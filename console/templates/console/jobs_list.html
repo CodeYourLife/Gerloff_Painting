@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block content %}
+<head>
+  <title>Gerloff Painting</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+$(document).ready(function () {
+$('#jobs_table').DataTable();
+$('.dataTables_length').addClass('bs-select');
+}); 
+$( ".job_list" ).addClass("active"); 
+</script>
+</head>
+
+</div>
+<center class="container" style="margin-top: 5%;">
+        <div  style="overflow: auto;">
+	<h1>Gerloff Painting Jobs</h1> 
+        <div class="table-wrapper-scroll-y" style="height: 600px;">
+                <table id="jobs_table" class="table responsive table-bordered table-striped table-hover">
+                <thead>
+                <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Job #</th>
+                        <th scope="col">Job Name</th>
+                        <th scope="col">Estimator</th>
+                        <th scope="col">Project Manager</th>
+                        <th scope="col">Foreman</th>
+                        <th scope="col">Superintendant</th>
+			<th scope="col">Contract Amount</th>
+			<th scope="col">Retainage</th>
+			<th scope="col">T&M Job</th>
+			<th scope="col">Booked Date</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if jobs %}
+                {% for job in jobs %}
+                <tr>
+                        <th scope="row">{{forloop.counter}}</th>
+                        <td>{{job.job_number}}</td>
+                        <td>{{job.job_name}}</td>
+                        <td>{{job.estimator}}</td>
+                        <td>{{job.project_manager}}</td>
+                        <td>{{job.foreman}}</td>
+			<td>{{job.superintendant}}</td>
+			<td>{{job.contract_amount}}</td>
+			<td>{{job.retainage_percentage}}</td>
+			<td>{{job.is_t_m_job}}</td>
+			<td>{{job.booked_date}}</td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+                	</tbody>
+                	</table>
+        	</div>
+	</div>
+</center>
+{% endblock %}
+~      

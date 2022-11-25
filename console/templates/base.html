@@ -1,0 +1,54 @@
+{% load static %}
+{# Load CSS and JavaScript #}
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.12/js/jquery.dataTables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.12/js/dataTables.bootstrap.min.js"></script>
+<script src "https://cdn.datatables.net/plug-ins/1.10.15/sorting/stringMonthYear.js"></script>
+<script src="jquery-3.6.0.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $(".navbar-nav .nav-item").bind("click", function (event) {
+            var clickedItem = $(this);
+            $(".navbar-nav .nav-item").each(function () {
+                $(this).removeClass("active");
+            });
+            clickedItem.addClass("active");
+        });
+    });
+</script>
+<html lang="en">
+<body>
+    <div class="page-header">
+        <nav class="navbar navbar-default">
+            <div class="container-fluid">
+                <!-- Brand and toggle get grouped for better mobile display -->
+                <div class="navbar-header">
+
+                            <ul class="nav navbar-nav">
+                                <li class="nav-item index"><a href="/console">Home</a></li>
+                                <li class="nav-item job_list"><a href="/console/job_list">View Job List</a></li>
+                                <li class="nav-item open_items"><a href="/console/open_items">Open Items</a></li>
+                                <li class="nav-item project_schedule"><a href="/console/project_schedule">Project Schedule</a></li>
+                                <li class="nav-item inventory_control"><a href="/console/inventory_control">Inventory Control</a></li>
+                                <li class="nav-item wallcovering"><a href="/console/wallcovering">Wallcovering</a></li>
+                                <li class="nav-item go_to_job_finder"><a href="/console/go_to_job_finder">GoTo Job Finder</a></li>
+                                <li class="nav-item book_new_job"><a href="/console/book_new_job">Book New Job</a></li>
+                            </ul>
+                </div><!-- /.container-fluid -->
+        </nav>
+    </div>
+
+    <div class="content container">
+        <div class="row">
+            <div class="col-md-12">
+                {% block content %}
+                <h1>Book New Job</h1>
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
