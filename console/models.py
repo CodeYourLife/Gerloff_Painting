@@ -135,10 +135,10 @@ class Inventory(models.Model):
 	job_name = models.CharField(null=True, max_length=250)
 	job_number = models.CharField(null=True, max_length=50)
 	notes = models.CharField(null=True, max_length=2000)
-	
+
+
 class Jobs(models.Model):
-	id = models.IntegerField(primary_key=True)
-	job_number = models.CharField(null=False, max_length=10)
+	job_number = models.CharField(null=False, max_length=5, primary_key=True)
 	job_name = models.CharField(null=True, max_length=250)
 	estimator = models.CharField(null=True, max_length=50)
 	foreman = models.CharField(null=True, max_length=50)
@@ -159,7 +159,7 @@ class Jobs(models.Model):
 	city = models.CharField(null=True, max_length=20)
 	state = models.CharField(null=True, max_length=2)
 	start_date = models.DateTimeField(null=True, blank=True)
-	duration = models.CharField(null=True, max_length=50) 
+	duration = models.CharField(null=True, max_length=50)
 	estimate_number = models.CharField(null=True, max_length=50)
 	estimate_price = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
 	has_wallcovering = models.BooleanField(default=False)
@@ -177,6 +177,9 @@ class Jobs(models.Model):
 	was_previously_closed = models.BooleanField(default=False)
 	previously_closed_date = models.DateTimeField(null=True, blank=True)
 	cumulative_costs_at_closing = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
+	contract_status = models.BooleanField(default=False)
+	insurance_status = models.BooleanField(default=False)
+
 
 class TM_Prices(models.Model):
 	id = models.IntegerField(primary_key=True)

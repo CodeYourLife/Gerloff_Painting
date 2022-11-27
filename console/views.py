@@ -75,3 +75,4 @@ def register(request):
         job.save();
         response = redirect('/')
         return response
+
