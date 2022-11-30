@@ -116,27 +116,6 @@ class Storage_Location_Type(models.Model):
 	type = models.CharField(null=True, max_length=50)
 	is_active = models.BooleanField(default=False)
 
-class Inventory(models.Model):
-	id = models.IntegerField(primary_key=True)
-	number = models.IntegerField(default=0)
-	item = models.CharField(null=True, max_length=2000)
-	inventory_type = models.CharField(null=True, max_length=50)
-	storage_location = models.CharField(null=True, max_length=50)
-	purchase_date = models.DateTimeField(null=True, blank=True)
-	purchase_price = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
-	purchased_from = models.CharField(null=True, max_length = 2000)
-	purchased_by = models.CharField(null=True, max_length=250)
-	serial_number = models.CharField(null=True, max_length=250)
-	po_number = models.CharField(null=True, max_length=250)
-	is_labeled = models.BooleanField(default=False)
-	#status = models.EnumField(choices=['Available','Checked Out', 'Missing'])
-	date_out = models.DateTimeField(null=True, blank=True)
-	date_returned = models.DateTimeField(null=True, blank=True)
-	job_name = models.CharField(null=True, max_length=250)
-	job_number = models.CharField(null=True, max_length=50)
-	notes = models.CharField(null=True, max_length=2000)
-
-
 class Jobs(models.Model):
 	job_number = models.CharField(null=False, max_length=5, primary_key=True)
 	job_name = models.CharField(null=True, max_length=250)
@@ -179,6 +158,27 @@ class Jobs(models.Model):
 	cumulative_costs_at_closing = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
 	contract_status = models.BooleanField(default=False)
 	insurance_status = models.BooleanField(default=False)
+
+class Inventory(models.Model):
+	id = models.IntegerField(primary_key=True)
+	number = models.IntegerField(default=0)
+	item = models.CharField(null=True, max_length=2000)
+	inventory_type = models.CharField(null=True, max_length=50)
+	storage_location = models.CharField(null=True, max_length=50)
+	purchase_date = models.DateTimeField(null=True, blank=True)
+	purchase_price = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+	purchased_from = models.CharField(null=True, max_length = 2000)
+	purchased_by = models.CharField(null=True, max_length=250)
+	serial_number = models.CharField(null=True, max_length=250)
+	po_number = models.CharField(null=True, max_length=250)
+	is_labeled = models.BooleanField(default=False)
+	#status = models.EnumField(choices=['Available','Checked Out', 'Missing'])
+	date_out = models.DateTimeField(null=True, blank=True)
+	date_returned = models.DateTimeField(null=True, blank=True)
+	job_name = models.CharField(null=True, max_length=250)
+	job_number = models.ForeignKey(Jobs)
+	# job_number is the foreign key to the job number in Jobs
+	notes = models.CharField(null=True, max_length=2000)
 
 
 class TM_Prices(models.Model):

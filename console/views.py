@@ -3,76 +3,29 @@ from django.views import generic
 from .models import Jobs, Clients
 from django.contrib.auth.models import User, auth
 from django.shortcuts import render, redirect
+from json import dumps
+import json
+from django.core.serializers.json import DjangoJSONEncoder
+
+def book_new_job(request):
+    allclients = Clients.objects.order_by('company').distinct('company')[0:2000]
+    pms = Clients.objects.values("company", "estimator")[0:100]
+    #pms = Clients.objects.values_list("company", "estimator")[0:1000]
+    prices_json = json.dumps(list(pms), cls=DjangoJSONEncoder)
+    return render(request, 'book_new_job.html', {'data': prices_json, 'allclients': allclients})
+
+def index(request):
+    return render(request, 'index.html')
 
 
-class IndexView(generic.ListView):
-    template_name = 'console/index.html'
-
-    def get_queryset(self):
-        return;
-
-
-class JobListView(generic.ListView):
-    template_name = 'console/job_list.html'
-    context_object_name = 'jobs'
-
-    def get_queryset(self):
-        return Jobs.objects.all().order_by('-booked_date')[0:2000]
-
-
-class OpenItemsView(generic.ListView):
-    template_name = 'console/open_items.html'
-
-    def get_queryset(self):
-        return;
-
-
-class ProjectScheduleView(generic.ListView):
-    template_name = 'console/project_schedule.html'
-
-    def get_queryset(self):
-        return;
-
-
-class InventoryControlView(generic.ListView):
-    template_name = 'console/inventory_control.html'
-
-    def get_queryset(self):
-        return;
-
-
-class WallcoveringView(generic.ListView):
-    template_name = 'console/wallcovering.html'
-
-    def get_queryset(self):
-        return;
-
-
-class GoToJobFinderView(generic.ListView):
-    template_name = 'console/go_to_job_finder.html'
-
-    def get_queryset(self):
-        return;
-
-
-class BookNewJobView(generic.ListView):
-    template_name = 'console/book_new_job.html'
-    context_object_name = 'clients'
-    def get_queryset(self):
-        return Clients.objects.all().order_by('-company')[0:2000]
-
-# def BookNewJobView(request);
-#     client = Clients.objects.all()
-#     return render(request, 'book_new_job.html', {'client': client})
-
+def tester(request):
+    return render(request, 'test.html')
 
 def register(request):
     if request.method == 'POST':
         job_number1 = request.POST['job_number']
         job_name1 = request.POST['job_name']
-
-        job= Jobs(id=3,job_number=job_number1, job_name=job_name1)
+        job= Jobs(job_number=job_number1, job_name=job_name1)
         job.save();
         response = redirect('/')
         return response
-
