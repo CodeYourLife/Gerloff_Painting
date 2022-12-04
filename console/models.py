@@ -1,10 +1,15 @@
 from django.db import models
 
 class Employees(models.Model):
-	id = models.IntegerField(primary_key=True)
+	id = models.BigAutoField(primary_key=True)
 	employee_number = models.IntegerField(default=0)
 	title = models.CharField(null=True, max_length=50)
 	active = models.BooleanField(default=True)
+	first_name = models.CharField(null=True, max_length=50)
+	last_name = models.CharField(null=True, max_length=50)
+	phone = models.CharField(null=True, max_length=50)
+	email = models.CharField(null=True, max_length=50)
+
 
 class Project_Users(models.Model):
 	employee_id = models.IntegerField(default=0)
@@ -16,7 +21,7 @@ class Project_Users(models.Model):
 	office_extension = models.CharField(null=True, max_length=10)
 
 class Change_Orders(models.Model):
-	id = models.IntegerField(primary_key=True)
+	id = models.BigAutoField(primary_key=True)
 	job_number = models.CharField(null=True,max_length=5)
 	cop_number = models.IntegerField(default=0)
 	is_t_and_m = models.BooleanField(default=True)
@@ -31,7 +36,7 @@ class Change_Orders(models.Model):
 	is_waiting_for_pm = models.BooleanField(default=False)
 
 class Checklist(models.Model):
-	id = models.IntegerField(primary_key=True)
+	id = models.BigAutoField(primary_key=True)
 	job_name = models.CharField(null=True,max_length=1000)
 	category = models.CharField(null=True, max_length=1000)
 	checklist_item = models.CharField(null=True, max_length=2000)
@@ -53,7 +58,7 @@ class Checklist(models.Model):
 	assigned = models.CharField(null=True, max_length=2000)
 
 class Clients(models.Model):
-	id = models.IntegerField(primary_key=True)
+	id = models.BigAutoField(primary_key=True)
 	company = models.CharField(null=True, max_length=250)
 	estimator = models.CharField(null=True, max_length=250)
 	estimator_phone = models.CharField(null=True, max_length=50)
@@ -62,8 +67,9 @@ class Clients(models.Model):
 	bid_email = models.CharField(null=True, max_length=50)
 	vendor_code = models.CharField(null=True, max_length=100)
 
+
 class Estimates(models.Model):
-	id = models.IntegerField(primary_key=True)
+	id = models.BigAutoField(primary_key=True)
 	to_number = models.IntegerField(default=0)
 	bid_date = models.DateTimeField(null=True, blank=True)
 	take_off_name = models.CharField(null=True, max_length=2000)
@@ -85,7 +91,7 @@ class Estimates(models.Model):
 	is_awarded_gc = models.BooleanField(default=False)
 
 class Extra_Work_Tickets(models.Model):
-	id = models.IntegerField(primary_key=True)
+	id = models.BigAutoField(primary_key=True)
 	job_number = models.CharField(null=True, max_length=10)
 	ewt_number = models.IntegerField(default=0)
 	description = models.CharField(null=True, max_length=2000)
@@ -96,7 +102,7 @@ class Extra_Work_Tickets(models.Model):
 	is_closed = models.BooleanField(default=False)
 
 class Incoming_Wall_Covering(models.Model):
-	id = models.IntegerField(primary_key=True)
+	id = models.BigAutoField(primary_key=True)
 	job_number = models.CharField(null=True, max_length=10)
 	orders_primary_key = models.IntegerField(default=0)
 	wallcovering_primary_key = models.IntegerField(default=0)
@@ -127,7 +133,7 @@ class Jobs(models.Model):
 	retainage_percentage = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
 	is_t_m_job = models.BooleanField(default=False)
 	t_m_nte_amount = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
-	#status = models.EnumField(choices=['Open', 'Closed','Temporarily Opened'])
+	status = models.CharField(null=True, max_length=50)
 	booked_date = models.DateTimeField(null=True, blank=True)
 	booked_by = models.CharField(null=True, max_length=50)
 	is_wage_scale = models.BooleanField(default=False)
@@ -142,13 +148,14 @@ class Jobs(models.Model):
 	estimate_number = models.CharField(null=True, max_length=50)
 	estimate_price = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
 	has_wallcovering = models.BooleanField(default=False)
+	has_paint = models.BooleanField(default=False)
 	has_owner_supplied_wallcovering = models.BooleanField(default=False)
 	painting_budget = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
 	wallcovering_budget = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
 	is_send_auto_co_emails = models.BooleanField(default=False)
 	is_send_auto_submittal_emails = models.BooleanField(default=False)
 	notes = models.CharField(null=True, max_length=2000)
-	approved_change_orers = models.DecimalField(max_digits=9, decimal_places=4, blank=True, null=True)
+	approved_change_orders = models.DecimalField(max_digits=9, decimal_places=4, blank=True, null=True)
 	final_bill_amount = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
 	is_closed = models.BooleanField(default=False)
 	labor_done_Date = models.DateTimeField(null=True, blank=True)
@@ -158,9 +165,23 @@ class Jobs(models.Model):
 	cumulative_costs_at_closing = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
 	contract_status = models.BooleanField(default=False)
 	insurance_status = models.BooleanField(default=False)
+	submittals_required = models.BooleanField(default=False)
+	has_special_paint = models.IntegerField()
+
+
+class Job_Notes(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	job_number = models.ForeignKey(Jobs,on_delete=models.CASCADE)
+	note = models.CharField(null=True, max_length=2000)
+	type = models.CharField(null=True, max_length=50) #booking note, field note, CO note, submittal note, start date note, daily report, etc
+	user = models.CharField(null=True, max_length=50) #bridgette joe
+	date = models.DateTimeField(null=True, blank=True)
+	daily_employee_count = models.IntegerField(default=0)
+	note_date = models.DateTimeField(null=True, blank=True) #use if you are having to back date a daily report
+
 
 class Inventory(models.Model):
-	id = models.IntegerField(primary_key=True)
+	id = models.BigAutoField(primary_key=True)
 	number = models.IntegerField(default=0)
 	item = models.CharField(null=True, max_length=2000)
 	inventory_type = models.CharField(null=True, max_length=50)
@@ -176,14 +197,14 @@ class Inventory(models.Model):
 	date_out = models.DateTimeField(null=True, blank=True)
 	date_returned = models.DateTimeField(null=True, blank=True)
 	job_name = models.CharField(null=True, max_length=250)
-	job_number = models.ForeignKey(Jobs)
+	job_number = models.ForeignKey(Jobs,on_delete=models.CASCADE)
 	# job_number is the foreign key to the job number in Jobs
 	notes = models.CharField(null=True, max_length=2000)
 
 
 class TM_Prices(models.Model):
-	id = models.IntegerField(primary_key=True)
-	job_id = models.IntegerField(default=0)
+	id = models.BigAutoField(primary_key=True)
+	job_number = models.ForeignKey(Jobs,on_delete=models.CASCADE)
 	supervisor = models.CharField(null=True, max_length=50)
 	painter_hours = models.IntegerField(default=0)
 	painter_hours_ot = models.IntegerField(default=0)
@@ -192,15 +213,15 @@ class TM_Prices(models.Model):
 	bond_percentage = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
 	
 class TM_List(models.Model):
-	id = models.IntegerField(primary_key=True)
+	id = models.BigAutoField(primary_key=True)
 	tm_price_id = models.IntegerField(default=0)
 	job_id = models.IntegerField(default=0)
 	paint_type = models.CharField(null=True, max_length=50)
 	amount = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
 
 class Client_Information(models.Model):
-	id = models.IntegerField(primary_key=True)
-	job_id = models.IntegerField(default=0)
+	id = models.BigAutoField(primary_key=True)
+	job_number = models.ForeignKey(Jobs,on_delete=models.CASCADE)
 	contractor = models.CharField(null=True, max_length=250)
 	office1 = models.CharField(null=True, max_length=250)
 	office2 = models.CharField(null=True, max_length=250)
@@ -214,7 +235,7 @@ class Client_Information(models.Model):
 	field = models.CharField(null=True, max_length=250)
 
 class Orders(models.Model):
-	id = models.IntegerField(primary_key=True)
+	id = models.BigAutoField(primary_key=True)
 	po_number = models.IntegerField(default=0)
 	item_number = models.CharField(null=True, max_length=50)
 	job_number = models.CharField(null=False,max_length=10)
@@ -231,7 +252,7 @@ class Orders(models.Model):
 	notes = models.CharField(null=True, max_length=2000)
 
 class Outgoing_Wallcovering(models.Model):
-	id = models.IntegerField(primary_key=True)
+	id = models.BigAutoField(primary_key=True)
 	job_number = models.CharField(null=False, max_length=10)
 	package_id = models.IntegerField(default=0)
 	packages_out = models.IntegerField(default=0)
@@ -240,7 +261,7 @@ class Outgoing_Wallcovering(models.Model):
 	notes = models.CharField(null=True, max_length=2000)
 
 class Packages(models.Model):
-	id = models.IntegerField(primary_key=True)
+	id = models.BigAutoField(primary_key=True)
 	wallcovering_id = models.IntegerField(default=0)
 	job_number = models.CharField(null=False, max_length=10)
 	package_description = models.CharField(null=True, max_length=1000)
@@ -248,14 +269,14 @@ class Packages(models.Model):
 	job_name = models.CharField(null=True, max_length=100)
 
 class Plans(models.Model):
-	id = models.IntegerField(primary_key=True)
+	id = models.BigAutoField(primary_key=True)
 	job_number = models.CharField(null=False, max_length=10)
 	job_name = models.CharField(null=True, max_length=250)
 	description = models.CharField(null=True, max_length=2000)
 	estimates_number = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 	
 class Subcontractors(models.Model):
-	id = models.IntegerField(primary_key=True)
+	id = models.BigAutoField(primary_key=True)
 	job_number = models.CharField(null=False, max_length=10)
 	wallcovering_id = models.IntegerField(default=0)
 	subcontractor = models.CharField(null=True, max_length=250)
@@ -267,7 +288,7 @@ class Subcontractors(models.Model):
 	total_authorized = models.IntegerField(default=0)
 	
 class Submittal_Items(models.Model):
-	id = models.IntegerField(primary_key=True)
+	id = models.BigAutoField(primary_key=True)
 	job_number = models.CharField(null=False, max_length=10)
 	wallcovering_id = models.IntegerField(default=0)
 	item_number = models.IntegerField(default=0)
@@ -278,7 +299,7 @@ class Submittal_Items(models.Model):
 	is_closed = models.BooleanField(default=False)
 
 class Submittals(models.Model):
-	id = models.IntegerField(primary_key=True)
+	id = models.BigAutoField(primary_key=True)
 	job_number = models.CharField(null=False, max_length=10)
 	wallcovering_id = models.IntegerField(default=0)
 	description = models.CharField(null=True, max_length=2000)
@@ -289,7 +310,7 @@ class Submittals(models.Model):
 	notes = models.CharField(null=True, max_length=2000)
 
 class Wallcovering(models.Model):
-	id = models.IntegerField(primary_key=True)
+	id = models.BigAutoField(primary_key=True)
 	job_number = models.CharField(null=False, max_length=10)
 	code = models.CharField(null=True, max_length=10)
 	vendor = models.CharField(null=True, max_length=25)
@@ -302,4 +323,7 @@ class Wallcovering(models.Model):
 	vertical_repeat = models.CharField(null=True, max_length=50)
 	#cut = models.EnumField(choices=['Straight','Random'])
 	notes = models.CharField(null=True, max_length=2000)
-	
+
+class Job_Numbers(models.Model):
+	letter = models.CharField(null=False, max_length=1)
+	number = models.CharField(null=False, max_length=4)

@@ -13,24 +13,60 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script>    $( ".book_new_job" ).addClass("active");  </script>
     <script type="text/javascript">
+
         function check_booking_data() {
             if (booking_input.job_name.value ==""){
                 alert('please enter a job name')
                 return false;
-                }
-         }
+            }
+
 
         function filter_estimators() {
+            booking_input.new_PM.value =""
+            booking_input.new_Super.value =""
+            booking_input.new_PM_Phone.value =""
+            booking_input.new_Super_Phone.value =""
+            booking_input.new_PM_Email.value =""
+            booking_input.new_Super_Email.value =""
             let selectedCompany = booking_input.select_company.value
             let rolodex = JSON.parse("{{data|escapejs}}");
-            console.log(selectedCompany)
+            //console.log(selectedCompany)
             //alert()
+            for(let i = booking_input.select_PM.options.length; i >= 0; i--) {
+                booking_input.select_PM.remove(i);
+            }
+            for(let i = booking_input.select_Super.options.length; i >= 0; i--) {
+                booking_input.select_Super.remove(i);
+            }
             let estimators = []
             rolodex.forEach(rolodexItem => (rolodexItem.company == selectedCompany) &&  estimators.push(rolodexItem.estimator))
             for(let i = 0; i < estimators.length; i++){
                 booking_input.select_PM.options[i] = new Option(estimators[i],estimators[i]);
+                booking_input.select_Super.options[i] = new Option(estimators[i],estimators[i]);
             }
          }
+        function clear_select_PM() {
+            for(let i = booking_input.select_PM.options.length; i >= 0; i--) {
+                booking_input.select_PM.remove(i);
+            }
+            booking_input.select_PM.options[0] = new Option("Use Below", "Use Below");
+        }
+        function clear_select_Super() {
+            for(let i = booking_input.select_Super.options.length; i >= 0; i--) {
+                booking_input.select_Super.remove(i);
+            }
+            booking_input.select_Super.options[0] = new Option("Use Below", "Use Below");
+        }
+
+            window.onload = function() {
+                var today = new Date();
+                var dd = String(today.getDate()).padStart(2, '0');
+                var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+                var yyyy = today.getFullYear();
+                today = yyyy + '-' + mm + '-' + dd;
+                booking_input.start_date.value = today
+            };
+
     </script>
 
 </head>
@@ -57,8 +93,8 @@
 
         <div class ="container">
             <div class ="row">
-                <div class ="col">                    <input type= "text" name="spray_scale" placeholder="Spray Scale" size="30"/><br />                </div>
-                <div class ="col">                    <input type= "text" name="brush_role" placeholder="Brush/Roll Scale" size="30"/><br />                </div>
+                <div class ="col"><input type= "text" name="spray_scale" placeholder="Spray Scale" size="30"/><br /></div>
+                <div class ="col"><input type= "text" name="brush_role" placeholder="Brush/Roll Scale" size="30"/><br /></div>
                 <div class ="col"></div>
             </div>
         </div>
@@ -96,40 +132,108 @@
             </div>
         </div>
         <br /> <hr>
-        <label>Please select company</label>
-        <select id="select_company" name="select_company" onChange="filter_estimators()" >
-            {% if allclients %}
-            {% for client in allclients %}
 
-                <option value="{{client.company}}">{{client.company}}</option>
-            {% endfor %}
-            {% endif %}
-        </select>
-        <label for="select_PM">Please select Estimator</label>
-        <select id="select_PM" name="select_PM" >
+       <div class ="container">
+            <div class ="row" style="height: 50px">
+                <div class ="col">
+                    <label>Please select company</label>
+                    <select id="select_company" name="select_company" onChange="filter_estimators()" >
+                        {% if allclients %}
+                        {% for client in allclients %}
+
+                            <option value="{{client.company}}">{{client.company}}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+            </div>
+            <div class = "row" style="height: 30px">
+                <div class ="col-sm-4">
+                    <label for="select_PM">Please select Estimator</label>
+                    <select id="select_PM" name="select_PM" >
+                            <option value="please_select">"please select"</option>
+                    </select>
+                </div>
+                <div class ="col">
+                    <label for="select_Super">Please select Superintendent</label>
+                    <select id="select_Super" name="select_Super" >
+                    <option value="please_select">"please select"</option>
+                    </select>
+                </div>
+            </div>
 
 
-                <option value="please_select">"please select"</option>
-
-
-
-        </select>
+            <div class ="row">
+                <div class ="col-sm-4"> Or Enter New Below: </div>
+                <div class ="col">Or Enter New Below: </div>
+            </div>
+            <div class ="row">
+                <div class ="col-sm-4">  <input type= "text" name="new_PM" placeholder="Office PM Name" size="30" onClick="clear_select_PM()"/></div>
+                <div class ="col"><input type= "text" name="new_Super" placeholder="Superintendent Name" size="30" onClick="clear_select_Super()"/></div>
+            </div>
+            <div class ="row">
+                <div class ="col-sm-4">  <input type= "tel" name="new_PM_Phone" placeholder="Phone Number" size="30"/></div>
+                <div class ="col"><input type= "tel" name="new_Super_Phone" placeholder="Phone Number" size="30"/></div>
+            </div>
+            <div class ="row">
+                <div class ="col-sm-4">  <input type= "email" name="new_PM_Email" placeholder="Email" size="30"/></div>
+                <div class ="col"><input type= "email" name="new_Super_Email" placeholder="Email" size="30"/></div>
+            </div>
+        </div>
+        <br /> <hr><br />
+            <label for="select_GPSuper">Please select Gerloff Superintendent</label>
+            <select id="select_GPSuper" name="select_GPSuper" >
+                {% if employees %}
+                {% for employee in employees %}
+                <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+        <br /> <hr>
+        <div class ="container">
+            <div class ="row">
+                <div class ="col-sm-4">Please select the scopes of work this project includes:</div>
+                <div class ="col-sm-2">    <input type="checkbox" name ="has_paint" id="has_paint"  /> <label for="has_paint">"Painting" </label>  <br /> </div>
+                <div class ="col">   <input type="checkbox" name ="has_wallcovering" id="has_wallcovering"  /> <label for="has_wallcovering">"Wallcovering" </label> </div>
+            </div>
+        </div>
         <br /> <hr>
 
-    <div id="result">
-      <!-- The card name will display here -->
-    </div>
-    <div id="result1">
-      <!-- The card name will display here -->
-    </div>
-    <div id="result2">
-      <!-- The card name will display here -->
-    </div>
+        <div class ="container">
+            <div class ="row">
+                <div class ="col-sm-3">
+                    <label for="start_date">Start date:</label>
+                    <input type="date" id="start_date" name="start_date">
+                </div>
+                <div class = "col"> <label for="date_note">Please clarify how you got this date: </label><br><textarea id="date_note" name="date_note" rows="4" cols="50" ></textarea></div>
+
+            </div>
+        </div>
+        <br /> <hr>
+        <label for="email_job_note">Summarize the job scope: </label> <br>
+        <textarea id="email_job_note" name="email_job_note" rows="4" cols="50" ></textarea>
+        <br /> <hr>
+        <div class ="container">
+            <div class ="row">
+                <div class ="col-sm-4">Total Contract Amount: </div>
+                <div class ="col-sm-2"> <input type= "text" name="contract_amount" placeholder="Contract Amount $$" size="30" />     <br /> </div>
+            </div>
+        </div>
+        <br>
+        <div class ="container">
+            <div class ="row">
+                <div class ="col-sm-4">Painting Budget: </div>
+                <div class ="col-sm-2"> <input type= "text" name="painting_budget" placeholder="Painting Budget $$" size="30" /> <br /> </div>
+            </div>
+            <div class ="row">
+                <div class ="col-sm-4">Wallcovering Budget: </div>
+                <div class ="col-sm-2"> <input type= "text" name="wallcovering_budget" placeholder="Wallcovering Budget $$" size="30" /> <br /> </div>
+            </div>
+        </div>
+        <br /> <hr>
 
          <br />
-        <input type="submit" value="Book Job Now" />
-
-
+           <input type="submit" value="Book Job Now" />
     </form>
 
 
