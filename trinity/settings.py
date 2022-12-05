@@ -31,7 +31,9 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'superintendent.apps.SuperintendentConfig',
     'console.apps.ConsoleConfig',
+    'django_tables2',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -55,7 +57,7 @@ ROOT_URLCONF = 'trinity.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR, 'console/templates/console', 'console/templates'],
+        'DIRS': [BASE_DIR, 'templates/console', 'templates', 'templates/superintendent', 'templates/bootstrap'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

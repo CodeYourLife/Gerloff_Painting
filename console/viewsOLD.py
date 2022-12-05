@@ -13,7 +13,7 @@ class IndexView(generic.ListView):
 
 
 class JobListView(generic.ListView):
-    template_name = 'console/job_list.html'
+    template_name = 'console/super_job_list.html'
     context_object_name = 'jobs'
 
     def get_queryset(self):
