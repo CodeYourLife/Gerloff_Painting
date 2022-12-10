@@ -9,4 +9,7 @@ urlpatterns = [
     path('jobs_list', views.jobs_list),
     path('select_super', views.select_super),
     path('goto_super', views.goto_super),
+    path('testtable', views.testtable),
+    path('filter_super', views.filter_super),
+    path('job_page/<jobnumber>', views.job_page),
 ]

@@ -104,6 +104,8 @@ class Inventory_Type(models.Model):
 	id = models.IntegerField(primary_key=True)
 	type = models.CharField(null=True, max_length=50)
 	is_active = models.BooleanField(default=False)
+	def __str__(self):
+		return f"{self.type}"
 
 class Storage_Location_Type(models.Model):
 	id = models.IntegerField(primary_key=True)

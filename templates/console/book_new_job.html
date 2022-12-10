@@ -1,0 +1,428 @@
+{% extends 'base.html' %}
+{% block content %}
+<!-- Include all compiled plugins (below), or include individual files as needed-->
+
+
+<head>
+  <title>Gerloff Painting</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
+      integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous"
+      xmlns:margin-left="http://www.w3.org/1999/xhtml">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>    $( ".book_new_job" ).addClass("active");  </script>
+    <script type="text/javascript">
+
+        function check_booking_data() {
+            if (booking_input.job_name.value ==""){
+                alert('please enter a job name')
+                return false;
+            }
+            if (booking_input.address.value ==""){
+                booking_input.address.scrollIntoView();
+                alert('please enter address')
+                return false;
+            }
+            if (booking_input.city.value ==""){
+                booking_input.state.scrollIntoView();
+                alert('please enter city')
+                return false;
+            }
+            if (booking_input.state.value ==""){
+                booking_input.state.scrollIntoView();
+                alert('please enter state')
+                return false;
+            }
+            if (booking_input.t_m_nte_amount.value != ""){
+                if (booking_input.is_t_m_job2.checked == false){
+                    booking_input.is_t_m_job2.scrollIntoView();
+                    alert("need to check box")
+                    return false;
+                }
+            }
+            if (booking_input.contract_status.value == "contract_please_select"){
+                booking_input.contract_status.scrollIntoView();
+                alert("Please select the contract status")
+                return false;
+            }
+            if (booking_input.insurance_Status.value == "COI_please_select"){
+                booking_input.insurance_Status.scrollIntoView();
+                alert("Please select the insurance status")
+                return false;
+            }
+
+            if (booking_input.select_company.value == "Please_select"){
+                booking_input.select_company.scrollIntoView();
+                alert("Please select the client name")
+                return false;
+            }
+
+            if (booking_input.select_company.value == "Add_new"){
+                if (booking_input.new_Client.value == ""){
+                    booking_input.new_Client.scrollIntoView();
+                    alert("Please type the new client name")
+                    return false;
+                }
+                if (booking_input.select_PM.value == "Not_Sure"){
+                    booking_input.select_PM.scrollIntoView();
+                    alert("For a new company, you have to enter a PM for that company")
+                    return false;
+                }
+            }
+            if (booking_input.select_PM.value == "Use_Below"){
+                if (booking_input.new_PM.value == ""){
+                    booking_input.select_PM.scrollIntoView();
+                    alert("Enter PM Name")
+                    return false;
+                }
+            }
+            if (booking_input.select_Super.value == "Use_Below"){
+                if (booking_input.new_Super.value == ""){
+                    booking_input.new_Super.scrollIntoView();
+                    alert("Enter Super Name")
+                    return false;
+                }
+            }
+            if (has_paint2.checked == false){
+                if (has_wallcovering2.checked == false){
+                    booking_input.has_paint2.scrollIntoView();
+                    alert("You need to pick at least one scope item")
+                    return false;
+                }
+            }
+
+            if (booking_input.date_note.value == ""){
+                booking_input.date_note.scrollIntoView();
+                alert("Please clarify how you established the start date")
+                return false;
+            }
+            if (booking_input.is_t_m_job2.checked==false){
+                if (booking_input.contract_amount.value == ""){
+                    booking_input.contract_amount.scrollIntoView();
+                    alert("Please enter a contract amount")
+                    return false;
+                }
+                if (booking_input.has_paint2.checked == true){
+                    if (booking_input.painting_budget.value == ""){
+                        booking_input.painting_budget.scrollIntoView();
+                        alert("Please enter a painting budget amount")
+                        return false;
+                    }
+                }
+                if (booking_input.has_wallcovering2.checked == true){
+                    if (booking_input.wallcovering_budget.value == ""){
+                        booking_input.wallcovering_budget.scrollIntoView();
+                        alert("Please enter a wallcovering budget amount")
+                        return false;
+                    }
+                }
+            }
+            if(Number(booking_input.wallcovering_budget.value) + Number(booking_input.painting_budget.value) != Number(booking_input.contract_amount.value)){
+                alert("Budget amounts must equal contract amount")
+                return false;
+            }
+        }
+
+        function hide_contract_amount(){
+            if (booking_input.is_t_m_job2.checked==true){
+                booking_input.contract_amount.value = "";
+                booking_input.painting_budget.value = "";
+                booking_input.wallcovering_budget.value = "";
+                booking_input.contract_amount.style.display ="none";
+                booking_input.painting_budget.style.display ="none";
+                booking_input.wallcovering_budget.style.display ="none";
+            }
+            else {
+                booking_input.contract_amount.style.display ="block";
+                booking_input.painting_budget.style.display ="block";
+                booking_input.wallcovering_budget.style.display ="block";
+            }
+        }
+
+        function filter_estimators() {
+            booking_input.new_PM.value =""
+            booking_input.new_Super.value =""
+            booking_input.new_PM_Phone.value =""
+            booking_input.new_Super_Phone.value =""
+            booking_input.new_PM_Email.value =""
+            booking_input.new_Super_Email.value =""
+            let selectedCompany = booking_input.select_company.value
+            let rolodex = JSON.parse("{{data|escapejs}}");
+            //console.log(selectedCompany)
+            //alert()
+            for(let i = booking_input.select_PM.options.length; i >= 0; i--) {
+                booking_input.select_PM.remove(i);
+            }
+            for(let i = booking_input.select_Super.options.length; i >= 0; i--) {
+                booking_input.select_Super.remove(i);
+            }
+            booking_input.select_PM.options[0] = new Option("Not Sure","Not_Sure");
+            booking_input.select_Super.options[0] = new Option("Not Sure","Not_Sure");
+            let b=1
+            for(let i =0; i < rolodex.length; i++){
+                if (rolodex[i].id == selectedCompany){
+                    booking_input.select_PM.options[b] = new Option(rolodex[i].name,rolodex[i].person_PK);
+                    booking_input.select_Super.options[b] = new Option(rolodex[i].name,rolodex[i].person_PK);
+                    b=b+1
+                }
+            }
+
+         }
+        function clear_select_PM() {
+            for(let i = booking_input.select_PM.options.length; i >= 0; i--) {
+                booking_input.select_PM.remove(i);
+            }
+            booking_input.select_PM.options[0] = new Option("Use Below", "Use_Below");
+        }
+        function clear_select_Super() {
+            for(let i = booking_input.select_Super.options.length; i >= 0; i--) {
+                booking_input.select_Super.remove(i);
+            }
+            booking_input.select_Super.options[0] = new Option("Use Below", "Use_Below");
+        }
+        function clear_Client() {
+                booking_input.select_company.value = "Add_new";
+                clear_select_PM()
+                clear_select_Super()
+                booking_input.select_PM.options[1] = new Option("Not Sure", "Not_Sure");
+                booking_input.select_Super.options[1] = new Option("Not Sure", "Not_Sure");
+        }
+
+        function clicked_paint(){
+            if (booking_input.has_paint2.checked==false){
+                booking_input.painting_budget.value = ""
+                alert("cleared paint budget")
+            }
+        }
+
+        function clicked_wc(){
+            if (booking_input.has_wallcovering2.checked==false){
+                booking_input.wallcovering_budget.value = ""
+                alert("cleared wallcovering budget")
+            }
+        }
+        function clicked_paintbudget(){
+            if (booking_input.painting_budget.value != ""){
+                if (booking_input.has_paint2.checked==false){
+                    booking_input.has_paint2.checked = true;
+                    alert("clicked paint scope button")
+                }
+            }
+        }
+       function clicked_wcbudget(){
+            if (booking_input.wallcovering_budget.value != ""){
+                if (booking_input.has_wallcovering2.checked==false){
+                    booking_input.has_wallcovering2.checked= true;
+                    alert("clicked wallcovering scope button")
+                }
+            }
+        }
+
+        window.onload = function() {
+            var today = new Date();
+            var dd = String(today.getDate()).padStart(2, '0');
+            var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+            var yyyy = today.getFullYear();
+            today = yyyy + '-' + mm + '-' + dd;
+            booking_input.start_date.value = today
+        };
+
+
+    </script>
+
+</head>
+
+  <body>
+  <h1>Book New Job</h1>
+    <form name = booking_input action="register" method="post"  onSubmit = "return check_booking_data()">
+        {% csrf_token %}
+        <input type="text" name="job_number" placeholder="Leave Blank (unless entering a custom job number)" maxlength="5" size="100" id="job_number"/><br />
+        <input type="text" name="job_name" placeholder="Job Name" size="100" id="job_name"/><br />
+        <br />
+        <input type="text" name="address" placeholder="Address" size="100" id="address" /><br />
+        <div class ="container">
+            <div class ="row">
+                <div class ="col">    <input type="text" name="city" placeholder="City" size="30" id="city"/><br />         </div>
+                <div class ="col">   <input type="text" name="state" placeholder="State" size="30" id="state" maxlength="2" /><br />       </div>
+                <div class ="col"></div>
+            </div>
+        </div> <!#city state>
+        <br />        <hr>
+        <input type='hidden' value='notchecked' name='on_base' id="on_base1">
+        <input type="checkbox" name ="on_base" id="on_base2" value="checked"  />
+        <label for="on_base2">"Security Clearance Required?" </label>
+        <br /><br>
+
+        <div class ="container">
+            <div class ="row">
+                <div class ="col"><input type= "text" name="spray_scale" placeholder="Spray Scale" size="30"/><br /></div>
+                <div class ="col"><input type= "text" name="brush_role" placeholder="Brush/Roll Scale" size="30"/><br /></div>
+                <div class ="col"></div>
+            </div>
+        </div> <!on base / scale>
+        <br />         <hr>
+        <div class ="container">
+            <div class ="row">
+
+                <div class ="col-sm-2"> <input type='hidden' value='notchecked' name='is_t_m_job' id = "is_t_m_job1">   <input type="checkbox" name ="is_t_m_job" id="is_t_m_job2" value="checked" onClick= "hide_contract_amount()" />         <label for="is_t_m_job2">"Is this a T&M Job?" </label>         <br />       </div>
+                <div class ="col">   <input type="number" name="t_m_nte_amount" placeholder="NTE AMOUNT $$" step="0.01" size="30" /><br />       </div>
+                <div class ="col-lg"></div>
+            </div>
+        </div> <!#is T&M?>
+        <br />         <hr>
+
+        <div class ="container">
+            <div class ="row">
+                <div class ="col">
+                    <label for="contract_status">Contract Status</label>
+                    <select id="contract_status" name="contract_status" >
+                        <option value="contract_please_select">Please Select Option</option>
+                        <option value="contract_received">Contract Received</option>
+                        <option value="contract_not_received">Contract Not Received Yet</option>
+                        <option value="contract_not_required">Contract Not Required</option>
+                    </select>
+                </div>
+                <div class ="col">
+                   <label for="insurance_Status">COI Status</label>
+                    <select id="insurance_Status" name="insurance_status" >
+                        <option value="COI_please_select">Please Select Option</option>
+                        <option value="COI_received">COI Received</option>
+                        <option value="COI_not_received">COI Not Received Yet</option>
+                        <option value="COI_not_required">COI Not Required</option>
+                    </select>
+                </div>
+                <div class ="col-lg"></div>
+            </div>
+        </div> <!#contract status and COI>
+        <br /> <hr>
+
+       <div class ="container"> <!#pick client>
+            <div class ="row" style="height: 50px">
+                <div class ="col">
+                    <label>Please select company</label>
+                    <select id="select_company" name="select_company" onChange="filter_estimators()" >
+                        <option value="Please_select">"Please Select"</option>
+                        <option value="Add_new">"Add New"</option>
+                        {% if allclients %}
+                        {% for client in allclients %}
+
+                            <option value="{{client.id}}">{{client.company}}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+            </div>
+            <div class ="row">
+                <div class ="col-sm-4"> Or Enter New Company Below: </div>
+            </div>
+            <div class ="row">
+                <div class ="col-sm-4">  <input type= "text" name="new_Client" placeholder="Company Name" size="30" onClick="clear_Client()"/></div>
+            </div>
+            <div class ="row">
+                <div class ="col-sm-4">  <input type= "tel" name="new_Client_phone" placeholder="Phone Number" size="30"/></div>
+            </div>
+            <div class ="row">
+                <div class ="col-sm-4">  <input type= "email" name="new_Client_bid_email" placeholder="Email" size="30"/></div>
+            </div>
+       </div> <!pick client>
+        <br>
+      <div class ="container">
+            <div class = "row" style="height: 30px">
+                <div class ="col-sm-4">
+                    <label for="select_PM">Please select Estimator</label>
+                    <select id="select_PM" name="select_PM" >
+                            <option value="please_select">"please select"</option>
+                    </select>
+                </div>
+                <div class ="col">
+                    <label for="select_Super">Please select Superintendent</label>
+                    <select id="select_Super" name="select_Super" >
+                    <option value="please_select">"please select"</option>
+                    </select>
+                </div>
+            </div>
+
+
+            <div class ="row">
+                <div class ="col-sm-4"> Or Enter New Below: </div>
+                <div class ="col">Or Enter New Below: </div>
+            </div>
+            <div class ="row">
+                <div class ="col-sm-4">  <input type= "text" name="new_PM" placeholder="Office PM Name" size="30" onClick="clear_select_PM()"/></div>
+                <div class ="col"><input type= "text" name="new_Super" placeholder="Superintendent Name" size="30" onClick="clear_select_Super()"/></div>
+            </div>
+            <div class ="row">
+                <div class ="col-sm-4">  <input type= "tel" name="new_PM_Phone" placeholder="Phone Number" size="30"/></div>
+                <div class ="col"><input type= "tel" name="new_Super_Phone" placeholder="Phone Number" size="30"/></div>
+            </div>
+            <div class ="row">
+                <div class ="col-sm-4">  <input type= "email" name="new_PM_Email" placeholder="Email" size="30"/></div>
+                <div class ="col"><input type= "email" name="new_Super_Email" placeholder="Email" size="30"/></div>
+            </div>
+        </div>
+        <br /> <hr><br />
+            <label for="select_GPSuper">Please select Gerloff Superintendent</label>
+            <select id="select_GPSuper" name="select_GPSuper" >
+                <option value="not_sure">Not Sure</option>
+                {% if employees %}
+                {% for employee in employees %}
+                <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+        <br /> <hr>
+        <div class ="container">
+            <div class ="row">
+                <div class ="col-sm-4">Please select the scopes of work this project includes:</div>
+                <div class ="col-sm-2">  <input type='hidden' value='notchecked' name='has_paint' id="has_paint1">  <input type="checkbox" name ="has_paint" id="has_paint2" value="checked" onClick="clicked_paint()" /> <label for="has_paint2">"Painting" </label>  <br /> </div>
+                <div class ="col"> <input type='hidden' value='notchecked' name='has_wallcovering' id="has_wallcovering1">  <input type="checkbox" name ="has_wallcovering" id="has_wallcovering2" value ="checked" onclick="clicked_wc()"/> <label for="has_wallcovering2">"Wallcovering" </label> </div>
+            </div>
+        </div>
+        <br /> <hr>
+
+        <div class ="container">
+            <div class ="row">
+                <div class ="col-sm-3">
+                    <label for="start_date">Start date:</label>
+                    <input type="date" id="start_date" name="start_date">
+                </div>
+                <div class = "col"> <label for="date_note">Please clarify how you got this date: </label><br><textarea id="date_note" name="date_note" rows="4" cols="50" ></textarea></div>
+
+            </div>
+        </div>
+        <br /> <hr>
+        <label for="email_job_note">Summarize the job scope: </label> <br>
+        <textarea id="email_job_note" name="email_job_note" rows="4" cols="100" ></textarea>
+        <br /> <hr>
+        <div class ="container" id = "contract_amount_section">
+            <div class ="row">
+                <div class ="col-sm-4">Total Contract Amount: </div>
+                <div class ="col-sm-2"> <input type= "number" name="contract_amount" placeholder="Contract Amount $$" size="30" step="0.01" id="contract_amount"/>     <br /> </div>
+            </div>
+        </div>
+        <br>
+        <div class ="container" id = "contract_amount_section2">
+            <div class ="row">
+                <div class ="col-sm-4">Painting Budget: </div>
+                <div class ="col-sm-2"> <input type= "number" name="painting_budget" placeholder="Painting Budget $$" size="30" id="painting_budget" step="0.01" onchange = "clicked_paintbudget()"/> <br /> </div>
+            </div>
+            <div class ="row">
+                <div class ="col-sm-4">Wallcovering Budget: </div>
+                <div class ="col-sm-2"> <input type= "number" name="wallcovering_budget" id="wallcovering_budget" placeholder="Wallcovering Budget $$" size="30" step="0.01" onchange = "clicked_wcbudget()"/> <br /> </div>
+            </div>
+        </div>
+        <br /> <hr>
+
+         <br />
+           <input type="submit" value="Book Job Now" />
+    </form>
+
+<script src=”https://code.jquery.com/jquery-3.2.1.slim.min.js” integrity=”sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN” crossorigin=”anonymous”></script>
+
+<script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js integrity=”sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q” crossorigin=”anonymous”></script>
+
+<script src=”https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js” integrity=”sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl” crossorigin=”anonymous”></script>
+  </body>
+</div>
+{% endblock %}
+
