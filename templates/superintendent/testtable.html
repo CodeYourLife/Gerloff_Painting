@@ -29,31 +29,7 @@
 				'tester': message
 			}));
             }
-        function post_job_number1(message) {
-		  let xmlHttpReq = new XMLHttpRequest();
-		  xmlHttpReq.open("GET", "job_page", false);
-		  xmlHttpReq.send(null);
-		  return xmlHttpReq.responseText;
-		}
 
-$(document).ready(function () {
-    var table = $('#job_table1').DataTable({
-        columnDefs: [
-            {
-                targets:0,
-                render: function ( data, type, row, meta ) {
-                    if(type === 'display'){
-                    	var message = "javascript:post_job_number('" + data + "');"
-                    	data = '<a href=' + message + '>' + data + '</a>';
-
-                    }
-                    return data;
-                }
-            }
-        ]
-    });
-
-});
 
 $(document).ready(function () {
     var table = $('#job_table').DataTable({
@@ -89,7 +65,7 @@ $(document).ready(function () {
         {% csrf_token %}
                     <label>Please select superintendent</label>
                     <select id="selected_super" name="selected_super" >
-                        <option value="Please_select">"Please Select"</option>
+                        <option value="please_select">"Please Select"</option>
                         {% if supers %}
                         {% for super in supers %}
 
@@ -97,7 +73,7 @@ $(document).ready(function () {
                         {% endfor %}
                         {% endif %}
 					</select>
-		<input type="submit" value="Select Super" />
+		<input type="submit" value="select super" />
 	</form>
 	<div class="demo-html" style="width:90%">
 		<table id="job_table" class="display" style="width:90%">

@@ -42,44 +42,44 @@
             }
             if (booking_input.contract_status.value == "contract_please_select"){
                 booking_input.contract_status.scrollIntoView();
-                alert("Please select the contract status")
+                alert("please select the contract status")
                 return false;
             }
-            if (booking_input.insurance_Status.value == "COI_please_select"){
-                booking_input.insurance_Status.scrollIntoView();
-                alert("Please select the insurance status")
+            if (booking_input.insurance_status.value == "coi_please_select"){
+                booking_input.insurance_status.scrollIntoView();
+                alert("please select the insurance status")
                 return false;
             }
 
-            if (booking_input.select_company.value == "Please_select"){
+            if (booking_input.select_company.value == "please_select"){
                 booking_input.select_company.scrollIntoView();
-                alert("Please select the client name")
+                alert("please select the client name")
                 return false;
             }
 
-            if (booking_input.select_company.value == "Add_new"){
-                if (booking_input.new_Client.value == ""){
-                    booking_input.new_Client.scrollIntoView();
-                    alert("Please type the new client name")
+            if (booking_input.select_company.value == "add_new"){
+                if (booking_input.new_client.value == ""){
+                    booking_input.new_client.scrollIntoView();
+                    alert("please type the new client name")
                     return false;
                 }
-                if (booking_input.select_PM.value == "Not_Sure"){
-                    booking_input.select_PM.scrollIntoView();
+                if (booking_input.select_pm.value == "not_sure"){
+                    booking_input.select_pm.scrollIntoView();
                     alert("For a new company, you have to enter a PM for that company")
                     return false;
                 }
             }
-            if (booking_input.select_PM.value == "Use_Below"){
-                if (booking_input.new_PM.value == ""){
-                    booking_input.select_PM.scrollIntoView();
-                    alert("Enter PM Name")
+            if (booking_input.select_pm.value == "use_below"){
+                if (booking_input.new_pm.value == ""){
+                    booking_input.select_pm.scrollIntoView();
+                    alert("enter pm name")
                     return false;
                 }
             }
-            if (booking_input.select_Super.value == "Use_Below"){
-                if (booking_input.new_Super.value == ""){
-                    booking_input.new_Super.scrollIntoView();
-                    alert("Enter Super Name")
+            if (booking_input.select_super.value == "use_below"){
+                if (booking_input.new_super.value == ""){
+                    booking_input.new_super.scrollIntoView();
+                    alert("enter super name")
                     return false;
                 }
             }
@@ -93,26 +93,26 @@
 
             if (booking_input.date_note.value == ""){
                 booking_input.date_note.scrollIntoView();
-                alert("Please clarify how you established the start date")
+                alert("please clarify how you established the start date")
                 return false;
             }
             if (booking_input.is_t_m_job2.checked==false){
                 if (booking_input.contract_amount.value == ""){
                     booking_input.contract_amount.scrollIntoView();
-                    alert("Please enter a contract amount")
+                    alert("please enter a contract amount")
                     return false;
                 }
                 if (booking_input.has_paint2.checked == true){
                     if (booking_input.painting_budget.value == ""){
                         booking_input.painting_budget.scrollIntoView();
-                        alert("Please enter a painting budget amount")
+                        alert("please enter a painting budget amount")
                         return false;
                     }
                 }
                 if (booking_input.has_wallcovering2.checked == true){
                     if (booking_input.wallcovering_budget.value == ""){
                         booking_input.wallcovering_budget.scrollIntoView();
-                        alert("Please enter a wallcovering budget amount")
+                        alert("please enter a wallcovering budget amount")
                         return false;
                     }
                 }
@@ -140,52 +140,52 @@
         }
 
         function filter_estimators() {
-            booking_input.new_PM.value =""
-            booking_input.new_Super.value =""
-            booking_input.new_PM_Phone.value =""
-            booking_input.new_Super_Phone.value =""
-            booking_input.new_PM_Email.value =""
-            booking_input.new_Super_Email.value =""
-            let selectedCompany = booking_input.select_company.value
+            booking_input.new_pm.value =""
+            booking_input.new_super.value =""
+            booking_input.new_pm_phone.value =""
+            booking_input.new_super_phone.value =""
+            booking_input.new_pm_email.value =""
+            booking_input.new_super_email.value =""
+            let selectedcompany = booking_input.select_company.value
             let rolodex = JSON.parse("{{data|escapejs}}");
-            //console.log(selectedCompany)
+            //console.log(selectedcompany)
             //alert()
-            for(let i = booking_input.select_PM.options.length; i >= 0; i--) {
-                booking_input.select_PM.remove(i);
+            for(let i = booking_input.select_pm.options.length; i >= 0; i--) {
+                booking_input.select_pm.remove(i);
             }
-            for(let i = booking_input.select_Super.options.length; i >= 0; i--) {
-                booking_input.select_Super.remove(i);
+            for(let i = booking_input.select_super.options.length; i >= 0; i--) {
+                booking_input.select_super.remove(i);
             }
-            booking_input.select_PM.options[0] = new Option("Not Sure","Not_Sure");
-            booking_input.select_Super.options[0] = new Option("Not Sure","Not_Sure");
+            booking_input.select_pm.options[0] = new Option("not sure","not_sure");
+            booking_input.select_super.options[0] = new Option("not sure","not_sure");
             let b=1
             for(let i =0; i < rolodex.length; i++){
-                if (rolodex[i].id == selectedCompany){
-                    booking_input.select_PM.options[b] = new Option(rolodex[i].name,rolodex[i].person_PK);
-                    booking_input.select_Super.options[b] = new Option(rolodex[i].name,rolodex[i].person_PK);
+                if (rolodex[i].id == selectedcompany){
+                    booking_input.select_pm.options[b] = new Option(rolodex[i].name,rolodex[i].person_PK);
+                    booking_input.select_super.options[b] = new Option(rolodex[i].name,rolodex[i].person_PK);
                     b=b+1
                 }
             }
 
          }
-        function clear_select_PM() {
-            for(let i = booking_input.select_PM.options.length; i >= 0; i--) {
-                booking_input.select_PM.remove(i);
+        function clear_select_pm() {
+            for(let i = booking_input.select_pm.options.length; i >= 0; i--) {
+                booking_input.select_pm.remove(i);
             }
-            booking_input.select_PM.options[0] = new Option("Use Below", "Use_Below");
+            booking_input.select_pm.options[0] = new Option("use below", "use_below");
         }
-        function clear_select_Super() {
-            for(let i = booking_input.select_Super.options.length; i >= 0; i--) {
-                booking_input.select_Super.remove(i);
+        function clear_select_super() {
+            for(let i = booking_input.select_super.options.length; i >= 0; i--) {
+                booking_input.select_super.remove(i);
             }
-            booking_input.select_Super.options[0] = new Option("Use Below", "Use_Below");
+            booking_input.select_super.options[0] = new Option("use below", "use_below");
         }
-        function clear_Client() {
-                booking_input.select_company.value = "Add_new";
-                clear_select_PM()
-                clear_select_Super()
-                booking_input.select_PM.options[1] = new Option("Not Sure", "Not_Sure");
-                booking_input.select_Super.options[1] = new Option("Not Sure", "Not_Sure");
+        function clear_client() {
+                booking_input.select_company.value = "add_new";
+                clear_select_pm()
+                clear_select_super()
+                booking_input.select_pm.options[1] = new Option("not sure", "not_sure");
+                booking_input.select_super.options[1] = new Option("not sure", "not_sure");
         }
 
         function clicked_paint(){
@@ -237,9 +237,9 @@
     <form name = booking_input action="register" method="post"  onSubmit = "return check_booking_data()">
         {% csrf_token %}
         <input type="text" name="job_number" placeholder="Leave Blank (unless entering a custom job number)" maxlength="5" size="100" id="job_number"/><br />
-        <input type="text" name="job_name" placeholder="Job Name" size="100" id="job_name"/><br />
+        <input type="text" name="job_name" placeholder="Job name" size="100" id="job_name"/><br />
         <br />
-        <input type="text" name="address" placeholder="Address" size="100" id="address" /><br />
+        <input type="text" name="address" placeholder="address" size="100" id="address" /><br />
         <div class ="container">
             <div class ="row">
                 <div class ="col">    <input type="text" name="city" placeholder="City" size="30" id="city"/><br />         </div>
@@ -274,35 +274,35 @@
         <div class ="container">
             <div class ="row">
                 <div class ="col">
-                    <label for="contract_status">Contract Status</label>
+                    <label for="contract_status">Contract status</label>
                     <select id="contract_status" name="contract_status" >
-                        <option value="contract_please_select">Please Select Option</option>
+                        <option value="contract_please_select">please Select Option</option>
                         <option value="contract_received">Contract Received</option>
-                        <option value="contract_not_received">Contract Not Received Yet</option>
-                        <option value="contract_not_required">Contract Not Required</option>
+                        <option value="contract_not_received">Contract not Received Yet</option>
+                        <option value="contract_not_required">Contract not Required</option>
                     </select>
                 </div>
                 <div class ="col">
-                   <label for="insurance_Status">COI Status</label>
-                    <select id="insurance_Status" name="insurance_status" >
-                        <option value="COI_please_select">Please Select Option</option>
-                        <option value="COI_received">COI Received</option>
-                        <option value="COI_not_received">COI Not Received Yet</option>
-                        <option value="COI_not_required">COI Not Required</option>
+                   <label for="insurance_status">coi status</label>
+                    <select id="insurance_status" name="insurance_status" >
+                        <option value="coi_please_select">please Select Option</option>
+                        <option value="coi_received">coi Received</option>
+                        <option value="coi_not_received">coi not Received Yet</option>
+                        <option value="coi_not_required">coi not Required</option>
                     </select>
                 </div>
                 <div class ="col-lg"></div>
             </div>
-        </div> <!#contract status and COI>
+        </div> <!#contract status and coi>
         <br /> <hr>
 
        <div class ="container"> <!#pick client>
             <div class ="row" style="height: 50px">
                 <div class ="col">
-                    <label>Please select company</label>
+                    <label>please select company</label>
                     <select id="select_company" name="select_company" onChange="filter_estimators()" >
-                        <option value="Please_select">"Please Select"</option>
-                        <option value="Add_new">"Add New"</option>
+                        <option value="please_select">"please Select"</option>
+                        <option value="add_new">"add New"</option>
                         {% if allclients %}
                         {% for client in allclients %}
 
@@ -313,30 +313,30 @@
                 </div>
             </div>
             <div class ="row">
-                <div class ="col-sm-4"> Or Enter New Company Below: </div>
+                <div class ="col-sm-4"> Or enter New company below: </div>
             </div>
             <div class ="row">
-                <div class ="col-sm-4">  <input type= "text" name="new_Client" placeholder="Company Name" size="30" onClick="clear_Client()"/></div>
+                <div class ="col-sm-4">  <input type= "text" name="new_client" placeholder="company name" size="30" onClick="clear_client()"/></div>
             </div>
             <div class ="row">
-                <div class ="col-sm-4">  <input type= "tel" name="new_Client_phone" placeholder="Phone Number" size="30"/></div>
+                <div class ="col-sm-4">  <input type= "tel" name="new_client_phone" placeholder="phone Number" size="30"/></div>
             </div>
             <div class ="row">
-                <div class ="col-sm-4">  <input type= "email" name="new_Client_bid_email" placeholder="Email" size="30"/></div>
+                <div class ="col-sm-4">  <input type= "email" name="new_client_bid_email" placeholder="email" size="30"/></div>
             </div>
        </div> <!pick client>
         <br>
       <div class ="container">
             <div class = "row" style="height: 30px">
                 <div class ="col-sm-4">
-                    <label for="select_PM">Please select Estimator</label>
-                    <select id="select_PM" name="select_PM" >
+                    <label for="select_pm">please select Estimator</label>
+                    <select id="select_pm" name="select_pm" >
                             <option value="please_select">"please select"</option>
                     </select>
                 </div>
                 <div class ="col">
-                    <label for="select_Super">Please select Superintendent</label>
-                    <select id="select_Super" name="select_Super" >
+                    <label for="select_super">please select superintendent</label>
+                    <select id="select_super" name="select_super" >
                     <option value="please_select">"please select"</option>
                     </select>
                 </div>
@@ -344,26 +344,26 @@
 
 
             <div class ="row">
-                <div class ="col-sm-4"> Or Enter New Below: </div>
-                <div class ="col">Or Enter New Below: </div>
+                <div class ="col-sm-4"> Or enter New below: </div>
+                <div class ="col">Or enter New below: </div>
             </div>
             <div class ="row">
-                <div class ="col-sm-4">  <input type= "text" name="new_PM" placeholder="Office PM Name" size="30" onClick="clear_select_PM()"/></div>
-                <div class ="col"><input type= "text" name="new_Super" placeholder="Superintendent Name" size="30" onClick="clear_select_Super()"/></div>
+                <div class ="col-sm-4">  <input type= "text" name="new_pm" placeholder="office pm name" size="30" onClick="clear_select_pm()"/></div>
+                <div class ="col"><input type= "text" name="new_super" placeholder="superintendent name" size="30" onClick="clear_select_super()"/></div>
             </div>
             <div class ="row">
-                <div class ="col-sm-4">  <input type= "tel" name="new_PM_Phone" placeholder="Phone Number" size="30"/></div>
-                <div class ="col"><input type= "tel" name="new_Super_Phone" placeholder="Phone Number" size="30"/></div>
+                <div class ="col-sm-4">  <input type= "tel" name="new_pm_phone" placeholder="phone Number" size="30"/></div>
+                <div class ="col"><input type= "tel" name="new_super_phone" placeholder="phone Number" size="30"/></div>
             </div>
             <div class ="row">
-                <div class ="col-sm-4">  <input type= "email" name="new_PM_Email" placeholder="Email" size="30"/></div>
-                <div class ="col"><input type= "email" name="new_Super_Email" placeholder="Email" size="30"/></div>
+                <div class ="col-sm-4">  <input type= "email" name="new_pm_email" placeholder="email" size="30"/></div>
+                <div class ="col"><input type= "email" name="new_super_email" placeholder="email" size="30"/></div>
             </div>
         </div>
         <br /> <hr><br />
-            <label for="select_GPSuper">Please select Gerloff Superintendent</label>
-            <select id="select_GPSuper" name="select_GPSuper" >
-                <option value="not_sure">Not Sure</option>
+            <label for="select_gpsuper">please select Gerloff superintendent</label>
+            <select id="select_gpsuper" name="select_gpsuper" >
+                <option value="not_sure">not sure</option>
                 {% if employees %}
                 {% for employee in employees %}
                 <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
@@ -373,7 +373,7 @@
         <br /> <hr>
         <div class ="container">
             <div class ="row">
-                <div class ="col-sm-4">Please select the scopes of work this project includes:</div>
+                <div class ="col-sm-4">please select the scopes of work this project includes:</div>
                 <div class ="col-sm-2">  <input type='hidden' value='notchecked' name='has_paint' id="has_paint1">  <input type="checkbox" name ="has_paint" id="has_paint2" value="checked" onClick="clicked_paint()" /> <label for="has_paint2">"Painting" </label>  <br /> </div>
                 <div class ="col"> <input type='hidden' value='notchecked' name='has_wallcovering' id="has_wallcovering1">  <input type="checkbox" name ="has_wallcovering" id="has_wallcovering2" value ="checked" onclick="clicked_wc()"/> <label for="has_wallcovering2">"Wallcovering" </label> </div>
             </div>
@@ -386,7 +386,7 @@
                     <label for="start_date">Start date:</label>
                     <input type="date" id="start_date" name="start_date">
                 </div>
-                <div class = "col"> <label for="date_note">Please clarify how you got this date: </label><br><textarea id="date_note" name="date_note" rows="4" cols="50" ></textarea></div>
+                <div class = "col"> <label for="date_note">please clarify how you got this date: </label><br><textarea id="date_note" name="date_note" rows="4" cols="50" ></textarea></div>
 
             </div>
         </div>

@@ -11,7 +11,28 @@
 	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
 	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
 	<style type="text/css" class="init">
+.collapsible {
+  background-color: #777;
+  color: white;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+}
 
+.active, .collapsible:hover {
+  background-color: #555;
+}
+
+.content {
+  padding: 0 18px;
+  display: none;
+  overflow: hidden;
+  background-color: #f1f1f1;
+}
 	</style>
 	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
 	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
@@ -21,12 +42,393 @@
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
-
-
+$(document).ready(function () {
+    var table = $('#tickets_table').DataTable({
+        columnDefs: [{
+                targets:0,
+                render: function ( data, type, row, meta ) {
+                    if(type === 'display'){
+                    	data = '<a href="job_page/' + data + '">' + data + '</a>'; }
+                    return data;}}] });
+});
+$(document).ready(function () {
+    var table = $('#tickets_table1').DataTable({
+        columnDefs: [{
+                targets:0,
+                render: function ( data, type, row, meta ) {
+                    if(type === 'display'){
+                    	data = '<a href="job_page/' + data + '">' + data + '</a>'; }
+                    return data;}}] });
+});
+$(document).ready(function () {
+    var table = $('#tickets_table2').DataTable({
+        columnDefs: [{
+                targets:0,
+                render: function ( data, type, row, meta ) {
+                    if(type === 'display'){
+                    	data = '<a href="job_page/' + data + '">' + data + '</a>'; }
+                    return data;}}] });
+});
+$(document).ready(function () {
+    var table = $('#tickets_table3').DataTable({
+        columnDefs: [{
+                targets:0,
+                render: function ( data, type, row, meta ) {
+                    if(type === 'display'){
+                    	data = '<a href="job_page/' + data + '">' + data + '</a>'; }
+                    return data;}}] });
+});
+$(document).ready(function () {
+    var table = $('#tickets_table4').DataTable({
+        columnDefs: [{
+                targets:0,
+                render: function ( data, type, row, meta ) {
+                    if(type === 'display'){
+                    	data = '<a href="job_page/' + data + '">' + data + '</a>'; }
+                    return data;}}] });
+});
 	</script>
 </head>
 <body>
-	{{job_number}}
+
+	{% for job in jobs %}
+        <div class ="container">
+            <div class ="row">
+                <div class ="col">Job Name: {{job.job_name}}</div>
+                <div class ="col">Job Number: {{job.job_number}}</div>
+                <div class ="col">Address: {{job.address}} {{job.city}} {{job.state}}</div>
+            </div>
+			<div class ="row">
+                <div class ="col">Client: {{job.client}}</div>
+                <div class ="col">Office PM: {{job.client_pm}} {{job.client_pm.phone}} {{job.client_pm.email}}</div>
+                <div class ="col">Superintendent: {{job.client_super}} {{job.client_super.phone}} {{job.client_super.email}}</div>
+            </div>
+		</div>
+				{% endfor %}
+		<hr><br>
+	{% if tickets %}
+	<button type="button" class="collapsible">Outstanding Extra Work Tickets</button>
+	<div class="content">
+		<div class="demo-html" style="width:90%">
+			<table id="tickets_table" class="display" style="width:90%" >
+			<thead>
+				<tr>
+					<th>CO#</th>
+					<th>Description</th>
+					<th>Notes</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for ticket in tickets %}
+				<tr>
+					<td>{{ticket.cop_number}}</td>
+					<td>{{ticket.description}}</td>
+					<td>{{ticket.notes}}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+	{% endif %}
+	{% if open_cos %}
+	<hr>
+	<button type="button" class="collapsible">Pending Change Orders Not Approved Yet</button>
+	<div class="content">
+		<div class="demo-html" style="width:90%">
+			<table id="tickets_table1" class="display" style="width:90%" >
+			<thead>
+				<tr>
+					<th>CO#</th>
+					<th>Description</th>
+					<th>Notes</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for open_co in open_cos %}
+				<tr>
+					<td>{{open_co.cop_number}}</td>
+					<td>{{open_co.description}}</td>
+					<td>{{open_co.notes}}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+	{% endif %}
+
+
+	{% if approved_cos %}
+	<hr>
+	<button type="button" class="collapsible">Approved Change Orders</button>
+	<div class="content">
+		<div class="demo-html" style="width:90%">
+			<table id="tickets_table2" class="display" style="width:90%" >
+			<thead>
+				<tr>
+					<th>CO#</th>
+					<th>Description</th>
+					<th>Notes</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for approved_co in approved_cos %}
+				<tr>
+					<td>{{approved_co.cop_number}}</td>
+					<td>{{approved_co.description}}</td>
+					<td>{{approved_co.notes}}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+				{% endif %}
+
+	{% if equipments %}
+	<hr>
+	<button type="button" class="collapsible">Equipment</button>
+	<div class="content">
+		<div class="demo-html" style="width:90%">
+			<table id="tickets_table3" class="display" style="width:90%" >
+			<thead>
+				<tr>
+					<th>Type</th>
+					<th>Item</th>
+					<th>Notes</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for equipment in equipments %}
+				<tr>
+					<td>{{equipment.inventory_type}}</td>
+					<td>{{equipment.item}}</td>
+					<td>{{equipment.notes}}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+				{% endif %}
+
+	{% if rentals %}
+	<hr>
+	<button type="button" class="collapsible">Rentals</button>
+	<div class="content">
+		<div class="demo-html" style="width:90%">
+			<table id="tickets_table4" class="display" style="width:90%" >
+			<thead>
+				<tr>
+					<th>Item</th>
+					<th>On Rent Date</th>
+					<th>Notes</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for rental in rentals %}
+				<tr>
+					<td>{{rental.item}}</td>
+					<td>{{rental.on_rent_date}}</td>
+					<td>{{rental.notes}}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+				{% endif %}
+
+	{% if wc_not_ordereds %}
+	<hr>
+	<button type="button" class="collapsible">Wallcovering Not Ordered</button>
+	<div class="content">
+		<div class="demo-html" style="width:90%">
+			<table id="tickets_table5" class="display" style="width:90%" >
+			<thead>
+				<tr>
+					<th>Code</th>
+					<th>Vendor</th>
+					<th>Pattern</th>
+					<th>Notes</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for wc_not_ordered in wc_not_ordereds %}
+				<tr>
+					<td>{{wc_not_ordered.code}}</td>
+					<td>{{wc_not_ordered.vendor.company_name}}</td>
+					<td>{{wc_not_ordered.pattern}}</td>
+					<td>{{wc_not_ordered.notes}}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+				{% endif %}
+
+	{% if wc_ordereds %}
+	<hr>
+	<button type="button" class="collapsible">Wallcovering Ordered But Not Received</button>
+	<div class="content">
+		<div class="demo-html" style="width:90%">
+			<table id="tickets_table6" class="display" style="width:90%" >
+			<thead>
+				<tr>
+					<th>Description</th>
+					<th>Date Ordered</th>
+					<th>Notes</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for wc_ordered in wc_ordereds %}
+				<tr>
+					<td>{{wc_ordered.description}}</td>
+					<td>{{wc_ordered.date_ordered}}</td>
+					<td>{{wc_ordered.notes}}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+				{% endif %}
+
+	{% if packages %}
+	<hr>
+	<button type="button" class="collapsible">Received Wallcovering</button>
+	<div class="content">
+		<div class="demo-html" style="width:90%">
+			<table id="tickets_table7" class="display" style="width:90%" >
+			<thead>
+				<tr>
+					<th>Description</th>
+					<th>Quantity </th>
+					<th>Notes</th>
+					<th>Sent to Job</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for package in packages %}
+				<tr>
+					<td>{{package.description}}
+						{% if package.order_item1.wallcovering.code != None %}
+						{{package.order_item1.wallcovering.code}} {{package.qnty_item1}} {{package.unit_item1}}
+						{% endif %}
+						{{package.order_item2.wallcovering.code}} {{package.qnty_item2}} {{package.unit_item2}}
+						{% if package.order_item3.wallcovering.code != None %}
+						{{package.order_item3.wallcovering.code}} {{package.qnty_item3}} {{package.unit_item3}}
+						{% endif %}
+						{% if package.order_item4.wallcovering.code != None %}
+						{{package.order_item4.wallcovering.code}} {{package.qnty_item4}} {{package.unit_item4}}
+						{% endif %}
+						{% if package.order_item5.wallcovering.code != None %}
+						{{package.order_item5.wallcovering.code}} {{package.qnty_item5}} {{package.unit_item5}}
+						{% endif %}
+					</td>
+					<td>{{package.quantity_received}} {{package.unit}}</td>
+					<td>{{package.notes}}</td>
+				<td>
+				{% if deliveries %}
+				{% for delivery in deliveries %}
+
+						{% if delivery.package == package %}
+							{{delivery.description}} {{delivery.quantity_sent}} {{delivery.outgoing_event.date}}
+						{% endif %}
+
+			    {% endfor %}
+				{% endif %}
+					</td>
+					</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+				{% endif %}
+
+	{% if submittals %}
+	<hr>
+	<button type="button" class="collapsible">Submittals</button>
+	<div class="content">
+		<div class="demo-html" style="width:90%">
+			<table id="tickets_table8" class="display" style="width:90%" >
+			<thead>
+				<tr>
+					<th>#</th>
+					<th>Description</th>
+					<th>Date Sent</th>
+					<th>Date Returned</th>
+					<th>Notes</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for submittal in submittals %}
+				<tr>
+					<td>{{submittal.submittal_number}}</td>
+					<td>{{submittal.description}}</td>
+					<td>{{submittal.date_sent}}</td>
+					<td>{{submittal.date_returned}}</td>
+					<td>{{submittal.notes}}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+				{% endif %}
+
+	{% if subcontracts %}
+	<hr>
+	<button type="button" class="collapsible">Subcontractors</button>
+	<div class="content">
+		<div class="demo-html" style="width:90%">
+			<table id="tickets_table9" class="display" style="width:90%" >
+			<thead>
+				<tr>
+					<th>PO #</th>
+					<th>Company</th>
+					<th>Description</th>
+
+				</tr>
+			</thead>
+			<tbody>
+			{% for subcontract in subcontracts %}
+				<tr>
+					<td>{{subcontract.po_number}}</td>
+					<td>{{subcontract.subcontractor.subcontractor}}</td>
+					<td>{{subcontract.description}}</td>
+
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+				{% endif %}
+
+
+
+</body>
+</html>
+<script>
+var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }
+  });
+}
+</script>
 
 </body>
 </html>
