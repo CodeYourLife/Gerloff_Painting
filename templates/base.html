@@ -20,19 +20,19 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
             <li class="nav-item active">
-            <a class="nav-link" href="/console">Home <span class="sr-only">(current)</span></a>
+            <a class="nav-link" href="{% url 'index' %}">Home <span class="sr-only">(current)</span></a>
             </li>
             <li class="nav-item">
-            <a class="nav-link" href="/console/book_new_job">Book New Job</a>
+            <a class="nav-link" href="{% url 'book_new_job' %}">Book New Job</a>
             </li>
             <li class="nav-item">
-            <a class="nav-link" href="/superintendent/select_super">Superintendent Home</a>
+            <a class="nav-link" href="{% url 'select_super' %}">Superintendent Home</a>
             </li>
             <li class="nav-item">
-            <a class="nav-link" href="/superintendent/jobs_list">Superintendent List</a>
+            <a class="nav-link" href="{% url 'jobs_list' %}">Superintendent List</a>
             </li>
             <li class="nav-item">
-            <a class="nav-link" href="/superintendent/testtable">Test Table</a>
+            <a class="nav-link" href="{% url 'testtable' %}">Test Table</a>
             </li>
             </ul>
 
