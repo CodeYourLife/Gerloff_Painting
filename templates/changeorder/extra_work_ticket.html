@@ -26,9 +26,29 @@
 	</script>
 </head>
 <body>
-{% if changeorder %}
-{{changeorder.id}}
+<h1>EXTRA WORK TICKET!</h1>
+<div id="co_number" ></div>
+<h2>{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} - {{changeorder.description}}</h2>
+<br>
+{% if notes %}
+{% for note in notes %}
+<h7>[{{note.date}}- {{note.user}}] {{note.note}}</h7>
+<br>
+{% endfor %}
 {% endif %}
+<br>
+<form name = ticket_input action="{% url 'extra_work_ticket' changeorder.id %}" method="post" >
+	{% csrf_token %}
+	<label for="new_note">Add a new note</label> <br>
+	<textarea id="new_note" name="new_note" rows="2" cols="50" ></textarea>
+	<input type="submit" value="Add Note" />
+	<hr> <br>
+</form>
+
+<form action = "{% url 'process_ewt' changeorder.id %}">
+    <input type="submit" value="Submit Ticket" />
+</form>
+
 
 </body>
 </html>

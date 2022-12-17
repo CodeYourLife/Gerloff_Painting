@@ -203,8 +203,33 @@ class ChangeOrders(models.Model):
 	is_work_complete = models.BooleanField(default=False)
 	is_ticket_signed = models.BooleanField(default=False)
 	date_signed = models.DateField(null=True, blank=True)
+	date_week_ending= models.DateField(null=True, blank=True)
+	ticket_description = models.CharField(null=True,max_length=2000, blank=True)
+	materials_used = models.CharField(null=True,max_length=2000, blank=True)
 	def __str__(self):
 		return f"{self.job_number} {self.description}"
+
+
+class ChangeOrderNotes(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	cop_number = models.ForeignKey(ChangeOrders, on_delete=models.PROTECT)
+	date = models.DateField(null=True, blank=True)
+	user = models.CharField(null=True,max_length=20)
+	note = models.CharField(null=True, max_length=2000)
+
+
+class PainterHours(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	cop_number = models.ForeignKey(ChangeOrders, on_delete=models.PROTECT)
+	details = models.CharField(null=False, max_length=2000) #hector was bondoing door frames
+	employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
+	monday = models.IntegerField(default=0)
+	tuesday = models.IntegerField(default=0)
+	wednesday = models.IntegerField(default=0)
+	thursday = models.IntegerField(default=0)
+	friday = models.IntegerField(default=0)
+	saturday = models.IntegerField(default=0)
+	sunday = models.IntegerField(default=0)
 
 
 class TMPricesMaster(models.Model): #use this in case a job has special rates
