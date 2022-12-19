@@ -8,6 +8,11 @@ def validate_tm_category(value):
 	else:
 		raise ValidationError("Category must be Labor, Material, Equipment, Inventory, or Bond")
 
+def validate_inventory_notes(value):
+	if value == "Returned" or value == "Missing" or value == "Job" or value == "Service" or value == "Misc":
+		return value
+	else:
+		raise ValidationError("Category must be Returned, Missing, Job, Service, or Misc")
 
 class Employees(models.Model):
 	id = models.BigAutoField(primary_key=True)
@@ -165,6 +170,22 @@ class JobNotes(models.Model):
 		return f"{self.job_number} {self.type}"
 
 
+class VendorCategory(models.Model): #rentals, wallcovering
+	id = models.BigAutoField(primary_key=True)
+	category = models.CharField(null=True, max_length=250)
+	def __str__(self):
+		return f"{self.category}"
+
+
+class Vendors(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	company_name = models.CharField(null=True, max_length=250)
+	category = models.ForeignKey(VendorCategory,on_delete=models.PROTECT, null=True, blank=True)
+	company_phone = models.CharField(null=True, max_length=20, blank=True)
+	company_email = models.EmailField(null=True, blank=True)
+	def __str__(self):
+		return f"{self.company_name}"
+
 class Inventory(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	number = models.CharField(null=True, max_length=50,blank = True)
@@ -178,14 +199,27 @@ class Inventory(models.Model):
 	serial_number = models.CharField(null=True, max_length=250, blank=True)
 	po_number = models.CharField(null=True, max_length=250, blank=True)
 	is_labeled = models.BooleanField(default=False)
-	status = models.CharField(null=True, max_length=250, blank=True)
+	status = models.CharField(null=True, max_length=250, blank=True) #checked out, missing, available, service
 	date_out = models.DateField(null=True, blank=True)
 	date_returned = models.DateField(null=True, blank=True)
-	job_number = models.ForeignKey(Jobs,on_delete=models.PROTECT, blank=True)
+	job_number = models.ForeignKey(Jobs,on_delete=models.PROTECT, blank=True, null=True)
 	# job_number is the foreign key to the job number in Jobs
 	notes = models.CharField(null=True, max_length=2000, blank=True)
+	vendor = models.ForeignKey(Vendors,on_delete=models.PROTECT, blank=True)
 	def __str__(self):
 		return f"{self.job_number} {self.item}"
+
+
+class InventoryNotes(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	inventory_item = models.ForeignKey(Inventory, on_delete=models.PROTECT)
+	date = models.DateField(null=True, blank=True)
+	user = models.CharField(null=True,max_length=20)
+	note = models.CharField(null=True, max_length=2000)
+	category = models.CharField(null=True, max_length=2000, validators = [validate_inventory_notes]) #newjob, service, misc, returned
+	job_number = models.CharField(null=True,max_length=5, blank = True)
+	job_name = models.CharField(null=True, max_length=2000, blank=True) #either job name, or service vendor
+
 
 
 class ChangeOrders(models.Model):
@@ -230,6 +264,7 @@ class PainterHours(models.Model):
 	friday = models.IntegerField(default=0)
 	saturday = models.IntegerField(default=0)
 	sunday = models.IntegerField(default=0)
+	is_overtime = models.BooleanField(default=False)
 
 
 class TMPricesMaster(models.Model): #use this in case a job has special rates
@@ -255,21 +290,7 @@ class TMList(models.Model): #one entry for each line item of t&m bill
 		return f"{self.change_order} {self.item}"
 
 
-class VendorCategory(models.Model): #rentals, wallcovering
-	id = models.BigAutoField(primary_key=True)
-	category = models.CharField(null=True, max_length=250)
-	def __str__(self):
-		return f"{self.category}"
 
-
-class Vendors(models.Model):
-	id = models.BigAutoField(primary_key=True)
-	company_name = models.CharField(null=True, max_length=250)
-	category = models.ForeignKey(VendorCategory,on_delete=models.PROTECT, null=True, blank=True)
-	company_phone = models.CharField(null=True, max_length=20, blank=True)
-	company_email = models.EmailField(null=True, blank=True)
-	def __str__(self):
-		return f"{self.company_name}"
 
 
 class VendorContact(models.Model):

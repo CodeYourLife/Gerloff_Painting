@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'superintendent.apps.SuperintendentConfig',
     'console.apps.ConsoleConfig',
     'changeorder.apps.ChangeorderConfig',
+    'equipment.apps.EquipmentConfig',
     'django_tables2',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -58,7 +59,7 @@ ROOT_URLCONF = 'trinity.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR, 'templates/console', 'templates', 'templates/superintendent', 'templates/bootstrap', 'templates/changeorder'],
+        'DIRS': [BASE_DIR, 'templates/console', 'templates', 'templates/superintendent', 'templates/bootstrap', 'templates/changeorder', 'templates/equipment'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

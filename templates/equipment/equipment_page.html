@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block content %}
+
+{% load render_table from django_tables2 %}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+
+	</style>
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+	function myFunction(location){
+    	var x;
+    	var name=prompt("Please make any notes about this return");
+    	if (name!=null){
+       		location.value = name;
+   		}
+	}
+	</script>
+</head>
+{% if inventories %}
+
+<body>
+        <div class ="container">
+            <div class ="row">
+                <div class ="col"> <b>Number: = </b>{{inventories.number}}   </div>
+                <div class ="col"> <b>Item: = </b>{{inventories.item}}   </div>
+                <div class ="col">  <b>Category: = </b>{{inventories.inventory_type}}  </div>
+            </div>
+			<div class ="row">
+                <div class ="col"><b>Purchase Date =</b>{{inventories.purchase_date}}
+
+ </div>
+                <div class ="col"> <b>Serial Number =</b>{{inventories.serial_number}} </div>
+                <div class ="col">  <b>Storage Location: =</b> {{inventories.storage_location}}   </div>
+            </div>
+						<div class ="row">
+                <div class ="col"> <b>Labeled? =</b>{{inventories.is_labeled}}
+
+ </div>
+                <div class ="col"> <b>Status =</b>{{inventories.status}} </div>
+                <div class ="col"> <b>Notes =</b> {{inventories.notes}}   </div>
+            </div>
+						<div class ="row">
+                <div class ="col"> <b>Date Out =</b>{{inventories.date_out}}
+
+ </div>
+                <div class ="col"> <b>Current Job =</b>{{inventories.job_number}} {{inventories.job_name}} </div>
+                <div class ="col"> <b>Vendor =</b> {{inventories.vendor}}   </div>
+            </div>
+
+        </div>
+
+		<br><hr>
+<div class ="container">
+	<div class ="row">
+		<div class ="col">
+					<form name = return_to_home action="{% url 'equipment_page' inventories.id %}" method="post" onSubmit = myFunction(return_to_home.returned_notes) >
+        				{% csrf_token %}
+						<input type="hidden" id="returned_notes" name = "returned_notes" value="" />
+						 <input id="returned" name = "returned" type="submit" value="Check Back In" />
+					</form>
+		</div>
+		<div class ="col">
+										<form name = missing action="{% url 'equipment_page' inventories.id %}" method="post" onSubmit = myFunction(missing.missing_notes) >
+        				{% csrf_token %}
+							<input type="hidden" id="missing_notes" name = "missing_notes" value="" />
+						 <input id="missing" name = "missing" type="submit" value="MISSING!" />
+					</form>
+		</div>
+		<div class ="col">
+			<form name = change_job action="{% url 'equipment_page' inventories.id %}" method="post" onSubmit = myFunction(change_job.job_notes)>
+        	{% csrf_token %}
+				<input type="hidden" id="job_notes" name = "job_notes" value="" />
+            <select id="select_job" name="select_job" >
+                <option value="select_job">select job</option>
+                {% if jobs %}
+                {% for job in jobs %}
+                <option value={{job.job_number}}>{{job.job_name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+ 			<input type="submit" value="Transfer to Job" />
+			</form>
+		</div>
+	</div>
+	<div class ="row">
+			<br><hr>
+			<form name = add_note action="{% url 'equipment_page' inventories.id %}" method="post" >
+        	{% csrf_token %}
+
+			<label for="equipment_note"> Make a note:  </label> <br>
+			<textarea id="equipment_note" name="equipment_note" rows="4" cols="100" ></textarea>
+			<br>
+			<input type="submit" value="Add Note" />
+			</form>
+	</div>
+</div>
+<br><hr>
+			<form name = filter_notes action="{% url 'equipment_page' inventories.id %}" method="post" >
+        	{% csrf_token %}
+            <select id="select_category" name="select_category" >
+                <option value="Returned">Returned to Shop</option>
+				<option value="Missing">Missing</option>
+				<option value="Job">Assigned to Job</option>
+				<option value="Service">Getting Serviced</option>
+				<option value="Misc">Misc Notes</option>
+            </select>
+ 			<input type="submit" value="Filter Notes" />
+			</form>
+		</div>
+
+{% render_table table %}
+
+</body>
+{% endif %}
+</html>
+
+{% endblock %}

@@ -26,5 +26,8 @@ def process_ewt(request, id):
     employees = Employees.objects.all()
     employees2 = Employees.objects.values()
     changeorder = ChangeOrders.objects.get(id=id)
-    prices_json = json.dumps(list(employees2), cls=DjangoJSONEncoder)
-    return render(request, "process_ewt.html", {'changeorder': changeorder,'employees': employees, 'employeesjson': prices_json})
+    materials = TMPricesMaster.objects.filter(category= "Material")
+    materials2 = TMPricesMaster.objects.filter(category="Material").values
+    employees_json = json.dumps(list(employees2), cls=DjangoJSONEncoder)
+    materials_json = json.dumps(list(materials2), cls=DjangoJSONEncoder)
+    return render(request, "process_ewt.html", {'materialsjson': materials_json, 'materials': materials,'changeorder': changeorder,'employees': employees, 'employeesjson': employees_json})

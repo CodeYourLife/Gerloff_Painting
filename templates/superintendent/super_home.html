@@ -1,26 +1,141 @@
 {% extends 'base.html' %}
 {% block content %}
-{% load render_table from django_tables2 %}
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Basic Bootstrap Template</title>
-    <!-- Bootstrap CSS -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">	</style>
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
 
+
+
+$(document).ready(function () {
+    var table = $('#job_table').DataTable({
+        columnDefs: [
+            {
+                targets:0,
+                render: function ( data, type, row, meta ) {
+                    if(type === 'display'){
+                    	data = '<a href="job_page/' + data + '">' + data + '</a>';
+
+                    }
+                    return data;
+                }
+            }
+        ]
+    });
+})
+	</script>
 </head>
-<body>
-Job List for {{supername.first_name}} + {{supername.last_name}}
+<body class="wide comments example">
+	<form name = select_super action="filter_super" method="post" >
+        {% csrf_token %}
+                    <label>Please select superintendent</label>
+                    <select id="selected_super" name="selected_super" >
+                        <option value="please_select">"Please Select"</option>
+                        {% if supers %}
+                        {% for super in supers %}
 
-{% render_table jobs %}
-
-{% render_table equipment %}
-
-<script src=”https://code.jquery.com/jquery-3.2.1.slim.min.js” integrity=”sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN” crossorigin=”anonymous”></script>
-<script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js integrity=”sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q” crossorigin=”anonymous”></script>
-<script src=”https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js” integrity=”sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl” crossorigin=”anonymous”></script>
+                            <option value="{{super.id}}">{{super.first_name}} {{super.last_name}}</option>
+                        {% endfor %}
+                        {% endif %}
+					</select>
+		<input type="submit" value="select super" />
+	</form>
+	<h3>Job List</h3>
+	<div class="demo-html" style="width:90%">
+		<table id="job_table" class="display" style="width:90%">
+			<thead>
+				<tr>
+					<th>Job Number</th>
+					<th>Job Name</th>
+					<th>Address</th>
+					<th>City</th>
+					<th>State</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% if jobs %}
+			{% for job in jobs %}
+				<tr>
+					<td>{{job.job_number}}</td>
+					<td>{{job.job_name}}</td>
+					<td>{{job.address}}</td>
+					<td>{{job.city}}</td>
+					<td>{{job.state}}</td>
+				</tr>
+			{% endfor %}
+			{% endif %}
+			</tbody>
+		</table>
+	</div>
+	<br> <hr>
+	<h3>Checked Out Equipment</h3>
+	<div class="demo-html">
+		<table id="equipment_table" class="display" style="width:90%">
+			<thead>
+				<tr>
+					<th style="display:none;">ID</th>
+					<th>Job Number</th>
+					<th>Equip Number</th>
+					<th>Item</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% if equipment %}
+			{% for item in equipment %}
+				<tr>
+					<td style="display:none;">{{item.id}}</td>
+					<td>{{item.job_number}}</td>
+					<td>{{item.number}}</td>
+					<td>
+						<a href = "{% url 'equipment_page' item.id %}">
+							<div style="height:100%;width:100%">
+								{{item.item}}
+							</div>
+						</a>
+					</td>
+				</tr>
+			{% endfor %}
+			{% endif %}
+			</tbody>
+		</table>
+	</div>
+	<br> <hr>
+	<h3>Rentals</h3>
+	<div class="demo-html">
+		<table id="rentals_table" class="display" style="width:90%">
+			<thead>
+				<tr>
+					<th>Job Number</th>
+					<th>Item</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% if equipment %}
+			{% for item in equipment %}
+				<tr>
+					<td>{{item.job_number}}</td>
+					<td>{{item.item}}</td>
+				</tr>
+			{% endfor %}
+			{% endif %}
+			</tbody>
+		</table>
+	</div>
 
 </body>
 </html>

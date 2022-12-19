@@ -26,14 +26,21 @@
             <a class="nav-link" href="{% url 'book_new_job' %}">Book New Job</a>
             </li>
             <li class="nav-item">
-            <a class="nav-link" href="{% url 'select_super' %}">Superintendent Home</a>
+            <a class="nav-link" href="{% url 'super_home' %}">Superintendent Home</a>
             </li>
-            <li class="nav-item">
-            <a class="nav-link" href="{% url 'jobs_list' %}">Superintendent List</a>
-            </li>
-            <li class="nav-item">
-            <a class="nav-link" href="{% url 'testtable' %}">Test Table</a>
-            </li>
+                {% if user.is_authenticated %}
+                    <li>Hello, {{user.first_name}}</li>
+                    <li class="nav-item">
+                            <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                            <a class="nav-link" href="{% url 'register_user' %}">Register</a>
+                    </li>
+                    <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}">Login</a>
+                    </li>
+                {% endif%}
             </ul>
 
         </div>

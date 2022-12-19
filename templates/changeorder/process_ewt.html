@@ -36,6 +36,7 @@ var row_counter = 0;
 			var cell6 = row.insertCell(5);
 			var cell7 = row.insertCell(6);
 			var cell8 = row.insertCell(7);
+			var cell9 = row.insertCell(8);
 			cell1.innerHTML = "<div id='new_painter" + row_counter + "'></div>";
 			add_painter_dropdown();
 			cell2.innerHTML = "<div id='monday_row" + row_counter + "'></div>";
@@ -52,6 +53,29 @@ var row_counter = 0;
 			add_day("saturday");
 			cell8.innerHTML = "<div id='sunday_row" + row_counter + "'></div>";
 			add_day("sunday");
+			cell9.innerHTML = "<div id='overtime" + row_counter + "'>OT?</div>";
+			add_ot();
+}
+
+function add_ot(){
+
+		var select = document.createElement("INPUT");
+		var select2 = document.createElement("INPUT");
+		var select3 = document.createElement("LABEL");
+		select2.setAttribute("type", "checkbox");
+		select.setAttribute("value", "notchecked");
+		select2.setAttribute("value", "checked");
+		select.setAttribute("type", "hidden");
+		select.name = add_ot + row_counter;
+		select.id = add_ot + row_counter;
+		select2.name = add_ot + row_counter;
+		select2.id = add_ot + row_counter;
+		select3.setAttribute("htmlFor", add_ot + row_counter);
+		document.getElementById("overtime" + row_counter).appendChild(select);
+		document.getElementById("overtime" + row_counter).appendChild(select2);
+		//var select3 = document.createElement("LABEL");
+		//select3.setAttribute("htmlFor", add_ot + row_counter);
+		document.getElementById("overtime" + row_counter).appendChild(select3);
 }
 
 
@@ -119,6 +143,7 @@ function add_day(daycolumn){
 				<th>F</th>
 				<th>S</th>
 				<th>S</th>
+				<th>OT?</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -140,16 +165,48 @@ function add_day(daycolumn){
 				<td><input type="number" id="thursday1" size=3></td>
 				<td><input type="number" id="friday1" size=3></td>
 				<td><input type="number" id="saturday1" size=3></td>
-				<td><input type="number" id="sunday1" size=3></td>
+				<td><input type="number" id="sunday1" size=3>
+				<td>OT?<input type='hidden' value='notchecked' name="is_overtime1" id="is_overtime1"><input type="checkbox" name="is_overtime1" id="is_overtime1" value="checked"  />
+        		</td>
+			</tr>
+		</tbody>
+	</table>
+	<button type="button" onclick="add_painter_row()">Add row </button>
+<br><br><hr>
+	<h3>MATERIAL BREAKDOWN</h3>
+	<table id="material_breakdown" class="display" style="width:90%" >
+		<thead>
+			<tr>
+				<th>Item</th>
+				<th>Description</th>
+				<th>Quantity</th>
+				<th>Units</th>
+
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>
+<!--					<label for="select_painter">please select Gerloff superintendent</label>-->
+            		<select id="select_material" name="select_material" >
+                	<option value="please_select">please select</option>
+                	{% if materials %}
+                	{% for material in materials %}
+                	<option value={{material_id}}>{{employee.item}}</option>
+                	{% endfor %}
+                	{% endif %}
+            		</select>
+				</td>
+				<td><input type="text" name="description" placeholder="description" size="30" id="description"/></td>
+				<td><input type="number" id="quantity" size=3></td>
+				<td><input type="text" name="units" placeholder="units" size="10" id="units"/></td>
+
 			</tr>
 		</tbody>
 	</table>
 
 
-	<button type="button" onclick="add_painter_row()">Add row </button>
 
-
-<br><br>
 
     <input type="submit" value="Submit Ticket" />
 </form>
