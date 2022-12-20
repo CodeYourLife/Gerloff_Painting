@@ -205,7 +205,7 @@ class Inventory(models.Model):
 	job_number = models.ForeignKey(Jobs,on_delete=models.PROTECT, blank=True, null=True)
 	# job_number is the foreign key to the job number in Jobs
 	notes = models.CharField(null=True, max_length=2000, blank=True)
-	vendor = models.ForeignKey(Vendors,on_delete=models.PROTECT, blank=True)
+	vendor = models.ForeignKey(Vendors,on_delete=models.PROTECT, blank=True, null=True)
 	def __str__(self):
 		return f"{self.job_number} {self.item}"
 
@@ -311,13 +311,6 @@ class Wallcovering(models.Model):
 	pattern = models.CharField(null=True, max_length=2000)
 	estimated_quantity = models.IntegerField(default=0)
 	estimated_unit = models.CharField(null=True, max_length=20)
-	pricing1_date = models.DateField(null=True, blank=True)
-	pricing1_yards_tier1 = models.IntegerField(default=0)
-	pricing1_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	pricing2_yards_tier1 = models.IntegerField(default=0)
-	pricing2_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	pricing3_yards_tier1 = models.IntegerField(default=0)
-	pricing3_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 	cut_charge = models.CharField(null=True, max_length=1000, blank=True)
 	roll_width = models.CharField(null=True, max_length=50, blank=True)
 	vertical_repeat = models.CharField(null=True, max_length=50, blank=True)
@@ -326,6 +319,18 @@ class Wallcovering(models.Model):
 	notes = models.CharField(null=True, max_length=2000, blank=True)
 	def __str__(self):
 		return f"{self.job_number} {self.code}"
+
+
+class WallcoveringPricing(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	wallcovering = models.ForeignKey(Wallcovering, on_delete=models.PROTECT)
+	quote_date= models.DateField()
+	min_yards = models.IntegerField(blank=True, null=True)
+	price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+	unit = models.CharField(null=True, max_length=50, blank=True)
+	note = models.CharField(null=True, max_length=2000, blank=True)
+
+
 
 
 class Orders(models.Model): #one pattern, one WC1, etc. may be broken up into several packages
@@ -385,6 +390,7 @@ class Packages(models.Model):
 	quantity_received = models.IntegerField(default=0) #3
 	unit = models.CharField(null=False, max_length=20) #boxes
 	notes = models.CharField(null=True, max_length=2000, blank=True)
+	is_all_delivered_to_job = models.BooleanField(default=False)
 	def __str__(self):
 		return f"{self.delivery.order.job_number} {self.description}"
 

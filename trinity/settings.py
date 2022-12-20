@@ -35,6 +35,11 @@ INSTALLED_APPS = [
     'console.apps.ConsoleConfig',
     'changeorder.apps.ChangeorderConfig',
     'equipment.apps.EquipmentConfig',
+    'employees.apps.EmployeesConfig',
+    'jobs.apps.JobsConfig',
+    'rentals.apps.RentalsConfig',
+    'subcontractors.apps.SubcontractorsConfig',
+    'wallcovering.apps.WallcoveringConfig',
     'django_tables2',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -59,7 +64,7 @@ ROOT_URLCONF = 'trinity.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR, 'templates/console', 'templates', 'templates/superintendent', 'templates/bootstrap', 'templates/changeorder', 'templates/equipment'],
+        'DIRS': [BASE_DIR, 'templates/console', 'templates', 'templates/superintendent', 'templates/bootstrap', 'templates/changeorder', 'templates/equipment', 'templates/employees','templates/jobs','templates/rentals','templates/subcontractors','templates/wallcovering'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

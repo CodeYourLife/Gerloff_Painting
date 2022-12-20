@@ -25,6 +25,16 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 	function myFunction(location){
+			if (location==service.service_notes){
+       			if (service.select_service.value == "select_vendor"){
+       				alert("Select a vendor");
+       				return false;
+       				}}
+			if (location==change_job.job_notes){
+				if (change_job.select_job.value == "select_job"){
+       				alert("Select a job");
+       				return false;
+       				}}
     	var x;
     	var name=prompt("Please make any notes about this return");
     	if (name!=null){
@@ -77,14 +87,29 @@
 					</form>
 		</div>
 		<div class ="col">
-										<form name = missing action="{% url 'equipment_page' inventories.id %}" method="post" onSubmit = myFunction(missing.missing_notes) >
+					<form name = missing_button action="{% url 'equipment_page' inventories.id %}" method="post" onSubmit = myFunction(missing_button.missing_notes) >
         				{% csrf_token %}
 							<input type="hidden" id="missing_notes" name = "missing_notes" value="" />
 						 <input id="missing" name = "missing" type="submit" value="MISSING!" />
 					</form>
 		</div>
 		<div class ="col">
-			<form name = change_job action="{% url 'equipment_page' inventories.id %}" method="post" onSubmit = myFunction(change_job.job_notes)>
+			<form name = service action="{% url 'equipment_page' inventories.id %}" method="post" onSubmit = "return myFunction(service.service_notes)">
+        	{% csrf_token %}
+				<input type="hidden" id="service_notes" name = "service_notes" value="" />
+            <select id="select_service" name="select_service" >
+                <option value="select_vendor">select vendor</option>
+                {% if vendors %}
+                {% for vendor in vendors %}
+                <option value={{vendor.id}}>{{vendor.company_name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+ 			<input type="submit" value="In Service" />
+			</form>
+		</div>
+		<div class ="col">
+			<form name = change_job action="{% url 'equipment_page' inventories.id %}" method="post" onSubmit = "return myFunction(change_job.job_notes)">
         	{% csrf_token %}
 				<input type="hidden" id="job_notes" name = "job_notes" value="" />
             <select id="select_job" name="select_job" >

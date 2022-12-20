@@ -25,4 +25,9 @@ urlpatterns = [
     path('', include('console.urls')),
     path('admin/', admin.site.urls),
     path('equipment/', include('equipment.urls')),
+    path('employees/', include('employees.urls')),
+    path('jobs/', include('jobs.urls')),
+    path('rentals/', include('rentals.urls')),
+    path('subcontractors/', include('subcontractors.urls')),
+    path('wallcovering/', include('wallcovering.urls')),
 ]

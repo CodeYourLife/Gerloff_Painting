@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+.collapsible {
+  background-color: #777;
+  color: white;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+}
+
+.active, .collapsible:hover {
+  background-color: #555;
+}
+
+.content {
+  padding: 0 18px;
+  display: none;
+  overflow: hidden;
+  background-color: #f1f1f1;
+}
+	</style>
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+$(document).ready(function () {
+    var table = $('#table1').DataTable({});
+});
+$(document).ready(function () {
+    var table = $('#table2').DataTable({});
+});
+$(document).ready(function () {
+    var table = $('#table3').DataTable({});
+});
+$(document).ready(function () {
+    var table = $('#table4').DataTable({});
+});
+$(document).ready(function () {
+    var table = $('#table5').DataTable({});
+});
+	</script>
+</head>
+<body>
+
+
+	{% if wc_not_ordereds %}
+	<hr>
+	<button type="button" class="collapsible">Wallcovering Not Ordered</button>
+	<div class="content">
+		<div class="demo-html" style="width:90%">
+			<table id="table1" class="display" style="width:90%" >
+			<thead>
+				<tr>
+					<th>Code</th>
+					<th>Vendor</th>
+					<th>Pattern</th>
+					<th>Job</th>
+					<th>Notes</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for wc_not_ordered in wc_not_ordereds %}
+				<tr>
+					<td><a href = "{% url 'wallcovering_pattern' wc_not_ordered.id %}">
+							<div style="height:100%;width:100%">
+								{{wc_not_ordered.code}}	</div>
+						</a></td>
+					<td>{{wc_not_ordered.vendor.company_name}}</td>
+					<td>{{wc_not_ordered.pattern}}</td>
+					<td>{{wc_not_ordered.job_number.job_name}}</td>
+					<td>{{wc_not_ordered.notes}}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+				{% endif %}
+
+	{% if wc_ordereds %}
+	<hr>
+	<button type="button" class="collapsible">Wallcovering Ordered But Not Received</button>
+	<div class="content">
+		<div class="demo-html" style="width:90%">
+			<table id="table2" class="display" style="width:90%" >
+			<thead>
+				<tr>
+					<th>Description</th>
+					<th>Date Ordered</th>
+					<th>Job</th>
+					<th>Notes</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for wc_ordered in wc_ordereds %}
+				<tr>
+					<td>{{wc_ordered.description}}</td>
+					<td>{{wc_ordered.date_ordered}}</td>
+					<td>{{wc_ordered.job_number.job_name}}</td>
+					<td>{{wc_ordered.notes}}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+				{% endif %}
+
+	{% if packages %}
+	<hr>
+	<button type="button" class="collapsible">Wallcovering in Warehouse</button>
+	<div class="content">
+		<div class="demo-html" style="width:90%">
+			<table id="table3" class="display" style="width:90%" >
+			<thead>
+				<tr>
+					<th>Description</th>
+					<th>Date Received </th>
+					<th>Notes</th>
+					<th>Job Name</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for package in packages %}
+				<tr>
+					<td>{{package.description}}	</td>
+					<td>{{package.delivery.date}}</td>
+					<td>{{package.notes}}</td>
+					<td>{{package.delivery.order.job_number.job_number}}</td>
+
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+				{% endif %}
+
+	{% if received_deliveries %}
+	<hr>
+	<button type="button" class="collapsible">Received Deliveries</button>
+	<div class="content">
+		<div class="demo-html" style="width:90%">
+			<table id="table4" class="display" style="width:90%" >
+			<thead>
+				<tr>
+					<th>Date</th>
+					<th>Order Description </th>
+					<th>Job Name</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for delivery in received_deliveries %}
+				<tr>
+					<td>{{delivery.date}}	</td>
+					<td>{{delivery.order.description}}	</td>
+					<td>{{delivery.order.job_number.job_name}}	</td>
+
+
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+				{% endif %}
+
+	{% if jobsite_deliveries %}
+	<hr>
+	<button type="button" class="collapsible">Jobsite Deliveries</button>
+	<div class="content">
+		<div class="demo-html" style="width:90%">
+			<table id="table5" class="display" style="width:90%" >
+			<thead>
+				<tr>
+					<th>Date</th>
+					<th>Job Name</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for delivery in jobsite_deliveries %}
+				<tr>
+					<td>{{delivery.date}}	</td>
+					<td>{{delivery.job_number.job_name}}	</td>
+
+
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+				{% endif %}
+
+
+
+</body>
+</html>
+<script>
+var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }
+  });
+}
+</script>
+
+</body>
+</html>
+
+{% endblock %}

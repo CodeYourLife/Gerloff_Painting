@@ -28,6 +28,24 @@
             <li class="nav-item">
             <a class="nav-link" href="{% url 'super_home' %}">Superintendent Home</a>
             </li>
+            <li class="nav-item">
+            <a class="nav-link" href="{% url 'equipment_home' %}">Equipment</a>
+            </li>
+            <li class="nav-item">
+            <a class="nav-link" href="{% url 'rentals_home' %}">Rentals</a>
+            </li>
+            <li class="nav-item">
+            <a class="nav-link" href="{% url 'jobs_home' %}">Jobs</a>
+            </li>
+            <li class="nav-item">
+            <a class="nav-link" href="{% url 'subcontractors_home' %}">Subcontractors</a>
+            </li>
+            <li class="nav-item">
+            <a class="nav-link" href="{% url 'employees_home' %}">Employees</a>
+            </li>
+            <li class="nav-item">
+            <a class="nav-link" href="{% url 'wallcovering_home' %}">Wallcovering</a>
+            </li>
                 {% if user.is_authenticated %}
                     <li>Hello, {{user.first_name}}</li>
                     <li class="nav-item">

@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load render_table from django_tables2 %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+    .table-container {
+        width: 50%;
+
+    }
+	</style>
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+
+	</script>
+</head>
+<body>
+
+
+
+
+<form name = wallcovering_input action="{% url 'wallcovering_pattern' selectedpattern.id %}" method="post"  >
+{% csrf_token %}
+    <label>Select Job</label>
+    <select name="job_select" id="job_select">
+        <option value={{selectedpattern.job_number.job_number}}>{{selectedpattern.job_number.job_name}}</option>
+            {% if jobs %}
+            {% for job in jobs %}
+                <option value="{{job.job_number}}">{{job.job_name}}</option>
+            {% endfor %}
+            {% endif %}
+    </select>
+
+    <label class="required" for="code">Code:</label>
+    <input type="text" name="code" value={{selectedpattern.code}} class="vTextField" maxlength="10" required id="code">
+
+    <label class="required" for="vendor">Vendor:</label>
+    <select name="vendor" id="vendor">
+        <option value={{selectedpattern.vendor.id}}>{{selectedpattern.vendor.company_name}}</option>
+            {% if vendors %}
+            {% for vendor in vendors %}
+                <option value="{{vendor.id}}">{{vendor.company_name}}</option>
+            {% endfor %}
+            {% endif %}
+    </select>
+
+    <label class="required" for="pattern">Pattern:</label>
+    <input type="text" name="pattern" value={{selectedpattern.pattern}} class="vTextField" maxlength="2000" required id="pattern">
+<br><br>
+    <label class="required" for="estimated_quantity">Estimated quantity:</label>
+    <input type="number" name="estimated_quantity" value={{selectedpattern.estimated_quantity}} class="vIntegerField" required id="estimated_quantity">
+
+    <label class="required" for="estimated_unit">Estimated unit:</label>
+    <input type="text" name="estimated_unit" value={{selectedpattern.estimated_unit}} class="vTextField" maxlength="20" required id="estimated_unit">
+
+{% render_table table %}
+<hr>
+                        <label for="cut_charge">Cut charge:</label>
+
+                            <input type="text" name="cut_charge" value={{selectedpattern.cut_charge}} class="vTextField" maxlength="1000" id="cut_charge">
+
+
+                        <label for="roll_width">Roll width:</label>
+
+                            <input type="text" name="roll_width" value={{selectedpattern.roll_width}} class="vTextField" maxlength="50" id="roll_width">
+
+
+                        <label for="vertical_repeat">Vertical repeat:</label>
+
+                            <input type="text" name="vertical_repeat" value={{selectedpattern.vertical_repeat}} class="vTextField" maxlength="50" id="vertical_repeat">
+
+
+                        {% if selectedpattern.is_random_reverse == True %}
+                        <input type="checkbox" name="is_random_reverse" id="is_random_reverse" checked><label class="vCheckboxLabel" for="is_random_reverse">Is random reverse</label>
+                        {% else %}
+                        <input type="checkbox" name="is_random_reverse" id="is_random_reverse" ><label class="vCheckboxLabel" for="is_random_reverse">Is random reverse</label>
+                        {% endif %}
+
+
+                    {% if selectedpattern.is_repeat == True %}
+                    <input type="checkbox" name="is_repeat" id="is_repeat" checked><label class="vCheckboxLabel" for="is_repeat">Is repeat</label>
+                    {% else %}
+                    <input type="checkbox" name="is_repeat" id="is_repeat"><label class="vCheckboxLabel" for="is_repeat">Is repeat</label>
+                    {% endif %}
+
+<br><br>
+                        <label for="notes">Notes:</label>
+                        <textarea id="notes" name="notes" rows="1" cols="100" value={{selectedpattern.notes}} maxlength="2000"></textarea>
+<br>
+<input type="submit" value="Update Pattern Info" class="default" name="save">
+</form>
+<br><hr>
+<form name = wallcovering_price_input action="{% url 'wallcovering_pattern' selectedpattern.id %}" method="post"  >
+    <h3>Log-in New Pricing</h3>
+    {% csrf_token %}
+                        <label for="pricing1_date">Date of New Pricing</label>
+                            <input type="date" name="pricing1_date"  required id="pricing1_date" >
+
+
+                        <label for="pricing1_yards_tier1">Minimum Yards Price is Based On</label>
+                            <input type="number" name="pricing1_yards_tier1"  value=0 class="vIntegerField" id="pricing1_yards_tier1">
+
+                        <label for="pricing1_price">Price per Unit</label>
+                            <input type="number" name="pricing1_price" step="0.01" required id="pricing1_price">
+
+                        <label for="pricing_unit">Unit</label>
+                            <input type="text" name="pricing_unit"  maxlength="10" required id="pricing_unit">
+<br><br>
+                            <label for="pricing_note">Notes</label>
+                            <input type="text" name="pricing_note" size="200" maxlength="200" id="pricing_note">
+<br>
+    <input type="submit" value="Save Pricing" class="default" name="save">
+</form>
+
+
+
+</body>
+</html>
+
+{% endblock %}
