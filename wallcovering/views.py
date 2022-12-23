@@ -12,13 +12,90 @@ from django_tables2 import SingleTableView
 from equipment.tables import WallcoveringPriceTable
 # Create your views here.
 
+
+
+
 def wallcovering_home(request):
+    #wc_only_open_jobs = Wallcovering.objects.filter(job_number__status = "Open").order_by(-job_number)
+    wc_table = []
+    xjob_name = "NA"
+    xcode = "NA"
+    xordered = 0
+    xdateordered = "NA"
+    xreceivedall = "NA"
+    xreceived = 0
+    xdatereceived = ""
+    xtojob = 0
+    for x in Wallcovering.objects.filter(job_number__status = "Open").order_by('-job_number'):
+        xjob_name = "NA"
+        xcode = "NA"
+        xordered = 0
+        xdateordered = "NA"
+        xreceivedall = "NA"
+        xreceived = 0
+        xdatereceived = ""
+        xtojob = 0
+
+        xjob_name = x.job_number.job_name
+        xcode = x.code
+        #orderinformation ->
+
+        for orderitem in OrderItems.objects.filter(wallcovering=x):
+
+            xordered = xordered + orderitem.quantity
+
+            xdateordered = orderitem.order.date_ordered
+            if orderitem.is_satisfied == False:
+                xreceivedall = "NO"
+            else:
+                if xreceivedall != "NO":
+                    xreceivedall = "YES"
+
+        #received information
+        match = False
+        for order in Orders.objects.filter(job_number = x.job_number):
+            for orderitem in OrderItems.objects.filter(order = order):
+                if orderitem.wallcovering == x:
+                        match = True
+            if match == True:
+                for receivedpackage in Packages.objects.filter(delivery__order = order):
+                    xreceived = xreceived + receivedpackage.quantity_received
+                    xdatereceived = receivedpackage.delivery.date
+                    for sentpackage in OutgoingItem.objects.filter(package = receivedpackage):
+                        xtojob = xtojob + sentpackage.quantity_sent
+
+
+        wc_table.append(
+            {
+            'job_name': xjob_name,
+            'job_number': x.job_number.job_number,
+            'code':xcode,
+            'qty_ordered' : xordered,
+            'date_ordered' : xdateordered,
+            'is_received_all' : xreceivedall,
+            'packages_received' : xreceived,
+            'date_received' : xdatereceived,
+            'packages_to_job' : xtojob,
+            'id' : x.id,
+            })
     wc_not_ordereds=Wallcovering.objects.exclude(orderitems1__item_description__isnull=False) #wallcovering not ordered yet
-    wc_ordereds = Orders.objects.filter(is_satisfied=False) #orders not received yet
+    wc_ordereds = OrderItems.objects.filter(is_satisfied=False) #orders not received yet
     received_deliveries = WallcoveringDelivery.objects.all()
-    jobsite_deliveries =  OutgoingWallcovering.objects.all()
-    packages = Packages.objects.filter(is_all_delivered_to_job=False) #items in warehouse not delivered to job yet
-    return render(request, "wallcovering_home.html", {'wc_not_ordereds': wc_not_ordereds,'wc_ordereds': wc_ordereds, 'received_deliveries':received_deliveries ,'jobsite_deliveries':jobsite_deliveries ,'packages':packages})
+    jobsite_deliveries =  OutgoingItem.objects.all()
+    packages = []
+    for y in Packages.objects.filter(delivery__order__job_number__status = "Open" ):
+        print("THIS HERE")
+        print(y.id)
+        sentquantity = 0
+        match = False
+        for x in OutgoingItem.objects.filter(package = y):
+            sentquantity = sentquantity + x.quantity_sent
+        if sentquantity == y.quantity_received:
+            match = True
+        if match == False:
+            packages.append(y)
+    #packages = Packages.objects.filter(is_all_delivered_to_job=False) #items in warehouse not delivered to job yet
+    return render(request, "wallcovering_home.html", {'wc_table':wc_table, 'wc_not_ordereds': wc_not_ordereds,'wc_ordereds': wc_ordereds, 'received_deliveries':received_deliveries ,'jobsite_deliveries':jobsite_deliveries ,'packages':packages})
 
 def wallcovering_pattern(request, id):
     selectedpattern = Wallcovering.objects.get(id=id)

@@ -43,6 +43,9 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 $(document).ready(function () {
+    var table = $('#table0').DataTable({});
+});
+$(document).ready(function () {
     var table = $('#table1').DataTable({});
 });
 $(document).ready(function () {
@@ -60,7 +63,49 @@ $(document).ready(function () {
 	</script>
 </head>
 <body>
+	{% if wc_table %}
+	<hr>
+	<button type="button" class="collapsible">Wallcovering Summary</button>
+	<div class="content">
+		<div class="demo-html" style="width:90%">
+			<table id="table0" class="display" style="width:90%" >
+			<thead>
+				<tr>
+					<th>Job </th>
+					<th>Item</th>
+					<th>Ordered</th>
+					<th>Date Ordered</th>
+					<th>Received All?</th>
+					<th>Packages Received</th>
+					<th>Date Received</th>
+					<th>Packages to Job</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for item in wc_table %}
+				<tr>
+					<td><a href = "{% url 'job_page' item.job_number %}">
+							<div style="height:100%;width:100%">
+								{{item.job_name}}	</div>
+						</a></td>
+					<td><a href = "{% url 'wallcovering_pattern' item.id %}">
+							<div style="height:100%;width:100%">
+								{{item.code}}	</div>
+						</a></td>
+					<td>{{item.qty_ordered}}</td>
+					<td>{{item.date_ordered}}</td>
+					<td>{{item.is_received_all}}</td>
+					<td>{{item.packages_received}}</td>
+					<td>{{item.date_received}}</td>
+					<td>{{item.packages_to_job}}</td>
 
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+				{% endif %}
 
 	{% if wc_not_ordereds %}
 	<hr>
@@ -86,7 +131,10 @@ $(document).ready(function () {
 						</a></td>
 					<td>{{wc_not_ordered.vendor.company_name}}</td>
 					<td>{{wc_not_ordered.pattern}}</td>
-					<td>{{wc_not_ordered.job_number.job_name}}</td>
+					<td><a href = "{% url 'job_page' wc_not_ordered.job_number.job_number %}">
+							<div style="height:100%;width:100%">
+								{{wc_not_ordered.job_number.job_name}}	</div>
+					</a></td>
 					<td>{{wc_not_ordered.notes}}</td>
 				</tr>
 			{% endfor %}
@@ -104,6 +152,7 @@ $(document).ready(function () {
 			<table id="table2" class="display" style="width:90%" >
 			<thead>
 				<tr>
+					<th>Code</th>
 					<th>Description</th>
 					<th>Date Ordered</th>
 					<th>Job</th>
@@ -113,10 +162,11 @@ $(document).ready(function () {
 			<tbody>
 			{% for wc_ordered in wc_ordereds %}
 				<tr>
-					<td>{{wc_ordered.description}}</td>
-					<td>{{wc_ordered.date_ordered}}</td>
-					<td>{{wc_ordered.job_number.job_name}}</td>
-					<td>{{wc_ordered.notes}}</td>
+					<td>{{wc_ordered.wallcovering.code}}</td>
+					<td>{{wc_ordered.item_description}}</td>
+					<td>{{wc_ordered.order.date_ordered}}</td>
+					<td>{{wc_ordered.order.job_number.job_name}}</td>
+					<td>{{wc_ordered.order.notes}}</td>
 				</tr>
 			{% endfor %}
 			</tbody>
@@ -124,6 +174,36 @@ $(document).ready(function () {
 		</div>
 	</div>
 				{% endif %}
+
+		{% if received_deliveries %}
+	<hr>
+	<button type="button" class="collapsible">Received Deliveries</button>
+	<div class="content">
+		<div class="demo-html" style="width:90%">
+			<table id="table4" class="display" style="width:90%" >
+			<thead>
+				<tr>
+					<th>Job Name</th>
+					<th>Order Description </th>
+					<th>Date</th>
+
+
+				</tr>
+			</thead>
+			<tbody>
+			{% for delivery in received_deliveries %}
+				<tr>
+					<td>{{delivery.order.job_number.job_name}}	</td>
+					<td>{{delivery.order.description}}	</td>
+					<td>{{delivery.date}}	</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+				{% endif %}
+
 
 	{% if packages %}
 	<hr>
@@ -133,20 +213,22 @@ $(document).ready(function () {
 			<table id="table3" class="display" style="width:90%" >
 			<thead>
 				<tr>
+					<th>Job Name</th>
+					<th>Order</th>
 					<th>Description</th>
 					<th>Date Received </th>
 					<th>Notes</th>
-					<th>Job Name</th>
+
 				</tr>
 			</thead>
 			<tbody>
 			{% for package in packages %}
 				<tr>
-					<td>{{package.description}}	</td>
+					<td>{{package.delivery.order.job_number.job_number}}</td>
+					<td>{{package.delivery.order.description}}</td>
+					<td>{{package.contents}}	</td>
 					<td>{{package.delivery.date}}</td>
 					<td>{{package.notes}}</td>
-					<td>{{package.delivery.order.job_number.job_number}}</td>
-
 				</tr>
 			{% endfor %}
 			</tbody>
@@ -155,34 +237,7 @@ $(document).ready(function () {
 	</div>
 				{% endif %}
 
-	{% if received_deliveries %}
-	<hr>
-	<button type="button" class="collapsible">Received Deliveries</button>
-	<div class="content">
-		<div class="demo-html" style="width:90%">
-			<table id="table4" class="display" style="width:90%" >
-			<thead>
-				<tr>
-					<th>Date</th>
-					<th>Order Description </th>
-					<th>Job Name</th>
-				</tr>
-			</thead>
-			<tbody>
-			{% for delivery in received_deliveries %}
-				<tr>
-					<td>{{delivery.date}}	</td>
-					<td>{{delivery.order.description}}	</td>
-					<td>{{delivery.order.job_number.job_name}}	</td>
 
-
-				</tr>
-			{% endfor %}
-			</tbody>
-		</table>
-		</div>
-	</div>
-				{% endif %}
 
 	{% if jobsite_deliveries %}
 	<hr>
@@ -192,15 +247,19 @@ $(document).ready(function () {
 			<table id="table5" class="display" style="width:90%" >
 			<thead>
 				<tr>
-					<th>Date</th>
 					<th>Job Name</th>
+					<th>Date</th>
+					<th>Description</th>
+					<th>Packages</th>
 				</tr>
 			</thead>
 			<tbody>
 			{% for delivery in jobsite_deliveries %}
 				<tr>
-					<td>{{delivery.date}}	</td>
-					<td>{{delivery.job_number.job_name}}	</td>
+					<td>{{delivery.outgoing_event.job_number.job_name}}	</td>
+					<td>{{delivery.outgoing_event.date}}	</td>
+					<td>{{delivery.package.contents}} {{delivery.description}}	</td>
+					<td>{{delivery.quantity_sent}}	</td>
 
 
 				</tr>

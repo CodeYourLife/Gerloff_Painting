@@ -21,20 +21,7 @@
 	<script type="text/javascript" class="init">
 
 $(document).ready(function () {
-    var table = $('#job_table').DataTable({
-        columnDefs: [
-            {
-                targets:0,
-                render: function ( data, type, row, meta ) {
-                    if(type === 'display'){
-                    	data = '<a href="job_page/' + data + '">' + data + '</a>';
-
-                    }
-                    return data;
-                }
-            }
-        ]
-    });
+    var table = $('#job_table').DataTable({});
 })
 	</script>
 </head>
@@ -69,7 +56,10 @@ $(document).ready(function () {
 			{% if jobs %}
 			{% for job in jobs %}
 				<tr>
-					<td>{{job.job_number}}</td>
+					<td><a href = "{% url 'job_page' job.job_number %}">
+							<div style="height:100%;width:100%">
+								{{job.job_number}}	</div>
+						</a></td>
 					<td>{{job.job_name}}</td>
 					<td>{{job.address}}</td>
 					<td>{{job.city}}</td>

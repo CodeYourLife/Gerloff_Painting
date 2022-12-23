@@ -341,7 +341,6 @@ class Orders(models.Model): #one pattern, one WC1, etc. may be broken up into se
 	description = models.CharField(null=True, max_length=2000)
 	date_ordered = models.DateField(null=True, blank=True)
 	partial_receipt = models.BooleanField(default=False)
-	is_satisfied = models.BooleanField(default=False)
 	notes = models.CharField(null=True, max_length=2000, blank=True)
 	def __str__(self):
 		return f"{self.job_number} {self.description}"
@@ -349,13 +348,14 @@ class Orders(models.Model): #one pattern, one WC1, etc. may be broken up into se
 
 class OrderItems(models.Model): #usually just one of these per order
 	id = models.BigAutoField(primary_key=True)
-	order = models.ForeignKey(Orders, on_delete=models.PROTECT, null=True, blank=True)
+	order = models.ForeignKey(Orders, on_delete=models.PROTECT, related_name = 'orderitems2')
 	wallcovering = models.ForeignKey(Wallcovering, on_delete=models.PROTECT, related_name = 'orderitems1', null=True, blank=True)
 	quantity = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 	unit = models.CharField(null=True, max_length=10)
 	price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 	item_description = models.CharField(null=True, max_length=100)
 	item_notes = models.CharField(null=True, max_length=1000, blank = True)
+	is_satisfied = models.BooleanField(default=False) #all has been received
 	def __str__(self):
 		return f"{self.item_description}"
 
@@ -368,31 +368,24 @@ class WallcoveringDelivery(models.Model): #one instance when receiving material.
 		return f"{self.date} {self.order.job_number}"
 
 
+class ReceivedItems(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	wallcovering_delivery = models.ForeignKey(WallcoveringDelivery, on_delete=models.PROTECT)
+	order_item = models.ForeignKey(OrderItems, on_delete=models.PROTECT)  # j-trim
+	quantity = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+	def __str__(self):
+		return f"{self.wallcovering_delivery.date} {self.order_item.item_description}"
+
 class Packages(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	delivery = models.ForeignKey(WallcoveringDelivery, on_delete=models.PROTECT)
-	order_item1 = models.ForeignKey(OrderItems, on_delete=models.PROTECT, related_name="order_item1", blank=True, null=True) #j-trim
-	qnty_item1 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True) #8
-	unit_item1 = models.CharField(null=True, max_length=20, blank=True) #pcs
-	order_item2 = models.ForeignKey(OrderItems, on_delete=models.PROTECT, related_name="order_item2", blank=True, null=True) #end caps
-	qnty_item2 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	unit_item2 = models.CharField(null=True, max_length=20, blank=True)
-	order_item3 = models.ForeignKey(OrderItems, on_delete=models.PROTECT, related_name="order_item3", blank=True, null=True) #divider bars
-	qnty_item3 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	unit_item3 = models.CharField(null=True, max_length=20, blank=True)
-	order_item4 = models.ForeignKey(OrderItems, on_delete=models.PROTECT, related_name="order_item4", blank=True, null=True) #marker tray
-	qnty_item4 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	unit_item4 = models.CharField(null=True, max_length=20, blank=True)
-	order_item5 = models.ForeignKey(OrderItems, on_delete=models.PROTECT, related_name="order_item5", blank=True, null=True) #etc
-	qnty_item5= models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	unit_item5 = models.CharField(null=True, max_length=20, blank=True)
-	description = models.CharField(null=True, max_length=200) #Wallprotection
+	type = models.CharField(null=True, max_length=200) #box, bolt, bucket
+	contents = models.CharField(null=True, max_length=2000) #Wallprotection, FRP glue,
 	quantity_received = models.IntegerField(default=0) #3
-	unit = models.CharField(null=False, max_length=20) #boxes
 	notes = models.CharField(null=True, max_length=2000, blank=True)
-	is_all_delivered_to_job = models.BooleanField(default=False)
 	def __str__(self):
-		return f"{self.delivery.order.job_number} {self.description}"
+		return f"{self.delivery.order.job_number} {self.contents}"
+
 
 
 class OutgoingWallcovering(models.Model):

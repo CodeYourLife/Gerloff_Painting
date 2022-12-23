@@ -255,7 +255,7 @@ $(document).ready(function () {
 					<th>Notes</th>
 				</tr>
 			</thead>
-			<tbody>
+			<tbody>c
 			{% for wc_not_ordered in wc_not_ordereds %}
 				<tr>
 					<td>{{wc_not_ordered.code}}</td>
@@ -286,9 +286,9 @@ $(document).ready(function () {
 			<tbody>
 			{% for wc_ordered in wc_ordereds %}
 				<tr>
-					<td>{{wc_ordered.description}}</td>
-					<td>{{wc_ordered.date_ordered}}</td>
-					<td>{{wc_ordered.notes}}</td>
+					<td>{{wc_ordered.item_description}}</td>
+					<td>{{wc_ordered.order.date_ordered}}</td>
+					<td>{{wc_ordered.order.notes}}</td>
 				</tr>
 			{% endfor %}
 			</tbody>

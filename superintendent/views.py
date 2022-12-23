@@ -76,24 +76,3 @@ def filter_super(request):
         #            equipment.append(x)
         return render(request, "super_home.html", {'jobs': jobs, 'supers': supers, "equipment": equipment})
 
-def job_page(request,jobnumber):
-    if request.method == 'GET':
-        jobs = Jobs.objects.filter(job_number=jobnumber)[0:2000]
-        tickets = ChangeOrders.objects.filter(job_number=jobnumber, is_t_and_m=True, is_ticket_signed=False)
-        open_cos = ChangeOrders.objects.filter(job_number=jobnumber, is_closed=False, is_approved=False) & ChangeOrders.objects.filter(is_t_and_m=False) | ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=True)
-        approved_cos =  ChangeOrders.objects.filter(job_number=jobnumber,is_closed=False,is_approved=True)
-        equipment = Inventory.objects.filter(job_number=jobnumber).order_by('inventory_type')
-        rentals = Rentals.objects.filter(job_number=jobnumber)
-        wallcovering2 = Wallcovering.objects.filter(job_number = jobnumber)
-        wc_not_ordereds = []
-        for x in wallcovering2:
-            if x.orderitems1.count() > 0:
-                print(x)
-            else:
-                wc_not_ordereds.append(x)
-        wc_ordereds = Orders.objects.filter(job_number=jobnumber, is_satisfied=False)
-        packages = Packages.objects.filter(delivery__order__job_number = jobnumber)
-        deliveries = OutgoingItem.objects.filter(outgoing_event__job_number=jobnumber)
-        submittals = Submittals.objects.filter(job_number = jobnumber)
-        subcontracts = Subcontracts.objects.filter(job_number = jobnumber)
-        return render(request, "job_page.html", {'subcontracts': subcontracts, 'submittals': submittals, 'packages': packages, 'deliveries': deliveries, 'wc_not_ordereds': wc_not_ordereds,'wc_ordereds': wc_ordereds,'jobs': jobs, 'tickets': tickets, 'open_cos': open_cos, 'approved_cos': approved_cos, 'equipments': equipment, 'rentals': rentals})
