@@ -9,7 +9,7 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
 from django_tables2 import SingleTableView
-from .tables import EquipmentNotesTable
+from .tables import *
 from console.models import InventoryNotes
 from .filters import EquipmentNotesFilter
 # Create your views here.

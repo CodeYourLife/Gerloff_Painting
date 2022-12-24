@@ -8,8 +8,3 @@ class JobsTable(tables.Table):
         fields = ("job_name","job_number", "superintendent.last_name")
 
 
-class EquipmentTable(tables.Table):
-    class Meta:
-        model = Inventory
-        template_name = "django_tables2/bootstrap.html"
-        fields = ("job_number.job_name", "inventory_type.type", "item")

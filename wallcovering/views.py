@@ -9,7 +9,7 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
 from django_tables2 import SingleTableView
-from equipment.tables import WallcoveringPriceTable
+from .tables import *
 # Create your views here.
 
 
@@ -133,3 +133,8 @@ def wallcovering_pattern(request, id):
 
 
     return render(request, "wallcovering_pattern.html", {'selectedpattern': selectedpattern, 'jobs': jobs, 'vendors': vendors, 'table': table })
+
+def wallcovering_status(request, table_type, id):
+    if table_type == 'Outgoing':
+        table = OutgoingWallcoveringTable(OutgoingItem.objects.filter(id=id))
+        return render(request, "wallcovering_status.html", {'table': table})

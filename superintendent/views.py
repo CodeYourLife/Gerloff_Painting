@@ -1,6 +1,7 @@
 from django.views.generic import ListView
 from console.models import *
-from.tables import JobsTable, EquipmentTable
+from.tables import JobsTable
+from equipment.tables import EquipmentTable
 from django_tables2 import SingleTableView
 from django.shortcuts import render, redirect
 

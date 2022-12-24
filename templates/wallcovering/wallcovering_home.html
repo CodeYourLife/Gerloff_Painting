@@ -63,6 +63,15 @@ $(document).ready(function () {
 	</script>
 </head>
 <body>
+        <div class ="container">
+            <div class ="row">
+				<div class ="col">Order New Wallcovering </div>
+				<div class ="col">Receive Wallcovering Delivery  </div>
+				<div class ="col">Send Wallcovering to Job </div>
+			</div>
+		</div>
+
+
 	{% if wc_table %}
 	<hr>
 	<button type="button" class="collapsible">Wallcovering Summary</button>
@@ -257,7 +266,7 @@ $(document).ready(function () {
 			{% for delivery in jobsite_deliveries %}
 				<tr>
 					<td>{{delivery.outgoing_event.job_number.job_name}}	</td>
-					<td>{{delivery.outgoing_event.date}}	</td>
+					<td><a href = "{% url 'wallcovering_status' table_type='Outgoing' id=delivery.id %}"><div style="height:100%;width:100%">{{delivery.outgoing_event.date}}	</div></a></td>
 					<td>{{delivery.package.contents}} {{delivery.description}}	</td>
 					<td>{{delivery.quantity_sent}}	</td>
 

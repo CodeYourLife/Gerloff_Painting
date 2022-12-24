@@ -9,8 +9,10 @@ class EquipmentNotesTable(tables.Table, FilterView):
         template_name = "django_tables2/bootstrap.html"
         fields = ("date", "user", "note", "job_name")
 
-class WallcoveringPriceTable(tables.Table):
+
+
+class EquipmentTable(tables.Table):
     class Meta:
-            model = WallcoveringPricing
-            template_name = "django_tables2/bootstrap.html"
-            fields = ("quote_date", "min_yards", "price", "unit", "note")
+        model = Inventory
+        template_name = "django_tables2/bootstrap.html"
+        fields = ("job_number.job_name", "inventory_type.type", "item")
