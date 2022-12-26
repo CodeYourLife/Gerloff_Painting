@@ -317,6 +317,11 @@ class Wallcovering(models.Model):
 	is_random_reverse = models.BooleanField(default=False)
 	is_repeat = models.BooleanField(default=False)
 	notes = models.CharField(null=True, max_length=2000, blank=True)
+	qnty_ordered = models.IntegerField(blank=True, null=True)
+	qnty_received = models.IntegerField(blank=True, null=True)
+	packages_received = models.IntegerField(blank=True, null=True)
+	packages_sent = models.IntegerField(blank=True, null=True)
+
 	def __str__(self):
 		return f"{self.job_number} {self.code}"
 
@@ -338,10 +343,10 @@ class Orders(models.Model): #one pattern, one WC1, etc. may be broken up into se
 	po_number = models.CharField(null=True, max_length=25, blank=True)
 	job_number = models.ForeignKey(Jobs,on_delete=models.PROTECT)
 	vendor = models.ForeignKey(Vendors,on_delete=models.PROTECT, null=True, blank=True)
-	description = models.CharField(null=True, max_length=2000)
+	description = models.CharField(null=True, max_length=2000) #this is for if there are multiple patterns ordered'
 	date_ordered = models.DateField(null=True, blank=True)
 	partial_receipt = models.BooleanField(default=False)
-	notes = models.CharField(null=True, max_length=2000, blank=True)
+	notes = models.CharField(null=True, max_length=2000, blank=True) #DONT USE THIS, USE ORDERITEMS
 	def __str__(self):
 		return f"{self.job_number} {self.description}"
 
@@ -356,6 +361,7 @@ class OrderItems(models.Model): #usually just one of these per order
 	item_description = models.CharField(null=True, max_length=100)
 	item_notes = models.CharField(null=True, max_length=1000, blank = True)
 	is_satisfied = models.BooleanField(default=False) #all has been received
+
 	def __str__(self):
 		return f"{self.item_description}"
 

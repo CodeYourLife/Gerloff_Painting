@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+
+	</style>
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+
+        var row_counter = 0;
+	  function add_painter_row() {
+			row_counter = row_counter + 1
+			var table = document.getElementById("labor_breakdown");
+			var rows = table.getElementsByTagName("tr").length;
+			var row = table.insertRow(rows);
+			var cell1 = row.insertCell(0);
+			var cell2 = row.insertCell(1);
+			var cell3 = row.insertCell(2);
+			var cell4 = row.insertCell(3);
+			var cell5 = row.insertCell(4);
+			var cell6 = row.insertCell(5);
+			var cell7 = row.insertCell(6);
+			var cell8 = row.insertCell(7);
+			var cell9 = row.insertCell(8);
+			cell1.innerHTML = "<div id='new_painter" + row_counter + "'></div>";
+			add_painter_dropdown();
+			cell2.innerHTML = "<div id='monday_row" + row_counter + "'></div>";
+			add_day("monday");
+			cell3.innerHTML = "<div id='tuesday_row" + row_counter + "'></div>";
+			add_day("tuesday");
+			cell4.innerHTML = "<div id='wednesday_row" + row_counter + "'></div>";
+			add_day("wednesday");
+			cell5.innerHTML = "<div id='thursday_row" + row_counter + "'></div>";
+			add_day("thursday");
+			cell6.innerHTML = "<div id='friday_row" + row_counter + "'></div>";
+			add_day("friday");
+			cell7.innerHTML = "<div id='saturday_row" + row_counter + "'></div>";
+			add_day("saturday");
+			cell8.innerHTML = "<div id='sunday_row" + row_counter + "'></div>";
+			add_day("sunday");
+			cell9.innerHTML = "<div id='overtime" + row_counter + "'>OT?</div>";
+			add_ot();
+}
+
+
+
+
+
+        function filter_wallcoverings() {
+
+            let selectedjob = order_input.select_job.value
+            let rolodex = JSON.parse("{{wallcovering_json|escapejs}}");
+            for(let i = order_input.select_wallcovering0.options.length; i >= 0; i--) {
+                order_input.select_wallcovering0.remove(i);
+            }
+            order_input.select_wallcovering0.options[0] = new Option("Select Wallcovering", "please_select");
+            let b=1
+            for(let i =0; i < rolodex.length; i++){
+                if (rolodex[i].job_number__job_number == selectedjob){
+                    order_input.select_wallcovering0.options[b] = new Option(rolodex[i].code + " " + rolodex[i].vendor__company_name + " " + rolodex[i].pattern, rolodex[i].id);
+                    b=b+1
+                }
+            }
+         }
+         function filter_pricing() {
+            let selectedwallcovering = order_input.select_wallcovering0.value
+            let rolodex = JSON.parse("{{pricing_json|escapejs}}");
+            for(let i = order_input.select_pricing.options.length; i >= 0; i--) {
+                order_input.select_pricing.remove(i);
+            }
+            order_input.select_pricing.options[0] = new Option("please_select","Select Pricing");
+            let b=1
+            for(let i =0; i < rolodex.length; i++){
+                if (rolodex[i].wallcovering__id == selectedwallcovering){
+                    order_input.select_pricing.options[b] = new Option(rolodex[i].quote_date + " Qnty: " + rolodex[i].min_yards + " Price: $" + rolodex[i].price,rolodex[i].price);
+                    b=b+1
+                }
+            }
+
+            let rolodex2 = JSON.parse("{{wallcovering_json|escapejs}}");
+            for(let i =0; i < rolodex2.length; i++){
+                if (rolodex2[i].id == selectedwallcovering){
+                    order_input.vendor.value = rolodex2[i].vendor__company_name;
+                    order_input.vendor_id.value = rolodex2[i].vendor__id;
+                    order_input.item_description.value = rolodex2[i].code + " " + rolodex2[i].vendor__company_name + " " + rolodex2[i].pattern
+                    order_input.quantity.value = rolodex2[i].estimated_quantity;
+                    order_input.unit.value = rolodex2[i].estimated_unit;
+                }
+            }
+         }
+
+         function filter_pricing2() {
+            order_input.price.value = order_input.select_pricing.value
+            let selectedpricing = order_input.select_pricing.value
+            let rolodex = JSON.parse("{{pricing_json|escapejs}}");
+            let b=1
+            for(let i =0; i < rolodex.length; i++){
+                if (rolodex[i].price == selectedpricing){
+                    order_input.unit.value = rolodex[i].unit
+                }
+            }
+
+
+         }
+	</script>
+</head>
+<body>
+<br>
+
+    <form name = order_input action="post_wallcovering_order" method="post"  onSubmit = "return check_data()">
+        {% csrf_token %}
+        <div class ="container">
+            <div class ="row">
+                <div class ="col">
+                    <select id="select_job" name="select_job" onChange="filter_wallcoverings()" >
+                        <option value="please_select">Select Job</option>
+						{% if jobs %}
+                        {% for job in jobs %}
+                            <option value="{{job.job_number}}">{{job.job_name}}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+				</div>
+				<div class ="col-sm text-left"><input type="text" name="po_number" placeholder="PO NUMBER" size="10" id="po_number"/></div>
+				<div class ="col-sm text-left"><input type="text" name="description" placeholder="Briefly Describe Order (ie. WC1 & WC2, etc." size="50" id="description"/></div>
+			</div>
+		</div>
+		<br>
+		<div class ="container">
+            <div class ="row">
+                <div class ="col">
+                    <select id="select_wallcovering0" name="select_wallcovering0" onChange="filter_pricing()" >
+                        <option value="please_select">Select Wallcovering</option>
+                        {% if wallcovering %}
+                        {% for wc in wallcovering %}
+                            <option value="{{wc.id}}">{{wc.code}} {{wc.vendor.company_name}} {{wc.pattern}}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+				</div>
+                <div class ="col">
+                    <select id="select_pricing" name="select_pricing" onChange="filter_pricing2()" >
+                        <option value="please_select">Select Pricing</option>
+                        {% if pricing %}
+                        {% for price in pricing %}
+                            <option value="{{price.id}}">{{price.quote_date}} Qnty: {{price.min_yards}} Price: ${{price.price}}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+				</div>
+			</div>
+            <div class ="row">
+                <div class ="col-sm text-left"><input type="text" name="vendor" placeholder="Vendor" size="20" id="vendor"/><input type="hidden" name="vendor_id" id="vendor_id" /></div>
+                <div class ="col-sm text-left"><input type="text" name="item_description" placeholder="Material Description" size="50" id="item_description"/></div>
+
+            </div>
+            <div class ="row">
+                <div class ="col-sm text-left"><input type="number" name="quantity" placeholder="quantity" size="20" id="quantity"/></div>
+                <div class ="col-sm text-left"><input type="text" name="unit" placeholder="yards" size="15" id="unit"/></div>
+                <div class ="col-sm text-left"><input type="text" name="price" placeholder="Price" size="7" id="price"/></div>
+            </div>
+            <div class ="row"> <label for="notes">Enter any notes about this item</label> </div>
+            <div class ="row"> <textarea id="notes" name="notes" rows="2" cols="50"></textarea></div>
+		</div>
+        <br>
+        <div class ="container">
+            <div class ="row"></div><button type="button" onclick="add_row()">Add Another Item to Order </button></div>
+
+ADD ITEM CLICK <br>
+dropdown to select wallcovering
+<br>
+Orders.vendor(populate)   OrderItems.item_description(populate code and pattern)
+<br>
+OrderItems.quantity (populate)  OrderItems.unit(populate)       OrderItems.price(populate listbox of prices)
+<br>
+OrderItems.notes
+<br>
+
+
+
+</body>
+</html>
+
+{% endblock %}

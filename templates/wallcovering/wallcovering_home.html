@@ -65,7 +65,11 @@ $(document).ready(function () {
 <body>
         <div class ="container">
             <div class ="row">
-				<div class ="col">Order New Wallcovering </div>
+				<div class ="col">Add New Wallcovering </div>
+				<div class ="col"><a href = "{% url 'wallcovering_order' "ALL" "ALL" %}">
+							<div style="height:100%;width:100%">
+								Place Wallcovering Order	</div>
+						</a></div>
 				<div class ="col">Receive Wallcovering Delivery  </div>
 				<div class ="col">Send Wallcovering to Job </div>
 			</div>

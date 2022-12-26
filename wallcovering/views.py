@@ -10,9 +10,42 @@ from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
 from django_tables2 import SingleTableView
 from .tables import *
+from json import dumps
+import json
+from django.core.serializers.json import DjangoJSONEncoder
 # Create your views here.
 
+pms = ClientEmployees.objects.values('name', 'id', 'person_pk')[0:1000]
+send_employees = Employees.objects.filter(title="Superintendent")[0:2000]
+prices_json = json.dumps(list(pms), cls=DjangoJSONEncoder)
+def wallcovering_order(request, id, job_number):
+    jobs = Jobs.objects.filter(status="Open")
 
+    if job_number == "ALL":
+        selectedjob = 0
+        if id == "ALL":
+            selectedwc = 0
+            selectedpricing = 0
+            wallcovering = Wallcovering.objects.filter(job_number__status="Open")
+            pricing = WallcoveringPricing.objects.filter(wallcovering__job_number__status="Open")
+            wallcovering1 = Wallcovering.objects.values('id','job_number__job_number','code','vendor__id','vendor__company_name','pattern','estimated_quantity', 'estimated_unit').filter(job_number__status="Open")
+            pricing1 = WallcoveringPricing.objects.values('wallcovering__id','quote_date','min_yards','price','unit').filter(wallcovering__job_number__status="Open")
+    else:
+        selectedjob = Jobs.objects.get(job_number=job_number)
+        wallcovering = Wallcovering.objects.filter(job_number__job_number=job_number)
+        pricing = WallcoveringPricing.objects.filter(wallcovering__job_number__job_number=job_number)
+        wallcovering1 = Wallcovering.objects.values('id','job_number__job_number','code','vendor__id','vendor__company_name','pattern','estimated_quantity', 'estimated_unit').filter(job_number__job_number=job_number)
+        pricing1 = WallcoveringPricing.objects.values('wallcovering__id','quote_date','min_yards','price','unit').filter(wallcovering__job_number__job_number=job_number)
+        if id == "ALL":
+            selectedwc = 0
+            selectedpricing = 0
+        else:
+            selectedwc = Wallcovering.objects.get(id=id)
+            selectedpricing = WallcoveringPricing.objects.filter(wallcovering__id=id)
+    wallcovering_json = json.dumps(list(wallcovering1), cls=DjangoJSONEncoder)
+    pricing_json = json.dumps(list(pricing1), cls=DjangoJSONEncoder)
+    print(wallcovering_json)
+    return render(request, "wallcovering_order.html", {'wallcovering_json':wallcovering_json,'pricing_json':pricing_json, 'selectedwc':selectedwc, 'selectedpricing':selectedpricing, 'selectedjob':selectedjob, 'jobs': jobs,'wallcovering': wallcovering, 'pricing': pricing})
 
 
 def wallcovering_home(request):
