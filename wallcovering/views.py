@@ -15,17 +15,22 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 # Create your views here.
 
-pms = ClientEmployees.objects.values('name', 'id', 'person_pk')[0:1000]
-send_employees = Employees.objects.filter(title="Superintendent")[0:2000]
-prices_json = json.dumps(list(pms), cls=DjangoJSONEncoder)
+
+def post_wallcovering_order(request):
+    print("hi")
+    return render(request, "index")
+
+
 def wallcovering_order(request, id, job_number):
     jobs = Jobs.objects.filter(status="Open")
-
+    vendors = Vendors.objects.all()
+    vendors1 = Vendors.objects.values()
     if job_number == "ALL":
         selectedjob = 0
         if id == "ALL":
             selectedwc = 0
             selectedpricing = 0
+            selectedvendor = 0
             wallcovering = Wallcovering.objects.filter(job_number__status="Open")
             pricing = WallcoveringPricing.objects.filter(wallcovering__job_number__status="Open")
             wallcovering1 = Wallcovering.objects.values('id','job_number__job_number','code','vendor__id','vendor__company_name','pattern','estimated_quantity', 'estimated_unit').filter(job_number__status="Open")
@@ -39,13 +44,15 @@ def wallcovering_order(request, id, job_number):
         if id == "ALL":
             selectedwc = 0
             selectedpricing = 0
+            selectedvendor = 0
         else:
             selectedwc = Wallcovering.objects.get(id=id)
             selectedpricing = WallcoveringPricing.objects.filter(wallcovering__id=id)
+            selectedvendor = Vendors.objects.get(wallcovering__id=id)
     wallcovering_json = json.dumps(list(wallcovering1), cls=DjangoJSONEncoder)
     pricing_json = json.dumps(list(pricing1), cls=DjangoJSONEncoder)
-    print(wallcovering_json)
-    return render(request, "wallcovering_order.html", {'wallcovering_json':wallcovering_json,'pricing_json':pricing_json, 'selectedwc':selectedwc, 'selectedpricing':selectedpricing, 'selectedjob':selectedjob, 'jobs': jobs,'wallcovering': wallcovering, 'pricing': pricing})
+    vendors_json = json.dumps(list(vendors1), cls=DjangoJSONEncoder)
+    return render(request, "wallcovering_order.html", {'vendors':vendors,'vendors_json':vendors_json,'wallcovering_json':wallcovering_json,'pricing_json':pricing_json, 'selectedwc':selectedwc, 'selectedpricing':selectedpricing, 'selectedjob':selectedjob, 'jobs': jobs,'wallcovering': wallcovering, 'pricing': pricing, 'selectedvendor': selectedvendor})
 
 
 def wallcovering_home(request):
