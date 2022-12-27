@@ -17,8 +17,26 @@ from django.core.serializers.json import DjangoJSONEncoder
 
 
 def post_wallcovering_order(request):
-    print("hi")
-    return render(request, "index")
+    new_order = Orders(job_number=Jobs.objects.get(job_number=request.POST["select_job"]),description=request.POST["description"],vendor=Vendors.objects.get(id=request.POST["select_vendor"]),date_ordered=date.today())
+    new_order.save()
+    new_order = Orders.objects.latest('id')
+    if 'po_number' in request.POST:
+        new_order.po_number = request.POST["po_number"]
+        new_order.save()
+    for y in range (0,int(request.POST["number_rows"])+1):
+        print(y)
+        x=str(y)
+        new_item = OrderItems(order =new_order,item_description=request.POST["item_description"+x], quantity=request.POST["quantity"+x],unit=request.POST["unit"+x], price=request.POST["price"+x])
+        new_item.save()
+        new_item= OrderItems.objects.latest('id')
+        if 'notes'+x in request.POST:
+            new_item.item_notes = request.POST["notes"+x]
+            new_item.save()
+        if 'select_wallcovering'+x in request.POST:
+            new_item.wallcovering = Wallcovering.objects.get(id=request.POST["select_wallcovering" + x])
+            new_item.save()
+    return render(request, 'index.html')
+
 
 
 def wallcovering_order(request, id, job_number):

@@ -25,6 +25,7 @@
     var row_counter = 0;
     function add_row(){
         row_counter = row_counter + 1
+        document.getElementById("number_rows").value = row_counter
         var table = document.getElementById("second_table0");
         var rows = table.getElementsByTagName("tr").length;
         var row = table.insertRow(rows);
@@ -40,11 +41,8 @@
         cell3.innerHTML ='<input type="text" name="price' + row_counter + '" placeholder="Price" size="7" id="price' + row_counter + '"/>';
         row = table.insertRow(rows);
         cell1 = row.insertCell(0);
-        cell2 = row.insertCell(1);
-        cell2.colSpan =2;
-        cell1.innerHTML = "<div id='new_vendor" + row_counter + "'></div>";
-        add_vendor_dropdown();
-        cell2.innerHTML = '<input type="text" name="item_description' + row_counter + '" placeholder="Material Description" size="50" id="item_description' + row_counter + '"/>';
+        cell1.colSpan =3;
+        cell1.innerHTML = '<input type="text" name="item_description' + row_counter + '" placeholder="Material Description" size="50" id="item_description' + row_counter + '"/>';
         row = table.insertRow(rows);
         cell1 = row.insertCell(0);
         cell2 = row.insertCell(1);
@@ -68,6 +66,7 @@
 
 	function add_material_dropdown() {
 		let selectedjob = order_input.select_job.value;
+		let selectedvendor = order_input.select_vendor.value;
 		var select = document.createElement("select");
 		select.name = "select_wallcovering" + row_counter;
 		select.id = "select_wallcovering" + row_counter;
@@ -80,34 +79,36 @@
 		select.appendChild(option);
         for(let i =0; i < rolodex.length; i++){
             if (rolodex[i].job_number__job_number == selectedjob){
+                if (rolodex[i].vendor__id == selectedvendor){
                     var option = document.createElement("option");
                     option.value =rolodex[i].id
                     option.text=rolodex[i].code + " " + rolodex[i].vendor__company_name + " " + rolodex[i].pattern
                     select.appendChild(option);
+                }
             }
         }
         var label = document.createElement("label");
 		document.getElementById('new_material' + row_counter).appendChild(label).appendChild(select);
 	}
 
-	function add_vendor_dropdown() {
-		var select = document.createElement("select");
-		select.name = "select_vendor" + row_counter;
-		select.id = "select_vendor" + row_counter;
-		let rolodex = JSON.parse("{{vendors_json|escapejs}}");
-		var option = document.createElement("option");
-		option.value = "please_select";
-		option.text= "Select Vendor";
-		select.appendChild(option);
-        for(let i =0; i < rolodex.length; i++){
-                    var option = document.createElement("option");
-                    option.value =rolodex[i].id
-                    option.text=rolodex[i].company_name
-                    select.appendChild(option);
-        }
-        var label = document.createElement("label");
-		document.getElementById('new_vendor' + row_counter).appendChild(label).appendChild(select);
-	}
+<!--	function add_vendor_dropdown() {-->
+<!--		var select = document.createElement("select");-->
+<!--		select.name = "select_vendor" + row_counter;-->
+<!--		select.id = "select_vendor" + row_counter;-->
+<!--		let rolodex = JSON.parse("{{vendors_json|escapejs}}");-->
+<!--		var option = document.createElement("option");-->
+<!--		option.value = "please_select";-->
+<!--		option.text= "Select Vendor";-->
+<!--		select.appendChild(option);-->
+<!--        for(let i =0; i < rolodex.length; i++){-->
+<!--                    var option = document.createElement("option");-->
+<!--                    option.value =rolodex[i].id-->
+<!--                    option.text=rolodex[i].company_name-->
+<!--                    select.appendChild(option);-->
+<!--        }-->
+<!--        var label = document.createElement("label");-->
+<!--		document.getElementById('new_vendor' + row_counter).appendChild(label).appendChild(select);-->
+<!--	}-->
 
         function filter_wallcoverings(rownumber) {
 
@@ -128,8 +129,7 @@
          }
          function filter_pricing(rownumber) {
             var select_wallcovering = document.getElementById("select_wallcovering" +rownumber);
-            var vendor = document.getElementById("select_vendor" +rownumber);
-            //var vendor_id = document.getElementById("vendor_id" +rownumber);
+            var vendor = document.getElementById("select_vendor");
             var item_description = document.getElementById("item_description" +rownumber);
             var quantity = document.getElementById("quantity" +rownumber);
             var unit = document.getElementById("unit" +rownumber);
@@ -181,7 +181,7 @@
 <body>
 <br>
 
-    <form name = order_input action="post_wallcovering_order" method="post"  onSubmit = "return check_data()">
+    <form name = order_input action={% url 'post_wallcovering_order' %} method="post"  onSubmit = "return check_data()">
         {% csrf_token %}
         <table id="first_table0" class="display" style="...">
             <thead>
@@ -237,7 +237,7 @@
                 </tr>
             <tr>
                     <td>
-                            <select id="select_vendor0" name="select_vendor0" >
+                            <select id="select_vendor" name="select_vendor" >
                         <option value="please_select">Select Vendor</option>
                         {% if vendors %}
                         {% for vendor in vendors %}
@@ -266,7 +266,7 @@
 
             </tbody>
         </table>
-        <div id="here" name="here"></div>
+        <input type="hidden" id="number_rows" name="number_rows" value = 0/>
         <div class ="container">
             <div class ="row"></div><button type="button" onclick="add_row()">Add Another Item to Order </button></div>
         <hr>
