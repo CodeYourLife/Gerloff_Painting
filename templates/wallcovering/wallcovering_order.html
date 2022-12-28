@@ -196,13 +196,17 @@
                     <td>
 
                         <select id="select_job" name="select_job" onChange="filter_wallcoverings('0')" >
-                        <option value="please_select">Select Job</option>
+                    {% if selectedjob == 0 %}
+                            <option value="please_select">Select Job</option>
 						{% if jobs %}
                         {% for job in jobs %}
                             <option value="{{job.job_number}}">{{job.job_name}}</option>
                         {% endfor %}
                         {% endif %}
                         </select>
+                    {% else %}
+                        <option value="{{selectedjob.job_number}}">{{selectedjob.job_name}}</option>
+                    {% endif %}
                     </td>
                     <td><input type="text" name="po_number" placeholder="PO NUMBER" size="10" id="po_number"/></td>
                     <td><input type="text" name="description" placeholder="Briefly Describe Order (ie. WC1 & WC2, etc." size="50" id="description"/></td>
@@ -215,12 +219,16 @@
                 <tr>
                     <td>
                     <select id="select_wallcovering0" name="select_wallcovering0" onChange="filter_pricing('0')" >
+                    {% if selectedwc == 0 %}
                         <option value="please_select">Select Wallcovering</option>
                         {% if wallcovering %}
                         {% for wc in wallcovering %}
                             <option value="{{wc.id}}">{{wc.code}} {{wc.vendor.company_name}} {{wc.pattern}}</option>
                         {% endfor %}
                         {% endif %}
+                    {% else %}
+                            <option value="{{selectedwc.id}}">{{selectedwc.code}} {{selectedwc.vendor.company_name}} {{selectedwc.pattern}}</option>
+                    {% endif %}
                     </select>
                     </td>
 
@@ -238,21 +246,33 @@
             <tr>
                     <td>
                             <select id="select_vendor" name="select_vendor" >
+                    {% if selectedvendor == 0 %}
                         <option value="please_select">Select Vendor</option>
                         {% if vendors %}
                         {% for vendor in vendors %}
                             <option value="{{vendor.id}}">{{vendor.company_name}}</option>
                         {% endfor %}
                         {% endif %}
+                    {% else %}
+                                <option value="{{selectedvendor.id}}">{{selectedvendor.company_name}}</option>
+                    {% endif %}
                     </select>
                     </td>
-                    <td colspan="2"><input type="text" name="item_description0" placeholder="Material Description" size="50" id="item_description0"/></td>
-
+                    {% if selectedwc == 0 %}
+                    <td colspan="2"><input type="text" name="item_description0" placeholder="Material Description" size="50" id="item_description0" /></td>
+                    {% else %}
+                    <td colspan="2"><input type="text" name="item_description0" placeholder="Material Description" size="50" id="item_description0" value = "{{selectedwc.code}} {{selectedwc.vendor.company_name}} {{selectedwc.pattern}}"/></td>
+                    {% endif %}
 
             </tr>
             <tr>
+                {% if selectedwc == 0 %}
                 <td><input type="number" name="quantity0" placeholder="quantity" size="20" id="quantity0"/></td>
                 <td><input type="text" name="unit0" placeholder="yards" size="15" id="unit0"/></td>
+                {% else %}
+                <td><input type="number" name="quantity0" placeholder="quantity" size="20" id="quantity0" value = "{{selectedwc.estimated_quantity}}"/></td>
+                <td><input type="text" name="unit0" placeholder="yards" size="15" id="unit0" value = "{{selectedwc.estimated_unit}}"/></td>
+                {% endif %}
                 <td><input type="text" name="price0" placeholder="Price" size="7" id="price0"/></td>
             </tr>
             <tr>

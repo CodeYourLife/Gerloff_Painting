@@ -38,7 +38,6 @@ def post_wallcovering_order(request):
     return render(request, 'index.html')
 
 
-
 def wallcovering_order(request, id, job_number):
     jobs = Jobs.objects.filter(status="Open")
     vendors = Vendors.objects.all()
@@ -158,6 +157,18 @@ def wallcovering_home(request):
 def wallcovering_pattern(request, id):
     selectedpattern = Wallcovering.objects.get(id=id)
     table = WallcoveringPriceTable(WallcoveringPricing.objects.filter(wallcovering__id = id))
+    orderstable= OrdersTable(OrderItems.objects.filter(wallcovering__id=id))
+    receivedtable= ReceivedTable(ReceivedItems.objects.filter(order_item__wallcovering__id=id))
+    packages_table=[]
+    jobdeliveries=[]
+    for x in Orders.objects.filter(orderitems2__wallcovering__id=id).distinct():
+        print(x.id)
+        for y in Packages.objects.filter(delivery__order=x):
+            packages_table.append(y)
+            for z in OutgoingItem.objects.filter(package = y):
+                    jobdeliveries.append(z)
+    packagestable= PackagesTable(packages_table)
+    jobdeliveriestable= JobDeliveriesTable(jobdeliveries)
     jobs = Jobs.objects.all()
     vendors = Vendors.objects.all()
     if request.method == 'POST':
@@ -172,6 +183,7 @@ def wallcovering_pattern(request, id):
             selectedpattern.job_number = Jobs.objects.get(job_number=request.POST['job_select'])
             selectedpattern.code = request.POST['code']
             selectedpattern.vendor = Vendors.objects.get(id = request.POST['vendor'])
+            print(request.POST['pattern'])
             selectedpattern.pattern = request.POST['pattern']
             selectedpattern.estimated_quantity = request.POST['estimated_quantity']
             selectedpattern.estimated_unit = request.POST['estimated_unit']
@@ -190,7 +202,7 @@ def wallcovering_pattern(request, id):
             selectedpattern.save()
 
 
-    return render(request, "wallcovering_pattern.html", {'selectedpattern': selectedpattern, 'jobs': jobs, 'vendors': vendors, 'table': table })
+    return render(request, "wallcovering_pattern.html", {'jobdeliveriestable':jobdeliveriestable,'packagestable':packagestable, 'receivedtable':receivedtable,'orderstable':orderstable,'selectedpattern': selectedpattern, 'jobs': jobs, 'vendors': vendors, 'table': table })
 
 def wallcovering_status(request, table_type, id):
     if table_type == 'Outgoing':

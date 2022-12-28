@@ -59,7 +59,7 @@
     </select>
 
     <label class="required" for="pattern">Pattern:</label>
-    <input type="text" name="pattern" value={{selectedpattern.pattern}} class="vTextField" maxlength="2000" required id="pattern">
+    <input type="text" name="pattern" value="{{selectedpattern.pattern}}"  maxlength="2000" size="50" required id="pattern">
 <br><br>
     <label class="required" for="estimated_quantity">Estimated quantity:</label>
     <input type="number" name="estimated_quantity" value={{selectedpattern.estimated_quantity}} class="vIntegerField" required id="estimated_quantity">
@@ -125,9 +125,18 @@
 <br>
     <input type="submit" value="Save Pricing" class="default" name="save">
 </form>
-
-
-
+<hr><hr>
+    <h3>Orders</h3>
+<div><a href = "{% url 'wallcovering_order' selectedpattern.id selectedpattern.job_number.job_number %}"><div style="height:100%;width:100%">Place New Order	</div></a></div>
+{% render_table orderstable %}
+    <h3>Receipts</h3>
+<div><a href = "{% url 'wallcovering_order' selectedpattern.id selectedpattern.job_number.job_number %}"><div style="height:100%;width:100%">Receive New Delivery	</div></a></div>
+{% render_table receivedtable %}
+    <h3>Packages</h3>
+{% render_table packagestable %}
+    <h3>Sent to Job</h3>
+<div><a href = "{% url 'wallcovering_order' selectedpattern.id selectedpattern.job_number.job_number %}"><div style="height:100%;width:100%">Send to Job	</div></a></div>
+{% render_table jobdeliveriestable %}
 </body>
 </html>
 
