@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
+{% load render_table from django_tables2 %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -22,279 +23,28 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 
-    var row_counter = 0;
-    function add_row(){
-        row_counter = row_counter + 1
-        document.getElementById("number_rows").value = row_counter
-        var table = document.getElementById("second_table0");
-        var rows = table.getElementsByTagName("tr").length;
-        var row = table.insertRow(rows);
-        cell1 = row.insertCell(0);
-        cell1.colSpan = 3;
-        cell1.innerHTML ='<label for="notes' + row_counter + '">Enter any notes about this item</label><br><textarea id="notes' + row_counter + '" name="notes' + row_counter + '" rows="1" cols="100"></textarea><hr><br>';
-        row = table.insertRow(rows);
-        cell1 = row.insertCell(0);
-        cell2 = row.insertCell(1);
-        cell3 = row.insertCell(2);
-        cell1.innerHTML ='<input type="number" name="quantity' + row_counter + '" placeholder="quantity" size="20" id="quantity' + row_counter + '"/>';
-        cell2.innerHTML ='<input type="text" name="unit' + row_counter + '" placeholder="yards" size="15" id="unit' + row_counter + '"/>';
-        cell3.innerHTML ='<input type="text" name="price' + row_counter + '" placeholder="Price" size="7" id="price' + row_counter + '"/>';
-        row = table.insertRow(rows);
-        cell1 = row.insertCell(0);
-        cell1.colSpan =3;
-        cell1.innerHTML = '<input type="text" name="item_description' + row_counter + '" placeholder="Material Description" size="50" id="item_description' + row_counter + '"/>';
-        row = table.insertRow(rows);
-        cell1 = row.insertCell(0);
-        cell2 = row.insertCell(1);
-        cell1.innerHTML = "<div id='new_material" + row_counter + "'></div>";
-        add_material_dropdown();
-        cell2.innerHTML = "<div id='new_pricing" + row_counter + "'></div>";
-        add_pricing_dropdown();
-    }
 
-    function add_pricing_dropdown() {
-		var select = document.createElement("select");
-		select.name = "select_pricing" + row_counter;
-		select.id = "select_pricing" + row_counter;
-		select.addEventListener('change',function() {filter_pricing2(row_counter);},false);
-        var option = document.createElement("option");
-		option.value = "please_select";
-		option.text= "Select Pricing";
-		select.appendChild(option);
-        document.getElementById('new_pricing' + row_counter).appendChild(select);
-    }
-
-	function add_material_dropdown() {
-		let selectedjob = order_input.select_job.value;
-		let selectedvendor = order_input.select_vendor.value;
-		var select = document.createElement("select");
-		select.name = "select_wallcovering" + row_counter;
-		select.id = "select_wallcovering" + row_counter;
-		select.addEventListener('change',function() {filter_pricing(row_counter);},false);
-		//select.onChange= function() {filter_pricing()};
-		let rolodex = JSON.parse("{{wallcovering_json|escapejs}}");
-		var option = document.createElement("option");
-		option.value = "please_select";
-		option.text= "Select Wallcovering";
-		select.appendChild(option);
-        for(let i =0; i < rolodex.length; i++){
-            if (rolodex[i].job_number__job_number == selectedjob){
-                if (rolodex[i].vendor__id == selectedvendor){
-                    var option = document.createElement("option");
-                    option.value =rolodex[i].id
-                    option.text=rolodex[i].code + " " + rolodex[i].vendor__company_name + " " + rolodex[i].pattern
-                    select.appendChild(option);
-                }
-            }
-        }
-        var label = document.createElement("label");
-		document.getElementById('new_material' + row_counter).appendChild(label).appendChild(select);
-	}
-
-<!--	function add_vendor_dropdown() {-->
-<!--		var select = document.createElement("select");-->
-<!--		select.name = "select_vendor" + row_counter;-->
-<!--		select.id = "select_vendor" + row_counter;-->
-<!--		let rolodex = JSON.parse("{{vendors_json|escapejs}}");-->
-<!--		var option = document.createElement("option");-->
-<!--		option.value = "please_select";-->
-<!--		option.text= "Select Vendor";-->
-<!--		select.appendChild(option);-->
-<!--        for(let i =0; i < rolodex.length; i++){-->
-<!--                    var option = document.createElement("option");-->
-<!--                    option.value =rolodex[i].id-->
-<!--                    option.text=rolodex[i].company_name-->
-<!--                    select.appendChild(option);-->
-<!--        }-->
-<!--        var label = document.createElement("label");-->
-<!--		document.getElementById('new_vendor' + row_counter).appendChild(label).appendChild(select);-->
-<!--	}-->
-
-        function filter_wallcoverings(rownumber) {
-
-            let selectedjob = order_input.select_job.value
-            let rolodex = JSON.parse("{{wallcovering_json|escapejs}}");
-            var select_wallcovering = document.getElementById("select_wallcovering" +rownumber);
-            for(let i = select_wallcovering.options.length; i >= 0; i--) {
-                select_wallcovering.remove(i);
-            }
-            select_wallcovering.options[0] = new Option("Select Wallcovering", "please_select");
-            let b=1
-            for(let i =0; i < rolodex.length; i++){
-                if (rolodex[i].job_number__job_number == selectedjob){
-                    select_wallcovering.options[b] = new Option(rolodex[i].code + " " + rolodex[i].vendor__company_name + " " + rolodex[i].pattern, rolodex[i].id);
-                    b=b+1
-                }
-            }
-         }
-         function filter_pricing(rownumber) {
-            var select_wallcovering = document.getElementById("select_wallcovering" +rownumber);
-            var vendor = document.getElementById("select_vendor");
-            var item_description = document.getElementById("item_description" +rownumber);
-            var quantity = document.getElementById("quantity" +rownumber);
-            var unit = document.getElementById("unit" +rownumber);
-            let selectedwallcovering = select_wallcovering.value
-            let rolodex = JSON.parse("{{pricing_json|escapejs}}");
-            var select_pricing = document.getElementById("select_pricing" +rownumber);
-            for(let i = select_pricing.options.length; i >= 0; i--) {
-                select_pricing.remove(i);
-            }
-            select_pricing.options[0] = new Option("please_select","Select Pricing");
-            let b=1
-            for(let i =0; i < rolodex.length; i++){
-                if (rolodex[i].wallcovering__id == selectedwallcovering){
-                    select_pricing.options[b] = new Option(rolodex[i].quote_date + " Qnty: " + rolodex[i].min_yards + " Price: $" + rolodex[i].price,rolodex[i].price);
-                    b=b+1
-                }
-            }
-
-            let rolodex2 = JSON.parse("{{wallcovering_json|escapejs}}");
-            for(let i =0; i < rolodex2.length; i++){
-                if (rolodex2[i].id == selectedwallcovering){
-                    vendor.text = rolodex2[i].vendor__company_name;
-                    vendor.value = rolodex2[i].vendor__id;
-                    //vendor.value = rolodex2[i].vendor__company_name;
-                    //vendor_id.value = rolodex2[i].vendor__id;
-                    item_description.value = rolodex2[i].code + " " + rolodex2[i].vendor__company_name + " " + rolodex2[i].pattern
-                    quantity.value = rolodex2[i].estimated_quantity;
-                    unit.value = rolodex2[i].estimated_unit;
-                }
-            }
-         }
-
-         function filter_pricing2(rownumber) {
-            var price = document.getElementById("price" +rownumber);
-            var unit = document.getElementById("unit" +rownumber);
-            var select_pricing = document.getElementById("select_pricing" +rownumber);
-            price.value = select_pricing.value
-            let selectedpricing = select_pricing.value
-            let rolodex = JSON.parse("{{pricing_json|escapejs}}");
-            let b=1
-            for(let i =0; i < rolodex.length; i++){
-                if (rolodex[i].price == selectedpricing){
-                    unit.value = rolodex[i].unit
-                }
-            }
-         }
 	</script>
 </head>
 <body>
+<h1>Order Details</h1>
+{% render_table orderstable %}
+<hr>
 <br>
-
-    <form name = order_input action={% url 'post_wallcovering_order' %} method="post"  onSubmit = "return check_data()">
-        {% csrf_token %}
-        <table id="first_table0" class="display" style="...">
-            <thead>
-                <tr>
-                    <th>Select Job</th>
-                    <th>PO#</th>
-                    <th>Description</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>
-
-                        <select id="select_job" name="select_job" onChange="filter_wallcoverings('0')" >
-                    {% if selectedjob == 0 %}
-                            <option value="please_select">Select Job</option>
-						{% if jobs %}
-                        {% for job in jobs %}
-                            <option value="{{job.job_number}}">{{job.job_name}}</option>
-                        {% endfor %}
-                        {% endif %}
-                        </select>
-                    {% else %}
-                        <option value="{{selectedjob.job_number}}">{{selectedjob.job_name}}</option>
-                    {% endif %}
-                    </td>
-                    <td><input type="text" name="po_number" placeholder="PO NUMBER" size="10" id="po_number"/></td>
-                    <td><input type="text" name="description" placeholder="Briefly Describe Order (ie. WC1 & WC2, etc." size="50" id="description"/></td>
-                </tr>
-            </tbody>
-        </table>
-        <hr><br>
-        <table id="second_table0" class="display" style="...">
-            <tbody>
-                <tr>
-                    <td>
-                    <select id="select_wallcovering0" name="select_wallcovering0" onChange="filter_pricing('0')" >
-                    {% if selectedwc == 0 %}
-                        <option value="please_select">Select Wallcovering</option>
-                        {% if wallcovering %}
-                        {% for wc in wallcovering %}
-                            <option value="{{wc.id}}">{{wc.code}} {{wc.vendor.company_name}} {{wc.pattern}}</option>
-                        {% endfor %}
-                        {% endif %}
-                    {% else %}
-                            <option value="{{selectedwc.id}}">{{selectedwc.code}} {{selectedwc.vendor.company_name}} {{selectedwc.pattern}}</option>
-                    {% endif %}
-                    </select>
-                    </td>
-
-                    <td>
-                    <select id="select_pricing0" name="select_pricing0" onChange="filter_pricing2('0')" >
-                        <option value="please_select">Select Pricing</option>
-                        {% if pricing %}
-                        {% for price in pricing %}
-                            <option value="{{price.id}}">{{price.quote_date}} Qnty: {{price.min_yards}} Price: ${{price.price}}</option>
-                        {% endfor %}
-                        {% endif %}
-                    </select>
-                    </td>
-                </tr>
-            <tr>
-                    <td>
-                            <select id="select_vendor" name="select_vendor" >
-                    {% if selectedvendor == 0 %}
-                        <option value="please_select">Select Vendor</option>
-                        {% if vendors %}
-                        {% for vendor in vendors %}
-                            <option value="{{vendor.id}}">{{vendor.company_name}}</option>
-                        {% endfor %}
-                        {% endif %}
-                    {% else %}
-                                <option value="{{selectedvendor.id}}">{{selectedvendor.company_name}}</option>
-                    {% endif %}
-                    </select>
-                    </td>
-                    {% if selectedwc == 0 %}
-                    <td colspan="2"><input type="text" name="item_description0" placeholder="Material Description" size="50" id="item_description0" /></td>
-                    {% else %}
-                    <td colspan="2"><input type="text" name="item_description0" placeholder="Material Description" size="50" id="item_description0" value = "{{selectedwc.code}} {{selectedwc.vendor.company_name}} {{selectedwc.pattern}}"/></td>
-                    {% endif %}
-
-            </tr>
-            <tr>
-                {% if selectedwc == 0 %}
-                <td><input type="number" name="quantity0" placeholder="quantity" size="20" id="quantity0"/></td>
-                <td><input type="text" name="unit0" placeholder="yards" size="15" id="unit0"/></td>
-                {% else %}
-                <td><input type="number" name="quantity0" placeholder="quantity" size="20" id="quantity0" value = "{{selectedwc.estimated_quantity}}"/></td>
-                <td><input type="text" name="unit0" placeholder="yards" size="15" id="unit0" value = "{{selectedwc.estimated_unit}}"/></td>
-                {% endif %}
-                <td><input type="text" name="price0" placeholder="Price" size="7" id="price0"/></td>
-            </tr>
-            <tr>
-                <td  colspan="3">
-                <br>
-                <label for="notes0">Enter any notes about this item</label><br>
-                            <textarea id="notes0" name="notes0" rows="1" cols="100"></textarea>
-                <hr><br>
-                </td>
-            </tr>
-
-            </tbody>
-        </table>
-        <input type="hidden" id="number_rows" name="number_rows" value = 0/>
-        <div class ="container">
-            <div class ="row"></div><button type="button" onclick="add_row()">Add Another Item to Order </button></div>
-        <hr>
-        <br>
-           <input type="submit" value="Send Order Now" />
-    </form>
-
-
+<h2>Order Items</h2>
+{% render_table orderitemstable %}
+<hr>
+<br>
+<h2>Received Material</h2>
+{% render_table receiptstable %}
+<hr>
+<br>
+<h2>Packages</h2>
+{% render_table packagestable %}
+<hr>
+<br>
+<h2>Jobsite Deliveries</h2>
+{% render_table jobdeliveriestable %}
 </body>
 </html>
 

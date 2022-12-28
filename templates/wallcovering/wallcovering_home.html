@@ -65,8 +65,11 @@ $(document).ready(function () {
 <body>
         <div class ="container">
             <div class ="row">
-				<div class ="col">Add New Wallcovering </div>
-				<div class ="col"><a href = "{% url 'wallcovering_order' "ALL" "ALL" %}">
+				<div class ="col"><a href = "{% url 'wallcovering_pattern_new' %}">
+							<div style="height:100%;width:100%">
+								Add New Wallcovering	</div>
+						</a></div>
+				<div class ="col"><a href = "{% url 'wallcovering_order_new' "ALL" "ALL" %}">
 							<div style="height:100%;width:100%">
 								Place Wallcovering Order	</div>
 						</a></div>
@@ -177,7 +180,9 @@ $(document).ready(function () {
 				<tr>
 					<td>{{wc_ordered.wallcovering.code}}</td>
 					<td>{{wc_ordered.item_description}}</td>
-					<td>{{wc_ordered.order.date_ordered}}</td>
+					<td><a href = "{% url 'wallcovering_order' wc_ordered.order.id %}">
+							<div style="height:100%;width:100%">
+								{{wc_ordered.order.date_ordered}}	</div></a></td>
 					<td>{{wc_ordered.order.job_number.job_name}}</td>
 					<td>{{wc_ordered.order.notes}}</td>
 				</tr>

@@ -309,8 +309,8 @@ class Wallcovering(models.Model):
 	code = models.CharField(null=True, max_length=10) #wc1, etc.
 	vendor = models.ForeignKey(Vendors,on_delete=models.PROTECT)
 	pattern = models.CharField(null=True, max_length=2000)
-	estimated_quantity = models.IntegerField(default=0)
-	estimated_unit = models.CharField(null=True, max_length=20)
+	estimated_quantity = models.IntegerField(default=0,blank=True)
+	estimated_unit = models.CharField(null=True, max_length=20,blank=True)
 	cut_charge = models.CharField(null=True, max_length=1000, blank=True)
 	roll_width = models.CharField(null=True, max_length=50, blank=True)
 	vertical_repeat = models.CharField(null=True, max_length=50, blank=True)

@@ -15,6 +15,14 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 # Create your views here.
 
+def wallcovering_order(request,id):
+    order = Orders.objects.get(id=id)
+    orderstable = OrdersTable(Orders.objects.filter(id=id))
+    orderitemstable=OrderItemsTable(OrderItems.objects.filter(order=order))
+    packagestable = PackagesTable(Packages.objects.filter(delivery__order=order))
+    receiptstable = ReceivedTable(ReceivedItems.objects.filter(order_item__order=order))
+    jobdeliveriestable = JobDeliveriesTable(OutgoingItem.objects.filter(package__delivery__order=order))
+    return render(request, "wallcovering_order.html", {'orderstable': orderstable, 'orderitemstable':orderitemstable, 'packagestable':packagestable,'receiptstable':receiptstable,'jobdeliveriestable':jobdeliveriestable})
 
 def post_wallcovering_order(request):
     new_order = Orders(job_number=Jobs.objects.get(job_number=request.POST["select_job"]),description=request.POST["description"],vendor=Vendors.objects.get(id=request.POST["select_vendor"]),date_ordered=date.today())
@@ -23,6 +31,8 @@ def post_wallcovering_order(request):
     if 'po_number' in request.POST:
         new_order.po_number = request.POST["po_number"]
         new_order.save()
+    print("Number of Rows")
+    print(request.POST["number_rows"])
     for y in range (0,int(request.POST["number_rows"])+1):
         print(y)
         x=str(y)
@@ -35,10 +45,10 @@ def post_wallcovering_order(request):
         if 'select_wallcovering'+x in request.POST:
             new_item.wallcovering = Wallcovering.objects.get(id=request.POST["select_wallcovering" + x])
             new_item.save()
-    return render(request, 'index.html')
 
+    return redirect('wallcovering_order',id=new_order.id)
 
-def wallcovering_order(request, id, job_number):
+def wallcovering_order_new(request, id, job_number):
     jobs = Jobs.objects.filter(status="Open")
     vendors = Vendors.objects.all()
     vendors1 = Vendors.objects.values()
@@ -51,13 +61,13 @@ def wallcovering_order(request, id, job_number):
             wallcovering = Wallcovering.objects.filter(job_number__status="Open")
             pricing = WallcoveringPricing.objects.filter(wallcovering__job_number__status="Open")
             wallcovering1 = Wallcovering.objects.values('id','job_number__job_number','code','vendor__id','vendor__company_name','pattern','estimated_quantity', 'estimated_unit').filter(job_number__status="Open")
-            pricing1 = WallcoveringPricing.objects.values('wallcovering__id','quote_date','min_yards','price','unit').filter(wallcovering__job_number__status="Open")
+            pricing1 = WallcoveringPricing.objects.values('wallcovering__id','quote_date','min_yards','price','unit','id').filter(wallcovering__job_number__status="Open")
     else:
         selectedjob = Jobs.objects.get(job_number=job_number)
         wallcovering = Wallcovering.objects.filter(job_number__job_number=job_number)
         pricing = WallcoveringPricing.objects.filter(wallcovering__job_number__job_number=job_number)
         wallcovering1 = Wallcovering.objects.values('id','job_number__job_number','code','vendor__id','vendor__company_name','pattern','estimated_quantity', 'estimated_unit').filter(job_number__job_number=job_number)
-        pricing1 = WallcoveringPricing.objects.values('wallcovering__id','quote_date','min_yards','price','unit').filter(wallcovering__job_number__job_number=job_number)
+        pricing1 = WallcoveringPricing.objects.values('wallcovering__id','quote_date','min_yards','price','unit','id').filter(wallcovering__job_number__job_number=job_number)
         if id == "ALL":
             selectedwc = 0
             selectedpricing = 0
@@ -69,7 +79,7 @@ def wallcovering_order(request, id, job_number):
     wallcovering_json = json.dumps(list(wallcovering1), cls=DjangoJSONEncoder)
     pricing_json = json.dumps(list(pricing1), cls=DjangoJSONEncoder)
     vendors_json = json.dumps(list(vendors1), cls=DjangoJSONEncoder)
-    return render(request, "wallcovering_order.html", {'vendors':vendors,'vendors_json':vendors_json,'wallcovering_json':wallcovering_json,'pricing_json':pricing_json, 'selectedwc':selectedwc, 'selectedpricing':selectedpricing, 'selectedjob':selectedjob, 'jobs': jobs,'wallcovering': wallcovering, 'pricing': pricing, 'selectedvendor': selectedvendor})
+    return render(request, "wallcovering_order_new.html", {'vendors':vendors,'vendors_json':vendors_json,'wallcovering_json':wallcovering_json,'pricing_json':pricing_json, 'selectedwc':selectedwc, 'selectedpricing':selectedpricing, 'selectedjob':selectedjob, 'jobs': jobs,'wallcovering': wallcovering, 'pricing': pricing, 'selectedvendor': selectedvendor})
 
 
 def wallcovering_home(request):
@@ -154,10 +164,44 @@ def wallcovering_home(request):
     #packages = Packages.objects.filter(is_all_delivered_to_job=False) #items in warehouse not delivered to job yet
     return render(request, "wallcovering_home.html", {'wc_table':wc_table, 'wc_not_ordereds': wc_not_ordereds,'wc_ordereds': wc_ordereds, 'received_deliveries':received_deliveries ,'jobsite_deliveries':jobsite_deliveries ,'packages':packages})
 
+
+def wallcovering_pattern_new(request):
+    jobs = Jobs.objects.all()
+    vendors = Vendors.objects.all()
+    selectedpattern = 'NEW'
+    table = []
+    orderstable = []
+    receivedtable = []
+    jobdeliveriestable = []
+    packagestable = []
+    if request.method == 'POST':
+        selectedpattern = Wallcovering.objects.create(
+            job_number=Jobs.objects.get(job_number=request.POST['job_select']), code=request.POST['code'],
+            vendor=Vendors.objects.get(id=request.POST['vendor']), pattern=request.POST['pattern'])
+        selectedpattern.estimated_quantity = request.POST['estimated_quantity']
+        selectedpattern.estimated_unit = request.POST['estimated_unit']
+        selectedpattern.cut_charge = request.POST['cut_charge']
+        selectedpattern.roll_width = request.POST['roll_width']
+        selectedpattern.vertical_repeat = request.POST['vertical_repeat']
+        selectedpattern.notes = request.POST['notes']
+        if 'is_random_reverse' in request.POST:
+            selectedpattern.is_random_reverse = True
+        else:
+            selectedpattern.is_random_reverse = False
+        if 'is_repeat' in request.POST:
+            selectedpattern.is_repeat = True
+        else:
+            selectedpattern.is_repeat = False
+        selectedpattern.save()
+        table = WallcoveringPriceTable(WallcoveringPricing.objects.filter(wallcovering__id=selectedpattern.id))
+        orderstable="SKIP"
+    return render(request, "wallcovering_pattern.html", {'jobdeliveriestable':jobdeliveriestable,'packagestable':packagestable, 'receivedtable':receivedtable,'orderstable':orderstable,'selectedpattern': selectedpattern, 'jobs': jobs, 'vendors': vendors, 'table': table })
 def wallcovering_pattern(request, id):
+    jobs = Jobs.objects.all()
+    vendors = Vendors.objects.all()
     selectedpattern = Wallcovering.objects.get(id=id)
     table = WallcoveringPriceTable(WallcoveringPricing.objects.filter(wallcovering__id = id))
-    orderstable= OrdersTable(OrderItems.objects.filter(wallcovering__id=id))
+    orderstable= OrderItemsTable(OrderItems.objects.filter(wallcovering__id=id))
     receivedtable= ReceivedTable(ReceivedItems.objects.filter(order_item__wallcovering__id=id))
     packages_table=[]
     jobdeliveries=[]
@@ -169,8 +213,6 @@ def wallcovering_pattern(request, id):
                     jobdeliveries.append(z)
     packagestable= PackagesTable(packages_table)
     jobdeliveriestable= JobDeliveriesTable(jobdeliveries)
-    jobs = Jobs.objects.all()
-    vendors = Vendors.objects.all()
     if request.method == 'POST':
         if 'pricing1_price' in request.POST:
             new_price = WallcoveringPricing(wallcovering = selectedpattern, quote_date=request.POST['pricing1_date'],
@@ -183,7 +225,6 @@ def wallcovering_pattern(request, id):
             selectedpattern.job_number = Jobs.objects.get(job_number=request.POST['job_select'])
             selectedpattern.code = request.POST['code']
             selectedpattern.vendor = Vendors.objects.get(id = request.POST['vendor'])
-            print(request.POST['pattern'])
             selectedpattern.pattern = request.POST['pattern']
             selectedpattern.estimated_quantity = request.POST['estimated_quantity']
             selectedpattern.estimated_unit = request.POST['estimated_unit']
@@ -201,10 +242,10 @@ def wallcovering_pattern(request, id):
                 selectedpattern.is_repeat = False
             selectedpattern.save()
 
-
     return render(request, "wallcovering_pattern.html", {'jobdeliveriestable':jobdeliveriestable,'packagestable':packagestable, 'receivedtable':receivedtable,'orderstable':orderstable,'selectedpattern': selectedpattern, 'jobs': jobs, 'vendors': vendors, 'table': table })
 
 def wallcovering_status(request, table_type, id):
     if table_type == 'Outgoing':
+
         table = OutgoingWallcoveringTable(OutgoingItem.objects.filter(id=id))
         return render(request, "wallcovering_status.html", {'table': table})

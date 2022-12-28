@@ -34,4 +34,4 @@ admin.site.register(ClientEmployees)
 admin.site.register(Checklist)
 admin.site.register(ChangeOrders)
 admin.site.register(ReceivedItems)
-
+admin.site.register(WallcoveringPricing)

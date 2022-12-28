@@ -21,17 +21,26 @@ class OutgoingWallcoveringTable(tables.Table):
             fields = ("edit", "outgoing_event.job_number.job_name", "outgoing_event.delivered_by", "outgoing_event.notes","package.type", "package.contents", "description","quantity_sent","edit_col")
 
 
-class OrdersTable(tables.Table):
+class OrderItemsTable(tables.Table):
+    edit = tables.TemplateColumn('<a href="{% url "wallcovering_order" record.order.id %}">{{record.order.date_ordered}}</a>')
     class Meta:
         model = OrderItems
         template_name = "django_tables2/bootstrap.html"
-        fields = ('order__date_ordered','item_description','quantity', 'unit', 'item_notes')
+        fields = ('edit','item_description','quantity', 'unit', 'item_notes')
+
+class OrdersTable(tables.Table):
+    edit = tables.TemplateColumn('<a href="{% url "wallcovering_order" record.id %}">{{record.date_ordered}}</a>')
+    class Meta:
+        model = Orders
+        template_name = "django_tables2/bootstrap.html"
+        fields = ('po_number', 'job_number', 'vendor', 'description', 'edit', 'notes')
+
 
 class ReceivedTable(tables.Table):
     class Meta:
         model = ReceivedItems
         template_name = "django_tables2/bootstrap.html"
-        fields = ('order_item__item_description','wallcovering_delivery__date','quantity' )
+        fields = ('order_item__item_description','wallcovering_delivery__date','quantity','order_item__unit' )
 
 
 class PackagesTable(tables.Table):

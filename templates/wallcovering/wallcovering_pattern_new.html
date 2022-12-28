@@ -12,33 +12,10 @@
 	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
 	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
 	<style type="text/css" class="init">
-
     .table-container {
         width: 50%;
 
     }
-    .collapsible {
-  background-color: #777;
-  color: white;
-  cursor: pointer;
-  padding: 18px;
-  width: 100%;
-  border: none;
-  text-align: left;
-  outline: none;
-  font-size: 15px;
-}
-
-.active, .collapsible:hover {
-  background-color: #555;
-}
-
-.content {
-  padding: 0 18px;
-  display: none;
-  overflow: hidden;
-  background-color: #f1f1f1;
-}
 	</style>
 	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
 	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
@@ -58,7 +35,7 @@
 {% if selectedpattern != 'NEW' %}
 <form name = wallcovering_input action="{% url 'wallcovering_pattern' selectedpattern.id %}" method="post"  >
 {% else %}
-<form name = wallcovering_input action="{% url 'wallcovering_pattern_new' %}" method="post"  >
+<form name = wallcovering_input action="{% url 'wallcovering_pattern' 'NEW' %}" method="post"  >
 {% endif %}
     {% csrf_token %}
     <label>Select Job</label>
@@ -120,21 +97,21 @@
 <hr>
                         <label for="cut_charge">Cut charge:</label>
                         {% if selectedpattern != 'NEW' %}
-                            <input type="text" name="cut_charge" value="{{selectedpattern.cut_charge}}" class="vTextField" maxlength="1000" id="cut_charge">
+                            <input type="text" name="cut_charge" value={{selectedpattern.cut_charge}} class="vTextField" maxlength="1000" id="cut_charge">
     {% else %}
     <input type="text" name="cut_charge" placeholder="cut charge" class="vTextField" maxlength="1000" id="cut_charge">
     {% endif %}
 
                         <label for="roll_width">Roll width:</label>
                             {% if selectedpattern != 'NEW' %}
-                            <input type="text" name="roll_width" value="{{selectedpattern.roll_width}}" class="vTextField" maxlength="50" id="roll_width">
+                            <input type="text" name="roll_width" value={{selectedpattern.roll_width}} class="vTextField" maxlength="50" id="roll_width">
     {% else %}
     <input type="text" name="roll_width" placeholder="roll width" class="vTextField" maxlength="50" id="roll_width">
     {% endif %}
 
                         <label for="vertical_repeat">Vertical repeat:</label>
                             {% if selectedpattern != 'NEW' %}
-                            <input type="text" name="vertical_repeat" value="{{selectedpattern.vertical_repeat}}" class="vTextField" maxlength="50" id="vertical_repeat">
+                            <input type="text" name="vertical_repeat" value={{selectedpattern.vertical_repeat}} class="vTextField" maxlength="50" id="vertical_repeat">
     {% else %}
     <input type="text" name="vertical_repeat" placeholder="vertical repeat" class="vTextField" maxlength="50" id="vertical_repeat">
     {% endif %}
@@ -172,10 +149,10 @@
 </form>
 <br><hr>
 {% if selectedpattern != 'NEW' %}
-<button type="button" class="collapsible">Log-In Pricing Received for this Material</button>
-    <div class="content">
-        <form name = wallcovering_price_input action="{% url 'wallcovering_pattern' selectedpattern.id %}" method="post"  >
-        {% csrf_token %}
+<form name = wallcovering_price_input action="{% url 'wallcovering_pattern' selectedpattern.id %}" method="post"  >
+
+    <h3>Log-in New Pricing</h3>
+    {% csrf_token %}
                         <label for="pricing1_date">Date of New Pricing</label>
                             <input type="date" name="pricing1_date"  required id="pricing1_date" >
 
@@ -188,48 +165,26 @@
 
                         <label for="pricing_unit">Unit</label>
                             <input type="text" name="pricing_unit"  maxlength="10" required id="pricing_unit">
-        <br><br>
+<br><br>
                             <label for="pricing_note">Notes</label>
                             <input type="text" name="pricing_note" size="200" maxlength="200" id="pricing_note">
-        <br>
-        <input type="submit" value="Save Pricing" class="default" name="save">
-        </form>
-        <hr><hr>
-    </div>
-    <hr><hr>
-{% if orderstable != "SKIP" %}
+<br>
+    <input type="submit" value="Save Pricing" class="default" name="save">
+</form>
+<hr><hr>
+
     <h3>Orders</h3>
-<div><a href = "{% url 'wallcovering_order_new' selectedpattern.id selectedpattern.job_number.job_number %}"><div style="height:100%;width:100%">Place New Order	</div></a></div>
+<div><a href = "{% url 'wallcovering_order' selectedpattern.id selectedpattern.job_number.job_number %}"><div style="height:100%;width:100%">Place New Order	</div></a></div>
 {% render_table orderstable %}
     <h3>Receipts</h3>
-<div><a href = "{% url 'index' %}"><div style="height:100%;width:100%">Receive New Delivery - still need to code	</div></a></div>
+<div><a href = "{% url 'wallcovering_order' selectedpattern.id selectedpattern.job_number.job_number %}"><div style="height:100%;width:100%">Receive New Delivery	</div></a></div>
 {% render_table receivedtable %}
     <h3>Packages</h3>
 {% render_table packagestable %}
     <h3>Sent to Job</h3>
-<div><a href = "{% url 'index' %}"><div style="height:100%;width:100%">Send to Job- still need to code	</div></a></div>
+<div><a href = "{% url 'wallcovering_order' selectedpattern.id selectedpattern.job_number.job_number %}"><div style="height:100%;width:100%">Send to Job	</div></a></div>
 {% render_table jobdeliveriestable %}
-{% endif %}
-    {% endif %}
-
-<script>
-var coll = document.getElementsByClassName("collapsible");
-var i;
-
-for (i = 0; i < coll.length; i++) {
-  coll[i].addEventListener("click", function() {
-    this.classList.toggle("active");
-    var content = this.nextElementSibling;
-    if (content.style.display === "block") {
-      content.style.display = "none";
-    } else {
-      content.style.display = "block";
-    }
-  });
-}
-</script>
-
 </body>
 </html>
-
+{% endif %}
 {% endblock %}
