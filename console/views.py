@@ -14,6 +14,9 @@ def index(request):
     return render(request, 'index.html')
 
 
+def warehouse_home(request):
+    return render(request, 'warehouse_home.html')
+
 
 
 # Create your views here.

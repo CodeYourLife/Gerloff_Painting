@@ -170,7 +170,7 @@ class JobNotes(models.Model):
 		return f"{self.job_number} {self.type}"
 
 
-class VendorCategory(models.Model): #rentals, wallcovering
+class VendorCategory(models.Model): #Equipment Rental, Wallcovering Supplier
 	id = models.BigAutoField(primary_key=True)
 	category = models.CharField(null=True, max_length=250)
 	def __str__(self):
@@ -350,12 +350,23 @@ class Orders(models.Model): #one pattern, one WC1, etc. may be broken up into se
 	def __str__(self):
 		return f"{self.job_number} {self.description}"
 
+	def packages_received(self):
+		totalquantity=0
+		for x in Packages.objects.filter(delivery__order=self):
+			totalquantity=totalquantity + x.quantity_received
+		return totalquantity
+	def packages_sent(self):
+		totalquantity=0
+		for x in OutgoingItem.objects.filter(package__delivery__order=self):
+			totalquantity=totalquantity+x.quantity_sent
+		return totalquantity
+
 
 class OrderItems(models.Model): #usually just one of these per order
 	id = models.BigAutoField(primary_key=True)
 	order = models.ForeignKey(Orders, on_delete=models.PROTECT, related_name = 'orderitems2')
 	wallcovering = models.ForeignKey(Wallcovering, on_delete=models.PROTECT, related_name = 'orderitems1', null=True, blank=True)
-	quantity = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+	quantity = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True,verbose_name='Quantity Ordered')
 	unit = models.CharField(null=True, max_length=10)
 	price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 	item_description = models.CharField(null=True, max_length=100)
@@ -365,10 +376,16 @@ class OrderItems(models.Model): #usually just one of these per order
 	def __str__(self):
 		return f"{self.item_description}"
 
+	def quantity_received(self):
+		totalquantity=0
+		for x in ReceivedItems.objects.filter(order_item=self):
+			totalquantity=totalquantity+x.quantity
+		return totalquantity
+
 
 class WallcoveringDelivery(models.Model): #one instance when receiving material. actual items listed below
 	id = models.BigAutoField(primary_key=True)
-	order = models.ForeignKey(Orders, on_delete=models.PROTECT)
+	order = models.ForeignKey(Orders, on_delete=models.PROTECT,related_name="foreign_wallcoveringdelivery")
 	date = models.DateField(null=True, blank=True)
 	def __str__(self):
 		return f"{self.date} {self.order.job_number}"
@@ -376,18 +393,18 @@ class WallcoveringDelivery(models.Model): #one instance when receiving material.
 
 class ReceivedItems(models.Model):
 	id = models.BigAutoField(primary_key=True)
-	wallcovering_delivery = models.ForeignKey(WallcoveringDelivery, on_delete=models.PROTECT)
-	order_item = models.ForeignKey(OrderItems, on_delete=models.PROTECT)  # j-trim
+	wallcovering_delivery = models.ForeignKey(WallcoveringDelivery, on_delete=models.PROTECT, related_name="foreign_receiveditems1")
+	order_item = models.ForeignKey(OrderItems, on_delete=models.PROTECT,related_name="foreign_receiveditems2")  # j-trim
 	quantity = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 	def __str__(self):
 		return f"{self.wallcovering_delivery.date} {self.order_item.item_description}"
 
 class Packages(models.Model):
 	id = models.BigAutoField(primary_key=True)
-	delivery = models.ForeignKey(WallcoveringDelivery, on_delete=models.PROTECT)
+	delivery = models.ForeignKey(WallcoveringDelivery, on_delete=models.PROTECT, related_name="foreign_packages")
 	type = models.CharField(null=True, max_length=200) #box, bolt, bucket
 	contents = models.CharField(null=True, max_length=2000) #Wallprotection, FRP glue,
-	quantity_received = models.IntegerField(default=0) #3
+	quantity_received = models.IntegerField(default=0, verbose_name='Packages Received') #3
 	notes = models.CharField(null=True, max_length=2000, blank=True)
 	def __str__(self):
 		return f"{self.delivery.order.job_number} {self.contents}"
@@ -409,7 +426,7 @@ class OutgoingItem(models.Model):
 	outgoing_event = models.ForeignKey(OutgoingWallcovering, on_delete=models.PROTECT)
 	package = models.ForeignKey(Packages, on_delete=models.PROTECT)
 	description = models.CharField(null=True, max_length=200)
-	quantity_sent = models.IntegerField(default=0)
+	quantity_sent = models.IntegerField(default=0,verbose_name='Packages Sent to Job')
 	def __str__(self):
 		return f"{self.description}"
 
@@ -487,12 +504,16 @@ class Rentals(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	company = models.ForeignKey(Vendors, on_delete=models.PROTECT, null=True, blank=True)
 	item = models.CharField(null=True, max_length=250)
-	purchase_order = models.CharField(null=True, max_length=250)
+	purchase_order = models.CharField(null=True, max_length=250,blank=True)
 	on_rent_date = models.DateField(null=True, blank=True)
 	off_rent_date = models.DateField(null=True, blank=True)
 	off_rent_number = models.CharField(null=True, max_length=250, blank=True)
 	notes = models.CharField(null=True, max_length=2000)
 	job_number = models.ForeignKey(Jobs, on_delete=models.PROTECT)
+	day_price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+	week_price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+	month_price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+	is_closed = models.BooleanField(default=False) #once accounting has invoiced
 	def __str__(self):
 		return f"{self.job_number} {self.item}"
 

@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+
+	</style>
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+function Previous() {
+window.history.back()
+}
+	</script>
+</head>
+<body>
+ <form name = rental_change action={% url 'rental_page' rental.id 'NO' %} method="post"  onSubmit = "return check_booking_data()">
+{% csrf_token %}
+
+Job: {{rental.job_number}}
+<br><br>
+Vendor: {{rental.company.company_name}}
+<br><br>
+Item: {{rental.item}}
+<br><br>
+{% if rental.purchase_order == "" %}
+Purchase Order: <input type= "text" name="purchase_order" id="purchase_order" placeholder="Purchase Order #" size="30" />
+{% else %}
+ <input type="hidden" name="purchase_order" value = ''/>
+Purchase Order: {{rental.purchase_order}}
+ {% endif %}
+<br><br>
+ {% if rental.day_price == None %}
+                          <label for="day_price">Daily Price: $</label>
+                            <input type="text" name="day_price"  maxlength="250" id="day_price">
+ {% else %}
+  <input type="hidden" name="day_price" value = ''/>
+ Price Per Day: ${{rental.day_price}}
+  {% endif %}
+<br><br>
+ {% if rental.week_price == None %}
+                         <label for="week_price">Weekly Price: $</label>
+                            <input type="text" name="week_price"  maxlength="250" id="week_price">
+  {% else %}
+  <input type="hidden" name="week_price" value = ''/>
+Price Per Week: ${{rental.week_price}}
+  {% endif %}
+<br><br>
+ {% if rental.month_price == None %}
+                         <label for="month_price">Monthly Price: $</label>
+                            <input type="text" name="month_price"  maxlength="250" id="month_price">
+  {% else %}
+  <input type="hidden" name="month_price" value = ''/>
+Price Per Month: ${{rental.month_price}}
+  {% endif %}
+<br><br>
+
+
+
+On Rent Date: {{rental.on_rent_date}}
+<br><br>
+ {% if rental.off_rent_date == None %}
+	                     <label for="off_rent_date">Off Rent Date:</label>
+                    <input type="date" id="off_rent_date" name="off_rent_date">
+	 {% else %}
+  <input type="hidden" name="off_rent_date" value = ''/>
+Off Rent Date: {{rental.off_rent_date}}
+	  {% endif %}
+<br><br>
+  {% if rental.off_rent_number == None %}
+Off Rent Number: <input type= "text" name="off_rent_number" id="off_rent_number" placeholder="Off Rent Number" size="30" />
+	 {% else %}
+  <input type="hidden" name="off_rent_number" value = ''/>
+Off Rent Number: {{rental.off_rent_number}}
+	  {% endif %}
+	 <br><br>
+        <label for="notes">Notes about this Rental </label> <br>
+        <textarea id="notes" name="notes" rows="4" cols="100" >{{rental.notes}}</textarea>
+<br>
+ <br>
+	 <input type="submit" value="Update Information" />
+    </form>
+ <br>
+{%if reverse == 'YES' %}
+  <button onclick="Previous()">Back to Previous Page</button>
+{% endif %}
+</body>
+</html>
+
+{% endblock %}

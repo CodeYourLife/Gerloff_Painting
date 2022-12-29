@@ -1,8 +1,10 @@
 from console.models import *
 import django_tables2 as tables
-from console.models import *
+from console.models import Orders, OrderItems, Packages, WallcoveringDelivery, ReceivedItems, OutgoingWallcovering, OutgoingItem
 from django_filters.views import FilterView
 from django_tables2.utils import A
+
+from .filters import OrderItemsFilter
 
 
 
@@ -29,11 +31,22 @@ class OrderItemsTable(tables.Table):
         fields = ('edit','item_description','quantity', 'unit', 'item_notes')
 
 class OrdersTable(tables.Table):
-    edit = tables.TemplateColumn('<a href="{% url "wallcovering_order" record.id %}">{{record.date_ordered}}</a>')
+    order_date = tables.TemplateColumn('<a href="{% url "wallcovering_order" record.id %}">{{record.date_ordered}}</a>')
     class Meta:
         model = Orders
         template_name = "django_tables2/bootstrap.html"
-        fields = ('po_number', 'job_number', 'vendor', 'description', 'edit', 'notes')
+        fields = ('po_number', 'job_number', 'vendor', 'description', 'order_date', 'notes')
+
+class CombinedOrdersTable(tables.Table):
+    ponumber = tables.TemplateColumn('<a href="{% url "wallcovering_order" record.order.id %}">{{record.order.po_number}}</a>')
+    jobnumber = tables.TemplateColumn('<a href="{% url "job_page" record.order.job_number.job_number %}">{{record.order.job_number}}</a>')
+    order__packages_received = tables.Column(verbose_name= 'Packages Received')
+    order__packages_sent = tables.Column(verbose_name='Packages Sent')
+    class Meta:
+        model = OrderItems
+        template_name = "django_tables2/bootstrap.html"
+        fields = ('jobnumber','ponumber', 'order.date_ordered', 'item_description', 'quantity', 'unit','quantity_received')
+        filterset_class = OrderItemsFilter
 
 
 class ReceivedTable(tables.Table):
@@ -44,6 +57,7 @@ class ReceivedTable(tables.Table):
 
 
 class PackagesTable(tables.Table):
+
     class Meta:
         model = Packages
         template_name = "django_tables2/bootstrap.html"

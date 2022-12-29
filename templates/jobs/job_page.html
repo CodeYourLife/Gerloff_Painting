@@ -80,13 +80,8 @@ $(document).ready(function () {
                     return data;}}] });
 });
 $(document).ready(function () {
-    var table = $('#tickets_table4').DataTable({
-        columnDefs: [{
-                targets:0,
-                render: function ( data, type, row, meta ) {
-                    if(type === 'display'){
-                    	data = '<a href="job_page/' + data + '">' + data + '</a>'; }
-                    return data;}}] });
+    var table = $('#tickets_table4').DataTable({})
+
 });
 	</script>
 </head>
@@ -230,7 +225,10 @@ $(document).ready(function () {
 			<tbody>
 			{% for rental in rentals %}
 				<tr>
-					<td>{{rental.item}}</td>
+					<td><a href = "{% url 'rental_page' rental.id 'YES' %}">
+							<div style="height:100%;width:100%">
+								{{rental.item}}	</div>
+						</a></td>
 					<td>{{rental.on_rent_date}}</td>
 					<td>{{rental.notes}}</td>
 				</tr>

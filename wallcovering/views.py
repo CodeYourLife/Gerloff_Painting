@@ -13,6 +13,8 @@ from .tables import *
 from json import dumps
 import json
 from django.core.serializers.json import DjangoJSONEncoder
+from .filters import OrderItemsFilter
+from django_tables2 import RequestConfig
 # Create your views here.
 
 def wallcovering_order(request,id):
@@ -50,8 +52,8 @@ def post_wallcovering_order(request):
 
 def wallcovering_order_new(request, id, job_number):
     jobs = Jobs.objects.filter(status="Open")
-    vendors = Vendors.objects.all()
-    vendors1 = Vendors.objects.values()
+    vendors = Vendors.objects.filter(category__category="Wallcovering Supplier")
+    vendors1 = Vendors.objects.filter(category__category="Wallcovering Supplier").values()
     if job_number == "ALL":
         selectedjob = 0
         if id == "ALL":
@@ -149,10 +151,11 @@ def wallcovering_home(request):
     wc_ordereds = OrderItems.objects.filter(is_satisfied=False) #orders not received yet
     received_deliveries = WallcoveringDelivery.objects.all()
     jobsite_deliveries =  OutgoingItem.objects.all()
+    all_orders = OrderItemsFilter(request.GET, queryset =OrderItems.objects.filter(order__job_number__status="Open"))
+    table2 = CombinedOrdersTable(all_orders.qs)
+    has_filter = any(field in request.GET for field in set(all_orders.get_fields()))
     packages = []
     for y in Packages.objects.filter(delivery__order__job_number__status = "Open" ):
-        print("THIS HERE")
-        print(y.id)
         sentquantity = 0
         match = False
         for x in OutgoingItem.objects.filter(package = y):
@@ -162,12 +165,12 @@ def wallcovering_home(request):
         if match == False:
             packages.append(y)
     #packages = Packages.objects.filter(is_all_delivered_to_job=False) #items in warehouse not delivered to job yet
-    return render(request, "wallcovering_home.html", {'wc_table':wc_table, 'wc_not_ordereds': wc_not_ordereds,'wc_ordereds': wc_ordereds, 'received_deliveries':received_deliveries ,'jobsite_deliveries':jobsite_deliveries ,'packages':packages})
+    return render(request, "wallcovering_home.html", {'has_filter':has_filter,'all_orders':all_orders,'wc_table':wc_table, 'wc_not_ordereds': wc_not_ordereds,'wc_ordereds': wc_ordereds, 'received_deliveries':received_deliveries ,'jobsite_deliveries':jobsite_deliveries ,'packages':packages, 'table2':table2})
 
 
 def wallcovering_pattern_new(request):
     jobs = Jobs.objects.all()
-    vendors = Vendors.objects.all()
+    vendors = Vendors.objects.filter(category__category="Wallcovering Supplier")
     selectedpattern = 'NEW'
     table = []
     orderstable = []
@@ -198,7 +201,7 @@ def wallcovering_pattern_new(request):
     return render(request, "wallcovering_pattern.html", {'jobdeliveriestable':jobdeliveriestable,'packagestable':packagestable, 'receivedtable':receivedtable,'orderstable':orderstable,'selectedpattern': selectedpattern, 'jobs': jobs, 'vendors': vendors, 'table': table })
 def wallcovering_pattern(request, id):
     jobs = Jobs.objects.all()
-    vendors = Vendors.objects.all()
+    vendors = Vendors.objects.filter(category__category="Wallcovering Supplier")
     selectedpattern = Wallcovering.objects.get(id=id)
     table = WallcoveringPriceTable(WallcoveringPricing.objects.filter(wallcovering__id = id))
     orderstable= OrderItemsTable(OrderItems.objects.filter(wallcovering__id=id))

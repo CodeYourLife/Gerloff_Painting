@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'subcontractors.apps.SubcontractorsConfig',
     'wallcovering.apps.WallcoveringConfig',
     'django_tables2',
+    'django_filters',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

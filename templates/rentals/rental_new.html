@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+
+	</style>
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+
+	</script>
+</head>
+<body>
+ <form name = rental_input action={% url 'rental_new' 'ALL' %} method="post"  onSubmit = "return check_data()">
+{% csrf_token %}
+
+    <label for="select_vendor">Select Vendor</label>
+    <select id="select_vendor" name="select_vendor" >
+        <option value="select_vendor_name">Select Vendor</option>
+        {% if vendors %}
+        {% for vendor in vendors %}
+        <option value={{vendor.id}}>{{vendor.company_name}}</option>
+        {% endfor %}
+        {% endif %}
+    </select>
+
+<br><br>
+
+                 <label for="select_job">Select Job</label>
+            <select id="select_job" name="select_job" >
+                <option value="selected_job">Select Job</option>
+                {% if jobs %}
+                {% for job in jobs %}
+                <option value={{job.job_number}}>{{job.job_number}} {{job.job_name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+<br><br>
+
+   <label class="required" for="item">Item:</label>
+    <input type="text" name="item" size="50" maxlength="250" placeholder = "40' Boom, 19' Scissor, Etc." required id="item">
+<br><br>
+                        <label for="purchase_order">Purchase order #</label>
+                            <input type="text" name="purchase_order"  maxlength="250" id="purchase_order">
+<br><br>
+                         <label for="day_price">Daily Price</label>
+                            <input type="text" name="day_price"  maxlength="250" id="day_price">
+<br><br>
+                         <label for="week_price">Weekly Price</label>
+                            <input type="text" name="week_price"  maxlength="250" id="week_price">
+<br><br>
+                         <label for="month_price">Monthly Price</label>
+                            <input type="text" name="month_price"  maxlength="250" id="month_price">
+<br><br>
+                        <label for="on_rent_date">On rent date:</label>
+                            <input type="date" name="on_rent_date" size="10" id="on_rent_date" required>
+<br><br>
+        <label for="notes">Any Notes About The Rental:</label> <br>
+        <textarea id="notes" name="notes" rows="4" cols="100" ></textarea>
+<br><br>
+
+     <input type="submit" value="Add New Rental" />
+    </form>
+</body>
+</html>
+
+{% endblock %}
