@@ -118,12 +118,40 @@ class Jobs(models.Model):
 
 
 class InventoryType(models.Model):
-	id = models.IntegerField(primary_key=True)
+	id = models.BigAutoField(primary_key=True)
+	#id = models.IntegerField(primary_key=True)
 	type = models.CharField(null=True, max_length=50)
-	is_active = models.BooleanField(default=False)
+	is_active = models.BooleanField(default=True)
 	def __str__(self):
 		return f"{self.type}"
 
+class InventoryItems(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	type = models.ForeignKey(InventoryType,on_delete=models.PROTECT)
+	name = models.CharField(null=True, max_length=100)
+	def __str__(self):
+		return f"{self.type} {self.name}"
+
+class InventoryItems2(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	type = models.ForeignKey(InventoryItems,on_delete=models.PROTECT)
+	name = models.CharField(null=True, max_length=100)
+	def __str__(self):
+		return f"{self.type} {self.name}"
+
+class InventoryItems3(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	type = models.ForeignKey(InventoryItems2,on_delete=models.PROTECT)
+	name = models.CharField(null=True, max_length=100)
+	def __str__(self):
+		return f"{self.type} {self.name}"
+
+class InventoryItems4(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	type = models.ForeignKey(InventoryItems3,on_delete=models.PROTECT)
+	name = models.CharField(null=True, max_length=100)
+	def __str__(self):
+		return f"{self.type} {self.name}"
 
 class StorageLocationType(models.Model):
 	id = models.IntegerField(primary_key=True)
@@ -194,7 +222,7 @@ class Inventory(models.Model):
 	storage_location = models.CharField(null=True, max_length=50, blank=True)
 	purchase_date = models.DateField(null=True, blank=True)
 	purchase_price = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
-	purchased_from = models.CharField(null=True, max_length = 2000, blank=True)
+	purchased_from = models.ForeignKey(Vendors,on_delete=models.PROTECT, blank=True, null=True,related_name = 'inventory1')
 	purchased_by = models.CharField(null=True, max_length=250, blank=True)
 	serial_number = models.CharField(null=True, max_length=250, blank=True)
 	po_number = models.CharField(null=True, max_length=250, blank=True)
@@ -205,9 +233,9 @@ class Inventory(models.Model):
 	job_number = models.ForeignKey(Jobs,on_delete=models.PROTECT, blank=True, null=True)
 	# job_number is the foreign key to the job number in Jobs
 	notes = models.CharField(null=True, max_length=2000, blank=True)
-	vendor = models.ForeignKey(Vendors,on_delete=models.PROTECT, blank=True, null=True)
+	service_vendor = models.ForeignKey(Vendors,on_delete=models.PROTECT, blank=True, null=True,related_name = 'inventory2')
 	def __str__(self):
-		return f"{self.job_number} {self.item}"
+		return f"{self.inventory_type} {self.item}"
 
 
 class InventoryNotes(models.Model):

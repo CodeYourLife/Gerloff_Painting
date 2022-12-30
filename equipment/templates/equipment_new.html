@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+
+	</style>
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+    var row_counter = 0;
+
+	function check_vendor(){
+		var hidden = document.getElementById("purchased_from")
+		var text_box = document.getElementById("vendor_name")
+		var select_box = document.getElementById("select_vendor")
+		if (select_box.options[select_box.selectedIndex].text != text_box.value){
+			hidden.value = "new"
+		}
+	}
+    function update_vendor(){
+    	var vendor = document.getElementById("select_vendor")
+    	var placeholder = document.getElementById("purchased_from")
+    	placeholder.value = vendor.value
+    	name_destination = document.getElementById("vendor_name")
+    	name_destination.value = vendor.options[vendor.selectedIndex].text
+	}
+    function add_dropdown(current_item) {
+    		if (row_counter > 0){
+    		for(let i = current_item+1; i < row_counter+1; i++){
+    			var deleted_item = document.getElementById("inventory_type" + i);
+    			for (const label of deleted_item.labels) {
+    			label.textContent = ""
+    			}
+    			deleted_item.remove();
+				}
+			}
+
+
+		row_counter = current_item +1
+    	var item_box = document.getElementById("item")
+    	temp_value = ""
+    	for(let i = 0; i < row_counter; i++){
+    		temp_item = document.getElementById("inventory_type" + i);
+    		temp_item_value = temp_item.options[temp_item.selectedIndex].text
+    		temp_value = temp_value + " " + temp_item_value;
+    		}
+    	item_box.value = temp_value
+    	add_item_dropdown();
+	}
+
+	function add_item_dropdown() {
+		var select = document.createElement("select");
+		select.name = "inventory_type" + row_counter;
+		select.id = "inventory_type" + row_counter;
+
+
+		if (row_counter == 1){
+		selectedtype = equipment_input.inventory_type0.value;
+		rolodex = JSON.parse("{{inventoryitems1|escapejs}}");
+		select.addEventListener('change',function() {add_dropdown(1);},false);
+		}
+		if (row_counter == 2){
+		selectedtype = equipment_input.inventory_type1.value;
+		rolodex = JSON.parse("{{inventoryitems2|escapejs}}");
+		select.addEventListener('change',function() {add_dropdown(2);},false);
+		}
+				if (row_counter == 3){
+		selectedtype = equipment_input.inventory_type2.value;
+		rolodex = JSON.parse("{{inventoryitems3|escapejs}}");
+		select.addEventListener('change',function() {add_dropdown(3);},false);
+		}
+				if (row_counter == 4){
+		selectedtype = equipment_input.inventory_type3.value;
+		rolodex = JSON.parse("{{inventoryitems4|escapejs}}");
+		select.addEventListener('change',function() {add_dropdown(4);},false);
+		}
+        b=0
+        for(let i =0; i < rolodex.length; i++){
+            if (rolodex[i].type__id == selectedtype){
+                    if (b==0){
+                    	b=1
+						var option = document.createElement("option");
+						option.value ="select_id"
+						option.text="Select Item"
+						select.appendChild(option);
+					}
+                    var option = document.createElement("option");
+                    option.value =rolodex[i].id
+                    option.text=rolodex[i].name
+                    select.appendChild(option);
+            }
+        }
+        if (b==0){
+        	row_counter = row_counter-1
+        	select.remove()}
+        if (b==1){
+        var label = document.createElement("label");
+        label.textContent= "Select Item"
+		document.getElementById('add_item_here' + row_counter).appendChild(label).appendChild(select);
+		}
+         }
+	</script>
+</head>
+<body>
+<div class ="container">
+ <form name = equipment_input action={% url 'equipment_new' %} method="post"  onSubmit = "return check_booking_data()">
+{% csrf_token %}
+			<label for="inventory_type0">Select Equipment Type</label>
+            <select id="inventory_type0" name="inventory_type0" onChange="add_dropdown(0)">
+				<option value="select_inventory_type">Select Category</option>
+                {% for type in inventorytype %}
+                <option value={{type.id}}>{{type.type}}</option>
+                {% endfor %}
+
+            </select>
+
+	 <br><br>
+			<div id="add_item_here1"></div>
+	 		<div id="add_item_here2"></div>
+	 		<div id="add_item_here3"></div>
+	 		<div id="add_item_here4"></div>
+
+	 <br><br>
+
+	 Item Description: <input type= "text" name="item" id="item" placeholder= "Stepladder 6'" size="30" required />
+	 <br><br>
+	 Gerloff Number:<input type= "text" name="number" id="number" placeholder="Equipment Number" size="30"  />
+	<br><br>
+                    <label for="purchase_date">Date Purchased:</label>
+                    <input type="date" id="purchase_date" name="purchase_date" required>
+
+	 Purchase Price:<input type= "number" name="purchase_price" id="purchase_price" placeholder=0.00 size="30" required/>
+	<br><br>
+	             <label for="select_vendor">Where did you purchase?</label>
+            <select id="select_vendor" name="select_vendor" onchange="update_vendor()" >
+                 <option value="new">Select Vendor</option>
+				{% if vendors %}
+                {% for vendor in vendors %}
+                <option value={{vendor.id}}>{{vendor.company_name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+
+<br><br>
+	 <input type = "hidden" id="purchased_from" name="purchased_from" value="new" />
+	 Type Vendor Name if Not in List:<input type= "text" name="vendor_name" id="vendor_name" placeholder="" size="30" onChange="check_vendor()"/>
+	<br><br>
+	 Purchased By:<input type= "text" name="purchased_by" id="purchased_by" placeholder="" size="30" />
+	<br><br>
+	 Serial Number:<input type= "text" name="serial_number" id="serial_number" placeholder="" size="30" />
+	<br><br>
+	 PO Number:<input type= "text" name="po_number" id="po_number" placeholder="" size="30" />
+	<br><br>
+	<input type="checkbox" name ="is_labeled" id="is_labeled"   /> <label for="is_labeled">"Does this have a Gerloff tag?" </label>
+	 <br><br>
+        <label for="notes">Any notes about this item: </label> <br>
+        <textarea id="notes" name="notes" rows="4" cols="100" ></textarea>
+
+
+<br><br>
+
+
+<input type="submit" value="Add New Equipment" />
+    </form>
+</div>
+
+</body>
+</html>
+
+{% endblock %}

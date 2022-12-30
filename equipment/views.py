@@ -12,8 +12,30 @@ from django_tables2 import SingleTableView
 from .tables import *
 from console.models import InventoryNotes
 from .filters import EquipmentNotesFilter
+import json
+from django.core.serializers.json import DjangoJSONEncoder
 # Create your views here.
 
+
+def equipment_new(request):
+    inventorytype=InventoryType.objects.all()
+    inventoryitems1 = json.dumps(list(InventoryItems.objects.values('id','type__id','name').all()), cls=DjangoJSONEncoder)
+    inventoryitems2 = json.dumps(list(InventoryItems2.objects.values('id','type__id','name').all()), cls=DjangoJSONEncoder)
+    inventoryitems3 = json.dumps(list(InventoryItems3.objects.values('id','type__id','name').all()), cls=DjangoJSONEncoder)
+    inventoryitems4 = json.dumps(list(InventoryItems4.objects.values('id','type__id','name').all()), cls=DjangoJSONEncoder)
+    vendors = Vendors.objects.filter(category__category='Equipment Supplier')
+    if request.method == 'POST':
+        if request.POST['purchased_from'] == 'new':
+            vendor = Vendors.objects.create(company_name=request.POST['vendor_name'], category=VendorCategory.objects.get(category='Equipment Supplier'))
+        else:
+            vendor = Vendors.objects.get(id=request.POST['purchased_from'])
+        inventory=Inventory.objects.create(item =request.POST['item'],inventory_type=InventoryType.objects.get(id=request.POST['inventory_type0']),purchase_date =request.POST['purchase_date'],purchased_from =vendor,status="Available",number=request.POST['number'],purchase_price=request.POST['purchase_price'],purchased_by=request.POST['purchased_by'],serial_number=request.POST['serial_number'],po_number=request.POST['po_number'],notes=request.POST['notes'])
+        inventory=Inventory.objects.latest('id')
+        if 'is_labeled' in request.POST:
+            inventory.is_labeled=True
+            inventory.save()
+        return redirect('equipment_page', id=inventory.id)
+    return render(request, "equipment_new.html", {'vendors':vendors,'inventorytype':inventorytype,'inventoryitems1':inventoryitems1,'inventoryitems2':inventoryitems2,'inventoryitems3':inventoryitems3,'inventoryitems4':inventoryitems4})
 def equipment_page(request, id):
     inventory = Inventory.objects.get(id=id)
     table = EquipmentNotesTable(InventoryNotes.objects.filter(inventory_item=inventory))

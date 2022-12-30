@@ -233,13 +233,21 @@
 </head>
 
   <body>
+  <div class ="container">
   <h1>Book New Job</h1>
+  </div>
     <form name = booking_input action="register" method="post"  onSubmit = "return check_booking_data()">
         {% csrf_token %}
-        <input type="text" name="job_number" placeholder="Leave Blank (unless entering a custom job number)" maxlength="5" size="100" id="job_number"/><br />
-        <input type="text" name="job_name" placeholder="Job name" size="100" id="job_name"/><br />
-        <br />
-        <input type="text" name="address" placeholder="address" size="100" id="address" /><br />
+       <div class ="container">
+            <div class ="row">
+                <input type="text" name="job_number" placeholder="Leave Blank (unless entering a custom job number)" maxlength="5" size="100" id="job_number"/><br />
+                <input type="text" name="job_name" placeholder="Job name" size="100" id="job_name"/><br />
+            </div>
+            <br />
+           <div class ="row">
+                <input type="text" name="address" placeholder="address" size="100" id="address" /><br />
+           </div>
+       </div>
         <div class ="container">
             <div class ="row">
                 <div class ="col">    <input type="text" name="city" placeholder="City" size="30" id="city"/><br />         </div>
@@ -248,11 +256,12 @@
             </div>
         </div> <!#city state>
         <br />        <hr>
-        <input type='hidden' value='notchecked' name='on_base' id="on_base1">
-        <input type="checkbox" name ="on_base" id="on_base2" value="checked"  />
+        <div class ="container">
+        <input type='hidden' value='notchecked' name='on_base2' id="on_base1">
+        <input type="checkbox" name ="on_base2" id="on_base2" value="checked"  />
         <label for="on_base2">"Security Clearance Required?" </label>
         <br /><br>
-
+        </div>
         <div class ="container">
             <div class ="row">
                 <div class ="col"><input type= "text" name="spray_scale" placeholder="Spray Scale" size="30"/><br /></div>
@@ -361,6 +370,7 @@
             </div>
         </div>
         <br /> <hr><br />
+        <div class ="container">
             <label for="select_gpsuper">please select Gerloff superintendent</label>
             <select id="select_gpsuper" name="select_gpsuper" >
                 <option value="not_sure">not sure</option>
@@ -371,6 +381,7 @@
                 {% endif %}
             </select>
         <br /> <hr>
+        </div>
         <div class ="container">
             <div class ="row">
                 <div class ="col-sm-4">please select the scopes of work this project includes:</div>
@@ -391,9 +402,11 @@
             </div>
         </div>
         <br /> <hr>
+        <div class ="container">
         <label for="email_job_note">Summarize the job scope: </label> <br>
         <textarea id="email_job_note" name="email_job_note" rows="4" cols="100" ></textarea>
         <br /> <hr>
+        </div>
         <div class ="container" id = "contract_amount_section">
             <div class ="row">
                 <div class ="col-sm-4">Total Contract Amount: </div>
@@ -414,7 +427,8 @@
         <br /> <hr>
 
          <br />
-           <input type="submit" value="Book Job Now" />
+        <div class ="container">
+            <input type="submit" value="Book Job Now" /></div>
     </form>
 
 <script src=”https://code.jquery.com/jquery-3.2.1.slim.min.js” integrity=”sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN” crossorigin=”anonymous”></script>

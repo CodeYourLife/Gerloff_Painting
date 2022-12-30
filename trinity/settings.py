@@ -65,7 +65,7 @@ ROOT_URLCONF = 'trinity.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR, 'templates/console', 'templates', 'templates/superintendent', 'templates/bootstrap', 'templates/changeorder', 'templates/equipment', 'templates/employees','templates/jobs','templates/rentals','templates/subcontractors','templates/wallcovering'],
+        'DIRS': [BASE_DIR, 'console/templates', 'templates', 'superintendent/templates', 'templates/bootstrap', 'changeorder/templates', 'equipment/templates', 'employees/templates','jobs/templates','rentals/templates','subcontractors/templates','wallcovering/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
