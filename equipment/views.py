@@ -11,11 +11,69 @@ from datetime import date
 from django_tables2 import SingleTableView
 from .tables import *
 from console.models import InventoryNotes
-from .filters import EquipmentNotesFilter
+from .filters import EquipmentNotesFilter, EquipmentFilter, EquipmentFilter2
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 # Create your views here.
 
+def equipment_remove_from_outgoing_cart(request,id): #status = None, Outgoing, Incoming
+    item = Inventory.objects.get(id=id)
+    item.batch = None
+    item.save()
+    return redirect('equipment_batch_outgoing',status='Outgoing')
+
+def equipment_remove_from_incoming_cart(request,id): #status = None, Outgoing, Incoming
+    item = Inventory.objects.get(id=id)
+    item.batch = None
+    item.save()
+    return redirect('equipment_batch_outgoing',status='Incoming')
+
+def equipment_add_to_outgoing(request,id): #status = None, Outgoing, Incoming
+    item = Inventory.objects.get(id=id)
+    item.batch = "Outgoing"
+    item.save()
+    return redirect('equipment_batch_outgoing',status='Outgoing')
+
+def equipment_add_to_incoming(request,id): #status = None, Outgoing, Incoming
+    item = Inventory.objects.get(id=id)
+    item.batch = "Incoming"
+    item.save()
+    return redirect('equipment_batch_outgoing',status='Incoming')
+
+def equipment_batch_outgoing(request,status): #status is Outgoing, Incoming
+    if request.method == 'POST':
+        if status == "Outgoing":
+            for x in Inventory.objects.filter(batch = 'Outgoing'):
+                x.job_number = Jobs.objects.get(job_number= request.POST['select_job'])
+                x.status = "Checked Out"
+                x.batch = None
+                x.save()
+            for x in Inventory.objects.filter(batch='Incoming'):
+                x.batch=None
+                x.save()
+        else:
+            for x in Inventory.objects.filter(batch = 'Incoming'):
+                x.job_number = None
+                x.status= "Available"
+                x.batch = None
+                x.save()
+            for x in Inventory.objects.filter(batch='Outgoing'):
+                x.batch=None
+                x.save()
+        return redirect('warehouse_home')
+    status=status
+    jobs = Jobs.objects.filter(status="Open")
+    available_filter = EquipmentFilter(request.GET, queryset = Inventory.objects.filter(status='Available',batch=None))
+    if status == 'Outgoing':
+        available_filter = EquipmentFilter(request.GET,queryset=Inventory.objects.filter(status='Available', batch=None))
+        pending_table = EquipmentTableOutgoing(Inventory.objects.filter(batch = 'Outgoing'))
+        available_table = EquipmentTableOutgoing(available_filter.qs)
+    else:
+        available_filter = EquipmentFilter2(request.GET,queryset=Inventory.objects.filter(status='Checked Out', batch=None))
+        pending_table = EquipmentTableOutgoing(Inventory.objects.filter(batch='Incoming'))
+        available_table = EquipmentTableIncoming(available_filter.qs)
+    has_filter = any(field in request.GET for field in set(available_filter.get_fields()))
+    return render(request, "equipment_batch_outgoing.html", {'status':status,'jobs':jobs,'available_filter':available_filter,'has_filter':has_filter,'pending_table':pending_table,'available_table':available_table})
 
 def equipment_new(request):
     inventorytype=InventoryType.objects.all()
@@ -80,7 +138,8 @@ def equipment_page(request, id):
 
         if 'select_service' in request.POST:
                 print(request.POST['select_service'])
-                inventory.vendor = Vendors.objects.get(id=request.POST['select_service'])
+                inventory.service_vendor = Vendors.objects.get(id=request.POST['select_service'])
+                print(inventory.service_vendor.company_name)
                 inventory.job_number = None
                 inventory.status = "Service"
                 inventory.save()

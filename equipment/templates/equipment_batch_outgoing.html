@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load render_table from django_tables2 %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+
+	</style>
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+
+	function job_update2(){
+		var hidden = document.getElementById("select_job")
+		var selectedjob = document.getElementById("selected_job")
+		document.getElementById("try_this").innerHTML = "PLEASE SELECT ITEMS GOING TO" + " " + selectedjob.options[selectedjob.selectedIndex].text.toUpperCase();
+		hidden.value = selectedjob.value
+	}
+
+	function check_booking_data(){
+		var hidden = document.getElementById("select_job")
+		if (hidden.value == "Not Selected"){
+			alert(hidden.value)
+			return false
+		}
+	}
+	</script>
+</head>
+<body>
+{% if status == 'Outgoing' %}
+ <form name = job_update action="{%  url 'equipment_batch_outgoing' status='Outgoing' %}" method="post"  onSubmit = "return check_booking_data()">
+
+            <label for="selected_job">Select the Job Where the Equipment is Going: </label>
+            <select id="selected_job" name="selected_job" onchange="job_update2()">
+                <option value=none_selected>Select Job</option>
+				{% if jobs %}
+                {% for job in jobs %}
+                <option value={{job.job_number}}>{{job.job_name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+ </form>
+ <br><br>
+
+<h3 id="try_this">PLEASE SELECT ITEMS GOING TO JOB:</h3>
+
+ {% else %}
+<h3>PLEASE SELECT ITEMS RETURNING TO SHOP: </h3>
+{% endif %}
+
+		{% if has_filter %}
+  		<a href="{%  url 'equipment_batch_outgoing' status %}">Clear Filter</a>
+		{% endif %}
+
+        	<div class="content">
+		    <form method="get">
+        {{ available_filter.form }}
+        <input type="submit" value="Filter Now" />
+    </form>
+{% render_table available_table %}
+
+<h3>SELECTED ITEMS</h3>
+
+{% render_table pending_table %}
+
+
+{% if status == 'Outgoing' %}
+ <form name = batch_update action="{%  url 'equipment_batch_outgoing' status='Outgoing' %}" method="post"  onSubmit = "return check_booking_data()">
+{% else %}
+ <form name = batch_update action="{%  url 'equipment_batch_outgoing' status='Incoming' %}" method="post" >
+{% endif %}
+	 {% csrf_token %}
+ <input type = "hidden" id="select_job" name="select_job" value ="Not Selected">
+{% if status == 'Outgoing' %}
+<input type="submit" value="Assign to Job" />
+{% else %}
+<input type="submit" value="Check Equipment Back In to Shop" />
+{% endif %}
+</form>
+</body>
+</html>
+
+{% endblock %}

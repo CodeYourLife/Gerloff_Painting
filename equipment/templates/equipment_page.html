@@ -70,7 +70,11 @@
                 <div class ="col"> <b>Date Out =</b>{{inventories.date_out}}
 
  </div>
-                <div class ="col"> <b>Current Job =</b>{{inventories.job_number}} {{inventories.job_name}} </div>
+                {% if inventories.service_vendor != None %}
+				<div class ="col"> <b>In Service At =</b>{{inventories.service_vendor.company_name}} </div>
+				{% else %}
+				<div class ="col"> <b>Current Job =</b>{{inventories.job_number}} {{inventories.job_name}} </div>
+				{% endif %}
                 <div class ="col"> <b>Vendor =</b> {{inventories.vendor}}   </div>
             </div>
 

@@ -234,6 +234,7 @@ class Inventory(models.Model):
 	# job_number is the foreign key to the job number in Jobs
 	notes = models.CharField(null=True, max_length=2000, blank=True)
 	service_vendor = models.ForeignKey(Vendors,on_delete=models.PROTECT, blank=True, null=True,related_name = 'inventory2')
+	batch = models.CharField(null=True, max_length=50, blank=True) #outgoing or incoming
 	def __str__(self):
 		return f"{self.inventory_type} {self.item}"
 
@@ -249,6 +250,18 @@ class InventoryNotes(models.Model):
 	job_name = models.CharField(null=True, max_length=2000, blank=True) #either job name, or service vendor
 
 
+class BatchInventory(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	job_number = models.ForeignKey(Jobs, on_delete=models.PROTECT,related_name = 'batch1')
+	date = models.DateField(null=True, blank=True)
+	status = models.CharField(null=True,max_length=50) #incoming or outgoing
+	current = models.BooleanField(default=False) #true means it is the latest one
+
+
+class BatchInventoryItems:
+	id = models.BigAutoField(primary_key=True)
+	batchinventory = models.ForeignKey(BatchInventory, on_delete=models.PROTECT,related_name = 'batchitem1')
+	inventory = models.ForeignKey(Inventory, on_delete=models.PROTECT,related_name = 'batchitem2')
 
 class ChangeOrders(models.Model):
 	id = models.BigAutoField(primary_key=True)

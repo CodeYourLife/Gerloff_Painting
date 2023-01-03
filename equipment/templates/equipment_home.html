@@ -66,13 +66,17 @@ $(document).ready(function () {
 							</div>
 						</a>
 					</td>
-					<td>{{inventory.is_labeled}}</td>
+					{% if inventory.is_labeled == True %}
+					<td>Yes</td>
+					{% else %}
+					<td>No</td>
+					{% endif %}
 					<td>{{inventory.status}}</td>
 					{% if inventory.job_number == None %}
-						{% if inventory.vendor == None %}
+						{% if inventory.service_vendor == None %}
 							<td>Gerloff Painting</td>
 						{% else %}
-							<td>{{inventory.vendor.company_name}}</td>
+							<td>{{inventory.service_vendor.company_name}}</td>
 						{% endif %}
 					{% else %}
 						<td>{{inventory.job_number.job_name}}</td>
