@@ -41,6 +41,11 @@
 								Equipment - Add New Equipment	</div>
 						</a>
 <br>
+<a href = "{% url 'equipment_home' %}">
+							<div style="height:100%;width:100%">
+								Equipment - View All Equipment	</div>
+						</a>
+<br>
 <a href = "{% url 'equipment_batch_outgoing' 'Incoming' %}">
 							<div style="height:100%;width:100%">
 								Equipment - Check Back In To Shop 	</div>
@@ -51,14 +56,14 @@
 								Equipment - Check-Out to Job	</div>
 						</a>
 <br>
-<a href = "{% url 'index' %}">
+<a href = "{% url 'wallcovering_order_new' 'ALL' 'ALL' %}">
 							<div style="height:100%;width:100%">
 								Wallcovering - Order New	</div>
 						</a>
 <br>
-<a href = "{% url 'index' %}">
+<a href = "{% url 'wallcovering_receive' 'ALL' %}">
 							<div style="height:100%;width:100%">
-								Wallcovering - Recieve Delivery	</div>
+								Wallcovering - Receive Delivery	</div>
 						</a>
 <br>
 <a href = "{% url 'index' %}">

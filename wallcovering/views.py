@@ -17,6 +17,33 @@ from .filters import OrderItemsFilter
 from django_tables2 import RequestConfig
 # Create your views here.
 
+
+def wallcovering_receive(request,orderid):
+    if orderid == 'ALL':
+        already_picked = 'ALL'
+        open_orders = []
+        open_order_items = []
+        for y in Orders.objects.filter(job_number__status="Open"):
+            b=0
+            for x in OrderItems.objects.filter(order = y):
+                if int(x.quantity_received()) < int(x.quantity):
+                    b=1
+                    open_order_items.append(x)
+            if b==1:
+                open_orders.append(y)
+        items_json = []
+    else:
+        already_picked = Orders.objects.get(id=orderid)
+        open_orders = Orders.objects.filter(id=orderid)
+        open_order_items = []
+        items_json = []
+        for x in OrderItems.objects.filter(order=already_picked):
+            if int(x.quantity_received()) < int(x.quantity):
+                open_order_items.append(x)
+                thisdict = {"id": x.id,'item_description':x.item_description, 'quantity':x.quantity,'unit':x.unit,'quantity_received':int(x.quantity_received())}
+                items_json.append(thisdict)
+    items_json = json.dumps(list(items_json), cls=DjangoJSONEncoder)
+    return render(request, "wallcovering_receive.html", {'open_orders':open_orders,'open_order_items':open_order_items,'already_picked':already_picked,'items_json':items_json})
 def wallcovering_order(request,id):
     order = Orders.objects.get(id=id)
     orderstable = OrdersTable(Orders.objects.filter(id=id))
