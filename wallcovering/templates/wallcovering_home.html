@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% block nav_item_wallcovering %}active{% endblock nav_item_wallcovering %}
 {% block content %}
 {% load render_table from django_tables2 %}
 
@@ -27,7 +28,7 @@
 }
 
 .active, .collapsible:hover {
-  background-color: #555;
+  background-color: Salmon;
 }
 
 .content {
@@ -92,11 +93,9 @@ $(document).ready(function () {
 				<tr>
 					<th>Job </th>
 					<th>Item</th>
-					<th>Ordered</th>
-					<th>Date Ordered</th>
-					<th>Received All?</th>
+					<th>Qnty Ordered</th>
+					<th>Qnty Received</th>
 					<th>Packages Received</th>
-					<th>Date Received</th>
 					<th>Packages to Job</th>
 				</tr>
 			</thead>
@@ -105,18 +104,16 @@ $(document).ready(function () {
 				<tr>
 					<td><a href = "{% url 'job_page' item.job_number %}">
 							<div style="height:100%;width:100%">
-								{{item.job_name}}	</div>
+								{{item.job_number}}	</div>
 						</a></td>
 					<td><a href = "{% url 'wallcovering_pattern' item.id %}">
 							<div style="height:100%;width:100%">
 								{{item.code}}	</div>
 						</a></td>
-					<td>{{item.qty_ordered}}</td>
-					<td>{{item.date_ordered}}</td>
-					<td>{{item.is_received_all}}</td>
+					<td>{{item.quantity_ordered}}</td>
+					<td>{{item.quantity_received}}</td>
 					<td>{{item.packages_received}}</td>
-					<td>{{item.date_received}}</td>
-					<td>{{item.packages_to_job}}</td>
+					<td>{{item.packages_sent}}</td>
 
 				</tr>
 			{% endfor %}

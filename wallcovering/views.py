@@ -18,7 +18,54 @@ from django_tables2 import RequestConfig
 # Create your views here.
 
 
+def wallcovering_send(request, jobnumber):
+    if request.method == 'POST':
+        if 'select_job' in request.POST:
+            return redirect('wallcovering_send', jobnumber= request.POST['select_job'])
+        else:
+            delivery = OutgoingWallcovering.objects.create(job_number=Jobs.objects.get(job_number=jobnumber),delivered_by=request.POST['delivered_by'],notes =request.POST['delivery_note'],date =date.today())
+            delivery = OutgoingWallcovering.objects.latest('id')
+            for y in range(1, int(request.POST["number_packages"]) + 1):
+                item=OutgoingItem.objects.create(outgoing_event=delivery, package=Packages.objects.get(id=request.POST['select_package' + str(y)]),description = request.POST['description'+ str(y)], quantity_sent=request.POST['quantity_sent'+ str(y)])
+            return redirect('job_page', jobnumber=jobnumber)
+    if jobnumber == 'ALL':
+        already_picked = 'ALL'
+        jobs =[]
+        for x in Jobs.objects.filter(status="Open",orders__isnull=False).distinct():
+            b=0
+            for y in Orders.objects.filter(job_number=x.job_number):
+                if int(y.packages_received()) > int(y.packages_sent()):
+                    b=1
+            if b != 0:
+                jobs.append(x)
+        packages = []
+        for y in Packages.objects.filter(delivery__order__job_number__status="Open"):
+            if int(y.total_sent())<int(y.quantity_received):
+                thisdict = {"id": y.id,"date":y.delivery.date, "type": y.type,"contents":y.contents,"quantity_received":y.quantity_received,"notes": y.notes,"total_sent":int(y.total_sent()),"available": int(y.quantity_received)-int(y.total_sent())}
+                packages.append(thisdict)
+    else:
+        already_picked = jobnumber
+        jobs =Jobs.objects.filter(job_number=jobnumber)
+        packages = []
+        for y in Packages.objects.filter(delivery__order__job_number__job_number=jobnumber):
+            if int(y.total_sent())<int(y.quantity_received):
+                thisdict = {"id": y.id,"date":y.delivery.date, "type": y.type,"contents":y.contents,"quantity_received":y.quantity_received,"notes": y.notes,"total_sent":int(y.total_sent()),"available": int(y.quantity_received)-int(y.total_sent())}
+                packages.append(thisdict)
+    packages_json = json.dumps(list(packages), cls=DjangoJSONEncoder)
+    return render(request, "wallcovering_send.html", {'packages':packages, 'packages_json':packages_json, 'jobs':jobs, 'already_picked':already_picked})
 def wallcovering_receive(request,orderid):
+    if request.method == 'POST':
+        delivery = WallcoveringDelivery.objects.create(order=Orders.objects.get(id=orderid),date=date.today(),notes = request.POST['delivery_note'])
+        delivery = WallcoveringDelivery.objects.latest('id')
+        for y in range(1,int(request.POST["number_items"])+1):
+            print(request.POST["number_items"])
+            print(y)
+            item = ReceivedItems.objects.create(wallcovering_delivery=delivery, order_item = OrderItems.objects.get(id =request.POST['select_item' + str(y)]),quantity =request.POST['quantity' + str(y)])
+        for y in range(1, int(request.POST["number_packages"]) + 1):
+            print(request.POST["number_packages"])
+            print(y)
+            package = Packages.objects.create(delivery=delivery, type= request.POST['package_type' + str(y)], contents=request.POST['package_contents' + str(y)],quantity_received=request.POST['package_quantity_received' + str(y)],notes=request.POST['package_notes' + str(y)])
+        return redirect('wallcovering_order', id=orderid)
     if orderid == 'ALL':
         already_picked = 'ALL'
         open_orders = []
@@ -51,7 +98,8 @@ def wallcovering_order(request,id):
     packagestable = PackagesTable(Packages.objects.filter(delivery__order=order))
     receiptstable = ReceivedTable(ReceivedItems.objects.filter(order_item__order=order))
     jobdeliveriestable = JobDeliveriesTable(OutgoingItem.objects.filter(package__delivery__order=order))
-    return render(request, "wallcovering_order.html", {'orderstable': orderstable, 'orderitemstable':orderitemstable, 'packagestable':packagestable,'receiptstable':receiptstable,'jobdeliveriestable':jobdeliveriestable})
+
+    return render(request, "wallcovering_order.html", {'orderstable': orderstable, 'orderitemstable':orderitemstable, 'packagestable':packagestable,'receiptstable':receiptstable,'jobdeliveriestable':jobdeliveriestable,'currentorder':order})
 
 def post_wallcovering_order(request):
     new_order = Orders(job_number=Jobs.objects.get(job_number=request.POST["select_job"]),description=request.POST["description"],vendor=Vendors.objects.get(id=request.POST["select_vendor"]),date_ordered=date.today())
@@ -112,73 +160,71 @@ def wallcovering_order_new(request, id, job_number):
 
 
 def wallcovering_home(request):
-    #wc_only_open_jobs = Wallcovering.objects.filter(job_number__status = "Open").order_by(-job_number)
-    wc_table = []
-    xjob_name = "NA"
-    xcode = "NA"
-    xordered = 0
-    xdateordered = "NA"
-    xreceivedall = "NA"
-    xreceived = 0
-    xdatereceived = ""
-    xtojob = 0
-    for x in Wallcovering.objects.filter(job_number__status = "Open").order_by('-job_number'):
-        xjob_name = "NA"
-        xcode = "NA"
-        xordered = 0
-        xdateordered = "NA"
-        xreceivedall = "NA"
-        xreceived = 0
-        xdatereceived = ""
-        xtojob = 0
-
-        xjob_name = x.job_number.job_name
-        xcode = x.code
-        #orderinformation ->
-
-        for orderitem in OrderItems.objects.filter(wallcovering=x):
-
-            xordered = xordered + orderitem.quantity
-
-            xdateordered = orderitem.order.date_ordered
-            if orderitem.is_satisfied == False:
-                xreceivedall = "NO"
-            else:
-                if xreceivedall != "NO":
-                    xreceivedall = "YES"
-
-        #received information
-        match = False
-        for order in Orders.objects.filter(job_number = x.job_number):
-            for orderitem in OrderItems.objects.filter(order = order):
-                if orderitem.wallcovering == x:
-                        match = True
-            if match == True:
-                for receivedpackage in Packages.objects.filter(delivery__order = order):
-                    xreceived = xreceived + receivedpackage.quantity_received
-                    xdatereceived = receivedpackage.delivery.date
-                    for sentpackage in OutgoingItem.objects.filter(package = receivedpackage):
-                        xtojob = xtojob + sentpackage.quantity_sent
-
-
-        wc_table.append(
-            {
-            'job_name': xjob_name,
-            'job_number': x.job_number.job_number,
-            'code':xcode,
-            'qty_ordered' : xordered,
-            'date_ordered' : xdateordered,
-            'is_received_all' : xreceivedall,
-            'packages_received' : xreceived,
-            'date_received' : xdatereceived,
-            'packages_to_job' : xtojob,
-            'id' : x.id,
-            })
+    wc_table = Wallcovering.objects.filter(job_number__status="Open")
+    # wc_table = []
+    # xjob_name = "NA"
+    # xcode = "NA"
+    # xordered = 0
+    # xdateordered = "NA"
+    # xreceivedall = "NA"
+    # xreceived = 0
+    # xdatereceived = ""
+    # xtojob = 0
+    # for x in Wallcovering.objects.filter(job_number__status = "Open").order_by('-job_number'):
+    #     xjob_name = "NA"
+    #     xcode = "NA"
+    #     xordered = 0
+    #     xdateordered = "NA"
+    #     xreceivedall = "NA"
+    #     xreceived = 0
+    #     xdatereceived = ""
+    #     xtojob = 0
+    #
+    #     xjob_name = x.job_number.job_name
+    #     xcode = x.code
+    #     #orderinformation ->
+    #
+    #     for orderitem in OrderItems.objects.filter(wallcovering=x):
+    #         xordered = xordered + orderitem.quantity
+    #         xdateordered = orderitem.order.date_ordered
+    #         if orderitem.is_satisfied == False:
+    #             xreceivedall = "NO"
+    #         else:
+    #             if xreceivedall != "NO":
+    #                 xreceivedall = "YES"
+    #
+    #     #received information
+    #     match = False
+    #     for order in Orders.objects.filter(job_number = x.job_number):
+    #         for orderitem in OrderItems.objects.filter(order = order):
+    #             if orderitem.wallcovering == x:
+    #                     match = True
+    #         if match == True:
+    #             for receivedpackage in Packages.objects.filter(delivery__order = order):
+    #                 xreceived = xreceived + receivedpackage.quantity_received
+    #                 xdatereceived = receivedpackage.delivery.date
+    #                 for sentpackage in OutgoingItem.objects.filter(package = receivedpackage):
+    #                     xtojob = xtojob + sentpackage.quantity_sent
+    #
+    #
+    #     wc_table.append(
+    #         {
+    #         'job_name': xjob_name,
+    #         'job_number': x.job_number.job_number,
+    #         'code':xcode,
+    #         'qty_ordered' : xordered,
+    #         'date_ordered' : xdateordered,
+    #         'is_received_all' : xreceivedall,
+    #         'packages_received' : xreceived,
+    #         'date_received' : xdatereceived,
+    #         'packages_to_job' : xtojob,
+    #         'id' : x.id,
+    #         })
     wc_not_ordereds=Wallcovering.objects.exclude(orderitems1__item_description__isnull=False) #wallcovering not ordered yet
     wc_ordereds = OrderItems.objects.filter(is_satisfied=False) #orders not received yet
     received_deliveries = WallcoveringDelivery.objects.all()
     jobsite_deliveries =  OutgoingItem.objects.all()
-    all_orders = OrderItemsFilter(request.GET, queryset =OrderItems.objects.filter(order__job_number__status="Open"))
+    all_orders = OrderItemsFilter(request.GET, queryset =OrderItems.objects.filter(order__job_number__status="Open").distinct())
     table2 = CombinedOrdersTable(all_orders.qs)
     has_filter = any(field in request.GET for field in set(all_orders.get_fields()))
     packages = []

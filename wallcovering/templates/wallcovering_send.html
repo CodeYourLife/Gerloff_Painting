@@ -23,11 +23,143 @@
 	<script type="text/javascript" class="init">
 
 
+var package_count=1;
+
+function click_package(x){
+	let rolodex = JSON.parse("{{packages_json|escapejs}}");
+	description = document.getElementById("description" + x)
+	for(let i =0; i < rolodex.length; i++){
+		if (rolodex[i].id == document.getElementById("select_package" + x).value){
+			description.value = rolodex[i].type + " [Contents:] " + rolodex[i].contents
+		}
+	}
+}
+
+function add_package(){
+	package_count=package_count +1
+	document.getElementById("number_packages").value = package_count
+	table = document.getElementById("packages_table");
+	rows = table.getElementsByTagName("tr").length-1;
+	row = table.insertRow(rows);
+	cell1 = row.insertCell(0);
+	cell1.innerHTML ='<label for="description'+ package_count+ '">Description: </label><input type= "text" name="description'+ package_count+ '" id="description'+ package_count+ '" placeholder="" size="100" required /><label for="quantity_sent'+ package_count+ '">Quantity Sent: </label><input type= "number" name="quantity_sent'+ package_count+ '" id="quantity_sent'+ package_count+ '" placeholder="" size="10" required />'
+	row = table.insertRow(rows);
+	cell1 = row.insertCell(0);
+	cell1.innerHTML = '<div id="new_item' + package_count + '"></div>';
+	add_item_dropdown();
+}
+
+function add_item_dropdown(){
+
+		var select = document.createElement("select");
+		select.name = "select_package" + package_count;
+		select.id = "select_package" + package_count;
+		select.addEventListener('change',function() {click_package(package_count);},false);
+		let rolodex = JSON.parse("{{packages_json|escapejs}}");
+		var option = document.createElement("option");
+		option.value = "None Selected";
+		option.text= "Select Package";
+		select.appendChild(option);
+		for(let i =0; i < rolodex.length; i++){
+				option = document.createElement("option");
+				option.value =rolodex[i].id
+				option.text="Date Received: " + rolodex[i].date + " Type: " + rolodex[i].type + " Contents: " + rolodex[i].contents + " AVAILABLE: " + rolodex[i].available
+				select.appendChild(option);
+		}
+		var label = document.createElement("label");
+		label.innerHTML = "Please Select Package"
+		document.getElementById('new_item' + package_count).appendChild(label).appendChild(select);
+
+
+}
+
+
 	</script>
 </head>
 <body>
+{% if already_picked == 'ALL' %}
+<h1>Please select which job you are sending material to:</h1>
 
 
+	 <form name = job_select action="{% url 'wallcovering_send' already_picked %}" method="post"  onSubmit = "return check_booking_data()">
+{% csrf_token %}
+
+<!--	             <label for="select_job">please select Job</label>-->
+            <select id="select_job" name="select_job" %}>
+                {% if jobs %}
+                {% for job in jobs %}
+                <option value={{job.job_number}}>{{job.job_name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+
+	 <br>
+	 <input type="submit" value="Select Job" />
+    </form>
+
+{% else %}
+	{% for job in jobs %}
+	<h1>Send material to: {{job.job_name}}</h1>
+	{% endfor %}
+
+	<a href = "{% url 'wallcovering_send' 'ALL' %}">
+							<div style="height:100%;width:100%">
+								Select Different Job	</div>
+						</a>
+
+
+  <form name = form_input action="{% url 'wallcovering_send' already_picked %}" method="post"  onSubmit = "return check_booking_data()">
+{% csrf_token %}
+
+<div class="demo-html" style="width:90%">
+		<table id="packages_table" class="display" style="width:90%">
+			<thead>	<tr><th></th></tr></thead>
+			<tbody>
+				<tr>
+					<td >
+						 <label for="select_package1">Please Select Package</label>
+						 <select id="select_package1" name="select_package1" onchange="click_package(1)">
+							<option value="None Selected">Please select</option>
+							 {% if packages %}
+							{% for package in packages %}
+							<option value={{package.id}}>Date Received: {{package.date}}  Type:{{package.type}} Contents:{{package.contents}}  AVAILABLE: {{package.available}}</option>
+							{% endfor %}
+							{% endif %}
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<td>
+					<label for="description1">Description: </label><input type= "text" name="description1" id="description1" placeholder="" size="100" required />
+	 <label for="quantity_sent1">Quantity Sent: </label><input type= "number" name="quantity_sent1" id="quantity_sent1" placeholder="" size="10" required />
+					</td>
+				</tr>
+			<tr> <td><button type="button" onclick="add_package()">Add Another Package: </button></td></tr>
+			</tbody>
+		</table>
+
+</div>
+	  <br>
+	  <br>
+	  <table>
+		  <thead><tr><td></td></tr></thead>
+	  				<tr>
+					<td>
+						<label for="delivered_by">Delivered By: </label><input type= "text" name="delivered_by" id="delivered_by" placeholder="" size="50" required />
+					</td>
+				</tr>
+				<tr>
+					<td>
+					  	<label for="delivery_note">Enet any details about this delivery: </label> <br>
+        				<textarea id="delivery_note" name="delivery_note" rows="1" cols="100" ></textarea>
+					</td>
+				</tr>
+		  	  </table>
+<input type = "hidden" id="number_packages" name="number_packages" value = 1/>
+<br><hr>
+<input type="submit" value="Send Packages Now" />
+    </form>
+	{% endif %}
 </body>
 </html>
 

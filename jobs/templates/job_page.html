@@ -1,5 +1,8 @@
 {% extends 'base.html' %}
+{% block nav_item_jobs %}active{% endblock nav_item_jobs %}
 {% block content %}
+{% load render_table from django_tables2 %}
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -24,7 +27,7 @@
 }
 
 .active, .collapsible:hover {
-  background-color: #555;
+  background-color: Salmon;
 }
 
 .content {
@@ -86,8 +89,11 @@ $(document).ready(function () {
 	</script>
 </head>
 <body>
-
-	{% for job in jobs %}
+<a href = "{% url 'book_new_job' %}"><div style="height:100%;width:100%">BOOK NEW JOB</div></a>
+{% if jobs == 'ALL' %}
+{% render_table jobstable %}
+{% else %}
+{% for job in jobs %}
         <div class ="container">
             <div class ="row">
                 <div class ="col">Job Name: {{job.job_name}}</div>
@@ -101,6 +107,7 @@ $(document).ready(function () {
             </div>
 		</div>
 				{% endfor %}
+{% endif %}
 		<hr><br>
 	{% if tickets %}
 	<button type="button" class="collapsible">Outstanding Extra Work Tickets</button>
@@ -410,8 +417,6 @@ $(document).ready(function () {
 
 
 
-</body>
-</html>
 <script>
 var coll = document.getElementsByClassName("collapsible");
 var i;

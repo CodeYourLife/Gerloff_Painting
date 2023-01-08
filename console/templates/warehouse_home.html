@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% block nav_item_warehouse %}active{% endblock nav_item_warehouse %}
 {% block content %}
 <!DOCTYPE html>
 <html>
@@ -66,7 +67,7 @@
 								Wallcovering - Receive Delivery	</div>
 						</a>
 <br>
-<a href = "{% url 'index' %}">
+<a href = "{% url 'wallcovering_send' 'ALL' %}">
 							<div style="height:100%;width:100%">
 								Wallcovering - Send to Job	</div>
 						</a>

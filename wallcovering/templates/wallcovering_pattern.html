@@ -199,15 +199,15 @@
     <hr><hr>
 {% if orderstable != "SKIP" %}
     <h3>Orders</h3>
-<div><a href = "{% url 'wallcovering_order_new' selectedpattern.id selectedpattern.job_number.job_number %}"><div style="height:100%;width:100%">Place New Order	</div></a></div>
+<div><a href = "{% url 'wallcovering_order_new' id=selectedpattern.id job_number=selectedpattern.job_number.job_number %}"><div style="height:100%;width:100%">Place New Order	</div></a></div>
 {% render_table orderstable %}
     <h3>Receipts</h3>
-<div><a href = "{% url 'index' %}"><div style="height:100%;width:100%">Receive New Delivery - still need to code	</div></a></div>
+<div><a href = "{% url 'wallcovering_receive' selectedpattern.id %}"><div style="height:100%;width:100%">Receive New Delivery</div></a></div>
 {% render_table receivedtable %}
     <h3>Packages</h3>
 {% render_table packagestable %}
     <h3>Sent to Job</h3>
-<div><a href = "{% url 'index' %}"><div style="height:100%;width:100%">Send to Job- still need to code	</div></a></div>
+<div><a href = "{% url 'wallcovering_send' selectedpattern.job_number.job_number %}"><div style="height:100%;width:100%">Send to Job	</div></a></div>
 {% render_table jobdeliveriestable %}
 {% endif %}
     {% endif %}

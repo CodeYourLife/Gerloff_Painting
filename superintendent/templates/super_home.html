@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% block nav_item_super %}active{% endblock nav_item_super %}
 {% block content %}
 <!DOCTYPE html>
 <html>
@@ -25,6 +26,7 @@ $(document).ready(function () {
 })
 	</script>
 </head>
+<br>
 <body class="wide comments example">
 	<form name = select_super action="filter_super" method="post" >
         {% csrf_token %}

@@ -12,4 +12,5 @@ path("wallcovering_pattern_new", views.wallcovering_pattern_new, name='wallcover
 path("wallcovering_status/<table_type> <id>", views.wallcovering_status, name='wallcovering_status'),
 path("wallcovering_order/<id>", views.wallcovering_order, name='wallcovering_order'),
 path("wallcovering_receive/<orderid>", views.wallcovering_receive, name='wallcovering_receive'),
+path("wallcovering_send/<jobnumber>", views.wallcovering_send, name='wallcovering_send'),
 ]

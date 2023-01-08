@@ -32,6 +32,7 @@
 <hr>
 <br>
 <h2>Order Items</h2>
+<a href = "{% url 'wallcovering_order_new' id='All' job_number=currentorder.job_number.job_number %}"><div style="height:100%;width:100%">{{item.job_name}}	</div></a>
 {% render_table orderitemstable %}
 <hr>
 <br>

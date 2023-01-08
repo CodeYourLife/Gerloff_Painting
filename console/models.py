@@ -366,6 +366,32 @@ class Wallcovering(models.Model):
 	def __str__(self):
 		return f"{self.job_number} {self.code}"
 
+	def quantity_ordered(self):
+		totalquantity=0
+		for x in OrderItems.objects.filter(wallcovering=self):
+			totalquantity = totalquantity + x.quantity
+		return totalquantity
+
+	def quantity_received(self):
+		totalquantity=0
+		for x in OrderItems.objects.filter(wallcovering=self):
+			totalquantity = totalquantity + x.quantity_received()
+		return totalquantity
+
+	def packages_received(self):
+		totalquantity = 0
+		for x in OrderItems.objects.filter(wallcovering=self):
+			for y in Orders.objects.filter(orderitems2__isnull=False):
+				totalquantity = totalquantity + y.packages_received()
+		return totalquantity
+
+	def packages_sent(self):
+		totalquantity = 0
+		for x in OrderItems.objects.filter(wallcovering=self):
+			for y in Orders.objects.filter(orderitems2__isnull=False):
+				totalquantity = totalquantity + y.packages_sent()
+		return totalquantity
+
 
 class WallcoveringPricing(models.Model):
 	id = models.BigAutoField(primary_key=True)
@@ -391,6 +417,17 @@ class Orders(models.Model): #one pattern, one WC1, etc. may be broken up into se
 	def __str__(self):
 		return f"{self.job_number} {self.description}"
 
+	def quantity_ordered(self):
+		totalquantity=0
+		for x in Orderitems.objects.filter(order=self):
+			totalquantity = totalquantity + x.quantity
+		return totalquantity
+
+	def quantity_received(self):
+		totalquantity=0
+		for x in Orderitems.objects.filter(order=self):
+			totalquantity = totalquantity + x.quantity_received()
+		return totalquantity
 	def packages_received(self):
 		totalquantity=0
 		for x in Packages.objects.filter(delivery__order=self):
@@ -428,6 +465,7 @@ class WallcoveringDelivery(models.Model): #one instance when receiving material.
 	id = models.BigAutoField(primary_key=True)
 	order = models.ForeignKey(Orders, on_delete=models.PROTECT,related_name="foreign_wallcoveringdelivery")
 	date = models.DateField(null=True, blank=True)
+	notes = models.CharField(null=True, max_length=2000,blank=True) #box, bolt, bucket
 	def __str__(self):
 		return f"{self.date} {self.order.job_number}"
 
@@ -449,7 +487,11 @@ class Packages(models.Model):
 	notes = models.CharField(null=True, max_length=2000, blank=True)
 	def __str__(self):
 		return f"{self.delivery.order.job_number} {self.contents}"
-
+	def total_sent(self):
+		totalquantity=0
+		for x in OutgoingItem.objects.filter(package=self):
+			totalquantity=totalquantity+x.quantity_sent
+		return totalquantity
 
 
 class OutgoingWallcovering(models.Model):

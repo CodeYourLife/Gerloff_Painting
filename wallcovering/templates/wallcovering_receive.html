@@ -31,29 +31,9 @@ var package_count = 1;
 
 function add_item(){
 	item_count=item_count +1
-	document.getElementById("number_packages").value = item_count
-<!--	const newDiv = document.createElement("div"+x);-->
-<!--  	const newContent = document.createTextNode("Hi there and greetings!");-->
-<!--  	newDiv.appendChild(newContent);-->
-<!--	const currentDiv = document.getElementById("add_table2_here");-->
-<!--	document.body.insertBefore(newDiv, currentDiv);-->
-<!--	newDiv.setAttribute('id', 'tester'+x)-->
-<!--	var html = '<table id= "magic_table'+x + '" class="display" style="width:90%"></table>';-->
-<!--	document.getElementById("tester" + x).innerHTML = html;-->
+	document.getElementById("number_items").value = item_count
 	table = document.getElementById("items_table");
 	rows = table.getElementsByTagName("tr").length-1;
-<!--	row = table.insertRow(rows);-->
-<!--	cell1 = row.insertCell(0);-->
-<!--	cell1.colSpan = 3;-->
-<!--	-->
-<!--	cell1.innerHTML ='<label for="package_notes'+p_n+'">Notes: </label><br><textarea name="package_notes'+p_n+'" id="package_notes'+p_n+'" rows="1" cols="150"placeholder="Black Box with White Letters"></textarea><hr>';-->
-<!--	row = table.insertRow(rows);-->
-<!--	cell1 = row.insertCell(0);-->
-<!--	cell2 = row.insertCell(1);-->
-<!--	cell3 = row.insertCell(2);-->
-<!--	cell1.innerHTML ='<label for="package_type'+p_n+'">Package ' + n + ' Type: </label><input type= "text" name="package_type'+p_n+'" id="package_type'+p_n+'" placeholder="Package Type (roll, bolt, small box, etc.)" size="30" required />';-->
-<!--	cell2.innerHTML ='<label for="package_contents'+p_n+'">Package Contents: </label><input type= "text" name="package_contents'+p_n+'" id="package_contents'+p_n+'" placeholder="End Caps, Glue, etc." size="30" required />';-->
-<!--	cell3.innerHTML ='<label for="package_quantity_received'+p_n+'"># of Packages: </label><input type= "number" name="package_quantity_received'+p_n+'" id="package_quantity_received'+p_n+'" placeholder="1" size="30" required />';-->
 	row = table.insertRow(rows);
 	cell1 = row.insertCell(0);
 	cell2 = row.insertCell(1);
@@ -93,7 +73,7 @@ function add_item_dropdown(){
 
 function add_package(){
 	package_count =package_count+1
-	document.getElementById("number_items").value = package_count
+	document.getElementById("number_packages").value = package_count
 	var table = document.getElementById("packages_table");
 	var rows = table.getElementsByTagName("tr").length-1;
 	var row = table.insertRow(rows);
@@ -123,10 +103,12 @@ function change_contents(id){
 </head>
 <body>
 
-
-
+{% if already_picked == 'ALL' %}
+<h1>Please select which order you are receiving:</h1>
+{% else %}
+<h1>Please Record the Received Items for the Following Order:</h1>
 <div class="demo-html" style="width:90%">
-{% if already_picked != 'ALL' %}
+
 	<a href = "{% url 'wallcovering_receive' 'ALL' %}">
 							<div style="height:100%;width:100%">
 								Select Different Order	</div>
@@ -173,13 +155,17 @@ function change_contents(id){
 	<hr>
 </div>
 {% if already_picked != 'ALL' %}
-<h3>Select Which Items Were Sent In This Order</h3>
+				<form name = select_new_item action="{% url 'wallcovering_receive' already_picked.id %}" method="post"  onSubmit = "return check_booking_data()">
+					{% csrf_token %}
+        <label for="delivery_note">Please enter any details about this delivery, such as damaged package, multiple boxes,etc. </label> <br>
+        <textarea id="delivery_note" name="delivery_note" rows="1" cols="100" ></textarea>
+<br><hr>
+<h3>Select Which Items Were Received In This Order</h3>
 <table id="items_table" class="display" style="width:90%">
 	<thead>
 		<tr>
 			<td>
-				<form name = select_new_item action="{% url 'wallcovering_receive' already_picked.id %}" method="post"  onSubmit = "return check_booking_data()">
-					{% csrf_token %}
+
 					<label for="select_item1">Select Item Delivered:</label>
 					<select id="select_item1" name="select_item1" onchange = "change_contents(1)">
 					{% if open_order_items %}
@@ -222,8 +208,8 @@ function change_contents(id){
 	</thead>
 </table>
 <br>
-<input type ="hidden" id="number_items" name ="number_items" />
-<input type ="hidden" id="number_packages" name ="number_packages" />
+<input type ="hidden" id="number_items" name ="number_items" value=1 />
+<input type ="hidden" id="number_packages" name ="number_packages" value=1 />
 
 
 
