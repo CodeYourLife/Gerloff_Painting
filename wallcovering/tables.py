@@ -15,12 +15,12 @@ class WallcoveringPriceTable(tables.Table):
             fields = ("quote_date", "min_yards", "price", "unit", "note")
 
 class OutgoingWallcoveringTable(tables.Table):
-    edit = tables.TemplateColumn('<a href="{% url "job_page" record.outgoing_event.job_number.job_number %}">TEST</a>')
+    edit = tables.TemplateColumn('<a href="{% url "job_page" record.outgoing_event.job_number.job_number %}">{{record.outgoing_event.date}}</a>', verbose_name="Date")
 
     class Meta:
             model = OutgoingItem
             template_name = "django_tables2/bootstrap.html"
-            fields = ("edit", "outgoing_event.job_number.job_name", "outgoing_event.delivered_by", "outgoing_event.notes","package.type", "package.contents", "description","quantity_sent","edit_col")
+            fields = ("edit", "outgoing_event.job_number.job_name", "outgoing_event.delivered_by", "outgoing_event.notes","package.type", "package.contents", "description","quantity_sent")
 
 
 class OrderItemsTable(tables.Table):
@@ -33,11 +33,12 @@ class OrderItemsTable(tables.Table):
         fields = ('edit','item_description','quantity', 'quantity_received','unit', 'item_notes','receive')
 
 class OrdersTable(tables.Table):
-    order_date = tables.TemplateColumn('<a href="{% url "wallcovering_order" record.id %}">{{record.date_ordered}}</a>')
+    po_link= tables.TemplateColumn('<a href="{% url "wallcovering_order" record.id %}">{{record.po_number}}</a>', verbose_name="PO Number")
+
     class Meta:
         model = Orders
         template_name = "django_tables2/bootstrap.html"
-        fields = ('po_number', 'job_number', 'vendor', 'description', 'order_date', 'notes')
+        fields = ('po_link', 'job_number', 'vendor', 'description', 'date_ordered', 'notes')
 
 class CombinedOrdersTable(tables.Table):
     ponumber = tables.TemplateColumn('<a href="{% url "wallcovering_order" record.order.id %}">{{record.order.po_number}}</a>')
@@ -70,3 +71,11 @@ class JobDeliveriesTable(tables.Table):
         model = OutgoingItem
         template_name = "django_tables2/bootstrap.html"
         fields = ('outgoing_event__date', 'package__type', 'package__contents', 'description', 'quantity_sent', 'outgoing_event__notes')
+
+
+class WallcoveringPatternsTable(tables.Table):
+    codelink = tables.TemplateColumn('<a href="{% url "wallcovering_pattern" record.id %}">{{record.code}}</a>')
+    class Meta:
+        model = OutgoingItem
+        template_name = "django_tables2/bootstrap.html"
+        fields = ('job_number','codelink','vendor','pattern','quantity_ordered','quantity_received','packages_received','packages_sent')

@@ -13,4 +13,8 @@ path("wallcovering_status/<table_type> <id>", views.wallcovering_status, name='w
 path("wallcovering_order/<id>", views.wallcovering_order, name='wallcovering_order'),
 path("wallcovering_receive/<orderid>", views.wallcovering_receive, name='wallcovering_receive'),
 path("wallcovering_send/<jobnumber>", views.wallcovering_send, name='wallcovering_send'),
+path("wallcovering_pattern_all", views.wallcovering_pattern_all, name='wallcovering_pattern_all'),
+path("wallcovering_order_all", views.wallcovering_order_all, name='wallcovering_order_all'),
+path("wallcovering_receive_all", views.wallcovering_receive_all, name='wallcovering_receive_all'),
+path("wallcovering_send_all", views.wallcovering_send_all, name='wallcovering_send_all'),
 ]

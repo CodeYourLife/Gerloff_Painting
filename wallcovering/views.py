@@ -17,7 +17,17 @@ from .filters import OrderItemsFilter
 from django_tables2 import RequestConfig
 # Create your views here.
 
+def wallcovering_send_all(request):
+    table = OutgoingWallcoveringTable(OutgoingItem.objects.filter(outgoing_event__job_number__status="Open"))
+    return render(request, "wallcovering_send_all.html", {'table':table})
 
+def wallcovering_receive_all(request):
+    table = ReceivedTable(ReceivedItems.objects.filter(wallcovering_delivery__order__job_number__status = "Open"))
+    return render(request, "wallcovering_receive_all.html", {'table':table})
+
+def wallcovering_order_all(request):
+    table = OrdersTable(Orders.objects.filter(job_number__status = "Open"))
+    return render(request, "wallcovering_order_all.html", {'table':table})
 def wallcovering_send(request, jobnumber):
     if request.method == 'POST':
         if 'select_job' in request.POST:
@@ -240,7 +250,9 @@ def wallcovering_home(request):
     #packages = Packages.objects.filter(is_all_delivered_to_job=False) #items in warehouse not delivered to job yet
     return render(request, "wallcovering_home.html", {'has_filter':has_filter,'all_orders':all_orders,'wc_table':wc_table, 'wc_not_ordereds': wc_not_ordereds,'wc_ordereds': wc_ordereds, 'received_deliveries':received_deliveries ,'jobsite_deliveries':jobsite_deliveries ,'packages':packages, 'table2':table2})
 
-
+def wallcovering_pattern_all(request):
+    table = WallcoveringPatternsTable(Wallcovering.objects.filter(job_number__status = "Open"))
+    return render(request, "wallcovering_pattern_all.html", {'table':table})
 def wallcovering_pattern_new(request):
     jobs = Jobs.objects.all()
     vendors = Vendors.objects.filter(category__category="Wallcovering Supplier")
@@ -322,6 +334,5 @@ def wallcovering_pattern(request, id):
 
 def wallcovering_status(request, table_type, id):
     if table_type == 'Outgoing':
-
         table = OutgoingWallcoveringTable(OutgoingItem.objects.filter(id=id))
         return render(request, "wallcovering_status.html", {'table': table})

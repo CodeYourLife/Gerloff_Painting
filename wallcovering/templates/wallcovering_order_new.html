@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% block nav_item_wallcovering %}active{% endblock nav_item_wallcovering %}
 {% block content %}
 <!DOCTYPE html>
 <html>
@@ -11,7 +12,9 @@
 	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
 	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
 	<style type="text/css" class="init">
-
+.active, .collapsible:hover {
+  background-color: Salmon;
+}
 	</style>
 	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
 	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
@@ -113,9 +116,11 @@
             var select_wallcovering = document.getElementById("select_wallcovering" +rownumber);
             var vendor = document.getElementById("select_vendor");
             var item_description = document.getElementById("item_description" +rownumber);
+            var main_description = document.getElementById("description");
             var quantity = document.getElementById("quantity" +rownumber);
             var unit = document.getElementById("unit" +rownumber);
             let selectedwallcovering = select_wallcovering.value
+            if (rownumber == 0){ main_description.value = select_wallcovering.options[select_wallcovering.selectedIndex].text}
             let rolodex = JSON.parse("{{pricing_json|escapejs}}");
             var select_pricing = document.getElementById("select_pricing" +rownumber);
             for(let i = select_pricing.options.length; i >= 0; i--) {
@@ -125,7 +130,7 @@
             let b=1
             for(let i =0; i < rolodex.length; i++){
                 if (rolodex[i].wallcovering__id == selectedwallcovering){
-                    select_pricing.options[b] = new Option(rolodex[i].quote_date + " Qnty: " + rolodex[i].min_yards + " Price: $" + rolodex[i].price,rolodex[i].price);
+                    select_pricing.options[b] = new Option(rolodex[i].quote_date + " Qnty: " + rolodex[i].min_yards + " Price: $" + rolodex[i].price,rolodex[i].id);
                     b=b+1
                 }
             }
@@ -154,7 +159,6 @@
             let b=1
             for(let i =0; i < rolodex.length; i++){
                 if (rolodex[i].id == selectedpricing){
-
                     unit.value = rolodex[i].unit
                     price.value = rolodex[i].price
                 }
@@ -163,6 +167,18 @@
 	</script>
 </head>
 <body>
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Wallcovering</a>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown2">
+    <ul class="navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'wallcovering_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'wallcovering_pattern_all' %}">Materials</a></li>
+        <li><a class="nav-item nav-link active" href="{% url 'wallcovering_order_all' %}">Orders</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'wallcovering_receive_all' %}">Receipts</a></li>
+        <li><a class="nav-item nav-link"  href="{% url 'wallcovering_send_all' %}">Sent to Job</a></li>
+    </ul>
+  </div>
+</nav>
 <br>
 
     <form name = order_input action={% url 'post_wallcovering_order' %} method="post"  onSubmit = "return check_data()">
@@ -191,8 +207,8 @@
                         <option value="{{selectedjob.job_number}}">{{selectedjob.job_name}}</option>
                     {% endif %}
                     </td>
-                    <td><input type="text" name="po_number" placeholder="PO NUMBER" size="10" id="po_number"/></td>
-                    <td><input type="text" name="description" placeholder="Briefly Describe Order (ie. WC1 & WC2, etc." size="50" id="description"/></td>
+                    <td><input type="text" name="po_number" placeholder="PO NUMBER" size="10" id="po_number" required/></td>
+                    <td><input type="text" name="description" placeholder="Briefly Describe Order (ie. WC1 & WC2, etc." size="50" id="description" required/></td>
                 </tr>
             </tbody>
         </table>
@@ -206,7 +222,7 @@
                         <option value="please_select">Select Wallcovering</option>
                         {% if wallcovering %}
                         {% for wc in wallcovering %}
-                            <option value="{{wc.id}}">{{wc.code}} {{wc.vendor.company_name}} {{wc.pattern}}</option>
+                            <option value="{{wc.id}}">{{wc.code}} {{wc.vendor.company_name}} {{wc.Material}}</option>
                         {% endfor %}
                         {% endif %}
                     {% else %}

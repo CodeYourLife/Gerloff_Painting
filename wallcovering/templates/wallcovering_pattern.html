@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% block nav_item_wallcovering %}active{% endblock nav_item_wallcovering %}
 {% block content %}
 {% load render_table from django_tables2 %}
 <!DOCTYPE html>
@@ -17,20 +18,20 @@
         width: 50%;
 
     }
-    .collapsible {
-  background-color: #777;
-  color: white;
-  cursor: pointer;
-  padding: 18px;
-  width: 100%;
-  border: none;
-  text-align: left;
-  outline: none;
-  font-size: 15px;
-}
+<!--    .collapsible {-->
+<!--  background-color: #777;-->
+<!--  color: white;-->
+<!--  cursor: pointer;-->
+<!--  padding: 18px;-->
+<!--  width: 100%;-->
+<!--  border: none;-->
+<!--  text-align: left;-->
+<!--  outline: none;-->
+<!--  font-size: 15px;-->
+<!--}-->
 
 .active, .collapsible:hover {
-  background-color: #555;
+  background-color: Salmon;
 }
 
 .content {
@@ -52,7 +53,18 @@
 	</script>
 </head>
 <body>
-
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Wallcovering</a>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown2">
+    <ul class="navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'wallcovering_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link active" href="{% url 'wallcovering_pattern_all' %}">Materials</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'wallcovering_order_all' %}">Orders</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'wallcovering_receive_all' %}">Receipts</a></li>
+        <li><a class="nav-item nav-link"  href="{% url 'wallcovering_send_all' %}">Sent to Job</a></li>
+    </ul>
+  </div>
+</nav>
 
 
 {% if selectedpattern != 'NEW' %}
@@ -170,7 +182,7 @@
     <input type="submit" value="Add Pattern" class="default" name="save">
     {% endif %}
 </form>
-<br><hr>
+<br>
 {% if selectedpattern != 'NEW' %}
 <button type="button" class="collapsible">Log-In Pricing Received for this Material</button>
     <div class="content">

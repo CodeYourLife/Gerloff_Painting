@@ -358,10 +358,10 @@ class Wallcovering(models.Model):
 	is_random_reverse = models.BooleanField(default=False)
 	is_repeat = models.BooleanField(default=False)
 	notes = models.CharField(null=True, max_length=2000, blank=True)
-	qnty_ordered = models.IntegerField(blank=True, null=True)
-	qnty_received = models.IntegerField(blank=True, null=True)
-	packages_received = models.IntegerField(blank=True, null=True)
-	packages_sent = models.IntegerField(blank=True, null=True)
+	qnty_ordered = models.IntegerField(blank=True, null=True)#not used
+	qnty_received = models.IntegerField(blank=True, null=True)#not used
+	packages_received = models.IntegerField(blank=True, null=True)#not used
+	packages_sent = models.IntegerField(blank=True, null=True)#not used
 
 	def __str__(self):
 		return f"{self.job_number} {self.code}"
@@ -407,10 +407,10 @@ class WallcoveringPricing(models.Model):
 
 class Orders(models.Model): #one pattern, one WC1, etc. may be broken up into several packages
 	id = models.BigAutoField(primary_key=True)
-	po_number = models.CharField(null=True, max_length=25, blank=True)
+	po_number = models.CharField(max_length=25)
 	job_number = models.ForeignKey(Jobs,on_delete=models.PROTECT)
 	vendor = models.ForeignKey(Vendors,on_delete=models.PROTECT, null=True, blank=True)
-	description = models.CharField(null=True, max_length=2000) #this is for if there are multiple patterns ordered'
+	description = models.CharField(max_length=2000) #this is for if there are multiple patterns ordered'
 	date_ordered = models.DateField(null=True, blank=True)
 	partial_receipt = models.BooleanField(default=False)
 	notes = models.CharField(null=True, max_length=2000, blank=True) #DONT USE THIS, USE ORDERITEMS

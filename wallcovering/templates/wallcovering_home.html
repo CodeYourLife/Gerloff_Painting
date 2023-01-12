@@ -67,21 +67,44 @@ $(document).ready(function () {
 	</script>
 </head>
 <body>
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Wallcovering</a>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown2">
+    <ul class="navbar-nav ">
+        <li><a class="nav-item nav-link active" href="{% url 'wallcovering_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'wallcovering_pattern_all' %}">Materials</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'wallcovering_order_all' %}">Orders</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'wallcovering_receive_all' %}">Receipts</a></li>
+        <li><a class="nav-item nav-link"  href="{% url 'wallcovering_send_all' %}">Sent to Job</a></li>
+    </ul>
+  </div>
+</nav>
+
         <div class ="container">
             <div class ="row">
-				<div class ="col"><a href = "{% url 'wallcovering_pattern_new' %}">
-							<div style="height:100%;width:100%">
-								Add New Pattern	</div>
-						</a></div>
-				<div class ="col"><a href = "{% url 'wallcovering_order_new' "ALL" "ALL" %}">
-							<div style="height:100%;width:100%">
-								Place Wallcovering Order	</div>
-						</a></div>
-				<div class ="col">Receive Wallcovering Delivery  </div>
-				<div class ="col">Send Wallcovering to Job </div>
+				<div class ="col">
+					<form action="{% url 'wallcovering_pattern_new' %}">
+    <input type="submit" value="Add New Material" />
+</form>
+</div>
+				<div class ="col">
+										<form action="{% url 'wallcovering_order_new' "ALL" "ALL" %}">
+    <input type="submit" value="Place Wallcovering Order" />
+</form>
+</div>
+				<div class ="col">
+
+										<form action="{% url 'wallcovering_receive' "ALL" %}">
+    <input type="submit" value="Receive Wallcovering Delivery" />
+</form>
+</div>
+				<div class ="col">
+										<form action="{% url 'wallcovering_send' "ALL" %}">
+    <input type="submit" value="Send Wallcovering to Job" />
+</form>
+</div>
 			</div>
 		</div>
-
 
 	{% if wc_table %}
 	<hr>

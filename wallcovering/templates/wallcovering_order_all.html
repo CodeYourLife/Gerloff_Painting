@@ -1,9 +1,7 @@
 {% extends 'base.html' %}
 {% block nav_item_wallcovering %}active{% endblock nav_item_wallcovering %}
 {% block content %}
-
 {% load render_table from django_tables2 %}
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -18,6 +16,7 @@
 .active, .collapsible:hover {
   background-color: Salmon;
 }
+
 	</style>
 	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
 	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
@@ -33,6 +32,23 @@
 </head>
 <body>
 
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Wallcovering</a>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown2">
+    <ul class="navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'wallcovering_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'wallcovering_pattern_all' %}">Materials</a></li>
+        <li><a class="nav-item nav-link active" href="{% url 'wallcovering_order_all' %}">Orders</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'wallcovering_receive_all' %}">Receipts</a></li>
+        <li><a class="nav-item nav-link"  href="{% url 'wallcovering_send_all' %}">Sent to Job</a></li>
+    </ul>
+  </div>
+</nav>
+<form action="{% url 'wallcovering_order_new' 'ALL' 'ALL' %}">
+    <input type="submit" value="Place New Order" />
+</form>
+
+<br>
 {% render_table table %}
 
 </body>
