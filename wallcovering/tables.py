@@ -53,10 +53,12 @@ class CombinedOrdersTable(tables.Table):
 
 
 class ReceivedTable(tables.Table):
+    send_to_job = tables.TemplateColumn(
+        '<a href="{% url "wallcovering_send" record.order_item.order.job_number.job_number %}">Send to Job</a>')
     class Meta:
         model = ReceivedItems
         template_name = "django_tables2/bootstrap.html"
-        fields = ('order_item__item_description','wallcovering_delivery__date','quantity','order_item__unit', 'wallcovering_delivery__notes' )
+        fields = ('wallcovering_delivery__order__job_number','order_item__item_description','wallcovering_delivery__date','quantity','order_item__unit', 'wallcovering_delivery__notes','send_to_job' )
 
 
 class PackagesTable(tables.Table):

@@ -180,7 +180,7 @@
   </div>
 </nav>
 <br>
-
+<h2>Place New Order</h2>
     <form name = order_input action={% url 'post_wallcovering_order' %} method="post"  onSubmit = "return check_data()">
         {% csrf_token %}
         <table id="first_table0" class="display" style="...">
@@ -208,7 +208,11 @@
                     {% endif %}
                     </td>
                     <td><input type="text" name="po_number" placeholder="PO NUMBER" size="10" id="po_number" required/></td>
+                    {% if selectedwc == 0 %}
                     <td><input type="text" name="description" placeholder="Briefly Describe Order (ie. WC1 & WC2, etc." size="50" id="description" required/></td>
+                    {% else %}
+                    <td><input type="text" name="description" placeholder="Briefly Describe Order (ie. WC1 & WC2, etc." size="50" id="description" required  value = "{{selectedwc.code}} {{selectedwc.vendor.company_name}} {{selectedwc.pattern}}"/></td>
+                    {% endif %}
                 </tr>
             </tbody>
         </table>
@@ -234,8 +238,8 @@
                     <td>
                     <select id="select_pricing0" name="select_pricing0" onChange="filter_pricing2('0')" >
                         <option value="please_select">Select Pricing</option>
-                        {% if pricing %}
-                        {% for price in pricing %}
+                        {% if selectedpricing %}
+                        {% for price in selectedpricing %}
                             <option value="{{price.id}}">{{price.quote_date}} Qnty: {{price.min_yards}} Price: ${{price.price}}</option>
                         {% endfor %}
                         {% endif %}
@@ -261,7 +265,8 @@
                     <td colspan="2"><input type="text" name="item_description0" placeholder="Material Description" size="50" id="item_description0" /></td>
                     {% else %}
                     <td colspan="2"><input type="text" name="item_description0" placeholder="Material Description" size="50" id="item_description0" value = "{{selectedwc.code}} {{selectedwc.vendor.company_name}} {{selectedwc.pattern}}"/></td>
-                    {% endif %}
+
+                {% endif %}
             </tr>
             <tr>
                 {% if selectedwc == 0 %}

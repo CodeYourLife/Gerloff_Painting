@@ -48,6 +48,11 @@ def equipment_batch_outgoing(request,status): #status is Outgoing, Incoming
                 x.status = "Checked Out"
                 x.batch = None
                 x.save()
+                new_note = InventoryNotes(inventory_item=x, date=date.today(),
+                                          user=request.user.first_name + " " + request.user.last_name,
+                                          note="Sent to Job -" + request.POST['inventory_notes'],
+                                          category="Job", job_number = request.POST['select_job'], job_name = x.job_number.job_name)
+                new_note.save()
             for x in Inventory.objects.filter(batch='Incoming'):
                 x.batch=None
                 x.save()
@@ -57,9 +62,15 @@ def equipment_batch_outgoing(request,status): #status is Outgoing, Incoming
                 x.status= "Available"
                 x.batch = None
                 x.save()
+                new_note = InventoryNotes(inventory_item=x, date=date.today(),
+                                          user=request.user.first_name + " " + request.user.last_name,
+                                          note="Returned -" + request.POST['inventory_notes'],
+                                          category="Returned")
+                new_note.save()
             for x in Inventory.objects.filter(batch='Outgoing'):
                 x.batch=None
                 x.save()
+
         return redirect('warehouse_home')
     status=status
     jobs = Jobs.objects.filter(status="Open")
@@ -92,8 +103,14 @@ def equipment_new(request):
         if 'is_labeled' in request.POST:
             inventory.is_labeled=True
             inventory.save()
+        new_note = InventoryNotes(inventory_item=inventory, date=date.today(),
+                                  user=request.user.first_name + " " + request.user.last_name,
+                                  note="Purchased From " + vendor.company_name,
+                                  category="Misc")
+        new_note.save()
         return redirect('equipment_page', id=inventory.id)
     return render(request, "equipment_new.html", {'vendors':vendors,'inventorytype':inventorytype,'inventoryitems1':inventoryitems1,'inventoryitems2':inventoryitems2,'inventoryitems3':inventoryitems3,'inventoryitems4':inventoryitems4})
+
 def equipment_page(request, id):
     inventory = Inventory.objects.get(id=id)
     table = EquipmentNotesTable(InventoryNotes.objects.filter(inventory_item=inventory))

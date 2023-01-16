@@ -8,11 +8,7 @@ def validate_tm_category(value):
 	else:
 		raise ValidationError("Category must be Labor, Material, Equipment, Inventory, or Bond")
 
-def validate_inventory_notes(value):
-	if value == "Returned" or value == "Missing" or value == "Job" or value == "Service" or value == "Misc":
-		return value
-	else:
-		raise ValidationError("Category must be Returned, Missing, Job, Service, or Misc")
+
 
 class Employees(models.Model):
 	id = models.BigAutoField(primary_key=True)
@@ -239,6 +235,12 @@ class Inventory(models.Model):
 		return f"{self.inventory_type} {self.item}"
 
 
+def validate_inventory_notes(value):
+	if value == "Returned" or value == "Missing" or value == "Job" or value == "Service" or value == "Misc":
+		return value
+	else:
+		raise ValidationError("Category must be Returned, Missing, Job, Service, or Misc")
+
 class InventoryNotes(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	inventory_item = models.ForeignKey(Inventory, on_delete=models.PROTECT)
@@ -380,16 +382,15 @@ class Wallcovering(models.Model):
 
 	def packages_received(self):
 		totalquantity = 0
-		for x in OrderItems.objects.filter(wallcovering=self):
-			for y in Orders.objects.filter(orderitems2__isnull=False):
-				totalquantity = totalquantity + y.packages_received()
+		for y in Orders.objects.filter(orderitems2__isnull=False, job_number=self.job_number, orderitems2__wallcovering=self).distinct(): #these are all orders with packages
+			totalquantity = totalquantity + y.packages_received()
 		return totalquantity
 
 	def packages_sent(self):
 		totalquantity = 0
-		for x in OrderItems.objects.filter(wallcovering=self):
-			for y in Orders.objects.filter(orderitems2__isnull=False):
-				totalquantity = totalquantity + y.packages_sent()
+		totalquantity = 0
+		for y in Orders.objects.filter(orderitems2__isnull=False, job_number=self.job_number, orderitems2__wallcovering=self).distinct(): #these are all orders with packages
+			totalquantity = totalquantity + y.packages_sent()
 		return totalquantity
 
 

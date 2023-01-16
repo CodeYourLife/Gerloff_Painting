@@ -116,6 +116,17 @@
 	</script>
 </head>
 <body>
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Equipment</a>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown2">
+    <ul class="navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'equipment_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link active" href="{% url 'equipment_new' %}">New</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
+    </ul>
+  </div>
+</nav>
 <div class ="container">
  <form name = equipment_input action={% url 'equipment_new' %} method="post"  onSubmit = "return check_booking_data()">
 {% csrf_token %}

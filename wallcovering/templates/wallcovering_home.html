@@ -125,7 +125,7 @@ $(document).ready(function () {
 			<tbody>
 			{% for item in wc_table %}
 				<tr>
-					<td><a href = "{% url 'job_page' item.job_number %}">
+					<td><a href = "{% url 'job_page' item.job_number.job_number %}">
 							<div style="height:100%;width:100%">
 								{{item.job_number}}	</div>
 						</a></td>
@@ -159,6 +159,7 @@ $(document).ready(function () {
 					<th>Pattern</th>
 					<th>Job</th>
 					<th>Notes</th>
+					<th>Order Now</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -175,6 +176,10 @@ $(document).ready(function () {
 								{{wc_not_ordered.job_number.job_name}}	</div>
 					</a></td>
 					<td>{{wc_not_ordered.notes}}</td>
+					<td><a href = "{% url 'wallcovering_order_new' wc_not_ordered.id wc_not_ordered.job_number.job_number %}">
+							<div style="height:100%;width:100%">
+								Order Now	</div>
+					</a></td>
 				</tr>
 			{% endfor %}
 			</tbody>
@@ -196,6 +201,7 @@ $(document).ready(function () {
 					<th>Date Ordered</th>
 					<th>Job</th>
 					<th>Notes</th>
+					<th>Receive Now</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -208,6 +214,9 @@ $(document).ready(function () {
 								{{wc_ordered.order.date_ordered}}	</div></a></td>
 					<td>{{wc_ordered.order.job_number.job_name}}</td>
 					<td>{{wc_ordered.order.notes}}</td>
+					<td><a href = "{% url 'wallcovering_receive' wc_ordered.order.id %}">
+							<div style="height:100%;width:100%">
+								Receive Delivery Now	</div></a></td>
 				</tr>
 			{% endfor %}
 			</tbody>
@@ -276,17 +285,25 @@ $(document).ready(function () {
 					<th>Description</th>
 					<th>Date Received </th>
 					<th>Notes</th>
+					<th>Send to Job</th>
 
 				</tr>
 			</thead>
 			<tbody>
 			{% for package in packages %}
 				<tr>
-					<td>{{package.delivery.order.job_number.job_number}}</td>
-					<td>{{package.delivery.order.description}}</td>
+					<td><a href = "{% url 'job_page' package.delivery.order.job_number.job_number %}">
+					<div style="height:100%;width:100%">
+					{{package.delivery.order.job_number}}	</div></a></td>
+					<td><a href = "{% url 'wallcovering_order' package.delivery.order.id %}">
+					<div style="height:100%;width:100%">
+					{{package.delivery.order.description}}	</div></a></td>
 					<td>{{package.contents}}	</td>
 					<td>{{package.delivery.date}}</td>
 					<td>{{package.notes}}</td>
+					<td><a href = "{% url 'wallcovering_send' package.delivery.order.job_number.job_number %}">
+					<div style="height:100%;width:100%">
+					Send to Job	</div></a></td>
 				</tr>
 			{% endfor %}
 			</tbody>

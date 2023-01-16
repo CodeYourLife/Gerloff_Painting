@@ -32,14 +32,37 @@
 
 	function check_booking_data(){
 		var hidden = document.getElementById("select_job")
+		var location = document.getElementById("inventory_notes")
 		if (hidden.value == "Not Selected"){
 			alert(hidden.value)
 			return false
 		}
+    	var x;
+    	var name=prompt("Please make any notes about this:");
+    	if (name!=null){
+       		location.value = name;
+   		}
 	}
+
 	</script>
 </head>
 <body>
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Equipment</a>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown2">
+    <ul class="navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'equipment_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'equipment_new' %}">New</a></li>
+		{% if status == 'Outgoing' %}
+        <li><a class="nav-item nav-link active" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
+		{% else %}
+        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
+        <li><a class="nav-item nav-link active" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
+		{% endif %}
+    </ul>
+  </div>
+</nav>
 {% if status == 'Outgoing' %}
  <form name = job_update action="{%  url 'equipment_batch_outgoing' status='Outgoing' %}" method="post"  onSubmit = "return check_booking_data()">
 
@@ -84,7 +107,8 @@
 {% endif %}
 	 {% csrf_token %}
  <input type = "hidden" id="select_job" name="select_job" value ="Not Selected">
-{% if status == 'Outgoing' %}
+<input type="hidden" id="inventory_notes" name = "inventory_notes" value="" />
+     {% if status == 'Outgoing' %}
 <input type="submit" value="Assign to Job" />
 {% else %}
 <input type="submit" value="Check Equipment Back In to Shop" />

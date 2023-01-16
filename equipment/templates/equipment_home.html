@@ -42,6 +42,19 @@ $(document).ready(function () {
 	</script>
 </head>
 <body>
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Equipment</a>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown2">
+    <ul class="navbar-nav ">
+        <li><a class="nav-item nav-link active" href="{% url 'equipment_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'equipment_new' %}">New</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
+    </ul>
+  </div>
+</nav>
+
+
 <div class="demo-html" style="width:90%">
 		<table id="inventory_table" class="display" style="width:90%">
 			<thead>

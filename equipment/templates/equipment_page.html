@@ -46,6 +46,18 @@
 {% if inventories %}
 
 <body>
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Equipment</a>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown2">
+    <ul class="navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'equipment_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'equipment_new' %}">New</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
+		<li><a class="nav-item nav-link active" href="#">{{inventories.item}}</a></li>
+    </ul>
+  </div>
+</nav>
         <div class ="container">
             <div class ="row">
                 <div class ="col"> <b>Number: = </b>{{inventories.number}}   </div>

@@ -47,12 +47,15 @@ def job_page(request,jobnumber):
         equipment = Inventory.objects.filter(job_number=jobnumber).order_by('inventory_type')
         rentals = Rentals.objects.filter(job_number=jobnumber)
         wallcovering2 = Wallcovering.objects.filter(job_number = jobnumber)
-        wc_not_ordereds = []
-        for x in wallcovering2:
-            if x.orderitems1.count() > 0:
-                print(x)
-            else:
-                wc_not_ordereds.append(x)
+        wc_not_ordereds = Wallcovering.objects.filter(job_number__job_number=jobnumber, orderitems1__isnull=True)
+        print(jobnumber)
+        print(wc_not_ordereds)
+        # wc_not_ordereds = []
+        # for x in wallcovering2:
+        #     if x.orderitems1.count() > 0:
+        #         print(x)
+        #     else:
+        #         wc_not_ordereds.append(x)
         wc_ordereds = OrderItems.objects.filter(order__job_number=jobnumber, is_satisfied=False)
         packages = Packages.objects.filter(delivery__order__job_number = jobnumber)
         deliveries = OutgoingItem.objects.filter(outgoing_event__job_number=jobnumber)
