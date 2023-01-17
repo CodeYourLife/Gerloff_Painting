@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
 {% block content %}
 <!DOCTYPE html>
 <html>
@@ -21,14 +22,38 @@
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
-
+function Previous() {
+window.history.back()
+}
+function check_booking_data(){
+	var notes_section = document.getElementById("no_tm_notes")
+	var name=prompt("Please clarify why you changed this");
+	if (name!=null){
+		notes_section.value = name;
+	}
+}
 
 	</script>
 </head>
 <body>
-<h1>EXTRA WORK TICKET!</h1>
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Change Orders</a>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown2">
+    <ul class="navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'change_order_home' %}">Home</a></li>
+		<li><a class="nav-item nav-link active" href="#">{{changeorder.job_number}} Change Order: #{{changeorder.cop_number}}</a></li>
+		<li><a class="nav-item nav-link" href="#">Add New</a></li>
+    </ul>
+  </div>
+</nav>
+
+{% if changeorder.need_ticket == "Yes" %}
+<h1>Ticket Required</h1>
+{% else %}
+<h1>Change Order</h1>
+{% endif %}
 <div id="co_number" ></div>
-<h2>{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} - {{changeorder.description}}</h2>
+<h2>{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} - Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</h2>
 <br>
 {% if notes %}
 {% for note in notes %}
@@ -37,19 +62,32 @@
 {% endfor %}
 {% endif %}
 <br>
-<form name = ticket_input action="{% url 'extra_work_ticket' changeorder.id %}" method="post" >
+<form name = note_input action="{% url 'extra_work_ticket' changeorder.id %}" method="post" >
 	{% csrf_token %}
 	<label for="new_note">Add a new note</label> <br>
 	<textarea id="new_note" name="new_note" rows="2" cols="50" ></textarea>
 	<input type="submit" value="Add Note" />
-	<hr> <br>
 </form>
-
+{% if changeorder.need_ticket == "Yes" %}
 <form action = "{% url 'process_ewt' changeorder.id %}">
-    <input type="submit" value="Submit Ticket" />
+    <input type="submit" value="Fill Out Ticket Now" />
 </form>
+<br><hr>
+{% endif %}
+<form name = change_tm action="{% url 'extra_work_ticket' changeorder.id %}" method="post" onSubmit = "return check_booking_data()">
+		{% csrf_token %}
+	<input type="hidden" id="no_tm" name="no_tm" value="Yes" />
+	<input type="hidden" id="no_tm_notes" name="no_tm_notes" />
+	{% if changeorder.need_ticket == "Yes" %}
+		<input type="submit" value="Price Required, No Longer T&M"/>
+	{% else %}
+		<input type="submit" value="Change to T&M"/>
+	{% endif %}
+</form>
+<br>
 
 
+<button onclick="Previous()">Back to Previous Page</button>
 </body>
 </html>
 

@@ -20,13 +20,14 @@ def change_start_date(request,jobnumber,previous):
         jobs.start_date=request.POST['start_date']
         if 'is_active' in request.POST:
             jobs.is_active=True
+        jobs.start_date_checked = date.today()
         new_note = JobNotes.objects.create(job_number=jobs, note=request.POST['date_note'],type="auto_start_date_note",user =request.user.first_name+request.user.last_name, date=date.today())
         new_note.save()
         jobs.save()
         if previous == 'jobpage':
             return redirect('job_page',jobnumber='ALL')
         else:
-            return redirect('/')
+            return redirect('super_home')
     return render(request, "change_start_date.html", {'jobs': jobs,'formatdate': format_date, 'previous_page': previous_page})
 def update_job_info(request,jobnumber):
     return render(request, "update_job_info.html")

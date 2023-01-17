@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block nav_item_super %}active{% endblock nav_item_super %}
+{% block nav_item_roles %}active{% endblock nav_item_roles %}
 {% block content %}
 <!DOCTYPE html>
 <html>
@@ -31,6 +31,9 @@ $(document).ready(function () {
 })
 $(document).ready(function () {
     var equipmenttable = $('#equipment_table').DataTable({});
+})
+$(document).ready(function () {
+    var equipmenttable = $('#tickets_table').DataTable({});
 })
 
 
@@ -67,29 +70,31 @@ $(document).ready(function () {
 	</form>
 	
 	<h3>Job List</h3>
-	<input type="checkbox" class="filter-checkbox" value="Virginia Beach" /> Virginia Beach
-
+	<input type="checkbox" class="filter-checkbox" value="started" /> Job Started
+	<input type="checkbox" class="filter-checkbox" value="not_started" /> Job Not Started
 		<table id="job_table" class="display" style="width:90%">
 			<thead>
 				<tr>
 					<th>Job Number</th>
 					<th>Job Name</th>
 					<th>Address</th>
-					<th>City</th>
-					<th>State</th>
+					<th>Start</th>
+					<th>Change</th>
 				</tr>
 			</thead>
 			<tbody>
 			{% if jobs %}
 			{% for job in jobs %}
-				<tr>
-					<td><a href = "{% url 'job_page' job.job_number %}">
-								{{job.job_number}}
-						</a></td>
+				{% if job.start_date_checked < todays_date %}
+				<tr style="background-color:Salmon">
+					{% else %}
+					<tr>
+				{% endif %}
+					<td><a href = "{% url 'job_page' job.job_number %}">{{job.job_number}}</a></td>
 					<td>{{job.job_name}}</td>
-					<td>{{job.address}}</td>
-					<td>{{job.city}}</td>
-					<td>{{job.state}}</td>
+					<td>{{job.address}} {{job.city}} {{job.state}}</td>
+					<td>{{job.start_date}}</td>
+					<td><a href = "{% url 'change_start_date' job.job_number 'superpage' %}">Change Date</a></td>
 				</tr>
 			{% endfor %}
 			{% endif %}
@@ -136,21 +141,48 @@ $(document).ready(function () {
 				<tr>
 					<th>Job Number</th>
 					<th>Item</th>
+					<th>On Rent Date</th>
 				</tr>
 			</thead>
 			<tbody>
-			{% if equipment %}
-			{% for item in equipment %}
+			{% if rentals %}
+			{% for item in rentals %}
 				<tr>
 					<td>{{item.job_number}}</td>
 					<td>{{item.item}}</td>
+					<td>{{item.on_rent_date}}</td>
 				</tr>
 			{% endfor %}
 			{% endif %}
 			</tbody>
 		</table>
 	</div>
-
+	<br> <hr>
+	<h3>Extra Work Tickets</h3>
+	<div class="demo-html">
+		<table id="tickets_table" class="display" style="width:90%">
+			<thead>
+				<tr>
+					<th>Job Number</th>
+					<th>COP #</th>
+					<th>Description</th>
+					<th>Notes</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% if tickets %}
+			{% for item in tickets %}
+				<tr>
+					<td>{{item.job_number}}</td>
+					<td><a href = "{% url 'extra_work_ticket' item.id %}">{{item.cop_number}}</a></td>
+					<td>{{item.description}}</td>
+					<td>{{item.notes}}</td>
+				</tr>
+			{% endfor %}
+			{% endif %}
+			</tbody>
+		</table>
+	</div>
 </body>
 </html>
 

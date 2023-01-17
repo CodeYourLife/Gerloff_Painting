@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
-{% block nav_item_roles %}active{% endblock nav_item_roles %}
+{% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
 {% block content %}
+{% load render_table from django_tables2 %}
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -23,64 +25,22 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 
-
 	</script>
 </head>
 <body>
 <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
-  <a class="navbar-brand" href="#">Warehouse</a>
+  <a class="navbar-brand" href="#">Change Orders</a>
   <div class="collapse navbar-collapse" id="navbarNavDropdown2">
     <ul class="navbar-nav ">
-        <li><a class="nav-item nav-link active" href="#">Home</a></li>
+        <li><a class="nav-item nav-link active" href="{% url 'change_order_home' %}">Home</a></li>
     </ul>
   </div>
 </nav>
 
-<a href = "{% url 'rental_new' "ALL" %}">
-							<div style="height:100%;width:100%">
-								Rentals - Add New	</div>
-						</a>
-<br>
-<a href = "{% url 'rentals_home' %}">
-							<div style="height:100%;width:100%">
-								Rentals - View All	</div>
-						</a>
-<br>
-<a href = "{% url 'equipment_new' %}">
-							<div style="height:100%;width:100%">
-								Equipment - Add New Equipment	</div>
-						</a>
-<br>
-<a href = "{% url 'equipment_home' %}">
-							<div style="height:100%;width:100%">
-								Equipment - View All Equipment	</div>
-						</a>
-<br>
-<a href = "{% url 'equipment_batch_outgoing' 'Incoming' %}">
-							<div style="height:100%;width:100%">
-								Equipment - Check Back In To Shop 	</div>
-						</a>
-<br>
-<a href = "{% url 'equipment_batch_outgoing' 'Outgoing' %}">
-							<div style="height:100%;width:100%">
-								Equipment - Check-Out to Job	</div>
-						</a>
-<br>
-<a href = "{% url 'wallcovering_order_new' 'ALL' 'ALL' %}">
-							<div style="height:100%;width:100%">
-								Wallcovering - Order New	</div>
-						</a>
-<br>
-<a href = "{% url 'wallcovering_receive' 'ALL' %}">
-							<div style="height:100%;width:100%">
-								Wallcovering - Receive Delivery	</div>
-						</a>
-<br>
-<a href = "{% url 'wallcovering_send' 'ALL' %}">
-							<div style="height:100%;width:100%">
-								Wallcovering - Send to Job	</div>
-						</a>
-<br>
+
+
+{% render_table table %}
+
 </body>
 </html>
 

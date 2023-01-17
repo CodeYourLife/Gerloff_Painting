@@ -110,6 +110,7 @@ class Jobs(models.Model):
 	assigned_rentals = models.IntegerField(null=True, blank=True)
 	is_bonded = models.BooleanField(default=False)
 	is_active = models.BooleanField(default=False)
+	start_date_checked = models.DateField(null=True, blank=True)
 	def __str__(self):
 		return f"{self.job_name}"
 
@@ -291,8 +292,15 @@ class ChangeOrders(models.Model):
 	date_week_ending= models.DateField(null=True, blank=True)
 	ticket_description = models.CharField(null=True,max_length=2000, blank=True)
 	materials_used = models.CharField(null=True,max_length=2000, blank=True)
+	price = models.DecimalField(max_digits=9, decimal_places=2,null=True)
 	def __str__(self):
 		return f"{self.job_number} {self.description}"
+
+	def need_ticket(self):
+		if self.is_t_and_m==True and self.is_ticket_signed==False and self.is_closed==False:
+			return "Yes"
+		else:
+			return ""
 
 
 class ChangeOrderNotes(models.Model):
