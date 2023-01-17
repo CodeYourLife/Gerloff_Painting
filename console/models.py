@@ -109,6 +109,7 @@ class Jobs(models.Model):
 	assigned_inventory = models.IntegerField(null=True, blank=True)
 	assigned_rentals = models.IntegerField(null=True, blank=True)
 	is_bonded = models.BooleanField(default=False)
+	is_active = models.BooleanField(default=False)
 	def __str__(self):
 		return f"{self.job_name}"
 

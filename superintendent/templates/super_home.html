@@ -7,11 +7,12 @@
 	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 	<title>DataTables example - HTML (DOM) sourced data</title>
-	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
 	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.css">
+	<link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
 	<style type="text/css" class="init">	</style>
+	<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.js"></script>
+
 	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
 	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
 	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
@@ -22,12 +23,24 @@
 	<script type="text/javascript" class="init">
 
 $(document).ready(function () {
-    var table = $('#job_table').DataTable({});
+    var jobtable = $('#job_table').DataTable({});
+
 })
+$(document).ready(function () {
+    var rentaltable = $('#rentals_table').DataTable({});
+})
+$(document).ready(function () {
+    var equipmenttable = $('#equipment_table').DataTable({});
+})
+
+
+
 	</script>
 </head>
 <br>
 <body class="wide comments example">
+
+
 	<form name = select_super action="filter_super" method="post" >
         {% csrf_token %}
                     <label>Please select superintendent</label>
@@ -35,15 +48,16 @@ $(document).ready(function () {
                         <option value="please_select">"Please Select"</option>
                         {% if supers %}
                         {% for super in supers %}
-
                             <option value="{{super.id}}">{{super.first_name}} {{super.last_name}}</option>
                         {% endfor %}
                         {% endif %}
 					</select>
 		<input type="submit" value="select super" />
 	</form>
+	
 	<h3>Job List</h3>
-	<div class="demo-html" style="width:90%">
+	<input type="checkbox" class="filter-checkbox" value="Virginia Beach" /> Virginia Beach
+
 		<table id="job_table" class="display" style="width:90%">
 			<thead>
 				<tr>
@@ -59,8 +73,7 @@ $(document).ready(function () {
 			{% for job in jobs %}
 				<tr>
 					<td><a href = "{% url 'job_page' job.job_number %}">
-							<div style="height:100%;width:100%">
-								{{job.job_number}}	</div>
+								{{job.job_number}}
 						</a></td>
 					<td>{{job.job_name}}</td>
 					<td>{{job.address}}</td>
@@ -71,7 +84,7 @@ $(document).ready(function () {
 			{% endif %}
 			</tbody>
 		</table>
-	</div>
+
 	<br> <hr>
 	<h3>Checked Out Equipment</h3>
 	<div class="demo-html">

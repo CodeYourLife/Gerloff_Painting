@@ -57,7 +57,6 @@ from django.shortcuts import render, redirect
 #         supername = Employees.objects.get(id=request.POST['select_gpsuper'])
 #         return render(request, "DELETEsuper_home.html",{'super':request.POST['select_gpsuper'],"jobs": jobs, "equipment":equipment, "supername": supername})
 
-
 def super_home(request):
     jobs = Jobs.objects.all()[0:2000]
     supers = Employees.objects.all()[0:2000]
