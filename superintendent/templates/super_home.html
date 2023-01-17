@@ -39,7 +39,18 @@ $(document).ready(function () {
 </head>
 <br>
 <body class="wide comments example">
-
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Superintendent</a>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown2">
+    <ul class="navbar-nav ">
+		{% if selected_super %}
+        <li><a class="nav-item nav-link active" href="#">{{selected_super.first_name}}</a></li>
+		{% else %}
+		<li><a class="nav-item nav-link active" href="#">Showing All Superintendents</a></li>
+		{% endif %}
+    </ul>
+  </div>
+</nav>
 
 	<form name = select_super action="filter_super" method="post" >
         {% csrf_token %}

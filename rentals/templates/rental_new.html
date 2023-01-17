@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% block nav_item_rentals %}active{% endblock nav_item_rentals %}
 {% block content %}
 <!DOCTYPE html>
 <html>
@@ -25,6 +26,15 @@
 	</script>
 </head>
 <body>
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Rentals</a>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown2">
+    <ul class="navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'rentals_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link active" href="{% url 'rental_new' 'ALL' %}">New</a></li>
+    </ul>
+  </div>
+</nav>
  <form name = rental_input action={% url 'rental_new' 'ALL' %} method="post"  onSubmit = "return check_data()">
 {% csrf_token %}
 

@@ -12,6 +12,25 @@ from equipment.tables import JobsTable
 from django_tables2 import SingleTableView
 
 
+def change_start_date(request,jobnumber,previous):
+    jobs = Jobs.objects.get(job_number=jobnumber)
+    format_date = jobs.start_date.strftime("%Y-%m-%d")
+    previous_page = previous
+    if request.method == 'POST':
+        jobs.start_date=request.POST['start_date']
+        if 'is_active' in request.POST:
+            jobs.is_active=True
+        new_note = JobNotes.objects.create(job_number=jobs, note=request.POST['date_note'],type="auto_start_date_note",user =request.user.first_name+request.user.last_name, date=date.today())
+        new_note.save()
+        jobs.save()
+        if previous == 'jobpage':
+            return redirect('job_page',jobnumber='ALL')
+        else:
+            return redirect('/')
+    return render(request, "change_start_date.html", {'jobs': jobs,'formatdate': format_date, 'previous_page': previous_page})
+def update_job_info(request,jobnumber):
+    return render(request, "update_job_info.html")
+
 def jobs_home(request):
     response = redirect('/')
     return response

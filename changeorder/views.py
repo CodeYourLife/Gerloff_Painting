@@ -1,9 +1,7 @@
-from django.shortcuts import render
-from django.views.generic import ListView
+
 from console.models import *
 from django.shortcuts import render, redirect
 from datetime import date
-from json import dumps
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 # Create your views here.

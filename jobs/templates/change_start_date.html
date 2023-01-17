@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
-{% block nav_item_rentals %}active{% endblock nav_item_rentals %}
+{% block nav_item_jobs %}active{% endblock nav_item_jobs %}
 {% block content %}
-{% load render_table from django_tables2 %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -29,17 +28,34 @@
 </head>
 <body>
 <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
-  <a class="navbar-brand" href="#">Rentals</a>
+  <a class="navbar-brand" href="#">Active Jobs</a>
   <div class="collapse navbar-collapse" id="navbarNavDropdown2">
     <ul class="navbar-nav ">
-        <li><a class="nav-item nav-link active" href="{% url 'rentals_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'rental_new' 'ALL' %}">New</a></li>
+		<li><a class="nav-item nav-link" href="{% url 'job_page' 'ALL' %}">Home</a></li>
+        <li><a class="nav-item nav-link active" href="#">Start Date for {{jobs.job_name}}</a></li>
     </ul>
   </div>
 </nav>
+ <form name = booking_input action="{% url 'change_start_date' jobs.job_number previous_page %}" method="post">
+{% csrf_token %}
+	                     <label for="start_date">Start date:</label>
+                    <input type="date" id="start_date" name="start_date" value="{{formatdate}}">
+<input type="hidden" id="previous_page" name="previous_page" value = {{previous_page}}/>
+<br>
+{% if jobs.is_active == True %}
+	 <input type="checkbox" name ="is_active" id="is_active" value="checked" /> <label for="is_active">"Job has started: " </label>
+{% else %}
+	 	 <input type="checkbox" name ="is_active" id="is_active" /> <label for="is_active">Click This Button If Job has Started </label>
+{% endif %}
+	 <br>
+	         <label for="date_note">Explain This Date Change: </label> <br>
+        <textarea id="date_note" name="date_note" rows="4" cols="100" ></textarea>
+<br>
 
+	 <input type="submit" value="Change Date Now" />
+    </form>
 
-{% render_table table %}
+  <button onclick="Previous()">Back to Previous Page</button>
 
 </body>
 </html>

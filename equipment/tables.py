@@ -6,10 +6,11 @@ from .filters import EquipmentFilter
 
 class JobsTable(tables.Table):
     jobnumber = tables.TemplateColumn('<a href="{% url "job_page" record.job_number %}">{{record.job_number}}</a>')
+    startdate = tables.TemplateColumn('<a href="{% url "change_start_date" record.job_number "jobpage" %}">{{record.start_date}}</a>')
     class Meta:
         model = Jobs
         template_name = "django_tables2/bootstrap.html"
-        fields = ("jobnumber", "job_name","start_date","client","estimator","superintendent","contract_amount","address","city","state")
+        fields = ("jobnumber", "job_name","startdate","client","estimator","superintendent","contract_amount","address","city","state")
 class EquipmentNotesTable(tables.Table, FilterView):
     class Meta:
         model = InventoryNotes

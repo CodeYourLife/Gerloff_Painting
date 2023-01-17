@@ -182,11 +182,18 @@ class Checklist(models.Model):
 		return f"{self.job_number} {self.checklist_item}"
 
 
+def validate_job_notes(value):
+	if value == "auto_booking_note" or value == "employee_note" or value == "auto_co_note" or value == "auto_submittal_note" or value == "auto_start_date_note" or value == "daily_report":
+		return value
+	else:
+		raise ValidationError("Category Not Allowed")
+
+
 class JobNotes(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	job_number = models.ForeignKey(Jobs,on_delete=models.PROTECT)
 	note = models.CharField(null=True, max_length=2000)
-	type = models.CharField(null=True, max_length=50) #booking note, field note, CO note, submittal note, start date note, daily report, etc
+	type = models.CharField(null=True, max_length=50,validators = [validate_job_notes])  #booking note, field note, CO note, submittal note, start date note, daily report, etc
 	user = models.CharField(null=True, max_length=50) #bridgette joe
 	date = models.DateField(null=True, blank=True)
 	daily_employee_count = models.IntegerField(default=0)
