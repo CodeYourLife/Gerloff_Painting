@@ -113,6 +113,15 @@
 		document.getElementById('add_item_here' + row_counter).appendChild(label).appendChild(select);
 		}
          }
+
+   	function addAttachmentToLocalStorage (event) {
+
+   		//localStorage.setItem("tempxml", xml_content);
+   		//loop over storage items
+   		//for each item, save to disk on the server in a folder path you've chosen
+   		//if the folder path does not exist, the create one
+   		//reach out to server for each of these tasks that involve server folder/file manipulation
+   	}
 	</script>
 </head>
 <body>
@@ -175,6 +184,8 @@
 	 Serial Number:<input type= "text" name="serial_number" id="serial_number" placeholder="" size="30" />
 	<br><br>
 	 PO Number:<input type= "text" name="po_number" id="po_number" placeholder="" size="30" />
+	<br><br>
+		 Attachment: <input type= "file" name="po_number" id="po_number" onchange="addAttachment(this)" placeholder="" multiple/>
 	<br><br>
 	<input type="checkbox" name ="is_labeled" id="is_labeled"   /> <label for="is_labeled">"Does this have a Gerloff tag?" </label>
 	 <br><br>

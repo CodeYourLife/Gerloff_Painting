@@ -7,7 +7,14 @@ from django.core.serializers.json import DjangoJSONEncoder
 from wallcovering.tables import ChangeOrderTable
 # Create your views here.
 
+def change_order_new(request,jobnumber):
+    if jobnumber == 'ALL':
+        jobs=Jobs.objects.filter(status="Open")
+        return render(request, "change_order_new.html",{'jobs':jobs})
+    else:
+        jobs=Jobs.objects.filter(job_number=jobnumber)
 
+    return render(request, "change_order_new.html")
 def change_order_home(request):
     table = ChangeOrderTable(ChangeOrders.objects.filter(is_closed=False))
     return render(request, "change_order_home.html", {'table':table})

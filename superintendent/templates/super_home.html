@@ -23,7 +23,7 @@
 	<script type="text/javascript" class="init">
 
 $(document).ready(function () {
-    var jobtable = $('#job_table').DataTable({});
+    jobtable = $('#job_table').DataTable({});
 
 })
 $(document).ready(function () {
@@ -35,6 +35,26 @@ $(document).ready(function () {
 $(document).ready(function () {
     var equipmenttable = $('#tickets_table').DataTable({});
 })
+
+var started = false
+var notStarted = false
+function filterJobStarted (event, isStarted) {
+	  table = $("#job_table").DataTable();
+	  if (isStarted)
+	  	started = event.checked
+	  else
+	  	notStarted = event.checked
+
+	  searchStatus = ''
+	  if(started)
+	  	searchStatus = true
+	  if(notStarted)
+	  	searchStatus = false
+	  if(notStarted && started)
+	  	searchStatus = ''
+	  table.columns(5).search(searchStatus).draw();
+}
+
 
 
 
@@ -70,8 +90,8 @@ $(document).ready(function () {
 	</form>
 	
 	<h3>Job List</h3>
-	<input type="checkbox" class="filter-checkbox" value="started" /> Job Started
-	<input type="checkbox" class="filter-checkbox" value="not_started" /> Job Not Started
+	<input type="checkbox" class="filter-checkbox" onclick="filterJobStarted(this, true)" value="started" /> Job Started
+	<input type="checkbox" class="filter-checkbox" onclick="filterJobStarted(this, false)"  value="not_started" /> Job Not Started
 		<table id="job_table" class="display" style="width:90%">
 			<thead>
 				<tr>
@@ -80,6 +100,7 @@ $(document).ready(function () {
 					<th>Address</th>
 					<th>Start</th>
 					<th>Change</th>
+					<th>Started?</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -95,6 +116,7 @@ $(document).ready(function () {
 					<td>{{job.address}} {{job.city}} {{job.state}}</td>
 					<td>{{job.start_date}}</td>
 					<td><a href = "{% url 'change_start_date' job.job_number 'superpage' %}">Change Date</a></td>
+					<td>{{job.is_active}}</td>
 				</tr>
 			{% endfor %}
 			{% endif %}
