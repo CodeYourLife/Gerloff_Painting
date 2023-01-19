@@ -1,8 +1,15 @@
 from console.models import *
 import django_tables2 as tables
-from console.models import InventoryNotes, Inventory
+from console.models import InventoryNotes, Inventory, Jobs
 import django_filters
 
+class JobsFilter(django_filters.FilterSet):
+    search = django_filters.CharFilter(label='Search Job =', method='search_filter')
+    def search_filter(self, queryset, name, value):
+        return queryset.filter(job_name__icontains=value)
+    class Meta:
+        model = Jobs
+        fields = ['search']
 
 class EquipmentNotesFilter(django_filters.FilterSet):
     class Meta:

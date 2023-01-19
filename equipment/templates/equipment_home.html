@@ -23,21 +23,40 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 $(document).ready(function () {
-    var table = $('#inventory_table').DataTable({
-<!--        columnDefs: [-->
-<!--            {-->
-<!--                targets:0,-->
-<!--                render: function ( data, type, row, meta ) {-->
-<!--                    if(type === 'display'){-->
-<!--                    	data = '<a href="job_page/' + data + '">' + data + '</a>';-->
-
-<!--                    }-->
-<!--                    return data;-->
-<!--                }-->
-<!--            }-->
-<!--        ]-->
+    inventorytable = $('#inventory_table').DataTable({
     });
 })
+
+function filterStatus() {
+	table = document.getElementById("inventory_table");
+	available_box =  document.getElementById("available");
+	checked_out_box =  document.getElementById("checked_out");
+	missing_box = document.getElementById("missing");
+	tr = table.getElementsByTagName("tr");
+	if (!available_box.checked && !checked_out_box.checked && !missing_box.checked){
+		for (i = 1; i < tr.length; i++) {
+			tr[i].style.display = "";}
+		return True}
+  	for (i = 1; i < tr.length; i++) {
+    td = tr[i].getElementsByTagName("td")[4];
+	tr[i].style.display = "none";
+	if (available_box.checked){
+		if (td.textContent == "Available"){
+			tr[i].style.display = "";
+			}
+		}
+	if (checked_out_box.checked){
+		if (td.textContent == "Checked Out" || td.textContent == "Service"){
+			tr[i].style.display = "";
+			}
+		}
+	if (missing_box.checked){
+		if (td.textContent == "Missing"){
+			tr[i].style.display = "";
+			}
+		}
+}
+}
 
 	</script>
 </head>
@@ -54,7 +73,9 @@ $(document).ready(function () {
   </div>
 </nav>
 
-
+	<input type="checkbox" class="filter-checkbox" onclick="filterStatus()" id="available" /> Available
+	<input type="checkbox" class="filter-checkbox" onclick="filterStatus()"  id="checked_out" /> Checked Out
+	<input type="checkbox" class="filter-checkbox" onclick="filterStatus()"  id="missing" /> Missing
 <div class="demo-html" style="width:90%">
 		<table id="inventory_table" class="display" style="width:90%">
 			<thead>

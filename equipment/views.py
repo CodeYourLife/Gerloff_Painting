@@ -105,7 +105,7 @@ def equipment_new(request):
             inventory.save()
         new_note = InventoryNotes(inventory_item=inventory, date=date.today(),
                                   user=request.user.first_name + " " + request.user.last_name,
-                                  note="Purchased From " + vendor.company_name,
+                                  note="Purchased From " + vendor.company_name + ". " + inventory.notes,
                                   category="Misc")
         new_note.save()
         return redirect('equipment_page', id=inventory.id)

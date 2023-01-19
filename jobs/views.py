@@ -9,6 +9,7 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
 from equipment.tables import JobsTable
+from equipment.filters import JobsFilter
 from django_tables2 import SingleTableView
 
 
@@ -39,7 +40,12 @@ def jobs_home(request):
 
 def job_page(request,jobnumber):
     if jobnumber == 'ALL':
-        jobstable = JobsTable(Jobs.objects.filter(status="Open"))
+        search_jobs = JobsFilter(request.GET, queryset=Jobs.objects.filter(status="Open"))
+        print("HERE")
+        print(search_jobs)
+
+        jobstable = JobsTable(search_jobs.qs)
+        has_filter = any(field in request.GET for field in set(search_jobs.get_fields()))
         tickets = ChangeOrders.objects.filter(job_number__status="Open", is_t_and_m=True, is_ticket_signed=False)
         open_cos = ChangeOrders.objects.filter(job_number__status="Open", is_closed=False, is_approved=False) & ChangeOrders.objects.filter(is_t_and_m=False) | ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=True)
         approved_cos =  ChangeOrders.objects.filter(job_number__status="Open",is_closed=False,is_approved=True)
@@ -58,6 +64,12 @@ def job_page(request,jobnumber):
         submittals = Submittals.objects.filter(job_number__status="Open")
         subcontracts = Subcontracts.objects.filter(job_number__status="Open")
         jobs = 'ALL'
+        return render(request, "job_page.html",
+                      {'search_jobs': search_jobs, 'has_filter': has_filter, 'jobstable': jobstable,
+                       'subcontracts': subcontracts, 'submittals': submittals, 'packages': packages,
+                       'deliveries': deliveries, 'wc_not_ordereds': wc_not_ordereds, 'wc_ordereds': wc_ordereds,
+                       'jobs': jobs, 'tickets': tickets, 'open_cos': open_cos, 'approved_cos': approved_cos,
+                       'equipments': equipment, 'rentals': rentals})
     elif request.method == 'GET':
         jobstable = JobsTable(Jobs.objects.filter(job_number=jobnumber))
         jobs = Jobs.objects.filter(job_number=jobnumber)[0:2000]
@@ -68,8 +80,6 @@ def job_page(request,jobnumber):
         rentals = Rentals.objects.filter(job_number=jobnumber)
         wallcovering2 = Wallcovering.objects.filter(job_number = jobnumber)
         wc_not_ordereds = Wallcovering.objects.filter(job_number__job_number=jobnumber, orderitems1__isnull=True)
-        print(jobnumber)
-        print(wc_not_ordereds)
         # wc_not_ordereds = []
         # for x in wallcovering2:
         #     if x.orderitems1.count() > 0:
@@ -81,7 +91,13 @@ def job_page(request,jobnumber):
         deliveries = OutgoingItem.objects.filter(outgoing_event__job_number=jobnumber)
         submittals = Submittals.objects.filter(job_number = jobnumber)
         subcontracts = Subcontracts.objects.filter(job_number = jobnumber)
-    return render(request, "job_page.html", {'jobstable':jobstable,'subcontracts': subcontracts, 'submittals': submittals, 'packages': packages, 'deliveries': deliveries, 'wc_not_ordereds': wc_not_ordereds,'wc_ordereds': wc_ordereds,'jobs': jobs, 'tickets': tickets, 'open_cos': open_cos, 'approved_cos': approved_cos, 'equipments': equipment, 'rentals': rentals})
+        return render(request, "job_page.html",
+                      {'jobstable': jobstable,
+                       'subcontracts': subcontracts, 'submittals': submittals, 'packages': packages,
+                       'deliveries': deliveries, 'wc_not_ordereds': wc_not_ordereds, 'wc_ordereds': wc_ordereds,
+                       'jobs': jobs, 'tickets': tickets, 'open_cos': open_cos, 'approved_cos': approved_cos,
+                       'equipments': equipment, 'rentals': rentals})
+
 
 def book_new_job(request):
         allclients = Clients.objects.order_by('company')[0:2000]

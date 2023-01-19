@@ -106,6 +106,16 @@ $(document).ready(function () {
 </nav>
 
 {% if jobs == 'ALL' %}
+		{% if has_filter %}
+  		<a href="{%  url 'job_page' 'ALL' %}">Clear Filter</a>
+		{% endif %}
+
+
+		    <form method="get">
+        {{ search_jobs.form }}
+        <input type="submit" value="Filter BY Job Name" />
+    </form>
+
 {% render_table jobstable %}
 {% else %}
 {% for job in jobs %}

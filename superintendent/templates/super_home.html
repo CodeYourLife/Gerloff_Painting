@@ -100,7 +100,7 @@ function filterJobStarted (event, isStarted) {
 					<th>Address</th>
 					<th>Start</th>
 					<th>Change</th>
-					<th>Started?</th>
+					<th style="display:none;">Started?</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -116,7 +116,7 @@ function filterJobStarted (event, isStarted) {
 					<td>{{job.address}} {{job.city}} {{job.state}}</td>
 					<td>{{job.start_date}}</td>
 					<td><a href = "{% url 'change_start_date' job.job_number 'superpage' %}">Change Date</a></td>
-					<td>{{job.is_active}}</td>
+					<td style="display:none;">{{job.is_active}}</td>
 				</tr>
 			{% endfor %}
 			{% endif %}
