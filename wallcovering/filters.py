@@ -1,7 +1,13 @@
-from console.models import OrderItems
+from console.models import *
 import django_filters
 
-
+class ChangeOrderFilter(django_filters.FilterSet):
+    search = django_filters.CharFilter(label='Job Name= ', method='search_filter')
+    def search_filter(self, queryset, name, value):
+        return queryset.filter(job_number__job_name__icontains=value)
+    class Meta:
+        model = ChangeOrders
+        fields = ['search']
 class OrderItemsFilter(django_filters.FilterSet):
     search = django_filters.CharFilter(label='PO Number=', method='search_filter')
     search2 = django_filters.CharFilter(label='Job Name=', method='search2_filter')

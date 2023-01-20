@@ -7,10 +7,11 @@ from django_tables2.utils import A
 from .filters import OrderItemsFilter
 
 class ChangeOrderTable(tables.Table):
+    edit = tables.TemplateColumn('<a href="{% url "extra_work_ticket" record.id %}">{{record.cop_number}}</a>', verbose_name="COP Number")
     class Meta:
         model = ChangeOrders
         template_name = "django_tables2/bootstrap.html"
-        fields = ("job_number","cop_number","description","need_ticket","date_sent","date_approved","gc_number","price")
+        fields = ("job_number","edit","description","need_ticket","date_sent","date_approved","gc_number","price")
 
 class WallcoveringPriceTable(tables.Table):
     class Meta:

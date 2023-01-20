@@ -37,7 +37,14 @@
     </ul>
   </div>
 </nav>
-
+		{% if has_filter %}
+  		<a href="{%  url 'change_order_home' %}">Clear Filter</a>
+		{% endif %}
+<div class="content">
+		    <form method="get">
+        {{ all_orders.form }}
+        <input type="submit" value="Filter by Job Name" />
+    </form>
 
 
 {% render_table table %}

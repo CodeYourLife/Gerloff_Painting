@@ -4,7 +4,9 @@ from django.shortcuts import render, redirect
 from datetime import date
 import json
 from django.core.serializers.json import DjangoJSONEncoder
+from django_tables2 import RequestConfig
 from wallcovering.tables import ChangeOrderTable
+from wallcovering.filters import ChangeOrderFilter
 # Create your views here.
 
 def change_order_new(request,jobnumber):
@@ -34,9 +36,13 @@ def change_order_new(request,jobnumber):
         jobs=Jobs.objects.filter(status="Open")
         return render(request, "change_order_new.html",{'jobs':jobs})
 
+
 def change_order_home(request):
-    table = ChangeOrderTable(ChangeOrders.objects.filter(is_closed=False))
-    return render(request, "change_order_home.html", {'table':table})
+    all_orders = ChangeOrderFilter(request.GET, queryset =ChangeOrders.objects.filter(is_closed=False))
+    table = ChangeOrderTable(all_orders.qs)
+    has_filter = any(field in request.GET for field in set(all_orders.get_fields()))
+    RequestConfig(request).configure(table)
+    return render(request, "change_order_home.html", {'table': table,'all_orders':all_orders,'has_filter':has_filter})
 
 
 def extra_work_ticket(request,id):
