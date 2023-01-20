@@ -8,13 +8,32 @@ from wallcovering.tables import ChangeOrderTable
 # Create your views here.
 
 def change_order_new(request,jobnumber):
-    if jobnumber == 'ALL':
+    if request.method == 'POST':
+        if 'select_job' in request.POST:
+            selected_job = Jobs.objects.get(job_number=request.POST['select_job'])
+            return render(request, "change_order_new.html", {'selected_job': selected_job})
+        else:
+            t_and_m = False
+            if 'is_t_and_m' in request.POST:
+                t_and_m = True
+            if ChangeOrders.objects.filter(job_number=Jobs.objects.get(job_number=jobnumber)):
+                last_cop = ChangeOrders.objects.filter(job_number=Jobs.objects.get(job_number=jobnumber)).order_by('cop_number').last()
+                next_cop = last_cop.cop_number + 1
+            else:
+                next_cop = 1
+            changeorder = ChangeOrders.objects.create(job_number=Jobs.objects.get(job_number=jobnumber), is_t_and_m=t_and_m, description= request.POST['description'],cop_number=next_cop)
+            print(request.user)
+            if changeorder.is_t_and_m == True:
+                note = ChangeOrderNotes.objects.create(cop_number=changeorder,date=date.today(),user=request.user.first_name + " " + request.user.last_name,note ="T&M COP Added. " + request.POST['notes'])
+            else:
+                note = ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                                       user=request.user.first_name + " " + request.user.last_name,
+                                                       note="COP Added. " + request.POST['notes'])
+            return redirect('extra_work_ticket',id=changeorder.id)
+    else:
         jobs=Jobs.objects.filter(status="Open")
         return render(request, "change_order_new.html",{'jobs':jobs})
-    else:
-        jobs=Jobs.objects.filter(job_number=jobnumber)
 
-    return render(request, "change_order_new.html")
 def change_order_home(request):
     table = ChangeOrderTable(ChangeOrders.objects.filter(is_closed=False))
     return render(request, "change_order_home.html", {'table':table})

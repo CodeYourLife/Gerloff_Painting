@@ -1,10 +1,75 @@
+{% extends 'base.html' %}
+{% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
+{% block content %}
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+
+	</style>
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+
+
+	</script>
 </head>
 <body>
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Change Orders</a>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown2">
+    <ul class="navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'change_order_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link active" href="#">Add New</a></li>
+    </ul>
+  </div>
+</nav>
+
+{% if selected_job %}
+<h4>Add New Change Order To Job: {{ selected_job.job_name }} </h4>
+<form name = booking_input2 action="{% url 'change_order_new' selected_job.job_number %}" method="post"  onSubmit = "return check_booking_data()">
+	{% csrf_token %}
+	<input type= "text" name="description" id="description" placeholder="Type Description of Change" size="75" required />
+<br><br>
+	<input type="checkbox" name ="is_t_and_m" id="is_t_and_m"   /> <label for="is_t_and_m">"Is this change order T&M?" </label>
+<br><br>
+        <label for="notes">Add any notes about this change order: </label> <br>
+        <textarea id="notes" name="notes" rows="4" cols="100" ></textarea>
+
+<br><br>
+	<input type="submit" value="Add Change Order to This Job" />
+</form>
+
+
+{% else %}
+<h4>Add New Change Order</h4>
+<form name = booking_input action="{% url 'change_order_new' 'ALL' %}" method="post"  onSubmit = "return check_booking_data()">
+{% csrf_token %}
+	            <label for="select_job">please select job</label>
+            <select id="select_job" name="select_job" >
+                {% if jobs %}
+                {% for job in jobs %}
+                <option value={{job.job_number}}>{{job.job_name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+<input type="submit" value="Add Change Order to This Job" />
+</form>
+{% endif %}
 
 </body>
 </html>
+
+{% endblock %}
