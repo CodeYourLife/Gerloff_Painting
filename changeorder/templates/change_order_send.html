@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+
+	</style>
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+var row_counter = 0;
+window.onload = function() {
+	if ({{co_contacts_exist}} = "Yes"){
+		rolodex = JSON.parse("{{co_contacts_json|escapejs}}");
+		for(let i =0; i < rolodex.length; i++){
+			row_counter =row_counter + 1
+			document.getElementById("number_recipients").value = row_counter
+			var select = document.createElement("select");
+			select.name = "select_client" + row_counter;
+			select.id = "select_client" + row_counter;
+			var option = document.createElement("option");
+			option.value =rolodex[i].person_pk
+			option.text=rolodex[i].name
+			select.appendChild(option);
+			var label = document.createElement("label");
+			label.textContent= "Recipient: "
+			document.getElementById("add_item_here").appendChild(label).appendChild(select);
+			var new_button= document.createElement('button')
+			new_button.innerText = 'Remove From Change Order Recipients from all future COs for this job'
+			if (row_counter = 1){new_button.addEventListener('click',function() {removecontact(1);},false);}
+			if (row_counter = 2){new_button.addEventListener('click',function() {removecontact(2);},false);}
+			if (row_counter = 3){new_button.addEventListener('click',function() {removecontact(3);},false);}
+			if (row_counter = 4){new_button.addEventListener('click',function() {removecontact(4);},false);}
+			if (row_counter = 5){new_button.addEventListener('click',function() {removecontact(5);},false);}
+			if (row_counter = 6){new_button.addEventListener('click',function() {removecontact(6);},false);}
+			if (row_counter = 7){new_button.addEventListener('click',function() {removecontact(7);},false);}
+			if (row_counter = 8){new_button.addEventListener('click',function() {removecontact(8);},false);}
+			document.getElementById("add_item_here").appendChild(new_button);
+	        br = document.createElement("br");
+        	document.getElementById("add_item_here").appendChild(br);
+
+		}
+
+		rolodex = JSON.parse("{{allcontacts_json|escapejs}}");
+			row_counter =row_counter + 1
+			document.getElementById("number_recipients").value = row_counter
+			var select = document.createElement("select");
+			select.name = "select_client" + row_counter;
+			select.id = "select_client" + row_counter;
+			option = document.createElement("option");
+			option.value ="None"
+			option.text="No Additional Recipients"
+			select.appendChild(option);
+			for(let i =0; i < rolodex.length; i++){
+			option = document.createElement("option");
+			option.value =rolodex[i].person_pk
+			option.text=rolodex[i].name
+			select.appendChild(option);
+			}
+			var label = document.createElement("label");
+			label.textContent= "Recipient: "
+			document.getElementById("add_item_here").appendChild(label).appendChild(select);
+			var new_button= document.createElement('button')
+			new_button.innerText = 'Add as Change Order contact for all future COs for this job'
+			new_button.addEventListener('click',function() {addcontact(row_counter);},false);
+			document.getElementById("add_item_here").appendChild(new_button);
+	}
+}
+
+function addcontact(x){
+	var hidden_area = document.getElementById("add_submittal_contact")
+	var selected_person = document.getElementById("select_client" + x)
+	hidden_area.value = selected_person.value
+	}
+
+function removecontact(x){
+	var hidden_area = document.getElementById("remove_submittal_contact")
+	var selected_person = document.getElementById("select_client" + x)
+	hidden_area.value = selected_person.value
+	}
+
+
+	</script>
+</head>
+<body>
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Change Orders</a>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown2">
+    <ul class="navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'change_order_home' %}">Home</a></li>
+		<li><a class="nav-item nav-link" href="#">Add New</a></li>
+		<li><a class="nav-item nav-link active" href="#">{{changeorder.job_number}} Change Order: #{{changeorder.cop_number}} - SEND NOW!</a></li>
+    </ul>
+  </div>
+</nav>
+<h2>{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} - Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</h2>
+ <form name = form_send_now action="{% url 'change_order_send' changeorder.id %}" method="post"  >
+	 <div id="add_item_here"></div>
+	 	{% csrf_token %}
+	{% if co_contacts_exist == "None" %}
+	 There are no specific submittal contacts.  Defaulted to Client PM"
+	 <br>
+	 <label for="select_client1">Who are you sending this to</label>
+            <select id="select_client1" name="select_client1" >
+				<option value = {{changeorder.job_number.client_Pm.person_pk}}>{{changeorder.job_number.client_Pm.name}}</option>
+                {% if allcontacts %}
+                {% for employee in allcontacts %}
+                <option value={{employee.person_pk}}>{{employee.name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+
+	  <button onclick="addcontact(1)">Add as Change Order contact for all future CO's for this job</button>
+
+
+	 {% endif %}
+	 <input type = "Hidden" name="add_submittal_contact" id="add_submittal_contact" value="None" />
+	 <input type = "Hidden" name="remove_submittal_contact" id="remove_submittal_contact" value="None" />
+	 <input type = "Hidden" name="number_recipients" id="number_recipients" value="1" />
+     <br>
+	 <label for="full_description">Type the full description: </label> <br>
+        <textarea id="full_description" name="full_description" rows="6" cols="100" ></textarea>
+	<br>
+	 <label for="price">Enter the Total Price: $</label>
+	 <input type= "number" name="price" id="price" placeholder="100.50" step="0.01" size="30" />
+	 <br>
+	 <input type="submit" value="Send Now" />
+ </form>
+
+
+</body>
+</html>
+
+{% endblock %}

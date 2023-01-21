@@ -48,6 +48,7 @@ class ClientEmployees(models.Model):
 		return f"{self.name}"
 
 
+
 class Jobs(models.Model):
 	job_number = models.CharField(null=False, max_length=5, primary_key=True)
 	job_name = models.CharField(null=True, max_length=250)
@@ -114,6 +115,15 @@ class Jobs(models.Model):
 	def __str__(self):
 		return f"{self.job_name}"
 
+
+class ClientJobRoles(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	employee = models.ForeignKey(ClientEmployees, on_delete=models.PROTECT, related_name='roles')
+	job = models.ForeignKey(Jobs, on_delete=models.PROTECT)
+	role = models.CharField(max_length=100) #Submittals, #Change Orders, anything else
+	notes = models.CharField(max_length=2000,blank=True)
+	def __str__(self):
+		return f"{self.job} {self.role} {self.employee}"
 
 class InventoryType(models.Model):
 	id = models.BigAutoField(primary_key=True)
@@ -293,6 +303,8 @@ class ChangeOrders(models.Model):
 	ticket_description = models.CharField(null=True,max_length=2000, blank=True)
 	materials_used = models.CharField(null=True,max_length=2000, blank=True)
 	price = models.DecimalField(max_digits=9, decimal_places=2,null=True)
+	full_description = models.CharField(null=True,max_length=2000, blank=True)
+	is_approved_to_bill = models.BooleanField(default=False)
 	def __str__(self):
 		return f"{self.job_number} {self.description}"
 
@@ -300,7 +312,7 @@ class ChangeOrders(models.Model):
 		if self.is_t_and_m==True and self.is_ticket_signed==False and self.is_closed==False:
 			return "Yes"
 		else:
-			return ""
+			return "No"
 
 
 class ChangeOrderNotes(models.Model):
