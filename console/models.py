@@ -545,21 +545,32 @@ class OutgoingItem(models.Model):
 
 class Subcontractors(models.Model):
 	id = models.BigAutoField(primary_key=True)
-	subcontractor = models.CharField(null=True, max_length=250)
+	company = models.CharField(null=True, max_length=250)
+	contact = models.CharField(null=True, max_length=250, blank=True)
 	phone = models.CharField(null=True, max_length=20, blank=True)
 	email = models.EmailField(null=True, blank=True)
+	insurance_expire_date = models.DateField(blank=True,null=True)
+	is_signed_labor_agreement = models.BooleanField(default=False)
+	notes = models.CharField(null=True, max_length=2000, blank=True)
 	def __str__(self):
-		return f"{self.subcontractor}"
+		return f"{self.company}"
 
+
+	def active_contracts(self):
+		totalquantity=0
+		for x in Subcontracts.objects.filter(subcontractor=self, is_closed = False):
+			totalquantity=totalquantity+1
+		return totalquantity
 
 class Subcontracts(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	job_number = models.ForeignKey(Jobs, on_delete=models.PROTECT)
-	subcontractor = models.ForeignKey(Subcontractors, on_delete=models.PROTECT)
+	subcontractor = models.ForeignKey(Subcontractors, on_delete=models.PROTECT, related_name="subcontract")
 	po_number = models.CharField(null=True, max_length=250)
 	total_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	description = models.CharField(null=True, max_length=250)
+	notes = models.CharField(null=True, max_length=2000)
 	date = models.DateField(null=True, blank=True)
+	is_closed = models.BooleanField(default=False)
 	def __str__(self):
 		return f"{self.subcontractor} {self.job_number}"
 

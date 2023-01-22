@@ -23,6 +23,10 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 
+$(document).ready(function () {
+    var table = $('#sub_table').DataTable({});
+})
+
 
 	</script>
 </head>
@@ -31,13 +35,42 @@
   <a class="navbar-brand" href="#">Subcontractors</a>
   <div class="collapse navbar-collapse" id="navbarNavDropdown2">
     <ul class="navbar-nav ">
-        <li><a class="nav-item nav-link active" href="{% url 'Subcontractor List' %}">Home</a></li>
-		 <li><a class="nav-item nav-link" href="{% url 'Current Contracts' %}">Add New</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'Add New Company' 'ALL' %}">Add New</a></li>
-         <li><a class="nav-item nav-link" href="{% url 'Add New Contract' 'ALL' %}">Add New</a></li>
+        <li><a class="nav-item nav-link active" href="{% url 'subcontractor_home' %}">Subcontractor List</a></li>
+		 <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
+         <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
     </ul>
   </div>
 </nav>
+
+
+
+<div class="demo-html" style="width:90%">
+		<table id="sub_table" class="display" style="width:90%">
+			<thead>
+
+				<tr>
+					<th>Company</th>
+					<th>Contact</th>
+					<th>Phone</th>
+					<th>Email</th>
+					<th>Active Contracts</th>
+				</tr>
+			</thead>
+			<tbody>
+
+			{% for x in subcontractors %}
+				<tr>
+					<td><a href = "{% url 'subcontractor' x.id %}">{{x.subcontractor}}</a></td>
+					<td>{{x.contact}}</td>
+					<td>{{x.phone}}</td>
+					<td>{{x.email}}</td>
+					<td>{{x.active_contracts}}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+
 
 </body>
 </html>

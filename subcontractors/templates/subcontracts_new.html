@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+{% block nav_item_subs %}active{% endblock nav_item_subs %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+
+	</style>
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+var number_items = 0
+
+function selected_wallcovering(event){
+    current_row = event.currentTarget.id.substr(19,event.currentTarget.id.length)
+    description = document.getElementById("item_description" + current_row)
+    quantity = document.getElementById("item_quantity" + current_row)
+    unit = document.getElementById("item_unit" + current_row)
+    rolodex = JSON.parse("{{wallcovering_json|escapejs}}");
+    for(let i =0; i < rolodex.length; i++){
+        if (rolodex[i].id == event.currentTarget.value){
+            description.value = "Install " + rolodex[i].code
+            quantity.value = rolodex[i].quantity_ordered
+            unit.value = rolodex[i].estimated_unit
+        }
+    }
+}
+
+function delete_selected(event){
+    document.getElementById(event.currentTarget.value).remove()
+}
+
+
+function new_lump_sum(){
+    number_items = number_items+1
+    hidden_items = document.getElementById("hidden_number_items")
+    add_new_here = document.getElementById("new_item_here")
+    hidden_items.value = number_items
+    var x = document.createElement('div')
+    x.setAttribute("name", "new_item_here" + number_items)
+    x.setAttribute("id", "new_item_here" + number_items)
+    add_new_here.appendChild(x)
+    add_new_here = document.getElementById("new_item_here" + number_items)
+    var hidden_input = document.createElement("input");
+    hidden_input.setAttribute("type", "hidden");
+    hidden_input.setAttribute("name", "item_type" + number_items);
+    hidden_input.setAttribute("value", "Lump Sum");
+    add_new_here.appendChild(hidden_input);
+        x = document.createElement("INPUT");
+        x.setAttribute("type", "text");
+        x.setAttribute("name", "item_description" + number_items)
+        x.setAttribute("id", "item_description" + number_items)
+        x.setAttribute("placeholder", "Install WC9")
+        x.setAttribute("size", 50)
+        add_new_here.appendChild(x)
+        document.getElementById("item_description" + number_items).required = true;
+        add_new_here.appendChild(document.createTextNode(" $"))
+        x = document.createElement("INPUT");
+        x.setAttribute("type", "number");
+        x.setAttribute("name", "item_price" + number_items)
+        x.setAttribute("id", "item_price" + number_items)
+        x.setAttribute("placeholder", "10.50")
+        x.setAttribute("step", "0.01")
+        x.setAttribute("size", 7)
+        add_new_here.appendChild(x)
+        document.getElementById("item_price" + number_items).required = true;
+        add_new_here.appendChild(document.createElement('br'))
+        x = document.createElement("INPUT")
+        x.setAttribute("type", "text");
+        x.setAttribute("placeholder", "NOTE - Includes Glue, etc.")
+        x.setAttribute("name", "item_notes" + number_items)
+        x.setAttribute("id", "item_notes" + number_items)
+        x.setAttribute("size", 75)
+        add_new_here.appendChild(x)
+        x = document.createElement("button");
+        x.setAttribute("onclick", "delete_selected(event)");
+        x.setAttribute("type", "button");
+        x.setAttribute("value", "new_item_here" + number_items);
+        x.appendChild(document.createTextNode("Delete"))
+        add_new_here.appendChild(x)
+        add_new_here.appendChild(document.createElement('br'))
+        add_new_here.appendChild(document.createElement('hr'))
+}
+
+function new_per_unit(){
+    number_items = number_items+1
+    hidden_items = document.getElementById("hidden_number_items")
+    add_new_here = document.getElementById("new_item_here")
+    hidden_items.value = number_items
+    var x = document.createElement('div')
+    x.setAttribute("name", "new_item_here" + number_items)
+    x.setAttribute("id", "new_item_here" + number_items)
+    add_new_here.appendChild(x)
+    add_new_here = document.getElementById("new_item_here" + number_items)
+    var hidden_input = document.createElement("input");
+    hidden_input.setAttribute("type", "hidden");
+    hidden_input.setAttribute("name", "item_type" + number_items);
+    hidden_input.setAttribute("value", "Per Unit");
+    add_new_here.appendChild(hidden_input);
+    if ("{{wallcovering_json}}" != 'None'){
+        rolodex = JSON.parse("{{wallcovering_json|escapejs}}");
+        var select = document.createElement("select");
+        select.name = "wallcovering_number" + number_items;
+        select.id = "wallcovering_number" + number_items;
+        select.addEventListener('change',function() {selected_wallcovering(event);},false);
+        var option = document.createElement("option");
+        option.value ='no_wc_selected'
+        option.text='None'
+        select.appendChild(option);
+        for(let i =0; i < rolodex.length; i++){
+            option = document.createElement("option");
+            option.value =rolodex[i].id
+            option.text=rolodex[i].code
+            select.appendChild(option);
+        }
+        var label = document.createElement("label");
+        label.textContent= "Select WC: "
+        add_new_here.appendChild(label).appendChild(select);
+    }
+        x = document.createElement("INPUT");
+        x.setAttribute("type", "text");
+        x.setAttribute("name", "item_description" + number_items)
+        x.setAttribute("id", "item_description" + number_items)
+        x.setAttribute("placeholder", "Install WC9")
+        x.setAttribute("size", 30)
+        add_new_here.appendChild(x)
+        document.getElementById("item_description" + number_items).required = true;
+        x = document.createElement("INPUT");
+        x.setAttribute("type", "number");
+        x.setAttribute("name", "item_quantity" + number_items)
+        x.setAttribute("id", "item_quantity" + number_items)
+        x.setAttribute("placeholder", "100")
+        x.setAttribute("size", 7)
+        add_new_here.appendChild(x)
+        document.getElementById("item_quantity" + number_items).required = true;
+        x = document.createElement("INPUT");
+        x.setAttribute("type", "text");
+        x.setAttribute("name", "item_unit" + number_items)
+        x.setAttribute("id", "item_unit" + number_items)
+        x.setAttribute("placeholder", "yard")
+        x.setAttribute("size", 7)
+        add_new_here.appendChild(x)
+        document.getElementById("item_unit" + number_items).required = true;
+        add_new_here.appendChild(document.createTextNode(" $"))
+        x = document.createElement("INPUT");
+        x.setAttribute("type", "number");
+        x.setAttribute("name", "item_price" + number_items)
+        x.setAttribute("id", "item_price" + number_items)
+        x.setAttribute("placeholder", "10.50")
+        x.setAttribute("step", "0.01")
+        x.setAttribute("size", 7)
+        add_new_here.appendChild(x)
+        document.getElementById("item_price" + number_items).required = true;
+        add_new_here.appendChild(document.createElement('br'))
+        x = document.createElement("INPUT")
+        x.setAttribute("type", "text");
+        x.setAttribute("placeholder", "NOTES - Includes Glue, etc.")
+        x.setAttribute("name", "item_notes" + number_items)
+        x.setAttribute("id", "item_notes" + number_items)
+        x.setAttribute("size", 75)
+        add_new_here.appendChild(x)
+        x = document.createElement("button");
+        x.setAttribute("onclick", "delete_selected(event)");
+        x.setAttribute("type", "button");
+        x.setAttribute("value", "new_item_here" + number_items);
+        x.appendChild(document.createTextNode("Delete"))
+        add_new_here.appendChild(x)
+        add_new_here.appendChild(document.createElement('br'))
+        add_new_here.appendChild(document.createElement('hr'))
+
+}
+
+	</script>
+</head>
+<body>
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Subcontractors</a>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown2">
+    <ul class="navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'subcontractor_home' %}">Subcontractor List</a></li>
+		 <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
+         <li><a class="nav-item nav-link active" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
+    </ul>
+  </div>
+</nav>
+{% if selectedjob == 'ALL' %}
+<h1>Select Job For New Subcontract</h1>
+<br>
+<form action="{% url 'subcontracts_new' %}" method="post"  >
+{% csrf_token %}
+<br>
+            <label for="select_job">Select the Job: </label>
+            <select id="select_job" name="select_job" >
+                {% if jobs %}
+                {% for job in jobs %}
+                <option value={{job.job_number}}>{{job.job_number}} {{job.job_name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+    <input type="submit" name="form1" value="Select Job" />
+</form>
+<br>
+{% else %}
+    <h1>New Subcontract for Job: {{selectedjob}}</h1>
+<form action="{% url 'subcontracts_new' %}" method="post"  >
+    {% csrf_token %}
+                <label for="select_subcontractor">Select the Subcontractor: </label>
+            <select id="select_subcontractor" name="select_subcontractor" >
+                {% if subcontractors %}
+                {% for subcontractor in subcontractors %}
+                <option value={{subcontractor.id}}>{{subcontractor.company}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+    <br>
+    <label for="po_number">PO Number: </label><input type="text" id="po_number" name="po_number" />
+    <br>
+    <textarea id="subcontract_notes" name="subcontract_notes" placeholder="General Notes about this subcontract" rows="2" cols="100" /></textarea>
+    <input type="hidden" id="hidden_number_items" name="number_items" />
+    <div id="new_item_here" name="new_item_here" /></div>
+    <br>
+
+     <button type="button" onclick="new_lump_sum()">New Lump Sum Item</button>
+    <button type="button" onclick="new_per_unit()">New Item - Per Unit</button>
+
+
+<br><br>
+
+<input type="submit" name="form2" value="Add New Contract" />
+</form>
+
+
+{% endif %}
+</body>
+</html>
+
+{% endblock %}
