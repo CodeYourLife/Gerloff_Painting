@@ -30,6 +30,193 @@ function edit_row(id){
 	document.getElementById("edit_existing_item").value = id
 }
 
+function delete_row(id){
+	document.getElementById("delete_existing_item").value = id
+}
+
+var number_items = 0
+
+function selected_wallcovering(event){
+    current_row = event.currentTarget.id.substr(19,event.currentTarget.id.length)
+    description = document.getElementById("item_description" + current_row)
+    quantity = document.getElementById("item_quantity" + current_row)
+    unit = document.getElementById("item_unit" + current_row)
+    rolodex = JSON.parse("{{wallcovering_json|escapejs}}");
+    for(let i =0; i < rolodex.length; i++){
+        if (rolodex[i].id == event.currentTarget.value){
+            description.value = "Install " + rolodex[i].code
+            quantity.value = rolodex[i].quantity_ordered
+            unit.value = rolodex[i].estimated_unit
+        }
+    }
+}
+
+function delete_selected(event){
+    document.getElementById(event.currentTarget.value).remove()
+}
+
+
+function new_lump_sum(){
+    number_items = number_items+1
+    hidden_items = document.getElementById("hidden_number_items")
+    add_new_here = document.getElementById("new_item_here")
+    hidden_items.value = number_items
+    var x = document.createElement('div')
+    x.setAttribute("name", "new_item_here" + number_items)
+    x.setAttribute("id", "new_item_here" + number_items)
+    add_new_here.appendChild(x)
+    add_new_here = document.getElementById("new_item_here" + number_items)
+    var hidden_input = document.createElement("input");
+    hidden_input.setAttribute("type", "hidden");
+    hidden_input.setAttribute("name", "item_type" + number_items);
+    hidden_input.setAttribute("value", "Lump Sum");
+    add_new_here.appendChild(hidden_input);
+    if ("{{wallcovering_json}}" != 'None'){
+        rolodex = JSON.parse("{{wallcovering_json|escapejs}}");
+        var select = document.createElement("select");
+        select.name = "wallcovering_number" + number_items;
+        select.id = "wallcovering_number" + number_items;
+        var option = document.createElement("option");
+        option.value ='no_wc_selected'
+        option.text='None'
+        select.appendChild(option);
+        for(let i =0; i < rolodex.length; i++){
+            option = document.createElement("option");
+            option.value =rolodex[i].id
+            option.text=rolodex[i].code
+            select.appendChild(option);
+        }
+        var label = document.createElement("label");
+        label.textContent= "Select WC: "
+        add_new_here.appendChild(label).appendChild(select);
+    }
+        x = document.createElement("INPUT");
+        x.setAttribute("type", "text");
+        x.setAttribute("name", "item_description" + number_items)
+        x.setAttribute("id", "item_description" + number_items)
+        x.setAttribute("placeholder", "Install WC9")
+        x.setAttribute("size", 50)
+        add_new_here.appendChild(x)
+        document.getElementById("item_description" + number_items).required = true;
+        add_new_here.appendChild(document.createTextNode(" $"))
+        x = document.createElement("INPUT");
+        x.setAttribute("type", "number");
+        x.setAttribute("name", "item_price" + number_items)
+        x.setAttribute("id", "item_price" + number_items)
+        x.setAttribute("placeholder", "10.50")
+        x.setAttribute("step", "0.01")
+        x.setAttribute("size", 7)
+        add_new_here.appendChild(x)
+        document.getElementById("item_price" + number_items).required = true;
+        add_new_here.appendChild(document.createElement('br'))
+        x = document.createElement("INPUT")
+        x.setAttribute("type", "text");
+        x.setAttribute("placeholder", "NOTE - Includes Glue, etc.")
+        x.setAttribute("name", "item_notes" + number_items)
+        x.setAttribute("id", "item_notes" + number_items)
+        x.setAttribute("size", 75)
+        add_new_here.appendChild(x)
+        x = document.createElement("button");
+        x.setAttribute("onclick", "delete_selected(event)");
+        x.setAttribute("type", "button");
+        x.setAttribute("value", "new_item_here" + number_items);
+        x.appendChild(document.createTextNode("Delete"))
+        add_new_here.appendChild(x)
+        add_new_here.appendChild(document.createElement('br'))
+        add_new_here.appendChild(document.createElement('hr'))
+}
+function new_per_unit(){
+    number_items = number_items+1
+    hidden_items = document.getElementById("hidden_number_items")
+    add_new_here = document.getElementById("new_item_here")
+    hidden_items.value = number_items
+    var x = document.createElement('div')
+    x.setAttribute("name", "new_item_here" + number_items)
+    x.setAttribute("id", "new_item_here" + number_items)
+    add_new_here.appendChild(x)
+    add_new_here = document.getElementById("new_item_here" + number_items)
+    var hidden_input = document.createElement("input");
+    hidden_input.setAttribute("type", "hidden");
+    hidden_input.setAttribute("name", "item_type" + number_items);
+    hidden_input.setAttribute("value", "Per Unit");
+    add_new_here.appendChild(hidden_input);
+    if ("{{wallcovering_json}}" != 'None'){
+        rolodex = JSON.parse("{{wallcovering_json|escapejs}}");
+        var select = document.createElement("select");
+        select.name = "wallcovering_number" + number_items;
+        select.id = "wallcovering_number" + number_items;
+        select.addEventListener('change',function() {selected_wallcovering(event);},false);
+        var option = document.createElement("option");
+        option.value ='no_wc_selected'
+        option.text='None'
+        select.appendChild(option);
+        for(let i =0; i < rolodex.length; i++){
+            option = document.createElement("option");
+            option.value =rolodex[i].id
+            option.text=rolodex[i].code
+            select.appendChild(option);
+        }
+        var label = document.createElement("label");
+        label.textContent= "Select WC: "
+        add_new_here.appendChild(label).appendChild(select);
+    }
+        x = document.createElement("INPUT");
+        x.setAttribute("type", "text");
+        x.setAttribute("name", "item_description" + number_items)
+        x.setAttribute("id", "item_description" + number_items)
+        x.setAttribute("placeholder", "Install WC9")
+        x.setAttribute("size", 30)
+        add_new_here.appendChild(x)
+        document.getElementById("item_description" + number_items).required = true;
+        x = document.createElement("INPUT");
+        x.setAttribute("type", "number");
+        x.setAttribute("name", "item_quantity" + number_items)
+        x.setAttribute("id", "item_quantity" + number_items)
+        x.setAttribute("placeholder", "100")
+        x.setAttribute("size", 7)
+        add_new_here.appendChild(x)
+        document.getElementById("item_quantity" + number_items).required = true;
+        x = document.createElement("INPUT");
+        x.setAttribute("type", "text");
+        x.setAttribute("name", "item_unit" + number_items)
+        x.setAttribute("id", "item_unit" + number_items)
+        x.setAttribute("placeholder", "yard")
+        x.setAttribute("size", 7)
+        add_new_here.appendChild(x)
+        document.getElementById("item_unit" + number_items).required = true;
+        add_new_here.appendChild(document.createTextNode(" $"))
+        x = document.createElement("INPUT");
+        x.setAttribute("type", "number");
+        x.setAttribute("name", "item_price" + number_items)
+        x.setAttribute("id", "item_price" + number_items)
+        x.setAttribute("placeholder", "10.50")
+        x.setAttribute("step", "0.01")
+        x.setAttribute("size", 7)
+        add_new_here.appendChild(x)
+        document.getElementById("item_price" + number_items).required = true;
+        add_new_here.appendChild(document.createElement('br'))
+        x = document.createElement("INPUT")
+        x.setAttribute("type", "text");
+        x.setAttribute("placeholder", "NOTES - Includes Glue, etc.")
+        x.setAttribute("name", "item_notes" + number_items)
+        x.setAttribute("id", "item_notes" + number_items)
+        x.setAttribute("size", 75)
+        add_new_here.appendChild(x)
+        x = document.createElement("button");
+        x.setAttribute("onclick", "delete_selected(event)");
+        x.setAttribute("type", "button");
+        x.setAttribute("value", "new_item_here" + number_items);
+        x.appendChild(document.createTextNode("Delete"))
+        add_new_here.appendChild(x)
+        add_new_here.appendChild(document.createElement('br'))
+        add_new_here.appendChild(document.createElement('hr'))
+
+}
+
+
+
+
+
 	</script>
 </head>
 <body>
@@ -49,7 +236,6 @@ function edit_row(id){
 
 <form action="{% url 'subcontract' subcontract.id %}" method="post"  >
     {% csrf_token %}
-
     <br>
     <label for="po_number">PO Number: </label><input type="text" id="po_number" name="po_number" value={{subcontract.po_number}} />
     <br>
@@ -62,8 +248,9 @@ function edit_row(id){
 	<hr>
 <form action="{% url 'subcontract' subcontract.id %}" method="post"  >
     {% csrf_token %}
-    <input type="hidden" id="number_items" name="number_items" value={{number_items}} />
-	<input type="hidden" id="edit_existing_item" name="edit_existing_item" value="None Selected"/>
+    <input type="hidden" id="hidden_number_items" name="number_items" value={{number_items}} />
+	<input type="hidden" id="edit_existing_item" name="edit_existing_item" value="None Selected" />
+	<input type="hidden" id="delete_existing_item" name="delete_existing_item" value="None Selected" />
 	<br>
 	<div class="demo-html" style="width:90%">
 		<table id="sub_table" class="display" style="width:90%">
@@ -81,7 +268,7 @@ function edit_row(id){
 			{% for x in items %}
 			{% if edit_row and x.id|slugify == edit_row|slugify %}
 			<tr>
-					<td><input type="hidden" id="item_edited" name="item_edited" value={{x.id}} /><input type= "text" name="SOV_description" id="SOV_description" value={{x.SOV_description}} size="30" required /></td>
+					<td><input type="hidden" id="item_edited" name="item_edited" value={{x.id}} /><input type= "text" name="SOV_description" id="SOV_description" value="{{x.SOV_description}}" size="30" required /></td>
 					{% if x.SOV_is_lump_sum == True %}
 					<td>1</td>
 					<td>Lump Sum</td>
@@ -95,7 +282,11 @@ function edit_row(id){
 					<td><input type= "number" name="SOV_rate" id="SOV_rate" value={{x.SOV_rate}} size="10" required /></td>
 					{% endif %}
 					<td><textarea name="notes" id="notes" cols="50" rows="2" >{{x.notes}}</textarea></td>
+					{% if invoiced_already %}
 					<td> <button >Edit Now</button></td>
+					{% else %}
+					<td> <button >Edit Now</button><button onclick="delete_row({{x.id}})">Delete Row</button></td>
+					{% endif %}
 				</tr>
 			{% else %}
 				<tr>
@@ -125,10 +316,13 @@ function edit_row(id){
  	<button type="button" onclick="new_lump_sum()">New Lump Sum Item</button>
     <button type="button" onclick="new_per_unit()">New Item - Per Unit</button>
 	<br><br>
-	<input type="submit" name="form2" value="Update PO with the Above Changes" />
 </form>
-
-
+<br>
+<hr>
+<form action="{% url 'subcontract_invoices' subcontract.id "ALL" %}" method="post"  >
+{% csrf_token %}
+<input type="submit" name="Form3" value="View Invoices" />
+</form>
 </body>
 </html>
 

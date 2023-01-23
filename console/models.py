@@ -572,9 +572,21 @@ class Subcontracts(models.Model):
 	date = models.DateField(null=True, blank=True)
 	is_closed = models.BooleanField(default=False)
 	is_retainage = models.BooleanField(default=True)
+	retainage_percentage = models.DecimalField(max_digits=4, decimal_places=2, blank=True, null=True)
 	def __str__(self):
 		return f"{self.subcontractor} {self.job_number}"
 
+	def total_billed(self):
+		total=0
+		for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=True):
+			total=total + x.final_amount
+		return total
+
+	def total_retainage(self):
+		total=0
+		for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=True):
+			total = total + x.retainage
+		return total
 
 class SubcontractItems(models.Model):
 	id = models.BigAutoField(primary_key=True)
@@ -585,22 +597,47 @@ class SubcontractItems(models.Model):
 	SOV_total = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True) #$1,050 - NOT USING THIS RIGHT NOW
 	SOV_is_lump_sum = models.BooleanField(default=False)
 	SOV_unit = models.CharField(null=True, max_length=50) #yards, SF, hour, lump sum
-	SOV_total_ordered = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)  #1,000 yards
+	SOV_total_ordered = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)  #1,000 yards.  $15,000 if lump sum.
 	SOV_total_authorized = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True) #not used right now
-	SOV_quantity_to_date = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	SOV_rate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+	SOV_quantity_to_date = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True) #not used right now
+	SOV_rate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True) #if lump sum, this is the same as total_ordered
 	notes = models.CharField(null=True, max_length=2050, blank=True)
 	date = models.DateField()
 	def __str__(self):
 		return f"{self.subcontract} {self.SOV_description}"
 
+	def total_cost(self):
+		totalcost = 0
+		if self.SOV_is_lump_sum == True:
+			totalcost = self.SOV_rate
+		else:
+			totalcost = self.SOV_total_ordered * self.SOV_rate
+		return totalcost
+
+	def quantity_billed(self):
+		totalcost = 0
+		for x in SubcontractorInvoiceItem.objects.filter(sov_item=self):
+			totalcost = totalcost + x.quantity
+		if self.SOV_is_lump_sum == True:
+			totalcost = totalcost / self.SOV_rate
+		return totalcost
+
+	def total_billed(self):
+		totalcost = 0
+		for x in SubcontractorInvoiceItem.objects.filter(sov_item=self):
+			totalcost = totalcost + x.quantity
+		if self.SOV_is_lump_sum == False:
+			totalcost = totalcost * self.SOV_rate
+		return totalcost
 class SubcontractorInvoice(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	date = models.DateField()
 	pay_app_number = models.IntegerField(default=0)
 	subcontract = models.ForeignKey(Subcontracts, on_delete=models.PROTECT, related_name="invoice")
-
-
+	retainage = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+	final_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+	is_sent = models.BooleanField(default=False)
+	notes = models.CharField(null=True, max_length=2000, blank=True)
 class SubcontractorInvoiceItem(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	invoice = models.ForeignKey(SubcontractorInvoice, on_delete=models.PROTECT, related_name="invoice_item")
@@ -608,6 +645,13 @@ class SubcontractorInvoiceItem(models.Model):
 	quantity = models.DecimalField(max_digits=10, decimal_places=2)
 	notes = models.CharField(null=True, max_length=2000, blank=True)
 
+	def total_cost(self):
+		totalcost = 0
+		if self.sov_item.subcontract.SOV_is_lump_sum == False:
+			totalcost = self.quantity * self.sov_item.SOV_rate
+		else:
+			totalcost = self.quantity
+		return totalcost
 class Submittals(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	job_number = models.ForeignKey(Jobs, on_delete=models.PROTECT)

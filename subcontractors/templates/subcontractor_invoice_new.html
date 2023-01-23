@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% block nav_item_subs %}active{% endblock nav_item_subs %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+
+	</style>
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+$(document).ready(function () {
+    var table = $('#job_table').DataTable({});
+})
+
+function update_percentage(event){
+unit = document.getElementById("unit"+event.currentTarget.id)
+percentage = document.getElementById("percentage"+event.currentTarget.id)
+current_total=parseFloat(event.currentTarget.value)
+if (unit.innerHTML == "Lump Sum"){
+	previous = parseFloat(document.getElementById("previous"+event.currentTarget.id).innerHTML)
+	totalcost = parseFloat(document.getElementById("total_cost"+event.currentTarget.id).innerHTML)
+}
+else{
+	totalcost = parseFloat(document.getElementById("quantity_ordered"+event.currentTarget.id).innerHTML)
+	previous = parseFloat(document.getElementById("quantity_billed"+event.currentTarget.id).innerHTML)
+}
+total_to_date = current_total + previous
+percentage_calc = parseFloat(total_to_date/totalcost *100).toFixed(1)
+percentage.innerHTML = String(percentage_calc)+ "%"
+}
+
+	</script>
+</head>
+<body>
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Subcontractors</a>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown2">
+    <ul class="navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'subcontractor_home' %}">Subcontractor List</a></li>
+		 <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
+         <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
+		<li><a class="nav-item nav-link active" href="#">NEW INVOICE -{{subcontract.job_number}} {{subcontract.subcontractor}} {{subcontract.po_number}}</a></li>
+    </ul>
+  </div>
+</nav>
+<h2>NEW INVOICE FOR JOB: {{subcontract.job_number}} - {{subcontract.subcontractor}} PO# {{subcontract.po_number}}</h2>
+<br>
+
+
+ <form action="{% url 'subcontractor_invoice_new' subcontract.id %}" method="post"  >
+{% csrf_token %}
+
+	 <h3>Pay App Number: {{next_number}}</h3>
+	 <br>
+        <label for="subcontract_note">Provide any notes about this invoice: </label> <br>
+        <textarea id="subcontract_note" name="subcontract_note" rows="2" cols="100" ></textarea>
+<br>
+<div class="demo-html" style="width:90%">
+		<table id="job_table" class="display" style="width:90%">
+			<thead>
+				<tr>
+					<th>Description</th>
+					<th>Quantity Ordered</th>
+					<th>Unit</th>
+					<th>Quantity Billed</th>
+					<th>Total Cost</th>
+					<th>Previous $</th>
+					<th>Current Quantity</th>
+					<th>Current Total</th>
+					<th>Total Percentage</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% if items %}
+				{% for item in items %}
+				<tr>
+					<td>{{item.SOV_description}}</td>
+					{% if item.SOV_is_lump_sum == True %}
+					<td>1</td>
+					{% else %}
+					<td><div id="quantity_ordered{{item.id}}" >{{item.SOV_total_ordered}}</div></td>
+					{% endif %}
+					<td><div id="unit{{item.id}}" >{{item.SOV_unit}}</div></td>
+					<td><div id="quantity_billed{{item.id}}" >{{item.quantity_billed}}</div></td>
+					<td><div id="total_cost{{item.id}}" >{{item.total_cost}}</div></td>
+					<td><div id="previous{{item.id}}" >{{item.total_billed}}</div></td>
+					{% if item.SOV_is_lump_sum == True %}
+					<td></td>
+					<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
+					{% else %}
+					<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
+					<td><div id="current_total{{item.id}}" ></div></td>
+					{% endif %}
+					<td><div id="percentage{{item.id}}" ></div></td>
+				</tr>
+				{% endfor %}
+				{% endif %}
+			</tbody>
+		</table>
+</div>
+
+<input type="submit" name="Form3" value="Send Invoice for Approval" />
+    </form>
+
+
+</body>
+</html>
+
+{% endblock %}
