@@ -41,9 +41,6 @@ def jobs_home(request):
 def job_page(request,jobnumber):
     if jobnumber == 'ALL':
         search_jobs = JobsFilter(request.GET, queryset=Jobs.objects.filter(status="Open"))
-        print("HERE")
-        print(search_jobs)
-
         jobstable = JobsTable(search_jobs.qs)
         has_filter = any(field in request.GET for field in set(search_jobs.get_fields()))
         tickets = ChangeOrders.objects.filter(job_number__status="Open", is_t_and_m=True, is_ticket_signed=False)
@@ -118,7 +115,6 @@ def register(request):
                 new_job_number = JobNumbers(letter=new_letter, number="0010")
                 new_job_number.save()
                 job_number = JobNumbers.objects.latest("id").letter + JobNumbers.objects.latest("id").number
-                print(job_number)
             else:
                 new_number = int(JobNumbers.objects.latest("id").number) + 10
                 new_number_convert = str(new_number)
@@ -141,7 +137,6 @@ def register(request):
             is_on_base = False
         else:
             is_on_base = True
-        print(list(request.POST.items()))
         spray_scale = request.POST['spray_scale']
         brush_role = request.POST['brush_role']
         if request.POST['is_t_m_job'] == 'notchecked':
@@ -174,7 +169,6 @@ def register(request):
             client = Clients(company=new_client, bid_email=new_client_email,phone=new_client_phone)
             client.save();
             client_id = Clients.objects.latest('id').id
-            print(client)
         else:
             client_id = request.POST['select_company']
 

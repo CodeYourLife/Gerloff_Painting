@@ -116,7 +116,6 @@ def equipment_page(request, id):
     table = EquipmentNotesTable(InventoryNotes.objects.filter(inventory_item=inventory))
     vendors = Vendors.objects.all()
     if request.method == 'POST':
-        print(request.POST)
         if 'select_category' in request.POST:
             table = EquipmentNotesTable(InventoryNotes.objects.filter(inventory_item=inventory, category=request.POST['select_category']))
         if 'returned' in request.POST:
@@ -130,7 +129,6 @@ def equipment_page(request, id):
             new_note.save()
 
         if 'missing' in request.POST:
-            print(request.POST['missing_notes'])
             inventory.status = "Missing"  # change field
             inventory.job_number = None
             inventory.vendor = None
@@ -139,7 +137,6 @@ def equipment_page(request, id):
                                       category="Missing")
             new_note.save()
         if 'select_job' in request.POST:
-            print(request.POST['select_job'])
             inventory.job_number = Jobs.objects.get(job_number = request.POST['select_job'])
             inventory.vendor = None
             inventory.status= "Checked Out"
@@ -154,9 +151,7 @@ def equipment_page(request, id):
             new_note.save()
 
         if 'select_service' in request.POST:
-                print(request.POST['select_service'])
                 inventory.service_vendor = Vendors.objects.get(id=request.POST['select_service'])
-                print(inventory.service_vendor.company_name)
                 inventory.job_number = None
                 inventory.status = "Service"
                 inventory.save()

@@ -19,6 +19,24 @@ def subcontract(request,id):
     subcontract= Subcontracts.objects.get(id=id)
     items = SubcontractItems.objects.filter(subcontract=subcontract)
     number_items = items.count()
+    if request.method == 'POST':
+        print(request.POST)
+        if 'edit_existing_item' in request.POST:
+            if 'item_edited' in request.POST:
+                item = SubcontractItems.objects.get(id=request.POST['item_edited'])
+                item.SOV_description=request.POST['SOV_description']
+                item.SOV_total_ordered=request.POST['SOV_total_ordered']
+                item.SOV_rate=request.POST['SOV_rate']
+                item.notes=request.POST['notes']
+                item.save()
+                return render(request, "subcontract.html",
+                              {'number_items': number_items, 'subcontract': subcontract, 'items': items})
+            if request.POST['edit_existing_item'] != 'None Selected':
+                item = SubcontractItems.objects.get(id=request.POST['edit_existing_item'])
+                if item.invoice_item2.exists():
+                    return render(request, "subcontract.html", {'invoiced_already':True,'number_items': number_items, 'subcontract': subcontract, 'items': items,'edit_row':request.POST['edit_existing_item']})
+                else:
+                    return render(request, "subcontract.html", {'number_items': number_items, 'subcontract': subcontract, 'items': items,'edit_row':request.POST['edit_existing_item']})
     return render(request, "subcontract.html", {'number_items':number_items,'subcontract':subcontract,'items':items})
 
 

@@ -26,6 +26,9 @@ $(document).ready(function () {
     var table = $('#sub_table').DataTable({});
 })
 
+function edit_row(id){
+	document.getElementById("edit_existing_item").value = id
+}
 
 	</script>
 </head>
@@ -52,9 +55,16 @@ $(document).ready(function () {
     <br>
 
     <textarea id="subcontract_notes" name="subcontract_notes" rows="2" cols="100" />{{subcontract.notes}}</textarea>
-    <input type="hidden" id="number_items" name="number_items" value={{number_items}}/>
+<br>
 
-		<br>
+	<input type="submit" name="form1" value="Update PO with the Above Changes" />
+</form>
+	<hr>
+<form action="{% url 'subcontract' subcontract.id %}" method="post"  >
+    {% csrf_token %}
+    <input type="hidden" id="number_items" name="number_items" value={{number_items}} />
+	<input type="hidden" id="edit_existing_item" name="edit_existing_item" value="None Selected"/>
+	<br>
 	<div class="demo-html" style="width:90%">
 		<table id="sub_table" class="display" style="width:90%">
 			<thead>
@@ -64,10 +74,30 @@ $(document).ready(function () {
 					<th>Unit</th>
 					<th>Price</th>
 					<th>Notes</th>
+					<th>Edit</th>
 				</tr>
 			</thead>
 			<tbody>
 			{% for x in items %}
+			{% if edit_row and x.id|slugify == edit_row|slugify %}
+			<tr>
+					<td><input type="hidden" id="item_edited" name="item_edited" value={{x.id}} /><input type= "text" name="SOV_description" id="SOV_description" value={{x.SOV_description}} size="30" required /></td>
+					{% if x.SOV_is_lump_sum == True %}
+					<td>1</td>
+					<td>Lump Sum</td>
+					{% else %}
+					<td><input type= "number" name="SOV_total_ordered" id="SOV_total_ordered" value={{x.SOV_total_ordered}} size="10" required /></td>
+					<td>{{x.SOV_unit}}</td>
+					{% endif %}
+					{% if invoiced_already %}
+					<td>{{x.SOV_rate}}</td>
+					{% else %}
+					<td><input type= "number" name="SOV_rate" id="SOV_rate" value={{x.SOV_rate}} size="10" required /></td>
+					{% endif %}
+					<td><textarea name="notes" id="notes" cols="50" rows="2" >{{x.notes}}</textarea></td>
+					<td> <button >Edit Now</button></td>
+				</tr>
+			{% else %}
 				<tr>
 					<td>{{x.SOV_description}}</td>
 					{% if x.SOV_is_lump_sum == True %}
@@ -79,24 +109,23 @@ $(document).ready(function () {
 					{% endif %}
 					<td>{{x.SOV_rate}}</td>
 					<td>{{x.notes}}</td>
-
+					{% if edit_row %}
+					<td></td>
+					{% else %}
+					<td> <button onclick="edit_row({{x.id}})">Edit Item</button></td>
+					{% endif %}
 				</tr>
+			{% endif %}
 			{% endfor %}
 			</tbody>
 		</table>
 	</div>
-
-
 	<div id="new_item_here" name="new_item_here" /></div>
     <br>
-
-
-     <button type="button" onclick="new_lump_sum()">New Lump Sum Item</button>
+ 	<button type="button" onclick="new_lump_sum()">New Lump Sum Item</button>
     <button type="button" onclick="new_per_unit()">New Item - Per Unit</button>
-
-<br><br>
-
-<input type="submit" name="form1" value="Add New Contract" />
+	<br><br>
+	<input type="submit" name="form2" value="Update PO with the Above Changes" />
 </form>
 
 

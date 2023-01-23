@@ -68,12 +68,8 @@ def wallcovering_receive(request,orderid):
         delivery = WallcoveringDelivery.objects.create(order=Orders.objects.get(id=orderid),date=date.today(),notes = request.POST['delivery_note'])
         delivery = WallcoveringDelivery.objects.latest('id')
         for y in range(1,int(request.POST["number_items"])+1):
-            print(request.POST["number_items"])
-            print(y)
             item = ReceivedItems.objects.create(wallcovering_delivery=delivery, order_item = OrderItems.objects.get(id =request.POST['select_item' + str(y)]),quantity =request.POST['quantity' + str(y)])
         for y in range(1, int(request.POST["number_packages"]) + 1):
-            print(request.POST["number_packages"])
-            print(y)
             package = Packages.objects.create(delivery=delivery, type= request.POST['package_type' + str(y)], contents=request.POST['package_contents' + str(y)],quantity_received=request.POST['package_quantity_received' + str(y)],notes=request.POST['package_notes' + str(y)])
         return redirect('wallcovering_order', id=orderid)
     if orderid == 'ALL':
@@ -118,10 +114,7 @@ def post_wallcovering_order(request):
     if 'po_number' in request.POST:
         new_order.po_number = request.POST["po_number"]
         new_order.save()
-    print("Number of Rows")
-    print(request.POST["number_rows"])
     for y in range (0,int(request.POST["number_rows"])+1):
-        print(y)
         x=str(y)
         new_item = OrderItems(order =new_order,item_description=request.POST["item_description"+x], quantity=request.POST["quantity"+x],unit=request.POST["unit"+x], price=request.POST["price"+x])
         new_item.save()
@@ -294,7 +287,6 @@ def wallcovering_pattern(request, id):
     packages_table=[]
     jobdeliveries=[]
     for x in Orders.objects.filter(orderitems2__wallcovering__id=id).distinct():
-        print(x.id)
         for y in Packages.objects.filter(delivery__order=x):
             packages_table.append(y)
             for z in OutgoingItem.objects.filter(package = y):

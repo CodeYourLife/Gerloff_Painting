@@ -571,6 +571,7 @@ class Subcontracts(models.Model):
 	notes = models.CharField(null=True, max_length=2000)
 	date = models.DateField(null=True, blank=True)
 	is_closed = models.BooleanField(default=False)
+	is_retainage = models.BooleanField(default=True)
 	def __str__(self):
 		return f"{self.subcontractor} {self.job_number}"
 
@@ -593,6 +594,19 @@ class SubcontractItems(models.Model):
 	def __str__(self):
 		return f"{self.subcontract} {self.SOV_description}"
 
+class SubcontractorInvoice(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	date = models.DateField()
+	pay_app_number = models.IntegerField(default=0)
+	subcontract = models.ForeignKey(Subcontracts, on_delete=models.PROTECT, related_name="invoice")
+
+
+class SubcontractorInvoiceItem(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	invoice = models.ForeignKey(SubcontractorInvoice, on_delete=models.PROTECT, related_name="invoice_item")
+	sov_item = models.ForeignKey(SubcontractItems, on_delete=models.PROTECT, related_name="invoice_item2")
+	quantity = models.DecimalField(max_digits=10, decimal_places=2)
+	notes = models.CharField(null=True, max_length=2000, blank=True)
 
 class Submittals(models.Model):
 	id = models.BigAutoField(primary_key=True)
@@ -616,6 +630,7 @@ class SubmittalItems(models.Model):
 	is_closed = models.BooleanField(default=False)
 	def __str__(self):
 		return f"{self.submittal} {self.description}"
+
 
 
 class JobNumbers(models.Model):
