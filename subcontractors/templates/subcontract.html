@@ -22,6 +22,9 @@
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
+$(document).ready(function () {
+    var table = $('#sub_table').DataTable({});
+})
 
 
 	</script>
@@ -31,13 +34,70 @@
   <a class="navbar-brand" href="#">Subcontractors</a>
   <div class="collapse navbar-collapse" id="navbarNavDropdown2">
     <ul class="navbar-nav ">
-        <li><a class="nav-item nav-link active" href="{% url 'subcontractor_home' %}">Subcontractor List</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'subcontractor_home' %}">Subcontractor List</a></li>
 		 <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
         <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
          <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
+		<li><a class="nav-item nav-link active" href="#">{{subcontract.job_number}} {{subcontract.subcontractor}} {{subcontract.po_number}}</a></li>
     </ul>
   </div>
 </nav>
+<h1>{{subcontract.job_number}} - {{subcontract.subcontractor}} </h1>
+
+<form action="{% url 'subcontract' subcontract.id %}" method="post"  >
+    {% csrf_token %}
+
+    <br>
+    <label for="po_number">PO Number: </label><input type="text" id="po_number" name="po_number" value={{subcontract.po_number}} />
+    <br>
+
+    <textarea id="subcontract_notes" name="subcontract_notes" rows="2" cols="100" />{{subcontract.notes}}</textarea>
+    <input type="hidden" id="number_items" name="number_items" value={{number_items}}/>
+
+		<br>
+	<div class="demo-html" style="width:90%">
+		<table id="sub_table" class="display" style="width:90%">
+			<thead>
+				<tr>
+					<th>Description</th>
+					<th>Quantity</th>
+					<th>Unit</th>
+					<th>Price</th>
+					<th>Notes</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for x in items %}
+				<tr>
+					<td>{{x.SOV_description}}</td>
+					{% if x.SOV_is_lump_sum == True %}
+					<td>1</td>
+					<td>Lump Sum</td>
+					{% else %}
+					<td>{{x.SOV_total_ordered}}</td>
+					<td>{{x.SOV_unit}}</td>
+					{% endif %}
+					<td>{{x.SOV_rate}}</td>
+					<td>{{x.notes}}</td>
+
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+	</div>
+
+
+	<div id="new_item_here" name="new_item_here" /></div>
+    <br>
+
+
+     <button type="button" onclick="new_lump_sum()">New Lump Sum Item</button>
+    <button type="button" onclick="new_per_unit()">New Item - Per Unit</button>
+
+<br><br>
+
+<input type="submit" name="form1" value="Add New Contract" />
+</form>
 
 
 </body>

@@ -22,6 +22,9 @@
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
+$(document).ready(function () {
+    var table = $('#sub_table').DataTable({});
+})
 
 
 	</script>
@@ -39,6 +42,25 @@
   </div>
 </nav>
 
+<div class="demo-html" style="width:90%">
+		<table id="sub_table" class="display" style="width:90%">
+			<thead>
+				<tr>
+					<th>Job</th>
+					<th>Subcontractor</th>
+					<th>PO# </th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for x in subcontracts %}
+				<tr>
+					<td>{{x.job_number}}</td>
+					<td>{{x.subcontractor}}</td>
+					<td><a href = "{% url 'subcontract' x.id %}">{{x.po_number}}</a></td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
 
 </body>
 </html>

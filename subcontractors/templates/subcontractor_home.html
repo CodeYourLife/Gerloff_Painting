@@ -61,7 +61,7 @@ $(document).ready(function () {
 
 			{% for x in subcontractors %}
 				<tr>
-					<td><a href = "{% url 'subcontractor' x.id %}">{{x.subcontractor}}</a></td>
+					<td><a href = "{% url 'subcontractor' x.id %}">{{x.company}}</a></td>
 					<td>{{x.contact}}</td>
 					<td>{{x.phone}}</td>
 					<td>{{x.email}}</td>

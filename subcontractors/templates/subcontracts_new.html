@@ -59,6 +59,25 @@ function new_lump_sum(){
     hidden_input.setAttribute("name", "item_type" + number_items);
     hidden_input.setAttribute("value", "Lump Sum");
     add_new_here.appendChild(hidden_input);
+    if ("{{wallcovering_json}}" != 'None'){
+        rolodex = JSON.parse("{{wallcovering_json|escapejs}}");
+        var select = document.createElement("select");
+        select.name = "wallcovering_number" + number_items;
+        select.id = "wallcovering_number" + number_items;
+        var option = document.createElement("option");
+        option.value ='no_wc_selected'
+        option.text='None'
+        select.appendChild(option);
+        for(let i =0; i < rolodex.length; i++){
+            option = document.createElement("option");
+            option.value =rolodex[i].id
+            option.text=rolodex[i].code
+            select.appendChild(option);
+        }
+        var label = document.createElement("label");
+        label.textContent= "Select WC: "
+        add_new_here.appendChild(label).appendChild(select);
+    }
         x = document.createElement("INPUT");
         x.setAttribute("type", "text");
         x.setAttribute("name", "item_description" + number_items)
@@ -229,6 +248,7 @@ function new_per_unit(){
     <br>
     <label for="po_number">PO Number: </label><input type="text" id="po_number" name="po_number" />
     <br>
+    <input type="hidden" id="selected_job" name="selected_job" value = {{selectedjob.job_number}} />
     <textarea id="subcontract_notes" name="subcontract_notes" placeholder="General Notes about this subcontract" rows="2" cols="100" /></textarea>
     <input type="hidden" id="hidden_number_items" name="number_items" />
     <div id="new_item_here" name="new_item_here" /></div>

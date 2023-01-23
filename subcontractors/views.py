@@ -16,8 +16,10 @@ def subcontractor_home(request):
     subcontractors = Subcontractors.objects.filter(subcontract__isnull=False)
     return render(request, "subcontractor_home.html", {'subcontractors':subcontractors})
 def subcontract(request,id):
-    response = redirect('/')
-    return response
+    subcontract= Subcontracts.objects.get(id=id)
+    items = SubcontractItems.objects.filter(subcontract=subcontract)
+    number_items = items.count()
+    return render(request, "subcontract.html", {'number_items':number_items,'subcontract':subcontract,'items':items})
 
 
 def subcontractor(request,id):
@@ -48,19 +50,28 @@ def subcontracts_new(request):
                 wallcovering_json = json.dumps(list(wallcovering_json1), cls=DjangoJSONEncoder)
             else:
                 wallcovering_json = 'None'
-            print(wallcovering_json)
             return render(request, "subcontracts_new.html", {'wallcovering_json':wallcovering_json,'selectedjob': selectedjob, 'subcontractors': subcontractors})
         else:
+            subcontract1 = Subcontracts.objects.create(job_number=Jobs.objects.get(job_number=request.POST['selected_job']),subcontractor=Subcontractors.objects.get(id=request.POST['select_subcontractor']),po_number=request.POST['po_number'],notes=request.POST['subcontract_notes'],date=date.today())
             for x in range(1,int(request.POST['number_items'])+1):
-                print(x)
-            response = redirect('/')
-            return response
+                if 'item_type' + str(x) in request.POST:
+                    if request.POST['item_type' + str(x)] == "Per Unit":
+                        item = SubcontractItems.objects.create(subcontract=subcontract1,SOV_description=request.POST['item_description'+ str(x)],SOV_unit=request.POST['item_unit'+ str(x)],SOV_total_ordered=request.POST['item_quantity'+ str(x)],SOV_rate =request.POST['item_price'+ str(x)],notes=request.POST['item_notes'+ str(x)],date=date.today())
+                        if request.POST['wallcovering_number'+ str(x)] != 'no_wc_selected':
+                            item.wallcovering_id = Wallcovering.objects.get(id=request.POST['wallcovering_number' + str(x)])
+                            item.save()
+                    else:
+                        item = SubcontractItems.objects.create(subcontract=subcontract1, SOV_description=request.POST['item_description' + str(x)],SOV_is_lump_sum = True, SOV_unit = "Lump Sum", SOV_total_ordered =request.POST['item_price'+ str(x)],SOV_rate =request.POST['item_price'+ str(x)],notes=request.POST['item_notes'+ str(x)],date=date.today())
+                        if request.POST['wallcovering_number'+ str(x)] != 'no_wc_selected':
+                            item.wallcovering_id = Wallcovering.objects.get(id=request.POST['wallcovering_number' + str(x)])
+                            item.save()
+            return redirect('subcontract', id=subcontract1.id)
+
     selectedjob = 'ALL'
     jobs = Jobs.objects.filter(status='Open')
     return render(request, "subcontracts_new.html",{'selectedjob': selectedjob,'jobs':jobs,'subcontractors':subcontractors})
 
 
-
 def subcontracts_home(request):
-    response = redirect('/')
-    return response
+    subcontracts = Subcontracts.objects.filter(is_closed=False)
+    return render(request, "subcontracts_home.html", {'subcontracts':subcontracts})

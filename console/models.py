@@ -567,7 +567,7 @@ class Subcontracts(models.Model):
 	job_number = models.ForeignKey(Jobs, on_delete=models.PROTECT)
 	subcontractor = models.ForeignKey(Subcontractors, on_delete=models.PROTECT, related_name="subcontract")
 	po_number = models.CharField(null=True, max_length=250)
-	total_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+	total_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True) #DONT USE
 	notes = models.CharField(null=True, max_length=2000)
 	date = models.DateField(null=True, blank=True)
 	is_closed = models.BooleanField(default=False)
@@ -581,11 +581,11 @@ class SubcontractItems(models.Model):
 	is_closed = models.BooleanField(default=False)
 	wallcovering_id = models.ForeignKey(Wallcovering, on_delete=models.PROTECT, null=True, blank=True)
 	SOV_description = models.CharField(null=True, max_length=250) #install WC1
-	SOV_total = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True) #$1,050
-	SOV_is_lump_sum =  models.BooleanField(default=False)
+	SOV_total = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True) #$1,050 - NOT USING THIS RIGHT NOW
+	SOV_is_lump_sum = models.BooleanField(default=False)
 	SOV_unit = models.CharField(null=True, max_length=50) #yards, SF, hour, lump sum
 	SOV_total_ordered = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)  #1,000 yards
-	SOV_total_authorized = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+	SOV_total_authorized = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True) #not used right now
 	SOV_quantity_to_date = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 	SOV_rate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 	notes = models.CharField(null=True, max_length=2050, blank=True)
