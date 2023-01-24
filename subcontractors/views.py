@@ -26,6 +26,14 @@ def subcontractor_invoice_new(request,subcontract_id):
         next_number = SubcontractorInvoice.objects.filter(subcontract=subcontract).latest('pay_app_number').pay_app_number + 1
     else:
         next_number = 1
+    if request.method == 'POST':
+        if 'subcontract_note' in request.POST:
+            print(request.POST)
+            invoice = SubcontractorInvoice.objects.create(date=date.today(), pay_app_number=next_number, subcontract=subcontract,notes=request.POST['subcontract_note'])
+            for x in SubcontractItems.objects.filter(subcontract=subcontract):
+                if request.POST['quantity' + str(x.id)] != '':
+                    SubcontractorInvoiceItem.objects.create(invoice=invoice, sov_item=x, quantity=request.POST['quantity' + str(x.id)],notes=request.POST['note' + str(x.id)])
+            return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id='ALL')
     return render(request, "subcontractor_invoice_new.html", {'next_number':next_number,'items':items,'subcontract':subcontract})
 
 def subcontract_invoices(request,subcontract_id,item_id):

@@ -638,13 +638,16 @@ class SubcontractorInvoice(models.Model):
 	final_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True)
 	is_sent = models.BooleanField(default=False)
 	notes = models.CharField(null=True, max_length=2000, blank=True)
+	def __str__(self):
+		return f"{self.subcontract} {self.pay_app_number}"
 class SubcontractorInvoiceItem(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	invoice = models.ForeignKey(SubcontractorInvoice, on_delete=models.PROTECT, related_name="invoice_item")
 	sov_item = models.ForeignKey(SubcontractItems, on_delete=models.PROTECT, related_name="invoice_item2")
 	quantity = models.DecimalField(max_digits=10, decimal_places=2)
 	notes = models.CharField(null=True, max_length=2000, blank=True)
-
+	def __str__(self):
+		return f"{self.invoice} {self.sov_item}"
 	def total_cost(self):
 		totalcost = 0
 		if self.sov_item.subcontract.SOV_is_lump_sum == False:

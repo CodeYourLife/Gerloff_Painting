@@ -83,6 +83,7 @@ percentage.innerHTML = String(percentage_calc)+ "%"
 					<th>Current Quantity</th>
 					<th>Current Total</th>
 					<th>Total Percentage</th>
+					<th>Note</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -107,6 +108,7 @@ percentage.innerHTML = String(percentage_calc)+ "%"
 					<td><div id="current_total{{item.id}}" ></div></td>
 					{% endif %}
 					<td><div id="percentage{{item.id}}" ></div></td>
+					<td><input type="text"  name="note{{item.id}}" size="40" /></td>
 				</tr>
 				{% endfor %}
 				{% endif %}

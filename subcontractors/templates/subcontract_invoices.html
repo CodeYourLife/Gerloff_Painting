@@ -60,10 +60,10 @@
 			{% if invoices %}
 			{% for x in invoices %}
 			<tr>
-			<td>x.date</td>
+			<td>{{x.date}}</td>
 			<td><a href = "{% url 'subcontract_invoices' subcontract.id x.id %}">{{x.pay_app_number}}</a></td>
-			<td>x.final_amount</td>
-			<td>x.retainage</td>
+			<td>{{x.final_amount}}</td>
+			<td>{{x.retainage}}</td>
 			</tr>
 			{% endfor %}
 			{% endif %}
