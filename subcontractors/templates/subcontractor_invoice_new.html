@@ -27,20 +27,22 @@ $(document).ready(function () {
 })
 
 function update_percentage(event){
-unit = document.getElementById("unit"+event.currentTarget.id)
-percentage = document.getElementById("percentage"+event.currentTarget.id)
+
+percentage_cell = document.getElementById("percentage"+event.currentTarget.id)
 current_total=parseFloat(event.currentTarget.value)
-if (unit.innerHTML == "Lump Sum"){
-	previous = parseFloat(document.getElementById("previous"+event.currentTarget.id).innerHTML)
-	totalcost = parseFloat(document.getElementById("total_cost"+event.currentTarget.id).innerHTML)
+quantity_ordered_cell = document.getElementById("quantity_ordered"+event.currentTarget.id)
+
+if (quantity_ordered_cell.innerHTML == "1 Lump Sum"){
+	previous = parseFloat(document.getElementById("previous"+event.currentTarget.id).value)
+	totalcost = parseFloat(document.getElementById("total_cost"+event.currentTarget.id).value)
 }
 else{
-	totalcost = parseFloat(document.getElementById("quantity_ordered"+event.currentTarget.id).innerHTML)
-	previous = parseFloat(document.getElementById("quantity_billed"+event.currentTarget.id).innerHTML)
+	totalcost = parseFloat(document.getElementById("quantity_ordered"+event.currentTarget.id).value)
+	previous = parseFloat(document.getElementById("quantity_billed"+event.currentTarget.id).value)
 }
 total_to_date = current_total + previous
 percentage_calc = parseFloat(total_to_date/totalcost *100).toFixed(1)
-percentage.innerHTML = String(percentage_calc)+ "%"
+percentage_cell.innerHTML = String(percentage_calc)+ "%"
 }
 
 	</script>
@@ -70,18 +72,20 @@ percentage.innerHTML = String(percentage_calc)+ "%"
         <label for="subcontract_note">Provide any notes about this invoice: </label> <br>
         <textarea id="subcontract_note" name="subcontract_note" rows="2" cols="100" ></textarea>
 <br>
+	 				{% for item in items %}
+				{{item.quantity_billed}}
+	 {% endfor %}
 <div class="demo-html" style="width:90%">
 		<table id="job_table" class="display" style="width:90%">
 			<thead>
 				<tr>
 					<th>Description</th>
-					<th>Quantity Ordered</th>
-					<th>Unit</th>
-					<th>Quantity Billed</th>
-					<th>Total Cost</th>
-					<th>Previous $</th>
-					<th>Current Quantity</th>
-					<th>Current Total</th>
+					<th>Ordered Qnty</th>
+					<th>Ordered $</th>
+					<th>Billed Qnty</th>
+					<th>Billed $</th>
+					<th>Current Qnty</th>
+					<th>Current $</th>
 					<th>Total Percentage</th>
 					<th>Note</th>
 				</tr>
@@ -92,20 +96,19 @@ percentage.innerHTML = String(percentage_calc)+ "%"
 				<tr>
 					<td>{{item.SOV_description}}</td>
 					{% if item.SOV_is_lump_sum == True %}
-					<td>1</td>
-					{% else %}
-					<td><div id="quantity_ordered{{item.id}}" >{{item.SOV_total_ordered}}</div></td>
-					{% endif %}
-					<td><div id="unit{{item.id}}" >{{item.SOV_unit}}</div></td>
-					<td><div id="quantity_billed{{item.id}}" >{{item.quantity_billed}}</div></td>
-					<td><div id="total_cost{{item.id}}" >{{item.total_cost}}</div></td>
-					<td><div id="previous{{item.id}}" >{{item.total_billed}}</div></td>
-					{% if item.SOV_is_lump_sum == True %}
+					<td><div id="quantity_ordered{{item.id}}" >1 Lump Sum</div></td>
+					<td><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>
+					<td><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.total_cost}}" />{{item.quantity_billed}}</td>
+					<td><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
 					<td></td>
 					<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
 					{% else %}
+					<td><input type="hidden" id="quantity_ordered{{item.id}}" value="{{item.SOV_total_ordered}}" />{{item.SOV_total_ordered}} {{item.SOV_unit}}</td>
+					<td><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>
+					<td><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.quantity_billed}}" />{{item.quantity_billed}} {{item.SOV_unit}}</td>
+					<td><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
 					<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
-					<td><div id="current_total{{item.id}}" ></div></td>
+					<td><input type="hidden" id="current_total{{item.id}}" value="" /></td>
 					{% endif %}
 					<td><div id="percentage{{item.id}}" ></div></td>
 					<td><input type="text"  name="note{{item.id}}" size="40" /></td>

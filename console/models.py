@@ -615,17 +615,18 @@ class SubcontractItems(models.Model):
 		return totalcost
 
 	def quantity_billed(self):
-		totalcost = 0
+		totalcost = float(0.00)
 		for x in SubcontractorInvoiceItem.objects.filter(sov_item=self):
-			totalcost = totalcost + x.quantity
+			totalcost = float(totalcost) + float(x.quantity)
 		if self.SOV_is_lump_sum == True:
-			totalcost = totalcost / self.SOV_rate
+			totalcost = float(totalcost) / float(self.SOV_rate)
 		return totalcost
 
 	def total_billed(self):
 		totalcost = 0
 		for x in SubcontractorInvoiceItem.objects.filter(sov_item=self):
-			totalcost = totalcost + x.quantity
+			if x.invoice.is_sent == True:
+				totalcost = totalcost + x.quantity
 		if self.SOV_is_lump_sum == False:
 			totalcost = totalcost * self.SOV_rate
 		return totalcost
@@ -637,7 +638,7 @@ class SubcontractorInvoice(models.Model):
 	retainage = models.DecimalField(max_digits=10, decimal_places=2, null=True)
 	final_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True)
 	is_sent = models.BooleanField(default=False)
-	notes = models.CharField(null=True, max_length=2000, blank=True)
+	notes = models.CharField(null=True, max_length=2000, blank=True) #DONT USE
 	def __str__(self):
 		return f"{self.subcontract} {self.pay_app_number}"
 class SubcontractorInvoiceItem(models.Model):
@@ -650,7 +651,7 @@ class SubcontractorInvoiceItem(models.Model):
 		return f"{self.invoice} {self.sov_item}"
 	def total_cost(self):
 		totalcost = 0
-		if self.sov_item.subcontract.SOV_is_lump_sum == False:
+		if self.sov_item.SOV_is_lump_sum == False:
 			totalcost = self.quantity * self.sov_item.SOV_rate
 		else:
 			totalcost = self.quantity
@@ -732,3 +733,11 @@ class Plans(models.Model):
 	job_name = models.CharField(null=True, max_length=250)
 	description = models.CharField(null=True, max_length=2000)
 	estimates_number = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+class SubcontractNotes(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	subcontract = models.ForeignKey(Subcontracts, on_delete=models.PROTECT, related_name="subcontract_notes")
+	date = models.DateField(null=True, blank=True)
+	user = models.CharField(null=True,max_length=200)
+	note = models.CharField(null=True, max_length=2000)
+	invoice = models.ForeignKey(SubcontractorInvoice, null=True, on_delete=models.PROTECT, related_name="subcontract_notes2")

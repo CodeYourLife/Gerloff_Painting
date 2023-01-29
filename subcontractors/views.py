@@ -1,14 +1,14 @@
-from django.utils import timezone
-from django.views import generic
-from django.views.generic import ListView
+
 from console.models import *
-from django.contrib.auth.models import User, auth
 from django.shortcuts import render, redirect
-from json import dumps
+
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
-from django_tables2 import SingleTableView
+
+from emails import Email
+
+
 # Create your views here.
 
 def subcontractor_invoice_new(request,subcontract_id):
@@ -21,29 +21,97 @@ def subcontractor_invoice_new(request,subcontract_id):
         quantitybilled=float(x.quantity_billed())
         remainingcost= totalcost-totalbilled
         remainingqnty = totalordered - quantitybilled
-        items.append({'remainingqnty':remainingqnty,'remainingcost':remainingcost,'id':x.id,'SOV_description':x.SOV_description,'SOV_is_lump_sum':x.SOV_is_lump_sum,'SOV_unit':x.SOV_unit,'SOV_total_ordered':x.SOV_total_ordered,'SOV_rate':x.SOV_rate,'notes':x.notes,'quantity_billed':int(x.quantity_billed()),'total_billed':int(x.total_billed()),'total_cost':int(x.total_cost())})
+        if x.SOV_is_lump_sum == True:
+            items.append({'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
+                          'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
+                          'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
+                          'notes': x.notes, 'quantity_billed': float(x.quantity_billed()),
+                          'total_billed': int(x.total_billed()), 'total_cost': int(x.total_cost())})
+        else:
+            items.append({'remainingqnty':remainingqnty,'remainingcost':remainingcost,'id':x.id,'SOV_description':x.SOV_description,'SOV_is_lump_sum':x.SOV_is_lump_sum,'SOV_unit':x.SOV_unit,'SOV_total_ordered':x.SOV_total_ordered,'SOV_rate':x.SOV_rate,'notes':x.notes,'quantity_billed':int(x.quantity_billed()),'total_billed':int(x.total_billed()),'total_cost':int(x.total_cost())})
+    print(items)
     if SubcontractorInvoice.objects.filter(subcontract=subcontract).exists():
         next_number = SubcontractorInvoice.objects.filter(subcontract=subcontract).latest('pay_app_number').pay_app_number + 1
     else:
         next_number = 1
     if request.method == 'POST':
         if 'subcontract_note' in request.POST:
-            print(request.POST)
-            invoice = SubcontractorInvoice.objects.create(date=date.today(), pay_app_number=next_number, subcontract=subcontract,notes=request.POST['subcontract_note'])
+            invoice = SubcontractorInvoice.objects.create(date=date.today(), pay_app_number=next_number, subcontract=subcontract)
             for x in SubcontractItems.objects.filter(subcontract=subcontract):
                 if request.POST['quantity' + str(x.id)] != '':
                     SubcontractorInvoiceItem.objects.create(invoice=invoice, sov_item=x, quantity=request.POST['quantity' + str(x.id)],notes=request.POST['note' + str(x.id)])
+                elif request.POST['note' + str(x.id)] != '':
+                    SubcontractorInvoiceItem.objects.create(invoice=invoice, sov_item=x, quantity=0,notes=request.POST['note' + str(x.id)])
+            SubcontractNotes.objects.create(subcontract=subcontract, date =date.today(), user= request.user.first_name + " " + request.user.last_name,note = "New Invoice- " + request.POST['subcontract_note'],invoice = invoice)
+            # Email.sendEmail('test', 'test body', 'joe@gerloffpainting.com')
             return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id='ALL')
     return render(request, "subcontractor_invoice_new.html", {'next_number':next_number,'items':items,'subcontract':subcontract})
 
+
 def subcontract_invoices(request,subcontract_id,item_id):
     subcontract = Subcontracts.objects.get(id=subcontract_id)
-    invoices = SubcontractorInvoice.objects.filter(subcontract=subcontract)
+    if request.method == 'POST':
+        if 'form5' in request.POST:
+            selected_invoice = SubcontractorInvoice.objects.get(id=item_id)
+            invoice = SubcontractorInvoice.objects.get(id=item_id)
+            invoicetotal = 0
+            for x in SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice):
+                invoicetotal = invoicetotal + x.total_cost()
+            invoice.final_amount=invoicetotal
+            if subcontract.is_retainage == True:
+                invoice.retainage = invoicetotal * subcontract.retainage_percentage
+            else:
+                invoice.retainage =0
+            invoice.is_sent = True
+            invoice.save()
+
+            return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id=item_id)
+        if 'form6' in request.POST:
+            selected_invoice = SubcontractorInvoice.objects.get(id=item_id)
+            invoice = SubcontractorInvoice.objects.get(id=item_id)
+            print(request.POST)
+            for x in SubcontractItems.objects.filter(subcontract=subcontract):
+                if request.POST['quantity' + str(x.id)] != '':
+                    if SubcontractorInvoiceItem.objects.get(invoice=invoice, sov_item=x):
+                        item = SubcontractorInvoiceItem.objects.get(invoice=invoice, sov_item=x)
+                        item.quantity = request.POST['quantity' + str(x.id)]
+                        item.notes = request.POST['note' + str(x.id)]
+                        item.save()
+                    else:
+                        SubcontractorInvoiceItem.objects.create(invoice=invoice, sov_item=x,
+                                                                quantity=request.POST['quantity' + str(x.id)],
+                                                                notes=request.POST['note' + str(x.id)])
+                elif request.POST['note' + str(x.id)] != '':
+                    SubcontractorInvoiceItem.objects.create(invoice=invoice, sov_item=x,
+                                                            quantity=0,
+                                                            notes=request.POST['note' + str(x.id)])
+            return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id=item_id)
+    if item_id == 'ALL':
+        invoices = SubcontractorInvoice.objects.filter(subcontract=subcontract)
+    else:
+        items = []
+        invoices = SubcontractorInvoice.objects.filter(id= item_id)
+        selected_invoice = SubcontractorInvoice.objects.get(id= item_id)
+        invoice_items = SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice)
+        for x in SubcontractItems.objects.filter(subcontract=subcontract):
+            totalcost = float(x.total_cost())
+            totalbilled = float(x.total_billed())
+            totalordered = float(x.SOV_total_ordered)
+            quantitybilled = float(x.quantity_billed())
+            remainingcost = totalcost - totalbilled
+            remainingqnty = totalordered - quantitybilled
+            invoiced = SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice,sov_item=x).exists()
+            items.append({'invoiced':invoiced,'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
+                          'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
+                          'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
+                          'notes': x.notes, 'quantity_billed': int(x.quantity_billed()),
+                          'total_billed': int(x.total_billed()), 'total_cost': int(x.total_cost())})
+
+        return render(request, "subcontract_invoices.html", {'items':items,'invoice_items':invoice_items,'selected_invoice':selected_invoice,'invoices': invoices, 'subcontract': subcontract})
     return render(request, "subcontract_invoices.html", {'invoices':invoices,'subcontract':subcontract})
 
 
 def subcontractor_home(request):
-
     subcontractors = Subcontractors.objects.filter(subcontract__isnull=False)
     return render(request, "subcontractor_home.html", {'subcontractors':subcontractors})
 def subcontract(request,id):
@@ -143,7 +211,11 @@ def subcontracts_new(request):
                 wallcovering_json = 'None'
             return render(request, "subcontracts_new.html", {'wallcovering_json':wallcovering_json,'selectedjob': selectedjob, 'subcontractors': subcontractors})
         else:
-            subcontract1 = Subcontracts.objects.create(job_number=Jobs.objects.get(job_number=request.POST['selected_job']),subcontractor=Subcontractors.objects.get(id=request.POST['select_subcontractor']),po_number=request.POST['po_number'],notes=request.POST['subcontract_notes'],date=date.today())
+            subcontract1 = Subcontracts.objects.create(job_number=Jobs.objects.get(job_number=request.POST['selected_job']),subcontractor=Subcontractors.objects.get(id=request.POST['select_subcontractor']),po_number=request.POST['po_number'],notes=request.POST['subcontract_notes'],date=date.today(),retainage_percentage=0, is_retainage = False)
+            if 'is_retainage' in request.POST:
+                subcontract1.is_retainage = True
+                subcontract1.retainage_percentage = request.POST['retainage_amt']
+                subcontract1.save()
             for x in range(1,int(request.POST['number_items'])+1):
                 if 'item_type' + str(x) in request.POST:
                     if request.POST['item_type' + str(x)] == "Per Unit":

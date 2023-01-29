@@ -24,6 +24,41 @@
 	<script type="text/javascript" class="init">
 var number_items = 0
 
+function update_retainage(event){
+    checkbox = document.getElementById("is_retainage")
+    amt = document.getElementById("retainage_amt")
+    if (event.currentTarget.id == "is_retainage"){
+        if (checkbox.checked){
+            if (amt.value == 0){
+                amt.value = .10
+            }
+        }
+        else {
+            if (amt.value > 0){
+                amt.value = 0
+            }
+        }
+    }
+else{
+    if (checkbox.checked){
+        if (amt.value == 0){
+            checkbox.checked = false
+        }
+    }
+    else {
+        if (amt.value > 0){
+            checkbox.checked = true
+        }
+    }
+}
+}
+function selected_wallcovering2(event){
+    current_row = event.currentTarget.id.substr(19,event.currentTarget.id.length)
+    description = document.getElementById("item_description" + current_row)
+     description.value = "Install " + event.currentTarget.options[event.currentTarget.selectedIndex].text
+     oSel.options[oSel.selectedIndex].text
+}
+
 function selected_wallcovering(event){
     current_row = event.currentTarget.id.substr(19,event.currentTarget.id.length)
     description = document.getElementById("item_description" + current_row)
@@ -64,6 +99,7 @@ function new_lump_sum(){
         var select = document.createElement("select");
         select.name = "wallcovering_number" + number_items;
         select.id = "wallcovering_number" + number_items;
+        select.addEventListener('change',function() {selected_wallcovering2(event);},false);
         var option = document.createElement("option");
         option.value ='no_wc_selected'
         option.text='None'
@@ -248,6 +284,8 @@ function new_per_unit(){
     <br>
     <label for="po_number">PO Number: </label><input type="text" id="po_number" name="po_number" />
     <br>
+    <input type="checkbox" name ="is_retainage" id="is_retainage" onchange="update_retainage(event)" checked /> <label for="is_retainage">Retainage?    </label><input type= "number" name="retainage_amt" id="retainage_amt" value="0.10" size="7" step="0.01" onchange="update_retainage(event)" />
+    <br>
     <input type="hidden" id="selected_job" name="selected_job" value = {{selectedjob.job_number}} />
     <textarea id="subcontract_notes" name="subcontract_notes" placeholder="General Notes about this subcontract" rows="2" cols="100" /></textarea>
     <input type="hidden" id="hidden_number_items" name="number_items" />
@@ -260,7 +298,7 @@ function new_per_unit(){
 
 <br><br>
 
-<input type="submit" name="form2" value="Add New Contract" />
+<input type="submit" name="form2" value="ADD THIS CONTRACT NOW!" />
 </form>
 
 

@@ -12,7 +12,7 @@
 	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
 	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
 	<style type="text/css" class="init">
-
+.submit {background-color:#f44336;} /* Blue */
 	</style>
 	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
 	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
@@ -22,7 +22,12 @@
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
-
+$(document).ready(function () {
+    var table = $('#sub_table').DataTable({});
+})
+$(document).ready(function () {
+    var table = $('#detail_table').DataTable({});
+})
 
 	</script>
 </head>
@@ -39,11 +44,11 @@
     </ul>
   </div>
 </nav>
-<h2>INVOICES FOR JOB: {{subcontract.job_number}} - {{subcontract.subcontractor}} - PO# {{subcontract.po_number}}</h2>
+<h2>INVOICES FOR JOB: {{subcontract.job_number}} - {{subcontract.subcontractor}} - PO#  <a href = "{% url 'subcontract' subcontract.id %}">{{subcontract.po_number}}</a></h2>
 
 <form action="{% url 'subcontractor_invoice_new' subcontract.id %}" method="post"  >
 {% csrf_token %}
-<input type="submit" name="Form3" value="NEW INVOICE" />
+<input type="submit" name="Form3" class = "submit" value="NEW INVOICE" />
 </form>
 
 <div class="demo-html" style="width:90%">
@@ -54,6 +59,7 @@
 				<th>Invoice #</th>
 				<th>Amount</th>
 				<th>Retainage</th>
+				<th>Status</th>
 			</tr>
 			</thead>
 			<tbody>
@@ -64,6 +70,11 @@
 			<td><a href = "{% url 'subcontract_invoices' subcontract.id x.id %}">{{x.pay_app_number}}</a></td>
 			<td>{{x.final_amount}}</td>
 			<td>{{x.retainage}}</td>
+			{% if x.is_sent == True %}
+				<td>Approved</td>
+			{% else %}
+				<td>Pending</td>
+				{% endif %}
 			</tr>
 			{% endfor %}
 			{% endif %}
@@ -71,7 +82,126 @@
 		</table>
 </div>
 
+{% if selected_invoice %}
+{% if selected_invoice.is_sent == False %}
+ <form action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post"  onSubmit = "return check_booking_data()">
+{% csrf_token %}
+<input type="submit" name="form5" class="submit" value="APPROVE INVOICE # {{selected_invoice.pay_app_number}} NOW" />
+ </form>
+<br>
+<hr>
+<h3>OR</h3>
+<br>
+<hr>
+<h3>Update Invoice Details</h3>
 
+
+ <form action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post"  >
+{% csrf_token %}
+
+<div class="demo-html" style="width:90%">
+		<table id="detail_table" class="display" style="width:90%">
+			<thead>
+				<tr>
+					<th>Description</th>
+					<th>Quantity Ordered</th>
+					<th>Quantity Billed</th>
+					<th>Total Cost</th>
+					<th>Billed $</th>
+					<th>Current Quantity</th>
+					<th>Current Total</th>
+					<th>Total Percentage</th>
+					<th>Note</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% if items %}
+				{% for item in items %}
+				<tr>
+					<td>{{item.SOV_description}}</td>
+					{% if item.SOV_is_lump_sum == True %}
+						<td></td>
+					{% else %}
+						<td><div id="quantity_ordered{{item.id}}" >{{item.SOV_total_ordered}} {{item.SOV_unit}}</div></td>
+					{% endif %}
+					{% if item.SOV_is_lump_sum == True %}
+						<td></td>
+					{% else %}
+						<td><div id="quantity_billed{{item.id}}" >{{item.quantity_billed}} {{item.SOV_unit}}</div></td>
+					{% endif %}
+					<td><div id="total_cost{{item.id}}" >${{item.total_cost}}</div></td>
+					<td><div id="previous{{item.id}}" >${{item.total_billed}}</div></td>
+					{% if item.SOV_is_lump_sum == True %}
+						<td></td>
+						 {% if item.invoiced == True %}
+							{% for x in invoice_items %}
+								{% if x.sov_item.id == item.id %}
+									<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" value={{x.quantity}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
+									<td><div id="percentage{{item.id}}" ></div></td>
+									<td><input type="text"  name="note{{item.id}}" size="40" value="{{x.notes}}"/></td>
+								{% endif %}
+							{% endfor %}
+						{% else %}
+							<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
+							<td><div id="percentage{{item.id}}" ></div></td>
+							<td><input type="text"  name="note{{item.id}}" size="40" /></td>
+						{% endif %}
+					{% else %}
+						 {% if item.invoiced == True %}
+							{% for x in invoice_items %}
+								{% if x.sov_item.id == item.id %}
+									<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" value={{x.quantity}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
+									<td><div id="current_total{{item.id}}" ></div></td>
+									<td><div id="percentage{{item.id}}" ></div></td>
+									<td><input type="text"  name="note{{item.id}}" size="40" value="{{x.notes}}"/></td>
+								{% endif %}
+							{% endfor %}
+						{% else %}
+								<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
+								<td><div id="current_total{{item.id}}" ></div></td>
+								<td><div id="percentage{{item.id}}" ></div></td>
+								<td><input type="text"  name="note{{item.id}}" size="40" /></td>
+						{% endif %}
+					{% endif %}
+				</tr>
+				{% endfor %}
+				{% endif %}
+			</tbody>
+		</table>
+</div>
+<input type="submit" name="form6" value="SEND UPDATED INVOICE FOR APPROVAL" />
+    </form>
+
+{% else %}
+<div class="demo-html" style="width:90%">
+		<table id="detail_table" class="display" style="width:90%">
+			<thead>
+				<tr>
+					<th>Description</th>
+					<th>Billed</th>
+					<th>Note</th>
+				</tr>
+			</thead>
+			<tbody>
+
+				{% if invoice_items %}
+				{% for x in invoice_items %}
+				<tr>
+					<td>{{x.sov_item.SOV_description}}</td>
+					{% if x.sov_item.SOV_is_lump_sum == True %}
+						<td>${{x.quantity}}</td>
+					{% else %}
+						<td>{{x.quantity}} {{x.sov_item.SOV_unit}}</td>
+					{% endif %}
+					<td>{{x.notes}}</td>
+				</tr>
+				{% endfor %}
+				{% endif %}
+			</tbody>
+		</table>
+</div>
+{% endif %}
+{% endif %}
 </body>
 </html>
 

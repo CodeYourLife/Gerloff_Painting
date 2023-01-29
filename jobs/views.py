@@ -10,6 +10,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
 from equipment.tables import JobsTable
 from equipment.filters import JobsFilter
+from django.core.mail import send_mail
 from django_tables2 import SingleTableView
 
 
@@ -217,7 +218,7 @@ def register(request):
         painting_budget = request.POST['painting_budget']
         wallcovering_budget = request.POST['wallcovering_budget']
 
-        jobs = Jobs.objects.create(job_number=job_number, job_name=job_name, address=address, city=city, state=state,
+        job = Jobs.objects.create(job_number=job_number, job_name=job_name, address=address, city=city, state=state,
                                    is_on_base=is_on_base, is_t_m_job=is_t_m_job, contract_status=contract_status,
                                    insurance_status=insurance_status, client=Clients.objects.get(id=client_id),
                                    has_wallcovering=has_wallcovering, has_paint=has_paint, start_date=start_date,
@@ -250,7 +251,13 @@ def register(request):
         # for x in checklist:
         #     checklist = Checklist(job_number=job_number, checklist_item=x, category="PM")
         #     checklist.save();
-
+        send_mail(
+            'New Job Booking',
+            f'Job {job.job_number}',
+            'joe@gerloffpainting.com',
+            ['joe@gerloffpainting.com'],
+            fail_silently=False,
+        )
         response = redirect('/')
         return response
 
