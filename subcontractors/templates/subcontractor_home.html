@@ -65,7 +65,7 @@ $(document).ready(function () {
 					<td>{{x.contact}}</td>
 					<td>{{x.phone}}</td>
 					<td>{{x.email}}</td>
-					<td>{{x.active_contracts}}</td>
+					<td><a href = "{% url 'subcontracts_home' %}">{{x.active_contracts}}</a></td>
 				</tr>
 			{% endfor %}
 			</tbody>

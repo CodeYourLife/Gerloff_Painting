@@ -42,7 +42,7 @@ def subcontractor_invoice_new(request,subcontract_id):
                     SubcontractorInvoiceItem.objects.create(invoice=invoice, sov_item=x, quantity=request.POST['quantity' + str(x.id)],notes=request.POST['note' + str(x.id)])
                 elif request.POST['note' + str(x.id)] != '':
                     SubcontractorInvoiceItem.objects.create(invoice=invoice, sov_item=x, quantity=0,notes=request.POST['note' + str(x.id)])
-            SubcontractNotes.objects.create(subcontract=subcontract, date =date.today(), user= request.user.first_name + " " + request.user.last_name,note = "New Invoice- " + request.POST['subcontract_note'],invoice = invoice)
+            SubcontractNotes .objects.create(subcontract=subcontract, date =date.today(), user= request.user.first_name + " " + request.user.last_name,note = "New Invoice- " + request.POST['subcontract_note'],invoice = invoice)
             # Email.sendEmail('test', 'test body', 'joe@gerloffpainting.com')
             return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id='ALL')
     return render(request, "subcontractor_invoice_new.html", {'next_number':next_number,'items':items,'subcontract':subcontract})
@@ -51,6 +51,12 @@ def subcontractor_invoice_new(request,subcontract_id):
 def subcontract_invoices(request,subcontract_id,item_id):
     subcontract = Subcontracts.objects.get(id=subcontract_id)
     if request.method == 'POST':
+        if 'form99' in request.POST:
+            selected_invoice = SubcontractorInvoice.objects.get(id=item_id)
+            SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
+                                            user=request.user.first_name + " " + request.user.last_name,
+                                            note=request.POST['invoice_notes'],invoice=selected_invoice)
+            return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id=item_id)
         if 'form5' in request.POST:
             selected_invoice = SubcontractorInvoice.objects.get(id=item_id)
             invoice = SubcontractorInvoice.objects.get(id=item_id)
@@ -64,7 +70,9 @@ def subcontract_invoices(request,subcontract_id,item_id):
                 invoice.retainage =0
             invoice.is_sent = True
             invoice.save()
-
+            SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
+                                            user=request.user.first_name + " " + request.user.last_name,
+                                            note="Invoice " + str(invoice.pay_app_number) + " Approved!",invoice=selected_invoice)
             return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id=item_id)
         if 'form6' in request.POST:
             selected_invoice = SubcontractorInvoice.objects.get(id=item_id)
@@ -72,7 +80,7 @@ def subcontract_invoices(request,subcontract_id,item_id):
             print(request.POST)
             for x in SubcontractItems.objects.filter(subcontract=subcontract):
                 if request.POST['quantity' + str(x.id)] != '':
-                    if SubcontractorInvoiceItem.objects.get(invoice=invoice, sov_item=x):
+                    if SubcontractorInvoiceItem.objects.filter(invoice=invoice, sov_item=x).exists():
                         item = SubcontractorInvoiceItem.objects.get(invoice=invoice, sov_item=x)
                         item.quantity = request.POST['quantity' + str(x.id)]
                         item.notes = request.POST['note' + str(x.id)]
@@ -93,6 +101,7 @@ def subcontract_invoices(request,subcontract_id,item_id):
         invoices = SubcontractorInvoice.objects.filter(id= item_id)
         selected_invoice = SubcontractorInvoice.objects.get(id= item_id)
         invoice_items = SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice)
+        notes = SubcontractNotes.objects.filter(subcontract=subcontract,invoice=selected_invoice)
         for x in SubcontractItems.objects.filter(subcontract=subcontract):
             totalcost = float(x.total_cost())
             totalbilled = float(x.total_billed())
@@ -101,23 +110,52 @@ def subcontract_invoices(request,subcontract_id,item_id):
             remainingcost = totalcost - totalbilled
             remainingqnty = totalordered - quantitybilled
             invoiced = SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice,sov_item=x).exists()
-            items.append({'invoiced':invoiced,'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
+            if invoiced:
+                if x.SOV_is_lump_sum:
+                    special =  (float(SubcontractorInvoiceItem.objects.get(invoice=selected_invoice,sov_item=x).quantity) / totalcost)*100
+                    percentage = ((float(SubcontractorInvoiceItem.objects.get(invoice=selected_invoice,sov_item=x).quantity) + totalbilled) / totalcost)*100
+                else:
+                    special = int(SubcontractorInvoiceItem.objects.get(invoice=selected_invoice,sov_item=x).quantity) * x.SOV_rate
+                    percentage = ((float(SubcontractorInvoiceItem.objects.get(invoice=selected_invoice,
+                                                                             sov_item=x).quantity) + quantitybilled) / totalordered)*100
+            else:
+                special =0
+                percentage = (totalbilled / totalcost)*100
+            items.append({'percentage':str(round(percentage, 2)),'special':str(round(special, 2)),'invoiced':invoiced,'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
                           'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
                           'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
-                          'notes': x.notes, 'quantity_billed': int(x.quantity_billed()),
+                          'notes': x.notes, 'quantity_billed': float(x.quantity_billed()),
                           'total_billed': int(x.total_billed()), 'total_cost': int(x.total_cost())})
-
-        return render(request, "subcontract_invoices.html", {'items':items,'invoice_items':invoice_items,'selected_invoice':selected_invoice,'invoices': invoices, 'subcontract': subcontract})
+        return render(request, "subcontract_invoices.html", {'notes':notes,'items':items,'invoice_items':invoice_items,'selected_invoice':selected_invoice,'invoices': invoices, 'subcontract': subcontract})
     return render(request, "subcontract_invoices.html", {'invoices':invoices,'subcontract':subcontract})
 
 
 def subcontractor_home(request):
     subcontractors = Subcontractors.objects.filter(subcontract__isnull=False)
     return render(request, "subcontractor_home.html", {'subcontractors':subcontractors})
+
+
 def subcontract(request,id):
     subcontract= Subcontracts.objects.get(id=id)
-    items = SubcontractItems.objects.filter(subcontract=subcontract)
-    number_items = items.count()
+    items = []
+    number_items =0
+    for x in SubcontractItems.objects.filter(subcontract=subcontract):
+        number_items = number_items + 1
+        totalcost = float(x.total_cost())
+        totalbilled = float(x.total_billed())
+        totalordered = float(x.SOV_total_ordered)
+        quantitybilled = float(x.quantity_billed())
+        remainingcost = totalcost - totalbilled
+        remainingqnty = totalordered - quantitybilled
+        percentage = (totalbilled / totalcost)*100
+        items.append({'percentage': str(round(percentage, 2)),
+                      'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
+                      'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
+                      'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
+                      'notes': x.notes, 'quantity_billed': float(x.quantity_billed()),
+                      'total_billed': int(x.total_billed()), 'total_cost': int(x.total_cost())})
+
+    notes = SubcontractNotes.objects.filter(subcontract=subcontract)
     if Wallcovering.objects.filter(job_number=subcontract.job_number):
         wallcovering = Wallcovering.objects.filter(job_number=subcontract.job_number)
         wallcovering_json1 = []
@@ -140,13 +178,13 @@ def subcontract(request,id):
                 item.notes=request.POST['notes']
                 item.save()
                 return render(request, "subcontract.html",
-                              {'number_items': number_items, 'subcontract': subcontract, 'items': items})
+                              {'notes':notes,'number_items': number_items, 'subcontract': subcontract, 'items': items})
             elif request.POST['edit_existing_item'] != 'None Selected':
                 item = SubcontractItems.objects.get(id=request.POST['edit_existing_item'])
                 if item.invoice_item2.exists():
-                    return render(request, "subcontract.html", {'invoiced_already':True,'number_items': number_items, 'subcontract': subcontract, 'items': items,'edit_row':request.POST['edit_existing_item']})
+                    return render(request, "subcontract.html", {'notes':notes,'invoiced_already':True,'number_items': number_items, 'subcontract': subcontract, 'items': items,'edit_row':request.POST['edit_existing_item']})
                 else:
-                    return render(request, "subcontract.html", {'number_items': number_items, 'subcontract': subcontract, 'items': items,'edit_row':request.POST['edit_existing_item']})
+                    return render(request, "subcontract.html", {'notes':notes,'number_items': number_items, 'subcontract': subcontract, 'items': items,'edit_row':request.POST['edit_existing_item']})
             else:
                 for x in range(1, int(request.POST['number_items']) + 1):
                     if 'item_type' + str(x) in request.POST:
@@ -178,7 +216,14 @@ def subcontract(request,id):
                                 item.wallcovering_id = Wallcovering.objects.get(
                                     id=request.POST['wallcovering_number' + str(x)])
                                 item.save()
-    return render(request, "subcontract.html", {'wallcovering_json':wallcovering_json,'number_items':number_items,'subcontract':subcontract,'items':items})
+        else:
+            if 'form1' in request.POST:
+                subcontract.po_number=request.POST['po_number']
+                print(request.POST)
+                if request.POST['subcontract_notes'] != '':
+                    SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(), user=request.user.first_name + " " + request.user.last_name,note = request.POST['subcontract_notes'])
+                    notes = SubcontractNotes.objects.filter(subcontract=subcontract)
+    return render(request, "subcontract.html", {'notes':notes,'wallcovering_json':wallcovering_json,'number_items':number_items,'subcontract':subcontract,'items':items})
 
 
 def subcontractor(request,id):
@@ -211,7 +256,8 @@ def subcontracts_new(request):
                 wallcovering_json = 'None'
             return render(request, "subcontracts_new.html", {'wallcovering_json':wallcovering_json,'selectedjob': selectedjob, 'subcontractors': subcontractors})
         else:
-            subcontract1 = Subcontracts.objects.create(job_number=Jobs.objects.get(job_number=request.POST['selected_job']),subcontractor=Subcontractors.objects.get(id=request.POST['select_subcontractor']),po_number=request.POST['po_number'],notes=request.POST['subcontract_notes'],date=date.today(),retainage_percentage=0, is_retainage = False)
+            subcontract1 = Subcontracts.objects.create(job_number=Jobs.objects.get(job_number=request.POST['selected_job']),subcontractor=Subcontractors.objects.get(id=request.POST['select_subcontractor']),po_number=request.POST['po_number'], date=date.today(),retainage_percentage=0, is_retainage = False)
+            SubcontractNotes.objects.create(subcontract=subcontract1, date =date.today(), user= request.user.first_name + " " + request.user.last_name,note = "New Contract- " + request.POST['subcontract_notes'])
             if 'is_retainage' in request.POST:
                 subcontract1.is_retainage = True
                 subcontract1.retainage_percentage = request.POST['retainage_amt']

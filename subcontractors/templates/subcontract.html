@@ -239,8 +239,18 @@ function new_per_unit(){
     <br>
     <label for="po_number">PO Number: </label><input type="text" id="po_number" name="po_number" value={{subcontract.po_number}} />
     <br>
-
-    <textarea id="subcontract_notes" name="subcontract_notes" rows="2" cols="100" />{{subcontract.notes}}</textarea>
+	{% if notes %}
+	{% for note in notes %}
+	{% if note.invoice %}
+	{{note.date}} - {{note.user}} - Invoice#{{note.invoice.pay_app_number}} - {{note.note}}
+	{% else %}
+	{{note.date}} - {{note.user}} - {{note.invoice}} - {{note.note}}
+	{% endif %}
+	<br>
+	{% endfor %}
+	{% endif %}
+    <label for="subcontract_notes">Enter new note: </label>
+	<textarea id="subcontract_notes" name="subcontract_notes" rows="1" cols="100" /></textarea>
 <br>
 
 	<input type="submit" name="form1" value="Update PO with the Above Changes" />
@@ -260,6 +270,7 @@ function new_per_unit(){
 					<th>Quantity</th>
 					<th>Unit</th>
 					<th>Price</th>
+					<th>Billed</th>
 					<th>Notes</th>
 					<th>Edit</th>
 				</tr>
@@ -281,6 +292,7 @@ function new_per_unit(){
 					{% else %}
 					<td><input type= "number" name="SOV_rate" id="SOV_rate" value={{x.SOV_rate}} size="10" required /></td>
 					{% endif %}
+					<td>{{x.percentage}}%</td>
 					<td><textarea name="notes" id="notes" cols="50" rows="2" >{{x.notes}}</textarea></td>
 					{% if invoiced_already %}
 					<td> <button >Edit Now</button></td>
@@ -299,6 +311,7 @@ function new_per_unit(){
 					<td>{{x.SOV_unit}}</td>
 					{% endif %}
 					<td>{{x.SOV_rate}}</td>
+					<td>{{x.percentage}}%</td>
 					<td>{{x.notes}}</td>
 					{% if edit_row %}
 					<td></td>
