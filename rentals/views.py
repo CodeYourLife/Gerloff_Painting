@@ -15,7 +15,7 @@ from django_tables2 import RequestConfig
 # Create your views here.
 
 def rentals_home(request):
-    table = RentalsTable(Rentals.objects.filter(is_closed=False))
+    table = RentalsTable(Rentals.objects.filter(is_closed=False).order_by('off_rent_date','job_number'))
     RequestConfig(request).configure(table)
     return render(request, "rentals_home.html", {'table': table})
 
@@ -54,6 +54,7 @@ def rental_page(request,id,reverse):
     rental = Rentals.objects.get(id=id)
     reverse = reverse
     if request.method == 'POST':
+        print(request.POST)
         if request.POST['purchase_order'] != '':
             rental.purchase_order=request.POST['purchase_order']
             rental.save()
@@ -74,6 +75,9 @@ def rental_page(request,id,reverse):
             rental.save()
         if request.POST['month_price']!= '':
             rental.month_price=request.POST['month_price']
+            rental.save()
+        if 'is_closed' in request.POST:
+            rental.is_closed = True
             rental.save()
         return redirect("rental_page", id=rental.id, reverse='YES')
     return render(request, "rental_page.html", {'rental': rental, 'reverse':reverse})

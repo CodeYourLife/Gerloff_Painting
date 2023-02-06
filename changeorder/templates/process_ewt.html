@@ -192,7 +192,7 @@ function add_day(daycolumn){
                 	<option value="please_select">please select</option>
                 	{% if materials %}
                 	{% for material in materials %}
-                	<option value={{material_id}}>{{employee.item}}</option>
+                	<option value={{material_id}}>{{material.item}}</option>
                 	{% endfor %}
                 	{% endif %}
             		</select>
@@ -204,8 +204,40 @@ function add_day(daycolumn){
 			</tr>
 		</tbody>
 	</table>
+	<button type="button" onclick="add_material_row()">Add row </button>
+<br><hr>
+	<h3>EQUIPMENT BREAKDOWN</h3>
+	<table id="equipment_breakdown" class="display" style="width:90%" >
+		<thead>
+			<tr>
+				<th>Item</th>
+				<th>Description</th>
+				<th>Quantity</th>
+				<th>Units</th>
 
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>
+<!--					<label for="select_painter">please select Gerloff superintendent</label>-->
+            		<select id="select_material" name="select_material" >
+                	<option value="please_select">please select</option>
+                	{% if materials %}
+                	{% for material in materials %}
+                	<option value={{material_id}}>{{material.item}}</option>
+                	{% endfor %}
+                	{% endif %}
+            		</select>
+				</td>
+				<td><input type="text" name="description" placeholder="description" size="30" id="description"/></td>
+				<td><input type="number" id="quantity" size=3></td>
+				<td><input type="text" name="units" placeholder="units" size="10" id="units"/></td>
 
+			</tr>
+		</tbody>
+	</table>
+<button type="button" onclick="add_equipment_row()">Add row </button>
 
 
     <input type="submit" value="Submit Ticket" />

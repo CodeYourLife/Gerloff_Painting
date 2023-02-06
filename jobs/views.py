@@ -12,7 +12,7 @@ from equipment.tables import JobsTable
 from equipment.filters import JobsFilter
 from django.core.mail import send_mail
 from django_tables2 import SingleTableView
-
+from emails import Email
 
 def change_start_date(request,jobnumber,previous):
     jobs = Jobs.objects.get(job_number=jobnumber)
@@ -134,7 +134,7 @@ def register(request):
         address = request.POST['address']
         city = request.POST['city']
         state = request.POST['state']
-        if request.POST['on_base'] == 'notchecked':
+        if request.POST['on_base2'] == 'notchecked':
             is_on_base = False
         else:
             is_on_base = True
@@ -166,26 +166,23 @@ def register(request):
         if request.POST['select_company'] == 'add_new':
             new_client = request.POST['new_client']
             new_client_phone = request.POST['new_client_phone']
-            new_client_email = request.POST['new_client_email']
-            client = Clients(company=new_client, bid_email=new_client_email,phone=new_client_phone)
+            new_client_email = request.POST['new_client_bid_email']
+            client = Clients.objects.create(company=new_client, bid_email=new_client_email,phone=new_client_phone)
             client.save();
-            client_id = Clients.objects.latest('id').id
         else:
-            client_id = request.POST['select_company']
+            client = Clients.objects.get(id=request.POST['select_company'])
 
-        if request.POST['select_PM'] == 'not_sure':
+        if request.POST['select_pm'] == 'not_sure':
             checklist.append("get pm info")
             client_pm = 'not_sure'
         elif request.POST['select_pm'] == 'use_below':
             new_name = request.POST['new_pm']
             new_phone = request.POST['new_pm_phone']
             new_email = request.POST['new_pm_email']
-            new_id = client_id
-            client_employee = ClientEmployees(id=new_ID, name=new_name, phone=new_phone,email=new_email)
-            client_employee.save;
-            client_pm = ClientEmployees.objects.latest('person_pk').person_pk
+            client_pm = ClientEmployees.objects.create(id=client, name=new_name, phone=new_phone,email=new_email)
+            client_pm.save;
         else:
-            client_pm = request.POST['select_pm']
+            client_pm = ClientEmployees.objects.get(person_pk=request.POST['select_pm'])
 
         if request.POST['select_super'] == 'not_sure':
             checklist.append("get superintendent info")
@@ -194,12 +191,11 @@ def register(request):
             new_name = request.POST['new_super']
             new_phone = request.POST['new_super_phone']
             new_email = request.POST['new_super_email']
-            new_ID = client_id
-            client_employee = ClientEmployees(id=new_ID, name=new_name, phone=new_phone,email=new_email)
-            client_employee.save;
-            client_super = ClientEmployees.objects.latest('person_pk').person_pk
+            client_super = ClientEmployees.objects.create(id=client, name=new_name, phone=new_phone,email=new_email)
+            client_super.save;
+
         else:
-            client_super = request.POST['select_super']
+            client_super = ClientEmployees.objects.get(person_pk=request.POST['select_super'])
 
         superintendent = request.POST['select_gpsuper']
         if request.POST['has_paint'] == 'true':
@@ -220,44 +216,39 @@ def register(request):
 
         job = Jobs.objects.create(job_number=job_number, job_name=job_name, address=address, city=city, state=state,
                                    is_on_base=is_on_base, is_t_m_job=is_t_m_job, contract_status=contract_status,
-                                   insurance_status=insurance_status, client=Clients.objects.get(id=client_id),
+                                   insurance_status=insurance_status, client=client,
                                    has_wallcovering=has_wallcovering, has_paint=has_paint, start_date=start_date,
                                    status="Open", booked_date=date.today())
         if client_super != 'not_sure':
-            Jobs.objects.filter(job_number=job_number).update(client_super=ClientEmployees.objects.get(person_pk=client_super))
+            job.client_super= client_super
         if client_pm != 'not_sure':
-            Jobs.objects.filter(job_number=job_number).update(client_pm=ClientEmployees.objects.get(person_pk=client_pm))
-            Jobs.objects.filter(job_number=job_number).update(client_submittal_contact=ClientEmployees.objects.get(person_pk=client_pm))
-            Jobs.objects.filter(job_number=job_number).update(client_co_contact=ClientEmployees.objects.get(person_pk=client_pm))
+            job.client_pm=client_pm
+            job.client_submittal_contact=client_pm
+            job.client_co_contact=client_pm
         if is_t_m_job == False:
-            Jobs.objects.filter(job_number=job_number).update(contract_amount=contract_amount)
+            job.contract_amount=contract_amount
         if t_m_nte_amount != "":
-            Jobs.objects.filter(job_number=job_number).update( t_m_nte_amount=t_m_nte_amount)
+            job.t_m_nte_amount=t_m_nte_amount
         if spray_scale != "":
-            Jobs.objects.filter(job_number=job_number).update(spray_scale=spray_scale)
+            job.spray_scale=spray_scale
         if brush_role != "":
-            Jobs.objects.filter(job_number=job_number).update(brush_role=brush_role)
+            job.brush_role=brush_role
         if painting_budget != "":
-            Jobs.objects.filter(job_number=job_number).update(painting_budget=painting_budget)
+            job.painting_budget=painting_budget
         if wallcovering_budget != "":
-            Jobs.objects.filter(job_number=job_number).update(wallcovering_budget=wallcovering_budget)
+            job.wallcovering_budget=wallcovering_budget
         if superintendent != 'not_sure':
-            Jobs.objects.filter(job_number=job_number).update(superintendent=Employees.objects.get(id=superintendent))
-        # job_note = Job_Notes(job_number=job_number, note = "Start Date at Booking: " + start_date + " " + request.POST['date_note'], type="Start_Date", date = date.today(), note_date = date.today())
-        # job_note.save;
-        # job_note = Job_Notes(job_number=job_number, note = request.POST['email_job_note'], type="PM", date = date.today(), note_date = date.today())
-        # job_note.save;
-        #
+            job.superintendent=Employees.objects.get(id=superintendent)
+        JobNotes.objects.create(job_number=job, note = "Start Date at Booking: " + start_date + " " + request.POST['date_note'], type="auto_start_date_note", date = date.today(),user=request.user.first_name + " " + request.user.last_name)
+
+        JobNotes.objects.create(job_number=job,
+                                 note="New Job Booked By: " + request.user.first_name + " " + request.user.last_name + ": " + request.POST['email_job_note'],
+                                 type="auto_booking_note", date=date.today(), user=request.user.first_name + " " + request.user.last_name)
+        email_body = "New Job Booked \n" + job.job_number + "\n" + job.job_name + "\n" + job.client.company
+        Email.sendEmail("New Job - " + job.job_name, email_body, 'joe@gerloffpainting.com')
         # for x in checklist:
         #     checklist = Checklist(job_number=job_number, checklist_item=x, category="PM")
         #     checklist.save();
-        send_mail(
-            'New Job Booking',
-            f'Job {job.job_number}',
-            'joe@gerloffpainting.com',
-            ['joe@gerloffpainting.com'],
-            fail_silently=False,
-        )
         response = redirect('/')
         return response
 

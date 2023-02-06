@@ -48,8 +48,6 @@
     			deleted_item.remove();
 				}
 			}
-
-
 		row_counter = current_item +1
     	var item_box = document.getElementById("item")
     	temp_value = ""
@@ -66,7 +64,6 @@
 		var select = document.createElement("select");
 		select.name = "inventory_type" + row_counter;
 		select.id = "inventory_type" + row_counter;
-
 
 		if (row_counter == 1){
 		selectedtype = equipment_input.inventory_type0.value;
@@ -137,7 +134,7 @@
   </div>
 </nav>
 <div class ="container">
- <form name = equipment_input action={% url 'equipment_new' %} method="post"  onSubmit = "return check_booking_data()">
+ <form name = equipment_input action="{% url 'equipment_new' %}" method="post"  onSubmit = "return check_booking_data()">
 {% csrf_token %}
 			<label for="inventory_type0">Select Equipment Type</label>
             <select id="inventory_type0" name="inventory_type0" onChange="add_dropdown(0)">
@@ -149,7 +146,7 @@
             </select>
 
 	 <br><br>
-			window.onload = function() {
+			<div id="add_item_here1"></div>
 	 		<div id="add_item_here2"></div>
 	 		<div id="add_item_here3"></div>
 	 		<div id="add_item_here4"></div>

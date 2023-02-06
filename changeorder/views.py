@@ -124,7 +124,7 @@ def extra_work_ticket(request,id):
         if 'submit_form2' in request.POST:
             if request.POST['new_note'] != "":
                 changeordernote = ChangeOrderNotes.objects.create(note=request.POST['new_note'],
-                                                                  cop_number= changeorder, date=date.today(), user="Current User")
+                                                                  cop_number= changeorder, date=date.today(), user=request.user.first_name + " " + request.user.last_name)
         notes = ChangeOrderNotes.objects.filter(cop_number=id)
         return render(request, "extra_work_ticket.html", {'ticket_needed':ticket_needed,'changeorder': changeorder, 'notes': notes})
 
@@ -137,4 +137,5 @@ def process_ewt(request, id):
     materials2 = TMPricesMaster.objects.filter(category="Material").values()
     employees_json = json.dumps(list(employees2), cls=DjangoJSONEncoder)
     materials_json = json.dumps(list(materials2), cls=DjangoJSONEncoder)
+    print(materials)
     return render(request, "process_ewt.html", {'materialsjson': materials_json, 'materials': materials,'changeorder': changeorder,'employees': employees, 'employeesjson': employees_json})

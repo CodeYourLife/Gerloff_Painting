@@ -100,6 +100,12 @@ Off Rent Number: <input type= "text" name="off_rent_number" id="off_rent_number"
 Off Rent Number: {{rental.off_rent_number}}
 	  {% endif %}
 	 <br><br>
+  {% if rental.is_closed == False %}
+<input type="checkbox" name ="is_closed" id="is_closed"  /> <label for="is_closed"> Billed </label>
+	 {% else %}
+<input type="checkbox" name ="is_closed" id="is_closed" checked /> <label for="is_closed"> Billed </label>
+	  {% endif %}
+	 <br><br>
         <label for="notes">Notes about this Rental </label> <br>
         <textarea id="notes" name="notes" rows="4" cols="100" >{{rental.notes}}</textarea>
 <br>
