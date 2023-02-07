@@ -338,7 +338,7 @@ class PainterHours(models.Model):
 	is_overtime = models.BooleanField(default=False)
 
 
-class TMPricesMaster(models.Model): #use this in case a job has special rates
+class TMPricesMaster(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	category = models.CharField(null=False, max_length=50, validators = [validate_tm_category]) #labor, material, equipment, bond, inventory
 	item = models.CharField(null=False, max_length=50) #painter-hours, latex paint, 19' scissor
@@ -357,6 +357,8 @@ class TMList(models.Model): #one entry for each line item of t&m bill
 	rate = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
 	total = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
 	category = models.CharField(null=False, max_length=50, validators = [validate_tm_category])  #labor, material, equipment, bond, inventory
+	notes = models.CharField(null=True, max_length=2000)
+	week_ending = models.DateField(null=True)
 	def __str__(self):
 		return f"{self.change_order} {self.item}"
 

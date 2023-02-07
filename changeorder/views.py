@@ -130,12 +130,15 @@ def extra_work_ticket(request,id):
 
 
 def process_ewt(request, id):
+    if request.method == 'POST':
+        print("HERE")
     employees = Employees.objects.all()
     employees2 = Employees.objects.values()
     changeorder = ChangeOrders.objects.get(id=id)
     materials = TMPricesMaster.objects.filter(category= "Material")
     materials2 = TMPricesMaster.objects.filter(category="Material").values()
+    equipment = TMPricesMaster.objects.filter(category="Equipment").values()
     employees_json = json.dumps(list(employees2), cls=DjangoJSONEncoder)
     materials_json = json.dumps(list(materials2), cls=DjangoJSONEncoder)
-    print(materials)
-    return render(request, "process_ewt.html", {'materialsjson': materials_json, 'materials': materials,'changeorder': changeorder,'employees': employees, 'employeesjson': employees_json})
+    equipment_json = json.dumps(list(equipment), cls=DjangoJSONEncoder)
+    return render(request, "process_ewt.html", {'equipment':equipment,'equipmentjson':equipment_json,'materialsjson': materials_json, 'materials': materials,'changeorder': changeorder,'employees': employees, 'employeesjson': employees_json})

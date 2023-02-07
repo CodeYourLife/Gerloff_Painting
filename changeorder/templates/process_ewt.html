@@ -22,9 +22,79 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 
-var row_counter = 0;
+var row_counter = 1;
+var material_row_counter = 1;
+var equipment_row_counter = 1;
+
+function changematerial(){
+	clicked_row = event.currentTarget.id.substring(15,event.currentTarget.id.length)
+	description = document.getElementById("description" + clicked_row)
+	units = document.getElementById("units" + clicked_row)
+	rolodex = JSON.parse("{{materialsjson|escapejs}}");
+	for(let i =0; i < rolodex.length; i++){
+		if (rolodex[i].id == event.currentTarget.value){
+			description.value = rolodex[i].item
+			units.value = rolodex[i].unit
+		}
+	}
+}
+
+function changeequipment(){
+	clicked_row = event.currentTarget.id.substring(16,event.currentTarget.id.length)
+	description = document.getElementById("equipment_description" + clicked_row)
+	units = document.getElementById("equipment_units" + clicked_row)
+	rolodex = JSON.parse("{{equipmentjson|escapejs}}");
+	for(let i =0; i < rolodex.length; i++){
+		if (rolodex[i].id == event.currentTarget.value){
+			description.value = rolodex[i].item
+			units.value = rolodex[i].unit
+		}
+	}
+}
+
+function add_equipment_row() {
+	equipment_row_counter = equipment_row_counter + 1
+	hidden = document.getElementById("number_equipment");
+	hidden.value=equipment_row_counter
+	var table = document.getElementById("equipment_breakdown");
+	var rows = table.getElementsByTagName("tr").length;
+	var row = table.insertRow(rows);
+	var cell1 = row.insertCell(0);
+	var cell2 = row.insertCell(1);
+	var cell3 = row.insertCell(2);
+	var cell4 = row.insertCell(3);
+	cell1.innerHTML = "<div id='new_equipment" + equipment_row_counter + "'></div>";
+	add_equipment_dropdown();
+	cell2.innerHTML = "<td><input type='text' name='equipment_description" + equipment_row_counter +"' placeholder='description' size='30' id='equipment_description" + equipment_row_counter +"'/></td>"
+	cell3.innerHTML ="<td><input type='number' id='equipment_quantity" + equipment_row_counter +"' name = 'equipment_quantity" + equipment_row_counter +"' size='3'></td>"
+	cell4.innerHTML ="<td><input type='text' name='equipment_units" + equipment_row_counter +"' placeholder='units' size='10' id='equipment_units" + equipment_row_counter +"'/></td>"
+
+}
+
+
+function add_material_row() {
+	material_row_counter = material_row_counter + 1
+		hidden = document.getElementById("number_materials");
+	hidden.value=material_row_counter
+	var table = document.getElementById("material_breakdown");
+	var rows = table.getElementsByTagName("tr").length;
+	var row = table.insertRow(rows);
+	var cell1 = row.insertCell(0);
+	var cell2 = row.insertCell(1);
+	var cell3 = row.insertCell(2);
+	var cell4 = row.insertCell(3);
+	cell1.innerHTML = "<div id='new_material" + material_row_counter + "'></div>";
+	add_material_dropdown();
+	cell2.innerHTML = "<td><input type='text' name='description" + material_row_counter +"' placeholder='description' size='30' id='description" + material_row_counter +"'/></td>"
+	cell3.innerHTML ="<td><input type='number' id='quantity" + material_row_counter +"' name = 'quantity" + material_row_counter +"' size='3'></td>"
+	cell4.innerHTML ="<td><input type='text' name='units" + material_row_counter +"' placeholder='units' size='10' id='units" + material_row_counter +"'/></td>"
+
+}
+
 	  function add_painter_row() {
 			row_counter = row_counter + 1
+				hidden = document.getElementById("number_painters");
+			hidden.value=row_counter
 			var table = document.getElementById("labor_breakdown");
 			var rows = table.getElementsByTagName("tr").length;
 			var row = table.insertRow(rows);
@@ -58,7 +128,6 @@ var row_counter = 0;
 }
 
 function add_ot(){
-
 		var select = document.createElement("INPUT");
 		var select2 = document.createElement("INPUT");
 		var select3 = document.createElement("LABEL");
@@ -80,7 +149,6 @@ function add_ot(){
 
 
 function add_day(daycolumn){
-
 		var select = document.createElement("INPUT");
 		select.setAttribute("type", "number");
 		select.setAttribute("size", 3);
@@ -89,14 +157,58 @@ function add_day(daycolumn){
 		document.getElementById(daycolumn + "_row" + row_counter).appendChild(select);
 	}
 
+function add_equipment_dropdown(){
+		var select = document.createElement("select");
+		select.name = "select_equipment" + equipment_row_counter;
+		select.id = "select_equipment" + equipment_row_counter;
+		select.addEventListener('change',function() {changeequipment(event);},false);
+		let rolodex = JSON.parse("{{equipmentjson|escapejs}}");
+				var option = document.createElement("option");
+		option.value = "please select";
+		option.text= "please select";
+		select.appendChild(option);
+				for (const x of rolodex)
+		{
+		var option = document.createElement("option");
+		option.value = x.id;
+		option.text= x.item;
+		select.appendChild(option);
+		}
+		var label = document.createElement("label");
+		document.getElementById("new_equipment" + equipment_row_counter).appendChild(label).appendChild(select);
 
+}
+
+
+
+function add_material_dropdown(){
+		var select = document.createElement("select");
+		select.name = "select_material" + material_row_counter;
+		select.id = "select_material" + material_row_counter;
+		select.addEventListener('change',function() {changematerial(event);},false);
+		let rolodex = JSON.parse("{{materialsjson|escapejs}}");
+				var option = document.createElement("option");
+		option.value = "please select";
+		option.text= "please select";
+		select.appendChild(option);
+				for (const x of rolodex)
+		{
+		var option = document.createElement("option");
+		option.value = x.id;
+		option.text= x.item;
+		select.appendChild(option);
+		}
+		var label = document.createElement("label");
+		document.getElementById("new_material" + material_row_counter).appendChild(label).appendChild(select);
+
+}
 
 	function add_painter_dropdown() {
 		var select = document.createElement("select");
 		select.name = "painter_dropdown" + row_counter;
 		select.id = "painter_dropdown" + row_counter;
 		let rolodex = JSON.parse("{{employeesjson|escapejs}}");
-				var option = document.createElement("option");
+		var option = document.createElement("option");
 		option.value = "please select";
 		option.text= "please select";
 		select.appendChild(option);
@@ -150,7 +262,7 @@ function add_day(daycolumn){
 			<tr>
 				<td>
 <!--					<label for="select_painter">please select Gerloff superintendent</label>-->
-            		<select id="select_painter" name="select_painter" >
+            		<select id="select_painter1" name="select_painter1" >
                 	<option value="please_select">please select</option>
                 	{% if employees %}
                 	{% for employee in employees %}
@@ -188,18 +300,18 @@ function add_day(daycolumn){
 			<tr>
 				<td>
 <!--					<label for="select_painter">please select Gerloff superintendent</label>-->
-            		<select id="select_material" name="select_material" >
+            		<select id="select_material1" name="select_material1" onchange="changematerial(event)">
                 	<option value="please_select">please select</option>
                 	{% if materials %}
                 	{% for material in materials %}
-                	<option value={{material_id}}>{{material.item}}</option>
+                	<option value={{material.id}}>{{material.item}}</option>
                 	{% endfor %}
                 	{% endif %}
             		</select>
 				</td>
-				<td><input type="text" name="description" placeholder="description" size="30" id="description"/></td>
-				<td><input type="number" id="quantity" size=3></td>
-				<td><input type="text" name="units" placeholder="units" size="10" id="units"/></td>
+				<td><input type="text" name="description1" placeholder="description" size="30" id="description1"/></td>
+				<td><input type="number" id="quantity1" name = "quantity1" size="3"></td>
+				<td><input type="text" name="units1" placeholder="units" size="10" id="units1"/></td>
 
 			</tr>
 		</tbody>
@@ -221,25 +333,28 @@ function add_day(daycolumn){
 			<tr>
 				<td>
 <!--					<label for="select_painter">please select Gerloff superintendent</label>-->
-            		<select id="select_material" name="select_material" >
+            		<select id="select_equipment1" name="select_equipment1" onchange="changeequipment(event)">
                 	<option value="please_select">please select</option>
-                	{% if materials %}
-                	{% for material in materials %}
-                	<option value={{material_id}}>{{material.item}}</option>
+                	{% if equipment %}
+                	{% for x in equipment %}
+                	<option value={{x.id}}>{{x.item}}</option>
                 	{% endfor %}
                 	{% endif %}
             		</select>
 				</td>
-				<td><input type="text" name="description" placeholder="description" size="30" id="description"/></td>
-				<td><input type="number" id="quantity" size=3></td>
-				<td><input type="text" name="units" placeholder="units" size="10" id="units"/></td>
+				<td><input type="text" name="equipment_description1" placeholder="description" size="30" id="equipment_description1"/></td>
+				<td><input type="number" id="equipment_quantity" name="equipment_quantity" size="3"></td>
+				<td><input type="text" name="equipment_units1" placeholder="units" size="10" id="equipment_units1"/></td>
 
 			</tr>
 		</tbody>
 	</table>
 <button type="button" onclick="add_equipment_row()">Add row </button>
 
-
+<br><br>
+	<input type="hidden" name="number_painters" value="0" size="30" id="number_painters"/>
+	<input type="hidden" name="number_materials" value="0" size="30" id="number_materials"/>
+	<input type="hidden" name="number_equipment" value="0" size="30" id="number_equipment"/>
     <input type="submit" value="Submit Ticket" />
 </form>
 
