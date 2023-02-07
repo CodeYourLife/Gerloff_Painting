@@ -364,8 +364,6 @@ class TMList(models.Model): #one entry for each line item of t&m bill
 
 
 
-
-
 class VendorContact(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	company = models.ForeignKey(Vendors, on_delete=models.PROTECT, null=True, blank=True)
