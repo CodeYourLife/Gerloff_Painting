@@ -26,6 +26,12 @@ var row_counter = 1;
 var material_row_counter = 1;
 var equipment_row_counter = 1;
 
+function delete_row(btn){
+var row = btn.parentNode.parentNode;
+row.parentNode.removeChild(row);
+}
+
+
 function changematerial(){
 	clicked_row = event.currentTarget.id.substring(15,event.currentTarget.id.length)
 	description = document.getElementById("description" + clicked_row)
@@ -107,6 +113,7 @@ function add_material_row() {
 			var cell7 = row.insertCell(6);
 			var cell8 = row.insertCell(7);
 			var cell9 = row.insertCell(8);
+			var cell10 = row.insertCell(9);
 			cell1.innerHTML = "<div id='new_painter" + row_counter + "'></div>";
 			add_painter_dropdown();
 			cell2.innerHTML = "<div id='monday_row" + row_counter + "'></div>";
@@ -125,26 +132,27 @@ function add_material_row() {
 			add_day("sunday");
 			cell9.innerHTML = "<div id='overtime" + row_counter + "'>OT?</div>";
 			add_ot();
+		 	const button = document.createElement('button')
+			button.innerText = 'Delete'
+			button.id = 'mainButton'
+			button.addEventListener('change',function() {delete_row(this);},false)
+			cell10.appendChild(button)
 }
 
 function add_ot(){
 		var select = document.createElement("INPUT");
-		var select2 = document.createElement("INPUT");
-		var select3 = document.createElement("LABEL");
-		select2.setAttribute("type", "checkbox");
-		select.setAttribute("value", "notchecked");
-		select2.setAttribute("value", "checked");
 		select.setAttribute("type", "hidden");
-		select.name = add_ot + row_counter;
-		select.id = add_ot + row_counter;
-		select2.name = add_ot + row_counter;
-		select2.id = add_ot + row_counter;
-		select3.setAttribute("htmlFor", add_ot + row_counter);
+		select.setAttribute("value", "notchecked");
+		select.name = "is_overtime" + row_counter;
+		select.id = "is_overtime" + row_counter;
 		document.getElementById("overtime" + row_counter).appendChild(select);
+		var select2 = document.createElement("INPUT");
+		select2.setAttribute("type", "checkbox");
+		select2.setAttribute("value", "checked");
+		select2.name = "is_overtime" + row_counter;
+		select2.id = "is_overtime" + row_counter;
 		document.getElementById("overtime" + row_counter).appendChild(select2);
-		//var select3 = document.createElement("LABEL");
-		//select3.setAttribute("htmlFor", add_ot + row_counter);
-		document.getElementById("overtime" + row_counter).appendChild(select3);
+
 }
 
 
@@ -233,7 +241,7 @@ function add_material_dropdown(){
 <br>
 
 <br>
-<form name = ticket_input action="{% url 'index'%}" method="post" >
+<form name = ticket_input action="{% url 'process_ewt' changeorder.id %}" method="post" >
 	{% csrf_token %}
 	<label for="date_week_ending">Week Ending Date</label>
 	<input type="date" id="date_week_ending" name="date_week_ending">
@@ -256,30 +264,31 @@ function add_material_dropdown(){
 				<th>S</th>
 				<th>S</th>
 				<th>OT?</th>
+				<th>Delete</th>
 			</tr>
 		</thead>
 		<tbody>
-			<tr>
+			<tr id="row1">
 				<td>
-<!--					<label for="select_painter">please select Gerloff superintendent</label>-->
-            		<select id="select_painter1" name="select_painter1" >
+            		<select id="painter_dropdown1" name="painter_dropdown1" >
                 	<option value="please_select">please select</option>
                 	{% if employees %}
                 	{% for employee in employees %}
-                	<option value={{employee_id}}>{{employee.first_name}} {{employee.last_name}}</option>
+                	<option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
                 	{% endfor %}
                 	{% endif %}
             		</select>
 				</td>
-				<td><input type="number" id="monday1" size=3></td>
-				<td><input type="number" id="tuesday1" size=3></td>
-				<td><input type="number" id="wednesday1" size=3></td>
-				<td><input type="number" id="thursday1" size=3></td>
-				<td><input type="number" id="friday1" size=3></td>
-				<td><input type="number" id="saturday1" size=3></td>
-				<td><input type="number" id="sunday1" size=3>
-				<td>OT?<input type='hidden' value='notchecked' name="is_overtime1" id="is_overtime1"><input type="checkbox" name="is_overtime1" id="is_overtime1" value="checked"  />
+				<td><input type="number" id="monday1" name="monday1" size=3></td>
+				<td><input type="number" id="tuesday1" name="tuesday1" size=3></td>
+				<td><input type="number" id="wednesday1" name="wednesday1" size=3></td>
+				<td><input type="number" id="thursday1" name="thursday1" size=3></td>
+				<td><input type="number" id="friday1" name="friday1" size=3></td>
+				<td><input type="number" id="saturday1" name="saturday1" size=3></td>
+				<td><input type="number" id="sunday1" name="sunday1" size=3>
+				<td>OT?<input type='hidden' value='notchecked' name="is_overtime1" id="is_overtime1" ><input type="checkbox" name="is_overtime1" id="is_overtime1" value="checked"  />
         		</td>
+				<td></td>
 			</tr>
 		</tbody>
 	</table>

@@ -130,8 +130,29 @@ def extra_work_ticket(request,id):
 
 
 def process_ewt(request, id):
+    #request.POST['']
     if request.method == 'POST':
-        print("HERE")
+        print(request.POST)
+        if request.POST['number_painters'] != 0:
+            for x in range (1,int(request.POST['number_painters'])+1):
+                if 'painter_dropdown' + str(x) in request.POST:
+                    hours=0
+                    if request.POST['monday' + str(x)] != '':
+                        hours=hours+int(request.POST['monday' + str(x)])
+                    if request.POST['tuesday' + str(x)] != '':
+                        hours = hours + int(request.POST['tuesday' + str(x)])
+                    if request.POST['wednesday' + str(x)] != '':
+                        hours = hours + int(request.POST['wednesday' + str(x)])
+                    if request.POST['thursday' + str(x)] != '':
+                        hours = hours + int(request.POST['thursday' + str(x)])
+                    if request.POST['friday' + str(x)] != '':
+                        hours = hours + int(request.POST['friday' + str(x)])
+                    if request.POST['saturday' + str(x)] != '':
+                        hours = hours + int(request.POST['saturday' + str(x)])
+                    if request.POST['sunday' + str(x)] != '':
+                        hours = hours + int(request.POST['sunday' + str(x)])
+                    if request.POST['is_overtime' + str(x)] != 'notchecked':
+                        print(hours)
     employees = Employees.objects.all()
     employees2 = Employees.objects.values()
     changeorder = ChangeOrders.objects.get(id=id)

@@ -352,6 +352,7 @@ class TMList(models.Model): #one entry for each line item of t&m bill
 	id = models.BigAutoField(primary_key=True)
 	change_order = models.ForeignKey(ChangeOrders,on_delete=models.PROTECT)
 	item = models.CharField(null=False, max_length=50) #painter hours, latex paint
+	description = models.CharField(null=False, max_length=100) #painter name, promar 200, etc.
 	quantity = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
 	units = models.CharField(null=False, max_length=10)
 	rate = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
