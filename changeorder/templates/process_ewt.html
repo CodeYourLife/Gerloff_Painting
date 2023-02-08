@@ -172,7 +172,7 @@ function add_equipment_dropdown(){
 		select.addEventListener('change',function() {changeequipment(event);},false);
 		let rolodex = JSON.parse("{{equipmentjson|escapejs}}");
 				var option = document.createElement("option");
-		option.value = "please select";
+		option.value = "please_select";
 		option.text= "please select";
 		select.appendChild(option);
 				for (const x of rolodex)
@@ -196,7 +196,7 @@ function add_material_dropdown(){
 		select.addEventListener('change',function() {changematerial(event);},false);
 		let rolodex = JSON.parse("{{materialsjson|escapejs}}");
 				var option = document.createElement("option");
-		option.value = "please select";
+		option.value = "please_select";
 		option.text= "please select";
 		select.appendChild(option);
 				for (const x of rolodex)
@@ -217,7 +217,7 @@ function add_material_dropdown(){
 		select.id = "painter_dropdown" + row_counter;
 		let rolodex = JSON.parse("{{employeesjson|escapejs}}");
 		var option = document.createElement("option");
-		option.value = "please select";
+		option.value = "please_select";
 		option.text= "please select";
 		select.appendChild(option);
 		for (const x of rolodex)
@@ -232,6 +232,16 @@ function add_material_dropdown(){
 	}
 
 
+function before_post(){
+var elementTypeSelector = document.querySelectorAll('select');
+for(let i = 0; i < elementTypeSelector.length; i++) {
+if (elementTypeSelector[i].value =='please_select'){
+ 	alert("Please select");
+	return false;
+}
+}
+}
+
 	</script>
 </head>
 <body>
@@ -241,10 +251,10 @@ function add_material_dropdown(){
 <br>
 
 <br>
-<form name = ticket_input action="{% url 'process_ewt' changeorder.id %}" method="post" >
+<form name="ticket_input" action="{% url 'process_ewt' changeorder.id %}" method="post" onSubmit="return before_post()" >
 	{% csrf_token %}
 	<label for="date_week_ending">Week Ending Date</label>
-	<input type="date" id="date_week_ending" name="date_week_ending">
+	<input type="date" id="date_week_ending" name="date_week_ending" required>
 
 	<label for="ticket_description">Details of Work Completed </label> <br>
         <textarea id="ticket_description" name="ticket_description" rows="4" cols="100" ></textarea>
@@ -270,29 +280,29 @@ function add_material_dropdown(){
 		<tbody>
 			<tr id="row1">
 				<td>
-            		<select id="painter_dropdown1" name="painter_dropdown1" >
+<!--            		<select id="painter_dropdown1" name="painter_dropdown1" >
                 	<option value="please_select">please select</option>
                 	{% if employees %}
                 	{% for employee in employees %}
                 	<option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
                 	{% endfor %}
                 	{% endif %}
-            		</select>
+            		</select>-->
 				</td>
-				<td><input type="number" id="monday1" name="monday1" size=3></td>
-				<td><input type="number" id="tuesday1" name="tuesday1" size=3></td>
-				<td><input type="number" id="wednesday1" name="wednesday1" size=3></td>
-				<td><input type="number" id="thursday1" name="thursday1" size=3></td>
-				<td><input type="number" id="friday1" name="friday1" size=3></td>
-				<td><input type="number" id="saturday1" name="saturday1" size=3></td>
-				<td><input type="number" id="sunday1" name="sunday1" size=3>
-				<td>OT?<input type='hidden' value='notchecked' name="is_overtime1" id="is_overtime1" ><input type="checkbox" name="is_overtime1" id="is_overtime1" value="checked"  />
+				<td><!--<input type="number" id="monday1" name="monday1" size=3>--></td>
+				<td><!--<input type="number" id="tuesday1" name="tuesday1" size=3>--></td>
+				<td><!--<input type="number" id="wednesday1" name="wednesday1" size=3>--></td>
+				<td><!--<input type="number" id="thursday1" name="thursday1" size=3>--></td>
+				<td><!--<input type="number" id="friday1" name="friday1" size=3>--></td>
+				<td><!--<input type="number" id="saturday1" name="saturday1" size=3>--></td>
+				<td><!--<input type="number" id="sunday1" name="sunday1" size=3>--></td>
+				<td><!--OT?<input type='hidden' value='notchecked' name="is_overtime1" id="is_overtime1" ><input type="checkbox" name="is_overtime1" id="is_overtime1" value="checked"  />-->
         		</td>
 				<td></td>
 			</tr>
 		</tbody>
 	</table>
-	<button type="button" onclick="add_painter_row()">Add row </button>
+	<button type="button" onclick="add_painter_row()">Add Painter Row </button>
 <br><br><hr>
 	<h3>MATERIAL BREAKDOWN</h3>
 	<table id="material_breakdown" class="display" style="width:90%" >
@@ -308,24 +318,24 @@ function add_material_dropdown(){
 		<tbody>
 			<tr>
 				<td>
-<!--					<label for="select_painter">please select Gerloff superintendent</label>-->
-            		<select id="select_material1" name="select_material1" onchange="changematerial(event)">
+
+<!--            		<select id="select_material1" name="select_material1" onchange="changematerial(event)">
                 	<option value="please_select">please select</option>
                 	{% if materials %}
                 	{% for material in materials %}
                 	<option value={{material.id}}>{{material.item}}</option>
                 	{% endfor %}
                 	{% endif %}
-            		</select>
+            		</select>-->
 				</td>
-				<td><input type="text" name="description1" placeholder="description" size="30" id="description1"/></td>
-				<td><input type="number" id="quantity1" name = "quantity1" size="3"></td>
-				<td><input type="text" name="units1" placeholder="units" size="10" id="units1"/></td>
+				<td><!--<input type="text" name="description1" placeholder="description" size="30" id="description1"/>--></td>
+				<td><!--<input type="number" id="quantity1" name = "quantity1" size="3">--></td>
+				<td><!--<input type="text" name="units1" placeholder="units" size="10" id="units1"/>--></td>
 
 			</tr>
 		</tbody>
 	</table>
-	<button type="button" onclick="add_material_row()">Add row </button>
+	<button type="button" onclick="add_material_row()">Add Material Row </button>
 <br><hr>
 	<h3>EQUIPMENT BREAKDOWN</h3>
 	<table id="equipment_breakdown" class="display" style="width:90%" >
@@ -341,7 +351,7 @@ function add_material_dropdown(){
 		<tbody>
 			<tr>
 				<td>
-<!--					<label for="select_painter">please select Gerloff superintendent</label>-->
+<!--
             		<select id="select_equipment1" name="select_equipment1" onchange="changeequipment(event)">
                 	<option value="please_select">please select</option>
                 	{% if equipment %}
@@ -349,16 +359,16 @@ function add_material_dropdown(){
                 	<option value={{x.id}}>{{x.item}}</option>
                 	{% endfor %}
                 	{% endif %}
-            		</select>
+            		</select>-->
 				</td>
-				<td><input type="text" name="equipment_description1" placeholder="description" size="30" id="equipment_description1"/></td>
-				<td><input type="number" id="equipment_quantity" name="equipment_quantity" size="3"></td>
-				<td><input type="text" name="equipment_units1" placeholder="units" size="10" id="equipment_units1"/></td>
+				<td><!--<input type="text" name="equipment_description1" placeholder="description" size="30" id="equipment_description1"/>--></td>
+				<td><!--<input type="number" id="equipment_quantity" name="equipment_quantity" size="3">--></td>
+				<td><!--<input type="text" name="equipment_units1" placeholder="units" size="10" id="equipment_units1"/>--></td>
 
 			</tr>
 		</tbody>
 	</table>
-<button type="button" onclick="add_equipment_row()">Add row </button>
+<button type="button" onclick="add_equipment_row()">Add Equipment </button>
 
 <br><br>
 	<input type="hidden" name="number_painters" value="0" size="30" id="number_painters"/>

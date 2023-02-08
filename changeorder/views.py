@@ -153,6 +153,7 @@ def process_ewt(request, id):
                         hours = hours + int(request.POST['sunday' + str(x)])
                     if request.POST['is_overtime' + str(x)] != 'notchecked':
                         print(hours)
+        return redirect('change_order_home')
     employees = Employees.objects.all()
     employees2 = Employees.objects.values()
     changeorder = ChangeOrders.objects.get(id=id)
