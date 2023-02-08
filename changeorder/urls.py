@@ -10,4 +10,5 @@ urlpatterns = [
     path('change_order_home', views.change_order_home, name='change_order_home'),
     path('change_order_new/<jobnumber>', views.change_order_new, name='change_order_new'),
     path('change_order_send/<id>', views.change_order_send, name='change_order_send'),
+    path('view_ewt/<id>', views.view_ewt, name='view_ewt'),
 ]

@@ -11,7 +11,7 @@ class ChangeOrderTable(tables.Table):
     class Meta:
         model = ChangeOrders
         template_name = "django_tables2/bootstrap.html"
-        fields = ("job_number","edit","description","need_ticket","date_sent","date_approved","is_approved","gc_number","price")
+        fields = ("job_number","edit","description","need_ticket","need_ticket_signed","date_sent","date_approved","is_approved","gc_number","price")
 
 class WallcoveringPriceTable(tables.Table):
     class Meta:

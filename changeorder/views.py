@@ -9,6 +9,18 @@ from wallcovering.tables import ChangeOrderTable
 from wallcovering.filters import ChangeOrderFilter
 
 # Create your views here.
+def view_ewt(request,id):
+    changeorder = ChangeOrders.objects.get(id=id)
+    employees = Employees.objects.all()
+    employees2 = Employees.objects.values()
+    materials = TMPricesMaster.objects.filter(category= "Material")
+    materials2 = TMPricesMaster.objects.filter(category="Material").values()
+    equipment = TMPricesMaster.objects.filter(category="Equipment").values()
+    employees_json = json.dumps(list(employees2), cls=DjangoJSONEncoder)
+    materials_json = json.dumps(list(materials2), cls=DjangoJSONEncoder)
+    equipment_json = json.dumps(list(equipment), cls=DjangoJSONEncoder)
+    return render(request, "process_ewt.html", {'equipment':equipment,'equipmentjson':equipment_json,'materialsjson': materials_json, 'materials': materials,'changeorder': changeorder,'employees': employees, 'employeesjson': employees_json})
+
 def change_order_send(request,id):
     changeorder = ChangeOrders.objects.get(id=id)
     if request.method == 'POST':
@@ -86,6 +98,8 @@ def extra_work_ticket(request,id):
     if request.method == 'GET':
         return render(request, "extra_work_ticket.html", {'ticket_needed':ticket_needed,'changeorder': changeorder, 'notes': notes})
     if request.method == 'POST':
+        if 'signed' in request.POST:
+            print("NEED TO DO THIS PART")
         if 'submit_form4' in request.POST:
             changeorder.is_closed = True
             changeorder.save()
@@ -130,9 +144,12 @@ def extra_work_ticket(request,id):
 
 
 def process_ewt(request, id):
-    #request.POST['']
+    changeorder = ChangeOrders.objects.get(id=id)
     if request.method == 'POST':
-        print(request.POST)
+        if EWT.objects.filter(change_order=changeorder).exists():
+            EWT.objects.get(change_order=changeorder).delete()
+        ewt= EWT.objects.create(change_order=changeorder,week_ending = request.POST['date_week_ending'], notes=request.POST['ticket_description'])
+        ChangeOrderNotes.objects.create(cop_number=changeorder,date = date.today(), user = request.user.first_name + " " + request.user.last_name,note = "Extra Work Ticket Added")
         if request.POST['number_painters'] != 0:
             for x in range (1,int(request.POST['number_painters'])+1):
                 if 'painter_dropdown' + str(x) in request.POST:
@@ -152,11 +169,33 @@ def process_ewt(request, id):
                     if request.POST['sunday' + str(x)] != '':
                         hours = hours + int(request.POST['sunday' + str(x)])
                     if request.POST['is_overtime' + str(x)] != 'notchecked':
-                        print(hours)
+                        master=TMPricesMaster.objects.get(item='Painter Hours OT')
+                        EWTicket.objects.create(master = master,EWT=ewt,employee=Employees.objects.get(id=request.POST['painter_dropdown' + str(x)]),monday=float(request.POST['monday'+ str(x)]),tuesday=float(request.POST['tuesday'+ str(x)]),wednesday=float(request.POST['wednesday'+ str(x)]),thursday=float(request.POST['thursday'+ str(x)]),friday=float(request.POST['friday'+ str(x)]),saturday=float(request.POST['saturday'+ str(x)]),sunday=float(request.POST['sunday'+ str(x)]),ot = True)
+                    else:
+                        master = TMPricesMaster.objects.get(item='Painter Hours')
+                        EWTicket.objects.create(master=master, EWT=ewt, employee=Employees.objects.get(id=request.POST['painter_dropdown' + str(x)]), monday=float(request.POST['monday' + str(x)]),
+                                                               tuesday=float(request.POST['tuesday' + str(x)]),
+                                                               wednesday=float(request.POST['wednesday' + str(x)]),
+                                                               thursday=float(request.POST['thursday' + str(x)]),
+                                                               friday=float(request.POST['friday' + str(x)]),
+                                                               saturday=float(request.POST['saturday' + str(x)]),
+                                                               sunday=float(request.POST['sunday' + str(x)]), ot=False)
+        if request.POST['number_materials'] != 0:
+            for x in range(1, int(request.POST['number_materials']) + 1):
+                if 'select_material' + str(x) in request.POST:
+                    master = TMPricesMaster.objects.get(id=request.POST['select_material' + str(x)])
+                    EWTicket.objects.create(master=master, EWT = ewt, description = request.POST['description' + str(x)], quantity = request.POST['quantity' + str(x)], units = request.POST['units' + str(x)])
+        if request.POST['number_equipment'] != 0:
+            for x in range(1, int(request.POST['number_equipment']) + 1):
+                if 'select_equipment' + str(x) in request.POST:
+                    master = TMPricesMaster.objects.get(id=request.POST['select_equipment' + str(x)])
+                    EWTicket.objects.create(master=master, EWT = ewt, description = request.POST['description' + str(x)], quantity = request.POST['quantity' + str(x)], units = request.POST['units' + str(x)])
+
+
+
         return redirect('change_order_home')
     employees = Employees.objects.all()
     employees2 = Employees.objects.values()
-    changeorder = ChangeOrders.objects.get(id=id)
     materials = TMPricesMaster.objects.filter(category= "Material")
     materials2 = TMPricesMaster.objects.filter(category="Material").values()
     equipment = TMPricesMaster.objects.filter(category="Equipment").values()

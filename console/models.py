@@ -310,6 +310,15 @@ class ChangeOrders(models.Model):
 
 	def need_ticket(self):
 		if self.is_t_and_m==True and self.is_ticket_signed==False and self.is_closed==False:
+			if EWT.objects.filter(change_order = self).exists():
+				return "No"
+			else:
+				return "Yes"
+		else:
+			return "No"
+
+	def need_ticket_signed(self):
+		if self.is_t_and_m==True and self.is_ticket_signed==False and self.is_closed==False:
 			return "Yes"
 		else:
 			return "No"
@@ -323,7 +332,7 @@ class ChangeOrderNotes(models.Model):
 	note = models.CharField(null=True, max_length=2000)
 
 
-class PainterHours(models.Model):
+class PainterHours(models.Model): #NOT USED
 	id = models.BigAutoField(primary_key=True)
 	cop_number = models.ForeignKey(ChangeOrders, on_delete=models.PROTECT)
 	details = models.CharField(null=False, max_length=2000) #hector was bondoing door frames
@@ -363,6 +372,33 @@ class TMList(models.Model): #one entry for each line item of t&m bill
 	def __str__(self):
 		return f"{self.change_order} {self.item}"
 
+class EWT(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	change_order = models.ForeignKey(ChangeOrders, on_delete=models.PROTECT)
+	week_ending = models.DateField()
+	notes = models.CharField(null=True, max_length=2000)
+	def __str__(self):
+		return f"{self.change_order.job_number} {self.change_order}"
+
+class EWTicket(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	master = models.ForeignKey(TMPricesMaster, on_delete=models.PROTECT, null=True)
+	EWT = models.ForeignKey(EWT, on_delete=models.PROTECT)
+	category = models.CharField(null=True, max_length=50, validators=[validate_tm_category]) #DONT USE # labor, material, equipment, bond, inventory
+	employee = models.ForeignKey(Employees, on_delete=models.PROTECT,null=True)
+	monday = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+	tuesday = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+	wednesday = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+	thursday = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+	friday = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+	saturday = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+	sunday = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+	ot = models.BooleanField(default=False)
+	description = models.CharField(null=True, max_length=2000)
+	quantity = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+	units = models.CharField(null=True, max_length=50)
+	def __str__(self):
+		return f"{self.EWT} {self.master}"
 
 
 class VendorContact(models.Model):

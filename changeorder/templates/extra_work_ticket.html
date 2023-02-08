@@ -62,6 +62,21 @@ function void_notes1(){
 {% else %}
 {% if changeorder.need_ticket == "Yes" %}
 	<h1>Ticket Required</h1>
+{% elif changeorder.need_ticket_signed == "Yes" %}
+	<h1>Ticket Submitted, Not Signed</h1>
+	<br>
+	<form action="{% url 'view_ewt' changeorder.id %}" >
+		<input type="submit" value="View / Change Ticket"/>
+	</form>
+	<br>
+	<form action="{% url 'extra_work_ticket' changeorder.id %}" method="post" >
+		{% csrf_token %}
+		<input type="submit" name='signed' value="Ticket Signed"/>
+	</form>
+	<br>
+	<form action="{% url 'change_order_send' changeorder.id %}" >
+		<input type="submit" value="Send Anyways"/>
+	</form>
 {% elif changeorder.date_sent == None %}
 	<h1>Change Order Not Sent Yet</h1>
 	<br>
@@ -119,12 +134,19 @@ function void_notes1(){
     <input type="submit" value="Fill Out Ticket Now" />
 </form>
 <br><hr>
+{% elif changeorder.need_ticket_signed == "Yes" %}
+<form action = "{% url 'view_ewt' changeorder.id %}">
+    <input type="submit" value="View / Change Ticket" />
+</form>
+<br><hr>
 {% endif %}
 <form name = 'change_tm' action="{% url 'extra_work_ticket' changeorder.id %}" method="post" onSubmit = "return check_booking_data()">
 		{% csrf_token %}
 	<input type="hidden" id="no_tm" name="no_tm" value="Yes" />
 	<input type="hidden" id="no_tm_notes" name="no_tm_notes" value="None" />
 	{% if changeorder.need_ticket == "Yes" %}
+		<input type="submit" name='submit_form3' value="Price Required, No Longer T&M"/>
+	{% elif changeorder.need_ticket_signed == "Yes" %}
 		<input type="submit" name='submit_form3' value="Price Required, No Longer T&M"/>
 	{% else %}
 		<input type="submit" name='submit_form3' value="Change to T&M"/>
