@@ -7,11 +7,75 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django_tables2 import RequestConfig
 from wallcovering.tables import ChangeOrderTable
 from wallcovering.filters import ChangeOrderFilter
-import jinja2
-import pdfkit
+from console.misc import Email
+
 import os
 import os.path
 # Create your views here.
+
+def price_ewt(request,id):
+    changeorder = ChangeOrders.objects.get(id=id)
+    ewt = EWT.objects.get(change_order=changeorder)
+    equipment = []
+    laboritems = []
+    materials = []
+    extras = []
+    totalhours = 0
+    totalmaterialcost =0
+    totalcost = 0
+    counter=0
+    for x in TMPricesMaster.objects.filter(category="Labor"):
+        hours = 0
+        for y in EWTicket.objects.filter(EWT=ewt, master=x).exclude(employee=None).order_by('master'):
+            hours = hours + y.monday + y.tuesday + y.wednesday + y.thursday + y.friday + y.saturday + y.sunday
+        totalhours = totalhours + hours
+        cost = hours * x.rate
+        totalcost=totalcost+cost
+        counter=counter+1
+        laboritems.append({'counter':counter,'item':x,'hours':hours, 'cost':int(cost)})
+    counter = 0
+    for y in EWTicket.objects.filter(EWT=ewt, master__category="Material").order_by('master'):
+        cost = y.quantity * y.master.rate
+        totalcost = totalcost + cost
+        totalmaterialcost = totalmaterialcost + cost
+        counter = counter + 1
+        materials.append(
+            {'counter':counter,'category': y.master.item, 'description': y.description, 'quantity': y.quantity, 'units': y.units,
+             'cost': int(cost)})
+    inventory = int(float(totalmaterialcost) * .15)
+    totalcost = totalcost + inventory
+    counter = 0
+    for y in EWTicket.objects.filter(EWT=ewt, master__category="Equipment").order_by('master'):
+        cost = y.quantity * y.master.rate
+        totalcost = totalcost + cost
+        counter = counter + 1
+        equipment.append(
+            {'counter':counter,'category': y.master.item, 'description': y.description, 'quantity': y.quantity, 'units': y.units,
+             'cost': int(cost)})
+    days = totalhours /8
+    counter=0
+    for x in JobCharges.objects.filter(job=changeorder.job_number):
+
+        if x.master.unit == "Day":
+            cost =days * x.master.rate
+            totalcost = totalcost + cost
+            counter = counter + 1
+            extras.append({'counter':counter,'category': x.master.item, 'quantity': days, 'unit': "Days", 'cost': int(cost)})
+        elif x.master.unit == "Hours":
+            cost = totalhours * x.master.rate
+            totalcost = totalcost + cost
+            counter = counter + 1
+            extras.append({'counter':counter,'category': x.master.item, 'quantity': totalhours, 'unit': "Hours", 'cost': int(cost)})
+        else:
+            counter = counter + 1
+            extras.append({'counter':counter,'category': x.master.item, 'quantity': 0, 'unit': x.master.unit, 'cost': 0})
+    if changeorder.job_number.is_bonded == True:
+        counter = counter + 1
+        extras.append({'counter':counter,'category':"Bond", 'quantity':1,'unit':"LS",'cost':int(float(totalcost) * .02) })
+
+    return render(request, "price_ewt.html",
+                  {'laborcount':int(len(laboritems)),'materialcount':int(len(materials)+1),'equipmentcount':int(len(equipment)),'extrascount':int(len(extras)),'extras':extras,'totalcost':int(totalcost),'inventory':int(inventory),'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
+                   'changeorder': changeorder})
 
 def print_ticket(request,id):
     changeorder = ChangeOrders.objects.get(id=id)
@@ -43,53 +107,75 @@ def change_order_send(request,id):
             x.delete()
     if request.method == 'POST':
         for x in request.POST:
-            if x[0:5] == 'remove':
-                print("YAY")
-            if x[0:9] == 'adddefault':
-                print("YAY")
-            if x[0:9] == 'tempremove':
-                print("YAY")
-            if x[0:6] == 'tempadd':
-                print("YAY")
-            if x[0:4] == 'final':
-                print("YAY")
-
-
-        print(request.POST)
-
-    no_recipients=False
-    found_contacts = False
+            if x[0:11] == 'updateemail':
+                person = ClientEmployees.objects.get(person_pk=x[11:len(x)])
+                person.email = request.POST['email'+str(person.person_pk)]
+                person.save()
+            if x[0:6] == 'remove':
+                person = ClientEmployees.objects.get(person_pk=x[6:len(x)])
+                ClientJobRoles.objects.get(role="Change Orders", job=changeorder.job_number, employee=person).delete()
+            if x[0:10] == 'adddefault':
+                person = ClientEmployees.objects.get(person_pk=x[10:len(x)])
+                ClientJobRoles.objects.create(role="Change Orders", job=changeorder.job_number, employee=person)
+            if x[0:10] == 'tempremove':
+                person = ClientEmployees.objects.get(person_pk=x[10:len(x)])
+                TempRecipients.objects.get(changeorder=changeorder,person=person).delete()
+            if x[0:7] == 'tempadd':
+                person = ClientEmployees.objects.get(person_pk=request.POST['addrecipient'])
+                TempRecipients.objects.create(person=person, changeorder=changeorder)
+            if x[0:10] == 'defaultadd':
+                person = ClientEmployees.objects.get(person_pk=request.POST['addrecipient'])
+                if not ClientJobRoles.objects.filter(role="Change Orders", job=changeorder.job_number, employee=person).exists():
+                    ClientJobRoles.objects.create(role="Change Orders", job=changeorder.job_number, employee=person)
+                    TempRecipients.objects.create(person=person, changeorder=changeorder)
+            if x[0:5] == 'final':
+                recipients = ""
+                for x in request.POST:
+                    if x[0:5] == 'email':
+                        if recipients == "":
+                            recipients = request.POST[x]
+                        else:
+                            recipients = recipients + "; " + request.POST[x]
+                changeorder.sent_to = recipients
+                changeorder.full_description = request.POST['full_description']
+                changeorder.price = request.POST['price']
+                changeorder.date_sent = date.today()
+                changeorder.save()
+                ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                                user=request.user.first_name + " " + request.user.last_name,
+                                                note="COP Sent. Price: $" + request.POST['price'])
+                # Email.sendEmail("Change Order","Test",recipients)
+                return redirect('extra_work_ticket', id=id)
     extra_contacts = False
     project_pm = ClientEmployees.objects.get(person_pk=changeorder.job_number.client_Pm.person_pk)
     client_list = []
+    if TempRecipients.objects.filter(changeorder=changeorder,default=False).exists():
+        if TempRecipients.objects.filter(changeorder=changeorder, default=True).exists():
+            TempRecipients.objects.filter(changeorder=changeorder,default=True).delete()
     if not ClientJobRoles.objects.filter(role="Change Orders", job=changeorder.job_number):
         if not TempRecipients.objects.filter(changeorder=changeorder):
-            TempRecipients.objects.create(person=project_pm,changeorder=changeorder)
-            no_recipients = True
-    else:
-        if not TempRecipients.objects.filter(changeorder=changeorder):
+            TempRecipients.objects.create(person=project_pm,changeorder=changeorder,default=True)
+    else: #means there is a default person
+        if not TempRecipients.objects.filter(changeorder=changeorder): #this will add all default as temp recipients if there are no temp recipients
             for x in ClientJobRoles.objects.filter(role="Change Orders", job=changeorder.job_number):
-                TempRecipients.objects.create(person=x,changeorder=changeorder)
+                TempRecipients.objects.create(person=x.employee,changeorder=changeorder)
     for x in ClientEmployees.objects.filter(id=changeorder.job_number.client):
         if ClientJobRoles.objects.filter(role="Change Orders", job=changeorder.job_number, employee=x).exists():
-            found_contacts=True
-            if x in TempRecipients.objects.filter(changeorder=changeorder):
-                client_list.append({'person_pk':x.person_pk,'name':x.name,'default':True,'current':True})
+            if TempRecipients.objects.filter(changeorder=changeorder,person=x).exists():
+                client_list.append({'person_pk':x.person_pk,'name':x.name,'default':True,'current':True,'email':x.email})
             else:
                 extra_contacts = True
-                client_list.append({'person_pk': x.person_pk, 'name': x.name, 'default': True, 'current': False})
+                client_list.append({'person_pk': x.person_pk, 'name': x.name, 'default': True, 'current': False,'email':x.email})
         else:
-            if TempRecipients.objects.filter(person=x,changeorder=changeorder):
-                client_list.append({'person_pk':x.person_pk,'name':x.name,'default':False,'current':True})
+            if TempRecipients.objects.filter(person=x,changeorder=changeorder).exists():
+                client_list.append({'person_pk':x.person_pk,'name':x.name,'default':False,'current':True,'email':x.email})
             else:
                 extra_contacts = True
-                client_list.append({'person_pk': x.person_pk, 'name': x.name, 'default': False, 'current': False})
-
-    print(client_list)
+                client_list.append({'person_pk': x.person_pk, 'name': x.name, 'default': False, 'current': False,'email':x.email})
 
     return render(request, "change_order_send.html",
-                  {'client_list':client_list,'no_recipients':no_recipients,
-                   'extra_contacts': extra_contacts, 'found_contacts': found_contacts,'changeorder': changeorder})
+                  {'client_list':client_list,
+                   'extra_contacts': extra_contacts,'changeorder': changeorder})
 
 
 

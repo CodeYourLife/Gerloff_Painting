@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 
 
 def validate_tm_category(value):
-	if value == "Labor" or value == "Material" or value == "Equipment" or value == "Inventory" or value == "Bond":
+	if value == "Labor" or value == "Material" or value == "Equipment" or value == "Inventory" or value == "Misc":
 		return value
 	else:
 		raise ValidationError("Category must be Labor, Material, Equipment, Inventory, or Bond")
@@ -307,23 +307,30 @@ class ChangeOrders(models.Model):
 	price = models.DecimalField(max_digits=9, decimal_places=2,null=True)
 	full_description = models.CharField(null=True,max_length=2000, blank=True)
 	is_approved_to_bill = models.BooleanField(default=False)
+	sent_to = models.CharField(null=True,max_length=2000, blank=True)
 	def __str__(self):
 		return f"{self.job_number} {self.description}"
 
 	def need_ticket(self):
-		if self.is_t_and_m==True and self.is_ticket_signed==False and self.is_closed==False:
-			if EWT.objects.filter(change_order = self).exists():
-				return "No"
+		if self.is_t_and_m==True:
+			if self.is_ticket_signed==False:
+				if EWT.objects.filter(change_order = self).exists():
+					return "No"
+				else:
+					return "Yes"
 			else:
-				return "Yes"
+				return "No"
 		else:
-			return "No"
+			return "N/A"
 
 	def need_ticket_signed(self):
-		if self.is_t_and_m==True and self.is_ticket_signed==False and self.is_closed==False:
-			return "Yes"
+		if self.is_t_and_m==True:
+			if self.is_ticket_signed==False:
+				return "Yes"
+			else:
+				return "No"
 		else:
-			return "No"
+			return "N/A"
 
 
 class ChangeOrderNotes(models.Model):
@@ -351,7 +358,7 @@ class PainterHours(models.Model): #NOT USED
 
 class TMPricesMaster(models.Model):
 	id = models.BigAutoField(primary_key=True)
-	category = models.CharField(null=False, max_length=50, validators = [validate_tm_category]) #labor, material, equipment, bond, inventory
+	category = models.CharField(null=False, max_length=50, validators = [validate_tm_category]) #Labor, Material, Equipment, Bond, Inventory
 	item = models.CharField(null=False, max_length=50) #painter-hours, latex paint, 19' scissor
 	unit = models.CharField(null=False, max_length=50) #gallons, hours
 	rate = models.DecimalField(max_digits=9, decimal_places=2)
@@ -404,11 +411,21 @@ class EWTicket(models.Model):
 		return f"{self.EWT} {self.master}"
 
 
+class JobCharges(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	job = models.ForeignKey(Jobs, on_delete=models.PROTECT)
+	master = models.ForeignKey(TMPricesMaster, on_delete=models.PROTECT)
+	def __str__(self):
+		return f"{self.job} {self.master}"
+
+
 class TempRecipients(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	person = models.ForeignKey(ClientEmployees, on_delete=models.PROTECT)
 	changeorder = models.ForeignKey(ChangeOrders, on_delete=models.PROTECT)
-
+	default = models.BooleanField(default=False)
+	def __str__(self):
+		return f"{self.person} {self.changeorder}"
 
 class VendorContact(models.Model):
 	id = models.BigAutoField(primary_key=True)

@@ -12,7 +12,9 @@
 	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
 	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
 	<style type="text/css" class="init">
-
+.emailbutton {
+ visibility:hidden;
+}
 	</style>
 	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
 	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
@@ -22,38 +24,10 @@
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
-var row_counter = 1;
-function add_row() {
-			row_counter = row_counter + 1
-			var table = document.getElementById("labor_breakdown");
-			var rows = table.getElementsByTagName("tr").length;
-			var row = table.insertRow(rows);
-			var cell1 = row.insertCell(0);
-			cell1.innerHTML = "<div id='new_painter" + row_counter + "'></div>";
-			add_painter_dropdown();
+function add_button(pk){
+hidden = document.getElementById("button"+ pk);
+hidden.style.visibility= "visible"
 }
-
-function add_painter_dropdown() {
-		var select = document.createElement("select");
-		select.name = "recipient" + row_counter;
-		select.id = "recipient" + row_counter;
-		let rolodex = JSON.parse("{{employeesjson|escapejs}}");
-		var option = document.createElement("option");
-		option.value = "please_select";
-		option.text= "please select";
-		select.appendChild(option);
-		for (const x of rolodex)
-		{
-		var option = document.createElement("option");
-		option.value = x.id;
-		option.text= x.first_name + " " + x.last_name;
-		select.appendChild(option);
-		}
-		var label = document.createElement("label");
-		document.getElementById("new_painter" + row_counter).appendChild(label).appendChild(select);
-	}
-
-
 	</script>
 </head>
 <body>
@@ -70,7 +44,7 @@ function add_painter_dropdown() {
 <h2>{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} - Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</h2>
 <h4>Send Change Order to the Following People: </h4>
 <table id="labor_breakdown" class="display" style="width:90%" ><thead><tr><th></th></tr></thead><tbody>
-<form action="{% url 'change_order_send' changeorder.id %}" method="post"  >
+<form action="{% url 'change_order_send' changeorder.id %}" method="post"   >
 	{% csrf_token %}
 	{% for x in client_list %}
 	{% if x.current == True %}
@@ -83,9 +57,12 @@ function add_painter_dropdown() {
 			<input type="submit" value="Add to Default CO Recipients" name="adddefault{{x.person_pk}}" />
 			{% endif %}
 			<input type="submit" value="Remove from this change order" name="tempremove{{x.person_pk}}"/>
+			<input type="email" class= "emails" value="{{x.email}}" name="email{{x.person_pk}}" size="30" onchange = "add_button({{x.person_pk}})"/>
+			<input type="submit" class="emailbutton" value="Update Now!" id="button{{x.person_pk}}" name="updateemail{{x.person_pk}}"/>
 			</td></tr>
 	{% endif %}
 	{% endfor %}
+	<tr height="25px"></tr>
 	{% if extra_contacts == True %}
 		<tr><td>Click Below To Add Additional Recipients </td></tr><tr><td>
 		<select id="recipient" name="addrecipient" >
@@ -95,13 +72,29 @@ function add_painter_dropdown() {
 		{% endif %}
 			{% endfor %}
 		</select>
+	<input type="submit" value="Add as a Default Recipient" name="defaultadd"/>
 		<input type="submit" value="Add to this change order" name="tempadd"/>
+
 </td></tr>
 	{% endif %}
-</form>
 </tbody></table>
 
+ <br>
 
+	 <label for="full_description">Type the full description: </label> <br>
+	  {% if changeorder.date_sent != None %}
+        <textarea id="full_description" name="full_description" rows="6" cols="100" >{{changeorder.full_description}}</textarea>
+	<br>
+	 <label for="price">Enter the Total Price: $</label>
+	 <input type= "number" name="price" id="price" value={{changeorder.price}} step="0.01" size="30" />
+	 <br>
+	 {% else %}
+	         <textarea id="full_description" name="full_description" rows="6" cols="100" ></textarea>
+	<br>
+	 <label for="price">Enter the Total Price: $</label>
+	 <input type= "number" name="price" id="price" placeholder="100.50" step="0.01" size="30" />
+	 <br>
+	 {% endif %}
 
 <br>
 <input type="submit" value="Send Now" name="final" />

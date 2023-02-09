@@ -8,7 +8,8 @@ class Email:
         msg = MIMEMultipart()
         sender = to
         msg['From'] = 'joe@gerloffpainting.com'
-        msg['To'] = 'joe@gerloffpainting.com; taroli757@gmail.com'
+        msg['To'] = to
+        # msg['To'] = 'joe@gerloffpainting.com; taroli757@gmail.com'
         msg['Subject'] = title
         msg.attach(MIMEText(body, 'plain'))
         text = msg.as_string()
