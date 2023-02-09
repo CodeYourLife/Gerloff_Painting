@@ -2,6 +2,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 
 
+
 def validate_tm_category(value):
 	if value == "Labor" or value == "Material" or value == "Equipment" or value == "Inventory" or value == "Bond":
 		return value
@@ -377,6 +378,7 @@ class EWT(models.Model):
 	change_order = models.ForeignKey(ChangeOrders, on_delete=models.PROTECT)
 	week_ending = models.DateField()
 	notes = models.CharField(null=True, max_length=2000)
+	completed_by= models.CharField(null=True, max_length=150)
 	def __str__(self):
 		return f"{self.change_order.job_number} {self.change_order}"
 

@@ -9,8 +9,27 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
 from django.contrib import messages
+import os
+import os.path
 
+def seperate_test(request):
+    fileitem = request.FILES['filename']
+    print(fileitem)
+    fn = os.path.basename(fileitem.name)
+    fn2 = os.path.join("C:/Trinity/",fn)
+    open(fn2, 'wb').write(fileitem.file.read())
+    return redirect('index')
 def index(request):
+    if request.method == 'POST':
+        print(request.POST)
+        directory = "GeeksforGeeks"
+        parent_dir = "C:/Trinity/"
+        path = os.path.join(parent_dir, directory)
+        try:
+            os.mkdir(path)
+        except OSError as error:
+            print(error)
+
     return render(request, 'index.html')
 
 

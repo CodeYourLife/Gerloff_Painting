@@ -1,18 +1,11 @@
-from django.utils import timezone
-from django.views import generic
-from django.views.generic import ListView
 from console.models import *
-from django.contrib.auth.models import User, auth
 from django.shortcuts import render, redirect
-from json import dumps
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
 from equipment.tables import JobsTable
 from equipment.filters import JobsFilter
-from django.core.mail import send_mail
-from django_tables2 import SingleTableView
-from emails import Email
+
 
 def change_start_date(request,jobnumber,previous):
     jobs = Jobs.objects.get(job_number=jobnumber)

@@ -7,8 +7,23 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django_tables2 import RequestConfig
 from wallcovering.tables import ChangeOrderTable
 from wallcovering.filters import ChangeOrderFilter
-
+import jinja2
+import pdfkit
+import os
+import os.path
 # Create your views here.
+
+def print_ticket(request,id):
+    changeorder = ChangeOrders.objects.get(id=id)
+    ewt = EWT.objects.get(change_order=changeorder)
+    laboritems = EWTicket.objects.filter(EWT=ewt).exclude(employee=None)
+    materials = EWTicket.objects.filter(EWT=ewt,master__category="Material")
+    equipment = EWTicket.objects.filter(EWT=ewt, master__category="Equipment")
+    if request.method == 'POST':
+        print("HI")
+    return render(request, "print_ticket.html", {'equipment':equipment,'materials':materials,'laboritems':laboritems,'ewt':ewt,'changeorder':changeorder})
+
+
 def view_ewt(request,id):
     changeorder = ChangeOrders.objects.get(id=id)
     employees = Employees.objects.all()
@@ -24,36 +39,29 @@ def view_ewt(request,id):
 def change_order_send(request,id):
     changeorder = ChangeOrders.objects.get(id=id)
     if request.method == 'POST':
-
-        if request.POST['add_submittal_contact'] != 'None':
-            ClientJobRoles.objects.create(job =changeorder.job_number, employee = ClientEmployees.objects.get(person_pk=request.POST['add_submittal_contact']),role="Change Orders")
-            return redirect('change_order_send', id=id)
-        elif request.POST['remove_submittal_contact'] != 'None':
-            employee = ClientEmployees.objects.get(person_pk=request.POST['remove_submittal_contact'])
-            job=changeorder.job_number
-            for x in ClientJobRoles.objects.filter(employee=employee, job=job, role="Change Orders"):
-                x.delete()
-            return redirect('change_order_send', id=id)
+        print(request.POST)
+    available_contacts = []
+    co_contacts = []
+    found_contacts = False
+    extra_contacts = False
+    pm_is_available = False
+    available = False
+    project_pm = ClientEmployees.objects.get(person_pk=changeorder.job_number.client_Pm.person_pk)
+    for x in ClientEmployees.objects.filter(id=changeorder.job_number.client):
+        if ClientJobRoles.objects.filter(role="Change Orders", job=changeorder.job_number, employee=x).exists():
+            co_contacts.append(x)
+            found_contacts = True
         else:
-            changeorder.date_sent=date.today()
-            changeorder.price=request.POST['price']
-            changeorder.full_description = request.POST['full_description']
-            changeorder.is_t_and_m = False
-            changeorder.save()
-            ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(), user=request.user.first_name + " " + request.user.last_name, note="COP Sent. Price: $" + request.POST['price'])
-            return redirect('extra_work_ticket', id=id)
-    allcontacts = ClientEmployees.objects.filter(id=changeorder.job_number.client)
-    allcontacts_json = json.dumps(list(ClientEmployees.objects.filter(id=changeorder.job_number.client).values('person_pk','name')), cls=DjangoJSONEncoder)
-    if ClientJobRoles.objects.filter(job=changeorder.job_number,role="Change Orders"):
-        co_contacts_exist = "Yes"
-        co_contacts = ClientEmployees.objects.filter(roles__role="Change Orders")
-        co_contacts_json = json.dumps(list(ClientEmployees.objects.filter(roles__role="Change Orders").values('person_pk','name')))
-        return render(request, "change_order_send.html",
-                      {'co_contacts_json': co_contacts_json, 'allcontacts_json': allcontacts_json,
-                       'changeorder': changeorder,'co_contacts_exist':co_contacts_exist,'allcontacts':allcontacts})
-    else:
-        co_contacts_exist = "None"
-        return render(request, "change_order_send.html", {'allcontacts_json': allcontacts_json, 'changeorder': changeorder,'co_contacts_exist':co_contacts_exist,'allcontacts':allcontacts})
+            available = True
+            if x == project_pm:
+                pm_is_available = True
+            else:
+                available_contacts.append(x)
+                extra_contacts = True
+    return render(request, "change_order_send.html",
+                  {'available': available, 'pm_is_available': pm_is_available, 'project_pm': project_pm,
+                   'extra_contacts': extra_contacts, 'found_contacts': found_contacts,
+                   'available_contacts': available_contacts, 'co_contacts': co_contacts, 'changeorder': changeorder})
 
 def change_order_new(request,jobnumber):
     if request.method == 'POST':
@@ -70,7 +78,13 @@ def change_order_new(request,jobnumber):
             else:
                 next_cop = 1
             changeorder = ChangeOrders.objects.create(job_number=Jobs.objects.get(job_number=jobnumber), is_t_and_m=t_and_m, description= request.POST['description'],cop_number=next_cop)
-
+            directory = changeorder.id
+            parent_dir = "C:/Trinity/ChangeOrder"
+            path = os.path.join(parent_dir, str(directory))
+            try:
+                os.mkdir(path)
+            except OSError as error:
+                print(error)
             if changeorder.is_t_and_m == True:
                 note = ChangeOrderNotes.objects.create(cop_number=changeorder,date=date.today(),user=request.user.first_name + " " + request.user.last_name,note ="T&M COP Added. " + request.POST['notes'])
             else:
@@ -95,9 +109,14 @@ def extra_work_ticket(request,id):
     changeorder = ChangeOrders.objects.get(id=id)
     ticket_needed = changeorder.need_ticket()
     notes = ChangeOrderNotes.objects.filter(cop_number=id)
+
     if request.method == 'GET':
         return render(request, "extra_work_ticket.html", {'ticket_needed':ticket_needed,'changeorder': changeorder, 'notes': notes})
     if request.method == 'POST':
+        if 'open_folder' in request.POST:
+            path = "C:/trinity/changeorder/" + str(changeorder.id)
+            path = os.path.realpath(path)
+            os.startfile(path)
         if 'signed' in request.POST:
             print("NEED TO DO THIS PART")
         if 'submit_form4' in request.POST:
@@ -146,9 +165,10 @@ def extra_work_ticket(request,id):
 def process_ewt(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
     if request.method == 'POST':
+
         if EWT.objects.filter(change_order=changeorder).exists():
             EWT.objects.get(change_order=changeorder).delete()
-        ewt= EWT.objects.create(change_order=changeorder,week_ending = request.POST['date_week_ending'], notes=request.POST['ticket_description'])
+        ewt= EWT.objects.create(change_order=changeorder,week_ending = request.POST['date_week_ending'], notes=request.POST['ticket_description'],completed_by=request.user.first_name + " " + request.user.last_name)
         ChangeOrderNotes.objects.create(cop_number=changeorder,date = date.today(), user = request.user.first_name + " " + request.user.last_name,note = "Extra Work Ticket Added")
         if request.POST['number_painters'] != 0:
             for x in range (1,int(request.POST['number_painters'])+1):
@@ -189,7 +209,7 @@ def process_ewt(request, id):
             for x in range(1, int(request.POST['number_equipment']) + 1):
                 if 'select_equipment' + str(x) in request.POST:
                     master = TMPricesMaster.objects.get(id=request.POST['select_equipment' + str(x)])
-                    EWTicket.objects.create(master=master, EWT = ewt, description = request.POST['description' + str(x)], quantity = request.POST['quantity' + str(x)], units = request.POST['units' + str(x)])
+                    EWTicket.objects.create(master=master, EWT = ewt, description = request.POST['equipment_description' + str(x)], quantity = request.POST['equipment_quantity' + str(x)], units = request.POST['equipment_units' + str(x)])
 
 
 

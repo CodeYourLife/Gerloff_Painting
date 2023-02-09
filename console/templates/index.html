@@ -9,6 +9,15 @@
 </head>
 <body>
 <H1>Welcome to Gerloff Painting</H1>
+
+	<form enctype = "multipart/form-data" action="{% url 'seperate_test' %}" method = 'post' >
+		{% csrf_token %}
+		<input type = "text" name = "text_test" />
+		<br>
+		Upload File: <input type = "file" name = "filename" />
+		<input type="submit" value="Test Folder"/>
+	</form>
+
 </body>
 </html>
 

@@ -6,7 +6,6 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
 
-from emails import Email
 
 
 # Create your views here.

@@ -56,6 +56,11 @@ function void_notes1(){
 </nav>
 
 <h2>{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} - Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</h2>
+	<br>
+	<form action="{% url 'extra_work_ticket' changeorder.id %}" method="post">
+{% csrf_token %}
+		<input type="submit" name="open_folder" value="Open Folder to View Files" />
+	</form>
 <br>
 {% if changeorder.is_closed == True %}
 <h1>VOIDED</h1>
@@ -64,6 +69,10 @@ function void_notes1(){
 	<h1>Ticket Required</h1>
 {% elif changeorder.need_ticket_signed == "Yes" %}
 	<h1>Ticket Submitted, Not Signed</h1>
+	<br>
+	<form action="{% url 'print_ticket' changeorder.id %}" >
+		<input type="submit" value="Print Ticket" />
+	</form>
 	<br>
 	<form action="{% url 'view_ewt' changeorder.id %}" >
 		<input type="submit" value="View / Change Ticket"/>
@@ -75,7 +84,7 @@ function void_notes1(){
 	</form>
 	<br>
 	<form action="{% url 'change_order_send' changeorder.id %}" >
-		<input type="submit" value="Send Anyways"/>
+		<input type="submit" value="Send Price Now, Without Signed Ticket"/>
 	</form>
 {% elif changeorder.date_sent == None %}
 	<h1>Change Order Not Sent Yet</h1>
@@ -108,6 +117,10 @@ function void_notes1(){
 				<textarea id="approval_note" name="approval_note" rows="2" cols="100" ></textarea>
 			<br>
 			<input type="submit" name='submit_form1' value="Approve Now!" />
+		</form>
+		<br>
+		<form action="{% url 'change_order_send' changeorder.id %}" >
+			<input type="submit" name='edit_co' value="Edit Change Order" />
 		</form>
 		<hr>
 	{% endif %}
