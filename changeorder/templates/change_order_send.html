@@ -22,75 +22,35 @@
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
-var row_counter = 0;
-window.onload = function() {
-	if ({{co_contacts_exist}} = "Yes"){
-		rolodex = JSON.parse("{{co_contacts_json|escapejs}}");
-		for(let i =0; i < rolodex.length; i++){
-			row_counter =row_counter + 1
-			document.getElementById("number_recipients").value = row_counter
-			var select = document.createElement("select");
-			select.name = "select_client" + row_counter;
-			select.id = "select_client" + row_counter;
-			var option = document.createElement("option");
-			option.value =rolodex[i].person_pk
-			option.text=rolodex[i].name
-			select.appendChild(option);
-			var label = document.createElement("label");
-			label.textContent= "Recipient: "
-			document.getElementById("add_item_here").appendChild(label).appendChild(select);
-			var new_button= document.createElement('button')
-			new_button.innerText = 'Remove From Change Order Recipients from all future COs for this job'
-			if (row_counter = 1){new_button.addEventListener('click',function() {removecontact(1);},false);}
-			if (row_counter = 2){new_button.addEventListener('click',function() {removecontact(2);},false);}
-			if (row_counter = 3){new_button.addEventListener('click',function() {removecontact(3);},false);}
-			if (row_counter = 4){new_button.addEventListener('click',function() {removecontact(4);},false);}
-			if (row_counter = 5){new_button.addEventListener('click',function() {removecontact(5);},false);}
-			if (row_counter = 6){new_button.addEventListener('click',function() {removecontact(6);},false);}
-			if (row_counter = 7){new_button.addEventListener('click',function() {removecontact(7);},false);}
-			if (row_counter = 8){new_button.addEventListener('click',function() {removecontact(8);},false);}
-			document.getElementById("add_item_here").appendChild(new_button);
-	        br = document.createElement("br");
-        	document.getElementById("add_item_here").appendChild(br);
-
-		}
-
-		rolodex = JSON.parse("{{allcontacts_json|escapejs}}");
-			row_counter =row_counter + 1
-			document.getElementById("number_recipients").value = row_counter
-			var select = document.createElement("select");
-			select.name = "select_client" + row_counter;
-			select.id = "select_client" + row_counter;
-			option = document.createElement("option");
-			option.value ="None"
-			option.text="No Additional Recipients"
-			select.appendChild(option);
-			for(let i =0; i < rolodex.length; i++){
-			option = document.createElement("option");
-			option.value =rolodex[i].person_pk
-			option.text=rolodex[i].name
-			select.appendChild(option);
-			}
-			var label = document.createElement("label");
-			label.textContent= "Recipient: "
-			document.getElementById("add_item_here").appendChild(label).appendChild(select);
-			var new_button= document.createElement('button')
-			new_button.innerText = 'Add as Change Order contact for all future COs for this job'
-			new_button.addEventListener('click',function() {addcontact(row_counter);},false);
-			document.getElementById("add_item_here").appendChild(new_button);
-	}
+var row_counter = 1;
+function add_row() {
+			row_counter = row_counter + 1
+			var table = document.getElementById("labor_breakdown");
+			var rows = table.getElementsByTagName("tr").length;
+			var row = table.insertRow(rows);
+			var cell1 = row.insertCell(0);
+			cell1.innerHTML = "<div id='new_painter" + row_counter + "'></div>";
+			add_painter_dropdown();
 }
 
-function addcontact(x){
-	var hidden_area = document.getElementById("add_submittal_contact")
-	var selected_person = document.getElementById("select_client" + x)
-	hidden_area.value = selected_person.value
-	}
-
-function removecontact(x){
-	var hidden_area = document.getElementById("remove_submittal_contact")
-	var selected_person = document.getElementById("select_client" + x)
-	hidden_area.value = selected_person.value
+function add_painter_dropdown() {
+		var select = document.createElement("select");
+		select.name = "recipient" + row_counter;
+		select.id = "recipient" + row_counter;
+		let rolodex = JSON.parse("{{employeesjson|escapejs}}");
+		var option = document.createElement("option");
+		option.value = "please_select";
+		option.text= "please select";
+		select.appendChild(option);
+		for (const x of rolodex)
+		{
+		var option = document.createElement("option");
+		option.value = x.id;
+		option.text= x.first_name + " " + x.last_name;
+		select.appendChild(option);
+		}
+		var label = document.createElement("label");
+		document.getElementById("new_painter" + row_counter).appendChild(label).appendChild(select);
 	}
 
 
@@ -108,71 +68,47 @@ function removecontact(x){
   </div>
 </nav>
 <h2>{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} - Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</h2>
-
-{% if found_contacts == True %}
-<h4>Designated CO Recipients</h4>
-<form action="{% url 'change_order_send' changeorder.id %}" method="post"  >
-	{% csrf_token %}
- <select id="remove_client" name="remove_client" >
-
-
-	{% for x in co_contacts %}
-<option value={{x.person_pk}}>{{x.name}}</option>
-{% endfor %}
-		<input type="submit" value="Remove from Designated CO Recipients For This Job" />
-<br><br>
-
-</form>
-{% endif %}
-{% if available == True %}
-<h4>Add Designated CO Recipients</h4>
-<br>
-<form action="{% url 'change_order_send' changeorder.id %}" method="post"  >
-	{% csrf_token %}
-            <select id="add_client" name="add_client" >
-				{% if pm_is_available == True %}
-					<option value = {{project_pm.person_pk}}>{{project_pm.name}}</option>
-                {% endif %}
-				{% if extra_contacts == True %}
-					{% for employee in available_contacts %}
-						<option value={{employee.person_pk}}>{{employee.name}}</option>
-					{% endfor %}
-                {% endif %}
-            </select>
-
-		<input type="submit" value="Add to Designated CO Recipients For This Job"  />
-	</tr>
-
-</form>
-{% endif %}
-<h4>Who Do You Want To Send This CO To?</h4>
+<h4>Send Change Order to the Following People: </h4>
 <table id="labor_breakdown" class="display" style="width:90%" ><thead><tr><th></th></tr></thead><tbody>
-<form name = form_send_now action="{% url 'change_order_send' changeorder.id %}" method="post"  >
-	 <div id="add_item_here"></div>
-	 	{% csrf_token %}
-	{% if found_contacts == True %}
-			{% for x in co_contacts %}
-
+<form action="{% url 'change_order_send' changeorder.id %}" method="post"  >
+	{% csrf_token %}
+	{% for x in client_list %}
+	{% if x.current == True %}
 		<tr><td>
-			<select id="select_client" + {{x.person_pk}} name="select_client" + {{x.person_pk}} >
-			<option value = {{x.person_pk}}>{{x.name}}</option>
-		</td></tr>
-		{% endfor %}
-	{% else %}
-		<tr><td>No Designated Recipients Found - Defaulted to Project PM</td></tr>
-		<tr><td>
-			<select id="select_client" + {{project_pm.person_pk}} name="select_client" + {{project_pm.person_pk}} >
-			<option value = {{project_pm.person_pk}}>{{project_pm.name}}</option>
-			<button onclick="delete_row(this)">Remove From Recipients</button>
-
-		</td></tr>
+	 <select id="recipient" name="recipient{{x.person_pk}}" >
+		 <option value={{x.person_pk}}>{{x.name}}</option></select>
+			{% if x.default == True %}
+			<input type="submit" value="Remove from Default CO Recipients" name="remove{{x.person_pk}}" />
+						{% else %}
+			<input type="submit" value="Add to Default CO Recipients" name="adddefault{{x.person_pk}}" />
+			{% endif %}
+			<input type="submit" value="Remove from this change order" name="tempremove{{x.person_pk}}"/>
+			</td></tr>
 	{% endif %}
+	{% endfor %}
+	{% if extra_contacts == True %}
+		<tr><td>Click Below To Add Additional Recipients </td></tr><tr><td>
+		<select id="recipient" name="addrecipient" >
+			{% for x in client_list %}
+			{% if x.current == False %}
+			<option value={{x.person_pk}}>{{x.name}}</option>
+		{% endif %}
+			{% endfor %}
+		</select>
+		<input type="submit" value="Add to this change order" name="tempadd"/>
+</td></tr>
+	{% endif %}
+</form>
+</tbody></table>
 
 
-	 <input type="submit" value="Send Now" />
- </form>
-</tbody>
-</table>
+
+<br>
+<input type="submit" value="Send Now" name="final" />
+</form>
+
+
+
 
 </body>
 </html>

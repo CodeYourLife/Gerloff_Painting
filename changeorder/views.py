@@ -38,30 +38,60 @@ def view_ewt(request,id):
 
 def change_order_send(request,id):
     changeorder = ChangeOrders.objects.get(id=id)
+    if request.method != 'POST':
+        for x in TempRecipients.objects.filter(changeorder=changeorder):
+            x.delete()
     if request.method == 'POST':
+        for x in request.POST:
+            if x[0:5] == 'remove':
+                print("YAY")
+            if x[0:9] == 'adddefault':
+                print("YAY")
+            if x[0:9] == 'tempremove':
+                print("YAY")
+            if x[0:6] == 'tempadd':
+                print("YAY")
+            if x[0:4] == 'final':
+                print("YAY")
+
+
         print(request.POST)
-    available_contacts = []
-    co_contacts = []
+
+    no_recipients=False
     found_contacts = False
     extra_contacts = False
-    pm_is_available = False
-    available = False
     project_pm = ClientEmployees.objects.get(person_pk=changeorder.job_number.client_Pm.person_pk)
+    client_list = []
+    if not ClientJobRoles.objects.filter(role="Change Orders", job=changeorder.job_number):
+        if not TempRecipients.objects.filter(changeorder=changeorder):
+            TempRecipients.objects.create(person=project_pm,changeorder=changeorder)
+            no_recipients = True
+    else:
+        if not TempRecipients.objects.filter(changeorder=changeorder):
+            for x in ClientJobRoles.objects.filter(role="Change Orders", job=changeorder.job_number):
+                TempRecipients.objects.create(person=x,changeorder=changeorder)
     for x in ClientEmployees.objects.filter(id=changeorder.job_number.client):
         if ClientJobRoles.objects.filter(role="Change Orders", job=changeorder.job_number, employee=x).exists():
-            co_contacts.append(x)
-            found_contacts = True
-        else:
-            available = True
-            if x == project_pm:
-                pm_is_available = True
+            found_contacts=True
+            if x in TempRecipients.objects.filter(changeorder=changeorder):
+                client_list.append({'person_pk':x.person_pk,'name':x.name,'default':True,'current':True})
             else:
-                available_contacts.append(x)
                 extra_contacts = True
+                client_list.append({'person_pk': x.person_pk, 'name': x.name, 'default': True, 'current': False})
+        else:
+            if TempRecipients.objects.filter(person=x,changeorder=changeorder):
+                client_list.append({'person_pk':x.person_pk,'name':x.name,'default':False,'current':True})
+            else:
+                extra_contacts = True
+                client_list.append({'person_pk': x.person_pk, 'name': x.name, 'default': False, 'current': False})
+
+    print(client_list)
+
     return render(request, "change_order_send.html",
-                  {'available': available, 'pm_is_available': pm_is_available, 'project_pm': project_pm,
-                   'extra_contacts': extra_contacts, 'found_contacts': found_contacts,
-                   'available_contacts': available_contacts, 'co_contacts': co_contacts, 'changeorder': changeorder})
+                  {'client_list':client_list,'no_recipients':no_recipients,
+                   'extra_contacts': extra_contacts, 'found_contacts': found_contacts,'changeorder': changeorder})
+
+
 
 def change_order_new(request,jobnumber):
     if request.method == 'POST':

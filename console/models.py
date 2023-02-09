@@ -41,12 +41,13 @@ class Clients(models.Model):
 class ClientEmployees(models.Model):
 	person_pk = models.BigAutoField(primary_key=True)
 	id = models.ForeignKey(Clients, on_delete=models.PROTECT)
-	name = models.CharField(null=True, max_length=250)
-	phone = models.CharField(null=True, max_length=50)
-	email = models.EmailField(null=True, blank=True)
-	title = models.CharField(null=True, max_length=250)
+	name = models.CharField(max_length=250)
+	phone = models.CharField(blank=True,null=True, max_length=50)
+	email = models.EmailField(blank=True,null=True)
+	title = models.CharField(blank=True,null=True, max_length=250)
 	def __str__(self):
 		return f"{self.name}"
+
 
 
 
@@ -96,7 +97,7 @@ class Jobs(models.Model):
 	submittals_required = models.IntegerField(null=True)
 	has_special_paint = models.IntegerField(null=True)
 	client = models.ForeignKey(Clients, related_name="Client", on_delete=models.PROTECT)
-	client_Pm = models.ForeignKey(ClientEmployees, related_name="PM", on_delete=models.PROTECT, blank=True, null=True)
+	client_Pm = models.ForeignKey(ClientEmployees, related_name="PM", on_delete=models.PROTECT)
 	client_Pm_Phone = models.CharField(null=True, max_length=50, blank=True)
 	client_Pm_Email = models.EmailField(null=True, blank=True)
 	client_Co_Contact = models.ForeignKey(ClientEmployees, related_name="CO", on_delete=models.PROTECT, null=True)
@@ -401,6 +402,12 @@ class EWTicket(models.Model):
 	units = models.CharField(null=True, max_length=50)
 	def __str__(self):
 		return f"{self.EWT} {self.master}"
+
+
+class TempRecipients(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	person = models.ForeignKey(ClientEmployees, on_delete=models.PROTECT)
+	changeorder = models.ForeignKey(ChangeOrders, on_delete=models.PROTECT)
 
 
 class VendorContact(models.Model):
