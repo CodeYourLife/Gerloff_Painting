@@ -66,10 +66,7 @@ function new_lump_sum(){
     x.setAttribute("id", "new_item_here" + number_items)
     add_new_here.appendChild(x)
     add_new_here = document.getElementById("new_item_here" + number_items)
-    var hidden_input = document.createElement("input");
-    hidden_input.setAttribute("type", "hidden");
-    hidden_input.setAttribute("name", "item_type" + number_items);
-    hidden_input.setAttribute("value", "Lump Sum");
+
     add_new_here.appendChild(hidden_input);
     if ("{{wallcovering_json}}" != 'None'){
         rolodex = JSON.parse("{{wallcovering_json|escapejs}}");

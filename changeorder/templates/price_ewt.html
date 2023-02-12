@@ -12,7 +12,9 @@
 	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
 	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
 	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.2/css/jquery.dataTables.min.css">
+
 	<style type="text/css" class="init">
 
 	</style>
@@ -25,9 +27,210 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 var laborcount = {{laborcount}}
-var materialcount= {{materialcount}}
-var equipmentcount= {{equipmentcount}}
-var extrascount = {{extrascount}}
+var glob_materialcount= {{materialcount}}
+var glob_equipmentcount= {{equipmentcount}}
+var glob_extrascount = {{extrascount}}
+
+function add_labor_row() {
+	laborcount = laborcount + 1
+	hidden = document.getElementById("hidden_labor");
+	hidden.value=laborcount
+	var table = document.getElementById("labor_breakdown");
+	var rows = table.getElementsByTagName("tr").length
+	var row = table.insertRow(rows-1);
+	var cell1 = row.insertCell(0);
+	var cell2 = row.insertCell(1);
+	var cell3 = row.insertCell(2);
+	var cell4 = row.insertCell(3);
+	cell1.innerHTML = "<div id='new_labor" + laborcount + "'></div>";
+	add_labor_dropdown()
+	cell2.innerHTML ="<input type= 'number' name='labor_hours" + laborcount + "' id='labor_hours" + laborcount + "'  onchange ='changehours(event)' size='10' required />"
+	cell3.innerHTML ="$<input type= 'number' name='labor_cost" + laborcount + "' id='labor_cost" + laborcount + "'  size='10' required />"
+}
+
+function add_labor_dropdown(){
+		var select = document.createElement("select");
+		var rate = 0.00
+		select.name = "select_labor" + laborcount;
+		select.id = "select_labor" + laborcount;
+		select.addEventListener('change',function() {changelabor(event);},false);
+		let rolodex = JSON.parse("{{employees_json|escapejs}}");
+				var option = document.createElement("option");
+		option.value = "please_select";
+		option.text= "please select";
+		select.appendChild(option);
+				for (const x of rolodex)
+		{
+		var option = document.createElement("option");
+		option.value = x.id;
+		option.text= x.item;
+		select.appendChild(option);
+		}
+		var label = document.createElement("label");
+		document.getElementById("new_labor" + laborcount).appendChild(label).appendChild(select);
+		var hidden_input = document.createElement("input");
+		hidden_input.setAttribute("type", "hidden");
+		hidden_input.setAttribute("name", "labor_rate" + laborcount);
+		hidden_input.setAttribute("id", "labor_rate" + laborcount);
+		hidden_input.setAttribute("value", 0);
+		document.getElementById("new_labor" + laborcount).appendChild(hidden_input);
+}
+function changelabor(){
+	clicked_row = event.currentTarget.id.substring(12,event.currentTarget.id.length)
+	description = document.getElementById("labor_rate" + clicked_row)
+	rolodex = JSON.parse("{{employees_json|escapejs}}");
+	for(let i =0; i < rolodex.length; i++){
+		if (rolodex[i].id == event.currentTarget.value){
+			description.value = rolodex[i].rate
+		}
+	}
+}
+function changehours(){
+	clicked_row = event.currentTarget.id.substring(11,event.currentTarget.id.length)
+	rate = document.getElementById("labor_rate" + clicked_row)
+	hours = document.getElementById("labor_hours" + clicked_row)
+	total = document.getElementById("labor_cost" + clicked_row)
+	total.value = hours.value * rate.value
+}
+
+
+function add_material_row(type) {
+	if (type == "material"){
+		glob_materialcount=glob_materialcount+1
+		materialcount = glob_materialcount
+		hidden = document.getElementById("hidden_material");
+		var table = document.getElementById("material_breakdown");
+	}
+	if (type == "equipment"){
+		glob_equipmentcount=glob_equipmentcount+1
+		materialcount = glob_equipmentcount
+		hidden = document.getElementById("hidden_equipment");
+		var table = document.getElementById("equipment_breakdown");
+	}
+	if (type == "extras"){
+		glob_extrascount = glob_extrascount+1
+		materialcount = glob_extrascount
+		hidden = document.getElementById("hidden_extras");
+		var table = document.getElementById("extras_breakdown");
+	}
+	hidden.value = materialcount
+	var rows = table.getElementsByTagName("tr").length
+		if (type == "material"){
+		var row = table.insertRow(rows-2);
+	}
+	else {var row = table.insertRow(rows-1)}
+
+	var cell1 = row.insertCell(0);
+	var cell2 = row.insertCell(1);
+	var cell3 = row.insertCell(2);
+	var cell4 = row.insertCell(3);
+	var cell5 = row.insertCell(4);
+	cell1.innerHTML = "<div id='new_" + type + String(materialcount) + "'></div>";
+	add_material_dropdown(type)
+	cell2.innerHTML ="<input type= 'text' name='" + type + "_description"+ materialcount + "' id='" + type + "_description"+ materialcount + "'  size='30' required />"
+	cell3.innerHTML ="<input type= 'number' name='" + type + "_quantity"+ materialcount + "' id='" + type + "_quantity"+ materialcount + "'  onchange = 'changequantity(event)' size='10' required />"
+	cell4.innerHTML ="<input type= 'text' name='" + type + "_units"+ materialcount + "' id='" + type + "_units"+ materialcount + "'  size='7' required />"
+	cell5.innerHTML ="$<input type= 'number' name='" + type + "_cost"+ materialcount + "' id='" + type + "_cost"+ materialcount + "'  size='7' required />"
+}
+
+
+function add_material_dropdown(type){
+		var select = document.createElement("select");
+		var rate = 0.00
+		select.name = type + "_category" + String(materialcount);
+		select.id = type + "_category" + String(materialcount);
+		if (type == "material"){
+			select.addEventListener('change',function() {changematerial(event);},false);
+			rolodex = JSON.parse("{{material_json|escapejs}}");
+		}
+		if (type == "equipment"){
+			select.addEventListener('change',function() {changeequipment(event);},false);
+			rolodex = JSON.parse("{{equipment_json|escapejs}}");
+		}
+		if (type == "extras"){
+			select.addEventListener('change',function() {changeextras(event);},false);
+			rolodex = JSON.parse("{{extras_json|escapejs}}");
+		}
+		var option = document.createElement("option");
+		option.value = "please_select";
+		option.text= "please select";
+		select.appendChild(option);
+		for (const x of rolodex)
+		{
+		var option = document.createElement("option");
+		option.value = x.id;
+		option.text= x.item;
+		select.appendChild(option);
+		}
+		var label = document.createElement("label");
+		document.getElementById("new_"  + type + String(materialcount)).appendChild(label).appendChild(select);
+		var hidden_input = document.createElement("input");
+		hidden_input.setAttribute("type", "hidden");
+		hidden_input.setAttribute("name", type + "_rate" + materialcount);
+		hidden_input.setAttribute("id", type + "_rate" + materialcount);
+		hidden_input.setAttribute("value", 0);
+		document.getElementById("new_"  + type + String(materialcount)).appendChild(hidden_input);
+}
+
+function changematerial(){
+	clicked_row = event.currentTarget.id.substring(17,event.currentTarget.id.length)
+	description = document.getElementById("material_description" + clicked_row)
+	rate = document.getElementById("material_rate" + clicked_row)
+	unit = document.getElementById("material_units" + clicked_row)
+	rolodex = JSON.parse("{{material_json|escapejs}}");
+	for(let i =0; i < rolodex.length; i++){
+		if (rolodex[i].id == event.currentTarget.value){
+			description.value = rolodex[i].item
+			rate.value = rolodex[i].rate
+			unit.value = rolodex[i].unit
+		}
+	}
+}
+
+function changeequipment(){
+	clicked_row = event.currentTarget.id.substring(18,event.currentTarget.id.length)
+	description = document.getElementById("equipment_description" + clicked_row)
+	rate = document.getElementById("equipment_rate" + clicked_row)
+	unit = document.getElementById("equipment_units" + clicked_row)
+	alert(rate.value)
+	rolodex = JSON.parse("{{equipment_json|escapejs}}");
+	for(let i =0; i < rolodex.length; i++){
+		if (rolodex[i].id == event.currentTarget.value){
+			description.value = rolodex[i].item
+			rate.value = rolodex[i].rate
+			unit.value = rolodex[i].unit
+		}
+	}
+}
+
+function changeextras(){
+	clicked_row = event.currentTarget.id.substring(15,event.currentTarget.id.length)
+	description = document.getElementById("extras_description" + clicked_row)
+	rate = document.getElementById("extras_rate" + clicked_row)
+	unit = document.getElementById("extras_units" + clicked_row)
+	alert(rate.value)
+	rolodex = JSON.parse("{{extras_json|escapejs}}");
+	for(let i =0; i < rolodex.length; i++){
+		if (rolodex[i].id == event.currentTarget.value){
+			description.value = rolodex[i].item
+			rate.value = rolodex[i].rate
+			unit.value = rolodex[i].unit
+		}
+	}
+}
+
+function changequantity(){
+	if (event.currentTarget.id.substring(0,17) == "material_quantity") {type = "material"; clicked_row = event.currentTarget.id.substring(17,event.currentTarget.id.length)}
+	if (event.currentTarget.id.substring(0,18) == "equipment_quantity") {type = "equipment"; clicked_row = event.currentTarget.id.substring(18,event.currentTarget.id.length)}
+	if (event.currentTarget.id.substring(0,15) == "extras_quantity") {type = "extras"; clicked_row = event.currentTarget.id.substring(15,event.currentTarget.id.length)}
+	alert(event.currentTarget.id)
+	rate = document.getElementById(type + "_rate" + clicked_row)
+	hours = document.getElementById(type + "_quantity" + clicked_row)
+	total = document.getElementById(type + "_cost" + clicked_row)
+	total.value = hours.value * rate.value
+}
+
+
 
 
 	</script>
@@ -55,17 +258,22 @@ var extrascount = {{extrascount}}
 {% csrf_token %}
 
 
-	<table id="labor_breakdown" class="display" style="width:90%" >
+	<table id="labor_breakdown" class="display compact nowrap" style="width:100%" >
 		<thead>
 			  {% if laboritems %}
+<!--			  <tr><th colspan="3"><b><h3>Labor Breakdown</h3></b></th></tr>-->
 		<tr><th colspan="3"><b><h3>Labor Breakdown</h3></b></th></tr>
 		<tr><th><b>Item</b></th><th><b>Hours</b></th><th><b>Cost</b></th></tr>
 			  </thead>
 		<tbody>
 	  {% for x in laboritems %}
-		<tr><td><input type= "text" name="labor_item{{x.counter}}" id="labor_item{{x.counter}}" value="{{x.item}}" size="50" required /></td><td><input type= "number" name="labor_hours{{x.counter}}" id="labor_hours{{x.counter}}" value="{{x.hours}}" size="10" required /></td><td>$<input type= "number" name="labor_cost{{x.counter}}" id="labor_cost{{x.counter}}" value="{{x.cost}}" size="10" required /></td></tr>
+		<tr><td><input type= "text" name="labor_item{{x.counter}}" id="labor_item{{x.counter}}" value="{{x.item}}" size="50" required /><input type= "hidden" name="labor_rate{{x.counter}}" id="labor_rate{{x.counter}}" value="{{x.rate}}"  /></td><td><input type= "number" name="labor_hours{{x.counter}}" id="labor_hours{{x.counter}}" value="{{x.hours}}" size="10" onchange = "changehours(event)" required /></td><td>$<input type= "number" name="labor_cost{{x.counter}}" id="labor_cost{{x.counter}}" value="{{x.cost}}" size="10" required /></td></tr>
 	   {% endfor %}
+
 		{% endif %}
+<input type = "hidden" name="hidden_labor" id = "hidden_labor" value = "{{laborcount}}" />
+<!--	  <tr><td colspan="3"><div id="add_labor_here"></div></td></tr>-->
+	  <tr><td colspan="3"><button type="button" onclick="add_labor_row()">Add Painter Row </button></td></tr>
 	</table>
   <br>
 	<table id="material_breakdown" class="display" style="width:90%" >
@@ -76,10 +284,13 @@ var extrascount = {{extrascount}}
 				  </thead>
 		<tbody>
 	  {% for x in materials %}
-		<tr><td>{{x.category}}</td><td>{{x.description}}</td><td>{{x.quantity}}</td><td>{{x.units}}</td><td>${{x.cost}}</td></tr>
+		<tr><td><input type= "text" name="material_category{{x.counter}}" id="material_category{{x.counter}}" value="{{x.category}}" size="50" required /><input type= "hidden" name="material_rate{{x.counter}}" id="material_rate{{x.counter}}" value="{{x.rate}}"  /></td><td><input type= "text" name="material_description{{x.counter}}" id="material_description{{x.counter}}" value="{{x.description}}" size="30" required /></td><td><input type= "number" name="material_quantity{{x.counter}}" id="material_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "changequantity(event)" size="10" required /></td><td><input type= "text" name="material_units{{x.counter}}" id="material_units{{x.counter}}" value="{{x.units}}" size="7" required /></td><td>$<input type= "number" name="material_cost{{x.counter}}" id="material_cost{{x.counter}}" value="{{x.cost}}" size="7" required /></td></tr>
 	   {% endfor %}
-		<tr><td>Inventory</th><td></td><td>Lump Sum</td><td></td><td>${{inventory}}</td></tr>
-		{% endif %}
+		<tr><td>Inventory</th><td></td><td>Lump Sum</td><td></td><td><input type= "hidden" name="inventory_cost" id="inventory_cost" value="{{inventory}}" size="7" required /><div id="inventory_display"></div>${{inventory}}</div></td></tr>
+
+	  {% endif %}
+<input type = "hidden" name="hidden_material" id = "hidden_material" value = "{{materialcount}}" />
+		<tr><td><button type="button" onclick="add_material_row('material')">Add Material Row </button></td></tr>
 	</tbody></table>
     <br>
 	<table id="equipment_breakdown" class="display" style="width:90%" >
@@ -90,26 +301,37 @@ var extrascount = {{extrascount}}
 				  </thead>
 		<tbody>
 	  {% for x in equipment %}
-		<tr><td>{{x.category}}</td><td>{{x.description}}</td><td>{{x.quantity}}</td><td>{{x.units}}</td><td>${{x.cost}}</td></tr>
+	<tr><td><input type= "hidden" name="equipment_rate{{x.counter}}" id="equipment_rate{{x.counter}}" value="{{x.rate}}"  /><input type= "text" name="equipment_category{{x.counter}}" id="equipment_category{{x.counter}}" value="{{x.category}}" size="50" required /></td></td><td><input type= "text" name="equipment_description{{x.counter}}" id="equipment_description{{x.counter}}" value="{{x.description}}" size="30" required /></td><td><input type= "number" name="equipment_quantity{{x.counter}}" id="equipment_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "changequantity(event)" size="10" required /></td><td><input type= "text" name="equipment_units{{x.counter}}" id="equipment_units{{x.counter}}" value="{{x.units}}" size="7" required /></td><td>$<input type= "number" name="equipment_cost{{x.counter}}" id="equipment_cost{{x.counter}}" value="{{x.cost}}" size="7" required /></td></tr>
+
 	   {% endfor %}
 		{% endif %}
+	  <input type = "hidden" name="hidden_equipment" id = "hidden_equipment" value = "{{equipmentcount}}" />
+		<tr><td><button type="button" onclick="add_material_row('equipment')">Add Equipment Row </button></td></tr>
 	</tbody></table>
 
       <br>
-	<table id="extra_breakdown" class="display" style="width:90%" >
+	<table id="extras_breakdown" class="display" style="width:90%" >
 		<thead>
 			  {% if extras %}
 		<tr><th colspan="4"><b><h3>Extras</h3></b></th></tr>
-		<tr><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Cost</b></th></tr>
-				  </thead>
+		<tr><th><b>Item</b></th><th></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Cost</b></th></tr>
+	  	</thead>
 		<tbody>
 	  {% for x in extras %}
-		<tr><td>{{x.category}}</td><td>{{x.quantity}}</td><td>{{x.unit}}</td><td>${{x.cost}}</td></tr>
-	   {% endfor %}
+	  {% if x.category == "Bond" %}
+	  <tr><td><input type= "hidden" name="bond_cost" id="bond_cost" value="{{x.cost}}" />{{x.category}}</td><td></td><td>{{x.quantity}}</td><td>{{x.unit}}</td><td><div id="bond_display" name = "bond_display">${{x.cost}}</td></tr>
+	  {% else %}
+	  <tr><td><input type= "hidden" name="extras_rate{{x.counter}}" id="extras_rate{{x.counter}}" value="{{x.rate}}"  /><input type= "text" name="extras_category{{x.counter}}" id="extras_category{{x.counter}}" value="{{x.category}}" size="50" required /></td><td></td><td><input type= "number" name="extras_quantity{{x.counter}}" id="extras_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "changequantity(event)" size="10" required /></td><td><input type= "text" name="extras_units{{x.counter}}" id="extras_units{{x.counter}}" value="{{x.unit}}" size="7" required /></td><td>$<input type= "number" name="extras_cost{{x.counter}}" id="extras_cost{{x.counter}}" value="{{x.cost}}" size="7" required /></td></tr>
+
+	  {% endif %}
+	  {% endfor %}
 		{% endif %}
+	  	  <input type = "hidden" name="hidden_extras" id = "hidden_extras" value = "{{extrascount}}" />
+		<tr><td><button type="button" onclick="add_material_row('extras')">Add Extra Row </button></td></tr>
 	</tbody></table>
 
 
+	 <input type = "hidden" name="final_cost" id = "final_cost" value = "" />
 <input type="submit" name="Form3" value="Send Price Now" />
     </form>
 
