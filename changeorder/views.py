@@ -24,6 +24,7 @@ def price_ewt(request,id):
     totalmaterialcost =0
     totalcost = 0
     counter=0
+    is_bonded = False
     for x in TMPricesMaster.objects.filter(category="Labor", ewticket__isnull=False).distinct():
         hours = 0
         for y in EWTicket.objects.filter(EWT=ewt, master=x).exclude(employee=None).order_by('master'):
@@ -34,6 +35,7 @@ def price_ewt(request,id):
         counter=counter+1
         rate = float(x.rate)
         laboritems.append({'rate':rate,'counter':counter,'item':x,'hours':hours, 'cost':int(cost)})
+    days = totalhours / 8
     counter = 0
     for y in EWTicket.objects.filter(EWT=ewt, master__category="Material").order_by('master'):
         cost = y.quantity * y.master.rate
@@ -55,10 +57,8 @@ def price_ewt(request,id):
         equipment.append(
             {'rate':rate,'counter':counter,'category': y.master.item, 'description': y.description, 'quantity': y.quantity, 'units': y.units,
              'cost': int(cost)})
-    days = totalhours /8
     counter=0
     for x in JobCharges.objects.filter(job=changeorder.job_number):
-        print("jeses")
         if x.master.unit == "Day":
             cost =days * x.master.rate
             totalcost = totalcost + cost
@@ -75,10 +75,14 @@ def price_ewt(request,id):
             counter = counter + 1
             rate = float(x.master.rate)
             extras.append({'rate':rate,'counter':counter,'category': x.master.item, 'quantity': 0, 'unit': x.master.unit, 'cost': 0})
-    if changeorder.job_number.is_bonded == True:
-        counter = counter + 1
-        extras.append({'rate':1,'counter':counter,'category':"Bond", 'quantity':1,'unit':"LS",'cost':int(float(totalcost) * .02)})
 
+    bond_rate=0
+    bond_cost=0
+    if changeorder.job_number.is_bonded == True:
+        bond_rate = TMPricesMaster.objects.get(category = 'Bond').rate
+        bond_cost = bond_rate * totalcost
+        totalcost = totalcost + bond_cost
+        is_bonded = True
 
     employees2 = TMPricesMaster.objects.filter(category="Labor").values()
     materials2 = TMPricesMaster.objects.filter(category="Material").values()
@@ -88,10 +92,9 @@ def price_ewt(request,id):
     material_json = json.dumps(list(materials2), cls=DjangoJSONEncoder)
     equipment_json = json.dumps(list(equipment2), cls=DjangoJSONEncoder)
     extras_json = json.dumps(list(extras2), cls=DjangoJSONEncoder)
-    print(extras)
-    print(extras_json)
+
     return render(request, "price_ewt.html",
-                  {'extras_json':extras_json,'employees_json':employees_json,'material_json':material_json,'equipment_json':equipment_json,'laborcount':int(len(laboritems)),'materialcount':int(len(materials)+1),'equipmentcount':int(len(equipment)),'extrascount':int(len(extras)),'extras':extras,'totalcost':int(totalcost),'inventory':int(inventory),'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
+                  {'is_bonded':is_bonded,'bond_cost':int(bond_cost),'bond_rate':bond_rate,'extras_json':extras_json,'employees_json':employees_json,'material_json':material_json,'equipment_json':equipment_json,'laborcount':int(len(laboritems)),'materialcount':int(len(materials)),'equipmentcount':int(len(equipment)),'extrascount':int(len(extras)),'extras':extras,'totalcost':int(totalcost),'inventory':int(inventory),'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
                    'changeorder': changeorder})
 
 def print_ticket(request,id):

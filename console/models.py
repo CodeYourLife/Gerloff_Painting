@@ -4,10 +4,10 @@ from django.core.exceptions import ValidationError
 
 
 def validate_tm_category(value):
-	if value == "Labor" or value == "Material" or value == "Equipment" or value == "Inventory" or value == "Misc":
+	if value == "Labor" or value == "Material" or value == "Equipment" or value == "Inventory" or value == "Misc" or value == "Bond":
 		return value
 	else:
-		raise ValidationError("Category must be Labor, Material, Equipment, Inventory, or Bond")
+		raise ValidationError("Category must be Labor, Material, Equipment, Inventory, Bond or Misc")
 
 
 
