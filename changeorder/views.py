@@ -13,9 +13,54 @@ import os
 import os.path
 # Create your views here.
 
+def print_TMProposal(request,id):
+    print("HI")
+    return redirect('index')
+
 def price_ewt(request,id):
     changeorder = ChangeOrders.objects.get(id=id)
     ewt = EWT.objects.get(change_order=changeorder)
+    if request.method == 'POST':
+        changeorder.price = request.POST['final_cost']
+        changeorder.date_sent = date.today()
+        changeorder.save()
+        newproposal = TMProposal.objects.create(change_order=changeorder, total=request.POST['final_cost'],notes=request.POST['notes'],ticket=ewt)
+        print(request.POST)
+        for x in range(1,int(request.POST['hidden_labor'])+1):
+            TMList.objects.create(change_order=changeorder, description =request.POST['labor_item'+str(x)],quantity = request.POST['labor_hours'+str(x)], units="Hours", rate=request.POST['labor_rate'+str(x)],total=request.POST['labor_cost'+str(x)],category="Labor",category2=request.POST['labor_item'+str(x)],proposal = newproposal)
+        for x in range(1, int(request.POST['hidden_material']) + 1):
+            TMList.objects.create(change_order=changeorder, description=request.POST['material_description' + str(x)],
+                                  quantity=request.POST['material_quantity' + str(x)], units=request.POST['material_units' + str(x)],
+                                  rate=request.POST['material_rate' + str(x)], total=request.POST['material_cost' + str(x)],
+                                  category="Material", category2=request.POST['material_category' + str(x)], proposal=newproposal)
+        for x in range(1, int(request.POST['hidden_equipment']) + 1):
+            TMList.objects.create(change_order=changeorder, description=request.POST['equipment_description' + str(x)],
+                                  quantity=request.POST['equipment_quantity' + str(x)], units=request.POST['equipment_units' + str(x)],
+                                  rate=request.POST['equipment_rate' + str(x)], total=request.POST['equipment_cost' + str(x)],
+                                  category="Equipment", category2=request.POST['equipment_category' + str(x)], proposal=newproposal)
+        for x in range(1, int(request.POST['hidden_extras']) + 1):
+            extras = TMList.objects.create(change_order=changeorder, description=request.POST['extras_category' + str(x)],
+                                  quantity=request.POST['extras_quantity' + str(x)], units=request.POST['extras_units' + str(x)],
+                                  rate=request.POST['extras_rate' + str(x)], total=request.POST['extras_cost' + str(x)],
+                                  category="Extras", category2=request.POST['extras_category' + str(x)], proposal=newproposal)
+            if 'extras_description'+ str(x) in request.POST:
+                extras.description = request.POST['extras_description' + str(x)]
+                extras.save()
+        if 'inventory_cost' in request.POST:
+            TMList.objects.create(change_order=changeorder, description="Inventory",
+                                  quantity="1",
+                                  units="Lump Sum",
+                                  rate="1", total=request.POST['inventory_cost'],
+                                  category="Inventory", category2="Inventory",
+                                  proposal=newproposal)
+        if 'bond_cost' in request.POST:
+            TMList.objects.create(change_order=changeorder, description="Bond",
+                                  quantity="1",
+                                  units="Lump Sum",
+                                  rate=request.POST['bond_rate'], total=request.POST['bond_cost'],
+                                  category="Bond", category2="Bond",
+                                  proposal=newproposal)
+        return redirect('print_TMProposal', id=newproposal.id)
     equipment = []
     laboritems = []
     materials = []
@@ -94,7 +139,7 @@ def price_ewt(request,id):
     extras_json = json.dumps(list(extras2), cls=DjangoJSONEncoder)
 
     return render(request, "price_ewt.html",
-                  {'is_bonded':is_bonded,'bond_cost':int(bond_cost),'bond_rate':bond_rate,'extras_json':extras_json,'employees_json':employees_json,'material_json':material_json,'equipment_json':equipment_json,'laborcount':int(len(laboritems)),'materialcount':int(len(materials)),'equipmentcount':int(len(equipment)),'extrascount':int(len(extras)),'extras':extras,'totalcost':int(totalcost),'inventory':int(inventory),'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
+                  {'notes':ewt.notes,'is_bonded':is_bonded,'bond_cost':int(bond_cost),'bond_rate':bond_rate,'extras_json':extras_json,'employees_json':employees_json,'material_json':material_json,'equipment_json':equipment_json,'laborcount':int(len(laboritems)),'materialcount':int(len(materials)),'equipmentcount':int(len(equipment)),'extrascount':int(len(extras)),'extras':extras,'totalcost':int(totalcost),'inventory':int(inventory),'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
                    'changeorder': changeorder})
 
 def print_ticket(request,id):

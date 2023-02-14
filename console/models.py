@@ -366,20 +366,7 @@ class TMPricesMaster(models.Model):
 		return f"{self.item}"
 
 
-class TMList(models.Model): #one entry for each line item of t&m bill
-	id = models.BigAutoField(primary_key=True)
-	change_order = models.ForeignKey(ChangeOrders,on_delete=models.PROTECT)
-	item = models.CharField(null=False, max_length=50) #painter hours, latex paint
-	description = models.CharField(null=False, max_length=100) #painter name, promar 200, etc.
-	quantity = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
-	units = models.CharField(null=False, max_length=10)
-	rate = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
-	total = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
-	category = models.CharField(null=False, max_length=50, validators = [validate_tm_category])  #labor, material, equipment, bond, inventory
-	notes = models.CharField(null=True, max_length=2000)
-	week_ending = models.DateField(null=True)
-	def __str__(self):
-		return f"{self.change_order} {self.item}"
+
 
 class EWT(models.Model):
 	id = models.BigAutoField(primary_key=True)
@@ -426,6 +413,30 @@ class TempRecipients(models.Model):
 	default = models.BooleanField(default=False)
 	def __str__(self):
 		return f"{self.person} {self.changeorder}"
+
+
+class TMProposal(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	change_order = models.ForeignKey(ChangeOrders, on_delete=models.PROTECT)
+	total = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+	notes = models.CharField(null=True, max_length=2000)
+	ticket = models.ForeignKey(EWT, on_delete=models.PROTECT)
+
+class TMList(models.Model): #one entry for each line item of t&m bill
+	id = models.BigAutoField(primary_key=True)
+	change_order = models.ForeignKey(ChangeOrders,on_delete=models.PROTECT)
+	description = models.CharField(null=False, max_length=500) #painter name, promar 200, etc. Called Item on the price breakdown
+	quantity = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+	units = models.CharField(null=False, max_length=10)
+	rate = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+	total = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+	category = models.CharField(null=False, max_length=50, validators = [validate_tm_category])  #labor, material, equipment, bond, inventory
+	category2 = models.CharField(null=False, max_length=200) #interior latex eg-shell
+	proposal = models.ForeignKey(TMProposal,on_delete=models.PROTECT)
+
+	def __str__(self):
+		return f"{self.change_order} {self.item}"
+
 
 class VendorContact(models.Model):
 	id = models.BigAutoField(primary_key=True)

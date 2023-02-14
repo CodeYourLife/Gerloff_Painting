@@ -281,7 +281,8 @@ function calculate_final_cost(){
 
    <form action="{% url 'price_ewt' changeorder.id %}" method="post"  onSubmit = "return check_booking_data()">
 {% csrf_token %}
-
+        <label for="notes">Description: </label> <br>
+        <textarea id="notes" name="notes" rows="4" cols="100" >{{notes}}</textarea>
 
 	<table id="labor_breakdown" class="display compact nowrap" style="width:100%" >
 		<thead>
@@ -348,7 +349,7 @@ function calculate_final_cost(){
 		{% endif %}
 	  	  <input type = "hidden" name="hidden_extras" id = "hidden_extras" value = "{{extrascount}}" />
 		<tr><td><button type="button" onclick="add_material_row('extras')">Add Extra Row </button></td></tr>
-	<tr><td><button type="button" onclick="calculate_final_cost()">Get Final Cost </button></td></tr>
+
 		</tbody></table>
 
 <br><br><hr>
@@ -359,10 +360,6 @@ function calculate_final_cost(){
 <input type="submit" name="Form3" value="Send Price Now" />
     </form>
 
-					<form action="{% url 'print_ticket' changeorder.id %}" method="post"  >
-        				{% csrf_token %}
-						 <input type="submit" value="pdf" />
-					</form>
 
 
 <script src=”https://code.jquery.com/jquery-3.2.1.slim.min.js” integrity=”sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN” crossorigin=”anonymous”></script>
