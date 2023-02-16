@@ -24,6 +24,9 @@ def price_ewt(request,id):
         changeorder.price = request.POST['final_cost']
         changeorder.date_sent = date.today()
         changeorder.save()
+        ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                        user=request.user.first_name + " " + request.user.last_name,
+                                        note="COP Sent. Price: $" + request.POST['final_cost'])
         newproposal = TMProposal.objects.create(change_order=changeorder, total=request.POST['final_cost'],notes=request.POST['notes'],ticket=ewt)
         print(request.POST)
         for x in range(1,int(request.POST['hidden_labor'])+1):
@@ -279,7 +282,7 @@ def change_order_new(request,jobnumber):
 
 
 def change_order_home(request):
-    all_orders = ChangeOrderFilter(request.GET, queryset =ChangeOrders.objects.filter(is_closed=False))
+    all_orders = ChangeOrderFilter(request.GET, queryset =ChangeOrders.objects.filter(is_closed=False).order_by('job_number','cop_number'))
     table = ChangeOrderTable(all_orders.qs)
     has_filter = any(field in request.GET for field in set(all_orders.get_fields()))
     RequestConfig(request).configure(table)
@@ -294,12 +297,20 @@ def extra_work_ticket(request,id):
     if request.method == 'GET':
         return render(request, "extra_work_ticket.html", {'ticket_needed':ticket_needed,'changeorder': changeorder, 'notes': notes})
     if request.method == 'POST':
+        if 'view_proposal' in request.POST:
+            print("NEED TO DO")
         if 'open_folder' in request.POST:
             path = "C:/trinity/changeorder/" + str(changeorder.id)
             path = os.path.realpath(path)
             os.startfile(path)
         if 'signed' in request.POST:
-            print("NEED TO DO THIS PART")
+            print(request.POST)
+            changeorder.is_ticket_signed = True
+            changeorder.date_signed = date.today()
+            changeorder.save()
+            ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                            user=request.user.first_name + " " + request.user.last_name,
+                                            note="Ticket Signed - " + request.POST['signed_notes'])
         if 'submit_form4' in request.POST:
             changeorder.is_closed = True
             changeorder.save()
@@ -310,7 +321,8 @@ def extra_work_ticket(request,id):
         if 'submit_form1' in request.POST:
             changeorder.is_approved = True
             changeorder.date_approved = date.today()
-            changeorder.gc_number = request.POST['gc_number']
+            if request.POST['gc_number'] != '':
+                changeorder.gc_number = request.POST['gc_number']
             if 'is_approved_to_bill' in request.POST:
                 changeorder.is_approved_to_bill = True
             changeorder.price = request.POST['approved_price']
@@ -321,6 +333,7 @@ def extra_work_ticket(request,id):
             return redirect('extra_work_ticket', id=id)
         if 'submit_form3' in request.POST:
             if 'no_tm' in request.POST:
+                print("WWHY IS IT GOING HERE")
                 if changeorder.is_t_and_m == True:
                     changeorder.is_t_and_m=False
                 else:

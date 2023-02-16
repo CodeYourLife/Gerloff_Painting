@@ -25,6 +25,24 @@
 function Previous() {
 window.history.back()
 }
+function check_booking_data1(){
+	if (document.getElementById("is_approved_to_bill").checked){
+		if (document.getElementById("gc_number").value == ""){
+			if (document.getElementById("approval_note").value == ""){
+				alert("You must either provide a GC number, or provide an explanation")
+				return false
+			}
+		}
+	}
+	else {
+			if (document.getElementById("approval_note").value == ""){
+				alert("You must provide an explanation")
+				return false
+			}
+	}
+}
+
+
 function check_booking_data(){
 	var notes_section = document.getElementById("no_tm_notes")
 	var name=prompt("Please clarify why you changed this");
@@ -32,13 +50,14 @@ function check_booking_data(){
 		notes_section.value = name;
 	}
 }
-function void_notes1(){
-	var notes_section = document.getElementById("void_notes")
-	var name=prompt("Please clarify why you voided this");
+function void_notes1(where){
+	var notes_section = document.getElementById(where)
+	var name=prompt("Please clarify");
 	if (name!=null){
 		notes_section.value = name;
 	}
 }
+
 
 	</script>
 </head>
@@ -56,75 +75,68 @@ function void_notes1(){
 </nav>
 
 <h2>{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} - Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</h2>
-	<br>
 	<form action="{% url 'extra_work_ticket' changeorder.id %}" method="post">
 {% csrf_token %}
 		<input type="submit" name="open_folder" value="Open Folder to View Files" />
 	</form>
 <br>
 {% if changeorder.is_closed == True %}
-<h1>VOIDED</h1>
+	<h1>VOIDED</h1>
 {% else %}
-{% if changeorder.need_ticket == "Yes" %}
-	<h1>Ticket Required</h1>
-{% elif changeorder.need_ticket_signed == "Yes" %}
-	<h1>Ticket Submitted, Not Signed</h1>
-	<br>
-	<form action="{% url 'print_ticket' changeorder.id %}" >
-		<input type="submit" value="Print Ticket" />
-	</form>
-	<br>
-	<form action="{% url 'view_ewt' changeorder.id %}" >
-		<input type="submit" value="View / Change Ticket"/>
-	</form>
-	<br>
-	<form action="{% url 'extra_work_ticket' changeorder.id %}" method="post" >
-		{% csrf_token %}
-		<input type="submit" name='signed' value="Ticket Signed"/>
-	</form>
-	<br>
-	<form action="{% url 'price_ewt' changeorder.id %}" >
-		<input type="submit" value="Send Price Now, Without Signed Ticket"/>
-	</form>
-{% elif changeorder.date_sent == None %}
-	<h1>Change Order Not Sent Yet</h1>
-	<br>
-	<form action="{% url 'change_order_send' changeorder.id %}" >
-		<input type="submit" value="Send Now"/>
-	</form>
-{% else %}
-	{% if changeorder.is_approved == True %}
-		<h1>Change Order Approved</h1>
-		<h3> Date Sent: {{changeorder.date_sent}}</h3>
-		<h3> Date Approved: {{changeorder.date_approved}}</h3>
-		<h3>Price: ${{changeorder.price}}</h3>
-		<h3>GC #: {{changeorder.gc_number}}</h3>
-	{% else %}
-		<h1>Change Order Sent</h1>
-		<h3> Date Sent: {{changeorder.date_sent}}</h3>
-		<h3>Price: ${{changeorder.price}}</h3>
-		<h5>Scope: {{changeorder.full_description}}</h5>
-		<form name = 'approval_input' action="{% url 'extra_work_ticket' changeorder.id %}" method="post" >
-			{% csrf_token %}
-
-			<input type="checkbox" name ="is_approved_to_bill" id="is_approved_to_bill" /> <label for="is_approved_to_bill">"Is this Approved for Billing?" </label>
-			<br>
-			<label for="approved_price">Approved Price: $</label><input type= "text" name="approved_price" id="approved_price" value={{changeorder.price}} size="30" required />
-				<br>
-			<label for="gc_number">GC Formal Number: </label><input type= "text" name="gc_number" id="gc_number"  size="10" />
-			<br>
-					<label for="approval_note">Please provide any notes about this approval: </label> <br>
-				<textarea id="approval_note" name="approval_note" rows="2" cols="100" ></textarea>
-			<br>
-			<input type="submit" name='submit_form1' value="Approve Now!" />
-		</form>
-		<br>
-		<form action="{% url 'change_order_send' changeorder.id %}" >
-			<input type="submit" name='edit_co' value="Edit Change Order" />
-		</form>
-		<hr>
+	{% if changeorder.is_t_and_m == True %}
+		{% if changeorder.need_ticket == "Yes" %}
+			<h1>Ticket Required</h1>
+			<form action = "{% url 'process_ewt' changeorder.id %}">
+				<input type="submit" value="Fill Out Ticket Now" />
+			</form>
+		{% else %}
+			<form action="{% url 'print_ticket' changeorder.id %}" ><input type="submit" value="Print Ticket" /></form>
+			<form action="{% url 'view_ewt' changeorder.id %}" ><input type="submit" value="View / Change Ticket (still need to code)"/></form><br>
+			{% if changeorder.need_ticket_signed == "Yes" %}
+				<h1>Ticket Submitted, Not Signed</h1>
+				<form action="{% url 'extra_work_ticket' changeorder.id %}" method="post" onSubmit = "void_notes1('signed_notes')" >
+					{% csrf_token %}
+					<input type = "hidden" name="signed_notes" id="signed_notes" /><input type="submit" name='signed' value="Ticket Signed" /></form><br>
+				<form action="{% url 'price_ewt' changeorder.id %}" ><input type="submit" value="Send Price Now, Without Signed Ticket"/></form>
+			{% endif %}
+		{% endif %}
 	{% endif %}
-{% endif %}
+	{% if changeorder.date_sent == None %}
+		{% if changeorder.is_t_and_m == True %}
+			{% if changeorder.need_ticket == "No" and changeorder.need_ticket_signed == "No"  %}
+					<h1>Change Order Not Sent Yet</h1><br>
+					<form action="{% url 'price_ewt' changeorder.id %}" ><input type="submit" value="Send TM Price Now"/></form>
+			{% endif %}
+		{% else %}
+				<h1>Change Order Not Sent Yet</h1><br>
+					<form action="{% url 'change_order_send' changeorder.id %}" ><input type="submit" value="Send Now"/></form>
+		{% endif %}
+	{% else %}
+			{% if changeorder.is_approved == True %}
+				<h1>Change Order Approved</h1>
+				<h3> Date Sent: {{changeorder.date_sent}}</h3>
+				<h3> Date Approved: {{changeorder.date_approved}}</h3>
+				<h3>Price: ${{changeorder.price}}</h3>
+				<h3>GC #: {{changeorder.gc_number}}</h3>
+			{% else %}
+				<h1>Change Order Sent</h1>
+				<form action="{% url 'extra_work_ticket' changeorder.id %}" method="post"  >
+					{% csrf_token %}
+				<input type="submit" name="view_proposal" value="View Proposal(need to code)"/></form>
+				<h3> Date Sent: {{changeorder.date_sent}}</h3>
+				<h3>Price: ${{changeorder.price}}</h3>
+				<h5>Scope: {{changeorder.full_description}}</h5>
+				<form name = 'approval_input' action="{% url 'extra_work_ticket' changeorder.id %}" method="post" onSubmit = "return check_booking_data1()">
+					{% csrf_token %}
+					<input type="checkbox" name ="is_approved_to_bill" id="is_approved_to_bill" /> <label for="is_approved_to_bill">"Is this Approved for Billing?" </label><br>
+					<label for="approved_price">Approved Price: $</label><input type= "text" name="approved_price" id="approved_price" value={{changeorder.price}} size="30" required /><br>
+					<label for="gc_number">GC Formal Number: </label><input type= "text" name="gc_number" id="gc_number"  size="10" /><br>
+							<label for="approval_note">Please provide any notes about this approval: </label> <br>
+						<textarea id="approval_note" name="approval_note" rows="2" cols="100" ></textarea><br>
+					<input type="submit" name='submit_form1' value="Approve Now!" /></form><br>
+				<form action="{% url 'change_order_send' changeorder.id %}" ><input type="submit" name='edit_co' value="Edit Change Order" /></form><hr>
+			{% endif %}
+	{% endif %}
 {% endif %}
 <br>
 {% if notes %}
@@ -142,41 +154,22 @@ function void_notes1(){
 	<textarea id="new_note" name="new_note" rows="2" cols="50" ></textarea>
 	<input type="submit" name='submit_form2' value="Add Note" />
 </form>
-{% if changeorder.need_ticket == "Yes" %}
-<form action = "{% url 'process_ewt' changeorder.id %}">
-    <input type="submit" value="Fill Out Ticket Now" />
-</form>
-<br><hr>
-{% elif changeorder.need_ticket_signed == "Yes" %}
-<form action = "{% url 'view_ewt' changeorder.id %}">
-    <input type="submit" value="View / Change Ticket" />
-</form>
-<br><hr>
-{% endif %}
+
 <form name = 'change_tm' action="{% url 'extra_work_ticket' changeorder.id %}" method="post" onSubmit = "return check_booking_data()">
 		{% csrf_token %}
 	<input type="hidden" id="no_tm" name="no_tm" value="Yes" />
 	<input type="hidden" id="no_tm_notes" name="no_tm_notes" value="None" />
-	{% if changeorder.need_ticket == "Yes" %}
+	{% if changeorder.is_t_and_m == True %}
 		<input type="submit" name='submit_form3' value="Price Required, No Longer T&M"/>
-	{% elif changeorder.need_ticket_signed == "Yes" %}
-		<input type="submit" name='submit_form3' value="Price Required, No Longer T&M"/>
+
 	{% else %}
 		<input type="submit" name='submit_form3' value="Change to T&M"/>
 	{% endif %}
 </form>
 
-	{% if changeorder.need_ticket != "Yes" %}
-	{% if changeorder.date_sent == None %}
-
-	{% endif %}
-	{% endif %}
-
-
-
 
 <br>
-		<form name = 'void_input' action="{% url 'extra_work_ticket' changeorder.id %}" method="post" onSubmit="void_notes1()" >
+		<form name = 'void_input' action="{% url 'extra_work_ticket' changeorder.id %}" method="post" onSubmit="void_notes1('void_notes')" >
 			{% csrf_token %}
 			<input type = "hidden" name="void_notes" id="void_notes" />
 		<input type="submit" name='submit_form4' value="VOID"/>
