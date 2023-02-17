@@ -14,8 +14,27 @@ import os.path
 # Create your views here.
 
 def print_TMProposal(request,id):
-    print("HI")
-    return redirect('index')
+    newproposal = TMProposal.objects.get(id=id)
+    changeorder = newproposal.change_order
+    laboritems = TMList.objects.filter(change_order=changeorder,category="Labor")
+    materialitems = TMList.objects.filter(change_order=changeorder,category="Material")
+    equipmentitems = TMList.objects.filter(change_order=changeorder, category="Equipment")
+    extraitems = TMList.objects.filter(change_order=changeorder, category="Extras")
+    inventory_exists = False
+    bond_exists = False
+    inventory = []
+    bond = []
+    if TMList.objects.filter(change_order=changeorder,category="Inventory"):
+        inventory_exists = True
+        inventory = TMList.objects.get(change_order=changeorder,category="Inventory")
+    if TMList.objects.filter(change_order=changeorder, category="Bond"):
+        bond = TMList.objects.get(change_order=changeorder, category="Bond")
+        bond_exists = True
+    ewt = newproposal.ticket
+
+    return render(request, "print_TMProposal.html",
+                  {'inventory_exists':inventory_exists,'bond_exists':bond_exists,'laboritems':laboritems,'materialitems':materialitems,'inventory':inventory,'bond':bond,'equipmentitems':equipmentitems,'extraitems':extraitems,'newproposal':newproposal,'changeorder':changeorder,'ewt':ewt})
+
 
 def price_ewt(request,id):
     changeorder = ChangeOrders.objects.get(id=id)
@@ -293,9 +312,11 @@ def extra_work_ticket(request,id):
     changeorder = ChangeOrders.objects.get(id=id)
     ticket_needed = changeorder.need_ticket()
     notes = ChangeOrderNotes.objects.filter(cop_number=id)
-
+    tmproposal=[]
+    if TMProposal.objects.filter(change_order=changeorder):
+        tmproposal=TMProposal.objects.get(change_order=changeorder)
     if request.method == 'GET':
-        return render(request, "extra_work_ticket.html", {'ticket_needed':ticket_needed,'changeorder': changeorder, 'notes': notes})
+        return render(request, "extra_work_ticket.html", {'tmproposal':tmproposal,'ticket_needed':ticket_needed,'changeorder': changeorder, 'notes': notes})
     if request.method == 'POST':
         if 'view_proposal' in request.POST:
             print("NEED TO DO")
@@ -353,7 +374,7 @@ def extra_work_ticket(request,id):
                 changeordernote = ChangeOrderNotes.objects.create(note=request.POST['new_note'],
                                                                   cop_number= changeorder, date=date.today(), user=request.user.first_name + " " + request.user.last_name)
         notes = ChangeOrderNotes.objects.filter(cop_number=id)
-        return render(request, "extra_work_ticket.html", {'ticket_needed':ticket_needed,'changeorder': changeorder, 'notes': notes})
+        return render(request, "extra_work_ticket.html", {'tmproposal':tmproposal,'ticket_needed':ticket_needed,'changeorder': changeorder, 'notes': notes})
 
 
 def process_ewt(request, id):

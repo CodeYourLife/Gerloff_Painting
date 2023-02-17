@@ -120,9 +120,13 @@ function void_notes1(where){
 				<h3>GC #: {{changeorder.gc_number}}</h3>
 			{% else %}
 				<h1>Change Order Sent</h1>
-				<form action="{% url 'extra_work_ticket' changeorder.id %}" method="post"  >
-					{% csrf_token %}
+				{% if changeorder.is_t_and_m == True %}
+				<form action="{% url 'print_TMProposal' tmproposal.id %}" >
+				<input type="submit" name="view_proposal" value="View Proposal"/></form>
+				{% else %}
+				<form action="{% url 'print_TMProposal' changeorder.tmproposal.id %}" >
 				<input type="submit" name="view_proposal" value="View Proposal(need to code)"/></form>
+				{% endif %}
 				<h3> Date Sent: {{changeorder.date_sent}}</h3>
 				<h3>Price: ${{changeorder.price}}</h3>
 				<h5>Scope: {{changeorder.full_description}}</h5>
