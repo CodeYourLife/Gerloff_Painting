@@ -8,6 +8,7 @@ from django_tables2 import RequestConfig
 from wallcovering.tables import ChangeOrderTable
 from wallcovering.filters import ChangeOrderFilter
 from console.misc import Email
+from datetime import datetime
 
 import os
 import os.path
@@ -381,11 +382,69 @@ def extra_work_ticket(request,id):
 def process_ewt(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
     if request.method == 'POST':
-
         if EWT.objects.filter(change_order=changeorder).exists():
+            ewt=EWT.objects.get(change_order=changeorder)
+            TMProposal.objects.filter(ticket=ewt).delete()
+            # if EWTicket.objects.filter(EWT=ewt).exists():
+            EWTicket.objects.filter(EWT=ewt).delete()
             EWT.objects.get(change_order=changeorder).delete()
-        ewt= EWT.objects.create(change_order=changeorder,week_ending = request.POST['date_week_ending'], notes=request.POST['ticket_description'],completed_by=request.user.first_name + " " + request.user.last_name)
-        ChangeOrderNotes.objects.create(cop_number=changeorder,date = date.today(), user = request.user.first_name + " " + request.user.last_name,note = "Extra Work Ticket Added")
+        ewt = EWT.objects.create(change_order=changeorder, week_ending=request.POST['date_week_ending'],
+                                     notes=request.POST['ticket_description'],
+                                     completed_by=request.user.first_name + " " + request.user.last_name)
+        ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                        user=request.user.first_name + " " + request.user.last_name,
+                                        note="Extra Work Ticket Added")
+        if 'existing_painter' in request.POST:
+            answer=request.POST.getlist('existing_painter')
+            tuesday = request.POST.getlist('tuesday')
+            wednesday = request.POST.getlist('wednesday')
+            thursday = request.POST.getlist('thursday')
+            friday = request.POST.getlist('friday')
+            saturday = request.POST.getlist('saturday')
+            sunday = request.POST.getlist('sunday')
+            monday = request.POST.getlist('monday')
+            ot = request.POST.getlist('is_overtime')
+            for x in range(0, len(answer)):
+                if ot[x] != 'notchecked':
+                    master = TMPricesMaster.objects.get(item='Painter Hours OT')
+                    EWTicket.objects.create(master=master, EWT=ewt, employee=Employees.objects.get(
+                        id=answer[x]), monday=float(monday[x]),
+                                            tuesday=float(tuesday[x]),
+                                            wednesday=float(wednesday[x]),
+                                            thursday=float(thursday[x]),
+                                            friday=float(friday[x]),
+                                            saturday=float(saturday[x]),
+                                            sunday=float(sunday[x]), ot=True)
+                else:
+                    master = TMPricesMaster.objects.get(item='Painter Hours')
+                    EWTicket.objects.create(master=master, EWT=ewt, employee=Employees.objects.get(
+                        id=answer[x]), monday=float(monday[x]),
+                                            tuesday=float(tuesday[x]),
+                                            wednesday=float(wednesday[x]),
+                                            thursday=float(thursday[x]),
+                                            friday=float(friday[x]),
+                                            saturday=float(saturday[x]),
+                                            sunday=float(sunday[x]), ot=False)
+        if 'existing_material' in request.POST:
+            answer = request.POST.getlist('existing_material')
+            description = request.POST.getlist('description')
+            quantity = request.POST.getlist('quantity')
+            units = request.POST.getlist('units')
+            for x in range(0, len(answer)):
+                master = TMPricesMaster.objects.get(id=answer[x])
+                EWTicket.objects.create(master=master, EWT=ewt, description=description[x],
+                                            quantity=quantity[x],
+                                            units=units[x])
+        if 'existing_equipment' in request.POST:
+            answer = request.POST.getlist('existing_equipment')
+            description = request.POST.getlist('equip_description')
+            quantity = request.POST.getlist('equip_quantity')
+            units = request.POST.getlist('equip_units')
+            for x in range(0, len(answer)):
+                master = TMPricesMaster.objects.get(id=answer[x])
+                EWTicket.objects.create(master=master, EWT=ewt, description=description[x],
+                                            quantity=quantity[x],
+                                            units=units[x])
         if request.POST['number_painters'] != 0:
             for x in range (1,int(request.POST['number_painters'])+1):
                 if 'painter_dropdown' + str(x) in request.POST:
@@ -426,9 +485,6 @@ def process_ewt(request, id):
                 if 'select_equipment' + str(x) in request.POST:
                     master = TMPricesMaster.objects.get(id=request.POST['select_equipment' + str(x)])
                     EWTicket.objects.create(master=master, EWT = ewt, description = request.POST['equipment_description' + str(x)], quantity = request.POST['equipment_quantity' + str(x)], units = request.POST['equipment_units' + str(x)])
-
-
-
         return redirect('change_order_home')
     employees = Employees.objects.all()
     employees2 = Employees.objects.values()
@@ -438,40 +494,34 @@ def process_ewt(request, id):
     employees_json = json.dumps(list(employees2), cls=DjangoJSONEncoder)
     materials_json = json.dumps(list(materials2), cls=DjangoJSONEncoder)
     equipment_json = json.dumps(list(equipment), cls=DjangoJSONEncoder)
-    ewt_exists=False
-    laboritems = []
-    laboritemscount = 0
-    materialitems = []
-    materialitemscount = 0
-    inventory = []
-    extraitems =[]
-    extraitemscount = 0
-    bond = []
-    labor_exists=False
-    material_exists=False
-    extras_exists = False
-    bond_exists = False
+    send_data ={'equipment':equipment,'equipmentjson':equipment_json,'materialsjson': materials_json, 'materials': materials,'changeorder': changeorder,'employees': employees, 'employeesjson': employees_json}
     if EWT.objects.filter(change_order=changeorder).exists():
         ewt = EWT.objects.get(change_order=changeorder)
-        ewt_exists=True
+        send_data['ewt']=ewt
+        adjust_date = ewt.week_ending.strftime("%Y-%m-%d")
+        send_data['ewtdate'] = adjust_date
         if EWTicket.objects.filter(EWT=ewt,master__category="Labor").exists():
-            laboritems = EWTicket.objects.filter(EWT=ewt, master__category="Labor")
-            laboritems2 = EWTicket.objects.filter(EWT=ewt, master__category="Labor").values
-            print(laboritems2)
-            laboritemscount = laboritems.count()
-            labor_exists = True
+            laboritems = EWTicket.objects.filter(EWT=ewt,master__category="Labor").values()
+            # laboritems = json.dumps(list(laboritems1), cls=DjangoJSONEncoder)
+            send_data['laboritems']=laboritems
         if EWTicket.objects.filter(EWT=ewt,master__category="Material").exists():
-            materialitems = EWTicket.objects.filter(EWT=ewt,master__category="Material")
-            materialitemscount = materialitems.count()
+            materialitems = EWTicket.objects.filter(EWT=ewt,master__category="Material").values()
+            # materialitems = json.dumps(list(materialitems1), cls=DjangoJSONEncoder)
+            send_data['materialitems']=materialitems
             inventory = EWTicket.objects.filter(EWT=ewt,master__category="Inventory")
-            material_exists = True
+            # inventory = json.dumps(list(inventory1), cls=DjangoJSONEncoder)
+            send_data['inventory'] = inventory
         if EWTicket.objects.filter(EWT=ewt,master__category="Extras").exists():
-            extraitems = EWTicket.objects.filter(EWT=ewt,master__category="Extras")
-            extraitemscount = extraitems.count()
-            extras_exists = True
+            extraitems = EWTicket.objects.filter(EWT=ewt,master__category="Extra").values()
+            # extraitems = json.dumps(list(extraitems1), cls=DjangoJSONEncoder)
+            send_data['extraitems']=extraitems
+        if EWTicket.objects.filter(EWT=ewt,master__category="Equipment").exists():
+            equipmentitems = EWTicket.objects.filter(EWT=ewt,master__category="Equipment").values()
+            # equipmentitems = json.dumps(list(equipmentitems1), cls=DjangoJSONEncoder)
+            send_data['equipmentitems']=equipmentitems
         if EWTicket.objects.filter(EWT=ewt,master__category="Bond").exists():
-            bond = EWTicket.objects.filter(EWT=ewt,master__category="Bond")
-            bond_exists = True
-    return render(request, "process_ewt.html", {'ewt_exists':ewt_exists,'laboritems':laboritems,'laboritemscount':laboritemscount,
-                                                'labor_exists':labor_exists,'materialitems':materialitems,'materialitemscount':materialitemscount,'inventory':inventory,'material_exists':material_exists,
-                                                'extraitems':extraitems,'extraitemscount':extraitemscount,'extras_exists':extras_exists,'bond':bond,'bond_exists':bond_exists,'equipment':equipment,'equipmentjson':equipment_json,'materialsjson': materials_json, 'materials': materials,'changeorder': changeorder,'employees': employees, 'employeesjson': employees_json})
+            bond = EWTicket.objects.filter(EWT=ewt,master__category="Bond").values
+            # bond = json.dumps(list(bond1), cls=DjangoJSONEncoder)
+            send_data['bond'] = bond
+
+    return render(request, "process_ewt.html", send_data)

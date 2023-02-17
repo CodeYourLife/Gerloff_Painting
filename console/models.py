@@ -379,7 +379,7 @@ class EWT(models.Model):
 
 class EWTicket(models.Model):
 	id = models.BigAutoField(primary_key=True)
-	master = models.ForeignKey(TMPricesMaster, on_delete=models.PROTECT, null=True)
+	master = models.ForeignKey(TMPricesMaster, on_delete=models.PROTECT, null=True,related_name = 'ewtmaster')
 	EWT = models.ForeignKey(EWT, on_delete=models.PROTECT)
 	category = models.CharField(null=True, max_length=50, validators=[validate_tm_category]) #DONT USE # labor, material, equipment, bond, inventory
 	employee = models.ForeignKey(Employees, on_delete=models.PROTECT,null=True)

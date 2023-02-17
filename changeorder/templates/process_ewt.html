@@ -26,6 +26,12 @@ var row_counter = 1;
 var material_row_counter = 1;
 var equipment_row_counter = 1;
 
+window.onload = function() {
+rolodex = JSON.parse("{{laboritems|escapejs}}");
+alert(rolodex[0].employee.id)
+}
+
+
 function delete_row(btn){
 var row = btn.parentNode.parentNode;
 row.parentNode.removeChild(row);
@@ -255,10 +261,11 @@ if (elementTypeSelector[i].value =='please_select'){
 <form name="ticket_input" action="{% url 'process_ewt' changeorder.id %}" method="post" onSubmit="return before_post()" >
 	{% csrf_token %}
 	<label for="date_week_ending">Week Ending Date</label>
-	<input type="date" id="date_week_ending" name="date_week_ending" required>
+	<input type="date" id="date_week_ending" name="date_week_ending" value = {{ewtdate}} required>
+
 
 	<label for="ticket_description">Details of Work Completed </label> <br>
-        <textarea id="ticket_description" name="ticket_description" rows="4" cols="100" ></textarea>
+        <textarea id="ticket_description" name="ticket_description" rows="4" cols="100" >{% if ewt %}{{ewt.notes}}{% endif %}</textarea>
         <br /> <hr>
 
 	<h3>LABOR BREAKDOWN</h3>
@@ -279,28 +286,38 @@ if (elementTypeSelector[i].value =='please_select'){
 			</tr>
 		</thead>
 		<tbody>
+
+		{% if laboritems %}
+		{% for x in laboritems %}
+
 			<tr id="row1">
+
 				<td>
-<!--            		<select id="painter_dropdown1" name="painter_dropdown1" >
-                	<option value="please_select">please select</option>
-                	{% if employees %}
-                	{% for employee in employees %}
-                	<option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
-                	{% endfor %}
-                	{% endif %}
-            		</select>-->
+					<select id="existing_painter" name="existing_painter" >
+{% for y in employees %} {% if y.id == x.employee_id %}
+                	<option value={{y.id}}>{{y.first_name}} {{y.last_name}}</option>
+{% endif %}{% endfor %}
+            		</select>
 				</td>
-				<td><!--<input type="number" id="monday1" name="monday1" size=3>--></td>
-				<td><!--<input type="number" id="tuesday1" name="tuesday1" size=3>--></td>
-				<td><!--<input type="number" id="wednesday1" name="wednesday1" size=3>--></td>
-				<td><!--<input type="number" id="thursday1" name="thursday1" size=3>--></td>
-				<td><!--<input type="number" id="friday1" name="friday1" size=3>--></td>
-				<td><!--<input type="number" id="saturday1" name="saturday1" size=3>--></td>
-				<td><!--<input type="number" id="sunday1" name="sunday1" size=3>--></td>
-				<td><!--OT?<input type='hidden' value='notchecked' name="is_overtime1" id="is_overtime1" ><input type="checkbox" name="is_overtime1" id="is_overtime1" value="checked"  />-->
-        		</td>
-				<td></td>
+				<td><input type="number" id="monday" name="monday" size=3 value ={{x.monday}}></td>
+				<td><input type="number" id="tuesday" name="tuesday" value ={{x.tuesday}} size=3></td>
+				<td><input type="number" id="wednesday" name="wednesday" value ={{x.wednesday}} size=3></td>
+				<td><input type="number" id="thursday" name="thursday" value ={{x.thursday}} size=3></td>
+				<td><input type="number" id="friday" name="friday" value ={{x.friday}} size=3></td>
+				<td><input type="number" id="saturday" name="saturday" value ={{x.saturday}} size=3></td>
+				<td><input type="number" id="sunday" name="sunday" value ={{x.sunday}} size=3></td>
+				{% if x.master_id == 8 %}
+				<td>OT?<input type='hidden' value='notchecked' name="is_overtime" id="is_overtime" ><input type="checkbox" name="is_overtime" id="is_overtime" value="checked" checked />
+        		{% else %}
+					<td>OT?<input type='hidden' value='notchecked' name="is_overtime" id="is_overtime" ><input type="checkbox" name="is_overtime" id="is_overtime" value="checked"  />
+				{% endif %}
+			</td>
+				<td><button type="button" onclick="delete_row(this)">Delete </button></td>
 			</tr>
+
+		{% endfor %}
+		{% endif %}
+
 		</tbody>
 	</table>
 	<button type="button" onclick="add_painter_row()">Add Painter Row </button>
@@ -313,27 +330,34 @@ if (elementTypeSelector[i].value =='please_select'){
 				<th>Description</th>
 				<th>Quantity</th>
 				<th>Units</th>
+				<th>Delete</th>
 
 			</tr>
 		</thead>
 		<tbody>
+				{% if materialitems %}
+		{% for x in materialitems %}
+
 			<tr>
 				<td>
 
-<!--            		<select id="select_material1" name="select_material1" onchange="changematerial(event)">
-                	<option value="please_select">please select</option>
-                	{% if materials %}
-                	{% for material in materials %}
-                	<option value={{material.id}}>{{material.item}}</option>
-                	{% endfor %}
-                	{% endif %}
-            		</select>-->
-				</td>
-				<td><!--<input type="text" name="description1" placeholder="description" size="30" id="description1"/>--></td>
-				<td><!--<input type="number" id="quantity1" name = "quantity1" size="3">--></td>
-				<td><!--<input type="text" name="units1" placeholder="units" size="10" id="units1"/>--></td>
+			<select id="existing_material" name="existing_material" >
 
+					{% for y in materials %}  {% if y.id == x.master_id %}
+                	<option value={{y.id}}>{{y.item}}</option>
+                {% endif %}
+				{% endfor %}
+
+            		</select>
+				</td>
+				<td><input type="text" name="description" placeholder="description" size="30" id="description" value = "{{x.description}}" /></td>
+				<td><input type="number" id="quantity" name = "quantity" size="3" value = {{x.quantity}} /></td>
+				<td><input type="text" name="units" placeholder="units" size="10" id="units" value = "{{x.units}}"  /></td>
+<td><button type="button" onclick="delete_row(this)">Delete </button></td>
 			</tr>
+
+				{% endfor %}
+		 {% endif %}
 		</tbody>
 	</table>
 	<button type="button" onclick="add_material_row()">Add Material Row </button>
@@ -346,27 +370,34 @@ if (elementTypeSelector[i].value =='please_select'){
 				<th>Description</th>
 				<th>Quantity</th>
 				<th>Units</th>
+				<th>Delete</th>
 
 			</tr>
 		</thead>
 		<tbody>
+				{% if equipmentitems %}
+		{% for x in equipmentitems %}
+
 			<tr>
 				<td>
-<!--
-            		<select id="select_equipment1" name="select_equipment1" onchange="changeequipment(event)">
-                	<option value="please_select">please select</option>
-                	{% if equipment %}
-                	{% for x in equipment %}
-                	<option value={{x.id}}>{{x.item}}</option>
-                	{% endfor %}
-                	{% endif %}
-            		</select>-->
-				</td>
-				<td><!--<input type="text" name="equipment_description1" placeholder="description" size="30" id="equipment_description1"/>--></td>
-				<td><!--<input type="number" id="equipment_quantity" name="equipment_quantity" size="3">--></td>
-				<td><!--<input type="text" name="equipment_units1" placeholder="units" size="10" id="equipment_units1"/>--></td>
 
+			<select id="existing_equipment" name="existing_equipment" >
+
+					{% for y in equipment %}  {% if y.id == x.master_id %}
+                	<option value={{y.id}}>{{y.item}}</option>
+                {% endif %}
+				{% endfor %}
+
+            		</select>
+				</td>
+				<td><input type="text" name="equip_description" size="30" id="equip_description" value = "{{x.description}}" /></td>
+				<td><input type="number" id="equip_quantity" name = "equip_quantity" size="3" value = {{x.quantity}} /></td>
+				<td><input type="text" name="equip_units" placeholder="units" size="10" id="equip_units" value = "{{x.units}}"  /></td>
+<td><button type="button" onclick="delete_row(this)">Delete </button></td>
 			</tr>
+
+				{% endfor %}
+		 {% endif %}
 		</tbody>
 	</table>
 <button type="button" onclick="add_equipment_row()">Add Equipment </button>
