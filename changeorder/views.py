@@ -42,6 +42,7 @@ def price_ewt(request,id):
     if request.method == 'POST':
         changeorder.price = request.POST['final_cost']
         changeorder.date_sent = date.today()
+        changeorder.full_description=ewt.notes + " " + request.POST['notes']
         changeorder.save()
         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                         user=request.user.first_name + " " + request.user.last_name,
@@ -437,4 +438,40 @@ def process_ewt(request, id):
     employees_json = json.dumps(list(employees2), cls=DjangoJSONEncoder)
     materials_json = json.dumps(list(materials2), cls=DjangoJSONEncoder)
     equipment_json = json.dumps(list(equipment), cls=DjangoJSONEncoder)
-    return render(request, "process_ewt.html", {'equipment':equipment,'equipmentjson':equipment_json,'materialsjson': materials_json, 'materials': materials,'changeorder': changeorder,'employees': employees, 'employeesjson': employees_json})
+    ewt_exists=False
+    laboritems = []
+    laboritemscount = 0
+    materialitems = []
+    materialitemscount = 0
+    inventory = []
+    extraitems =[]
+    extraitemscount = 0
+    bond = []
+    labor_exists=False
+    material_exists=False
+    extras_exists = False
+    bond_exists = False
+    if EWT.objects.filter(change_order=changeorder).exists():
+        ewt = EWT.objects.get(change_order=changeorder)
+        ewt_exists=True
+        if EWTicket.objects.filter(EWT=ewt,master__category="Labor").exists():
+            laboritems = EWTicket.objects.filter(EWT=ewt, master__category="Labor")
+            laboritems2 = EWTicket.objects.filter(EWT=ewt, master__category="Labor").values
+            print(laboritems2)
+            laboritemscount = laboritems.count()
+            labor_exists = True
+        if EWTicket.objects.filter(EWT=ewt,master__category="Material").exists():
+            materialitems = EWTicket.objects.filter(EWT=ewt,master__category="Material")
+            materialitemscount = materialitems.count()
+            inventory = EWTicket.objects.filter(EWT=ewt,master__category="Inventory")
+            material_exists = True
+        if EWTicket.objects.filter(EWT=ewt,master__category="Extras").exists():
+            extraitems = EWTicket.objects.filter(EWT=ewt,master__category="Extras")
+            extraitemscount = extraitems.count()
+            extras_exists = True
+        if EWTicket.objects.filter(EWT=ewt,master__category="Bond").exists():
+            bond = EWTicket.objects.filter(EWT=ewt,master__category="Bond")
+            bond_exists = True
+    return render(request, "process_ewt.html", {'ewt_exists':ewt_exists,'laboritems':laboritems,'laboritemscount':laboritemscount,
+                                                'labor_exists':labor_exists,'materialitems':materialitems,'materialitemscount':materialitemscount,'inventory':inventory,'material_exists':material_exists,
+                                                'extraitems':extraitems,'extraitemscount':extraitemscount,'extras_exists':extras_exists,'bond':bond,'bond_exists':bond_exists,'equipment':equipment,'equipmentjson':equipment_json,'materialsjson': materials_json, 'materials': materials,'changeorder': changeorder,'employees': employees, 'employeesjson': employees_json})
