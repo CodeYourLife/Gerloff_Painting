@@ -25,6 +25,46 @@
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
+var number_rows = 0;
+
+function addWCRow(){
+		if (event.currentTarget.checked){
+		var table = document.getElementById("items_table");
+		var rows = table.getElementsByTagName("tr").length;
+		var row = table.insertRow(rows);
+		wc_id = event.currentTarget.id
+		checkbox =  document.getElementById(event.currentTarget.id)
+		labels = document.getElementsByTagName('label');
+	   	for( var i = 0; i < labels.length; i++ ) {
+      		if (labels[i].htmlFor == event.currentTarget.id){
+           		label = labels[i].innerHTML;
+           		alert(label)
+           		var cell1 = row.insertCell(0);
+           		cell1.innerHTML = "<td><input type='text' name='wallcovering" + wc_id + "' value='" + label + "' size='60' id='wallcovering" + wc_id + "'/></td>"
+   				}
+}
+}
+}
+
+
+function add_equipment_row() {
+	equipment_row_counter = equipment_row_counter + 1
+	hidden = document.getElementById("number_equipment");
+	hidden.value=equipment_row_counter
+	var table = document.getElementById("equipment_breakdown");
+	var rows = table.getElementsByTagName("tr").length;
+	var row = table.insertRow(rows);
+	var cell1 = row.insertCell(0);
+	var cell2 = row.insertCell(1);
+	var cell3 = row.insertCell(2);
+	var cell4 = row.insertCell(3);
+	cell1.innerHTML = "<div id='new_equipment" + equipment_row_counter + "'></div>";
+	add_equipment_dropdown();
+	cell2.innerHTML = "<td><input type='text' name='equipment_description" + equipment_row_counter +"' placeholder='description' size='30' id='equipment_description" + equipment_row_counter +"'/></td>"
+	cell3.innerHTML ="<td><input type='number' id='equipment_quantity" + equipment_row_counter +"' name = 'equipment_quantity" + equipment_row_counter +"' size='3'></td>"
+	cell4.innerHTML ="<td><input type='text' name='equipment_units" + equipment_row_counter +"' placeholder='units' size='10' id='equipment_units" + equipment_row_counter +"'/></td>"
+
+}
 
 
 	</script>
@@ -50,9 +90,30 @@
  <input type="submit" name="job_select" value="Select Job" />
 
 	{% if job_selected %}
+	{% if wallcovering %}
+	 <br>
+	 Please select any wallcoverings included in this submittal: <br>
+
+	 {% for x in wallcovering %}
+
+	 <input type="checkbox" name =checkbox{{x.id}} id={{x.id}} onClick="addWCRow()" /> <label for={{x.id}}>{{x.code}} {{x.vendor}} {{x.pattern}} </label>
+<br>
+	 {% endfor %}
+	{% endif %}
 
 
+<br>
 
+<div class="demo-html" style="width:90%">
+		<table id="items_table" class="display" style="width:90%">
+
+			<tbody>
+				<tr>
+					<td> <button type="button" onclick="addRow()">Add Submittal Item</button> </td>
+				</tr>
+			</tbody>
+		</table>
+</div>
 
 
 

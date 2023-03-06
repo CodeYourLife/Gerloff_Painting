@@ -17,6 +17,13 @@ def submittals_new(request):
             if 'job_select' in request.POST:
                 jobs = Jobs.objects.filter(job_number=request.POST['select_job'])
                 send_data['job_selected'] = Jobs.objects.get(job_number=request.POST['select_job'])
+                wallcovering = Wallcovering.objects.filter(job_number = request.POST['select_job'])
+                send_data['wallcovering'] = wallcovering
+                if Submittals.objects.filter(job_number = request.POST['select_job']).exists():
+                    submittal_number = Submittals.objects.filter(job_number = request.POST['select_job']).order_by('submittal_number').last() +1
+                else:
+                    submittal_number = 1
+                send_data['submittal_number'] = submittal_number
     send_data["jobs"]=jobs
 
     return render(request, "submittals_new.html", send_data)
