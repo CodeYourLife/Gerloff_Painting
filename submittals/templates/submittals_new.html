@@ -27,43 +27,65 @@
 	<script type="text/javascript" class="init">
 var number_rows = 0;
 
+function delete_row(btn){
+var row = btn.parentNode.parentNode;
+row.parentNode.removeChild(row);
+}
+
+function SelectWC(btn){
+	var table = document.getElementById("wc_items_table");
+	cell = btn.parentNode
+	row = btn.parentNode.parentNode.parentNode.parentNode
+	cell1 = row.insertCell(1);
+	var sel = document.getElementById(btn.id);
+	cell1.innerHTML = "<td><input type='text' name = 'wc_item' value = '" +  sel.options[sel.selectedIndex].text + "' size = '70' /></td>"
+	cell3 = row.insertCell(2);
+	cell3.innerHTML = "<td>Quantity: <input type='number' name = 'wc_quantity' value = '1' size = '8' /></td>"
+	cell2 = row.insertCell(3);
+	cell2.innerHTML = "<td><button type='button' onclick='delete_row(this)'>Delete Item</button> </td>"
+}
+
 function addWCRow(){
-		if (event.currentTarget.checked){
+		number_rows=number_rows+1
+		var table = document.getElementById("wc_items_table");
+		var rows = table.getElementsByTagName("tr").length;
+		var row = table.insertRow(rows-1);
+		var cell1 = row.insertCell(0);
+		cell1.innerHTML = "<div id='new_item" + number_rows + "'></div>";
+		add_wc_dropdown();
+}
+function add_wc_dropdown(){
+		var select = document.createElement("select");
+		select.name = "select_wc"
+		select.id = "select_wc" + number_rows
+		select.addEventListener('change',function() {SelectWC(this);},false);
+		let rolodex = JSON.parse("{{wallcovering|escapejs}}");
+				var option = document.createElement("option");
+		option.value = "please_select";
+		option.text= "please select";
+		select.appendChild(option);
+				for (const x of rolodex)
+		{
+		var option = document.createElement("option");
+		option.value = x.id;
+
+		option.text= x.code + " " + x.vendor__company_name + " " + x.pattern;
+		select.appendChild(option);
+		}
+		var label = document.createElement("label");
+		document.getElementById("new_item" + number_rows).appendChild(label).appendChild(select);
+}
+function addRow(){
+		number_rows=number_rows+1
 		var table = document.getElementById("items_table");
 		var rows = table.getElementsByTagName("tr").length;
-		var row = table.insertRow(rows);
-		wc_id = event.currentTarget.id
-		checkbox =  document.getElementById(event.currentTarget.id)
-		labels = document.getElementsByTagName('label');
-	   	for( var i = 0; i < labels.length; i++ ) {
-      		if (labels[i].htmlFor == event.currentTarget.id){
-           		label = labels[i].innerHTML;
-           		alert(label)
-           		var cell1 = row.insertCell(0);
-           		cell1.innerHTML = "<td><input type='text' name='wallcovering" + wc_id + "' value='" + label + "' size='60' id='wallcovering" + wc_id + "'/></td>"
-   				}
-}
-}
-}
-
-
-function add_equipment_row() {
-	equipment_row_counter = equipment_row_counter + 1
-	hidden = document.getElementById("number_equipment");
-	hidden.value=equipment_row_counter
-	var table = document.getElementById("equipment_breakdown");
-	var rows = table.getElementsByTagName("tr").length;
-	var row = table.insertRow(rows);
-	var cell1 = row.insertCell(0);
-	var cell2 = row.insertCell(1);
-	var cell3 = row.insertCell(2);
-	var cell4 = row.insertCell(3);
-	cell1.innerHTML = "<div id='new_equipment" + equipment_row_counter + "'></div>";
-	add_equipment_dropdown();
-	cell2.innerHTML = "<td><input type='text' name='equipment_description" + equipment_row_counter +"' placeholder='description' size='30' id='equipment_description" + equipment_row_counter +"'/></td>"
-	cell3.innerHTML ="<td><input type='number' id='equipment_quantity" + equipment_row_counter +"' name = 'equipment_quantity" + equipment_row_counter +"' size='3'></td>"
-	cell4.innerHTML ="<td><input type='text' name='equipment_units" + equipment_row_counter +"' placeholder='units' size='10' id='equipment_units" + equipment_row_counter +"'/></td>"
-
+		var row = table.insertRow(rows-1);
+		var cell1 = row.insertCell(0);
+		cell1.innerHTML = "<td><input type='text' name = 'other_item' placeholder = 'PT1 Drawdown' size = '70' /></td>"
+	cell2 = row.insertCell(1);
+	cell2.innerHTML = "<td>Quantity: <input type='number' name = 'other_quantity' value = '1' size = '8' /></td>"
+	cell3 = row.insertCell(2);
+	cell3.innerHTML = "<td><button type='button' onclick='delete_row(this)'>Delete Item</button> </td>"
 }
 
 
@@ -80,7 +102,13 @@ function add_equipment_row() {
   </div>
 </nav>
  <form action="{% url 'submittals_new' %}" method="post"  onSubmit = "return check_booking_data()">
-{% csrf_token %}
+	 {% csrf_token %}
+	 {% if job_selected %}
+	 <h3>Submittal # {{next_submittal_number}} for Job: {{job_selected.job_name}}</h3> <br>
+<input type ="hidden" name ="select_job" value="{{job_selected.job_number}}" />
+	 <input type ="hidden" name ="submittal_number" value="{{next_submittal_number}}" />
+Description:<input type ="text" name ="description" placeholder="Paint and Wallcovering Samples" size = "70" required /><br><br>
+	 {% else %}
             <label for="select_job">please select Job</label>
             <select id="select_job" name="select_job" >
 {% for job in jobs %}
@@ -89,28 +117,16 @@ function add_equipment_row() {
             </select>
  <input type="submit" name="job_select" value="Select Job" />
 
+	 {% endif %}
 	{% if job_selected %}
 	{% if wallcovering %}
-	 <br>
-	 Please select any wallcoverings included in this submittal: <br>
-
-	 {% for x in wallcovering %}
-
-	 <input type="checkbox" name =checkbox{{x.id}} id={{x.id}} onClick="addWCRow()" /> <label for={{x.id}}>{{x.code}} {{x.vendor}} {{x.pattern}} </label>
-<br>
-	 {% endfor %}
-	{% endif %}
-
-
-<br>
 
 <div class="demo-html" style="width:90%">
-		<table id="items_table" class="display" style="width:90%">
-
+		<table id="wc_items_table" class="display" style="width:90%">
 			<tbody>
-				<tr>
-					<td> <button type="button" onclick="addRow()">Add Submittal Item</button> </td>
-				</tr>
+			<tr><td>If you are submitting any wallcovering items, please add them here:</td></tr>
+
+			<tr><td><button type="button" onclick="addWCRow()">Add Wallcovering Item</button> </td></tr>
 			</tbody>
 		</table>
 </div>
@@ -119,6 +135,21 @@ function add_equipment_row() {
 
 	 {% endif %}
 
+<br>
+<div class="demo-html" style="width:90%">
+		<table id="items_table" class="display" style="width:90%">
+			<tbody>
+			<tr><td>Add non-wallcovering items here:</td></tr>
+
+			<tr><td><button type="button" onclick="addRow()">Add Item</button> </td></tr>
+			</tbody>
+		</table>
+</div>
+
+<br><hr>
+<input type="submit" name="add_submittal" value="Send Now" />
+
+{% endif %}
 
 
     </form>

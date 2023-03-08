@@ -746,7 +746,7 @@ class Submittals(models.Model):
 class SubmittalItems(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	submittal = models.ForeignKey(Submittals, on_delete=models.PROTECT)
-	wallcovering_id = models.ForeignKey(Wallcovering, on_delete=models.PROTECT)
+	wallcovering_id = models.ForeignKey(Wallcovering, on_delete=models.PROTECT,null=True)
 	description = models.CharField(null=True, max_length=250)
 	quantity = models.IntegerField(default=0)
 	is_closed = models.BooleanField(default=False)
