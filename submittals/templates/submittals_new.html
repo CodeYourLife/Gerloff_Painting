@@ -53,6 +53,9 @@ function addWCRow(){
 		var cell1 = row.insertCell(0);
 		cell1.innerHTML = "<div id='new_item" + number_rows + "'></div>";
 		add_wc_dropdown();
+		var row2 = table.insertRow(rows);
+		var cell2 = row2.insertCell(0);
+		cell2.innerHTML = "Note: <input type='text' name = 'wc_note' placeholder = 'Type Note Here' size = '70' />"
 }
 function add_wc_dropdown(){
 		var select = document.createElement("select");
@@ -86,6 +89,10 @@ function addRow(){
 	cell2.innerHTML = "<td>Quantity: <input type='number' name = 'other_quantity' value = '1' size = '8' /></td>"
 	cell3 = row.insertCell(2);
 	cell3.innerHTML = "<td><button type='button' onclick='delete_row(this)'>Delete Item</button> </td>"
+		row = table.insertRow(rows);
+		cell2 = row.insertCell(0);
+		cell2.innerHTML = "Note: <input type='text' name = 'other_note' placeholder = 'Type Note Here' size = '70' />"
+
 }
 
 
@@ -107,7 +114,8 @@ function addRow(){
 	 <h3>Submittal # {{next_submittal_number}} for Job: {{job_selected.job_name}}</h3> <br>
 <input type ="hidden" name ="select_job" value="{{job_selected.job_number}}" />
 	 <input type ="hidden" name ="submittal_number" value="{{next_submittal_number}}" />
-Description:<input type ="text" name ="description" placeholder="Paint and Wallcovering Samples" size = "70" required /><br><br>
+Description:<input type ="text" name ="description" placeholder="Paint and Wallcovering Samples" size = "70" required /><br>
+	         <textarea id="new_note" name="new_note" placeholder = "Type Any Notes Here" rows="1" cols="100" ></textarea><br>
 	 {% else %}
             <label for="select_job">please select Job</label>
             <select id="select_job" name="select_job" >

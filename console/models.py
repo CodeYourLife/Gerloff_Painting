@@ -9,7 +9,10 @@ def validate_tm_category(value):
 	else:
 		raise ValidationError("Category must be Labor, Material, Equipment, Inventory, Bond or Misc")
 
-
+class EmployeeLevels(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	description = models.CharField(max_length=50)
+	pay_rate = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
 
 class Employees(models.Model):
 	id = models.BigAutoField(primary_key=True)
@@ -20,6 +23,7 @@ class Employees(models.Model):
 	last_name = models.CharField(null=True, max_length=50)
 	phone = models.CharField(null=True, max_length=50)
 	email = models.EmailField(null=True, blank=True)
+	level = models.ForeignKey(EmployeeLevels, on_delete=models.PROTECT, null=True)
 	def __str__(self):
 		return f"{self.first_name} {self.last_name}"
 
@@ -114,6 +118,7 @@ class Jobs(models.Model):
 	is_bonded = models.BooleanField(default=False)
 	is_active = models.BooleanField(default=False)
 	start_date_checked = models.DateField(null=True, blank=True)
+
 	def __str__(self):
 		return f"{self.job_name}"
 
@@ -739,6 +744,7 @@ class Submittals(models.Model):
 	date_returned = models.DateField(null=True, blank=True)
 	is_closed = models.BooleanField(default=False)
 	notes = models.CharField(null=True, max_length=2000, blank=True)
+	status = models.CharField(null=True, max_length=20)
 	def __str__(self):
 		return f"{self.job_number} {self.description}"
 
@@ -750,6 +756,7 @@ class SubmittalItems(models.Model):
 	description = models.CharField(null=True, max_length=250)
 	quantity = models.IntegerField(default=0)
 	is_closed = models.BooleanField(default=False)
+	notes = models.CharField(null=True, max_length=2000, blank=True)
 	def __str__(self):
 		return f"{self.submittal} {self.description}"
 
@@ -815,3 +822,80 @@ class SubcontractNotes(models.Model):
 	user = models.CharField(null=True,max_length=200)
 	note = models.CharField(null=True, max_length=2000)
 	invoice = models.ForeignKey(SubcontractorInvoice, null=True, on_delete=models.PROTECT, related_name="subcontract_notes2")
+
+class SubmittalNotes(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	submittal = models.ForeignKey(Submittals, on_delete=models.PROTECT)
+	date = models.DateField(null=True, blank=True)
+	user = models.CharField(null=True,max_length=40)
+	note = models.CharField(null=True, max_length=2000)
+
+
+class Metrics(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	description = models.CharField(max_length=1000) #Brush/Roll, Spray
+
+class MetricCategories(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	number = models.IntegerField(default=0)
+	metric = models.ForeignKey(Metrics, on_delete=models.PROTECT)
+	description = models.CharField(max_length=1000) #1 = none 2 = learning puttying materials 3 = proficient
+
+class MetricLevels(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	level = models.ForeignKey(EmployeeLevels, on_delete=models.PROTECT)
+	metric = models.ForeignKey(Metrics, on_delete=models.PROTECT)
+
+
+class MetricAssessment(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	reviewer = models.ForeignKey(Employees, on_delete=models.PROTECT)
+	date = models.DateField()
+	note = models.CharField(max_length=2000)
+	job = models.ForeignKey(Jobs, on_delete=models.PROTECT,null=True)
+
+class DailyReports(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	foreman = models.ForeignKey(Employees, on_delete=models.PROTECT)
+	date = models.DateField()
+	note = models.CharField(max_length=2000)
+	job = models.ForeignKey(Jobs, on_delete=models.PROTECT,null=True)
+class Metric_Assessment_Item(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	assessment = models.ForeignKey(MetricAssessment, on_delete=models.PROTECT,null=True)
+	note = models.CharField(max_length=2000,null=True)
+	daily_report = models.ForeignKey(DailyReports, on_delete=models.PROTECT,null=True)
+	category = models.ForeignKey(MetricCategories, on_delete=models.PROTECT)
+	employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
+
+class WriteUp(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	supervisor = models.ForeignKey(Employees, on_delete=models.PROTECT,related_name="Supervisor")
+	employee = models.ForeignKey(Employees, on_delete=models.PROTECT,related_name="Employee")
+	date = models.DateField()
+	note = models.CharField(max_length=2000)
+	job = models.ForeignKey(Jobs, on_delete=models.PROTECT,null=True)
+
+class Vacation(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
+	vacation_date = models.DateField()
+	duration = models.IntegerField(default=0)
+	employee_note = models.CharField(max_length=2000)
+	is_approved = models.BooleanField(default=False)
+	request_date = models.DateField()
+
+class VacationApprovers(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
+
+class ApprovedVacations(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	request = models.ForeignKey(Vacation, on_delete=models.PROTECT)
+	date_sent = models.DateField()
+	approver = models.ForeignKey(Employees, on_delete=models.PROTECT)
+	is_approved = models.BooleanField(default=False)
+	approver_notes = models.CharField(max_length=2000)
+
+
+

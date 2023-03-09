@@ -16,6 +16,7 @@
   background-color: Salmon;
 }
 
+
 	</style>
 	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
 	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
@@ -25,7 +26,9 @@
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
-
+$(document).ready(function () {
+    var table = $('#submittals_table').DataTable({});
+})
 
 	</script>
 </head>
@@ -40,6 +43,27 @@
   </div>
 </nav>
 
+
+
+<div class="demo-html" style="width:90%">
+		<table id="submittals_table" class="display" style="width:90%">
+			<thead>
+				<tr>
+					<th>Job </th>
+					<th>Submittal #</th>
+					<th>Submittal Description</th>
+					<th>Status</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for x in submittals %}
+			<tr><td>{{x.job_number}}</td><td><a href = "{% url 'submittals_page' x.id %}">{{x.submittal_number}}</td><td>{{x.description}}</td><td>{% if x.is_closed == True %}
+				{{x.status}} {% else %} Open {% endif %}</td>
+			</tr>
+{% endfor %}
+			</tbody>
+		</table>
+</div>
 </body>
 </html>
 
