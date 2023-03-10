@@ -2,6 +2,11 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 
+class EmployeeTitles(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	description = models.CharField(max_length=50)
+	def __str__(self):
+		return f"{self.description}"
 
 def validate_tm_category(value):
 	if value == "Labor" or value == "Material" or value == "Equipment" or value == "Inventory" or value == "Misc" or value == "Bond":
@@ -13,11 +18,12 @@ class EmployeeLevels(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	description = models.CharField(max_length=50)
 	pay_rate = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+	def __str__(self):
+		return f"{self.description}"
 
 class Employees(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	employee_number = models.IntegerField(default=0)
-	title = models.CharField(null=True, max_length=50)
 	active = models.BooleanField(default=True)
 	first_name = models.CharField(null=True, max_length=50)
 	last_name = models.CharField(null=True, max_length=50)
@@ -25,7 +31,9 @@ class Employees(models.Model):
 	email = models.EmailField(null=True, blank=True)
 	level = models.ForeignKey(EmployeeLevels, on_delete=models.PROTECT, null=True,blank=True)
 	nickname = models.CharField(null=True, max_length=50,blank=True)
-	user = models.ForeignKey(User, on_delete=models.CASCADE,null=True)
+	user = models.ForeignKey(User, on_delete=models.CASCADE,null=True,blank=True)
+	job_title = models.ForeignKey(EmployeeTitles, on_delete=models.CASCADE,null=True)
+
 	def __str__(self):
 		return f"{self.first_name} {self.last_name}"
 
@@ -837,25 +845,30 @@ class SubmittalNotes(models.Model):
 class Metrics(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	description = models.CharField(max_length=1000) #Brush/Roll, Spray
-
+	def __str__(self):
+		return f"{self.description}"
 class MetricCategories(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	number = models.IntegerField(default=0)
 	metric = models.ForeignKey(Metrics, on_delete=models.PROTECT)
 	description = models.CharField(max_length=1000) #1 = none 2 = learning puttying materials 3 = proficient
-
+	def __str__(self):
+		return f"{self.metric} {self.number}"
 class MetricLevels(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	level = models.ForeignKey(EmployeeLevels, on_delete=models.PROTECT)
 	metric = models.ForeignKey(Metrics, on_delete=models.PROTECT)
-
+	def __str__(self):
+		return f"{self.metric} {self.level}"
 
 class MetricAssessment(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	reviewer = models.ForeignKey(Employees, on_delete=models.PROTECT)
 	date = models.DateField()
-	note = models.CharField(max_length=2000)
-	job = models.ForeignKey(Jobs, on_delete=models.PROTECT,null=True)
+	note = models.CharField(max_length=2000,blank=True,null=True)
+	job = models.ForeignKey(Jobs, on_delete=models.PROTECT,null=True,blank=True)
+	def __str__(self):
+		return f"{self.date} {self.reviewer}"
 
 class DailyReports(models.Model):
 	id = models.BigAutoField(primary_key=True)
@@ -863,6 +876,9 @@ class DailyReports(models.Model):
 	date = models.DateField()
 	note = models.CharField(max_length=2000)
 	job = models.ForeignKey(Jobs, on_delete=models.PROTECT,null=True)
+	def __str__(self):
+		return f"{self.foreman} {self.date}"
+
 class Metric_Assessment_Item(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	assessment = models.ForeignKey(MetricAssessment, on_delete=models.PROTECT,null=True)
@@ -870,7 +886,8 @@ class Metric_Assessment_Item(models.Model):
 	daily_report = models.ForeignKey(DailyReports, on_delete=models.PROTECT,null=True)
 	category = models.ForeignKey(MetricCategories, on_delete=models.PROTECT)
 	employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
-
+	def __str__(self):
+		return f"{self.assessment} {self.employee}"
 class WriteUp(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	supervisor = models.ForeignKey(Employees, on_delete=models.PROTECT,related_name="Supervisor")
@@ -1019,3 +1036,4 @@ class Certifications(models.Model):
 	job = models.ForeignKey(Jobs, on_delete=models.PROTECT, null=True)
 	note = models.CharField(null=True, max_length=2000)
 	is_closed = models.BooleanField(default=False)
+
