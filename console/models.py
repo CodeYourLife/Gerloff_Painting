@@ -1,6 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
-
+from django.contrib.auth.models import User
 
 
 def validate_tm_category(value):
@@ -21,9 +21,11 @@ class Employees(models.Model):
 	active = models.BooleanField(default=True)
 	first_name = models.CharField(null=True, max_length=50)
 	last_name = models.CharField(null=True, max_length=50)
-	phone = models.CharField(null=True, max_length=50)
+	phone = models.CharField(null=True, max_length=50,blank=True)
 	email = models.EmailField(null=True, blank=True)
-	level = models.ForeignKey(EmployeeLevels, on_delete=models.PROTECT, null=True)
+	level = models.ForeignKey(EmployeeLevels, on_delete=models.PROTECT, null=True,blank=True)
+	nickname = models.CharField(null=True, max_length=50,blank=True)
+	user = models.ForeignKey(User, on_delete=models.CASCADE,null=True)
 	def __str__(self):
 		return f"{self.first_name} {self.last_name}"
 
@@ -257,6 +259,7 @@ class Inventory(models.Model):
 	notes = models.CharField(null=True, max_length=2000, blank=True)
 	service_vendor = models.ForeignKey(Vendors,on_delete=models.PROTECT, blank=True, null=True,related_name = 'inventory2')
 	batch = models.CharField(null=True, max_length=50, blank=True) #outgoing or incoming
+	assigned_to = models.ForeignKey(Employees,on_delete=models.PROTECT, blank=True, null=True)
 	def __str__(self):
 		return f"{self.inventory_type} {self.item}"
 
@@ -898,4 +901,121 @@ class ApprovedVacations(models.Model):
 	approver_notes = models.CharField(max_length=2000)
 
 
+class ProductionCategories(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	description = models.CharField(max_length=100) #brush/roll, spray, cut-in
 
+
+class ProductionValues(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	category = models.ForeignKey(ProductionCategories, on_delete=models.PROTECT)#brush/roll, spray, cut-in
+	description = models.CharField(max_length=100) #prime, 1st coat, 2nd coat
+	unit = models.CharField(max_length=20) #gals
+	unit2 = models.CharField(max_length=20) #sf
+
+
+class DailyReportEmployees(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	report = models.ForeignKey(DailyReports, on_delete=models.PROTECT)
+	employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
+	hours = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+
+
+class ProductionItems(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	category = models.ForeignKey(ProductionValues, on_delete=models.PROTECT)
+	value1 = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+	value2 = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+	unit = models.CharField(max_length=20)  # gals
+	unit2 = models.CharField(max_length=20)  # sf
+	note = models.CharField(max_length=2000)
+	hours = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+	daily_report = models.ForeignKey(DailyReports, on_delete=models.PROTECT)
+	metric_assessment = models.ForeignKey(MetricAssessment, on_delete=models.PROTECT)
+	employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
+
+
+class TrainingTopic(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	description = models.CharField(max_length=2000) #spray training
+	details = models.CharField(max_length=2000) #class syllabus / outline
+	assessment_category = models.ForeignKey(Metrics, on_delete=models.PROTECT,related_name="class1")
+	assessment_category1 = models.ForeignKey(Metrics, on_delete=models.PROTECT,related_name="class2")
+
+class ClassOccurrence(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	topic = models.ForeignKey(TrainingTopic, on_delete=models.PROTECT)
+	date = models.DateField()
+	teacher = models.ForeignKey(Employees, on_delete=models.PROTECT)
+	note = models.CharField(max_length=2000)
+	location = models.CharField(max_length=100)
+	job = models.ForeignKey(Jobs, on_delete=models.PROTECT)
+
+class ClassAttendees(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	class_event = models.ForeignKey(ClassOccurrence, on_delete=models.PROTECT)
+	student = models.ForeignKey(Employees, on_delete=models.PROTECT)
+	note = models.CharField(max_length=2000)
+
+
+class Exam(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	description = models.CharField(max_length=500) #spray exam
+	details = models.CharField(max_length=2000) #spray exam
+	max_score = models.IntegerField(default=0)
+
+class ExamScore(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	exam = models.ForeignKey(Exam, on_delete=models.PROTECT)
+	student = models.ForeignKey(Employees, on_delete=models.PROTECT,related_name="student")
+	teacher = models.ForeignKey(Employees, on_delete=models.PROTECT,related_name="teacher")
+	score = models.IntegerField(default=0)
+	note = models.CharField(max_length=2000)
+
+
+class SuperWeeklyReport(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	date = models.DateField()
+	job = models.ForeignKey(Jobs, on_delete=models.PROTECT)
+	superintendent = models.ForeignKey(Employees, on_delete=models.PROTECT)
+	total_weekly_hours = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+	completed = models.CharField(max_length=2000)
+	remaining = models.CharField(max_length=2000)
+	issues = models.CharField(max_length=2000)
+
+class SuperReportEmployees(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	report = models.ForeignKey(SuperWeeklyReport, on_delete=models.PROTECT)
+	employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
+
+class Mentorship(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	apprentice = models.ForeignKey(Employees, on_delete=models.PROTECT,related_name="apprentice")
+	mentor = models.ForeignKey(Employees, on_delete=models.PROTECT, related_name="mentor")
+	start_date = models.DateField()
+	note = models.CharField(max_length=2000)
+	is_closed = models.BooleanField(default=False)
+
+
+class MentorshipNotes(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	mentorship = models.ForeignKey(Mentorship, on_delete=models.PROTECT)
+	date = models.DateField()
+	user = models.CharField(null=True, max_length=200)
+	note = models.CharField(null=True, max_length=2000)
+
+
+class CertificationCategories(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	description = models.CharField(null=True, max_length=200) #OSHA30, dbids card, tuburculosis, CRMC
+
+class Certifications(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	category = models.ForeignKey(CertificationCategories, on_delete=models.PROTECT, null=True)
+	employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
+	description = models.CharField(null=True, max_length=500)
+	date_received = models.DateField()
+	date_expires = models.DateField()
+	job = models.ForeignKey(Jobs, on_delete=models.PROTECT, null=True)
+	note = models.CharField(null=True, max_length=2000)
+	is_closed = models.BooleanField(default=False)
