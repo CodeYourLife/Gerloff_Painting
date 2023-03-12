@@ -47,8 +47,11 @@ $(document).ready(function () {
 
     </ul>
   </div>
-</nav>
-
+</nav><br>
+<form action="{% url 'new_assessment' 'ALL' %}">
+    <input type="submit" value="NEW ASSESSMENT - CLICK HERE" />
+</form>
+<br>
 <div class="demo-html" style="width:90%">
 		<table id="employees_table" class="display" style="width:90%">
 			<thead>
@@ -74,9 +77,43 @@ $(document).ready(function () {
 			</tbody>
 		</table>
 </div>
+<div class ="container">
+
+
 {% if selected_item %}
-{{selected_item.employee}}
+
+
+{% if selected_item.daily_report %}
+<div class ="row">
+	<div class ="col" ><h3><b>Daily Report - Reviewed Employee:</b> {{selected_item.employee}} </h3></div></div>
+
+	<div class ="row">
+		<div class ="col"><b>Foreman: </b>{{selected_item.daily_report.foreman}}</div>
+		<div class ="col"><b>Date: </b>{{selected_item.daily_report.date}}</div>
+
+		<div class ="col"><b>Job: </b>{{selected_item.daily_report.job}}</div>
+	</div>
+	<div class ="row">
+		<div class ="col"><b>Note: </b>{{selected_item.daily_report.note}}</div></div>
+{% else %}
+	<div class ="row">
+		<div class ="col"><h3><b>Assessment - Reviewed Employee: </b>{{selected_item.employee}}</h3> </div></div>
+
+	<div class ="row">
+		<div class ="col"><b>Foreman: </b>{{selected_item.assessment.reviewer}}</div>
+		<div class ="col"><b>Date: </b>{{selected_item.assessment.date}}</div>
+
+		<div class ="col"><b>Job: </b>{{selected_item.assessment.job}}</div>
+	</div>
+	<div class ="row">
+		<div class ="col"><b>Note: </b>{{selected_item.assessment.note}}</div></div>
 {% endif %}
+
+{% for x in selected_assessment %}
+	<div class ="row"></div><div class ="row"><div class ="col">{{x.category}}</div></div>
+{% endfor %}
+{% endif %}
+</div>
 </body>
 </html>
 

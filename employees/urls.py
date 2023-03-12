@@ -15,4 +15,5 @@ path("production_reports", views.production_reports, name='production_reports'),
 path("classes", views.classes, name='classes'),
 path("exams", views.exams, name='exams'),
 path("mentorships", views.mentorships, name='mentorships'),
+path("new_assessment/<id>", views.new_assessment, name='new_assessment'),
 ]

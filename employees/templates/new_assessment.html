@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% block nav_item_employees %}active{% endblock nav_item_employees %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+.active, .collapsible:hover {
+  background-color: Salmon;
+}
+#categories_table td
+{
+    text-align: center;
+    vertical-align: middle;
+}
+
+	</style>
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+window.onload = function() {
+counter=0
+var table = document.getElementById("categories_table");
+var rows = table.getElementsByTagName("tr").length;
+let rolodex = JSON.parse("{{categories|escapejs}}");
+currentmetric = 99999
+counter = "False"
+for (const x of rolodex){
+	if (x.metric__id != currentmetric){
+		counter = "True"
+		currentmetric = x.metric__id
+		row = table.insertRow(rows);
+		rows=rows+1
+		cell1 = row.insertCell(0)
+		cell1.colSpan = 5
+		cell1.innerHTML = "<hr>"
+		row = table.insertRow(rows);
+		rows=rows+1
+		cell1 = row.insertCell(0)
+		cell1.rowSpan = 2
+		cell1.innerHTML = ""+ x.metric__description
+		cell1 = row.insertCell(1)
+		row2 = table.insertRow(rows)
+		rows = rows+1
+		cell2 = row2.insertCell(0)
+	}
+if (counter == "False"){
+var cell1 = row.insertCell(x.number+1)
+var cell2 = row2.insertCell(x.number)
+}
+counter = "False"
+cell1.innerHTML = "<input type='checkbox' name ='" + x.id + "' />"
+cell2.innerHTML = "" + x.description
+
+}
+}
+
+function check_booking_data(){
+	let rolodex = JSON.parse("{{metrics|escapejs}}");
+	let rolodex2 = JSON.parse("{{categories|escapejs}}");
+	for (const x of rolodex){
+		for (y = 0; y < document.getElementsByTagName('input').length; y++) {
+ 			if (document.getElementsByTagName('input').item(y).type == 'checkbox') {
+ 				do { i = i + 1;
+  result = result + i;
+} while (i < 5);
+ 				alert(document.getElementsByTagName('input').item(y).value);
+ }
+	}
+}
+}
+
+	</script>
+</head>
+<body>
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Training</a>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown2">
+    <ul class="navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Employees Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'training' %}">Training Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'assessments' 'ALL' %}">Assessments</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'production_reports' %}">Production Reports</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Classes</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Exams</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Mentorships</a></li>
+		<li><a class="nav-item nav-link active" >NEW ASSESSMENT</a></li>
+    </ul>
+  </div>
+
+</nav><br>
+{% if employees %}
+ <form action="{% url 'new_assessment' 'ALL' %}" method="post" >
+{% csrf_token %}
+	             <label for="select_reviewer">Person Doing the Review:</label>
+            <select id="select_reviewer" name="select_reviewer" >
+                 <option value={{current_user.id}}>{{current_user.first_name}} {{current_user.last_name}}</option>
+				{% if employees %}
+                {% for employee in employees %}
+                <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+	 <br>
+	 	             <label for="select_employee">Person Being Reviewed:</label>
+            <select id="select_employee" name="select_employee" >
+
+				{% if employees %}
+                {% for employee in employees %}
+                <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+	 <br>
+<input type="submit" name="select_employees" value="BEGIN REVIEW" />
+ </form>
+{% else %}
+<form action="{% url 'new_assessment' 'ALL' %}" method="post"  onSubmit = "return check_booking_data()">
+<h3><b>Reviewer:</b>{{reviewer.first_name}} {{reviewer.last_name}}</h3>
+<h3><b>Employee:</b>{{employee.first_name}} {{employee.last_name}}</h3> <br>
+<h3>Required Assessments for: {{employee.level}}</h3>
+<div class="demo-html" style="width:90%">
+		<table id="categories_table" class="display" style="width:90%">
+
+			<tbody>
+			<tr><td></td></tr>
+
+			</tbody>
+		</table>
+</div>
+{% endif %}
+	     </form>
+</body>
+</html>
+
+{% endblock %}

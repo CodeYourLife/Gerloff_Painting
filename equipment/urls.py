@@ -12,4 +12,5 @@ path("equipment_remove_from_outgoing_cart/<id>", views.equipment_remove_from_out
 path("equipment_remove_from_incoming_cart/<id>", views.equipment_remove_from_incoming_cart, name='equipment_remove_from_incoming_cart'),
 path("equipment_add_to_outgoing/<id>", views.equipment_add_to_outgoing, name='equipment_add_to_outgoing'),
 path("equipment_add_to_incoming/<id>", views.equipment_add_to_incoming, name='equipment_add_to_incoming'),
+
 ]
