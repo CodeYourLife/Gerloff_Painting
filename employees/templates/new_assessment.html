@@ -67,21 +67,45 @@ cell2.innerHTML = "" + x.description
 }
 }
 
-function check_booking_data(){
+function myFunction(){
+
+	metrics = []
 	let rolodex = JSON.parse("{{metrics|escapejs}}");
 	let rolodex2 = JSON.parse("{{categories|escapejs}}");
 	for (const x of rolodex){
-		for (y = 0; y < document.getElementsByTagName('input').length; y++) {
- 			if (document.getElementsByTagName('input').item(y).type == 'checkbox') {
- 				do { i = i + 1;
-  result = result + i;
-} while (i < 5);
- 				alert(document.getElementsByTagName('input').item(y).value);
- }
+		metrics[x.id]=0
 	}
-}
+	for (y = 0; y < document.getElementsByTagName('input').length; y++) {
+		if (document.getElementsByTagName('input').item(y).checked) {
+			b=0
+			i=-1
+			do { i = i + 1;
+ 				if (rolodex2[i].id=document.getElementsByTagName('input').item(y).name){
+ 					b=1
+ 					metrics[rolodex2[i].metric__id]=metrics[rolodex2[i].metric__id]+1
+
+ 				}
+ 			}
+ 			while (b=0);
+
+		}
+	}
+
+		for (const x of rolodex){
+		if (metrics[x.id]>1){alert("YES")}
+	}
+	alert("done")
 }
 
+function check_booking_data(){
+	metrics = []
+	let rolodex = JSON.parse("{{metrics|escapejs}}");
+	for (const x of rolodex){
+	metrics[x.id]=0
+	}
+
+	return false
+}
 	</script>
 </head>
 <body>
@@ -101,6 +125,7 @@ function check_booking_data(){
   </div>
 
 </nav><br>
+ <button onclick="myFunction()">Click me</button>
 {% if employees %}
  <form action="{% url 'new_assessment' 'ALL' %}" method="post" >
 {% csrf_token %}
@@ -140,6 +165,7 @@ function check_booking_data(){
 			</tbody>
 		</table>
 </div>
+	<input type="submit" name="new_assessment" value="File Assessment Now" />
 {% endif %}
 	     </form>
 </body>
