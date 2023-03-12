@@ -34,19 +34,22 @@ $(document).ready(function () {
 </head>
 <body>
 <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
-  <a class="navbar-brand" href="#">Employees</a>
+  <a class="navbar-brand" href="#">Training</a>
   <div class="collapse navbar-collapse" id="navbarNavDropdown2">
     <ul class="navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link active" href="{% url 'training' %}">Training</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'certifications' %}">Certifications</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Employees Home</a></li>
+        <li><a class="nav-item nav-link active" href="{% url 'training' %}">Training Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'assessments' 'ALL' %}">Assessments</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'production_reports' %}">Production Reports</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Classes</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Exams</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Mentorships</a></li>
+
     </ul>
   </div>
 </nav>
 
-<h4><a href = "{% url 'assessments' 'ALL' %}">Assessments</a></h4>
+<h4><a href = "{% url 'training' %}">Assessments</a></h4>
 
 <h4><a href = "{% url 'training' %}">Production Reports</a></h4>
 

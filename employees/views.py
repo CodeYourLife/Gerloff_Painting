@@ -11,6 +11,34 @@ from datetime import date
 from django_tables2 import SingleTableView
 
 # Create your views here.
+def classes(request):
+    send_data = {}
+    send_data['employees']=Employees.objects.filter(active = True)
+    return render(request, "classes.html", send_data)
+
+def exams(request):
+    send_data = {}
+    send_data['employees']=Employees.objects.filter(active = True)
+    return render(request, "exams.html", send_data)
+
+def mentorships(request):
+    send_data = {}
+    send_data['employees']=Employees.objects.filter(active = True)
+    return render(request, "mentorships.html", send_data)
+
+def assessments(request,id):
+    send_data = {}
+    send_data['employeereviews']=EmployeeReview.objects.filter(employee__active = True)
+    if id != 'ALL':
+        send_data['selected_item']= EmployeeReview.objects.get(id=id)
+    return render(request, "assessments.html", send_data)
+
+
+def production_reports(request):
+    send_data = {}
+    send_data['employees']=Employees.objects.filter(active = True)
+    return render(request, "production_reports.html", send_data)
+
 
 def employees_home(request):
     send_data = {}

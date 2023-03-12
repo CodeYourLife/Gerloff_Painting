@@ -874,16 +874,25 @@ class DailyReports(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	foreman = models.ForeignKey(Employees, on_delete=models.PROTECT)
 	date = models.DateField()
-	note = models.CharField(max_length=2000)
+	note = models.CharField(max_length=2000,null=True,blank=True)
 	job = models.ForeignKey(Jobs, on_delete=models.PROTECT,null=True)
 	def __str__(self):
 		return f"{self.foreman} {self.date}"
 
-class Metric_Assessment_Item(models.Model):
+class EmployeeReview(models.Model):
 	id = models.BigAutoField(primary_key=True)
-	assessment = models.ForeignKey(MetricAssessment, on_delete=models.PROTECT,null=True)
-	note = models.CharField(max_length=2000,null=True)
-	daily_report = models.ForeignKey(DailyReports, on_delete=models.PROTECT,null=True)
+	assessment = models.ForeignKey(MetricAssessment, on_delete=models.PROTECT,null=True,blank=True)
+	daily_report = models.ForeignKey(DailyReports, on_delete=models.PROTECT,null=True,blank=True)
+	employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
+	def __str__(self):
+		if self.assessment != None:
+			return f"{self.assessment} {self.employee}"
+		else:
+			return f"{self.daily_report} {self.employee}"
+class MetricAssessmentItem(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	assessment = models.ForeignKey(EmployeeReview, on_delete=models.PROTECT,null=True,blank=True)
+	note = models.CharField(max_length=2000,null=True,blank=True)
 	category = models.ForeignKey(MetricCategories, on_delete=models.PROTECT)
 	employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
 	def __str__(self):
