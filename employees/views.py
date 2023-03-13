@@ -15,6 +15,15 @@ from django_tables2 import SingleTableView
 def new_assessment(request,id):
     send_data = {}
     if request.method == 'POST':
+        if 'new_assessment' in request.POST:
+            assessment= MetricAssessment.objects.create(reviewer=Employees.objects.get(id=request.POST['reviewer']),note=request.POST['note_main'],date=date.today())
+            review = EmployeeReview.objects.create(assessment=assessment,employee=Employees.objects.get(id=request.POST['employee']))
+            for x in request.POST:
+                if request.POST[x] =='on':
+                    print(x)
+                #if x[0:4] != 'note':
+                    category = MetricCategories.objects.get(id=x)
+                    MetricAssessmentItem.objects.create(assessment=review,note = request.POST['note'+str(category.metric.id)],category=category, employee=Employees.objects.get(id=request.POST['employee']))
         if 'select_employees' in request.POST:
             send_data['reviewer'] = Employees.objects.get(id=request.POST['select_reviewer'])
             employee = Employees.objects.get(id=request.POST['select_employee'])

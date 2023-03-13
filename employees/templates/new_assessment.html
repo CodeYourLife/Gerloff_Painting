@@ -37,8 +37,14 @@ var rows = table.getElementsByTagName("tr").length;
 let rolodex = JSON.parse("{{categories|escapejs}}");
 currentmetric = 99999
 counter = "False"
+tester="Beginning"
 for (const x of rolodex){
 	if (x.metric__id != currentmetric){
+		if (tester != "Beginning"){
+		var cell1 = row.insertCell(counter1+1)
+		cell1.rowSpan = 2
+		cell1.innerHTML = "<textarea name ='note" + counter2 + "' placeholder = 'Note' rows='1' cols='20' ></textarea>"}
+		tester="End"
 		counter = "True"
 		currentmetric = x.metric__id
 		row = table.insertRow(rows);
@@ -50,13 +56,15 @@ for (const x of rolodex){
 		rows=rows+1
 		cell1 = row.insertCell(0)
 		cell1.rowSpan = 2
-		cell1.innerHTML = ""+ x.metric__description
+		cell1.innerHTML = "<b>"+ x.metric__description + "</b>"
 		cell1 = row.insertCell(1)
 		row2 = table.insertRow(rows)
 		rows = rows+1
 		cell2 = row2.insertCell(0)
 	}
 if (counter == "False"){
+counter1 = x.number+1
+counter2 = x.metric__id
 var cell1 = row.insertCell(x.number+1)
 var cell2 = row2.insertCell(x.number)
 }
@@ -65,9 +73,14 @@ cell1.innerHTML = "<input type='checkbox' name ='" + x.id + "' />"
 cell2.innerHTML = "" + x.description
 
 }
+
+		var cell1 = row.insertCell(counter1+1)
+		cell1.rowSpan = 2
+		cell1.innerHTML = "<textarea name ='note" + counter2 + "' placeholder = 'Note' rows='1' cols='20' ></textarea>"
 }
 
-function myFunction(){
+
+function check_booking_data(){
 
 	metrics = []
 	let rolodex = JSON.parse("{{metrics|escapejs}}");
@@ -80,31 +93,22 @@ function myFunction(){
 			b=0
 			i=-1
 			do { i = i + 1;
- 				if (rolodex2[i].id=document.getElementsByTagName('input').item(y).name){
+ 				if (rolodex2[i].id == document.getElementsByTagName('input').item(y).name){
  					b=1
  					metrics[rolodex2[i].metric__id]=metrics[rolodex2[i].metric__id]+1
-
  				}
+ 				if (i > rolodex2.length){b=1}
  			}
- 			while (b=0);
-
+ 			while (b==0);
 		}
 	}
-
+	for (i=0;i < rolodex2.length;i++){}
 		for (const x of rolodex){
-		if (metrics[x.id]>1){alert("YES")}
-	}
-	alert("done")
-}
-
-function check_booking_data(){
-	metrics = []
-	let rolodex = JSON.parse("{{metrics|escapejs}}");
-	for (const x of rolodex){
-	metrics[x.id]=0
+		if (metrics[x.id]>1){
+		alert("Can't have more than one box checked for the same category!")
+		return false}
 	}
 
-	return false
 }
 	</script>
 </head>
@@ -125,7 +129,7 @@ function check_booking_data(){
   </div>
 
 </nav><br>
- <button onclick="myFunction()">Click me</button>
+
 {% if employees %}
  <form action="{% url 'new_assessment' 'ALL' %}" method="post" >
 {% csrf_token %}
@@ -153,9 +157,14 @@ function check_booking_data(){
  </form>
 {% else %}
 <form action="{% url 'new_assessment' 'ALL' %}" method="post"  onSubmit = "return check_booking_data()">
+	{% csrf_token %}
+	<input type="hidden" name='reviewer' value="{{reviewer.id}}" />
+	<input type="hidden" name='employee' value="{{employee.id}}" />
 <h3><b>Reviewer:</b>{{reviewer.first_name}} {{reviewer.last_name}}</h3>
 <h3><b>Employee:</b>{{employee.first_name}} {{employee.last_name}}</h3> <br>
 <h3>Required Assessments for: {{employee.level}}</h3>
+	<br>
+        <textarea name="note_main" rows="1" cols="120" placeholder="General Note Here" ></textarea>
 <div class="demo-html" style="width:90%">
 		<table id="categories_table" class="display" style="width:90%">
 
@@ -165,6 +174,7 @@ function check_booking_data(){
 			</tbody>
 		</table>
 </div>
+	<br><br>
 	<input type="submit" name="new_assessment" value="File Assessment Now" />
 {% endif %}
 	     </form>
