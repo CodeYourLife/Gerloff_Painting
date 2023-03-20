@@ -875,7 +875,7 @@ class DailyReports(models.Model):
 	foreman = models.ForeignKey(Employees, on_delete=models.PROTECT)
 	date = models.DateField()
 	note = models.CharField(max_length=2000,null=True,blank=True)
-	job = models.ForeignKey(Jobs, on_delete=models.PROTECT,null=True)
+	job = models.ForeignKey(Jobs, on_delete=models.PROTECT,null=True,blank=True)
 	def __str__(self):
 		return f"{self.foreman} {self.date}"
 
@@ -926,39 +926,92 @@ class ApprovedVacations(models.Model):
 	is_approved = models.BooleanField(default=False)
 	approver_notes = models.CharField(max_length=2000)
 
-
-class ProductionCategories(models.Model):
+class ProductionCategory1(models.Model):
 	id = models.BigAutoField(primary_key=True)
-	description = models.CharField(max_length=100) #brush/roll, spray, cut-in
+	description = models.CharField(max_length=200)  # Gypsum Walls, CMU Walls, Exposed Ceilings, Punchlist
+	def __str__(self):
+		return f"{self.description}"
 
-
-class ProductionValues(models.Model):
+class ProductionCategory2(models.Model):
 	id = models.BigAutoField(primary_key=True)
-	category = models.ForeignKey(ProductionCategories, on_delete=models.PROTECT)#brush/roll, spray, cut-in
-	description = models.CharField(max_length=100) #prime, 1st coat, 2nd coat
-	unit = models.CharField(max_length=20) #gals
-	unit2 = models.CharField(max_length=20) #sf
+	description = models.CharField(max_length=200)  # Brush/Roll, Spray, Other
+	def __str__(self):
+		return f"{self.description}"
 
+class ProductionCategory3(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	description = models.CharField(max_length=200)  # Prime New, Prime Existing, Finish, Block Fill, Dryfall, Other, Spot Prime
+	def __str__(self):
+		return f"{self.description}"
 
+class ProductionTask(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	description = models.CharField(max_length=200)  # Pointup, Sand, Roll, Brush, Mask, Help, Spray, Caulk
+	def __str__(self):
+		return f"{self.description}"
+
+class Exclusions(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	task = models.ForeignKey(ProductionTask, on_delete=models.PROTECT)
+	category3 = models.ForeignKey(ProductionCategory3, on_delete=models.PROTECT,blank=True,null=True)
+	category2 = models.ForeignKey(ProductionCategory2, on_delete=models.PROTECT, blank=True, null=True)
+	category1 = models.ForeignKey(ProductionCategory1, on_delete=models.PROTECT, blank=True, null=True)
+	def __str__(self):
+		if self.category3 != None:
+			return f"{self.task} {self.category3}"
+		elif self.category2 != None:
+			return f"{self.task} {self.category2}"
+		else:
+			return f"{self.task} {self.category1}"
 class DailyReportEmployees(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	report = models.ForeignKey(DailyReports, on_delete=models.PROTECT)
 	employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
 	hours = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
 
-
-class ProductionItems(models.Model):
+class TempProductionItems(models.Model):
 	id = models.BigAutoField(primary_key=True)
-	category = models.ForeignKey(ProductionValues, on_delete=models.PROTECT)
+	task = models.ForeignKey(ProductionTask, on_delete=models.PROTECT)
+	category3 = models.ForeignKey(ProductionCategory3, on_delete=models.PROTECT, blank=True, null=True)
+	category2 = models.ForeignKey(ProductionCategory2, on_delete=models.PROTECT, blank=True, null=True)
+	category1 = models.ForeignKey(ProductionCategory1, on_delete=models.PROTECT, blank=True, null=True)
 	value1 = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
 	value2 = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+	value3 = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+	description = models.CharField(max_length=2000)
 	unit = models.CharField(max_length=20)  # gals
 	unit2 = models.CharField(max_length=20)  # sf
+	unit3 = models.CharField(max_length=20)  # lf
 	note = models.CharField(max_length=2000)
+	is_team = models.BooleanField(default=False)
+	team_note = models.CharField(max_length=2000)
 	hours = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
 	daily_report = models.ForeignKey(DailyReports, on_delete=models.PROTECT)
 	metric_assessment = models.ForeignKey(MetricAssessment, on_delete=models.PROTECT)
 	employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
+	date = models.DateField(null=True,blank=True)
+
+class ProductionItems(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	task = models.ForeignKey(ProductionTask, on_delete=models.PROTECT)
+	category3 = models.ForeignKey(ProductionCategory3, on_delete=models.PROTECT, blank=True, null=True)
+	category2 = models.ForeignKey(ProductionCategory2, on_delete=models.PROTECT, blank=True, null=True)
+	category1 = models.ForeignKey(ProductionCategory1, on_delete=models.PROTECT, blank=True, null=True)
+	value1 = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+	value2 = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+	value3 = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+	description = models.CharField(max_length=2000)
+	unit = models.CharField(max_length=20, blank=True, null=True)  # gals
+	unit2 = models.CharField(max_length=20, blank=True, null=True)  # sf
+	unit3 = models.CharField(max_length=20, blank=True, null=True)  # lf
+	note = models.CharField(max_length=2000, blank=True, null=True)
+	is_team = models.BooleanField(default=False)
+	team_note = models.CharField(max_length=2000, blank=True, null=True)
+	hours = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+	daily_report = models.ForeignKey(DailyReports, on_delete=models.PROTECT, blank=True, null=True)
+	metric_assessment = models.ForeignKey(MetricAssessment, on_delete=models.PROTECT, blank=True, null=True)
+	employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
+	date = models.DateField(null=True,blank=True)
 
 
 class TrainingTopic(models.Model):

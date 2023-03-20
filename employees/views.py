@@ -12,6 +12,27 @@ from django_tables2 import SingleTableView
 
 # Create your views here.
 
+def new_production_report(request,jobnumber):
+    send_data = {}
+    if jobnumber == 'ALL':
+        print("HEEE")
+        send_data['jobs'] = Jobs.objects.filter(status = 'Open')
+    else:
+        print("HEEHAW")
+        send_data['jobs'] = Jobs.objects.get(job_number=jobnumber)
+        send_data['selected_job'] = Jobs.objects.get(job_number=jobnumber)
+    send_data['employees'] = Employees.objects.filter(active=True)
+    send_data['current_employee'] = Employees.objects.get(user=request.user)
+    if request.method == 'POST':
+        if 'job_select' in request.POST:
+            jobnumber = request.POST['select_job']
+            send_data['jobs'] = Jobs.objects.get(job_number=jobnumber)
+            send_data['selected_job'] = Jobs.objects.get(job_number=jobnumber)
+            return render(request, "new_production_report.html", send_data)
+        send_data['selected_reviewer'] = Employees.objects.get(id=request.POST['select_reviewer'])
+        if 'report_complete' in request.POST:
+            return render(request, "new_production_report.html", send_data)
+    return render(request, "new_production_report.html", send_data)
 def new_assessment(request,id):
     send_data = {}
     if request.method == 'POST':
@@ -67,13 +88,16 @@ def assessments(request,id):
     if id != 'ALL':
         send_data['selected_item']= EmployeeReview.objects.get(id=id)
         send_data['selected_assessment'] = MetricAssessmentItem.objects.filter(assessment__id=id)
-
     return render(request, "assessments.html", send_data)
 
 
-def production_reports(request):
+def production_reports(request,id):
     send_data = {}
-    send_data['employees']=Employees.objects.filter(active = True)
+    if id != 'ALL':
+        send_data['production_reports'] = ProductionItems.objects.filter(id=id).order_by('employee', 'date')
+        send_data['selected_item'] = ProductionItems.objects.get(id=id)
+    else:
+        send_data['production_reports']=ProductionItems.objects.all().order_by('employee','date')
     return render(request, "production_reports.html", send_data)
 
 

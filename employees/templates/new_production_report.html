@@ -26,9 +26,6 @@
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
-$(document).ready(function () {
-    var table = $('#employees_table').DataTable({});
-})
 
 	</script>
 </head>
@@ -38,26 +35,68 @@ $(document).ready(function () {
   <div class="collapse navbar-collapse" id="navbarNavDropdown2">
     <ul class="navbar-nav ">
         <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Employees Home</a></li>
-        <li><a class="nav-item nav-link active" href="{% url 'training' %}">Training Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'training' %}">Training Home</a></li>
         <li><a class="nav-item nav-link" href="{% url 'assessments' 'ALL' %}">Assessments</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'production_reports' 'ALL' %}">Production Reports</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'production_reports' 'ALL'  %}">Production Reports</a></li>
         <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Classes</a></li>
         <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Exams</a></li>
         <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Mentorships</a></li>
-
+		<li><a class="nav-item nav-link active" >NEW PRODUCTION REPORT</a></li>
     </ul>
   </div>
-</nav>
 
-<h4><a href = "{% url 'training'  %}">Assessments</a></h4>
+</nav><br>
+{% if selected_job %}
+ <form action="{% url 'new_production_report' selected_job.job_number %}" method="post" >
+	 {% csrf_token %}
+	 <H4>New Production Report for: {{selected_job.job_name}}</H4>
 
-<h4><a href = "{% url 'training' %}">Production Reports</a></h4>
+ {% else %}
+ <form action="{% url 'new_production_report' 'ALL' %}" method="post" >
+	 {% csrf_token %}
+	 	             <label for="select_job">Select Job:</label>
+            <select id="select_job" name="select_job" >
+                 <option value="please_select">"Please Select"</option>
+				{% if jobs %}
+                {% for x in jobs %}
+                <option value={{x.job_number}}>{{x.job_name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+	 <input type="submit" name="job_select" value="BEGIN REVIEW" />
+{% endif %}
 
-<h4><a href = "{% url 'training' %}">View Classes</a></h4>
+{% if selected_job %}
 
-<h4><a href = "{% url 'training' %}">View Exams</a></h4>
+	 <br>
+	 	             <label for="select_reviewer">Select Reviewer:</label>
+            <select id="select_reviewer" name="select_reviewer" >
+{% if selected_reviewer %}
+				<option value={{selected_reviewer.id}}>{{selected_reviewer.first_name}} {{selected_reviewer.last_name}}</option>
+				{% endif %}
+				<option value={{current_employee.id}}>{{current_employee.first_name}} {{current_employee.last_name}}</option>
+                {% for employee in employees %}
+                <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
+                {% endfor %}
+            </select>
+	 <br>
 
-<h4><a href = "{% url 'training' %}">View Mentorships</a></h4>
+	  <button type="button" onclick="addteam()">Add A New Team</button>
+	 <button type="button" onclick="addperson()">Add A New Person</button>
+
+	 <br>
+	 <br>
+
+
+
+<input type="submit" name="submit_team" value="Submit Team" />
+
+<input type="submit" name="submit_individual" value="Submit Individual" />
+	 <br><hr>
+<input type="submit" name="report_complete" value="Production Report Complete" />
+
+ {% endif %}
+ </form>
 
 </body>
 </html>
