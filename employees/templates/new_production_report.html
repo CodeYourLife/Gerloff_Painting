@@ -27,6 +27,97 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 
+function addteam(){
+alert("addteam")
+}
+
+
+function addperson(){
+alert("addperson")
+}
+
+
+
+window.onload = function() {
+counter=0
+var table = document.getElementById("categories_table");
+var rows = table.getElementsByTagName("tr").length;
+let rolodex = JSON.parse("{{categories|escapejs}}");
+currentmetric = 99999
+counter = "False"
+tester="Beginning"
+for (const x of rolodex){
+	if (x.metric__id != currentmetric){
+		if (tester != "Beginning"){
+		var cell1 = row.insertCell(counter1+1)
+		cell1.rowSpan = 2
+		cell1.innerHTML = "<textarea name ='note" + counter2 + "' placeholder = 'Note' rows='1' cols='20' ></textarea>"}
+		tester="End"
+		counter = "True"
+		currentmetric = x.metric__id
+		row = table.insertRow(rows);
+		rows=rows+1
+		cell1 = row.insertCell(0)
+		cell1.colSpan = 5
+		cell1.innerHTML = "<hr>"
+		row = table.insertRow(rows);
+		rows=rows+1
+		cell1 = row.insertCell(0)
+		cell1.rowSpan = 2
+		cell1.innerHTML = "<b>"+ x.metric__description + "</b>"
+		cell1 = row.insertCell(1)
+		row2 = table.insertRow(rows)
+		rows = rows+1
+		cell2 = row2.insertCell(0)
+	}
+if (counter == "False"){
+counter1 = x.number+1
+counter2 = x.metric__id
+var cell1 = row.insertCell(x.number+1)
+var cell2 = row2.insertCell(x.number)
+}
+counter = "False"
+cell1.innerHTML = "<input type='checkbox' name ='" + x.id + "' />"
+cell2.innerHTML = "" + x.description
+
+}
+
+		var cell1 = row.insertCell(counter1+1)
+		cell1.rowSpan = 2
+		cell1.innerHTML = "<textarea name ='note" + counter2 + "' placeholder = 'Note' rows='1' cols='20' ></textarea>"
+}
+
+
+function check_booking_data(){
+
+	metrics = []
+	let rolodex = JSON.parse("{{metrics|escapejs}}");
+	let rolodex2 = JSON.parse("{{categories|escapejs}}");
+	for (const x of rolodex){
+		metrics[x.id]=0
+	}
+	for (y = 0; y < document.getElementsByTagName('input').length; y++) {
+		if (document.getElementsByTagName('input').item(y).checked) {
+			b=0
+			i=-1
+			do { i = i + 1;
+ 				if (rolodex2[i].id == document.getElementsByTagName('input').item(y).name){
+ 					b=1
+ 					metrics[rolodex2[i].metric__id]=metrics[rolodex2[i].metric__id]+1
+ 				}
+ 				if (i > rolodex2.length){b=1}
+ 			}
+ 			while (b==0);
+		}
+	}
+	for (i=0;i < rolodex2.length;i++){}
+		for (const x of rolodex){
+		if (metrics[x.id]>1){
+		alert("Can't have more than one box checked for the same category!")
+		return false}
+	}
+
+}
 	</script>
 </head>
 <body>
@@ -80,6 +171,38 @@
                 {% endfor %}
             </select>
 	 <br>
+
+
+
+<div class="demo-html" style="width:90%">
+		<table id="team_table" class="display" style="width:90%">
+			<tbody>
+				<tr>
+					<td>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+</div>
+
+
+<div class="demo-html" style="width:90%">
+		<table id="individual_table" class="display" style="width:90%">
+
+			<tbody>
+				<tr>
+					<td>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+</div>
+
+
+
+
+
+
 
 	  <button type="button" onclick="addteam()">Add A New Team</button>
 	 <button type="button" onclick="addperson()">Add A New Person</button>
