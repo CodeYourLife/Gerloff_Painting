@@ -81,4 +81,4 @@ admin.site.register(ProductionCategory3)
 admin.site.register(ProductionCategory2)
 admin.site.register(ProductionCategory1)
 admin.site.register(TempProductionItems)
-
+admin.site.register(ProductionCategory)

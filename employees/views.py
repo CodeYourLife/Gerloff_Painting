@@ -15,14 +15,18 @@ from django_tables2 import SingleTableView
 def new_production_report(request,jobnumber):
     send_data = {}
     if jobnumber == 'ALL':
-        print("HEEE")
         send_data['jobs'] = Jobs.objects.filter(status = 'Open')
     else:
-        print("HEEHAW")
         send_data['jobs'] = Jobs.objects.get(job_number=jobnumber)
         send_data['selected_job'] = Jobs.objects.get(job_number=jobnumber)
+
+    send_data['category1'] = json.dumps(list(ProductionCategory.objects.all().order_by('item1').values().distinct('item1')), cls=DjangoJSONEncoder)
+    send_data['category2'] = json.dumps(list(ProductionCategory.objects.all().order_by('item1','item2','item3','task').values()), cls=DjangoJSONEncoder)
+
+    send_data['employees_json'] = json.dumps(list(Employees.objects.filter(active=True).values()), cls=DjangoJSONEncoder)
     send_data['employees'] = Employees.objects.filter(active=True)
     send_data['current_employee'] = Employees.objects.get(user=request.user)
+
     if request.method == 'POST':
         if 'job_select' in request.POST:
             jobnumber = request.POST['select_job']

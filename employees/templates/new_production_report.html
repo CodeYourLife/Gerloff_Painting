@@ -16,7 +16,6 @@
   background-color: Salmon;
 }
 
-
 	</style>
 	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
 	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
@@ -27,96 +26,313 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 
-function addteam(){
-alert("addteam")
-}
+var number_rows = 0;
 
+function addteam(){
+	alert("addteam")
+}
 
 function addperson(){
-alert("addperson")
-}
-
-
-
-window.onload = function() {
-counter=0
-var table = document.getElementById("categories_table");
-var rows = table.getElementsByTagName("tr").length;
-let rolodex = JSON.parse("{{categories|escapejs}}");
-currentmetric = 99999
-counter = "False"
-tester="Beginning"
-for (const x of rolodex){
-	if (x.metric__id != currentmetric){
-		if (tester != "Beginning"){
-		var cell1 = row.insertCell(counter1+1)
-		cell1.rowSpan = 2
-		cell1.innerHTML = "<textarea name ='note" + counter2 + "' placeholder = 'Note' rows='1' cols='20' ></textarea>"}
-		tester="End"
-		counter = "True"
-		currentmetric = x.metric__id
-		row = table.insertRow(rows);
-		rows=rows+1
-		cell1 = row.insertCell(0)
-		cell1.colSpan = 5
-		cell1.innerHTML = "<hr>"
-		row = table.insertRow(rows);
-		rows=rows+1
-		cell1 = row.insertCell(0)
-		cell1.rowSpan = 2
-		cell1.innerHTML = "<b>"+ x.metric__description + "</b>"
-		cell1 = row.insertCell(1)
-		row2 = table.insertRow(rows)
-		rows = rows+1
-		cell2 = row2.insertCell(0)
-	}
-if (counter == "False"){
-counter1 = x.number+1
-counter2 = x.metric__id
-var cell1 = row.insertCell(x.number+1)
-var cell2 = row2.insertCell(x.number)
-}
-counter = "False"
-cell1.innerHTML = "<input type='checkbox' name ='" + x.id + "' />"
-cell2.innerHTML = "" + x.description
+	var table = document.getElementById("person_table");
+	var rows = table.getElementsByTagName("tr").length;
+	number_rows = number_rows + 1
+	row = table.insertRow(rows);
+	cell1 = row.insertCell(0)
+	cell1.innerHTML = "<div id='new_item" + number_rows + "'></div>";
+	add_employee_dropdown()
+	cell2 = row.insertCell(1)
+	cell2.innerHTML = "<div id='new_item1" + number_rows + "'></div>";
+	add_category1_dropdown();
+	cell3 = row.insertCell(2)
+	cell3.innerHTML = "<div id='new_item2" + number_rows + "'></div>";
+	add_category2_dropdown();
+	cell4 = row.insertCell(3)
+	cell4.innerHTML = "<div id='new_item3" + number_rows + "'></div>";
+	add_category3_dropdown();
+	row2 = table.insertRow(rows+1);
+	cell5 = row2.insertCell(0);
+	cell5.innerHTML = "<div id='new_item4" + number_rows + "'></div>";
+	add_task_dropdown();
+	cell6 = row2.insertCell(1);
+	cell6.innerHTML = "<div id='new_item5" + number_rows + "'></div>";
+		cell7 = row2.insertCell(2);
+	cell7.innerHTML = "<div id='new_item6" + number_rows + "'></div>";
+		cell8 = row2.insertCell(3);
+	cell8.innerHTML = "<div id='new_item7" + number_rows + "'></div>";
+	cell9 = row2.insertCell(4);
+	cell9.innerHTML = "<input type = 'text' name = 'test' id = 'test' placeholder = 'hours' />";
 
 }
 
-		var cell1 = row.insertCell(counter1+1)
-		cell1.rowSpan = 2
-		cell1.innerHTML = "<textarea name ='note" + counter2 + "' placeholder = 'Note' rows='1' cols='20' ></textarea>"
+function add_employee_dropdown(){
+		var select = document.createElement("select");
+		select.name = "select_employee" + number_rows
+		select.id = "select_employee" + number_rows
+		let rolodex = JSON.parse("{{employees_json|escapejs}}");
+				var option = document.createElement("option");
+		option.value = "please_select";
+		option.text= "Select Employee";
+		select.appendChild(option);
+				for (const x of rolodex){
+		var option = document.createElement("option");
+		option.value = x.id;
+		option.text= x.first_name + " " + x.last_name
+		select.appendChild(option);
+		}
+		var label = document.createElement("label");
+		document.getElementById("new_item" + number_rows).appendChild(label).appendChild(select);
 }
 
+function add_category1_dropdown(){
+		var select = document.createElement("select");
+		select.name = "select_category1" + number_rows
+		select.id = "select_category1" + number_rows
+		select.addEventListener('change',function() {SelectCategory1(this);},false);
+		let rolodex = JSON.parse("{{category1|escapejs}}");
+		var option = document.createElement("option");
+		option.value = "please_select";
+		option.text= "Select Substrate";
+		select.appendChild(option);
+				for (const x of rolodex)
+		{
+		var option = document.createElement("option");
+		option.value = x.id;
+		option.text= x.item1;
+		select.appendChild(option);
+		}
+		var label = document.createElement("label");
+		document.getElementById("new_item1" + number_rows).appendChild(label).appendChild(select);
+}
 
-function check_booking_data(){
+function add_category2_dropdown(){
+		var select = document.createElement("select");
+		select.name = "select_category2" + number_rows
+		select.id = "select_category2" + number_rows
+		select.addEventListener('change',function() {SelectCategory2(this);},false);
+		var option = document.createElement("option");
+		option.value = "please_select";
+		option.text= "Select Method";
+		select.appendChild(option);
+		var label = document.createElement("label");
+		document.getElementById("new_item2" + number_rows).appendChild(label).appendChild(select);
+}
 
-	metrics = []
-	let rolodex = JSON.parse("{{metrics|escapejs}}");
-	let rolodex2 = JSON.parse("{{categories|escapejs}}");
+function add_category3_dropdown(){
+
+		var select = document.createElement("select");
+		select.name = "select_category3" + number_rows
+		select.id = "select_category3" + number_rows
+		select.addEventListener('change',function() {SelectCategory3(this);},false);
+		var option = document.createElement("option");
+		option.value = "please_select";
+		option.text= "Select Step";
+		select.appendChild(option);
+		var label = document.createElement("label");
+		document.getElementById("new_item3" + number_rows).appendChild(label).appendChild(select);
+}
+function add_task_dropdown(){
+		var select = document.createElement("select");
+		select.name = "select_task" + number_rows
+		select.id = "select_task" + number_rows
+		select.addEventListener('change',function() {SelectTask(this);},false);
+		var option = document.createElement("option");
+		option.value = "please_select";
+		option.text= "Select Task";
+		select.appendChild(option);
+		var label = document.createElement("label");
+		document.getElementById("new_item4" + number_rows).appendChild(label).appendChild(select);
+}
+
+function SelectCategory1(btn){
+	var sel = document.getElementById(btn.id);
+	match = sel.options[sel.selectedIndex].text
+	var sel2 = document.getElementById("select_category2" + sel.id.substring(16,sel.id.length))
+	for(let i = sel2.options.length; i >= 0; i--) {
+					sel2.remove(i);
+				}
+	var sel3 = document.getElementById("select_category3" + sel.id.substring(16,sel.id.length))
+	for(let i = sel3.options.length; i >= 0; i--) {
+					sel3.remove(i);
+				}
+	var sel4 = document.getElementById("select_task" + sel.id.substring(16,sel.id.length))
+	for(let i = sel4.options.length; i >= 0; i--) {
+					sel4.remove(i);
+				}
+	var option = document.createElement("option");
+	option.value = "please_select";
+	option.text= "Select Method";
+	sel2.appendChild(option);
+	var option = document.createElement("option");
+	option.value = "please_select";
+	option.text= "Select Step";
+	sel3.appendChild(option);
+	var option = document.createElement("option");
+	option.value = "please_select";
+	option.text= "Select Task";
+	sel4.appendChild(option);
+	let rolodex = JSON.parse("{{category2|escapejs}}");
+	test_word = "START"
+	b=0
 	for (const x of rolodex){
-		metrics[x.id]=0
-	}
-	for (y = 0; y < document.getElementsByTagName('input').length; y++) {
-		if (document.getElementsByTagName('input').item(y).checked) {
-			b=0
-			i=-1
-			do { i = i + 1;
- 				if (rolodex2[i].id == document.getElementsByTagName('input').item(y).name){
- 					b=1
- 					metrics[rolodex2[i].metric__id]=metrics[rolodex2[i].metric__id]+1
- 				}
- 				if (i > rolodex2.length){b=1}
- 			}
- 			while (b==0);
+		if (b==0){
+			if (x.item1 == match){
+				b=b+1
+				test_word = x.item2
+				var option = document.createElement("option");
+				option.value = x.item2
+				option.text= x.item2
+				sel2.appendChild(option);
+			}
+		}
+		if (b==1){
+			if (x.item1 != match){ break; }
+			if (x.item2 != test_word){
+				test_word = x.item2
+				var option = document.createElement("option");
+				option.value = x.item2
+				option.text= x.item2
+				sel2.appendChild(option);
+			}
 		}
 	}
-	for (i=0;i < rolodex2.length;i++){}
-		for (const x of rolodex){
-		if (metrics[x.id]>1){
-		alert("Can't have more than one box checked for the same category!")
-		return false}
-	}
+}
 
+
+function SelectCategory2(btn){
+	var sel = document.getElementById(btn.id);
+	match = document.getElementById("select_category1" + sel.id.substring(16,sel.id.length)).options[document.getElementById("select_category1" + sel.id.substring(16,sel.id.length)).selectedIndex].text
+	match2 = sel.options[sel.selectedIndex].text
+	var sel2 = document.getElementById("select_category3" + sel.id.substring(16,sel.id.length))
+	for(let i = sel2.options.length; i >= 0; i--) {
+					sel2.remove(i);
+				}
+	var option = document.createElement("option");
+	option.value = "please_select";
+	option.text= "Select Step";
+	sel2.appendChild(option);
+	var sel3 = document.getElementById("select_task" + sel.id.substring(16,sel.id.length))
+	for(let i = sel3.options.length; i >= 0; i--) {
+					sel3.remove(i);
+				}
+	var option = document.createElement("option");
+	option.value = "please_select";
+	option.text= "Select Task";
+	sel3.appendChild(option);
+	let rolodex = JSON.parse("{{category2|escapejs}}");
+	test_word = "START"
+	b=0
+	for (const x of rolodex){
+	console.log(x.item1 + " -- " + x.item2 + " -- " + x.item3 + " -- " + x.task)
+		if (b==0){
+			if (x.item1 == match){
+				b=b+1
+				if (x.item2 == match2){
+					b=b+1
+					test_word = x.item3
+					var option = document.createElement("option");
+					option.value = x.item3
+					option.text= x.item3
+					sel2.appendChild(option);
+				}
+			}
+		}
+		else if (b==1){
+			if (x.item2 == match2){
+				b=b+1
+				test_word = x.item3
+				var option = document.createElement("option");
+				option.value = x.item3
+				option.text= x.item3
+				sel2.appendChild(option);
+			}
+		}
+		else if (b==2){
+				if (x.item1 != match){ break; }
+				if (x.item2 != match2){ break; }
+				if (x.item3 != test_word){
+					test_word = x.item3
+					var option = document.createElement("option");
+					option.value = x.item3
+					option.text= x.item3
+					sel2.appendChild(option);
+				}
+		}
+
+	}
+}
+
+function SelectCategory3(btn){
+	var sel = document.getElementById(btn.id);
+	match = document.getElementById("select_category1" + sel.id.substring(16,sel.id.length)).options[document.getElementById("select_category1" + sel.id.substring(16,sel.id.length)).selectedIndex].text
+	match2 = document.getElementById("select_category2" + sel.id.substring(16,sel.id.length)).options[document.getElementById("select_category2" + sel.id.substring(16,sel.id.length)).selectedIndex].text
+	match3 = sel.options[sel.selectedIndex].text
+	var sel2 = document.getElementById("select_task" + sel.id.substring(16,sel.id.length))
+	for(let i = sel2.options.length; i >= 0; i--) {
+					sel2.remove(i);
+				}
+	var option = document.createElement("option");
+	option.value = "please_select";
+	option.text= "Select Task";
+	sel2.appendChild(option);
+	let rolodex = JSON.parse("{{category2|escapejs}}");
+	test_word = "START"
+	b=0
+	for (const x of rolodex){
+	console.log(x.item1 + " -- " + x.item2 + " -- " + x.item3 + " -- " + x.task)
+		if (b==0){
+			if (x.item1 == match){
+				b=b+1
+				if (x.item2 == match2){
+					b=b+1
+					if (x.item3 == match3){
+						b=b+1
+						var option = document.createElement("option");
+						option.value = x.id
+						option.text= x.task
+						sel2.appendChild(option);
+					}
+				}
+			}
+		}
+		else if (b==1){
+			if (x.item2 == match2){
+				b=b+1
+				if (x.item3 == match3){
+					b=b+1
+					var option = document.createElement("option");
+					option.value = x.id
+					option.text= x.task
+					sel2.appendChild(option);
+				}
+			}
+		}
+		else if (b==2){
+			if (x.item3 == match3){
+				b=b+1
+				test_word = x.item3
+				var option = document.createElement("option");
+				option.value = x.id
+				option.text= x.task
+				sel2.appendChild(option);
+			}
+		}
+		else if (b==3){
+				if (x.item1 != match){ break; }
+				if (x.item2 != match2){ break; }
+				if (x.item3 != match3){ break; }
+					var option = document.createElement("option");
+					option.value = x.id
+					option.text= x.task
+					sel2.appendChild(option);
+
+		}
+
+	}
+}
+
+function SelectTask(btn){
+	var sel = document.getElementById(btn.id);
+	alert(sel.options[sel.selectedIndex].text)
 }
 	</script>
 </head>
@@ -177,21 +393,18 @@ function check_booking_data(){
 <div class="demo-html" style="width:90%">
 		<table id="team_table" class="display" style="width:90%">
 			<tbody>
-				<tr>
-					<td>
-					</td>
-				</tr>
+				<tr><td><b>TEAMS</b></td></tr>
 			</tbody>
 		</table>
 </div>
 
 
 <div class="demo-html" style="width:90%">
-		<table id="individual_table" class="display" style="width:90%">
+		<table id="person_table" class="display" style="width:90%">
 
 			<tbody>
 				<tr>
-					<td>
+					<td><b>INDIVIDUALS</b>
 					</td>
 				</tr>
 			</tbody>

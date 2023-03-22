@@ -929,12 +929,27 @@ class ApprovedVacations(models.Model):
 class ProductionCategory1(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	description = models.CharField(max_length=200)  # Gypsum Walls, CMU Walls, Exposed Ceilings, Punchlist
+	unit1 = models.CharField(max_length=200,null=True, blank=True)
+	unit2 = models.CharField(max_length=200, null=True, blank=True)
+	unit3 = models.CharField(max_length=200, null=True, blank=True)
 	def __str__(self):
 		return f"{self.description}"
 
+class ProductionCategory(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	item1 = models.CharField(max_length=200)
+	item2 = models.CharField(max_length=200,null=True,blank=True)
+	item3 = models.CharField(max_length=200,null=True,blank=True)
+	task = models.CharField(max_length=200, null=True, blank=True)
+	unit1 = models.CharField(max_length=200, null=True, blank=True)
+	unit2 = models.CharField(max_length=200, null=True, blank=True)
+	unit3 = models.CharField(max_length=200, null=True, blank=True)
+	def __str__(self):
+		return f"{self.item1} {self.item2} {self.item3} {self.task}"
+
 class ProductionCategory2(models.Model):
 	id = models.BigAutoField(primary_key=True)
-	description = models.CharField(max_length=200)  # Brush/Roll, Spray, Other
+	description = models.CharField(max_length=200)  # Brush/Roll, Spray, Other2
 	def __str__(self):
 		return f"{self.description}"
 
