@@ -1008,14 +1008,9 @@ class TempProductionItems(models.Model):
 
 class ProductionItems(models.Model):
 	id = models.BigAutoField(primary_key=True)
-	task = models.ForeignKey(ProductionTask, on_delete=models.PROTECT)
-	category3 = models.ForeignKey(ProductionCategory3, on_delete=models.PROTECT, blank=True, null=True)
-	category2 = models.ForeignKey(ProductionCategory2, on_delete=models.PROTECT, blank=True, null=True)
-	category1 = models.ForeignKey(ProductionCategory1, on_delete=models.PROTECT, blank=True, null=True)
 	value1 = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
 	value2 = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
 	value3 = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
-	description = models.CharField(max_length=2000)
 	unit = models.CharField(max_length=20, blank=True, null=True)  # gals
 	unit2 = models.CharField(max_length=20, blank=True, null=True)  # sf
 	unit3 = models.CharField(max_length=20, blank=True, null=True)  # lf
@@ -1027,6 +1022,11 @@ class ProductionItems(models.Model):
 	metric_assessment = models.ForeignKey(MetricAssessment, on_delete=models.PROTECT, blank=True, null=True)
 	employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
 	date = models.DateField(null=True,blank=True)
+	team_members = models.IntegerField(default=0,null=True,blank=True)
+	task = models.ForeignKey(ProductionCategory, on_delete=models.PROTECT, blank=True, null=True)
+	description = models.CharField(max_length=2000, blank=True, null=True)
+	def __str__(self):
+		return f"{self.employee} {self.date}"
 
 
 class TrainingTopic(models.Model):

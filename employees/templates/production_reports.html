@@ -60,19 +60,19 @@ $(document).ready(function () {
 					<th>Date</th>
 					<th>Goto</th>
 					<th>Task </th>
-					<th>Description</th>
+					<th>Quantity</th>
 					<th>Notes</th>
 				</tr>
 			</thead>
 			<tbody>
 			{% for x in production_reports %}
-			<tr><td><a href = "{% url 'employees_page' x.employee.id %}">{{x.employee}}</td></tr>
-			<tr><td>{{x.date}}</td></tr>
-			<tr><td><a href = "{% url 'production_reports' x.id %}">View</td></tr>
-			<tr><td>{{x.task}}</td></tr>
-			<tr><td>{{x.description}}</td></tr>
-			<tr><td>{{x.note}} {% if x.team_note == True %} Team: {{x.team_note}} {% endif %}</td></tr>
-			</tr>
+			<tr><td><a href = "{% url 'employees_page' x.employee.id %}">{{x.employee}}</a></td>
+			<td>{{x.date}}</td>
+			<td><a href = "{% url 'production_reports' x.id %}">View</a></td>
+			<td>{{x.task}}</td>
+			<td>{{x.value1}} {{x.unit}}{% if x.value2 != None %}...{{x.value2}} {{x.unit2}}{% endif %}{% if x.value3 != None %}...{{x.value3}} {{x.unit3}}{% endif %}</td>
+			<td>{{x.note}} {% if x.is_team == True %} Team members: {{x.team_members}}. {{x.team_note}} {% endif %}</td></tr>
+
 {% endfor %}
 			</tbody>
 		</table>

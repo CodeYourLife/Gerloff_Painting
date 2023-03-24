@@ -22,7 +22,6 @@ def new_production_report(request,jobnumber):
 
     send_data['category1'] = json.dumps(list(ProductionCategory.objects.all().order_by('item1').values().distinct('item1')), cls=DjangoJSONEncoder)
     send_data['category2'] = json.dumps(list(ProductionCategory.objects.all().order_by('item1','item2','item3','task').values()), cls=DjangoJSONEncoder)
-
     send_data['employees_json'] = json.dumps(list(Employees.objects.filter(active=True).values()), cls=DjangoJSONEncoder)
     send_data['employees'] = Employees.objects.filter(active=True)
     send_data['current_employee'] = Employees.objects.get(user=request.user)
@@ -35,6 +34,50 @@ def new_production_report(request,jobnumber):
             return render(request, "new_production_report.html", send_data)
         send_data['selected_reviewer'] = Employees.objects.get(id=request.POST['select_reviewer'])
         if 'report_complete' in request.POST:
+            print(request.POST)
+            daily_report = DailyReports.objects.create(foreman=Employees.objects.get(id=request.POST['select_reviewer']),date = date.today(),note=request.POST['report_note'],job=Jobs.objects.get(job_number=request.POST['selected_job']))
+            for x in request.POST:
+                if x[0:20] == 'select_teamcategory1':
+                    team_members=0
+                    team = x[20:len(x)]
+                    team_note =""
+                    for y in request.POST:
+                        if y[0:4] =='task':
+                            if y[9:9+int(len(team))]== team:
+                                team_members=team_members+1
+                                employee_number = y[19+int(len(team)):len(y)]
+                                for z in request.POST:
+                                    if z[0:27+int(len(team))+int(len(employee_number))] == "select_team" + team + "select_employee" + employee_number:
+                                        employee = Employees.objects.get(id=request.POST[z]).first_name
+                                        task = ProductionCategory.objects.get(id=request.POST[y]).task
+                                        team_note = team_note + employee + " " + task + ". "
+                    team_note = request.POST['teamnotes_' + team] + ". " + team_note
+                    for y in request.POST:
+                        if y[0:4] =='task':
+                            if y[9:9+int(len(team))]== team:
+                                employee_number = y[19+int(len(team)):len(y)]
+                                for z in request.POST:
+                                    if z[0:27+int(len(team))+int(len(employee_number))] == "select_team" + team + "select_employee" + employee_number:
+                                        employee = Employees.objects.get(id=request.POST[z])
+                                        task = ProductionCategory.objects.get(id=request.POST[y])
+                                note= request.POST['team_' + team + "_employeenote_" + employee_number]
+                                description = task.item1 + " - " + task.item2 + " - " + task.item3 + " - " + task.task
+                                new_entry = ProductionItems.objects.create(note=note, is_team=True,team_note=team_note,daily_report=daily_report,employee=employee,date=date.today(),team_members=team_members,task=task,description=description)
+                                if request.POST['hoursteam_'+ team] != "":
+                                    new_entry.hours = float(request.POST['hoursteam_'+ team])
+                                if 'unit1team_'+team in request.POST:
+                                    if request.POST['unit1team_'+team] != "":
+                                        new_entry.value1=float(request.POST['unit1team_'+team])
+                                        new_entry.unit = task.unit1
+                                if 'unit2team_'+team in request.POST:
+                                    if request.POST['unit2team_' + team] != "":
+                                        new_entry.value2=float(request.POST['unit2team_'+team])
+                                        new_entry.unit2 = task.unit2
+                                if 'unit3team_'+team in request.POST:
+                                    if request.POST['unit3team_' + team] != "":
+                                        new_entry.value3=float(request.POST['unit3team_'+team])
+                                        new_entry.unit3 = task.unit3
+                                new_entry.save()
             return render(request, "new_production_report.html", send_data)
     return render(request, "new_production_report.html", send_data)
 def new_assessment(request,id):
