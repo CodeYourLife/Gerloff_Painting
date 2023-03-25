@@ -78,6 +78,29 @@ def new_production_report(request,jobnumber):
                                         new_entry.value3=float(request.POST['unit3team_'+team])
                                         new_entry.unit3 = task.unit3
                                 new_entry.save()
+                if x[0:15] == 'select_employee':
+                    employee_number = x[15:len(x)]
+                    print(employee_number)
+                    task=ProductionCategory.objects.get(id=request.POST['select_task'+employee_number])
+                    description = task.item1 + " - " + task.item2 + " - " + task.item3 + " - " + task.task
+                    employee = Employees.objects.get(id=request.POST[x])
+                    note = request.POST['note' + employee_number]
+                    new_entry = ProductionItems.objects.create(note=note, is_team=False,daily_report=daily_report,employee=employee, date=date.today(),task=task,description=description)
+                    if request.POST['hours' + employee_number] != "":
+                        new_entry.hours = float(request.POST['hours' + employee_number])
+                    if 'value1' + employee_number in request.POST:
+                        if request.POST['value1' + employee_number] != "":
+                            new_entry.value1 = float(request.POST['value1' + employee_number])
+                            new_entry.unit = task.unit1
+                    if 'value2' + employee_number in request.POST:
+                        if request.POST['value2' + employee_number] != "":
+                            new_entry.value2 = float(request.POST['value2' + employee_number])
+                            new_entry.unit2 = task.unit2
+                    if 'value3' + employee_number in request.POST:
+                        if request.POST['value3' + employee_number] != "":
+                            new_entry.value3 = float(request.POST['value3' + employee_number])
+                            new_entry.unit3 = task.unit3
+                    new_entry.save()
             return render(request, "new_production_report.html", send_data)
     return render(request, "new_production_report.html", send_data)
 def new_assessment(request,id):
