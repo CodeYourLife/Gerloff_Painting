@@ -1033,23 +1033,29 @@ class TrainingTopic(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	description = models.CharField(max_length=2000) #spray training
 	details = models.CharField(max_length=2000) #class syllabus / outline
-	assessment_category = models.ForeignKey(Metrics, on_delete=models.PROTECT,related_name="class1")
-	assessment_category1 = models.ForeignKey(Metrics, on_delete=models.PROTECT,related_name="class2")
+	assessment_category = models.ForeignKey(Metrics, on_delete=models.PROTECT,related_name="class1",null=True,blank=True)
+	assessment_category1 = models.ForeignKey(Metrics, on_delete=models.PROTECT,related_name="class2",null=True,blank=True)
+	def __str__(self):
+		return f"{self.description}"
 
 class ClassOccurrence(models.Model):
 	id = models.BigAutoField(primary_key=True)
-	topic = models.ForeignKey(TrainingTopic, on_delete=models.PROTECT)
+	topic = models.ForeignKey(TrainingTopic, on_delete=models.PROTECT,null=True,blank=True)
+	description = models.CharField(max_length=500)
 	date = models.DateField()
-	teacher = models.ForeignKey(Employees, on_delete=models.PROTECT)
-	note = models.CharField(max_length=2000)
-	location = models.CharField(max_length=100)
-	job = models.ForeignKey(Jobs, on_delete=models.PROTECT)
-
+	teacher = models.ForeignKey(Employees, on_delete=models.PROTECT,null=True,blank=True)
+	teacher2 = models.CharField(max_length=100,null=True,blank=True)
+	note = models.CharField(max_length=2000,null=True,blank=True)
+	location = models.CharField(max_length=100,null=True,blank=True)
+	job = models.ForeignKey(Jobs, on_delete=models.PROTECT,null=True,blank=True)
+	def __str__(self):
+		return f"{self.description} {self.date}"
 class ClassAttendees(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	class_event = models.ForeignKey(ClassOccurrence, on_delete=models.PROTECT)
-	student = models.ForeignKey(Employees, on_delete=models.PROTECT)
-	note = models.CharField(max_length=2000)
+	student = models.ForeignKey(Employees, on_delete=models.PROTECT,null=True,blank=True)
+	student2 = models.CharField(max_length=100,null=True,blank=True)
+	note = models.CharField(max_length=2000,null=True,blank=True)
 
 
 class Exam(models.Model):

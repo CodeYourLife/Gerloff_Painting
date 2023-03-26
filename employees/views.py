@@ -137,10 +137,49 @@ def new_assessment(request,id):
         # send_data['current_user']=json.dumps(list(Employees.objects.filter(user=request.user).values('id','last_name','first_name')), cls=DjangoJSONEncoder)
         # send_data['employees'] = json.dumps(list(Employees.objects.filter(active=True).values('id','last_name','first_name')), cls=DjangoJSONEncoder)
     return render(request, "new_assessment.html", send_data)
-def classes(request):
+def classes(request,id):
+    send_data = {}
+    send_data['classoccurrences']=ClassOccurrence.objects.all()
+    if id != 'ALL':
+        send_data['selected_item']= ClassOccurrence.objects.get(id=id)
+        send_data['attendees'] = ClassAttendees.objects.filter(class_event__id=id)
+    return render(request, "classes.html", send_data)
+
+def new_class(request):
     send_data = {}
     send_data['employees']=Employees.objects.filter(active = True)
-    return render(request, "classes.html", send_data)
+    send_data['topics']=TrainingTopic.objects.all()
+    send_data['jobs'] = Jobs.objects.filter(status = 'Open')
+    send_data['topics_json'] = json.dumps(list(TrainingTopic.objects.values()), cls=DjangoJSONEncoder)
+    send_data['employees_json'] = json.dumps(list(Employees.objects.filter(active = True).values()), cls=DjangoJSONEncoder)
+    if request.method == 'POST':
+        new_class = ClassOccurrence.objects.create(date=date.today(),note = request.POST['class_note'],location=request.POST['location'])
+        if request.POST['select_job'] != 'please_select':
+            new_class.job= Jobs.objects.get(job_number =request.POST['select_job'])
+        if request.POST['select_topic'] != 'custom_topic':
+            topic = TrainingTopic.objects.get(id=request.POST['select_topic'])
+            description = topic.description
+            new_class.topic=topic
+            new_class.description=description
+        else:
+            description = request.POST['custom_topic']
+            new_class.description=description
+        if request.POST['select_teacher'] != 'custom_teacher':
+            teacher = Employees.objects.get(id=request.POST['select_teacher'])
+            new_class.teacher=teacher
+        else:
+            teacher2 = request.POST['custom_teacher']
+            new_class.teacher2=teacher2
+        new_class .save()
+        for x in request.POST:
+            if x[0:15] == 'select_employee':
+                employee_number= x[15:int(len(x))]
+                if request.POST[x] == 'custom_student':
+                    ClassAttendees.objects.create(class_event=new_class,student2=request.POST['custom_student'+employee_number],note=request.POST['note_'+employee_number])
+                else:
+                    ClassAttendees.objects.create(class_event=new_class,student = Employees.objects.get(id=request.POST[x]),note=request.POST['note_'+employee_number])
+        return redirect('classes',id='ALL')
+    return render(request, "new_class.html", send_data)
 
 def exams(request):
     send_data = {}

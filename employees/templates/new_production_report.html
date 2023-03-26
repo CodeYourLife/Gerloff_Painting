@@ -25,10 +25,62 @@
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
-
+var counter = 0;
 var number_rows = 0;
 var new_employee =0;
 var employee_number = 0
+
+function delete_row(btn){
+	x = 0
+	y = 0
+	counter = counter + 1
+	console.log("COUNTER NUMBER HERE")
+	console.log(counter)
+	if (btn.id.substring(0,10)== "deleteteam"){
+		var table = document.getElementById("team_table");
+		team_number =  btn.id.substring(10,btn.id.length)
+		for (let row of table.rows) {
+			console.log(row.cells[0].innerText)
+			if (row.cells[0].innerText.substring(0, 9+team_number.length) == "New Team " + team_number){
+				x = row.rowIndex
+			}
+			if (row.cells[0].innerText == "Add A Team-Member"){
+				y = row.rowIndex
+				break
+			}
+		}
+	}
+
+	if (btn.id.substring(0,14)== "deleteemployee"){
+		var table = document.getElementById("person_table");
+		employee_number =  btn.id.substring(15,btn.id.length)
+		for (let row of table.rows) {
+				console.log(row.rowIndex)
+				console.log(row.cells[0].innerText)
+				console.log(row.cells[0].innerHTML)
+				if (row.cells[0].innerHTML.substring(9, 17 +employee_number.length) == "new_item" + employee_number){
+					x = row.rowIndex -1
+				}
+				y=row.rowIndex
+				if (x > 0 && row.cells[0].innerText == "NEXT EMPLOYEE"){
+					y=y-1
+					break
+				}
+		}
+	}
+
+	if (x > 0){
+		for (let i = x; i <= y; i++) {
+			console.log("ROW ABOUT TO BE DELETED")
+			console.log(table.rows[x].cells[0].innerText)
+			table.deleteRow(x)
+		}
+	}
+
+
+}
+
+
 
 function addteam(){
 	number_rows = number_rows + 1
@@ -52,7 +104,7 @@ function addteam(){
 	cell3.innerHTML = "<div id='new_teamitem3" + number_rows + "'></div>";
 	add_teamcategory3_dropdown();
 	cell3 = row.insertCell(3)
-	cell3.innerHTML = "<div id='team_" + number_rows + "_row_" + rows + "' ></div>";
+	cell3.innerHTML = "<button type='button' id = 'deleteteam" + number_rows + "' onclick='delete_row(this)' >Delete Team</button>";
 	row3 = table.insertRow(rows);
 	rows = rows+1
 	cell1 = row3.insertCell(0)
@@ -270,7 +322,11 @@ function add_team_employee(btn){
 	number_rows = number_rows + 1
 	table_number = btn.id.substring(7,btn.id.length)
 	var table =  document.getElementById("team_table")
-
+	select1 = document.getElementById("select_teamcategory1" + table_number)
+	select2 = document.getElementById("select_teamcategory2" + table_number)
+	select3 = document.getElementById("select_teamcategory3" + table_number)
+	if (select1.value == "please_select" || select2.value == "please_select" || select3.value == "please_select"){alert("Need to select all menu options")}
+	else {
 	for (let row of table.rows) {
 			for(let cell of row.cells){
 				if (cell.innerText.substring(0,9) == "New Team "){
@@ -283,11 +339,7 @@ function add_team_employee(btn){
 	if (table.rows[rows].cells[0].innerText == "Employee Info"){
 		do{rows=rows+2}while(table.rows[rows].cells[0].innerText == "Employee Info")
 		}
-	select1 = document.getElementById("select_teamcategory1" + table_number)
-	select2 = document.getElementById("select_teamcategory2" + table_number)
-	select3 = document.getElementById("select_teamcategory3" + table_number)
-	if (select1.value == "please_select" || select2.value == "please_select" || select3.value == "please_select"){alert("Need to select all menu options")}
-	else {
+
 		var category = document.getElementById("select_teamcategory1" + table_number)
 		match = category.options[category.selectedIndex].text
 		var category2 = document.getElementById("select_teamcategory2" + table_number)
@@ -324,6 +376,8 @@ function add_team_employee(btn){
 		cell2 = row.insertCell(2)
 		cell2.colSpan = 2
 		cell2.innerHTML = "<input type = 'text' size = '40' name = 'team_" + table_number + "_employeenote_" + number_rows + "' placeholder = 'Enter Notes About This Employee' />"
+		cell2 = row.insertCell(3)
+		cell2.innerHTML = "<button type='button' id = 'deleteteam_" + table_number + "_employee_" + number_rows + "' onclick='delete_row(this)' >Delete Employee</button>";
 	}
 }
 
@@ -441,7 +495,9 @@ function addperson(){
 	rows = rows+1
 	cell10 = row3.insertCell(0)
 	cell10.colSpan = 4
-	cell10.innerHTML = "<input type = 'text' size = '60' name = 'note" + number_rows + "' id = 'note" + number_rows + "' placeholder = 'Notes about this employee' />";
+	cell10.innerHTML = "<input type = 'text' size = '60' name = 'note" + number_rows + "' id = 'note" + number_rows + "' placeholder = 'Notes about this employee' /><button type='button' id = 'deleteemployee_" + number_rows + "' onclick='delete_row(this)' >Delete Employee</button>";
+
+
 }
 
 function add_employee_dropdown(){
@@ -806,11 +862,6 @@ function SelectCategory3(btn){
 	 <br>
 	 <br>
 
-
-
-<!--<input type="submit" name="submit_team" value="Submit Team" />-->
-
-<!--<input type="submit" name="submit_individual" value="Submit Individual" />-->
 	 <br><hr>
 
 <input type="submit" name="report_complete" value="Production Report Complete" />

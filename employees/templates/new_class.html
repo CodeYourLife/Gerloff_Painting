@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% block nav_item_employees %}active{% endblock nav_item_employees %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+.active, .collapsible:hover {
+  background-color: Salmon;
+}
+
+	</style>
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+
+var number_rows = 0
+
+function delete_row(btn){
+	x = 0
+	if (btn.id.substring(0,15)== "deleteemployee_"){
+		var table = document.getElementById("student_table");
+		employee_number =  btn.id.substring(15,btn.id.length)
+		for (let row of table.rows) {
+			console.log(row.cells[0].innerText)
+			if (row.cells[0].innerText.substring(0, 8+employee_number.length) == "Student " + employee_number){
+				x = row.rowIndex
+				break
+			}
+		}
+	}
+	if (x > 0){
+			table.deleteRow(x)
+			table.deleteRow(x)
+	}
+}
+
+function selecttopic(){
+	match = document.getElementById("select_topic")
+	description_location = document.getElementById("class_description_here")
+	custom_location = document.getElementById("custom_topic_here")
+	if (match.value == "custom_topic"){
+	custom_location.innerHTML = "<input type = 'text' name='custom_topic' size = '40' placeholder = 'Class Topic' /><br>"
+	}
+	else {
+		custom_location.innerHTML = ""
+		let rolodex = JSON.parse("{{topics_json|escapejs}}");
+		for (const x of rolodex){
+			if (x.id == match.value) {
+			description_location.innerHTML = x.details
+			break
+			}
+		}
+	}
+}
+
+function selectteacher(){
+	match = document.getElementById("select_teacher")
+	description_location = document.getElementById("teacher_here")
+	if (match.value == "custom_teacher"){
+	description_location.innerHTML = "<input type = 'text' name='custom_teacher' size = '40' placeholder = 'ACME TEACHING' /><br>"
+	}
+	else { description_location.innerHTML = ""}
+}
+
+function customemployee(btn){
+if (btn.value == "custom_student"){
+	student_number = btn.id.substr(15,btn.id.length)
+	destination = document.getElementById("custom_student_location" + student_number)
+	destination.innerHTML = "<input type = 'text' name='custom_student" + student_number + "' size = '40' placeholder = 'Person Name' />"
+}
+}
+
+
+function addstudent(){
+var table = document.getElementById("student_table");
+var rows = table.getElementsByTagName("tr").length;
+number_rows = number_rows + 1
+row = table.insertRow(rows);
+rows=rows+1
+cell1 = row.insertCell(0);
+cell1.innerHTML = "<b style='color:blue'> Student " + number_rows + "</b>"
+row = table.insertRow(rows);
+rows=rows+1
+cell1 = row.insertCell(0);
+cell1.innerHTML = "<div id='new_student" + number_rows + "'></div>";
+var select = document.createElement("select");
+select.name = "select_employee" + number_rows
+select.id = "select_employee" + number_rows
+select.addEventListener('change',function() {customemployee(this);},false);
+let rolodex = JSON.parse("{{employees_json|escapejs}}");
+		var option = document.createElement("option");
+option.value = "please_select";
+option.text= "Select Employee";
+select.appendChild(option);
+var option = document.createElement("option");
+option.value = "custom_student";
+option.text= "Non-Employee";
+select.appendChild(option);
+		for (const x of rolodex){
+var option = document.createElement("option");
+option.value = x.id;
+option.text= x.first_name + " " + x.last_name
+select.appendChild(option);
+}
+var label = document.createElement("label");
+document.getElementById("new_student" + number_rows).appendChild(label).appendChild(select);
+cell1 = row.insertCell(1);
+cell1.innerHTML = "<div id='custom_student_location" + number_rows + "'></div><input type = 'text' name='note_" + number_rows + "' size = '100' placeholder = 'student notes' /><button type='button' id = 'deleteemployee_" + number_rows + "' onclick='delete_row(this)' >Delete Employee</button>"
+}
+
+
+	</script>
+</head>
+<body>
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Training</a>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown2">
+    <ul class="navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Employees Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'training' %}">Training Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'assessments' 'ALL' %}">Assessments</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'production_reports' 'ALL'  %}">Production Reports</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Classes</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Exams</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Mentorships</a></li>
+		<li><a class="nav-item nav-link active" >NEW CLASS</a></li>
+    </ul>
+  </div>
+
+</nav><br>
+
+ <form action="{% url 'new_class' %}" method="post" >
+	 {% csrf_token %}
+
+			 <label for="select_topic">Select Class Topic: </label>
+            <select id="select_topic" name="select_topic" onChange="selecttopic()" >
+				<option value="please_select">Please Select</option>
+                 <option value="custom_topic">Custom Class</option>
+                {% for x in topics %}
+                <option value={{x.id}}>{{x.description}}</option>
+                {% endfor %}
+            </select>
+	 		<br><br>
+	 <div id="custom_topic_here" ></div>
+<br>
+	 			 <label for="select_topic">Select Teacher: </label>
+            <select id="select_teacher" name="select_teacher" onChange="selectteacher()" >
+				<option value="please_select">Please Select</option>
+                 <option value="custom_teacher">Custom Teacher</option>
+                {% for x in employees %}
+                <option value={{x.id}}>{{x.first_name}} {{x.last_name}}</option>
+                {% endfor %}
+            </select>
+
+	 		<br>
+	 <div id="teacher_here" ></div>
+	 <br>
+	 <textarea name="class_note" rows="2" cols="100" placeholder="Class Notes" ></textarea>
+	 <br>
+	 Class Location: <input type = "text" name="location" size = "40" placeholder = "Gerloff Conference" />
+	 <br>
+
+				 <label for="select_job">If this class was related to a specific job, please select it:</label>
+            <select id="select_job" name="select_job" >
+                 <option value="please_select">"Please Select"</option>
+				{% if jobs %}
+                {% for x in jobs %}
+                <option value={{x.job_number}}>{{x.job_name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+	 <br>
+	 <b>Class Description: </b>
+	  <div id="class_description_here" ></div>
+
+<hr><br>
+<div class="demo-html" style="width:90%">
+		<table id="student_table" class="display" style="width:90%">
+
+			<tbody>
+				<tr>
+					<td><h3 style="color:red">STUDENTS</h3>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+</div>
+
+ 	 <button type="button" onclick="addstudent()" style='color:blue' >Add A Student</button>
+<br><br>
+<input type="submit" name="report_complete" value="Log-In Class Results Now" />
+
+ </form>
+
+</body>
+</html>
+
+{% endblock %}
