@@ -194,7 +194,10 @@ def new_exam(request):
     send_data = {}
     send_data['employees']=Employees.objects.filter(active = True)
     send_data['exams']=Exam.objects.all()
-
+    send_data['exams_json'] = json.dumps(list(Exam.objects.all().values()),
+                                             cls=DjangoJSONEncoder)
+    if request.method == 'POST':
+        print(request.POST)
     return render(request, "new_exam.html", send_data)
 
 def mentorships(request):

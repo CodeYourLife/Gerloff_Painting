@@ -26,9 +26,39 @@
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
-$(document).ready(function () {
-    var table = $('#class_table').DataTable({});
-})
+function selectexam(btn){
+	var destination = document.getElementById("custom_topic_here")
+	var destination2 = document.getElementById("exam_description_here")
+	var destination3 = document.getElementById("max_score")
+    if (btn.value == "custom_exam"){
+        destination.innerHTML = "<input type = 'text' name='custom_exam' size = '80' placeholder = 'Custom Exam Description' /><br>"
+    }
+    else {
+    	destination.innerHTML = ""
+    	let rolodex = JSON.parse("{{exams_json|escapejs}}");
+		for (const x of rolodex){
+			if (x.id==btn.value){
+                destination2.innerHTML = "<p>" + x.details+"</p>"
+                destination3.innerHTML = "<p>" + x.max_score+"</p>"
+            }
+		}
+    }
+}
+
+function selectteacher(btn){
+var destination = document.getElementById("teacher_here")
+if (btn.value == "custom_teacher"){
+	destination.innerHTML = "<input type = 'text' name='custom_teacher' size = '80' placeholder = 'Enter teacher name' /><br>"
+} else { destination.innerHTML = ""}
+}
+
+function selectstudent(btn){
+var destination = document.getElementById("student_here")
+if (btn.value == "custom_student"){
+	destination.innerHTML = "<input type = 'text' name='custom_studnt' size = '80' placeholder = 'Enter student name' /><br>"
+} else { destination.innerHTML = ""}
+}
+
 
 	</script>
 </head>
@@ -53,10 +83,10 @@ $(document).ready(function () {
 
 
 			 <label for="select_exam">Select Exam: </label>
-            <select id="select_exam" name="select_exam" onChange="selectexam()" >
+            <select id="select_exam" name="select_exam" onChange="selectexam(this)" >
 				<option value="please_select">Please Select</option>
                  <option value="custom_exam">Custom Exam</option>
-                {% for x in examss %}
+                {% for x in exams %}
                 <option value={{x.id}}>{{x.description}}</option>
                 {% endfor %}
             </select>
@@ -66,7 +96,7 @@ $(document).ready(function () {
 	 <br>
 
 	 <label for="select_teacher">Select Teacher: </label>
-            <select id="select_teacher" name="select_teacher" onChange="selectteacher()" >
+            <select id="select_teacher" name="select_teacher" onChange="selectteacher(this)" >
 				<option value="please_select">Please Select</option>
                  <option value="custom_teacher">Custom Teacher</option>
                 {% for x in employees %}
@@ -77,7 +107,7 @@ $(document).ready(function () {
 	 <br>
 
 	 	 <label for="select_student">Select Teacher: </label>
-            <select id="select_student" name="select_student" onChange="selectstudent()" >
+            <select id="select_student" name="select_student" onChange="selectstudent(this)" >
 				<option value="please_select">Please Select</option>
                  <option value="custom_student">Custom Student</option>
                 {% for x in employees %}
@@ -86,12 +116,26 @@ $(document).ready(function () {
             </select>
 <div id="student_here" ></div>
 	 <br>
+     <div class="demo-html" style="width:90%">
+		<table id="class_table" class="display" style="width:90%">
+
+			<tbody>
+
+			<tr><td width="20%">     Score: <input type="number" size="7" name="score" step="0.1" /> out of </td>
+<td> <div id="max_score" ></div></td>
+			</tr>
+
+			</tbody>
+		</table>
+
+
+
 <textarea name="exam_note" rows="2" cols="100" placeholder="Exam Notes" ></textarea>
 	 <br>
 
 	 <b>Exam Description: </b>
 	  <div id="exam_description_here" ></div>
-
+<input type="submit" name="report_complete" value="Log-In Exam Score" />
  </form>
 </body>
 </html>
