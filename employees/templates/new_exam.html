@@ -42,66 +42,57 @@ $(document).ready(function () {
         <li><a class="nav-item nav-link" href="{% url 'assessments' 'ALL' %}">Assessments</a></li>
         <li><a class="nav-item nav-link" href="{% url 'production_reports' 'ALL'  %}">Production Reports</a></li>
         <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Classes</a></li>
-        <li><a class="nav-item nav-link active" href="{% url 'exams' 'ALL' %}">Exams</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'exams' 'ALL' %}">Exams</a></li>
         <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Mentorships</a></li>
-
+        <li><a class="nav-item nav-link active" >NEW EXAM</a></li>
     </ul>
   </div>
 </nav><br>
-<form action="{% url 'new_exam' %}">
-    <input type="submit" value="NEW EXAM - CLICK HERE" />
-</form>
-<br>
-<div class="demo-html" style="width:90%">
-		<table id="class_table" class="display" style="width:90%">
-			<thead>
-				<tr>
-					<th>Date</th>
-					<th>View</th>
-					<th>Student</th>
-					<th>Exam</th>
-					<th>Score </th>
-					<th>Note</th>
-				</tr>
-			</thead>
-			<tbody>
-			{% for x in examscores %}
-			<tr><td>{{x.date}}</td>
-			<td><a href = "{% url 'exams' x.id %}">View</td>
-			<td>{% if x.student != None %}{{x.student}}{% else %}{{x.student2}}{% endif %}</td>
-			<td>{{x.exam}}</td>
-			<td>{{x.score}} / {{x.exam.max_score}}</td>
-			<td>{{x.note}}</td>
-			</tr>
-{% endfor %}
-			</tbody>
-		</table>
-</div>
-<div class ="container">
+ <form action="{% url 'new_exam' %}" method="post" >
+     	 {% csrf_token %}
 
 
-{% if selected_item %}
+			 <label for="select_exam">Select Exam: </label>
+            <select id="select_exam" name="select_exam" onChange="selectexam()" >
+				<option value="please_select">Please Select</option>
+                 <option value="custom_exam">Custom Exam</option>
+                {% for x in examss %}
+                <option value={{x.id}}>{{x.description}}</option>
+                {% endfor %}
+            </select>
+	 		<br><br>
+	 <div id="custom_topic_here" ></div>
 
+	 <br>
 
-<div class ="row">
-	<div class ="col" ><h3><b>Exam - </b> {{selected_item.exam.description}} </h3></div></div>
-<div class ="col" >{{selected_item.exam.details}}</div></div>
-	<div class ="row">
-		<div class ="col">{{selected_item.date}}</div><div class ="col">{{selected_item.score}} / {{selected_item.exam.max_score}}</div></div>
-	<div class ="row">
-<div class ="col"><b>Teacher: </b>{% if selected_item.teacher != None %}{{selected_item.teacher}}{% else %} {{selected_item.teacher2}}{% endif %}</div>
-		<div class ="col"><b>Student: </b>{% if selected_item.student != None %}{{selected_item.studemt}}{% else %} {{selected_item.student2}}{% endif %}</div></div>
-		<div class ="col"><b>Date: </b>{{selected_item.date}}</div>
+	 <label for="select_teacher">Select Teacher: </label>
+            <select id="select_teacher" name="select_teacher" onChange="selectteacher()" >
+				<option value="please_select">Please Select</option>
+                 <option value="custom_teacher">Custom Teacher</option>
+                {% for x in employees %}
+                <option value={{x.id}}>{{x.first_name}} {{x.last_name}}</option>
+                {% endfor %}
+            </select>
+<div id="teacher_here" ></div>
+	 <br>
 
-	</div>
+	 	 <label for="select_student">Select Teacher: </label>
+            <select id="select_student" name="select_student" onChange="selectstudent()" >
+				<option value="please_select">Please Select</option>
+                 <option value="custom_student">Custom Student</option>
+                {% for x in employees %}
+                <option value={{x.id}}>{{x.first_name}} {{x.last_name}}</option>
+                {% endfor %}
+            </select>
+<div id="student_here" ></div>
+	 <br>
+<textarea name="exam_note" rows="2" cols="100" placeholder="Exam Notes" ></textarea>
+	 <br>
 
-		<div class ="row">
-		<div class ="col"><b>Note: </b>{{selected_item.note}}</div>
-	</div>
+	 <b>Exam Description: </b>
+	  <div id="exam_description_here" ></div>
 
-
-{% endif %}
-</div>
+ </form>
 </body>
 </html>
 

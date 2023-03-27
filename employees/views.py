@@ -181,10 +181,21 @@ def new_class(request):
         return redirect('classes',id='ALL')
     return render(request, "new_class.html", send_data)
 
-def exams(request):
+def exams(request,id):
     send_data = {}
     send_data['employees']=Employees.objects.filter(active = True)
+    send_data['exam_scores']=ExamScore.objects.all()
+    if id != 'ALL':
+        send_data['selected_item']= ExamScore.objects.get(id=id)
+        send_data['attendees'] = ClassAttendees.objects.filter(class_event__id=id)
     return render(request, "exams.html", send_data)
+
+def new_exam(request):
+    send_data = {}
+    send_data['employees']=Employees.objects.filter(active = True)
+    send_data['exams']=Exam.objects.all()
+
+    return render(request, "new_exam.html", send_data)
 
 def mentorships(request):
     send_data = {}

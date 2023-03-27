@@ -1063,15 +1063,20 @@ class Exam(models.Model):
 	description = models.CharField(max_length=500) #spray exam
 	details = models.CharField(max_length=2000) #spray exam
 	max_score = models.IntegerField(default=0)
-
+	def __str__(self):
+		return f"{self.description}"
 class ExamScore(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	exam = models.ForeignKey(Exam, on_delete=models.PROTECT)
 	student = models.ForeignKey(Employees, on_delete=models.PROTECT,related_name="student")
+	student2 = models.CharField(max_length=100,null=True,blank=True)
 	teacher = models.ForeignKey(Employees, on_delete=models.PROTECT,related_name="teacher")
+	teacher2= models.CharField(max_length=100,null=True,blank=True)
 	score = models.IntegerField(default=0)
 	note = models.CharField(max_length=2000)
-
+	date = models.DateField(blank=True, null=True)
+	def __str__(self):
+		return f"{self.student} {self.exam} {self.date}"
 
 class SuperWeeklyReport(models.Model):
 	id = models.BigAutoField(primary_key=True)
