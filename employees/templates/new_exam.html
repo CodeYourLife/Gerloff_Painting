@@ -32,6 +32,7 @@ function selectexam(btn){
 	var destination3 = document.getElementById("max_score")
     if (btn.value == "custom_exam"){
         destination.innerHTML = "<input type = 'text' name='custom_exam' size = '80' placeholder = 'Custom Exam Description' /><br>"
+        destination3.innerHTML = "Score Max: <input type = 'number' name='custom_score_max' size = '10' required /><br>"
     }
     else {
     	destination.innerHTML = ""
@@ -55,7 +56,7 @@ if (btn.value == "custom_teacher"){
 function selectstudent(btn){
 var destination = document.getElementById("student_here")
 if (btn.value == "custom_student"){
-	destination.innerHTML = "<input type = 'text' name='custom_studnt' size = '80' placeholder = 'Enter student name' /><br>"
+	destination.innerHTML = "<input type = 'text' name='custom_student' size = '80' placeholder = 'Enter student name' /><br>"
 } else { destination.innerHTML = ""}
 }
 
@@ -80,8 +81,6 @@ if (btn.value == "custom_student"){
 </nav><br>
  <form action="{% url 'new_exam' %}" method="post" >
      	 {% csrf_token %}
-
-
 			 <label for="select_exam">Select Exam: </label>
             <select id="select_exam" name="select_exam" onChange="selectexam(this)" >
 				<option value="please_select">Please Select</option>
@@ -92,9 +91,7 @@ if (btn.value == "custom_student"){
             </select>
 	 		<br><br>
 	 <div id="custom_topic_here" ></div>
-
 	 <br>
-
 	 <label for="select_teacher">Select Teacher: </label>
             <select id="select_teacher" name="select_teacher" onChange="selectteacher(this)" >
 				<option value="please_select">Please Select</option>
@@ -118,21 +115,14 @@ if (btn.value == "custom_student"){
 	 <br>
      <div class="demo-html" style="width:90%">
 		<table id="class_table" class="display" style="width:90%">
-
 			<tbody>
-
-			<tr><td width="20%">     Score: <input type="number" size="7" name="score" step="0.1" /> out of </td>
+			<tr><td width="20%">Score: <input type="number" size="7" name="score" step="0.1" required /> out of </td>
 <td> <div id="max_score" ></div></td>
 			</tr>
-
 			</tbody>
 		</table>
-
-
-
 <textarea name="exam_note" rows="2" cols="100" placeholder="Exam Notes" ></textarea>
 	 <br>
-
 	 <b>Exam Description: </b>
 	  <div id="exam_description_here" ></div>
 <input type="submit" name="report_complete" value="Log-In Exam Score" />

@@ -41,9 +41,9 @@ $(document).ready(function () {
         <li><a class="nav-item nav-link" href="{% url 'training' %}">Training Home</a></li>
         <li><a class="nav-item nav-link" href="{% url 'assessments' 'ALL' %}">Assessments</a></li>
         <li><a class="nav-item nav-link" href="{% url 'production_reports' 'ALL'  %}">Production Reports</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Classes</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'classes' 'ALL' %}">Classes</a></li>
         <li><a class="nav-item nav-link active" href="{% url 'exams' 'ALL' %}">Exams</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Mentorships</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'mentorships' 'ALL' %}">Mentorships</a></li>
 
     </ul>
   </div>
@@ -65,12 +65,12 @@ $(document).ready(function () {
 				</tr>
 			</thead>
 			<tbody>
-			{% for x in examscores %}
+			{% for x in exam_scores %}
 			<tr><td>{{x.date}}</td>
 			<td><a href = "{% url 'exams' x.id %}">View</td>
 			<td>{% if x.student != None %}{{x.student}}{% else %}{{x.student2}}{% endif %}</td>
-			<td>{{x.exam}}</td>
-			<td>{{x.score}} / {{x.exam.max_score}}</td>
+			<td>{% if x.exam != None %} {{x.exam}} {% else %} {{x.exam2}}{% endif %}</td>
+			<td>{{x.score}} / {% if x.exam != None %}{{x.exam.max_score}}{% else %}{{x.custom_score_max}}{% endif %}</td>
 			<td>{{x.note}}</td>
 			</tr>
 {% endfor %}
@@ -85,7 +85,8 @@ $(document).ready(function () {
 
 <div class ="row">
 	<div class ="col" ><h3><b>Exam - </b> {{selected_item.exam.description}} </h3></div></div>
-<div class ="col" >{{selected_item.exam.details}}</div></div>
+<div class ="row">
+	<div class ="col" >{{selected_item.exam.details}}</div></div>
 	<div class ="row">
 		<div class ="col">{{selected_item.date}}</div><div class ="col">{{selected_item.score}} / {{selected_item.exam.max_score}}</div></div>
 	<div class ="row">

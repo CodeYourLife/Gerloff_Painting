@@ -41,9 +41,9 @@ $(document).ready(function () {
         <li><a class="nav-item nav-link" href="{% url 'training' %}">Training Home</a></li>
         <li><a class="nav-item nav-link active" href="{% url 'assessments' 'ALL' %}">Assessments</a></li>
         <li><a class="nav-item nav-link" href="{% url 'production_reports' 'ALL'  %}">Production Reports</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Classes</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Exams</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Mentorships</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'classes' 'ALL' %}">Classes</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'exams' 'ALL' %}">Exams</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'mentorships' 'ALL' %}">Mentorships</a></li>
 
     </ul>
   </div>

@@ -34,19 +34,23 @@ $(document).ready(function () {
 </head>
 <body>
 <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
-  <a class="navbar-brand" href="#">Employees</a>
+  <a class="navbar-brand" href="#">Training</a>
   <div class="collapse navbar-collapse" id="navbarNavDropdown2">
     <ul class="navbar-nav ">
-        <li><a class="nav-item nav-link active" href="{% url 'employees_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
         <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>
         <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'certifications' %}">Certifications</a></li>
+        <li><a class="nav-item nav-link active" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
         <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
+
     </ul>
   </div>
-</nav>
+</nav><br>
+<form action="{% url 'new_certification' %}">
+    <input type="submit" value="NEW CERTIFICATION - CLICK HERE" />
+</form>
+<br>
 
-<h4><a href = "{% url 'certifications' %}">New Certification</a></h4>
 
 <div class="demo-html" style="width:90%">
 		<table id="certifications_table" class="display" style="width:90%">
@@ -54,17 +58,55 @@ $(document).ready(function () {
 				<tr>
 					<th>Employee</th>
 					<th>Certification </th>
+					<th>View</th>
 					<th>Date Received </th>
 					<th>Date Expired</th>
+					<th>Closed?</th>
 				</tr>
 			</thead>
 			<tbody>
 			{% for x in certifications %}
-			<tr><td><a href = "{% url 'employees_page' x.id %}">{{x.id}}</td><td>{{x.last_name}} {{x.first_name}}</td><td>{{x.nickname}}</td><td>{{x.level}}</td>
+			<tr><td>{{x.employee}}</td><td>{{x.category}}</td><td><a href = "{% url 'certifications' x.id %}">View</td><td>{{x.date_received}}</td><td>{{x.date_expires}}</td><td>{% if x.is_closed == True %} Yes {% else %} No {% endif %}</td>
 			</tr>
-{% endfor %}
+			{% endfor %}
 			</tbody>
 		</table>
+<div class ="container">
+
+
+{% if selected_item %}
+
+
+<div class ="row">
+	<div class ="col" ><h3><b>Certification - </b> {{selected_item.category}} </h3></div></div>
+	<div class ="row">
+	<div class ="col" ><h3><b>Employee - </b> {{selected_item.employee}} </h3></div></div>
+	<div class ="row">
+	<div class ="col" ><b>Description: - </b>{{selected_item.description}}</div></div>
+	<div class ="row">
+		<div class ="col"><b>Received: </b>{{selected_item.date_received}}</div><div class ="col"><b>Expires: </b>{{selected_item.date_expires}}</div></div>
+	<div class ="row">
+			<div class ="col" ><b>Job: - </b>{{selected_item.job}}</div></div>
+
+
+		<div class ="row">
+		<div class ="col"><b>Note: </b>{{selected_item.note}}</div>
+	</div>
+	{% if notes2 %}
+	{% for y in notes2 %}
+			<div class ="row">
+		<div class ="col"><b>Note: </b>{{y.date}} - {{y.user}} - {{y.note}}</div>
+	</div>
+	{% endfor %}
+	{% endif %}
+		 <form action="{% url 'certifications' selected_item.id %}" method="post" >
+			 {% csrf_token %}
+			 <div class ="row"><div class ="col"><input type="text" name="note" size="100" placeholder ='New Note Here' /> <input type="submit" name="new_note" value="ADD NOTE" /></div></div>
+		<div class ="row">
+		<div class ="col"><b>Certification is closed: </b>{% if selected_item.is_closed == False %} <input type="checkbox" name="closed" />{% else %}<input type="checkbox" name="closed" checked />{% endif %}   <input type="submit" name="update" value="UPDATE RECORD" /></div>
+	</div>
+		 </form>
+{% endif %}
 </div>
 </body>
 </html>

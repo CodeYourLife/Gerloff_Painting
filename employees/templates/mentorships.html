@@ -27,7 +27,7 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 $(document).ready(function () {
-    var table = $('#employees_table').DataTable({});
+    var table = $('#class_table').DataTable({});
 })
 
 	</script>
@@ -38,27 +38,72 @@ $(document).ready(function () {
   <div class="collapse navbar-collapse" id="navbarNavDropdown2">
     <ul class="navbar-nav ">
         <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Employees Home</a></li>
-        <li><a class="nav-item nav-link active" href="{% url 'training' %}">Training Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'training' %}">Training Home</a></li>
         <li><a class="nav-item nav-link" href="{% url 'assessments' 'ALL' %}">Assessments</a></li>
         <li><a class="nav-item nav-link" href="{% url 'production_reports' 'ALL'  %}">Production Reports</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Classes</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Exams</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">Mentorships</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'classes' 'ALL' %}">Classes</a></li>
+        <li><a class="nav-item nav-link " href="{% url 'exams' 'ALL' %}">Exams</a></li>
+        <li><a class="nav-item nav-link active" href="{% url 'mentorships' 'ALL' %}">Mentorships</a></li>
 
     </ul>
   </div>
-</nav>
+</nav><br>
+<form action="{% url 'new_mentorship' %}">
+    <input type="submit" value="NEW MENTORSHIP - CLICK HERE" />
+</form>
+<br>
+<div class="demo-html" style="width:90%">
+		<table id="class_table" class="display" style="width:90%">
+			<thead>
+				<tr>
+					<th>Date</th>
+					<th>View</th>
+					<th>Mentor</th>
+					<th>Apprentice</th>
+					<th>Note </th>
+					<th>Active?</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for x in mentorships %}
+			<tr><td>{{x.start_date}}</td>
+			<td><a href = "{% url 'mentorships' x.id %}">View</td>
+			<td>{{x.mentor}}</td>
+			<td>{{x.apprentice}}</td>
+			<td>{{x.note}}</td>
+			<td>{% if x.is_closed == True %} No {% else %} Yes {% endif %}</td>
+			</tr>
+{% endfor %}
+			</tbody>
+		</table>
+</div>
+<div class ="container">
 
-<h4><a href = "{% url 'training' %}">Assessments</a></h4>
 
-<h4><a href = "{% url 'training' %}">Production Reports</a></h4>
+{% if selected_item %}
 
-<h4><a href = "{% url 'training' %}">View Classes</a></h4>
 
-<h4><a href = "{% url 'training' %}">View Exams</a></h4>
+<div class ="row"><div class ="col" ><b>Start Date: </b>{{selected_item.start_date}}</div><div class ="col" ><b>Start Date: </b>{{selected_item.end_date}}</div></div>
+<div class ="row"><div class ="col" ><b>Mentor: </b>{{selected_item.mentor}}</div><div class ="col" ><b>Apprentice: </b>{{selected_item.apprentice}}</div></div>
+<div class ="row"><div class ="col" ><b>Note: </b>{{selected_item.note}}</div></div>
+{% for x in selected_notes %}
+	<div class ="row"><div class ="col" >{{x.date}} - {{x.user}} - {{x.note}}</div></div>
+{% endfor %}
 
-<h4><a href = "{% url 'training' %}">View Mentorships</a></h4>
+	 <form action="{% url 'mentorships' selected_item.id %}" method="post" >
+	 {% csrf_token %}
+		 <br>
+<input type="text" name="note" size="100" placeholder ='New Note Here' /> <input type="submit" name="new_note" value="ADD NOTE" />
+		 <br><br>
+		 CLOSED?{% if selected_item.is_closed == False %} <input type="checkbox" name="closed" />{% else %}<input type="checkbox" name="closed" checked />{% endif %}   <input type="submit" name="update" value="UPDATE RECORD" />
 
+	 </form>
+ <br>
+
+
+
+{% endif %}
+</div>
 </body>
 </html>
 

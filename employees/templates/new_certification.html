@@ -16,7 +16,6 @@
   background-color: Salmon;
 }
 
-
 	</style>
 	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
 	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
@@ -26,15 +25,13 @@
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
-$(document).ready(function () {
-    var table = $('#employees_table').DataTable({});
-})
+
 
 	</script>
 </head>
 <body>
 <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
-  <a class="navbar-brand" href="#">Employees</a>
+  <a class="navbar-brand" href="#">Training</a>
   <div class="collapse navbar-collapse" id="navbarNavDropdown2">
     <ul class="navbar-nav ">
         <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
@@ -42,41 +39,47 @@ $(document).ready(function () {
         <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
         <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
         <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
-		 <li><a class="nav-item nav-link active" >{{employee.first_name}} {{employee.last_name}}</a></li>
+        <li><a class="nav-item nav-link active" >NEW CERTIFICATION</a></li>
     </ul>
   </div>
-</nav>
+</nav><br>
+ <form action="{% url 'new_certification' %}" method="post" >
+     	 {% csrf_token %}
+          			 <label for="select_category">Select Certification: </label>
+            <select id="select_category" name="select_category" >
+				<option value="please_select">Please Select</option>
+                {% for x in categories %}
+                <option value={{x.id}}>{{x.description}}</option>
+                {% endfor %}
+            </select>
+     <br><br>
+			 <label for="select_employee">Select Employee: </label>
+            <select id="select_employee" name="select_employee" >
+				<option value="please_select">Please Select</option>
+                {% for x in employees %}
+                <option value={{x.id}}>{{x.first_name}} {{x.last_name}}</option>
+                {% endfor %}
+            </select>
+	 		<br><br>
 
-<h4><a href = "{% url 'employees_page' employee.id %}">First Name, Last Name</a></h4>
+                   Start date: <input type="date" name="start_date">
+     <br><br>
+     Expiration date: <input type="date" name="end_date">  Don't Know? <input type="checkbox" name="dont_know" />
+     <br><br>
+			 <label for="select_job">Select Job (if applicable): </label>
+            <select id="select_job" name="select_job" >
+				<option value="please_select">Please Select Job</option>
+                {% for x in jobs %}
+                <option value={{x.job_number}}>{{x.job_name}}</option>
+                {% endfor %}
+            </select>
+	 		<br><br>
 
-<h4><a href = "{% url 'employees_page' employee.id %}">Phone Number, Email</a></h4>
+<textarea name="note" rows="2" cols="100" placeholder="Notes" ></textarea>
+	 <br>
 
-<h4><a href = "{% url 'employees_page' employee.id %}">Current Level</a></h4>
-
-<h4><a href = "{% url 'employees_page' employee.id %}">View Assessments</a></h4>
-
-<h4><a href = "{% url 'employees_page' employee.id %}">View Production Reports</a></h4>
-
-<h4><a href = "{% url 'employees_page' employee.id %}">View Mentorships</a></h4>
-
-<h4><a href = "{% url 'employees_page' employee.id %}">View Certifications</a></h4>
-
-<h4><a href = "{% url 'employees_page' employee.id %}">View Exams</a></h4>
-
-<h4><a href = "{% url 'employees_page' employee.id %}">View Classes</a></h4>
-
-<h4><a href = "{% url 'employees_page' employee.id %}">View Write Ups</a></h4>
-
-<h4><a href = "{% url 'employees_page' employee.id %}">View Vacations</a></h4>
-
-<h4><a href = "{% url 'employees_page' employee.id %}">View Assessments Completed</a></h4>
-
-<h4><a href = "{% url 'employees_page' employee.id %}">View Daily Reports Completed</a></h4>
-
-<h4><a href = "{% url 'employees_page' employee.id %}">View Weekly Super Reports Completed</a></h4>
-
-<h4><a href = "{% url 'employees_page' employee.id %}">View Assigned Equipment</a></h4>
-
+<input type="submit" name="complete" value="ADD NOW" />
+ </form>
 </body>
 </html>
 

@@ -190,20 +190,69 @@ def exams(request,id):
         send_data['attendees'] = ClassAttendees.objects.filter(class_event__id=id)
     return render(request, "exams.html", send_data)
 
+
 def new_exam(request):
     send_data = {}
     send_data['employees']=Employees.objects.filter(active = True)
     send_data['exams']=Exam.objects.all()
-    send_data['exams_json'] = json.dumps(list(Exam.objects.all().values()),
-                                             cls=DjangoJSONEncoder)
+    send_data['exams_json'] = json.dumps(list(Exam.objects.all().values()),cls=DjangoJSONEncoder)
     if request.method == 'POST':
-        print(request.POST)
+        new_exam=ExamScore.objects.create(score=request.POST['score'],note=request.POST['exam_note'],date=date.today())
+        if 'custom_student' in request.POST:
+            new_exam.student2 = request.POST['custom_student']
+        else:
+            new_exam.student = Employees.objects.get(id=request.POST['select_student'])
+        if 'custom_teacher' in request.POST:
+            new_exam.teacher2 = request.POST['custom_teacher']
+        else:
+            new_exam.teacher = Employees.objects.get(id=request.POST['select_teacher'])
+        if 'custom_exam' in request.POST:
+            new_exam.exam2 = request.POST['custom_exam']
+            new_exam.custom_score_max = request.POST['custom_score_max']
+        else:
+            new_exam.exam = Exam.objects.get(id=request.POST['select_exam'])
+        new_exam.save()
     return render(request, "new_exam.html", send_data)
 
-def mentorships(request):
+
+def mentorships(request,id):
+    send_data = {}
+    send_data['mentorships'] = Mentorship.objects.all()
+    print(request.POST)
+    if request.method == 'POST':
+        if 'new_note' in request.POST:
+            MentorshipNotes.objects.create(mentorship=Mentorship.objects.get(id=id), date=date.today(), user=request.user,
+                                           note=request.POST['note'])
+        else:
+            if 'closed' in request.POST:
+                selected_item = Mentorship.objects.get(id=id)
+                selected_item.is_closed=True
+                selected_item.end_date=date.today()
+                MentorshipNotes.objects.create(mentorship=selected_item, date=date.today(),
+                                               user=request.user,
+                                               note="Mentorship Ended." + request.POST['note'])
+            else:
+                selected_item = Mentorship.objects.get(id=id)
+                selected_item.is_closed=False
+                selected_item.end_date=""
+                MentorshipNotes.objects.create(mentorship=selected_item, date=date.today(),
+                                               user=request.user,
+                                               note="Mentorship Activated Again." + request.POST['note'])
+            selected_item.save()
+    if id !='ALL':
+        send_data['selected_notes'] = MentorshipNotes.objects.filter(mentorship__id = id)
+        send_data['selected_item'] = Mentorship.objects.get(id=id)
+    return render(request, "mentorships.html", send_data)
+
+
+def new_mentorship(request):
     send_data = {}
     send_data['employees']=Employees.objects.filter(active = True)
-    return render(request, "mentorships.html", send_data)
+    if request.method == 'POST':
+        new_item= Mentorship.objects.create(apprentice = Employees.objects.get(id=request.POST['select_apprentice']),mentor = Employees.objects.get(id=request.POST['select_mentor']),start_date=date.today(),note=request.POST['note'])
+        MentorshipNotes.objects.create(mentorship=new_item,date=date.today(),user=request.user,note="New mentorship added")
+        return redirect('mentorships', id=new_item.id)
+    return render(request, "new_mentorship.html", send_data)
 
 def assessments(request,id):
     send_data = {}
@@ -220,7 +269,7 @@ def production_reports(request,id):
         send_data['production_reports'] = ProductionItems.objects.filter(id=id).order_by('employee', 'date')
         send_data['selected_item'] = ProductionItems.objects.get(id=id)
     else:
-        send_data['production_reports']=ProductionItems.objects.all().order_by('employee','date')
+        send_data['production_reports'] = ProductionItems.objects.all().order_by('employee','date')
     return render(request, "production_reports.html", send_data)
 
 
@@ -228,6 +277,7 @@ def employees_home(request):
     send_data = {}
     send_data['employees']=Employees.objects.filter(active = True)
     return render(request, "employees_home.html", send_data)
+
 
 def employees_page(request,id):
     send_data = {}
@@ -244,11 +294,47 @@ def my_page(request):
     send_data['employee'] = Employees.objects.get(user = request.user)
     return render(request, "my_page.html", send_data)
 
-def certifications(request):
-    response = redirect('/')
-    return response
+def certifications(request,id):
+    send_data = {}
+    send_data['certifications'] = Certifications.objects.all()
+    if id != 'ALL':
+        send_data['selected_item'] = Certifications.objects.get(id=id)
+        send_data['notes2'] = CertificationNotes.objects.filter(certification__id=id)
+    if request.method == 'POST':
+        cert = Certifications.objects.get(id=id)
+        if 'new_note' in request.POST:
+            CertificationNotes.objects.create(certification=cert,date=date.today(),user=request.user,note=request.POST['note'])
+        if 'update' in request.POST:
+            if 'closed' in request.POST:
+                if cert.is_closed == False:
+                    cert.is_closed=True
+                    CertificationNotes.objects.create(certification=cert, date=date.today(),
+                                                  user=request.user, note="Cert closed." + request.POST['note'])
+            else:
+                if cert.is_closed == True:
+                    cert.is_closed = False
+                    CertificationNotes.objects.create(certification=cert, date=date.today(),
+                                                  user=request.user, note="Cert changed to open." + request.POST['note'])
+        cert.save()
+    return render(request, "certifications.html", send_data)
 
-
+def new_certification(request):
+    send_data = {}
+    send_data['employees']=Employees.objects.filter(active=True)
+    send_data['jobs'] = Jobs.objects.filter(status = 'Open')
+    send_data['categories'] = CertificationCategories.objects.all()
+    if request.method == 'POST':
+        print(request.POST)
+        new_cert = Certifications.objects.create(category = CertificationCategories.objects.get(id=request.POST['select_category']),employee = Employees.objects.get(id=request.POST['select_employee']),date_received=request.POST['start_date'],note=request.POST['note'])
+        if 'dont_know' in request.POST:
+            print("HI")
+        else:
+            new_cert.date_expires=request.POST['end_date']
+        if request.POST['select_job'] != 'please_select':
+            new_cert.job=Jobs.objects.get(job_number=request.POST['select_job'])
+        new_cert.save()
+        return redirect('certifications', id=new_cert.id)
+    return render(request, "new_certification.html", send_data)
 def add_new_employee(request):
     response = redirect('/')
     return response

@@ -1067,13 +1067,15 @@ class Exam(models.Model):
 		return f"{self.description}"
 class ExamScore(models.Model):
 	id = models.BigAutoField(primary_key=True)
-	exam = models.ForeignKey(Exam, on_delete=models.PROTECT)
-	student = models.ForeignKey(Employees, on_delete=models.PROTECT,related_name="student")
+	exam = models.ForeignKey(Exam, on_delete=models.PROTECT,null=True,blank=True)
+	exam2 = models.CharField(max_length=200,null=True,blank=True)
+	student = models.ForeignKey(Employees, on_delete=models.PROTECT,related_name="student",null=True,blank=True)
 	student2 = models.CharField(max_length=100,null=True,blank=True)
-	teacher = models.ForeignKey(Employees, on_delete=models.PROTECT,related_name="teacher")
+	teacher = models.ForeignKey(Employees, on_delete=models.PROTECT,related_name="teacher",null=True,blank=True)
 	teacher2= models.CharField(max_length=100,null=True,blank=True)
-	score = models.IntegerField(default=0)
-	note = models.CharField(max_length=2000)
+	score = models.IntegerField(default=0,null=True,blank=True)
+	custom_score_max=models.IntegerField(default=0,null=True,blank=True)
+	note = models.CharField(max_length=2000,null=True,blank=True)
 	date = models.DateField(blank=True, null=True)
 	def __str__(self):
 		return f"{self.student} {self.exam} {self.date}"
@@ -1098,9 +1100,11 @@ class Mentorship(models.Model):
 	apprentice = models.ForeignKey(Employees, on_delete=models.PROTECT,related_name="apprentice")
 	mentor = models.ForeignKey(Employees, on_delete=models.PROTECT, related_name="mentor")
 	start_date = models.DateField()
-	note = models.CharField(max_length=2000)
+	note = models.CharField(max_length=2000,null=True,blank=True)
 	is_closed = models.BooleanField(default=False)
-
+	end_date = models.DateField(null=True,blank=True)
+	def __str__(self):
+		return f"{self.mentor} {self.apprentice}"
 
 class MentorshipNotes(models.Model):
 	id = models.BigAutoField(primary_key=True)
@@ -1114,14 +1118,24 @@ class CertificationCategories(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	description = models.CharField(null=True, max_length=200) #OSHA30, dbids card, tuburculosis, CRMC
 
+	def __str__(self):
+		return f"{self.description}"
 class Certifications(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	category = models.ForeignKey(CertificationCategories, on_delete=models.PROTECT, null=True)
 	employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
-	description = models.CharField(null=True, max_length=500)
-	date_received = models.DateField()
-	date_expires = models.DateField()
-	job = models.ForeignKey(Jobs, on_delete=models.PROTECT, null=True)
-	note = models.CharField(null=True, max_length=2000)
+	description = models.CharField(null=True,blank=True,max_length=500)
+	date_received = models.DateField(null=True,blank=True)
+	date_expires = models.DateField(null=True,blank=True)
+	job = models.ForeignKey(Jobs, on_delete=models.PROTECT,null=True,blank=True)
+	note = models.CharField(null=True,blank=True,max_length=2000)
 	is_closed = models.BooleanField(default=False)
+	def __str__(self):
+		return f"{self.category} {self.employee}"
 
+class CertificationNotes(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	certification = models.ForeignKey(Certifications, on_delete=models.PROTECT, null=True)
+	date = models.DateField()
+	user = models.CharField(null=True, max_length=200)
+	note = models.CharField(null=True, max_length=2000)
