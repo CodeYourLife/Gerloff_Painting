@@ -41,28 +41,30 @@ def new_production_report(request,jobnumber):
                     team_members=0
                     team = x[20:len(x)]
                     team_note =""
-                    for y in request.POST:
-                        if y[0:4] =='task':
-                            if y[9:9+int(len(team))]== team:
+                    for y in request.POST: #count team members
+                        if y[0:26+len(team)] =='select_team' + team + 'select_employee':
                                 team_members=team_members+1
-                                employee_number = y[19+int(len(team)):len(y)]
-                                for z in request.POST:
-                                    if z[0:27+int(len(team))+int(len(employee_number))] == "select_team" + team + "select_employee" + employee_number:
-                                        employee = Employees.objects.get(id=request.POST[z]).first_name
-                                        task = ProductionCategory.objects.get(id=request.POST[y]).task
-                                        team_note = team_note + employee + " " + task + ". "
+                                employee_number = y[26+int(len(team)):len(y)]
+                                employee = Employees.objects.get(id=request.POST['select_team' + team + 'select_employee'+employee_number]).first_name
+                                if 'taskteam_' + team + '_employee_' + employee_number in request.POST:
+                                    task = ProductionCategory.objects.get(id=request.POST['taskteam_' + team + '_employee_' + employee_number]).task
+                                if 'custom_taskteam_' + team + '_employee_' + employee_number in request.POST:
+                                    task = request.POST['custom_taskteam_' + team + '_employee_' + employee_number]
+                                team_note = team_note + employee + " " + task + ". "
                     team_note = request.POST['teamnotes_' + team] + ". " + team_note
                     for y in request.POST:
-                        if y[0:4] =='task':
-                            if y[9:9+int(len(team))]== team:
-                                employee_number = y[19+int(len(team)):len(y)]
-                                for z in request.POST:
-                                    if z[0:27+int(len(team))+int(len(employee_number))] == "select_team" + team + "select_employee" + employee_number:
-                                        employee = Employees.objects.get(id=request.POST[z])
-                                        task = ProductionCategory.objects.get(id=request.POST[y])
+                        if y[0:26 + len(team)] == 'select_team' + team + 'select_employee':
+                                employee_number = y[26 + len(team):len(y)]
+                                employee = Employees.objects.get(id=request.POST[y])
                                 note= request.POST['team_' + team + "_employeenote_" + employee_number]
-                                description = task.item1 + " - " + task.item2 + " - " + task.item3 + " - " + task.task
-                                new_entry = ProductionItems.objects.create(note=note, is_team=True,team_note=team_note,daily_report=daily_report,employee=employee,date=date.today(),team_members=team_members,task=task,description=description)
+                                if 'taskteam_' + team + '_employee_' + employee_number in request.POST:
+                                    task = ProductionCategory.objects.get(id=request.POST['taskteam_' + team + '_employee_' + employee_number])
+                                    description = task.item1 + " - " + task.item2 + " - " + task.item3 + " - " + task.task
+                                else:
+                                    description = request.POST['custom_category1' + team] + "- " + request.POST['custom_taskteam_' + team + '_employee_' + employee_number]
+                                new_entry = ProductionItems.objects.create(note=note, is_team=True,team_note=team_note,daily_report=daily_report,employee=employee,date=date.today(),team_members=team_members,description=description)
+                                if 'taskteam_' + team + '_employee_' + employee_number in request.POST:
+                                    new_entry.task = ProductionCategory.objects.get(id=request.POST['taskteam_' + team + '_employee_' + employee_number])
                                 if request.POST['hoursteam_'+ team] != "":
                                     new_entry.hours = float(request.POST['hoursteam_'+ team])
                                 if 'unit1team_'+team in request.POST:
@@ -77,15 +79,25 @@ def new_production_report(request,jobnumber):
                                     if request.POST['unit3team_' + team] != "":
                                         new_entry.value3=float(request.POST['unit3team_'+team])
                                         new_entry.unit3 = task.unit3
+                                if 'custom_category1' + team in request.POST:
+                                    new_entry.value1 = float(request.POST['custom_value' + team])
+                                    new_entry.unit = request.POST['custom_unit' + team]
                                 new_entry.save()
                 if x[0:15] == 'select_employee':
                     employee_number = x[15:len(x)]
-                    print(employee_number)
-                    task=ProductionCategory.objects.get(id=request.POST['select_task'+employee_number])
-                    description = task.item1 + " - " + task.item2 + " - " + task.item3 + " - " + task.task
+                    if 'select_task' + employee_number in request.POST:
+                        task=ProductionCategory.objects.get(id=request.POST['select_task'+employee_number])
+                        description = task.item1 + " - " + task.item2 + " - " + task.item3 + " - " + task.task
+                    else:
+                        description = request.POST['custom_description'+employee_number]
                     employee = Employees.objects.get(id=request.POST[x])
                     note = request.POST['note' + employee_number]
-                    new_entry = ProductionItems.objects.create(note=note, is_team=False,daily_report=daily_report,employee=employee, date=date.today(),task=task,description=description)
+                    new_entry = ProductionItems.objects.create(note=note, is_team=False,daily_report=daily_report,employee=employee, date=date.today(),description=description)
+                    if 'select_task' + employee_number in request.POST:
+                        new_entry.task = ProductionCategory.objects.get(id=request.POST['select_task' + employee_number])
+                    else:
+                        new_entry.value1= request.POST['custom_value1'+employee_number]
+                        new_entry.unit = request.POST['custom_unit'+employee_number]
                     if request.POST['hours' + employee_number] != "":
                         new_entry.hours = float(request.POST['hours' + employee_number])
                     if 'value1' + employee_number in request.POST:

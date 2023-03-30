@@ -181,10 +181,16 @@ function SelectTeamCategory1(btn){
 		}
 	}
 	if (table.rows[rows].cells[0].innerHTML.substr(0,5) != "Notes"){
-	do {table.deleteRow(rows)}while (table.rows[rows].cells[0].innerHTML.substr(0,5) != "Notes")
+		do {table.deleteRow(rows)}while (table.rows[rows].cells[0].innerHTML.substr(0,5) != "Notes")
+	}
+	if (sel.options[sel.selectedIndex].text == 'Other'){
+		row = table.insertRow(rows);
+		rows=rows+1
+		cell1 = row.insertCell(0)
+		cell1.colSpan=4
+		cell1.innerHTML = "Item: <input type='text' name= 'custom_category1" + sel.id.substring(20,sel.id.length) + "' size = '40' /> Quantity: <input type='number' name= 'custom_value" + sel.id.substring(20,sel.id.length) + "' size = '10' /> Unit: <input type='text' name= 'custom_unit" + sel.id.substring(20,sel.id.length) + "' size = '7' />Hours: <input type = 'number' size = '7'  step = '0.1' name = 'hoursteam_" + team_number + "' id = 'hoursteam_" + team_number + "'  />"
 	}
 
-	row = table.insertRow(rows);
 	var sel2 = document.getElementById("select_teamcategory2" + sel.id.substring(20,sel.id.length))
 	for(let i = sel2.options.length; i >= 0; i--) {
 					sel2.remove(i);
@@ -194,13 +200,29 @@ function SelectTeamCategory1(btn){
 					sel3.remove(i);
 				}
 	var option = document.createElement("option");
+	if (sel.options[sel.selectedIndex].text == 'Other'){
+	option.value = "other";
+	option.text= "Other";
+	}else{
 	option.value = "please_select";
 	option.text= "Select Method";
+	}
 	sel2.appendChild(option);
 	var option = document.createElement("option");
+	if (sel.options[sel.selectedIndex].text == 'Other'){
+		option.value = "please_select";
+		option.text= "Select Step"
+		sel3.appendChild(option);
+		var option = document.createElement("option");
+		option.value = "other";
+		option.text= "Other";
+	}else{
 	option.value = "please_select";
 	option.text= "Select Step";
+	}
 	sel3.appendChild(option);
+	if (sel.options[sel.selectedIndex].text != 'Other'){
+	row= table.insertRow(rows);
 	let rolodex = JSON.parse("{{category2|escapejs}}");
 	test_word = "START"
 	b=0
@@ -245,6 +267,7 @@ function SelectTeamCategory1(btn){
 			}
 		}
 	}
+	}
 }
 
 function SelectTeamCategory2(btn){
@@ -256,9 +279,16 @@ function SelectTeamCategory2(btn){
 					sel2.remove(i);
 				}
 	var option = document.createElement("option");
-	option.value = "please_select";
-	option.text= "Select Step";
+<!--	if (sel.options[sel.selectedIndex].text == 'Other'){-->
+
+<!--		option.value = "other";-->
+<!--		option.text= "Other";-->
+<!--		sel2.appendChild(option);-->
+<!--		}else{-->
+		option.value = "please_select";
+		option.text= "Select Step";
 	sel2.appendChild(option);
+
 	let rolodex = JSON.parse("{{category2|escapejs}}");
 	test_word = "START"
 	b=0
@@ -297,11 +327,12 @@ function SelectTeamCategory2(btn){
 					sel2.appendChild(option);
 				}
 		}
-
 	}
+
 }
 
 function SelectTeamCategory3(btn){
+
 	var sel = document.getElementById(btn.id);
 	match = document.getElementById("select_teamcategory1" + sel.id.substring(20,sel.id.length)).options[document.getElementById("select_teamcategory1" + sel.id.substring(20,sel.id.length)).selectedIndex].text
 	match2 = document.getElementById("select_teamcategory2" + sel.id.substring(20,sel.id.length)).options[document.getElementById("select_teamcategory2" + sel.id.substring(20,sel.id.length)).selectedIndex].text
@@ -371,8 +402,15 @@ function add_team_employee(btn){
 		var label = document.createElement("label");
 		document.getElementById("divteam_" + table_number + "_employee_" + number_rows).appendChild(label).appendChild(select);
 		cell2 = row.insertCell(1)
+
+		if (match == 'Other' || match2 == 'Other' || match3 == 'Other' ){
+		cell2.innerHTML = "<div id='divtaskteam_" + table_number + "_employee_" + number_rows + "'>Task: <input type='text' name='custom_taskteam_" + table_number + "_employee_" + number_rows + "' size='20' /></div>";
+<!--		new_cell=document.getElementbyID("divtaskteam_" + table_number + "_employee_" + number_rows)-->
+<!--		new_cell.innerHTML = "Task: <input type='text' name='custom_taskteam_" + table_number + "_employee_" + number_rows + "' size='20' />"-->
+		}else{
 		cell2.innerHTML = "<div id='divtaskteam_" + table_number + "_employee_" + number_rows + "'></div>";
 		addteamtask("divtaskteam_" + table_number + "_employee_" + number_rows,match,match2,match3,table_number,number_rows)
+		}
 		cell2 = row.insertCell(2)
 		cell2.colSpan = 2
 		cell2.innerHTML = "<input type = 'text' size = '40' name = 'team_" + table_number + "_employeenote_" + number_rows + "' placeholder = 'Enter Notes About This Employee' />"
@@ -382,6 +420,9 @@ function add_team_employee(btn){
 }
 
 function addteamtask(location,match,match2,match3,table_number,employee_number){
+		if (match == 'Other' || match2 == 'Other' || match3 == 'Other' ){
+			document.getElementById(location).innerHTML = "Task: <input type='text' name='custom_taskteam_" + table_number + "_employee_" + number_rows + "' size='20' />"
+		}else{
 		var sel2 = document.createElement("select");
 		sel2.name = "taskteam_" + table_number + "_employee_" + employee_number
 		sel2.id = "taskteam_" + table_number + "_employee_" + employee_number
@@ -441,6 +482,7 @@ function addteamtask(location,match,match2,match3,table_number,employee_number){
 		}
 		var label = document.createElement("label");
 		document.getElementById(location).appendChild(label).appendChild(sel2);
+}
 }
 
 function addperson(){
@@ -594,10 +636,19 @@ function SelectCategory1(btn){
 	for(let i = sel3.options.length; i >= 0; i--) {
 					sel3.remove(i);
 				}
-	var sel4 = document.getElementById("select_task" + sel.id.substring(16,sel.id.length))
-	for(let i = sel4.options.length; i >= 0; i--) {
-					sel4.remove(i);
-				}
+
+	if (match == "Other"){
+		document.getElementById("new_item4" + sel.id.substring(16,sel.id.length)).innerHTML = "<input type = 'text' name = 'custom_description" + sel.id.substring(16,sel.id.length) + "' id = 'custom_description" + sel.id.substring(16,sel.id.length) + "' placeholder = 'Description of Work' />"
+		document.getElementById("new_item5" + sel.id.substring(16,sel.id.length)).innerHTML = "Amount Completed: <input type = 'number'  size = '7' step = '0.1' name = 'custom_value1" + sel.id.substring(16,sel.id.length) + "' id = 'custom_value1" + sel.id.substring(16,sel.id.length) + "' /><input type = 'text' size = '10' name = 'custom_unit" + sel.id.substring(16,sel.id.length) + "' id = 'custom_unit" + sel.id.substring(16,sel.id.length) + "' placeholder = 'Units' />"
+		var option = document.createElement("option");
+		option.value = "other";
+		option.text= "Other";
+		sel2.appendChild(option);
+		var option = document.createElement("option");
+		option.value = "other";
+		option.text= "Other";
+		sel3.appendChild(option);}
+	else{
 	var option = document.createElement("option");
 	option.value = "please_select";
 	option.text= "Select Method";
@@ -606,10 +657,17 @@ function SelectCategory1(btn){
 	option.value = "please_select";
 	option.text= "Select Step";
 	sel3.appendChild(option);
+	document.getElementById("new_item4" + sel.id.substring(16,sel.id.length)).innerHTML= ""
+	var sel4 = document.createElement("select");
+	sel4.name = "select_task" + sel.id.substring(16,sel.id.length)
+	sel4.id = "select_task" + sel.id.substring(16,sel.id.length)
+	sel4.addEventListener('change',function() {SelectTask(this);},false);
 	var option = document.createElement("option");
 	option.value = "please_select";
 	option.text= "Select Task";
 	sel4.appendChild(option);
+	var label = document.createElement("label");
+	document.getElementById("new_item4" + sel.id.substring(16,sel.id.length)).appendChild(label).appendChild(sel4);
 	let rolodex = JSON.parse("{{category2|escapejs}}");
 	test_word = "START"
 	b=0
@@ -617,10 +675,11 @@ function SelectCategory1(btn){
 		if (b==0){
 			if (x.item1 == match){
 				b=b+1
-				if (x.unit1 != null && x.unit1 != "" ){document.getElementById("new_item5" + sel.id.substring(16,sel.id.length)).innerHTML = x.unit1 + "=<input type = 'number'  step = '0.1' size = '7' name = 'value1" + number_rows + "' id = 'value1" + number_rows + "' />";}
-				else {document.getElementById("new_item5" + sel.id.substring(16,sel.id.length)).innerHTML = "<input type = 'text' name = 'custom_description" + number_rows + "' id = 'custom_description" + number_rows + "' placeholder = 'Description of Work' />Amount Completed: <input type = 'number'  step = '0.1' name = 'value1" + number_rows + "' id = 'value1" + number_rows + "' /><input type = 'text' name = 'no_unit" + number_rows + "' id = 'no_unit" + number_rows + "' placeholder = 'Units' />";}
-				if (x.unit2 != null && x.unit2 != "" ){document.getElementById("new_item6" + sel.id.substring(16,sel.id.length)).innerHTML = x.unit2 + "= <input type = 'number'  step = '0.1' size = '7' name = 'value2" + number_rows + "' id = 'value2" + number_rows + "' />";}
-				if (x.unit3 != null && x.unit3 != "" ){document.getElementById("new_item7" + sel.id.substring(16,sel.id.length)).innerHTML = x.unit3 + "= <input type = 'number'  step = '0.1' size = '7' name = 'value3" + number_rows + "' id = 'value3" + number_rows + "' />";}
+				if (x.unit1 != null && x.unit1 != "" ){document.getElementById("new_item5" + sel.id.substring(16,sel.id.length)).innerHTML = x.unit1 + "=<input type = 'number'  step = '0.1' size = '7' name = 'value1" + sel.id.substring(16,sel.id.length) + "' id = 'value1" + sel.id.substring(16,sel.id.length) + "' />";}
+				else {}
+
+				if (x.unit2 != null && x.unit2 != "" ){document.getElementById("new_item6" + sel.id.substring(16,sel.id.length)).innerHTML = x.unit2 + "= <input type = 'number'  step = '0.1' size = '7' name = 'value2" + sel.id.substring(16,sel.id.length) + "' id = 'value2" + sel.id.substring(16,sel.id.length) + "' />";}
+				if (x.unit3 != null && x.unit3 != "" ){document.getElementById("new_item7" + sel.id.substring(16,sel.id.length)).innerHTML = x.unit3 + "= <input type = 'number'  step = '0.1' size = '7' name = 'value3" + sel.id.substring(16,sel.id.length) + "' id = 'value3" + sel.id.substring(16,sel.id.length) + "' />";}
 				test_word = x.item2
 				var option = document.createElement("option");
 				option.value = x.item2
@@ -640,6 +699,7 @@ function SelectCategory1(btn){
 		}
 	}
 }
+}
 
 function SelectCategory2(btn){
 	var sel = document.getElementById(btn.id);
@@ -657,6 +717,18 @@ function SelectCategory2(btn){
 	for(let i = sel3.options.length; i >= 0; i--) {
 					sel3.remove(i);
 				}
+	if (match2 == "Other"){
+			document.getElementById("new_item4" + sel.id.substring(16,sel.id.length)).innerHTML = "<input type = 'text' name = 'custom_description" + sel.id.substring(16,sel.id.length) + "' id = 'custom_description" + sel.id.substring(16,sel.id.length) + "' placeholder = 'Description of Work' />"
+		document.getElementById("new_item5" + sel.id.substring(16,sel.id.length)).innerHTML = "Amount Completed: <input type = 'number'  size = '7' step = '0.1' name = 'custom_value1" + sel.id.substring(16,sel.id.length) + "' id = 'custom_value1" + sel.id.substring(16,sel.id.length) + "' /><input type = 'text' size = '10' name = 'custom_unit" + sel.id.substring(16,sel.id.length) + "' id = 'custom_unit" + sel.id.substring(16,sel.id.length) + "' placeholder = 'Units' />"
+					for(let i = sel.options.length; i >= 0; i--) {
+					sel.remove(i);
+				}
+					var option = document.createElement("option");
+					option.value = "other";
+					option.text= "Other";
+					sel.appendChild(option);
+	}
+
 	var option = document.createElement("option");
 	option.value = "please_select";
 	option.text= "Select Task";
@@ -708,10 +780,16 @@ function SelectCategory3(btn){
 	match = document.getElementById("select_category1" + sel.id.substring(16,sel.id.length)).options[document.getElementById("select_category1" + sel.id.substring(16,sel.id.length)).selectedIndex].text
 	match2 = document.getElementById("select_category2" + sel.id.substring(16,sel.id.length)).options[document.getElementById("select_category2" + sel.id.substring(16,sel.id.length)).selectedIndex].text
 	match3 = sel.options[sel.selectedIndex].text
+	if (match3 != "Other"){
+
+
+
+
 	var sel2 = document.getElementById("select_task" + sel.id.substring(16,sel.id.length))
 	for(let i = sel2.options.length; i >= 0; i--) {
 					sel2.remove(i);
 				}
+
 	var option = document.createElement("option");
 	option.value = "please_select";
 	option.text= "Select Task";
@@ -768,8 +846,123 @@ function SelectCategory3(btn){
 		}
 	}
 }
+}
 
+function check_booking_data(){
+message = ""
+c=0
+const forms = document.querySelectorAll('form');
+const form = forms[0];
+a=0
+b=0
+Array.from(form.elements).forEach((input) => {
+if (a==0){
+  	if (input.id.substring(0,4) == "unit"){
+		a=1
+		if (input.value!=""){
+			b=1
+		}
+	}
+}
+else {
+	if (input.id.substring(0,4) == "unit"){
+		if (input.value!=""){
+			b=1
+		}
+	}
+	else {
+		if (b==0){
+			message = "Need to pick a value for the team"
+			c=1
+			a=0
+			b=0
+		}
+		else{
+			a=0
+			b=0
+		}
+	}
+}
+});
+Array.from(form.elements).forEach((input) => {
+  	if (input.value == "please_select") {
+  	message = "value missing"
+  	c=1
+  	}
+	if (input.name.substring(0,6)=="custom"){
+		if (input.value == ""){
+		message = "value missing"
+		c=1
+		}
+	}
+});
 
+a=0
+b=0
+Array.from(form.elements).forEach((input) => {
+if (a==0){
+  	if (input.id.substring(0,5) == "value"){
+		a=1
+		if (input.value!=""){
+			b=1
+		}
+	}
+}
+else {
+	if (input.id.substring(0,5) == "value"){
+		if (input.value!=""){
+			b=1
+		}
+	}
+	else {
+		if (b==0){
+			message = "Need to pick a value for the employee"
+			c=1
+			a=0
+			b=0
+		}
+		else{
+			a=0
+			b=0
+		}
+	}
+}
+});
+a=0
+b=0
+Array.from(form.elements).forEach((input) => {
+if (a==0){
+  	if (input.id.substring(0,20) == "select_teamcategory1"){
+  		team_number = input.id.substring(20,input.id.length)
+		a=1
+	}
+}
+else {
+	if (input.id.substring(0,26 + team_number.length) == "select_team" + team_number + "select_employee"){
+			a=0
+	}
+}
+});
+if (a==1){
+	c=1
+	message = "Can't have a team without employees"
+}
+if (c==1){
+alert(message)
+return false;
+}
+}
+
+function myFunction(){
+const forms = document.querySelectorAll('form');
+const form = forms[0];
+Array.from(form.elements).forEach((input) => {
+console.log(input.name)
+});
+}
+
+function myFunction2(){
+}
 
 	</script>
 </head>
@@ -790,13 +983,14 @@ function SelectCategory3(btn){
   </div>
 
 </nav><br>
+ <button onclick="myFunction()">Log</button><button onclick="myFunction2()">Check</button>
 {% if selected_job %}
- <form action="{% url 'new_production_report' selected_job.job_number %}" method="post" >
+ <form action="{% url 'new_production_report' selected_job.job_number %}" method="post" onSubmit = "return check_booking_data()" >
 	 {% csrf_token %}
 	 <H4>New Production Report for: {{selected_job.job_name}}</H4>
 
  {% else %}
- <form action="{% url 'new_production_report' 'ALL' %}" method="post" >
+ <form action="{% url 'new_production_report' 'ALL' %}" method="post" onSubmit = "return check_booking_data()" >
 	 {% csrf_token %}
 	 	             <label for="select_job">Select Job:</label>
             <select id="select_job" name="select_job" >
