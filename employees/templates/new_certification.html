@@ -62,9 +62,9 @@
             </select>
 	 		<br><br>
 
-                   Start date: <input type="date" name="start_date">
+                   Start date: <input type="date" name="start_date">Don't Know? <input type="checkbox" name="dont_know_start" />
      <br><br>
-     Expiration date: <input type="date" name="end_date">  Don't Know? <input type="checkbox" name="dont_know" />
+     Expiration date: <input type="date" name="end_date">  Don't Know? <input type="checkbox" name="dont_know_end" />
      <br><br>
 			 <label for="select_job">Select Job (if applicable): </label>
             <select id="select_job" name="select_job" >
@@ -75,8 +75,23 @@
             </select>
 	 		<br><br>
 
-<textarea name="note" rows="2" cols="100" placeholder="Notes" ></textarea>
+     <textarea name="note" rows="2" cols="100" placeholder="Notes" ></textarea>
 	 <br>
+<b>Employee Action Required? </b> <input type="checkbox" name="is_action_required" />
+     <br>
+   			 <label for="select_action">Select Action: </label>
+            <select id="select_action" name="select_action" >
+				<option value="please_select">Please Select Action Required</option>
+                <option value="please_select">Custom (Type it in the box)</option>
+                {% for x in actions %}
+                <option value={{x.id}}>{{x.action}}</option>
+                {% endfor %}
+            </select>
+<br>
+     Custom Action: <input type="text" name="custom_action" size="75" />
+     <br>
+
+
 
 <input type="submit" name="complete" value="ADD NOW" />
  </form>

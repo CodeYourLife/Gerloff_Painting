@@ -1130,6 +1130,8 @@ class Certifications(models.Model):
 	job = models.ForeignKey(Jobs, on_delete=models.PROTECT,null=True,blank=True)
 	note = models.CharField(null=True,blank=True,max_length=2000)
 	is_closed = models.BooleanField(default=False)
+	action_required = models.BooleanField(default=False)
+	action = models.CharField(null=True,blank=True,max_length=500)
 	def __str__(self):
 		return f"{self.category} {self.employee}"
 
@@ -1139,3 +1141,9 @@ class CertificationNotes(models.Model):
 	date = models.DateField()
 	user = models.CharField(null=True, max_length=200)
 	note = models.CharField(null=True, max_length=2000)
+
+class CertificationActionRequired(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	action = models.CharField(null=True, max_length=200)
+	def __str__(self):
+		return f"{self.action}"

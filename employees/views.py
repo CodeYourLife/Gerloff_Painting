@@ -303,12 +303,29 @@ def training(request):
 
 def my_page(request):
     send_data = {}
-    send_data['employee'] = Employees.objects.get(user = request.user)
+    employee= Employees.objects.get(user = request.user)
+    send_data['employee'] = employee
+    send_data['inventory']= Inventory.objects.filter(assigned_to=employee)
+    send_data['assessments_performed'] = EmployeeReview.objects.filter(assessment__reviewer=employee)
+    send_data['assessments_received'] = EmployeeReview.objects.filter(employee=employee)
+    send_data['writeups_written'] = WriteUp.objects.filter(supervisor=employee)
+    send_data['writeups_received'] = WriteUp.objects.filter(employee=employee)
+    send_data['vacation_requests'] = Vacation.objects.filter(employee=employee)
+    send_data['production_reports_written'] = DailyReports.objects.filter(foreman=employee)
+    send_data['production_reports_received'] = ProductionItems.objects.filter(employee=employee)
+    send_data['classes_taught'] = ClassOccurrence.objects.filter(teacher=employee)
+    send_data['classes_attended'] = ClassAttendees.objects.filter(student=employee)
+    send_data['exams'] = ExamScore.objects.filter(student=employee)
+    send_data['mentorship_mentor'] = Mentorship.objects.filter(mentor=employee)
+    send_data['mentorship_apprentice'] = Mentorship.objects.filter(apprentice=employee)
+    send_data['certifications'] = Certifications.objects.filter(employee=employee)
+    send_data['actions'] = Certifications.objects.filter(employee=employee,action_required=True)
     return render(request, "my_page.html", send_data)
 
 def certifications(request,id):
     send_data = {}
     send_data['certifications'] = Certifications.objects.all()
+    send_data['actions'] = CertificationActionRequired.objects.all()
     if id != 'ALL':
         send_data['selected_item'] = Certifications.objects.get(id=id)
         send_data['notes2'] = CertificationNotes.objects.filter(certification__id=id)
@@ -316,17 +333,31 @@ def certifications(request,id):
         cert = Certifications.objects.get(id=id)
         if 'new_note' in request.POST:
             CertificationNotes.objects.create(certification=cert,date=date.today(),user=request.user,note=request.POST['note'])
-        if 'update' in request.POST:
-            if 'closed' in request.POST:
-                if cert.is_closed == False:
-                    cert.is_closed=True
-                    CertificationNotes.objects.create(certification=cert, date=date.today(),
-                                                  user=request.user, note="Cert closed." + request.POST['note'])
-            else:
-                if cert.is_closed == True:
-                    cert.is_closed = False
-                    CertificationNotes.objects.create(certification=cert, date=date.today(),
-                                                  user=request.user, note="Cert changed to open." + request.POST['note'])
+        if 'closed_item' in request.POST:
+            cert.is_closed == False
+            CertificationNotes.objects.create(certification=cert, date=date.today(),
+                                                  user=request.user, note="Cert closed." + request.POST['closed_note'])
+        if 'closed_action' in request.POST:
+            cert.action_required = False
+            CertificationNotes.objects.create(certification=cert, date=date.today(),
+                                                  user=request.user, note="Action: <" + cert.action + "> Completed! " + request.POST['closed_action_note'])
+            cert.action = ""
+        if 'select_action_now' in request.POST:
+            cert.action_required = True
+            cert.action = CertificationActionRequired.objects.get(id=request.POST['closed_action_note']).action
+            CertificationNotes.objects.create(certification=cert, date=date.today(),
+                                                  user=request.user, note="Action: <" + cert.action + "> Required! ")
+        if 'custom_action_now' in request.POST:
+            cert.action_required = True
+            cert.action = request.POST['custom_action']
+            CertificationNotes.objects.create(certification=cert, date=date.today(),
+                                                  user=request.user, note="Action: <" + cert.action + "> Required! ")
+        if 'change_start_date' in request.POST:
+            cert.date_received = request.POST['start_date']
+            CertificationNotes.objects.create(certification=cert, date=date.today(),user=request.user, note="Start Date Changed to: " + cert.date_received + "- "+ request.POST['start_date_note'])
+        if 'change_end_date' in request.POST:
+            cert.date_expires = request.POST['end_date']
+            CertificationNotes.objects.create(certification=cert, date=date.today(),user=request.user, note="Expiration Date Changed to: " + cert.date_expires + "- "+ request.POST['end_date_note'])
         cert.save()
     return render(request, "certifications.html", send_data)
 
@@ -335,15 +366,26 @@ def new_certification(request):
     send_data['employees']=Employees.objects.filter(active=True)
     send_data['jobs'] = Jobs.objects.filter(status = 'Open')
     send_data['categories'] = CertificationCategories.objects.all()
+    send_data['actions']=CertificationActionRequired.objects.all()
     if request.method == 'POST':
         print(request.POST)
-        new_cert = Certifications.objects.create(category = CertificationCategories.objects.get(id=request.POST['select_category']),employee = Employees.objects.get(id=request.POST['select_employee']),date_received=request.POST['start_date'],note=request.POST['note'])
-        if 'dont_know' in request.POST:
+        new_cert = Certifications.objects.create(category = CertificationCategories.objects.get(id=request.POST['select_category']),employee = Employees.objects.get(id=request.POST['select_employee']),note=request.POST['note'])
+        if 'dont_know_end' in request.POST:
             print("HI")
         else:
             new_cert.date_expires=request.POST['end_date']
+        if 'dont_know_start' in request.POST:
+            print("HI")
+        else:
+            new_cert.date_received = request.POST['start_date']
         if request.POST['select_job'] != 'please_select':
             new_cert.job=Jobs.objects.get(job_number=request.POST['select_job'])
+        if 'is_action_required' in request.POST:
+            new_cert.action_required = True
+            if request.POST['custom_action'] != "":
+                new_cert.action = request.POST['custom_action']
+            else:
+                new_cert.action = CertificationActionRequired.objects.get(id=request.POST['select_action']).action
         new_cert.save()
         return redirect('certifications', id=new_cert.id)
     return render(request, "new_certification.html", send_data)
