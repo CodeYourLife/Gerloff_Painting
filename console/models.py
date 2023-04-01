@@ -259,7 +259,7 @@ class Inventory(models.Model):
 	serial_number = models.CharField(null=True, max_length=250, blank=True)
 	po_number = models.CharField(null=True, max_length=250, blank=True)
 	is_labeled = models.BooleanField(default=False)
-	status = models.CharField(null=True, max_length=250, blank=True) #checked out, missing, available, service
+	status = models.CharField(null=True, max_length=250, blank=True) #Checked Out, Missing, Available, Service
 	date_out = models.DateField(null=True, blank=True)
 	date_returned = models.DateField(null=True, blank=True)
 	job_number = models.ForeignKey(Jobs,on_delete=models.PROTECT, blank=True, null=True)
@@ -273,10 +273,10 @@ class Inventory(models.Model):
 
 
 def validate_inventory_notes(value):
-	if value == "Returned" or value == "Missing" or value == "Job" or value == "Service" or value == "Misc":
+	if value == "Returned" or value == "Missing" or value == "Job" or value == "Service" or value == "Misc" or value == "Employee":
 		return value
 	else:
-		raise ValidationError("Category must be Returned, Missing, Job, Service, or Misc")
+		raise ValidationError("Category must be Returned, Missing, Job, Service, Employee, or Misc")
 
 class InventoryNotes(models.Model):
 	id = models.BigAutoField(primary_key=True)

@@ -35,6 +35,11 @@
        				alert("Select a job");
        				return false;
        				}}
+			if (location==change_employee.job_notes){
+				if (change_employee.select_employee.value == "select_employee"){
+       				alert("Select an employee");
+       				return false;
+       				}}
     	var x;
     	var name=prompt("Please make any notes about this: ");
     	if (name!=null){
@@ -89,19 +94,23 @@
 				{% endif %}
                 <div class ="col"> <b>Vendor =</b> {{inventories.vendor}}   </div>
             </div>
-
+			{% if inventories.assigned_to != None %} <div class ="row"><div class ="col"><b>Employee =</b>{{inventories.assigned_to}}</div></div>{% endif %}
         </div>
 
 		<br><hr>
 <div class ="container">
 	<div class ="row">
+		{% if inventories.service_vendor != None or inventories.job_number != None or inventories.assigned_to != None %}
 		<div class ="col">
 					<form name = return_to_home action="{% url 'equipment_page' inventories.id %}" method="post" onSubmit = myFunction(return_to_home.returned_notes) >
         				{% csrf_token %}
 						<input type="hidden" id="returned_notes" name = "returned_notes" value="" />
-						 <input id="returned" name = "returned" type="submit" value="Check Back In" />
+						 {% if inventories.service_vendor != None %} <input id="returned" name = "returned" type="submit" value="Service Complete" />{% endif %}
+						{% if inventories.job_number != None %} <input id="returned" name = "returned" type="submit" value="Check Back In From Job" />{% endif %}
+						{% if inventories.assigned_to != None %} <input id="returned_employee" name = "returned_employee" type="submit" value="Remove Employee" />{% endif %}
 					</form>
 		</div>
+		{% endif %}
 		<div class ="col">
 					<form name = missing_button action="{% url 'equipment_page' inventories.id %}" method="post" onSubmit = myFunction(missing_button.missing_notes) >
         				{% csrf_token %}
@@ -139,9 +148,25 @@
  			<input type="submit" value="Transfer to Job" />
 			</form>
 		</div>
+				<div class ="col">
+			<form name = change_employee action="{% url 'equipment_page' inventories.id %}" method="post" onSubmit = "return myFunction(change_employee.job_notes)">
+        	{% csrf_token %}
+				<input type="hidden" id="job_notes" name = "job_notes" value="" />
+            <select id="select_employee" name="select_employee" >
+                <option value="select_employee">Select Employee</option>
+                {% if employees %}
+                {% for x in employees %}
+                <option value={{x.id}}>{{x.first_name}} {{x.last_name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+ 			<input type="submit" value="Assign to Employee" />
+			</form>
+		</div>
 	</div>
 	<div class ="row">
-			<br><hr>
+			<div class="column">
+
 			<form name = add_note action="{% url 'equipment_page' inventories.id %}" method="post" >
         	{% csrf_token %}
 
@@ -150,9 +175,11 @@
 			<br>
 			<input type="submit" value="Add Note" />
 			</form>
+			</div>
 	</div>
 </div>
 <br><hr>
+<h3>NOTES ABOUT THIS ITEM:</h3>
 			<form name = filter_notes action="{% url 'equipment_page' inventories.id %}" method="post" >
         	{% csrf_token %}
             <select id="select_category" name="select_category" >
@@ -162,7 +189,7 @@
 				<option value="Service">Getting Serviced</option>
 				<option value="Misc">Misc Notes</option>
             </select>
- 			<input type="submit" value="Filter Notes" />
+ 			<input type="submit" value="Apply Filter" name="apply_filter" /><input type="submit" name= "clear_filter" value="Clear Filter" />
 			</form>
 		</div>
 

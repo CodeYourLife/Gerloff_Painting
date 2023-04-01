@@ -320,6 +320,11 @@ def my_page(request):
     send_data['mentorship_apprentice'] = Mentorship.objects.filter(apprentice=employee)
     send_data['certifications'] = Certifications.objects.filter(employee=employee)
     send_data['actions'] = Certifications.objects.filter(employee=employee,action_required=True)
+    if request.method == 'POST':
+        employee.nickname=request.POST['nickname']
+        employee.phone = request.POST['phone']
+        employee.email = request.POST['email']
+        employee.save()
     return render(request, "my_page.html", send_data)
 
 def certifications(request,id):

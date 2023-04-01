@@ -114,32 +114,61 @@ def equipment_new(request):
 def equipment_page(request, id):
     inventory = Inventory.objects.get(id=id)
     table = EquipmentNotesTable(InventoryNotes.objects.filter(inventory_item=inventory))
-    vendors = Vendors.objects.all()
+    employees = Employees.objects.filter(active=True)
+    vendors = Vendors.objects.filter(category__category="Equipment Repair")
     if request.method == 'POST':
-        if 'select_category' in request.POST:
+        if 'apply_filter' in request.POST:
             table = EquipmentNotesTable(InventoryNotes.objects.filter(inventory_item=inventory, category=request.POST['select_category']))
+        if 'clear_filter' in request.POST:
+            table = EquipmentNotesTable(InventoryNotes.objects.filter(inventory_item=inventory))
         if 'returned' in request.POST:
-            inventory.status = "Available"  # change field
+            if inventory.assigned_to != None:
+                inventory.status = "Checked Out"
+            else:
+                inventory.status = "Available"  # change field
             inventory.date_returned = date.today()
             inventory.job_number = None
-            inventory.vendor = None
+            inventory.service_vendor = None
             inventory.save()  # this will update only
             new_note = InventoryNotes(inventory_item=inventory, date=date.today(), user=request.user.first_name + " " + request.user.last_name, note="Returned -" + request.POST['returned_notes'],
                                       category="Returned")
             new_note.save()
+        if 'returned_employee' in request.POST:
+            if inventory.job_number != None:
+                inventory.status = "Checked Out"
+            elif inventory.service_vendor != None:
+                inventory.status = "Service"
+            else:
+                inventory.status = "Available"  # change field
+                inventory.date_returned = date.today()
+            if inventory.job_number != None or inventory.service_vendor != None:
+                new_note = InventoryNotes(inventory_item=inventory, date=date.today(),
+                                          user=request.user.first_name + " " + request.user.last_name,
+                                          note="No longer assigned to employee. " + inventory.assigned_to.first_name + " " + inventory.assigned_to.last_name + ". " +
+                                               request.POST['returned_notes'],
+                                          category="Employee")
+            else:
+                new_note = InventoryNotes(inventory_item=inventory, date=date.today(), user=request.user.first_name + " " + request.user.last_name, note="No longer assigned to employee. " + inventory.assigned_to.first_name + " " + inventory.assigned_to.last_name + ". " + request.POST['returned_notes'],
+                                      category="Returned")
+            new_note.save()
+            inventory.assigned_to = None
+            inventory.save()  # this will update only
 
         if 'missing' in request.POST:
             inventory.status = "Missing"  # change field
             inventory.job_number = None
-            inventory.vendor = None
+            inventory.service_vendor = None
+            inventory.assigned_to = None
             inventory.save()
             new_note = InventoryNotes(inventory_item=inventory, date=date.today(), user=request.user.first_name + " " + request.user.last_name, note="Missing -" + request.POST['missing_notes'],
                                       category="Missing")
             new_note.save()
         if 'select_job' in request.POST:
             inventory.job_number = Jobs.objects.get(job_number = request.POST['select_job'])
-            inventory.vendor = None
+            inventory.service_vendor = None
             inventory.status= "Checked Out"
+            inventory.date_out = date.today()
+            inventory.date_returned = None
             inventory.save()
             new_note = InventoryNotes(inventory_item=inventory, date=date.today(), user= request.user.first_name + " " + request.user.last_name, note="New Job -" + request.POST['job_notes'],
                                       category="Job", job_name = Jobs.objects.get(job_number = request.POST['select_job']).job_name, job_number = request.POST['select_job'] )
@@ -154,6 +183,8 @@ def equipment_page(request, id):
                 inventory.service_vendor = Vendors.objects.get(id=request.POST['select_service'])
                 inventory.job_number = None
                 inventory.status = "Service"
+                inventory.date_out = date.today()
+                inventory.date_returned = None
                 inventory.save()
                 new_note = InventoryNotes(inventory_item=inventory, date=date.today(),
                                           user=request.user.first_name + " " + request.user.last_name,
@@ -162,9 +193,23 @@ def equipment_page(request, id):
                                           job_name= Vendors.objects.get(id=request.POST['select_service']).company_name)
                 new_note.save()
 
+        if 'select_employee' in request.POST:
+            inventory.assigned_to = Employees.objects.get(id=request.POST['select_employee'])
+            if inventory.status != "Service":
+                inventory.status = "Checked Out"
+            if inventory.job_number == None and inventory.service_vendor == None:
+                inventory.date_out = date.today()
+                inventory.date_returned = None
+            inventory.save()
+            new_note = InventoryNotes(inventory_item=inventory, date=date.today(),
+                                      user=request.user.first_name + " " + request.user.last_name,
+                                      note="Assigned to Employee -" + inventory.assigned_to.first_name + " " + inventory.assigned_to.last_name + ". " + request.POST['job_notes'],
+                                      category="Employee",)
+            new_note.save()
+
 
     jobs = Jobs.objects.all()
-    return render(request, "equipment_page.html", {'jobs': jobs,'inventories': inventory, "table": table, "vendors": vendors})
+    return render(request, "equipment_page.html", {'employees':employees,'jobs': jobs,'inventories': inventory, "table": table, "vendors": vendors})
 
 def equipment_home(request):
     inventories = Inventory.objects.all()

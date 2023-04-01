@@ -44,7 +44,7 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 $(document).ready(function () {
-    var table = $('#employees_table').DataTable({});
+    var table = $('#employees2_table').DataTable({});
 })
 
 	</script>
@@ -65,10 +65,11 @@ $(document).ready(function () {
 {{employee}}
 <!--{{employee.}}-->
 <form action="{% url 'my_page' %}" method="post" onSubmit = "return check_booking_data()" >
+	{% csrf_token %}
 <button type="button" class="collapsible">My Info</button>
 <div class="content">
 	<b>{{employee.first_name}} {{employee.last_name}}</b> Nickname: <input type="text" size = "20" name ="nickname" value = "{{employee.nickname}}" />
-	<br>Phone: <input type="text" size = "10" name ="phone" value = "{{employee.phone}}" />Email: <input type="email" size = "20" name ="email" value = "{{employee.email}}" />
+	<br>Phone: <input type="text" size = "12" name ="phone" value = "{{employee.phone}}" />Email: <input type="email" size = "30" name ="email" value = "{{employee.email}}" />
 	<br> Current Level: {{employee.level}}<br>
 	<input type="submit" name="update_info" value="Update Info" />
 </div>
@@ -76,13 +77,19 @@ $(document).ready(function () {
 
 <button type="button" class="collapsible">Assigned Tools</button>
 <div class="content">
-    {{inventory}}
-
+    <table id="employees_table" class="display" >
+	{% for x in inventory %}
+		<tbody><tr><td>{{x.item}}</td><td>{{x.item}}</td></tr></tbody>
+	{% endfor %}
+	</table>
 	</div>
 <button type="button" class="collapsible">Performed Assessments</button>
 <div class="content">
-    {{assessments_performed}}
-
+	    <table id="employees_table" class="display" >
+	{% for x in assessments_performed %}
+		<tbody><tr><td>{{x.assessment.date}}</td><td>{{x.employee}}</td></tr></tbody>
+	{% endfor %}
+	</table>
 	</div>
 <button type="button" class="collapsible">Received Assessments</button>
 <div class="content">
