@@ -86,6 +86,7 @@ function filterStatus() {
 					<th>Labeled?</th>
 					<th>Status</th>
 					<th>Location</th>
+					<th>Employee</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -116,6 +117,7 @@ function filterStatus() {
 					{% else %}
 						<td>{{inventory.job_number.job_name}}</td>
 					{% endif %}
+					<td>{% if inventory.assigned_to != None %}{{inventory.assigned_to}}{% endif %}</td>
 
 				</tr>
 			{% endfor %}

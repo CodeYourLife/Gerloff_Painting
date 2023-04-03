@@ -42,35 +42,33 @@ $(document).ready(function () {
         <li><a class="nav-item nav-link" href="{% url 'assessments' 'ALL' %}">Assessments</a></li>
         <li><a class="nav-item nav-link" href="{% url 'production_reports' 'ALL'  %}">Production Reports</a></li>
 		 <li><a class="nav-item nav-link" href="{% url 'daily_reports' 'ALL'  %}">Daily Reports</a></li>
-        <li><a class="nav-item nav-link active" href="{% url 'classes' 'ALL' %}">Classes</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'exams' 'ALL' %}">Exams</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'mentorships' 'ALL' %}">Mentorships</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'classes' 'ALL' %}">Classes</a></li>
+        <li><a class="nav-item nav-link " href="{% url 'exams' 'ALL' %}">Exams</a></li>
+        <li><a class="nav-item nav-link active" href="{% url 'mentorships' 'ALL' %}">Mentorships</a></li>
 
     </ul>
   </div>
 </nav><br>
-<form action="{% url 'new_class' %}">
-    <input type="submit" value="NEW CLASS - CLICK HERE" />
+<form action="{% url 'new_production_report' %}">
+    <input type="submit" value="NEW DAILY REPORT- CLICK HERE" />
 </form>
 <br>
-<div class="demo-html" style="width:90%">
+<div class="demo-html" >
 		<table id="class_table" class="display" style="width:90%">
 			<thead>
 				<tr>
 					<th>Date</th>
-					<th>View</th>
-					<th>Topic</th>
-					<th>Teacher </th>
-					<th>Note</th>
+					<th>Job</th>
+					<th>Foreman</th>
+
 				</tr>
 			</thead>
 			<tbody>
-			{% for x in classoccurrences %}
+			{% for x in dailyreports %}
 			<tr><td>{{x.date}}</td>
-			<td><a href = "{% url 'classes' x.id %}">View</td>
-			<td>{{x.description}}</td>
-			<td>{{x.teacher}}</td>
-			<td>{{x.note}}</td>
+			<td><a href = "{% url 'daily_reports' x.id %}">View</td>
+			<td>{{x.job}}</td>
+			<td>{{x.foreman}}</td>
 			</tr>
 {% endfor %}
 			</tbody>
@@ -82,27 +80,33 @@ $(document).ready(function () {
 {% if selected_item %}
 
 
-<div class ="row">
-	<div class ="col" ><h3><b>CLASS TOPIC - </b> {{selected_item.description}} </h3></div></div>
+<div class ="row"><div class ="col" ><b>Date: </b>{{selected_item.date}}</div><div class ="col" ><b>Foreman: </b>{{selected_item.foreman}}</div><div class ="col" ><b>Job: </b>{{selected_item.job}}</div></div>
+<div class ="row"><div class ="col" ><b>Note: </b>{{selected_item.note}}</div></div>
 
+{% if teamnumbers %}
+	{% for x in teamnumbers %}
+	<div class ="row"><div class ="col" > <h3>Team: </h3></div></div>
+	{% for y in items %}
+	{% if y.team_number == x %}
 	<div class ="row">
-		<div class ="col"><b>Teacher: </b>{% if selected_item.teacher != None %}{{selected_item.teacher}}{% else %} {{selected_item.teacher2}}{% endif %}</div>
-		<div class ="col"><b>Date: </b>{{selected_item.date}}</div>
+			<div class ="col" >{{y.employee}}</div><div class ="col" >[{{y.value1}} {{y.unit}}]{% if y.value2 != None %}[{{y.value2}} {{y.unit2}}]{% endif %} {% if y.value3 != None %}[{{y.value3}} {{y.unit3}}]{% endif %}</div><div class ="col" ><a href="{%  url 'production_reports' y.id %}">View</a></div>
 
-	</div>
-	<div class ="row">
-		<div class ="col"><b>Job: </b>{{selected_item.job}}</div>
-		<div class ="col"><b>Location: </b>{{selected_item.location}}</div>
-	</div>
-		<div class ="row">
-		<div class ="col"><b>Note: </b>{{selected_item.note}}</div>
-	</div>
-	{% for x in attendees %}
-			<div class ="row">
-		<div class ="col"><b>Attendee: </b>{% if x.student != None %}{{x.student}}{% else %}{{x.student2}}{% endif %}</div>
-		<div class ="col">{{x.note}}</div>
-	</div>
-	{% endfor %}
+<div class ="row"><div class ="col" ><b>Note: </b>{{selected_item.note}}</div></div>
+{% for x in selected_notes %}
+	<div class ="row"><div class ="col" >{{x.date}} - {{x.user}} - {{x.note}}</div></div>
+{% endfor %}
+
+	 <form action="{% url 'mentorships' selected_item.id %}" method="post" >
+	 {% csrf_token %}
+		 <br>
+<input type="text" name="note" size="100" placeholder ='New Note Here' /> <input type="submit" name="new_note" value="ADD NOTE" />
+		 <br><br>
+		 CLOSED?{% if selected_item.is_closed == False %} <input type="checkbox" name="closed" />{% else %}<input type="checkbox" name="closed" checked />{% endif %}   <input type="submit" name="update" value="UPDATE RECORD" />
+
+	 </form>
+ <br>
+
+
 
 {% endif %}
 </div>

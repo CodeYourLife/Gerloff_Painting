@@ -41,6 +41,7 @@ $(document).ready(function () {
         <li><a class="nav-item nav-link" href="{% url 'training' %}">Training Home</a></li>
         <li><a class="nav-item nav-link active" href="{% url 'assessments' 'ALL' %}">Assessments</a></li>
         <li><a class="nav-item nav-link" href="{% url 'production_reports' 'ALL'  %}">Production Reports</a></li>
+		 <li><a class="nav-item nav-link" href="{% url 'daily_reports' 'ALL'  %}">Daily Reports</a></li>
         <li><a class="nav-item nav-link" href="{% url 'classes' 'ALL' %}">Classes</a></li>
         <li><a class="nav-item nav-link" href="{% url 'exams' 'ALL' %}">Exams</a></li>
         <li><a class="nav-item nav-link" href="{% url 'mentorships' 'ALL' %}">Mentorships</a></li>
@@ -108,9 +109,11 @@ $(document).ready(function () {
 	<div class ="row">
 		<div class ="col"><b>Note: </b>{{selected_item.assessment.note}}</div></div>
 {% endif %}
-
+	<div class ="row"><div class ="col"><b>SCORES</b></div></div>
+	<br>
+<div class ="row"><div class ="col"><b>Score</b></div><div class ="col"><b>Notes</b></div><div class ="col"><b>Current Level</b></div><div class ="col"><b>Next Level</b></div></div>
 {% for x in selected_assessment %}
-	<div class ="row"></div><div class ="row"><div class ="col">{{x.category}}</div></div>
+	<div class ="row"><div class ="col">{{x.category}} / {{x.total}}</div><div class ="col">{{x.note}}</div><div class ="col">{{x.description}}</div><div class ="col">{{x.next}}</div></div>
 {% endfor %}
 {% endif %}
 </div>

@@ -26,15 +26,23 @@
 	</script>
 </head>
 <body>
-    <form action = "register" method = "post">
+    <form action = "register_user" method = "post">
         {% csrf_token %}
-        <input type="test" name = "first_name" placeholder="First Name"><br>
-        <input type="test" name = "last_name" placeholder="Last Name"><br>
+<!--		                    <label for="select_employee">Contract status</label>-->
+                    <select id="select_employee" name="select_employee" >
+                        <option value="please_select">Select Employee</option>
+						{% for x in employees %}
+                        <option value={{x.id}}>{{x.first_name}} {{x.last_name}}</option>
+						{% endfor %}
+                    </select>
+		<br>
+<!--        <input type="test" name = "first_name" placeholder="First Name"><br>-->
+<!--        <input type="test" name = "last_name" placeholder="Last Name"><br>-->
         <input type="test" name = "username" placeholder="Username"><br>
         <input type="email" name = "email" placeholder="email"><br>
         <input type="password" name = "password1" placeholder="Password"><br>
         <input type="password" name = "password2" placeholder="Confirm Password"><br>
-        <input type="submit">
+        <input type="submit" value="SUBMIT NOW" >
     </form>
 
     <div>

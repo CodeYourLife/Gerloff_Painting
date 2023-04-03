@@ -27,52 +27,45 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 $(document).ready(function () {
-    var table = $('#class_table').DataTable({});
+    var table = $('#employees_table').DataTable({});
 })
 
 	</script>
 </head>
 <body>
 <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
-  <a class="navbar-brand" href="#">Training</a>
+  <a class="navbar-brand" href="#">Employees</a>
   <div class="collapse navbar-collapse" id="navbarNavDropdown2">
     <ul class="navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Employees Home</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'training' %}">Training Home</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'assessments' 'ALL' %}">Assessments</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'production_reports' 'ALL'  %}">Production Reports</a></li>
-		 <li><a class="nav-item nav-link" href="{% url 'daily_reports' 'ALL'  %}">Daily Reports</a></li>
-        <li><a class="nav-item nav-link active" href="{% url 'classes' 'ALL' %}">Classes</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'exams' 'ALL' %}">Exams</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'mentorships' 'ALL' %}">Mentorships</a></li>
-
+        <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
+		<li><a class="nav-item nav-link active" href="{% url 'write_ups' 'ALL' %}">Write_Ups</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
     </ul>
   </div>
 </nav><br>
-<form action="{% url 'new_class' %}">
-    <input type="submit" value="NEW CLASS - CLICK HERE" />
+<form action="{% url 'write_ups_new' %}">
+    <input type="submit" value="NEW WRITE UP- CLICK HERE" />
 </form>
 <br>
 <div class="demo-html" style="width:90%">
-		<table id="class_table" class="display" style="width:90%">
+		<table id="employees_table" class="display" >
 			<thead>
 				<tr>
-					<th>Date</th>
 					<th>View</th>
-					<th>Topic</th>
-					<th>Teacher </th>
-					<th>Note</th>
+					<th>Date</th>
+					<th>Employee</th>
+					<th>Description </th>
+
 				</tr>
 			</thead>
 			<tbody>
-			{% for x in classoccurrences %}
-			<tr><td>{{x.date}}</td>
-			<td><a href = "{% url 'classes' x.id %}">View</td>
-			<td>{{x.description}}</td>
-			<td>{{x.teacher}}</td>
-			<td>{{x.note}}</td>
-			</tr>
-{% endfor %}
+			{% for x in write_ups %}
+			<tr><td><a href = "{% url 'write_ups' x.id %}">View</td><td>{{x.date}}</td>
+				<td>{{x.employee}}</td>  <td>{{x.description}}</td></tr>
+			{% endfor %}
 			</tbody>
 		</table>
 </div>
@@ -82,30 +75,23 @@ $(document).ready(function () {
 {% if selected_item %}
 
 
+
 <div class ="row">
-	<div class ="col" ><h3><b>CLASS TOPIC - </b> {{selected_item.description}} </h3></div></div>
+	<div class ="col" ><h3><b>Write Up For Employee:</b> {{selected_item.employee}} </h3></div></div>
 
 	<div class ="row">
-		<div class ="col"><b>Teacher: </b>{% if selected_item.teacher != None %}{{selected_item.teacher}}{% else %} {{selected_item.teacher2}}{% endif %}</div>
+		<div class ="col"><b>Supervisor: </b>{{selected_item.supervisor}}</div>
 		<div class ="col"><b>Date: </b>{{selected_item.date}}</div>
 
+		<div class ="col"><b>Job: </b>{{selected_item.job}}</div>
 	</div>
 	<div class ="row">
-		<div class ="col"><b>Job: </b>{{selected_item.job}}</div>
-		<div class ="col"><b>Location: </b>{{selected_item.location}}</div>
-	</div>
-		<div class ="row">
-		<div class ="col"><b>Note: </b>{{selected_item.note}}</div>
-	</div>
-	{% for x in attendees %}
-			<div class ="row">
-		<div class ="col"><b>Attendee: </b>{% if x.student != None %}{{x.student}}{% else %}{{x.student2}}{% endif %}</div>
-		<div class ="col">{{x.note}}</div>
-	</div>
-	{% endfor %}
+		<div class ="col"><b>Item: </b>{{selected_item.description}}</div></div>
+	<div class ="row">
+		<div class ="col"><b>Note: </b>{{selected_item.note}}</div></div>
 
-{% endif %}
 </div>
+{% endif %}
 </body>
 </html>
 

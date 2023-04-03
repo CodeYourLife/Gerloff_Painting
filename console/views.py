@@ -20,6 +20,7 @@ def seperate_test(request):
     open(fn2, 'wb').write(fileitem.file.read())
     return redirect('index')
 def index(request):
+
     if request.method == 'POST':
         print(request.POST)
         directory = "GeeksforGeeks"
@@ -40,29 +41,32 @@ def warehouse_home(request):
 
 # Create your views here.
 def register_user(request):
-
+    send_data = {}
+    send_data['employees']=Employees.objects.filter(user = None)
     if request.method == 'POST':
-        first_name = request.POST['first_name']
-        last_name = request.POST['last_name']
+        # first_name = request.POST['first_name']
+        # last_name = request.POST['last_name']
         username = request.POST['username']
         password1 = request.POST['password1']
         password2 = request.POST['password2']
         email = request.POST['email']
-
         if password1==password2:
             if User.objects.filter(username=username).exists():
                 messages.info(request, 'Username Taken')
-                return redirect('register')
+                return redirect('register_user')
             else:
-                user = User.objects.create_user(username=username, password=password1, email=email, first_name=first_name,last_name=last_name)
+                user = User.objects.create_user(username=username, password=password1, email=email, first_name=Employees.objects.get(id=request.POST['select_employee']).first_name,last_name=Employees.objects.get(id=request.POST['select_employee']).last_name, is_active= False)
                 user.save();
+                employee = Employees.objects.get(id=request.POST['select_employee'])
+                employee.user=user
+                employee.save()
                 return redirect('login')
         else:
             messages.info(request, 'password not matching...')
-            return redirect('register')
+            return redirect('register_user')
 
     else:
-        return render(request,'register.html')
+        return render(request,'register.html',send_data)
 
 def login(request):
     if request.method == 'POST':

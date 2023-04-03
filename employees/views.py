@@ -62,7 +62,7 @@ def new_production_report(request,jobnumber):
                                     description = task.item1 + " - " + task.item2 + " - " + task.item3 + " - " + task.task
                                 else:
                                     description = request.POST['custom_category1' + team] + "- " + request.POST['custom_taskteam_' + team + '_employee_' + employee_number]
-                                new_entry = ProductionItems.objects.create(note=note, is_team=True,team_note=team_note,daily_report=daily_report,employee=employee,date=date.today(),team_members=team_members,description=description)
+                                new_entry = ProductionItems.objects.create(team_number=team,note=note, is_team=True,team_note=team_note,daily_report=daily_report,employee=employee,date=date.today(),team_members=team_members,description=description)
                                 if 'taskteam_' + team + '_employee_' + employee_number in request.POST:
                                     new_entry.task = ProductionCategory.objects.get(id=request.POST['taskteam_' + team + '_employee_' + employee_number])
                                 if request.POST['hoursteam_'+ team] != "":
@@ -271,7 +271,15 @@ def assessments(request,id):
     send_data['employeereviews']=EmployeeReview.objects.filter(employee__active = True)
     if id != 'ALL':
         send_data['selected_item']= EmployeeReview.objects.get(id=id)
-        send_data['selected_assessment'] = MetricAssessmentItem.objects.filter(assessment__id=id)
+        selected_assessment = []
+        for x in MetricAssessmentItem.objects.filter(assessment__id=id):
+            if MetricCategories.objects.filter(metric=x.category.metric, number=x.category.number + 1).exists():
+                selected_assessment.append({'category':x.category,'total':x.category.metric.total_numbers,'note':x.note,'description':x.category.description,'next':MetricCategories.objects.get(metric=x.category.metric, number=x.category.number + 1).description})
+            else:
+                selected_assessment.append(
+                    {'category': x.category, 'total': x.category.metric.total_numbers, 'note': x.note,
+                     'description': x.category.description, 'next': "None"})
+        send_data['selected_assessment'] = selected_assessment
     return render(request, "assessments.html", send_data)
 
 
@@ -320,6 +328,8 @@ def my_page(request):
     send_data['mentorship_apprentice'] = Mentorship.objects.filter(apprentice=employee)
     send_data['certifications'] = Certifications.objects.filter(employee=employee)
     send_data['actions'] = Certifications.objects.filter(employee=employee,action_required=True)
+
+
     if request.method == 'POST':
         employee.nickname=request.POST['nickname']
         employee.phone = request.POST['phone']
@@ -398,3 +408,48 @@ def add_new_employee(request):
     response = redirect('/')
     return response
 
+def write_ups(request,id):
+    send_data = {}
+    send_data['employees']=Employees.objects.filter(active=True)
+    send_data['me'] = Employees.objects.get(user=request.user)
+    send_data['jobs'] = Jobs.objects.filter(status = 'Open')
+    send_data['write_ups'] = WriteUp.objects.filter(employee__active = True)
+    if id != 'ALL':
+        send_data['selected_item'] = WriteUp.objects.get(id=id)
+    return render(request, "write_ups.html", send_data)
+
+def write_ups_new(request):
+    send_data = {}
+    send_data['employees']=Employees.objects.filter(active=True)
+    send_data['me'] = Employees.objects.get(user=request.user)
+    send_data['jobs'] = Jobs.objects.filter(status = 'Open')
+    send_data['write_ups'] = WriteUp.objects.filter(employee__active = True)
+    send_data['defaults'] = WriteUpDefaults.objects.all()
+    if request.method == 'POST':
+        if 'custom_topic' in request.POST:
+            new_writeup=WriteUp.objects.create(supervisor=Employees.objects.get(id=request.POST['select_supervisor']),employee=Employees.objects.get(id=request.POST['select_employee']),date=date.today(),description=request.POST['custom_topic'],note=request.POST['note'])
+        else:
+            new_writeup = WriteUp.objects.create(supervisor=Employees.objects.get(id=request.POST['select_supervisor']),employee=Employees.objects.get(id=request.POST['select_employee']), date=date.today(),
+                                                 description=request.POST['select_topic'], note=request.POST['note'])
+        if request.POST['select_job'] != "please_select":
+            new_writeup.job=Jobs.objects.get(job_number=request.POST['select_job'])
+            new_writeup.save()
+        return redirect('write_ups', id=new_writeup.id)
+    return render(request, "write_ups_new.html", send_data)
+
+def daily_reports(request,id):
+    send_data = {}
+    send_data['dailyreports']=DailyReports.objects.all()
+    if id != 'ALL':
+        teamnumbers = []
+        a=0
+        for x in ProductionItems.objects.filter(daily_report__id=id):
+            if x.team_number != None:
+                a=1
+                if x.team_number not in teamnumbers:
+                    teamnumbers.append(x.team_number)
+        if a=1:
+            send_data['teamnumbers']=teamnumbers
+        send_data['selected_item']=DailyReports.objects.get(id=id)
+        send_data['items']= ProductionItems.objects.filter(daily_report__id=id)
+    return render(request, "daily_reports.html", send_data)

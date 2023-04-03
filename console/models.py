@@ -847,6 +847,13 @@ class Metrics(models.Model):
 	description = models.CharField(max_length=1000) #Brush/Roll, Spray
 	def __str__(self):
 		return f"{self.description}"
+
+	def total_numbers(self):
+		totalnumbers = -1
+		for x in MetricCategories.objects.filter(metric=self):
+			totalnumbers = totalnumbers+1
+		return totalnumbers
+
 class MetricCategories(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	number = models.IntegerField(default=0)
@@ -854,6 +861,9 @@ class MetricCategories(models.Model):
 	description = models.CharField(max_length=1000) #1 = none 2 = learning puttying materials 3 = proficient
 	def __str__(self):
 		return f"{self.metric} {self.number}"
+
+
+
 class MetricLevels(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	level = models.ForeignKey(EmployeeLevels, on_delete=models.PROTECT)
@@ -902,9 +912,16 @@ class WriteUp(models.Model):
 	supervisor = models.ForeignKey(Employees, on_delete=models.PROTECT,related_name="Supervisor")
 	employee = models.ForeignKey(Employees, on_delete=models.PROTECT,related_name="Employee")
 	date = models.DateField()
-	note = models.CharField(max_length=2000)
-	job = models.ForeignKey(Jobs, on_delete=models.PROTECT,null=True)
-
+	description = models.CharField(max_length=100)
+	note = models.CharField(max_length=2000,null=True,blank=True)
+	job = models.ForeignKey(Jobs, on_delete=models.PROTECT,null=True,blank=True)
+	def __str__(self):
+		return f"{self.date} {self.employee} {self.description}"
+class WriteUpDefaults(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	description = models.CharField(max_length=100)
+	def __str__(self):
+		return f"{self.description}"
 class Vacation(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
@@ -1025,6 +1042,7 @@ class ProductionItems(models.Model):
 	team_members = models.IntegerField(default=0,null=True,blank=True)
 	task = models.ForeignKey(ProductionCategory, on_delete=models.PROTECT, blank=True, null=True)
 	description = models.CharField(max_length=2000, blank=True, null=True)
+	team_number = models.IntegerField(default=0,null=True,blank=True)
 	def __str__(self):
 		return f"{self.employee} {self.date}"
 

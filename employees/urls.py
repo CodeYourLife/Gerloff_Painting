@@ -21,4 +21,7 @@ path("mentorships/<id>", views.mentorships, name='mentorships'),
 path("new_mentorship", views.new_mentorship, name='new_mentorship'),
 path("new_assessment/<id>", views.new_assessment, name='new_assessment'),
 path("new_production_report/<jobnumber>", views.new_production_report, name='new_production_report'),
+path("write_ups/<id>", views.write_ups, name='write_ups'),
+path("write_ups_new", views.write_ups_new, name='write_ups_new'),
+path("daily_reports/<id>", views.daily_reports, name='daily_reports'),
 ]

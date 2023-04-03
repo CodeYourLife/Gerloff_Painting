@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block nav_item_employees %}active{% endblock nav_item_employees %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+.active, .collapsible:hover {
+  background-color: Salmon;
+}
+
+	</style>
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+function selecttopic(){
+var select = document.getElementById("select_topic");
+var destination = document.getElementById("custom_here");
+if (select.value == "select_custom"){
+destination.innerHTML = "<input type='text' name='custom_topic' size='50' placeholder='Custom Topic Here' />"
+}
+else{ destination.innerHTML = ""}
+}
+
+	</script>
+</head>
+<body>
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Training</a>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown2">
+    <ul class="navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
+		<li><a class="nav-item nav-link" href="{% url 'write_ups' 'ALL' %}">Write_Ups</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
+        <li><a class="nav-item nav-link active" >NEW WRITE UP!</a></li>
+    </ul>
+  </div>
+</nav><br>
+ <form action="{% url 'write_ups_new' %}" method="post" >
+     	 {% csrf_token %}
+          			 <label for="select_supervisor">Select Supervisor: </label>
+            <select id="select_supervisor" name="select_supervisor" >
+				<option value={{me.id}}>{{me}}</option>
+                {% for x in employees %}
+                <option value={{x.id}}>{{x}}</option>
+                {% endfor %}
+            </select>
+     <br><br>
+			 <label for="select_employee">Select Employee: </label>
+            <select id="select_employee" name="select_employee" >
+				<option value="please_select">Please Select</option>
+                {% for x in employees %}
+                <option value={{x.id}}>{{x.first_name}} {{x.last_name}}</option>
+                {% endfor %}
+            </select>
+	 		<br><br>
+     			 <label for="select_job">Select Job: </label>
+            <select id="select_job" name="select_job" >
+				<option value="please_select">Please Select</option>
+                {% for x in jobs %}
+                <option value={{x.job_number}}>{{x.job_name}}</option>
+                {% endfor %}
+            </select>
+	 		<br><br>
+			 <label for="select_topic">Select Topic: </label>
+            <select id="select_topic" name="select_topic" onChange="selecttopic()" >
+				<option value="please_select">Please Select</option>
+                <option value="select_custom">Custom Topic</option>
+                {% for x in defaults %}
+                <option value={{x.description}}>{{x.description}}</option>
+                {% endfor %}
+            </select><div id="custom_here" ></div>
+	 		<br><br>
+
+     <textarea name="note" rows="2" cols="100" placeholder="Notes" ></textarea>
+	 <br>
+
+<input type="submit" name="complete" value="ADD NOW" />
+ </form>
+</body>
+</html>
+
+{% endblock %}
