@@ -49,7 +49,7 @@ $(document).ready(function () {
     </ul>
   </div>
 </nav><br>
-<form action="{% url 'new_production_report' %}">
+<form action="{% url 'new_production_report' 'ALL' %}">
     <input type="submit" value="NEW DAILY REPORT- CLICK HERE" />
 </form>
 <br>
@@ -58,6 +58,7 @@ $(document).ready(function () {
 			<thead>
 				<tr>
 					<th>Date</th>
+					<th>Link</th>
 					<th>Job</th>
 					<th>Foreman</th>
 
@@ -74,42 +75,34 @@ $(document).ready(function () {
 			</tbody>
 		</table>
 </div>
-<div class ="container">
-
 
 {% if selected_item %}
 
+	<div class ="container">
+	<div class ="row"><div class ="col" ><b>Date: </b>{{selected_item.date}}</div><div class ="col" ><b>Foreman: </b>{{selected_item.foreman}}</div><div class ="col" ><b>Job: </b>{{selected_item.job}}</div></div>
+	<div class ="row"><div class ="col" ><b>Note: </b>{{selected_item.note}}</div></div>
+		<br><hr>
+	{% if teamnumbers %}
+		{% for x in teamnumbers %}
+			<div class ="row"><div class ="col-8" > <h4>Team: {{x.description}} - [{{x.value1}} {{x.unit1}}]{% if x.value2 != None %}[{{x.value2}} {{x.unit2}}]{% endif %} {% if x.value3 != None %}[{{x.value3}} {{x.unit3}}]{% endif %} {{x.hours}} Hours</h4></div><div class ="col" >{{x.team_note}}</div></div>
 
-<div class ="row"><div class ="col" ><b>Date: </b>{{selected_item.date}}</div><div class ="col" ><b>Foreman: </b>{{selected_item.foreman}}</div><div class ="col" ><b>Job: </b>{{selected_item.job}}</div></div>
-<div class ="row"><div class ="col" ><b>Note: </b>{{selected_item.note}}</div></div>
-
-{% if teamnumbers %}
-	{% for x in teamnumbers %}
-	<div class ="row"><div class ="col" > <h3>Team: </h3></div></div>
-	{% for y in items %}
-	{% if y.team_number == x %}
-	<div class ="row">
-			<div class ="col" >{{y.employee}}</div><div class ="col" >[{{y.value1}} {{y.unit}}]{% if y.value2 != None %}[{{y.value2}} {{y.unit2}}]{% endif %} {% if y.value3 != None %}[{{y.value3}} {{y.unit3}}]{% endif %}</div><div class ="col" ><a href="{%  url 'production_reports' y.id %}">View</a></div>
-
-<div class ="row"><div class ="col" ><b>Note: </b>{{selected_item.note}}</div></div>
-{% for x in selected_notes %}
-	<div class ="row"><div class ="col" >{{x.date}} - {{x.user}} - {{x.note}}</div></div>
-{% endfor %}
-
-	 <form action="{% url 'mentorships' selected_item.id %}" method="post" >
-	 {% csrf_token %}
-		 <br>
-<input type="text" name="note" size="100" placeholder ='New Note Here' /> <input type="submit" name="new_note" value="ADD NOTE" />
-		 <br><br>
-		 CLOSED?{% if selected_item.is_closed == False %} <input type="checkbox" name="closed" />{% else %}<input type="checkbox" name="closed" checked />{% endif %}   <input type="submit" name="update" value="UPDATE RECORD" />
-
-	 </form>
- <br>
-
-
-
+			{% for y in items %}
+				{% if y.team_number == x.number %}
+		<div class ="row"><div class ="col" >{{y.employee}}</div><div class ="col" >{% if y.task != None %}{{y.task.task}}{% else %} {{y.description}}{% endif %}</div><div class ="col" >{{y.note}}</div></div>
+				{% endif %}
+			{% endfor %}
+		{% endfor %}
+	{% endif %}
+		<br>
+		<div class ="row"><div class ="col" > <h3>Individuals: </h3></div></div>
+		{% for x in items %}
+		{% if x.is_team == False %}
+		<div class ="row"><div class ="col-6" >{{x.employee}} - {{x.description}}</div><div class ="col" >[{{x.value1}} {{x.unit}}]{% if x.value2 != None %}[{{x.value2}} {{x.unit2}}]{% endif %} {% if x.value3 != None %}[{{x.value3}} {{x.unit3}}]{% endif %}</div><div class ="col" >{{x.hours}} hours</div><div class ="col" >{{x.note}}</div></div>
+		{% endif %}
+		{% endfor %}
+	</div>
 {% endif %}
-</div>
+
 </body>
 </html>
 

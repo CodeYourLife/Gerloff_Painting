@@ -442,13 +442,21 @@ def daily_reports(request,id):
     send_data['dailyreports']=DailyReports.objects.all()
     if id != 'ALL':
         teamnumbers = []
+        numbercheck=[]
         a=0
         for x in ProductionItems.objects.filter(daily_report__id=id):
             if x.team_number != None:
                 a=1
-                if x.team_number not in teamnumbers:
-                    teamnumbers.append(x.team_number)
-        if a=1:
+                if x.team_number not in numbercheck:
+                    numbercheck.append(x.team_number)
+                    if x.task != None:
+                        teamnumbers.append({'number':x.team_number,'value1':x.value1,'value2':x.value2,'value3':x.value3,'unit1':x.unit,'unit2':x.unit2,'unit3':x.unit3,'hours':x.hours,'description':x.task.item1 + ' '+ x.task.item2 + ' ' + x.task.item3})
+                    else:
+                        teamnumbers.append(
+                            {'number': x.team_number, 'value1': x.value1, 'value2': x.value2, 'value3': x.value3,
+                             'unit1': x.unit, 'unit2': x.unit2, 'unit3': x.unit3, 'hours': x.hours,
+                             'description': x.description})
+        if a==1:
             send_data['teamnumbers']=teamnumbers
         send_data['selected_item']=DailyReports.objects.get(id=id)
         send_data['items']= ProductionItems.objects.filter(daily_report__id=id)

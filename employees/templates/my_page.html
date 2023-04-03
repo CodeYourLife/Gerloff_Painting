@@ -130,7 +130,7 @@ $(document).ready(function () {
 <div class="content">
 					    <table id="employees_table" class="display" >
 	{% for x in production_reports_written %}
-		<tbody><tr><td>{{x.date}}</td><td>{{x.job}}</td><td><a href="{%  url 'production_reports' x.id %}">View</a></td></tr></tbody>
+		<tbody><tr><td>{{x.date}}</td><td>{{x.job}}</td><td><a href="{%  url 'daily_reports' x.id %}">View</a></td></tr></tbody>
 	{% endfor %}
 	</table>
 
