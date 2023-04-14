@@ -92,7 +92,7 @@ $(document).ready(function () {
 		<div class ="col">{{selected_item.date}}</div><div class ="col">{{selected_item.score}} / {{selected_item.exam.max_score}}</div></div>
 	<div class ="row">
 <div class ="col"><b>Teacher: </b>{% if selected_item.teacher != None %}{{selected_item.teacher}}{% else %} {{selected_item.teacher2}}{% endif %}</div>
-		<div class ="col"><b>Student: </b>{% if selected_item.student != None %}{{selected_item.studemt}}{% else %} {{selected_item.student2}}{% endif %}</div></div>
+		<div class ="col"><b>Student: </b>{% if selected_item.student != None %}{{selected_item.student}}{% else %} {{selected_item.student2}}{% endif %}</div></div>
 		<div class ="col"><b>Date: </b>{{selected_item.date}}</div>
 
 	</div>

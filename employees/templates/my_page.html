@@ -79,45 +79,47 @@ $(document).ready(function () {
 <button type="button" class="collapsible">Assigned Tools</button>
 <div class="content">
     <table id="employees_table" class="display" >
+		<tbody>
 	{% for x in inventory %}
-		<tbody><tr><td>{{x.item}}</td><td><a href="{%  url 'equipment_page' x.id %}">View</a></td></tr></tbody>
-	{% endfor %}
+		<tr><td>{{x.item}}</td><td><a href="{%  url 'equipment_page' x.id %}">View</a></td></tr>
+	{% endfor %}</tbody>
 	</table>
 	</div>
 <button type="button" class="collapsible">Performed Assessments</button>
 <div class="content">
 	    <table id="employees_table" class="display" >
+			<tbody>
 	{% for x in assessments_performed %}
-		<tbody><tr><td>{{x.assessment.date}}</td><td>{{x.employee}}</td><td><a href="{%  url 'assessments' x.id %}">View</a></td></tr></tbody>
-	{% endfor %}
+		<tr><td>{{x.assessment.date}}</td><td>{{x.employee}}</td><td><a href="{%  url 'assessments' x.id %}">View</a></td></tr>
+	{% endfor %}</tbody>
 	</table>
 	</div>
 <button type="button" class="collapsible">Received Assessments</button>
 <div class="content">
-		    <table id="employees_table" class="display" >
+		    <table id="employees_table" class="display" ><tbody>
 	{% for x in assessments_received %}
-		<tbody><tr><td>{{x.assessment.date}}</td><td>{{x.assessment.reviewer}}</td><td>{{x.assessment.note}}</td><td><a href="{%  url 'assessments' x.id %}">View</a></td></tr></tbody>
-	{% endfor %}
+		<tr><td>{{x.assessment.date}}</td><td>{{x.assessment.reviewer}}</td><td>{{x.assessment.note}}</td><td><a href="{%  url 'assessments' x.id %}">View</a></td></tr>
+	{% endfor %}</tbody>
 	</table>
 
 
 	</div>
 <button type="button" class="collapsible">Write-Ups Written</button>
 <div class="content">
-			    <table id="employees_table" class="display" >
+			    <table id="employees_table" class="display" ><tbody>
 	{% for x in writeups_written %}
-		<tbody><tr><td>{{x.date}}</td><td>{{x.employee}}</td><td>{{x.description}}</td><td><a href="{%  url 'write_ups' x.id %}">View</a></td></tr></tbody>
-	{% endfor %}
+		<tr><td>{{x.date}}</td><td>{{x.employee}}</td><td>{{x.description}}</td><td><a href="{%  url 'write_ups' x.id %}">View</a></td></tr>
+	{% endfor %}</tbody>
 	</table>
 
 
 	</div>
 <button type="button" class="collapsible">Write-Ups Received</button>
 <div class="content">
-				    <table id="employees_table" class="display" >
+				    <table id="employees_table" class="display" ><tbody>
 	{% for x in writeups_received %}
-		<tbody><tr><td>{{x.date}}</td><td>{{x.supervisor}}</td><td>{{x.description}}</td><td><a href="{%  url 'write_ups' x.id %}">View</a></td></tr></tbody>
-	{% endfor %}
+		<tr><td>{{x.date}}</td><td>{{x.supervisor}}</td><td>{{x.description}}</td><td><a href="{%  url 'write_ups' x.id %}">View</a></td></tr>
+	{% endfor %}</tbody>
 	</table>
 
 	</div>
@@ -128,10 +130,10 @@ $(document).ready(function () {
 	</div>
 <button type="button" class="collapsible">Production Reports Written</button>
 <div class="content">
-					    <table id="employees_table" class="display" >
+					    <table id="employees_table" class="display" ><tbody>
 	{% for x in production_reports_written %}
-		<tbody><tr><td>{{x.date}}</td><td>{{x.job}}</td><td><a href="{%  url 'daily_reports' x.id %}">View</a></td></tr></tbody>
-	{% endfor %}
+		<tr><td>{{x.date}}</td><td>{{x.job}}</td><td><a href="{%  url 'daily_reports' x.id %}">View</a></td></tr>
+	{% endfor %}</tbody>
 	</table>
 
 
@@ -139,42 +141,80 @@ $(document).ready(function () {
 <button type="button" class="collapsible">Production Reports Received</button>
 <div class="content">
 
-						    <table id="employees_table" class="display" >
+						    <table id="employees_table" class="display" ><tbody>
 	{% for x in production_reports_received %}
-								<tbody><tr><td>{{x.date}}</td><td>{{x.job}}</td><td>{{x.description}}</td><td>[{{x.value1}} {{x.unit}}]{% if x.value2 != None %}[{{x.value2}} {{x.unit2}}]{% endif %} {% if x.value3 != None %}[{{x.value3}} {{x.unit3}}]{% endif %}</td><td><a href="{%  url 'production_reports' x.id %}">View</a></td></tr></tbody>
-	{% endfor %}
+								<tr><td>{{x.date}}</td><td>{{x.job}}</td><td>{{x.description}}</td><td>[{{x.value1}} {{x.unit}}]{% if x.value2 != None %}[{{x.value2}} {{x.unit2}}]{% endif %} {% if x.value3 != None %}[{{x.value3}} {{x.unit3}}]{% endif %}</td><td><a href="{%  url 'production_reports' x.id %}">View</a></td></tr>
+	{% endfor %}</tbody>
 	</table>
 
 
 	</div>
 <button type="button" class="collapsible">Classes Taught</button>
 <div class="content">
-    {{classes_taught}}
+
+							    <table id="employees_table" class="display" ><tbody>
+	{% for x in classes_taught %}
+								<tr><td>{{x.date}} - </td><td><a href="{%  url 'classes' x.id %}">View - </a></td><td>{{x.description}} - </td><td>{{x.note}} </td></tr>
+	{% endfor %}
+									</tbody>
+	</table>
 
 	</div>
 <button type="button" class="collapsible">Classes Attended</button>
 <div class="content">
-    {{classes_attended}}
+
+								    <table id="employees_table" class="display" ><tbody>
+	{% for x in classes_attended %}
+								<tr><td>{{x.class_event.date}} - </td><td><a href="{%  url 'classes' x.class_event.id %}">View - </a></td><td>{{x.class_event.description}} - </td><td>{{x.class_event.note}} </td></tr>
+	{% endfor %}
+									</tbody>
+	</table>
+
 
 	</div>
 <button type="button" class="collapsible">Exam Scores</button>
 <div class="content">
-    {{exams}}
 
-	</div>
+									    <table id="employees_table" class="display" ><tbody>
+	{% for x in exams %}
+								<tr><td>{{x.date}} - </td><td>{% if x.exam != None %}{{x.exam}}{% else %}{{x.exam2}}{% endif %} - </td><td><a href="{%  url 'exams' x.id %}">View - </a></td><td>Score: {{x.score}} / {% if x.exam != None %}{{x.exam.max_score}}{% else %}{{x.custom_score_max}}{% endif %}</td></tr>
+	{% endfor %}
+									</tbody>
+										</table>
+
+</div>
 <button type="button" class="collapsible">Mentorships -As Mentor</button>
 <div class="content">
-    {{mentorship_mentor}}
+										    <table id="employees_table" class="display" ><tbody>
+	{% for x in mentorship_mentor %}
+	<tr><td>{{x.start_date}} - </td><td><b>Apprentice: </b>{{x.apprentice}} - </td><td><a href="{%  url 'mentorships' x.id %}">View - </a></td><td>{% if x.is_closed == False %} Active {% else %} Closed {% endif %}</td></tr>
+	{% endfor %}
+									</tbody>
+										</table>
+
 
 	</div>
 <button type="button" class="collapsible">Mentorships -As Apprentice</button>
 <div class="content">
-    {{mentorship_apprentice}}
+
+											    <table id="employees_table" class="display" ><tbody>
+	{% for x in mentorship_apprentice %}
+	<tr><td>{{x.start_date}} - </td><td><b>Mentor: </b>{{x.mentor}} - </td><td><a href="{%  url 'mentorships' x.id %}">View - </a></td><td>{% if x.is_closed == False %} Active {% else %} Closed {% endif %}</td></tr>
+	{% endfor %}
+									</tbody>
+										</table>
+
+
 
 	</div>
 <button type="button" class="collapsible">Certifications</button>
 <div class="content">
-    {{certifications}}
+    											    <table id="employees_table" class="display" ><tbody>
+	{% for x in certifications %}
+	<tr><td>{{x.category}} - </td><td>{{x.description}} - </td><td><a href="{%  url 'certifications' x.id %}">View - </a></td><td>{{x.date_received}} - </td><td>{{x.date_expires}} - </td><td>{{x.action}} - </td></tr>
+	{% endfor %}
+									</tbody>
+										</table>
 
 </div>
 <button type="button" class="collapsible">Actions Required</button>

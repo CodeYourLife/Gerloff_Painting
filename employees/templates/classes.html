@@ -69,7 +69,7 @@ $(document).ready(function () {
 			<tr><td>{{x.date}}</td>
 			<td><a href = "{% url 'classes' x.id %}">View</td>
 			<td>{{x.description}}</td>
-			<td>{{x.teacher}}</td>
+			<td>{% if x.teacher != None %}{{x.teacher}}{% else %}{{x.teacher2}}{% endif %}</td>
 			<td>{{x.note}}</td>
 			</tr>
 {% endfor %}
