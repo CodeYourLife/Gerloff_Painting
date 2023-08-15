@@ -1,8 +1,8 @@
-from console.models import *
+from changeorder.models import *
+from jobs.models import *
+from wallcovering.models import *
 import django_tables2 as tables
-from console.models import Orders, OrderItems, Packages, WallcoveringDelivery, ReceivedItems, OutgoingWallcovering, OutgoingItem
-from django_filters.views import FilterView
-from django_tables2.utils import A
+
 
 from .filters import OrderItemsFilter
 

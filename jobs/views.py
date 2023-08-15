@@ -1,10 +1,20 @@
+from changeorder.models import ClientJobRoles
 from console.models import *
 from django.shortcuts import render, redirect
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
+from changeorder.models import ChangeOrders
 from equipment.tables import JobsTable
 from equipment.filters import JobsFilter
+from jobs.models import Jobs, JobNotes, JobNumbers, ClientEmployees, Clients
+from employees.models import *
+from equipment.models import Inventory
+from rentals.models import Rentals
+from subcontractors.models import *
+from wallcovering.models import Wallcovering, Packages, OutgoingItem, OrderItems
+from submittals.models import *
+from console.misc import Email
 
 
 def change_start_date(request,jobnumber,previous):
@@ -160,7 +170,7 @@ def register(request):
             new_client = request.POST['new_client']
             new_client_phone = request.POST['new_client_phone']
             new_client_email = request.POST['new_client_bid_email']
-            client = Clients.objects.create(company=new_client, bid_email=new_client_email,phone=new_client_phone)
+            client = ClientJobRoles.objects.create(company=new_client, bid_email=new_client_email,phone=new_client_phone)
             client.save();
         else:
             client = Clients.objects.get(id=request.POST['select_company'])
@@ -244,4 +254,29 @@ def register(request):
         #     checklist.save();
         response = redirect('/')
         return response
+
+class Checklist(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    category = models.CharField(null=True, max_length=1000)
+    checklist_item = models.CharField(null=True, max_length=2000)
+    is_closed = models.BooleanField(default=False)
+    job_number = models.ForeignKey(Jobs, on_delete=models.PROTECT)
+    notes = models.CharField(null=True, max_length=2500)
+    job_start_date_from_schedule = models.DateField(null=True, blank=True)
+    cop = models.BooleanField(default=False)
+    cop_amount = models.DecimalField(
+        max_digits=6, decimal_places=2, blank=True, null=True)
+    cop_sent_date = models.DateField(null=True, blank=True)
+    cop_number = models.IntegerField(default=0)
+    is_ewt = models.BooleanField(default=False)
+    ewt_date = models.DateField(null=True, blank=True)
+    is_submittal = models.BooleanField(default=False)
+    submittal_number = models.IntegerField(default=0)
+    submittal_description = models.CharField(null=True, max_length=2000)
+    submittal_date_sent = models.DateField(null=True, blank=True)
+    wallcovering_order_date = models.DateField(null=True, blank=True)
+    assigned = models.CharField(null=True, max_length=2000)
+
+    def __str__(self):
+        return f"{self.job_number} {self.checklist_item}"
 

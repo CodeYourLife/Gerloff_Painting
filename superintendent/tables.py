@@ -1,5 +1,5 @@
 import django_tables2 as tables
-from console.models import Jobs, Inventory, InventoryType
+from console.models import Jobs
 
 class JobsTable(tables.Table):
     class Meta:

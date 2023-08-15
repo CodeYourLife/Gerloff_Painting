@@ -4,7 +4,10 @@ from console.models import *
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
-# Create your views here.
+from jobs.models import Jobs
+from wallcovering.models import Wallcovering
+from submittals.models import SubmittalItems, SubmittalNotes, Submittals
+
 
 def submittals_item_close(request,id):
     item = SubmittalItems.objects.get(id=id)

@@ -1,5 +1,6 @@
-
-from console.models import *
+from changeorder.models import *
+from jobs.models import Jobs, JobCharges, ClientEmployees
+from employees.models import *
 from django.shortcuts import render, redirect
 from datetime import date
 import json
@@ -7,12 +8,8 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django_tables2 import RequestConfig
 from wallcovering.tables import ChangeOrderTable
 from wallcovering.filters import ChangeOrderFilter
-from console.misc import Email
-from datetime import datetime
-
 import os
 import os.path
-# Create your views here.
 
 def print_TMProposal(request,id):
     newproposal = TMProposal.objects.get(id=id)

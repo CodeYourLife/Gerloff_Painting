@@ -1,14 +1,13 @@
 
 from console.models import *
 from django.shortcuts import render, redirect
-
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
+from wallcovering.models import Wallcovering
+from subcontractors.models import *
+from jobs.models import *
 
-
-
-# Create your views here.
 
 def subcontractor_invoice_new(request,subcontract_id):
     subcontract = Subcontracts.objects.get(id=subcontract_id)

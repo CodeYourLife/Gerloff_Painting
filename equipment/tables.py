@@ -1,8 +1,7 @@
-from console.models import *
 import django_tables2 as tables
-from console.models import InventoryNotes, WallcoveringPricing
+from jobs.models import Jobs
+from equipment.models import Inventory, InventoryNotes
 from django_filters.views import FilterView
-from .filters import EquipmentFilter
 
 class JobsTable(tables.Table):
     jobnumber = tables.TemplateColumn('<a href="{% url "job_page" record.job_number %}">{{record.job_number}}</a>')

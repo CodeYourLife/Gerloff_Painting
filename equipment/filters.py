@@ -1,6 +1,6 @@
-from console.models import *
-import django_tables2 as tables
-from console.models import InventoryNotes, Inventory, Jobs
+
+from jobs.models import Jobs
+from equipment.models import InventoryNotes, Inventory
 import django_filters
 
 class JobsFilter(django_filters.FilterSet):
@@ -15,8 +15,6 @@ class EquipmentNotesFilter(django_filters.FilterSet):
     class Meta:
         model = InventoryNotes
         fields = ['category']
-
-        import django_filters
 
 class EquipmentFilter(django_filters.FilterSet):
     search = django_filters.CharFilter(label='Filter By Item =', method='search_filter')

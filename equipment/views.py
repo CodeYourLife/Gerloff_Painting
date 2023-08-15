@@ -1,20 +1,13 @@
-from django.utils import timezone
-from django.views import generic
-from django.views.generic import ListView
-from console.models import *
-from django.contrib.auth.models import User, auth
 from django.shortcuts import render, redirect
-from json import dumps
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
-from django_tables2 import SingleTableView
 from .tables import *
-from console.models import InventoryNotes
-from .filters import EquipmentNotesFilter, EquipmentFilter, EquipmentFilter2
+from equipment.models import *
+from jobs.models import Jobs
+from .filters import EquipmentFilter, EquipmentFilter2
 import json
 from django.core.serializers.json import DjangoJSONEncoder
-# Create your views here.
 
 def equipment_remove_from_outgoing_cart(request,id): #status = None, Outgoing, Incoming
     item = Inventory.objects.get(id=id)
@@ -214,3 +207,9 @@ def equipment_page(request, id):
 def equipment_home(request):
     inventories = Inventory.objects.all()
     return render(request, "equipment_home.html", {'inventories': inventories})
+
+
+
+        
+
+

@@ -1,15 +1,7 @@
-from django.utils import timezone
-from django.views import generic
-from django.views.generic import ListView
-from console.models import *
-from console.models import Rentals
-from django.contrib.auth.models import User, auth
+from equipment.models import Vendors
+from rentals.models import Rentals
+from jobs.models import Jobs
 from django.shortcuts import render, redirect
-from json import dumps
-import json
-from django.core.serializers.json import DjangoJSONEncoder
-from datetime import date
-from django_tables2 import SingleTableView
 from .tables import RentalsTable
 from django_tables2 import RequestConfig
 # Create your views here.

@@ -1,21 +1,14 @@
-from django.utils import timezone
-from django.views import generic
-from django.views.generic import ListView
-from console.models import *
-from django.contrib.auth.models import User, auth
+from equipment.models import Vendors
+from wallcovering.models import Packages, Wallcovering, WallcoveringPricing
+from jobs.models import Jobs
 from django.shortcuts import render, redirect
-from json import dumps
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
-from django_tables2 import SingleTableView
 from .tables import *
-from json import dumps
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from .filters import OrderItemsFilter
-from django_tables2 import RequestConfig
-# Create your views here.
 
 def wallcovering_send_all(request):
     table = OutgoingWallcoveringTable(OutgoingItem.objects.filter(outgoing_event__job_number__status="Open"))
@@ -28,6 +21,7 @@ def wallcovering_receive_all(request):
 def wallcovering_order_all(request):
     table = OrdersTable(Orders.objects.filter(job_number__status = "Open"))
     return render(request, "wallcovering_order_all.html", {'table':table})
+
 def wallcovering_send(request, jobnumber):
     if request.method == 'POST':
         if 'select_job' in request.POST:
@@ -277,6 +271,7 @@ def wallcovering_pattern_new(request):
         table = WallcoveringPriceTable(WallcoveringPricing.objects.filter(wallcovering__id=selectedpattern.id))
         orderstable="SKIP"
     return render(request, "wallcovering_pattern.html", {'jobdeliveriestable':jobdeliveriestable,'packagestable':packagestable, 'receivedtable':receivedtable,'orderstable':orderstable,'selectedpattern': selectedpattern, 'jobs': jobs, 'vendors': vendors, 'table': table })
+
 def wallcovering_pattern(request, id):
     jobs = Jobs.objects.all()
     vendors = Vendors.objects.filter(category__category="Wallcovering Supplier")

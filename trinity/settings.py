@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from pathlib import Path
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,21 +26,11 @@ SECRET_KEY = 'django-insecure-3t5e#t@#xt)=#557w!n_y@vrm-c8x7_71z=8tw-0+(_^&6&$_w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # Application definition
 
 INSTALLED_APPS = [
-    'superintendent.apps.SuperintendentConfig',
-    'console.apps.ConsoleConfig',
-    'changeorder.apps.ChangeorderConfig',
-    'equipment.apps.EquipmentConfig',
-    'employees.apps.EmployeesConfig',
-    'jobs.apps.JobsConfig',
-    'rentals.apps.RentalsConfig',
-    'subcontractors.apps.SubcontractorsConfig',
-    'wallcovering.apps.WallcoveringConfig',
     'django_tables2',
     'django_filters',
     'django.contrib.admin',
@@ -48,7 +39,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'console.apps.ConsoleConfig',
+    'jobs',
+    'changeorder',
+    'equipment',
+    'employees',
+    'rentals',
+    'subcontractors',
+    'wallcovering',
+   'superintendent',
+   'submittals'
 ]
+
+#django.setup() 
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

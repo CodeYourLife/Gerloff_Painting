@@ -1,13 +1,7 @@
-from django.utils import timezone
-from django.views import generic
-#from .models import Jobs, Clients, Employees, JobNumbers, Checklist, ClientEmployees, JobNotes
+from employees.models import *
 from .models import *
 from django.contrib.auth.models import User, auth
 from django.shortcuts import render, redirect
-from json import dumps
-import json
-from django.core.serializers.json import DjangoJSONEncoder
-from datetime import date
 from django.contrib import messages
 import os
 import os.path
@@ -42,7 +36,7 @@ def warehouse_home(request):
 # Create your views here.
 def register_user(request):
     send_data = {}
-    send_data['employees']=Employees.objects.filter(user = None)
+    send_data['employees']=EmployeeLevels.objects.filter(user = None)
     if request.method == 'POST':
         # first_name = request.POST['first_name']
         # last_name = request.POST['last_name']

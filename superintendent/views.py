@@ -1,8 +1,13 @@
 
-from django.shortcuts import render, redirect
-from console.models import *
+from django.shortcuts import render
+from rentals.models import Rentals
 from datetime import date, timedelta
-import datetime
+from employees.models import Employees
+from jobs.models import Jobs
+from changeorder.models import ChangeOrders
+from equipment.models import *
+from console.models import *
+
 
 def super_home(request):
     jobs = Jobs.objects.all()[0:2000]
