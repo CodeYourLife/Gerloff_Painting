@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     'subcontractors',
     'wallcovering',
    'superintendent',
-   'submittals'
+   'submittals',
+   'accounts'
 ]
 
 #django.setup() 
