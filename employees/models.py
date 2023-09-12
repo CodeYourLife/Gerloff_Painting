@@ -20,7 +20,11 @@ class EmployeeLevels(models.Model):
     def __str__(self):
         return f"{self.description}"
 
-
+class GPUserAccount(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    pinEntryDate = models.DateTimeField(blank=False, auto_now_add=True)
+    pin = models.IntegerField(blank=False, unique=True)
+    
 class Employees(models.Model):
     id = models.BigAutoField(primary_key=True)
     employee_number = models.IntegerField(default=0)
