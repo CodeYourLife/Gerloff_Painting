@@ -28,13 +28,15 @@
 <body>
     <div style="padding-top: 50px" class="row align-items-center justify-content-center align-middle">
         <div class="col-6">
-    <form action = "addNewEmployee" method = "post" class="form-group">
+    <form action = "/accounts/addNewEmployee" name="addNewEmployee" method = "post" class="form-group">
         {% csrf_token %}
+        {{ form }}
         <label for="firstName">First Name</label>
-        <input id="firstName" type="text" name = "first_name" placeholder="Employee First Name" class="form-control">
+        <input id="firstName" type="text" name = "firstName" placeholder="Employee First Name" class="form-control">
         <label for="lastName">Last Name</label>
-        <input id="lastName" type="text" name = "last_name" placeholder="Employee Last Name" class="form-control"></br>
-        <input type="button submit" class="btn btn-primary btn-sm"  value="Submit" >
+        <input id="lastName" type="text" name = "lastName" placeholder="Employee Last Name" class="form-control"></br>
+        <input type="submit" class="btn btn-primary btn-sm"  value="Submit" >
+        <div>New PIN: {{user.pin}}</div>
     </form>
 </div>
 </div>

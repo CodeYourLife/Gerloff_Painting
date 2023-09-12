@@ -1,3 +1,6 @@
+import random
+from django.shortcuts import render
+from employees.models import *
 from django.shortcuts import render
 
 def registration(request):
@@ -16,9 +19,12 @@ def addEmployee(request):
     return render(request, "add_employee.html", send_data)
 
 def addNewEmployee(request):
-    print('hello')
+    #
     if request.method == 'POST':
         firstName = request.POST['firstName']
         lastName = request.POST['lastName']
-        print('here', firstName, lastName)
+        user = User.objects.create_user(username=firstName,password=lastName)
+        randomPin = random.randint(1000,9999)
+        gerloffPaintingUser = GPUserAccount.objects.create(user=user, pin=randomPin)
+    return render(request, "add_employee.html", {'user': gerloffPaintingUser})
 
