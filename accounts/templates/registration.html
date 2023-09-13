@@ -26,10 +26,14 @@
 	</script>
 </head>
 <body>
-    <div style="padding-top: 50px" class="row align-items-center justify-content-center align-middle">
-    <div class="col-6">
+    <div style="padding-top: 50px; padding-bottom: 50px" class="row align-items-center justify-content-center align-middle">
+    <div class="col-6" >
         <form action = "add_employee" method = "post" class="form-group">
             {% csrf_token %}
+            <label for="username">Username</label>
+            <input id="username" type="text" name = "userName" placeholder="Employee Username" class="form-control">
+            <label for="password">Password</label>
+            <input id="password" type="text" name = "password" placeholder="Employee Password" class="form-control">
             <label for="firstName">First Name</label>
             <input id="firstName" type="text" name = "first_name" placeholder="Employee First Name" class="form-control">
             <label for="lastName">Last Name</label>

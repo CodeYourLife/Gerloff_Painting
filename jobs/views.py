@@ -103,11 +103,11 @@ def job_page(request,jobnumber):
 def book_new_job(request):
         allclients = Clients.objects.order_by('company')[0:2000]
         pms = ClientEmployees.objects.values('name', 'id', 'person_pk')[0:1000]
-        send_employees = Employees.objects.filter(title="Superintendent")[0:2000]
+        #send_employees = Employees.objects.filter(job_title="Superintendent")[0:2000]
         prices_json = json.dumps(list(pms), cls=DjangoJSONEncoder)
 
         return render(request, 'book_new_job.html',
-                      {'data': prices_json, 'allclients': allclients, 'employees': send_employees})
+                      {'data': prices_json, 'allclients': allclients, 'employees': {}})
 
 
 def register(request):
