@@ -3,20 +3,22 @@
 {% block content %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
 <body>
-<H1>Welcome to Gerloff Painting</H1>
-
-	<form enctype = "multipart/form-data" action="{% url 'seperate_test' %}" method = 'post' >
-		{% csrf_token %}
-		<input type = "text" name = "text_test" />
-		<br>
-		Upload File: <input type = "file" name = "filename" />
-		<input type="submit" value="Test Folder"/>
-	</form>
+	<div class="page-header d-flex justify-content-center align-item-center">
+		<H1>Welcome to Gerloff Painting</H1>
+	</div>
+	<div style="padding-top: 50px" class="row align-items-center justify-content-center align-middle">
+		<div class="col-6">
+			<form enctype = "multipart/form-data" action="{% url 'seperate_test' %}" method = 'post' class="form-group" >
+				{% csrf_token %}
+				<input type = "text" style="margin-top: 22px" class="form-control" name = "text_test" />
+				<div style="margin-top: 22px">
+				Upload File: <input type = "file" class="form-control" name = "filename" />
+				</div>
+				<input style="margin-top: 22px" type="submit" class="btn btn-primary btn-sm" value="Test Folder"/>
+			</form>
+		</div>
+	</div>
 
 </body>
 </html>

@@ -38,8 +38,7 @@ class Employees(models.Model):
     nickname = models.CharField(null=True, max_length=50, blank=True)
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, null=True, blank=True)
-    job_title = models.ForeignKey(
-        EmployeeTitles, on_delete=models.CASCADE, null=True)
+    job_title = models.ForeignKey(EmployeeTitles, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"

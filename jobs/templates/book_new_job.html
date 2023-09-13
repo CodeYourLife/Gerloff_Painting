@@ -233,203 +233,225 @@
 </head>
 
   <body>
-  <div class ="container">
-  <h1>Book New Job</h1>
-  </div>
-    <form name = booking_input action="register" method="post"  onSubmit = "return check_booking_data()">
-        {% csrf_token %}
-       <div class ="container">
-            <div class ="row">
-                <input type="text" name="job_number" placeholder="Leave Blank (unless entering a custom job number)" maxlength="5" size="100" id="job_number"/><br />
-                <input type="text" name="job_name" placeholder="Job name" size="100" id="job_name"/><br />
-            </div>
-            <br />
-           <div class ="row">
-                <input type="text" name="address" placeholder="address" size="100" id="address" /><br />
-           </div>
-       </div>
-        <div class ="container">
-            <div class ="row">
-                <div class ="col">    <input type="text" name="city" placeholder="City" size="30" id="city"/><br />         </div>
-                <div class ="col">   <input type="text" name="state" placeholder="State" size="30" id="state" maxlength="2" /><br />       </div>
-                <div class ="col"></div>
-            </div>
-        </div> <!#city state>
-        <br />        <hr>
-        <div class ="container">
-        <input type='hidden' value='notchecked' name='on_base2' id="on_base1">
-        <input type="checkbox" name ="on_base2" id="on_base2" value="checked"  />
-        <label for="on_base2">"Security Clearance Required?" </label>
-        <br /><br>
-        </div>
-        <div class ="container">
-            <div class ="row">
-                <div class ="col"><input type= "text" name="spray_scale" placeholder="Spray Scale" size="30"/><br /></div>
-                <div class ="col"><input type= "text" name="brush_role" placeholder="Brush/Roll Scale" size="30"/><br /></div>
-                <div class ="col"></div>
-            </div>
-        </div> <!on base / scale>
-        <br />         <hr>
-        <div class ="container">
-            <div class ="row">
-
-                <div class ="col-sm-2"> <input type='hidden' value='notchecked' name='is_t_m_job' id = "is_t_m_job1">   <input type="checkbox" name ="is_t_m_job" id="is_t_m_job2" value="checked" onClick= "hide_contract_amount()" />         <label for="is_t_m_job2">"Is this a T&M Job?" </label>         <br />       </div>
-                <div class ="col">   <input type="number" name="t_m_nte_amount" placeholder="NTE AMOUNT $$" step="0.01" size="30" /><br />       </div>
-                <div class ="col-lg"></div>
-            </div>
-        </div> <!#is T&M?>
-        <br />         <hr>
-
-        <div class ="container">
-            <div class ="row">
-                <div class ="col">
-                    <label for="contract_status">Contract status</label>
-                    <select id="contract_status" name="contract_status" >
-                        <option value="contract_please_select">please Select Option</option>
-                        <option value="contract_received">Contract Received</option>
-                        <option value="contract_not_received">Contract not Received Yet</option>
-                        <option value="contract_not_required">Contract not Required</option>
-                    </select>
+	<div class="page-header d-flex justify-content-center align-item-center">
+		<H1>Book New Job</H1>
+	</div>
+	<div style="padding-top: 50px" class="row align-items-center justify-content-center align-middle">
+		<div class="col-6">
+            <form name = booking_input action="register" method="post" class="form-group" onSubmit = "return check_booking_data()">
+                {% csrf_token %}
+            <div class ="container">
+                    <div class ="row">
+                        <input class="form-control" style="margin-top: 22px" type="text" name="job_number" placeholder="Leave Blank (unless entering a custom job number)" maxlength="5" size="100" id="job_number"/><br />
+                        <input class="form-control" style="margin-top: 22px" type="text" name="job_name" placeholder="Job name" size="100" id="job_name"/><br />
+                    </div>
+                    <br />
+                <div class ="row">
+                        <input style="margin-top: 22px" class="form-control" type="text" name="address" placeholder="address" size="100" id="address" /><br />
                 </div>
-                <div class ="col">
-                   <label for="insurance_status">coi status</label>
-                    <select id="insurance_status" name="insurance_status" >
-                        <option value="coi_please_select">please Select Option</option>
-                        <option value="coi_received">coi Received</option>
-                        <option value="coi_not_received">coi not Received Yet</option>
-                        <option value="coi_not_required">coi not Required</option>
-                    </select>
-                </div>
-                <div class ="col-lg"></div>
             </div>
-        </div> <!#contract status and coi>
-        <br /> <hr>
+                    <div class ="row">
+                        <div class ="col">    <input style="margin-top: 22px" class="form-control" type="text" name="city" placeholder="City" size="30" id="city"/><br />         </div>
+                        <div class ="col">   <input style="margin-top: 22px" class="form-control" type="text" name="state" placeholder="State" size="30" id="state" maxlength="2" /><br />       </div>
+                        <div class ="col"></div>
+                    </div>
+                <!#city state>
+                <br />        <hr>
+                <div class ="container">
+                <input style="margin-top: 22px" class="form-control" type='hidden' value='notchecked' name='on_base2' id="on_base1">
+                <input style="margin-top: 22px" class="form-control" type="checkbox" name ="on_base2" id="on_base2" value="checked"  />
+                <label for="on_base2">"Security Clearance Required?" </label>
+                <br /><br>
+                </div>
+                <div class ="container">
+                    <div class ="row">
+                        <div class ="col "><input style="margin-top: 22px" class="form-control" type= "text" name="spray_scale" placeholder="Spray Scale" size="30"/><br /></div>
+                        <div class ="col"><input style="margin-top: 22px" class="form-control" type= "text" name="brush_role" placeholder="Brush/Roll Scale" size="30"/><br /></div>
+                        <div class ="col"></div>
+                    </div>
+                </div> <!on base / scale>
+                <br />         <hr>
+                <div class ="container">
+                    <div class ="row">
 
-       <div class ="container"> <!#pick client>
-            <div class ="row" style="height: 50px">
-                <div class ="col">
-                        <label>please select company</label>
-                    <select id="select_company" name="select_company" onChange="filter_estimators()" >
-                        <option value="please_select">"please Select"</option>
-                        <option value="add_new">"add New"</option>
-                        {% if allclients %}
-                        {% for client in allclients %}
+                        <div class ="col-sm-2"> 
+                            <input style="margin-top: 22px" class="form-control" type='hidden' value='notchecked' name='is_t_m_job' id = "is_t_m_job1">   
+                            <label for="is_t_m_job2">"Is this a T&M Job?" </label>  
+                            <input class="form-control" type="checkbox" name ="is_t_m_job" id="is_t_m_job2" value="checked" onClick= "hide_contract_amount()" />         
+                                  
+                            <br />       
+                        </div>
+                        <div class ="col">   
+                            <input class="form-control" type="number" name="t_m_nte_amount" placeholder="NTE AMOUNT $$" step="0.01" size="30" />
+                            <br />       
+                        </div>
+                        <div class ="col-lg"></div>
+                    </div>
+                </div> <!#is T&M?>
+                <br />         <hr>
 
-                            <option value="{{client.id}}">{{client.company}}</option>
+                <div class ="container">
+                    <div class ="row">
+                        <div class ="col">
+                            <label for="contract_status">Contract status</label>
+                            <select id="contract_status" class="form-control" name="contract_status" >
+                                <option value="contract_please_select">Please Select Option</option>
+                                <option value="contract_received">Contract Received</option>
+                                <option value="contract_not_received">Contract not Received Yet</option>
+                                <option value="contract_not_required">Contract not Required</option>
+                            </select>
+                        </div>
+                        <div class ="col">
+                        <label for="insurance_status">coi status</label>
+                            <select id="insurance_status" class="form-control" name="insurance_status" >
+                                <option value="coi_please_select">Please Select Option</option>
+                                <option value="coi_received">coi Received</option>
+                                <option value="coi_not_received">coi not Received Yet</option>
+                                <option value="coi_not_required">coi not Required</option>
+                            </select>
+                        </div>
+                        <div class ="col-lg"></div>
+                    </div>
+                </div> <!#contract status and coi>
+                <br /> <hr>
+
+            <div class ="container"> <!#pick client>
+                    <div class ="row" style="height: 50px">
+                        <div class ="col">
+                                <label>please select company</label>
+                            <select class="form-control" id="select_company" name="select_company" onChange="filter_estimators()" >
+                                <option value="please_select">"please Select"</option>
+                                <option value="add_new">"add New"</option>
+                                {% if allclients %}
+                                {% for client in allclients %}
+
+                                    <option value="{{client.id}}">{{client.company}}</option>
+                                {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class ="row">
+                        <div class ="col-sm-4"> Or enter New company below: </div>
+                    </div>
+                    <div class ="row">
+                        <div class ="col-sm-4">  <input style="margin-top: 22px" class="form-control" type= "text" name="new_client" placeholder="company name" size="30" onClick="clear_client()"/></div>
+                    </div>
+                    <div class ="row">
+                        <div class ="col-sm-4">  <input style="margin-top: 22px" class="form-control" type= "tel" name="new_client_phone" placeholder="phone Number" size="30"/></div>
+                    </div>
+                    <div class ="row">
+                        <div class ="col-sm-4">  <input style="margin-top: 22px" class="form-control" type= "email" name="new_client_bid_email" placeholder="email" size="30"/></div>
+                    </div>
+            </div> <!pick client>
+                <br>
+            <div class ="container">
+                    <div class = "row">
+                        <div class ="col-sm-4">
+                            <label for="select_pm">Please select Estimator</label>
+                            <select class="form-control" id="select_pm" name="select_pm" >
+                                    <option value="please_select">"Please select"</option>
+                            </select>
+                        </div>
+                        <div class ="col-sm-8">
+                            <label for="select_super">Please select superintendent</label>
+                            <select class="form-control" id="select_super" name="select_super" >
+                            <option value="please_select">"Please select"</option>
+                            </select>
+                        </div>
+                    </div>
+
+
+                    <div class ="row">
+                        <div class ="col-sm-4"> Or enter New below: </div>
+                        <div class ="col-sm-8">Or enter New below: </div>
+                    </div>
+                    <div class ="row">
+                        <div class ="col-sm-4">  <input style="margin-top: 22px" type= "text" name="new_pm" class="form-control" placeholder="office pm name" size="30" onClick="clear_select_pm()"/></div>
+                        <div class ="col"><input style="margin-top: 22px" type= "text" name="new_super" class="form-control" placeholder="superintendent name" size="30" onClick="clear_select_super()"/></div>
+                    </div>
+                    <div class ="row">
+                        <div class ="col-sm-4">  <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" placeholder="phone Number" size="30"/></div>
+                        <div class ="col"><input style="margin-top: 22px" class="form-control" type= "tel" name="new_super_phone" placeholder="phone Number" size="30"/></div>
+                    </div>
+                    <div class ="row">
+                        <div class ="col-sm-4">  <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" placeholder="email" size="30"/></div>
+                        <div class ="col"><input style="margin-top: 22px" class="form-control" type= "email" name="new_super_email" placeholder="email" size="30"/></div>
+                    </div>
+                </div>
+                <br /> <hr><br />
+                <div class ="container">
+                    <label for="select_gpsuper">Please select Gerloff superintendent</label>
+                    <select class="form-control" id="select_gpsuper" name="select_gpsuper" >
+                        <option value="not_sure">not sure</option>
+                        {% if employees %}
+                        {% for employee in employees %}
+                        <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
                         {% endfor %}
                         {% endif %}
                     </select>
+                <br /> <hr>
                 </div>
-            </div>
-            <div class ="row">
-                <div class ="col-sm-4"> Or enter New company below: </div>
-            </div>
-            <div class ="row">
-                <div class ="col-sm-4">  <input type= "text" name="new_client" placeholder="company name" size="30" onClick="clear_client()"/></div>
-            </div>
-            <div class ="row">
-                <div class ="col-sm-4">  <input type= "tel" name="new_client_phone" placeholder="phone Number" size="30"/></div>
-            </div>
-            <div class ="row">
-                <div class ="col-sm-4">  <input type= "email" name="new_client_bid_email" placeholder="email" size="30"/></div>
-            </div>
-       </div> <!pick client>
-        <br>
-      <div class ="container">
-            <div class = "row" style="height: 30px">
-                <div class ="col-sm-4">
-                    <label for="select_pm">please select Estimator</label>
-                    <select id="select_pm" name="select_pm" >
-                            <option value="please_select">"please select"</option>
-                    </select>
+                <div class ="container">
+                    <div class ="row">
+                        <div class ="col-sm-12">Please select the scopes of work this project includes:</div>
+                    <div class ="row">
+                        <div class ="col-sm-6">  
+                            <input style="margin-top: 22px" class="form-control" type='hidden' value='notchecked' name='has_paint' id="has_paint1">  
+                            <label for="has_paint2">"Painting" </label> 
+                            <input type="checkbox" name ="has_paint" id="has_paint2" value="checked" onClick="clicked_paint()" /> 
+                            <br /> 
+                        </div>
+                        <div class ="col-sm-6"> 
+                            <input class="form-control" type='hidden' value='notchecked' name='has_wallcovering' id="has_wallcovering1">  
+                            <label for="has_wallcovering2">"Wallcovering" </label> 
+                            <input type="checkbox" name ="has_wallcovering" id="has_wallcovering2" value ="checked" onclick="clicked_wc()"/> 
+                        </div>
+                    </div>
                 </div>
-                <div class ="col">
-                    <label for="select_super">please select superintendent</label>
-                    <select id="select_super" name="select_super" >
-                    <option value="please_select">"please select"</option>
-                    </select>
+                <br /> <hr>
+
+                <div class ="container">
+                    <div class ="row">
+                        <div class ="col-sm-4">
+                            <label for="start_date">Start date:</label>
+                            <input class="form-control" type="date" id="start_date" name="start_date">
+                        </div>
+                        <div class = "col-8"> <label for="date_note">Please clarify how you got this date: </label><br><textarea class="form-control" id="date_note" name="date_note" rows="4" cols="50" ></textarea></div>
+
+                    </div>
                 </div>
-            </div>
-
-
-            <div class ="row">
-                <div class ="col-sm-4"> Or enter New below: </div>
-                <div class ="col">Or enter New below: </div>
-            </div>
-            <div class ="row">
-                <div class ="col-sm-4">  <input type= "text" name="new_pm" placeholder="office pm name" size="30" onClick="clear_select_pm()"/></div>
-                <div class ="col"><input type= "text" name="new_super" placeholder="superintendent name" size="30" onClick="clear_select_super()"/></div>
-            </div>
-            <div class ="row">
-                <div class ="col-sm-4">  <input type= "tel" name="new_pm_phone" placeholder="phone Number" size="30"/></div>
-                <div class ="col"><input type= "tel" name="new_super_phone" placeholder="phone Number" size="30"/></div>
-            </div>
-            <div class ="row">
-                <div class ="col-sm-4">  <input type= "email" name="new_pm_email" placeholder="email" size="30"/></div>
-                <div class ="col"><input type= "email" name="new_super_email" placeholder="email" size="30"/></div>
-            </div>
-        </div>
-        <br /> <hr><br />
-        <div class ="container">
-            <label for="select_gpsuper">please select Gerloff superintendent</label>
-            <select id="select_gpsuper" name="select_gpsuper" >
-                <option value="not_sure">not sure</option>
-                {% if employees %}
-                {% for employee in employees %}
-                <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
-                {% endfor %}
-                {% endif %}
-            </select>
-        <br /> <hr>
-        </div>
-        <div class ="container">
-            <div class ="row">
-                <div class ="col-sm-4">please select the scopes of work this project includes:</div>
-                <div class ="col-sm-2">  <input type='hidden' value='notchecked' name='has_paint' id="has_paint1">  <input type="checkbox" name ="has_paint" id="has_paint2" value="checked" onClick="clicked_paint()" /> <label for="has_paint2">"Painting" </label>  <br /> </div>
-                <div class ="col"> <input type='hidden' value='notchecked' name='has_wallcovering' id="has_wallcovering1">  <input type="checkbox" name ="has_wallcovering" id="has_wallcovering2" value ="checked" onclick="clicked_wc()"/> <label for="has_wallcovering2">"Wallcovering" </label> </div>
-            </div>
-        </div>
-        <br /> <hr>
-
-        <div class ="container">
-            <div class ="row">
-                <div class ="col-sm-3">
-                    <label for="start_date">Start date:</label>
-                    <input type="date" id="start_date" name="start_date">
+                <br /> <hr>
+                <div class ="container">
+                <label for="email_job_note">Summarize the job scope: </label> <br>
+                <textarea class="form-control" id="email_job_note" name="email_job_note" rows="4" cols="100" ></textarea>
+                <br /> <hr>
                 </div>
-                <div class = "col"> <label for="date_note">please clarify how you got this date: </label><br><textarea id="date_note" name="date_note" rows="4" cols="50" ></textarea></div>
+                <div class ="container" id = "contract_amount_section">
+                    <div class ="row">
+                        <div class ="col-sm-6">Total Contract Amount: </div>
+                        <div class ="col-sm-6"> <input class="form-control" type= "number" name="contract_amount" placeholder="Contract Amount $$" size="30" step="0.01" id="contract_amount"/>     <br /> </div>
+                    </div>
+                </div>
+                <br>
+                <div class ="container" id = "contract_amount_section2">
+                    <div class ="row">
+                        <div class ="col-sm-6">Painting Budget: </div>
+                        <div class ="col-sm-6"> <input class="form-control" type= "number" name="painting_budget" placeholder="Painting Budget $$" size="30" id="painting_budget" step="0.01" onchange = "clicked_paintbudget()"/> <br /> </div>
+                    </div>
+                    <div class ="row">
+                        <div class ="col-sm-6">Wallcovering Budget: </div>
+                        <div class ="col-sm-6"> <input class="form-control" type= "number" name="wallcovering_budget" id="wallcovering_budget" placeholder="Wallcovering Budget $$" size="30" step="0.01" onchange = "clicked_wcbudget()"/> <br /> </div>
+                    </div>
+                </div>
+                <br /> <hr>
 
-            </div>
+                <br />
+                <div class ="container">
+                    <input type="submit" class="btn btn-primary btn-sm" value="Book Job Now" /></div>
+            </form>
         </div>
-        <br /> <hr>
-        <div class ="container">
-        <label for="email_job_note">Summarize the job scope: </label> <br>
-        <textarea id="email_job_note" name="email_job_note" rows="4" cols="100" ></textarea>
-        <br /> <hr>
-        </div>
-        <div class ="container" id = "contract_amount_section">
-            <div class ="row">
-                <div class ="col-sm-4">Total Contract Amount: </div>
-                <div class ="col-sm-2"> <input type= "number" name="contract_amount" placeholder="Contract Amount $$" size="30" step="0.01" id="contract_amount"/>     <br /> </div>
-            </div>
-        </div>
-        <br>
-        <div class ="container" id = "contract_amount_section2">
-            <div class ="row">
-                <div class ="col-sm-4">Painting Budget: </div>
-                <div class ="col-sm-2"> <input type= "number" name="painting_budget" placeholder="Painting Budget $$" size="30" id="painting_budget" step="0.01" onchange = "clicked_paintbudget()"/> <br /> </div>
-            </div>
-            <div class ="row">
-                <div class ="col-sm-4">Wallcovering Budget: </div>
-                <div class ="col-sm-2"> <input type= "number" name="wallcovering_budget" id="wallcovering_budget" placeholder="Wallcovering Budget $$" size="30" step="0.01" onchange = "clicked_wcbudget()"/> <br /> </div>
-            </div>
-        </div>
-        <br /> <hr>
-
-         <br />
-        <div class ="container">
-            <input type="submit" value="Book Job Now" /></div>
-    </form>
+    </div>
 
 <script src=”https://code.jquery.com/jquery-3.2.1.slim.min.js” integrity=”sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN” crossorigin=”anonymous”></script>
 
