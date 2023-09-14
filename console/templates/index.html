@@ -8,7 +8,7 @@
 		<H1>Welcome to Gerloff Painting</H1>
 	</div>
 	<div style="padding-top: 50px" class="row align-items-center justify-content-center align-middle">
-		<div class="col-6">
+		<div class="col-10">
 			<form enctype = "multipart/form-data" action="{% url 'seperate_test' %}" method = 'post' class="form-group" >
 				{% csrf_token %}
 				<input type = "text" style="margin-top: 22px" class="form-control" name = "text_test" />
