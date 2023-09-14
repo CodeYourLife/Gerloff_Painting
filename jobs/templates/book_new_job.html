@@ -15,22 +15,22 @@
 
         function check_booking_data() {
             if (booking_input.job_name.value ==""){
-                alert('please enter a job name')
+                alert('Please enter a job name')
                 return false;
             }
             if (booking_input.address.value ==""){
                 booking_input.address.scrollIntoView();
-                alert('please enter address')
+                alert('Please enter address')
                 return false;
             }
             if (booking_input.city.value ==""){
                 booking_input.state.scrollIntoView();
-                alert('please enter city')
+                alert('Please enter city')
                 return false;
             }
             if (booking_input.state.value ==""){
                 booking_input.state.scrollIntoView();
-                alert('please enter state')
+                alert('Please enter state')
                 return false;
             }
             if (booking_input.t_m_nte_amount.value != ""){
@@ -240,47 +240,58 @@
 		<div class="col-6">
             <form name = booking_input action="register" method="post" class="form-group" onSubmit = "return check_booking_data()">
                 {% csrf_token %}
-            <div class ="container">
-                    <div class ="row">
-                        <input class="form-control" style="margin-top: 22px" type="text" name="job_number" placeholder="Leave Blank (unless entering a custom job number)" maxlength="5" size="100" id="job_number"/><br />
-                        <input class="form-control" style="margin-top: 22px" type="text" name="job_name" placeholder="Job name" size="100" id="job_name"/><br />
-                    </div>
-                    <br />
                 <div class ="row">
-                        <input style="margin-top: 22px" class="form-control" type="text" name="address" placeholder="address" size="100" id="address" /><br />
-                </div>
-            </div>
-                    <div class ="row">
-                        <div class ="col">    <input style="margin-top: 22px" class="form-control" type="text" name="city" placeholder="City" size="30" id="city"/><br />         </div>
-                        <div class ="col">   <input style="margin-top: 22px" class="form-control" type="text" name="state" placeholder="State" size="30" id="state" maxlength="2" /><br />       </div>
-                        <div class ="col"></div>
+                    <div class="col-sm-12">
+                        <input class="form-control" type="text" name="job_number" placeholder="Leave Blank (unless entering a custom job number)" maxlength="5" size="100" id="job_number"/><br />
                     </div>
+                </div>
+                <div class ="row">
+                    <div class="col-sm-12">
+                        <input class="form-control" type="text" name="job_name" placeholder="Job name" size="100" id="job_name"/><br />
+                    </div>
+                </div>
+                <div class ="row">
+                    <div class="col-sm-12">
+                        <input class="form-control" type="text" name="address" placeholder="address" size="100" id="address" /><br />
+                    </div>
+                </div>
+                <div class ="row">
+                    <div class="col-sm-6">    
+                        <input class="form-control" type="text" name="city" placeholder="City" id="city"/><br />         
+                    </div>
+                    <div class="col-sm-6">   
+                        <input class="form-control" type="text" name="state" placeholder="State" id="state" maxlength="2" /><br />       
+                    </div>
+                </div>
                 <!#city state>
-                <br />        <hr>
-                <div class ="container">
-                <input style="margin-top: 22px" class="form-control" type='hidden' value='notchecked' name='on_base2' id="on_base1">
-                <input style="margin-top: 22px" class="form-control" type="checkbox" name ="on_base2" id="on_base2" value="checked"  />
-                <label for="on_base2">"Security Clearance Required?" </label>
-                <br /><br>
-                </div>
-                <div class ="container">
-                    <div class ="row">
-                        <div class ="col "><input style="margin-top: 22px" class="form-control" type= "text" name="spray_scale" placeholder="Spray Scale" size="30"/><br /></div>
-                        <div class ="col"><input style="margin-top: 22px" class="form-control" type= "text" name="brush_role" placeholder="Brush/Roll Scale" size="30"/><br /></div>
-                        <div class ="col"></div>
+                <hr>
+                <div class ="row">
+                    <div class="col-sm-6">
+                        <label for="on_base2">"Security Clearance Required?" </label>
                     </div>
-                </div> <!on base / scale>
-                <br />         <hr>
+                    <div class="col-sm-6">
+                        <input class="form-control" type='hidden' value='notchecked' name='on_base2' id="on_base1">
+                        <input type="checkbox" name ="on_base2" id="on_base2" value="checked"  />
+                    </div>
+                </div>
+                <hr>
+                    <div class ="row">
+                        <div class="col-sm-6"><input style="margin-top: 22px" class="form-control" type= "text" name="spray_scale" placeholder="Spray Scale" size="30"/><br /></div>
+                        <div class="col-sm-6"><input style="margin-top: 22px" class="form-control" type= "text" name="brush_role" placeholder="Brush/Roll Scale" size="30"/><br /></div>
+                    </div>
+                <!on base / scale>         
+                <hr>
                 <div class ="container">
                     <div class ="row">
-
-                        <div class ="col-sm-2"> 
-                            <input style="margin-top: 22px" class="form-control" type='hidden' value='notchecked' name='is_t_m_job' id = "is_t_m_job1">   
+                        <div class="col-sm-6">
                             <label for="is_t_m_job2">"Is this a T&M Job?" </label>  
-                            <input class="form-control" type="checkbox" name ="is_t_m_job" id="is_t_m_job2" value="checked" onClick= "hide_contract_amount()" />         
-                                  
-                            <br />       
                         </div>
+                        <div class ="col-sm-6"> 
+                            <input class="form-control" type='hidden' value='notchecked' name='is_t_m_job' id = "is_t_m_job1">   
+                            <input type="checkbox" name ="is_t_m_job" id="is_t_m_job2" value="checked" onClick= "hide_contract_amount()" />              
+                        </div>
+                    </div>
+                    <div class ="row">
                         <div class ="col">   
                             <input class="form-control" type="number" name="t_m_nte_amount" placeholder="NTE AMOUNT $$" step="0.01" size="30" />
                             <br />       
@@ -288,11 +299,11 @@
                         <div class ="col-lg"></div>
                     </div>
                 </div> <!#is T&M?>
-                <br />         <hr>
+                <hr>
 
                 <div class ="container">
                     <div class ="row">
-                        <div class ="col">
+                        <div class ="col-sm-6">
                             <label for="contract_status">Contract status</label>
                             <select id="contract_status" class="form-control" name="contract_status" >
                                 <option value="contract_please_select">Please Select Option</option>
@@ -301,7 +312,7 @@
                                 <option value="contract_not_required">Contract not Required</option>
                             </select>
                         </div>
-                        <div class ="col">
+                        <div class ="col-sm-6">
                         <label for="insurance_status">coi status</label>
                             <select id="insurance_status" class="form-control" name="insurance_status" >
                                 <option value="coi_please_select">Please Select Option</option>
@@ -317,10 +328,10 @@
 
             <div class ="container"> <!#pick client>
                     <div class ="row" style="height: 50px">
-                        <div class ="col">
-                                <label>please select company</label>
+                        <div class ="col-sm-12">
+                                <label>Please select company</label>
                             <select class="form-control" id="select_company" name="select_company" onChange="filter_estimators()" >
-                                <option value="please_select">"please Select"</option>
+                                <option value="please_select">"Please Select"</option>
                                 <option value="add_new">"add New"</option>
                                 {% if allclients %}
                                 {% for client in allclients %}
@@ -331,52 +342,80 @@
                             </select>
                         </div>
                     </div>
-                    <div class ="row">
-                        <div class ="col-sm-4"> Or enter New company below: </div>
+                    <div class ="row" style="margin-top: 40px">
+                        <div class ="col-sm-12"> Or enter New company below: </div>
                     </div>
-                    <div class ="row">
-                        <div class ="col-sm-4">  <input style="margin-top: 22px" class="form-control" type= "text" name="new_client" placeholder="company name" size="30" onClick="clear_client()"/></div>
+                    <div class ="row" style="margin-top: 22px" >
+                        <div class ="col-sm-12">  
+                            <input class="form-control" type= "text" name="new_client" placeholder="company name" size="30" onClick="clear_client()"/>
+                        </div>
                     </div>
-                    <div class ="row">
-                        <div class ="col-sm-4">  <input style="margin-top: 22px" class="form-control" type= "tel" name="new_client_phone" placeholder="phone Number" size="30"/></div>
+                    <div class ="row" style="margin-top: 22px" >
+                        <div class ="col-sm-12">  
+                            <input class="form-control" type= "tel" name="new_client_phone" placeholder="phone Number" size="30"/>
+                        </div>
                     </div>
-                    <div class ="row">
-                        <div class ="col-sm-4">  <input style="margin-top: 22px" class="form-control" type= "email" name="new_client_bid_email" placeholder="email" size="30"/></div>
+                    <div class ="row" style="margin-top: 22px" >
+                        <div class ="col-sm-12">  
+                            <input class="form-control" type= "email" name="new_client_bid_email" placeholder="email" size="30"/>
+                        </div>
                     </div>
             </div> <!pick client>
-                <br>
+            <hr></hr>
             <div class ="container">
                     <div class = "row">
-                        <div class ="col-sm-4">
+                        <div class ="col-sm-12">
                             <label for="select_pm">Please select Estimator</label>
                             <select class="form-control" id="select_pm" name="select_pm" >
                                     <option value="please_select">"Please select"</option>
                             </select>
                         </div>
-                        <div class ="col-sm-8">
+                    </div>
+                    <div class ="row" style="margin-top: 22px">
+                        <div class ="col-sm-12">Or enter New below: </div>
+                    </div>
+                    <div class ="row" style="margin-top: 22px">
+                        <div class ="col-sm-12">  
+                            <input  type= "text" name="new_pm" class="form-control" placeholder="office pm name" size="30" onClick="clear_select_pm()"/>
+                        </div>
+                    </div>
+
+                    <div class ="row">
+                        <div class ="col-sm-12">  
+                            <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" placeholder="phone Number" size="30"/>
+                        </div>
+                    </div>
+                    <div class ="row">
+                        <div class ="col-sm-12">  
+                            <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" placeholder="email" size="30"/>
+                        </div>
+                    </div>
+                    <hr></hr>
+                    <div class = "row">
+                        <div class ="col-sm-12">
                             <label for="select_super">Please select superintendent</label>
                             <select class="form-control" id="select_super" name="select_super" >
                             <option value="please_select">"Please select"</option>
                             </select>
                         </div>
                     </div>
-
-
-                    <div class ="row">
-                        <div class ="col-sm-4"> Or enter New below: </div>
-                        <div class ="col-sm-8">Or enter New below: </div>
+                    <div class ="row" style="margin-top: 22px">
+                        <div class ="col-sm-6">Or enter New below: </div>
+                    </div>
+                    <div class ="row" style="margin-top: 22px">
+                        <div class ="col-sm-12">
+                            <input type= "text" name="new_super" class="form-control" placeholder="superintendent name" size="30" onClick="clear_select_super()"/>
+                        </div>
                     </div>
                     <div class ="row">
-                        <div class ="col-sm-4">  <input style="margin-top: 22px" type= "text" name="new_pm" class="form-control" placeholder="office pm name" size="30" onClick="clear_select_pm()"/></div>
-                        <div class ="col"><input style="margin-top: 22px" type= "text" name="new_super" class="form-control" placeholder="superintendent name" size="30" onClick="clear_select_super()"/></div>
+                        <div class ="col-sm-12">
+                            <input style="margin-top: 22px" class="form-control" type= "tel" name="new_super_phone" placeholder="phone Number" size="30"/>
+                        </div>
                     </div>
                     <div class ="row">
-                        <div class ="col-sm-4">  <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" placeholder="phone Number" size="30"/></div>
-                        <div class ="col"><input style="margin-top: 22px" class="form-control" type= "tel" name="new_super_phone" placeholder="phone Number" size="30"/></div>
-                    </div>
-                    <div class ="row">
-                        <div class ="col-sm-4">  <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" placeholder="email" size="30"/></div>
-                        <div class ="col"><input style="margin-top: 22px" class="form-control" type= "email" name="new_super_email" placeholder="email" size="30"/></div>
+                        <div class ="col-sm-12">
+                            <input style="margin-top: 22px" class="form-control" type= "email" name="new_super_email" placeholder="email" size="30"/>
+                        </div>
                     </div>
                 </div>
                 <br /> <hr><br />
@@ -413,19 +452,24 @@
 
                 <div class ="container">
                     <div class ="row">
-                        <div class ="col-sm-4">
+                        <div class ="col-sm-12">
                             <label for="start_date">Start date:</label>
                             <input class="form-control" type="date" id="start_date" name="start_date">
                         </div>
-                        <div class = "col-8"> <label for="date_note">Please clarify how you got this date: </label><br><textarea class="form-control" id="date_note" name="date_note" rows="4" cols="50" ></textarea></div>
-
+                    </div>
+                    <div class ="row">
+                        <div class = "col-12"> 
+                            <label for="date_note">Please clarify how you got this date: </label>
+                            <br>
+                            <textarea class="form-control" id="date_note" name="date_note" rows="4" cols="50" ></textarea>
+                        </div>
                     </div>
                 </div>
                 <br /> <hr>
                 <div class ="container">
                 <label for="email_job_note">Summarize the job scope: </label> <br>
                 <textarea class="form-control" id="email_job_note" name="email_job_note" rows="4" cols="100" ></textarea>
-                <br /> <hr>
+                <hr>
                 </div>
                 <div class ="container" id = "contract_amount_section">
                     <div class ="row">
@@ -433,7 +477,6 @@
                         <div class ="col-sm-6"> <input class="form-control" type= "number" name="contract_amount" placeholder="Contract Amount $$" size="30" step="0.01" id="contract_amount"/>     <br /> </div>
                     </div>
                 </div>
-                <br>
                 <div class ="container" id = "contract_amount_section2">
                     <div class ="row">
                         <div class ="col-sm-6">Painting Budget: </div>
