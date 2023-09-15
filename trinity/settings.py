@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 
@@ -24,9 +25,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-3t5e#t@#xt)=#557w!n_y@vrm-c8x7_71z=8tw-0+(_^&6&$_w'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.168.120', '98.174.216.233']
 
 # Application definition
 
@@ -147,3 +148,5 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'joe@gerloffpainting.com'
 EMAIL_USE_TLS = False
 EMAIL_HOST_PASSWORD = 'Password$*80'
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')

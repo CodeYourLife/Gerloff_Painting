@@ -15,13 +15,14 @@ def validate_job_notes(value):
 class Clients(models.Model):
     id = models.BigAutoField(primary_key=True)
     company = models.CharField(null=True, max_length=250)
-    bid_fax = models.CharField(null=True, max_length=50)
+    bid_fax = models.CharField(null=True, blank=True,max_length=50)
     bid_email = models.EmailField(null=True, blank=True)
-    vendor_code = models.CharField(null=True, max_length=100)
+    vendor_code = models.CharField(null=True,blank=True, max_length=100)
     address = models.CharField(null=True, max_length=100)
     city = models.CharField(null=True, max_length=100)
     state = models.CharField(null=True, max_length=100)
     phone = models.CharField(null=True, max_length=50)
+
 
     def __str__(self):
         return f"{self.company}"
