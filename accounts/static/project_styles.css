@@ -1,0 +1,51 @@
+
+    @media screen and (max-width: 574px) {
+        .nav-item {
+            font-size: 8px !important;
+            padding-left: 2px !important;
+            padding-right: 2px !important;
+            margin-right: 3px !important;
+        }
+        .sub-nav {
+            height: 40px;
+            flex-wrap: inherit;
+            justify-content: start !important;
+        }
+        .sub-navbar-brand {
+            font-size: 12px;
+        }
+        #navbarNavDropdown2 {
+
+        }
+
+        .sub-nav-list {
+            -webkit-box-orient: horizontal !important;
+            -webkit-box-direction: normal !important;
+            -ms-flex-direction: row !important;
+            flex-direction: row !important;
+            flex-flow: row nowrap !important;
+        }
+    }
+
+    .collapsible {
+        background-color: #777;
+        color: white;
+        cursor: pointer;
+        padding: 18px;
+        width: 100%;
+        border: none;
+        text-align: left;
+        outline: none;
+        font-size: 15px;
+    }
+    
+    .active, .collapsible:hover {
+        background-color: Salmon;
+    }
+    
+    .content {
+        padding: 0 18px;
+        display: none;
+        overflow: hidden;
+        background-color: #f1f1f1;
+    }

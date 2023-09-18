@@ -1,98 +1,70 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block nav_item_jobs %}active{% endblock nav_item_jobs %}
 {% block content %}
 {% load render_table from django_tables2 %}
 
+
 <!DOCTYPE html>
 <html>
-<head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>DataTables example - HTML (DOM) sourced data</title>
-	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
-.collapsible {
-  background-color: #777;
-  color: white;
-  cursor: pointer;
-  padding: 18px;
-  width: 100%;
-  border: none;
-  text-align: left;
-  outline: none;
-  font-size: 15px;
-}
+	<head>
+		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+		<title>DataTables example - HTML (DOM) sourced data</title>
+		<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+		<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+		<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+		<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+		<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+		<script type="text/javascript" class="init">
+			$(document).ready(function () {
+				var table = $('#tickets_table').DataTable({
+					columnDefs: [
+					{
+							targets:0,
+							render: function ( data, type, row, meta ) {
+								if(type === 'display'){
+									data = data;}
+								return data;}}] });
+			});
+			$(document).ready(function () {
+				var table = $('#tickets_table1').DataTable({
+					columnDefs: [{
+							targets:0,
+							render: function ( data, type, row, meta ) {
+								if(type === 'display'){
+									data = '<a href="job_page/' + data + '">' + data + '</a>'; }
+								return data;}}] });
+			});
+			$(document).ready(function () {
+				var table = $('#tickets_table2').DataTable({
+					columnDefs: [{
+							targets:0,
+							render: function ( data, type, row, meta ) {
+								if(type === 'display'){
+									data = '<a href="job_page/' + data + '">' + data + '</a>'; }
+								return data;}}] });
+			});
+			$(document).ready(function () {
+				var table = $('#tickets_table3').DataTable({
+					columnDefs: [{
+							targets:0,
+							render: function ( data, type, row, meta ) {
+								if(type === 'display'){
+									data = '<a href="job_page/' + data + '">' + data + '</a>'; }
+								return data;}}] });
+			});
+			$(document).ready(function () {
+				var table = $('#tickets_table4').DataTable({})
 
-.active, .collapsible:hover {
-  background-color: Salmon;
-}
-
-.content {
-  padding: 0 18px;
-  display: none;
-  overflow: hidden;
-  background-color: #f1f1f1;
-}
-	</style>
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
-$(document).ready(function () {
-    var table = $('#tickets_table').DataTable({
-        columnDefs: [
-        {
-                targets:0,
-                render: function ( data, type, row, meta ) {
-                    if(type === 'display'){
-                    	data = data;}
-                    return data;}}] });
-});
-$(document).ready(function () {
-    var table = $('#tickets_table1').DataTable({
-        columnDefs: [{
-                targets:0,
-                render: function ( data, type, row, meta ) {
-                    if(type === 'display'){
-                    	data = '<a href="job_page/' + data + '">' + data + '</a>'; }
-                    return data;}}] });
-});
-$(document).ready(function () {
-    var table = $('#tickets_table2').DataTable({
-        columnDefs: [{
-                targets:0,
-                render: function ( data, type, row, meta ) {
-                    if(type === 'display'){
-                    	data = '<a href="job_page/' + data + '">' + data + '</a>'; }
-                    return data;}}] });
-});
-$(document).ready(function () {
-    var table = $('#tickets_table3').DataTable({
-        columnDefs: [{
-                targets:0,
-                render: function ( data, type, row, meta ) {
-                    if(type === 'display'){
-                    	data = '<a href="job_page/' + data + '">' + data + '</a>'; }
-                    return data;}}] });
-});
-$(document).ready(function () {
-    var table = $('#tickets_table4').DataTable({})
-
-});
-	</script>
-</head>
+			});
+		</script>
+	</head>
 <body>
-<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
-  <a class="navbar-brand" href="#">Active Jobs</a>
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand sub-navbar-brand" href="#">Active Jobs</a>
   <div id="navbarNavDropdown2">
-    <ul class="navbar-nav ">
+    <ul class="sub-nav-list navbar-nav ">
 		{% if jobs == 'ALL' %}
         <li><a class="nav-item nav-link active" href="#">Home</a></li>
 		{% else %}
@@ -111,7 +83,7 @@ $(document).ready(function () {
 		{% endif %}
 
 
-		    <form method="get">
+		    <form style="padding-top: 24px" method="get">
         {{ search_jobs.form }}
         <input type="submit" value="Filter BY Job Name" />
     </form>

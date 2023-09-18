@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block nav_item_submittals %}active{% endblock nav_item_submittals %}
 {% block content %}
 <!DOCTYPE html>
@@ -18,6 +19,7 @@
 
 
 	</style>
+	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
 	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
 	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
 	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
@@ -41,10 +43,10 @@ location1.innerHTML = "<input type='submit' name='note" + tester + "' value='Cha
 	</script>
 </head>
 <body>
-<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
-  <a class="navbar-brand" href="#">Submittals</a>
-  <div  id="navbarNavDropdown2">
-    <ul class="navbar-nav ">
+	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+		<a class="navbar-brand sub-navbar-brand" href="#">Active Jobs</a>
+		<div id="navbarNavDropdown2">
+		  <ul class="sub-nav-list navbar-nav ">
         <li><a class="nav-item nav-link" href="{% url 'submittals_home' %}">Home</a></li>
         <li><a class="nav-item nav-link" href="{% url 'submittals_new' %}">New Submittal</a></li>
         <li><a class="nav-item nav-link active" >{{selected_job}} - Submittal {{selected_submittal.submittal_number}}</a></li>
