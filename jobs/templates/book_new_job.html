@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block nav_item_jobs %}active{% endblock nav_item_jobs %}
 {% block content %}
 <!-- Include all compiled plugins (below), or include individual files as needed-->
@@ -6,6 +7,7 @@
 
 <head>
   <title>Gerloff Painting</title>
+  <link rel="stylesheet" href="{% static 'project_styles.css' %}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
       integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous"
       xmlns:margin-left="http://www.w3.org/1999/xhtml">
@@ -235,6 +237,16 @@
 </head>
 
   <body>
+    <div>
+    <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+        <a style="padding-left: 14px;" class="navbar-brand sub-navbar-brand" href="#">Active Jobs</a>
+        <div id="navbarNavDropdown2">
+          <ul class="sub-nav-list navbar-nav ">
+              <li><a class="nav-item nav-link" href="{% url 'job_page' 'ALL' %}">Home</a></li>
+              <li><a class="nav-item nav-link active" href="#">Start Date for {{jobs.job_name}}</a></li>
+          </ul>
+        </div>
+      </nav>
 	<div class="page-header d-flex justify-content-center align-item-center">
 		<H1>Book New Job</H1>
 	</div>
@@ -503,16 +515,9 @@
 <script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js integrity=”sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q” crossorigin=”anonymous”></script>
 
 <script src=”https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js” integrity=”sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl” crossorigin=”anonymous”></script>
-  </body>
-  <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand" href="#">Active Jobs</a>
-    <div  id="navbarNavDropdown2">
-      <ul class="navbar-nav ">
-          <li><a class="nav-item nav-link" href="{% url 'job_page' 'ALL' %}">Home</a></li>
-          <li><a class="nav-item nav-link active" href="#">Start Date for {{jobs.job_name}}</a></li>
-      </ul>
-    </div>
-  </nav>
+</div>  
+</body>
+
 </div>
 {% endblock %}
 
