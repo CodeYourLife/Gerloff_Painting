@@ -88,19 +88,31 @@ def equipment_new(request):
     vendors = Vendors.objects.filter(category__category='Equipment Supplier')
     if request.method == 'POST':
         if request.POST['purchased_from'] == 'new':
-            vendor = Vendors.objects.create(company_name=request.POST['vendor_name'], category=VendorCategory.objects.get(category='Equipment Supplier'))
+            try:
+                vendor = Vendors.objects.create(company_name=request.POST['vendor_name'], category=VendorCategory.objects.get(category='Equipment Supplier'))
+            except Exception as e:
+                print('unable to create new vendor', e)
         else:
-            vendor = Vendors.objects.get(id=request.POST['purchased_from'])
-        inventory=Inventory.objects.create(item =request.POST['item'],inventory_type=InventoryType.objects.get(id=request.POST['inventory_type0']),purchase_date =request.POST['purchase_date'],purchased_from =vendor,status="Available",number=request.POST['number'],purchase_price=request.POST['purchase_price'],purchased_by=request.POST['purchased_by'],serial_number=request.POST['serial_number'],po_number=request.POST['po_number'],notes=request.POST['notes'])
+            try:
+                vendor = Vendors.objects.get(id=request.POST['purchased_from'])
+            except Exception as e:
+                print('unable to get vendor', e)
+        try:
+            inventory=Inventory.objects.create(item =request.POST['item'],inventory_type=InventoryType.objects.get(id=request.POST['inventory_type0']),purchase_date =request.POST['purchase_date'],purchased_from =vendor,status="Available",number=request.POST['number'],purchase_price=request.POST['purchase_price'],purchased_by=request.POST['purchased_by'],serial_number=request.POST['serial_number'],po_number=request.POST['po_number'],notes=request.POST['notes'])
+        except Exception as e:
+            print('unable to create vendor', e)
         inventory=Inventory.objects.latest('id')
         if 'is_labeled' in request.POST:
             inventory.is_labeled=True
             inventory.save()
-        new_note = InventoryNotes(inventory_item=inventory, date=date.today(),
+        try:
+            new_note = InventoryNotes(inventory_item=inventory, date=date.today(),
                                   user=request.user.first_name + " " + request.user.last_name,
                                   note="Purchased From " + vendor.company_name + ". " + inventory.notes,
                                   category="Misc")
-        new_note.save()
+            new_note.save()
+        except Exception as e:
+            print('unable to add new note', e)
         return redirect('equipment_page', id=inventory.id)
     return render(request, "equipment_new.html", {'vendors':vendors,'inventorytype':inventorytype,'inventoryitems1':inventoryitems1,'inventoryitems2':inventoryitems2,'inventoryitems3':inventoryitems3,'inventoryitems4':inventoryitems4})
 
