@@ -10,4 +10,5 @@ urlpatterns = [
     path('logout', views.logout, name='logout'),
     path('warehouse_home', views.warehouse_home, name='warehouse_home'),
     path('seperate_test', views.seperate_test, name='seperate_test'),
+    path('import_csv', views.import_csv, name='import_csv'),
 ]
