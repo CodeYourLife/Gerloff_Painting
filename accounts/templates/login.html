@@ -30,7 +30,10 @@
         {% csrf_token %}
         <input type="username" name = "username" placeholder="username"><br>
         <input type="password" name = "password" placeholder="Password"><br>
-        <input type="submit">
+        <input type="submit" name = "login" value="Log In">
+		<br>
+		<br>
+		<input type="submit" name = "register" value="Register New User With Pin">
     </form>
 
         {% for message in messages %}
