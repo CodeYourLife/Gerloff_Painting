@@ -18,3 +18,4 @@ bin/activate.fish
 lib/python3.7/site-packages/pip/_vendor/certifi/cacert.pem
 **/__main__*
 lib/*
+.idea/trinity.iml

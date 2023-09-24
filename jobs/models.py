@@ -11,21 +11,22 @@ def validate_job_notes(value):
         return value
     else:
         raise ValidationError("Category Not Allowed")
-        
+
+
 class Clients(models.Model):
     id = models.BigAutoField(primary_key=True)
     company = models.CharField(null=True, max_length=250)
-    bid_fax = models.CharField(null=True, blank=True,max_length=50)
+    bid_fax = models.CharField(null=True, blank=True, max_length=50)
     bid_email = models.EmailField(null=True, blank=True)
-    vendor_code = models.CharField(null=True,blank=True, max_length=100)
+    vendor_code = models.CharField(null=True, blank=True, max_length=100)
     address = models.CharField(null=True, max_length=100)
     city = models.CharField(null=True, max_length=100)
     state = models.CharField(null=True, max_length=100)
     phone = models.CharField(null=True, max_length=50)
 
-
     def __str__(self):
         return f"{self.company}"
+
 
 class ClientEmployees(models.Model):
     person_pk = models.BigAutoField(primary_key=True)
@@ -104,7 +105,7 @@ class Jobs(models.Model):
     client = models.ForeignKey(
         Clients, related_name="Client", on_delete=models.PROTECT)
     client_Pm = models.ForeignKey(
-        ClientEmployees, related_name="PM", on_delete=models.PROTECT)
+        ClientEmployees, related_name="PM", on_delete=models.PROTECT, null=True, blank=True)
     client_Pm_Phone = models.CharField(null=True, max_length=50, blank=True)
     client_Pm_Email = models.EmailField(null=True, blank=True)
     client_Co_Contact = models.ForeignKey(
@@ -127,7 +128,6 @@ class Jobs(models.Model):
 
     def __str__(self):
         return f"{self.job_name}"
-
 
 
 class JobNotes(models.Model):
@@ -184,7 +184,7 @@ class Orders(models.Model):  # one pattern, one WC1, etc. may be broken up into 
     def packages_sent(self):
         totalquantity = 0
         for x in OutgoingItem.objects.filter(package__delivery__order=self):
-            totalquantity = totalquantity+x.quantity_sent
+            totalquantity = totalquantity + x.quantity_sent
         return totalquantity
 
 

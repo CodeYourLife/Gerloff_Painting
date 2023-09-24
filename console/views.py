@@ -366,7 +366,7 @@ def import_csv(request):
                 if found != 3 :
                     raise ValueError('A very specific bad thing happened.')
             else:
-                current_table.objects.create(id=row[a],letter=row[b], number=row[c])
+                current_table.objects.create(letter=row[b], number=row[c])
 
     with open("c:/sql_backup/metrics.csv") as f:
         current_table= employees.models.Metrics
