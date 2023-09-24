@@ -165,8 +165,9 @@
             let b=1
             for(let i =0; i < rolodex.length; i++){
                 if (rolodex[i].id == selectedcompany){
-                    booking_input.select_pm.options[b] = new Option(rolodex[i].name,rolodex[i].person_PK);
-                    booking_input.select_super.options[b] = new Option(rolodex[i].name,rolodex[i].person_PK);
+
+                    booking_input.select_pm.options[b] = new Option(rolodex[i].name,rolodex[i].person_pk);
+                    booking_input.select_super.options[b] = new Option(rolodex[i].name,rolodex[i].person_pk);
                     b=b+1
                 }
             }
