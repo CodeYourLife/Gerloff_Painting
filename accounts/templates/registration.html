@@ -28,24 +28,23 @@
 <body>
     <div style="padding-top: 50px; padding-bottom: 50px" class="row align-items-center justify-content-center align-middle">
     <div class="col-6" >
-        <form action = "add_employee" method = "post" class="form-group">
+        <form action = "{% url 'registration' %}" method = "post" class="form-group">
             {% csrf_token %}
+            <h2>Registration for {{selected_employee.first_name}} {{selected_employee.middle_name}} {{selected_employee.last_name}}</h2>
+            <br>
             <label for="username">Username</label>
-            <input id="username" type="text" name = "userName" placeholder="Employee Username" class="form-control">
+            <input id="username" type="text" name = "username" placeholder="Employee Username" class="form-control">
             <label for="password">Password</label>
             <input id="password" type="text" name = "password" placeholder="Employee Password" class="form-control">
-            <label for="firstName">First Name</label>
-            <input id="firstName" type="text" name = "first_name" placeholder="Employee First Name" class="form-control">
-            <label for="lastName">Last Name</label>
-            <input id="lastName" type="text" name = "last_name" placeholder="Employee Last Name" class="form-control">
             <label for="phoneNumber">Phone Number</label>
-            <input id="phoneNumber" type="tel" name = "phoneNumber" placeholder="Employee Phone" class="form-control">
+            <input id="phoneNumber" type="tel" name = "phonenumber" placeholder="Employee Phone" class="form-control">
             <label for="email">Email address</label>
             <input id="email" type="email" name = "email" placeholder="Employee Email" class="form-control">
             <label for="nickname">Nickname</label>
             <input id="nickname" type="text" name = "nickname" placeholder="Employee Name" class="form-control">
+            <input type="hidden" name="selected_employee" value={{selected_employee.id}}>
             <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
-            <input type="button submit" class="btn btn-primary btn-sm" value="Submit" >
+            <input type="submit" class="btn btn-primary btn-sm" value="Submit" >
         </form>
     </div>
 </div>

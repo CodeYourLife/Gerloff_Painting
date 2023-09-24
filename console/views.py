@@ -22,7 +22,7 @@ from subcontractors.models import *
 from submittals.models import *
 from superintendent.models import *
 from wallcovering.models import *
-
+import random
 
 def seperate_test(request):
     fileitem = request.FILES['filename']
@@ -49,6 +49,30 @@ def index(request):
 def warehouse_home(request):
     return render(request, 'warehouse_home.html')
 
+def admin_home(request):
+    send_data = {}
+    send_data['employees'] = Employees.objects.filter(user__isnull=True)
+    return render(request, 'admin_home.html',send_data)
+
+def grant_web_access(request):
+    send_data = {}
+    send_data['employees'] = Employees.objects.filter(user__isnull=True,pin__isnull=True)
+    if request.method == 'POST':
+        selected_employee = Employees.objects.get(id=request.POST['select_employee'])
+        tester = False
+        while tester == False:
+            randomPin = random.randint(1000, 9999)
+            tester = True
+            for x in Employees.objects.filter(user__isnull=True,pin__isnull=False):
+                if x.pin == randomPin:
+                    tester = False
+                    randomPin = random.randint(1000, 9999)
+        selected_employee.pin = randomPin
+        selected_employee.save()
+        send_data['employees'] = Employees.objects.filter(user__isnull=True)
+        return render(request, 'admin_home.html', send_data)
+
+    return render(request, 'grant_web_access.html', send_data)
 
 
 # Create your views here.
@@ -80,23 +104,6 @@ def register_user(request):
     else:
         return render(request,'register.html',send_data)
 
-def login(request):
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        user = auth.authenticate(username=username, password=password)
-        if user is not None:
-            auth.login(request, user)
-            return redirect("/")
-        else:
-            messages.info(request,'invalid credentials')
-            return redirect('login')
-    else:
-        return render(request, 'login.html')
-
-def logout(request):
-    auth.logout(request)
-    return redirect("/")
 
 def import_csv(request):
     equipment.models.InventoryItems4.objects.all().delete()
