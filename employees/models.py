@@ -3,6 +3,14 @@ from django.contrib.auth.models import User
 from employees.models import *
 
 
+class Employers(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    company_name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.company_name}"
+
+
 class EmployeeTitles(models.Model):
     id = models.BigAutoField(primary_key=True)
     description = models.CharField(max_length=50)
@@ -20,16 +28,19 @@ class EmployeeLevels(models.Model):
     def __str__(self):
         return f"{self.description}"
 
+
 class GPUserAccount(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     pinEntryDate = models.DateTimeField(blank=False, auto_now_add=True)
     pin = models.IntegerField(blank=False, unique=True)
-    
+
+
 class Employees(models.Model):
     id = models.BigAutoField(primary_key=True)
     employee_number = models.IntegerField(default=0)
     active = models.BooleanField(default=True)
     first_name = models.CharField(null=True, max_length=50)
+    middle_name = models.CharField(null=True, blank=True, max_length=50)
     last_name = models.CharField(null=True, max_length=50)
     phone = models.CharField(null=True, max_length=50, blank=True)
     email = models.EmailField(null=True, blank=True)
@@ -39,6 +50,8 @@ class Employees(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, null=True, blank=True)
     job_title = models.ForeignKey(EmployeeTitles, on_delete=models.CASCADE, null=True)
+    employer = models.CharField(max_length=100)  # Gerloff Painting, Nam, JuarezPro, etc.
+    pin = models.IntegerField(default=1000, null=True, blank=True)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
@@ -54,8 +67,9 @@ class Metrics(models.Model):
     def total_numbers(self):
         totalnumbers = -1
         for x in MetricCategories.objects.filter(metric=self):
-            totalnumbers = totalnumbers+1
+            totalnumbers = totalnumbers + 1
         return totalnumbers
+
 
 class MetricAssessment(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -67,6 +81,7 @@ class MetricAssessment(models.Model):
 
     def __str__(self):
         return f"{self.date} {self.reviewer}"
+
 
 class DailyReports(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -339,6 +354,8 @@ class ProductionCategory(models.Model):
 
     def __str__(self):
         return f"{self.item1} {self.item2} {self.item3} {self.task}"
+
+
 class MetricAssessmentItem(models.Model):
     id = models.BigAutoField(primary_key=True)
     assessment = models.ForeignKey(
@@ -349,6 +366,7 @@ class MetricAssessmentItem(models.Model):
 
     def __str__(self):
         return f"{self.assessment} {self.employee}"
+
 
 class ProductionItems(models.Model):
     id = models.BigAutoField(primary_key=True)

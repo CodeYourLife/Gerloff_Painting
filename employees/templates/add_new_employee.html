@@ -39,34 +39,62 @@ $(document).ready(function () {
 		<a class="navbar-brand sub-navbar-brand" href="#">Active Jobs</a>
 		<div id="navbarNavDropdown2">
 		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link active" href="{% url 'employees_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
         <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>
         <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
         <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
+        <li><a class="nav-item nav-link" active href="{% url 'add_new_employee' %}">New Employee</a></li>
     </ul>
   </div>
 </nav>
 
 
 
-<div class="demo-html" style="width:90%">
-		<table id="employees_table" class="display" style="width:90%">
-			<thead>
-				<tr>
-					<th>ID</th>
-					<th>Name </th>
-					<th>Nickname </th>
-					<th>Level</th>
-				</tr>
-			</thead>
-			<tbody>
-			{% for x in employees %}
-			<tr><td><a href = "{% url 'employees_page' x.id %}">{{x.id}}</td><td>{{x.last_name}} {{x.first_name}}</td><td>{{x.nickname}}</td><td>{{x.level}}</td>
-			</tr>
-{% endfor %}
-			</tbody>
-		</table>
+<div style="padding-top: 50px; padding-bottom: 50px" class="row align-items-center justify-content-center align-middle">
+    <div class="col-6" >
+
+        <form action = "{% url 'add_new_employee' %}" method = "post" class="form-group">
+            {% csrf_token %}
+<!--            <label for="username">Username</label>-->
+<!--            <input id="username" type="text" name = "userName" placeholder="Employee Username" class="form-control">-->
+<!--            <label for="password">Password</label>-->
+<!--            <input id="password" type="text" name = "password" placeholder="Employee Password" class="form-control">-->
+            <label for="firstName">First Name</label>
+            <input id="firstName" type="text" name = "first_name" placeholder="Employee First Name" class="form-control">
+            <label for="middleName">Middle Name</label>
+            <input id="middleName" type="text" name = "middle_name" placeholder="Employee Middle Name" class="form-control">
+            <label for="lastName">Last Name</label>
+            <input id="lastName" type="text" name = "last_name" placeholder="Employee Last Name" class="form-control">
+			 <label for="jobTitle">Job Title</label>
+            <select id="jobTitle" name="jobTitle" class="form-control">
+                <option value="not_selected">Select Title</option>
+                {% if jobtitles %}
+                {% for x in jobtitles %}
+                <option value={{x.id}}>{{x.description}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+                <label for="employer">Employer</label>
+				<select id="employer" name="employer" class="form-control">
+                <option value="not_selected">Select Employer</option>
+                {% if employers %}
+                {% for x in employers %}
+                <option value={{x.id}}>{{x.company_name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+
+<!--            <label for="phoneNumber">Phone Number</label>-->
+<!--            <input id="phoneNumber" type="tel" name = "phoneNumber" placeholder="Employee Phone" class="form-control">-->
+<!--            <label for="email">Email address</label>-->
+<!--            <input id="email" type="email" name = "email" placeholder="Employee Email" class="form-control">-->
+<!--            <label for="nickname">Nickname</label>-->
+<!--            <input id="nickname" type="text" name = "nickname" placeholder="Employee Name" class="form-control">-->
+<!--            <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>-->
+
+            <input type="submit" class="btn btn-primary btn-sm" name="add_new" value="Submit" >
+        </form>
+    </div>
 </div>
 </body>
 </html>
