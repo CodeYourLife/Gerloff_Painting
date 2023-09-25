@@ -51,7 +51,6 @@ class Employees(models.Model):
         User, on_delete=models.CASCADE, null=True, blank=True)
     job_title = models.ForeignKey(EmployeeTitles, on_delete=models.CASCADE, null=True)
     employer = models.CharField(max_length=100)  # Gerloff Painting, Nam, JuarezPro, etc.
-
     pin = models.IntegerField(null=True, blank=True)
 
 
