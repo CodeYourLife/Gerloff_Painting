@@ -1,5 +1,6 @@
 from django.urls import path
-
+from django.conf.urls.static import static
+from django.conf import settings
 from . import views
 
 
@@ -14,3 +15,7 @@ path("equipment_add_to_outgoing/<id>", views.equipment_add_to_outgoing, name='eq
 path("equipment_add_to_incoming/<id>", views.equipment_add_to_incoming, name='equipment_add_to_incoming'),
 
 ]
+
+# only in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)

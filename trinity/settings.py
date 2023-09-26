@@ -13,10 +13,8 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import os
 from pathlib import Path
 
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -25,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-3t5e#t@#xt)=#557w!n_y@vrm-c8x7_71z=8tw-0+(_^&6&$_w'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.168.120', '98.174.216.233']
 
@@ -48,12 +46,12 @@ INSTALLED_APPS = [
     'rentals',
     'subcontractors',
     'wallcovering',
-   'superintendent',
-   'submittals',
-   'accounts'
+    'superintendent',
+    'submittals',
+    'accounts'
 ]
 
-#django.setup() 
+# django.setup()
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -70,7 +68,9 @@ ROOT_URLCONF = 'trinity.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR,'submittals/templates', 'console/templates', 'templates', 'superintendent/templates', 'templates/bootstrap', 'changeorder/templates', 'equipment/templates', 'employees/templates','jobs/templates','rentals/templates','subcontractors/templates','wallcovering/templates'],
+        'DIRS': [BASE_DIR, 'submittals/templates', 'console/templates', 'templates', 'superintendent/templates',
+                 'templates/bootstrap', 'changeorder/templates', 'equipment/templates', 'employees/templates',
+                 'jobs/templates', 'rentals/templates', 'subcontractors/templates', 'wallcovering/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -84,7 +84,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'trinity.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
@@ -118,7 +117,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
@@ -129,7 +127,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
@@ -153,3 +150,6 @@ EMAIL_USE_TLS = False
 EMAIL_HOST_PASSWORD = 'Password$*80'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
