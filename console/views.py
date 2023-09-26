@@ -10,6 +10,7 @@ from django.contrib import messages
 import os
 import os.path
 import csv
+from pathlib import Path
 
 from jobs.models import *
 from accounts.models import *
@@ -32,7 +33,7 @@ def seperate_test(request):
     open(fn2, 'wb').write(fileitem.file.read())
     return redirect('index')
 def index(request):
-
+    print(Path(__file__).resolve().parent.parent)
     if request.method == 'POST':
         print(request.POST)
         directory = "GeeksforGeeks"

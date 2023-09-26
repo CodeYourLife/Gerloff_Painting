@@ -8,6 +8,13 @@ from jobs.models import Jobs
 from .filters import EquipmentFilter, EquipmentFilter2
 import json
 from django.core.serializers.json import DjangoJSONEncoder
+from console.misc import createfolder
+from django.core.files.storage import FileSystemStorage
+import os
+import os.path
+import csv
+from pathlib import Path
+from django.conf import settings
 
 def equipment_remove_from_outgoing_cart(request,id): #status = None, Outgoing, Incoming
     item = Inventory.objects.get(id=id)
@@ -88,31 +95,18 @@ def equipment_new(request):
     vendors = Vendors.objects.filter(category__category='Equipment Supplier')
     if request.method == 'POST':
         if request.POST['purchased_from'] == 'new':
-            try:
-                vendor = Vendors.objects.create(company_name=request.POST['vendor_name'], category=VendorCategory.objects.get(category='Equipment Supplier'))
-            except Exception as e:
-                print('unable to create new vendor', e)
+            vendor = Vendors.objects.create(company_name=request.POST['vendor_name'], category=VendorCategory.objects.get(category='Equipment Supplier'))
         else:
-            try:
-                vendor = Vendors.objects.get(id=request.POST['purchased_from'])
-            except Exception as e:
-                print('unable to get vendor', e)
-        try:
-            inventory=Inventory.objects.create(item =request.POST['item'],inventory_type=InventoryType.objects.get(id=request.POST['inventory_type0']),purchase_date =request.POST['purchase_date'],purchased_from =vendor,status="Available",number=request.POST['number'],purchase_price=request.POST['purchase_price'],purchased_by=request.POST['purchased_by'],serial_number=request.POST['serial_number'],po_number=request.POST['po_number'],notes=request.POST['notes'])
-        except Exception as e:
-            print('unable to create vendor', e)
-        inventory=Inventory.objects.latest('id')
+            vendor = Vendors.objects.get(id=request.POST['purchased_from'])
+        inventory=Inventory.objects.create(item =request.POST['item'],inventory_type=InventoryType.objects.get(id=request.POST['inventory_type0']),purchase_date =request.POST['purchase_date'],purchased_from =vendor,status="Available",number=request.POST['number'],purchase_price=request.POST['purchase_price'],purchased_by=request.POST['purchased_by'],serial_number=request.POST['serial_number'],po_number=request.POST['po_number'],notes=request.POST['notes'])
+        createfolder("equipment/" + str(inventory.id))
         if 'is_labeled' in request.POST:
             inventory.is_labeled=True
             inventory.save()
-        try:
-            new_note = InventoryNotes(inventory_item=inventory, date=date.today(),
+        new_note = InventoryNotes.objects.create(inventory_item=inventory, date=date.today(),
                                   user=request.user.first_name + " " + request.user.last_name,
                                   note="Purchased From " + vendor.company_name + ". " + inventory.notes,
                                   category="Misc")
-            new_note.save()
-        except Exception as e:
-            print('unable to add new note', e)
         return redirect('equipment_page', id=inventory.id)
     return render(request, "equipment_new.html", {'vendors':vendors,'inventorytype':inventorytype,'inventoryitems1':inventoryitems1,'inventoryitems2':inventoryitems2,'inventoryitems3':inventoryitems3,'inventoryitems4':inventoryitems4})
 
@@ -121,6 +115,10 @@ def equipment_page(request, id):
     table = EquipmentNotesTable(InventoryNotes.objects.filter(inventory_item=inventory))
     employees = Employees.objects.filter(active=True)
     vendors = Vendors.objects.filter(category__category="Equipment Repair")
+    path = os.path.join(settings.MEDIA_ROOT, "equipment", str(inventory.id))
+    #filelist = os.listdir(path)
+    #res = [str(path) + x for x in filelist]
+    foldercontents =  os.listdir(path)
     if request.method == 'POST':
         if 'apply_filter' in request.POST:
             table = EquipmentNotesTable(InventoryNotes.objects.filter(inventory_item=inventory, category=request.POST['select_category']))
@@ -211,10 +209,26 @@ def equipment_page(request, id):
                                       note="Assigned to Employee -" + inventory.assigned_to.first_name + " " + inventory.assigned_to.last_name + ". " + request.POST['job_notes'],
                                       category="Employee",)
             new_note.save()
+        if 'upload_file' in request.FILES:
+            #COULDN"T GET THIS PART TO WORK
+            # uploaded_file = request.FILES['upload_file']
+            # fs = FileSystemStorage()
+            # file = fs.save(uploaded_file.name, uploaded_file)
+            # fileurl = fs.url(file)
+
+            #TRYING THIS INSTEAD
+            fileitem = request.FILES['upload_file']
+            print(fileitem)
+            fn = os.path.basename(fileitem.name)
+            print(settings.MEDIA_ROOT)
+            # fn2 = os.path.join("C:/Trinity/", fn)
+            #createfolder("equipment/" + str(inventory.id))
+            fn2 = os.path.join(settings.MEDIA_ROOT, "equipment", str(inventory.id), fn)
+            open(fn2, 'wb').write(fileitem.file.read())
 
 
     jobs = Jobs.objects.all()
-    return render(request, "equipment_page.html", {'employees':employees,'jobs': jobs,'inventories': inventory, "table": table, "vendors": vendors})
+    return render(request, "equipment_page.html", {'employees':employees,'jobs': jobs,'inventories': inventory, "table": table, "vendors": vendors, "foldercontents":foldercontents})
 
 def equipment_home(request):
     inventories = Inventory.objects.all()

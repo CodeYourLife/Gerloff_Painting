@@ -179,7 +179,37 @@
 			</form>
 			</div>
 	</div>
+	<div class = "row">
+	</div>
+		<div class ="row">
+			<div class="column">
+				<font color = "red" >Upload Documents (Pictures, Invoice, Etc.) For This Equipment</font>
+				<form name = add_file action="{% url 'equipment_page' inventories.id %}" method="post" enctype="multipart/form-data">
+        			{% csrf_token %}
+					<!--Attachment: <input type= "file" name="upload_file" id="upload_file" onchange="addAttachment(this)" placeholder="" multiple/>-->
+					Attachment: <input type= "file" name="upload_file" id="upload_file" />
+					<input type="submit" value="Upload File" />
+				</form>
+			</div>
+		</div>
+		<div class ="row">
+			<div class="column">
+				<font color = "red" >Here are the documents that have been uploaded for this equipment</font>
+				<br>
+			{% for x in foldercontents %}
+				{{x}}
+				<br>
+			{% endfor %}
+			</div>
+		</div>
+
 </div>
+
+
+
+
+
+
 <br><hr>
 <h3>NOTES ABOUT THIS ITEM:</h3>
 			<form name = filter_notes action="{% url 'equipment_page' inventories.id %}" method="post" >
