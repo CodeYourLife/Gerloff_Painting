@@ -2,7 +2,7 @@
 {% load static %}
 {% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
 {% block content %}
-{% load render_table from django_tables2 %}
+	<!--{% load render_table from django_tables2 %}-->
 
 <!DOCTYPE html>
 <html>
@@ -26,7 +26,8 @@
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
-
+			$(document).ready(function () {
+				var table = $('#co_table').DataTable({}); })
 	</script>
 </head>
 <body>
@@ -39,6 +40,7 @@
     </ul>
   </div>
 </nav>
+	<!--
 		{% if has_filter %}
   		<a href="{%  url 'change_order_home' %}">Clear Filter</a>
 		{% endif %}
@@ -47,9 +49,48 @@
         {{ all_orders.form }}
         <input type="submit" value="Filter Now" />
     </form>
+    {% render_table table %}
+-->
+<div class="demo-html" style="width:90%">
+		<table id="co_table" class="display" style="width:90%">
+			<thead>
+				<tr>
+					<th>Job #</th>
+					<th>COP #</th> <!--edit = tables.TemplateColumn('<a href="{% url "extra_work_ticket" record.id %}">{{record.cop_number}}</a>', verbose_name="COP Number")-->
+					<th>Description</th>
+					<th>Need Ticket?</th>
+					<th>Ticket Signed?</th>
+					<th>Date Sent</th>
+					<th>Date Approved</th>
+					<th>Is Approved?</th>
+					<th>GC #</th>
+					<th>Price</th>
+
+				</tr>
+			</thead>
+			<tbody>
+				{% if changeorders %}
+				{% for item in changeorders %}
+				<tr>
+					<td>{{item.job_number}}</td>
+					<td><a href = "{% url 'extra_work_ticket' item.id %}">{{item.cop_number}} </a></td>
+					<td>{{item.description}}</td>
+					<td>{{item.need_ticket}}</td>
+					<td>{{item.need_ticket_signed}}</td>
+					<td>{{item.date_sent}}</td>
+					<td>{{item.date_approved}}</td>
+					<td>{{item.is_approved}}</td>
+					<td>{{item.gc_number}}</td>
+					<td>{{item.price}}</td>
+				</tr>
+				{% endfor %}
+				{% endif %}
+			</tbody>
+		</table>
+</div>
 
 
-{% render_table table %}
+
 
 </body>
 </html>
