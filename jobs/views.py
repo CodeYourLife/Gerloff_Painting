@@ -125,23 +125,22 @@ def register(request):
         if request.POST['job_number'] == "":
             if JobNumbers.objects.latest("id").number == "9990":
                 new_letter = chr(ord(JobNumbers.objects.latest("id").letter) + 1)
-                new_job_number = JobNumbers(letter=new_letter, number="0010")
-                new_job_number.save()
-                job_number = JobNumbers.objects.latest("id").letter + JobNumbers.objects.latest("id").number
+                new_job_number = JobNumbers.objects.create(letter=new_letter, number="0010")
+                job_number = new_job_number.letter + new_job_number.number
             else:
                 new_number = int(JobNumbers.objects.latest("id").number) + 10
                 new_number_convert = str(new_number)
                 if new_number < 100:
-                    new_job_number = JobNumbers(letter=JobNumbers.objects.latest("id").letter,
+                    new_job_number = JobNumbers.objects.create(letter=JobNumbers.objects.latest("id").letter,
                                                 number="00" + new_number_convert)
                 elif new_number < 1000:
-                    new_job_number = JobNumbers(letter=JobNumbers.objects.latest("id").letter,
+                    new_job_number = JobNumbers.objects.create(letter=JobNumbers.objects.latest("id").letter,
                                                 number="0" + new_number_convert)
                 else:
-                    new_job_number = JobNumbers(letter=JobNumbers.objects.latest("id").letter,
+                    new_job_number = JobNumbers.objects.create(letter=JobNumbers.objects.latest("id").letter,
                                                 number=new_number_convert)
                 new_job_number.save()
-                job_number = JobNumbers.objects.latest("id").letter + JobNumbers.objects.latest("id").number
+                job_number = new_job_number.letter + new_job_number.number
         else:
             job_number = request.POST['job_number']
 
