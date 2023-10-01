@@ -349,16 +349,11 @@ def change_order_new(request, jobnumber):
 
 
 def change_order_home(request):
-    send_data = {}
-    change_orders = ChangeOrders.objects.filter(is_closed=False)
-    send_data['changeorders'] = change_orders
-    # JOE TOOK OUT THIS DJANGO TABLES CRAP, AND DECIDED TO USE DATA TABLES INSTEAD
-    # all_orders = ChangeOrderFilter(request.GET, queryset =ChangeOrders.objects.filter(is_closed=False).order_by('job_number','cop_number'))
-    # table = ChangeOrderTable(all_orders.qs)
-    # has_filter = any(field in request.GET for field in set(all_orders.get_fields()))
+    all_orders = ChangeOrderFilter(request.GET, queryset =ChangeOrders.objects.filter(is_closed=False).order_by('job_number','cop_number'))
+    table = ChangeOrderTable(all_orders.qs)
+    has_filter = any(field in request.GET for field in set(all_orders.get_fields()))
     # RequestConfig(request).configure(table)
-    # return render(request, "change_order_home.html", {'table': table,'all_orders':all_orders,'has_filter':has_filter})
-    return render(request, "change_order_home.html", send_data)
+    return render(request, "change_order_home.html", {'table': table,'all_orders':all_orders,'has_filter':has_filter})
 
 
 def extra_work_ticket(request, id):
