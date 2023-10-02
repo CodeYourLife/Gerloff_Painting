@@ -1,10 +1,1 @@
-GP-WEBSERVER
-username: Administrator
-password: HRDCdc!@#
-Public IP: 98.174.216.233
 
-Local IP for web server: 192.168.168.120
-
-Local IP address for server GP2022: 192.168.168.5
-username for server: admin
-password for server: Password$**)
