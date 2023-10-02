@@ -26,20 +26,20 @@
 	</script>
 </head>
 <body>
-    <form action = "login" method = "post">
+    <div style="margin-top: 20%"  class="row h-100 d-flex align-items-center justify-content-center">
+    <div class="col-6">
+    <form action = "login" method = "post" class="form-group">
         {% csrf_token %}
-        <input type="username" name = "username" placeholder="username"><br>
-        <input type="password" name = "password" placeholder="Password"><br>
-        <input type="submit" name = "login" value="Log In">
-		<br>
-		<br>
-		<input type="submit" name = "register" value="Register New User With Pin">
-    </form>
-
-        {% for message in messages %}
-            <h3> {{message}} </h3>
-        {% endfor %}
-
+        <input type="username" name = "username" placeholder="username" class="form-control"><br>
+        <input type="password" name = "password" placeholder="Password" class="form-control"><br>
+        <div style="display: flex; justify-content: space-between; align-items: center">
+			<input type="submit" class="btn btn-primary btn-sm" name = "login" value="Log In">
+			<input type="submit" class="btn btn-primary btn-sm" name = "register" value="Register New User With Pin">
+    	<div class="text-danger">{{message}}</div>
+		</div>
+	</form>
+	</div>
+	</div>
 </body>
 </html>
 
