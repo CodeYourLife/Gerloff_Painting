@@ -7,6 +7,13 @@ from django.contrib.auth.models import User, auth
 def registration(request):
     send_data = {}
     if request.method == 'POST':
+        if User.objects.filter(username=request.POST['username']).exists():
+            send_data['message'] = "Username already exists"
+            send_data['username'] = request.POST['username']
+            send_data['password'] = request.POST['password']
+            send_data['phonenumber'] = request.POST['phonenumber']
+            send_data['email'] = request.POST['email']
+            return render(request, "registration.html", send_data)
         user = User.objects.create_user(username=request.POST['username'],
                                         email=request.POST['email'],
                                         password=request.POST['password'])
@@ -19,7 +26,6 @@ def registration(request):
         user.save()
         employee.save()
         return render(request, "login.html", send_data)
-    #send_data['employees']=Employees.objects.filter(active = True)
     return render(request, "registration.html", send_data)
 
 def verifyPin(request):
@@ -32,21 +38,6 @@ def verifyPin(request):
         else:
             send_data['message'] = "PIN NOT CORRECT"
             return render(request, "verify_pin.html", send_data)
-
-# def addEmployee(request):
-#     send_data = {}
-#     #send_data['employees']=Employees.objects.filter(active = True)
-#     return render(request, "add_employee.html", send_data)
-
-# def addNewEmployee(request):
-#     #
-#     if request.method == 'POST':
-#         firstName = request.POST['firstName']
-#         lastName = request.POST['lastName']
-#         user = User.objects.create_user(username=firstName,password=lastName)
-#         randomPin = random.randint(1000,9999)
-#         gerloffPaintingUser = GPUserAccount.objects.create(user=user, pin=randomPin)
-#     return render(request, "add_employee.html", {'user': gerloffPaintingUser})
 
 def login(request):
     if request.method == 'POST':

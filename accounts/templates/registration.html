@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block content %}
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -21,8 +23,75 @@
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
+        function hideValidations() {
+            //get all labels with a validation and hide them when user enters text in an input
+            var validationLabel = document.getElementsByClassName('validationLabel');
+            for (var i = 0; i < validationLabel.length; i ++) {
+                validationLabel[i].style.display = 'none';
+            }
+        };
 
-
+        function validate(event){
+            passes = true;
+            value = event.target.value;
+            id = event.target.id;
+            //user name validation
+            username = document.getElementById("username").value;
+            usernameRegex = /^[a-z0-9_.]+$/
+            if (usernameRegex.test(username) == false || !username) {
+                passes = false;
+                if (id == "username"){
+                    document.getElementById("validateUsernameLbl").style.display = 'block';
+                    document.getElementById("validateUsernameLbl").innerHTML = "Usernames can only use letters, numbers, underscores, and periods and must not be blank";
+                }
+            }
+            //password validation
+            password = document.getElementById("password").value;
+            passwordRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/
+            if (passwordRegex.test(password) == false || !password) {
+                passes = false;
+                if (id == "password"){
+                    document.getElementById("validatePasswordLbl").style.display = 'block';
+                    document.getElementById("validatePasswordLbl").innerHTML = "Password must have a minimum eight characters, at least one letter, one number and one special character"
+                }
+            }
+            //password match validation
+            passwordMatch = document.getElementById("reEnterPassword").value;
+            if (passwordMatch != password) {
+                passes = false;
+                if (id == "reEnterPassword" || !passwordMatch){
+                    document.getElementById("validatePasswordMatchLbl").style.display = 'block';
+                    document.getElementById("validatePasswordMatchLbl").innerHTML = "Password must match.";
+                }
+            }
+            //phone validation
+            phone = document.getElementById("phoneNumber").value
+            phoneRegex = /^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$/
+            if (phoneRegex.test(phone) == false || !phone) {
+                passes = false;
+                if (id == "phoneNumber"){
+                    document.getElementById("validatePhoneNumberLbl").style.display = 'block';
+                    document.getElementById("validatePhoneNumberLbl").innerHTML = "Not a valid phone number";
+                }
+            }
+            //email validation
+            email = document.getElementById("email").value;
+            emailRegex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+            if (emailRegex.test(email) == false || !email) {
+                passes = false;
+                if (id == "email"){
+                    document.getElementById("validateEmailLbl").style.display = 'block';
+                    document.getElementById("validateEmailLbl").innerHTML = "Not a valid email address";
+                }
+            }
+            //can it be disabled? Only if all validations have passed.
+            if (passes == true){
+                document.getElementById('submitBtn').removeAttribute('disabled')
+            }
+            else {
+                document.getElementById('submitBtn').setAttribute('disabled', true);
+            }
+        };
 	</script>
 </head>
 <body>
@@ -32,19 +101,32 @@
             {% csrf_token %}
             <h2>Registration for {{selected_employee.first_name}} {{selected_employee.middle_name}} {{selected_employee.last_name}}</h2>
             <br>
-            <label for="username">Username</label>
-            <input id="username" type="text" name = "username" placeholder="Employee Username" class="form-control">
-            <label for="password">Password</label>
-            <input id="password" type="text" name = "password" placeholder="Employee Password" class="form-control">
-            <label for="phoneNumber">Phone Number</label>
-            <input id="phoneNumber" type="tel" name = "phonenumber" placeholder="Employee Phone" class="form-control">
-            <label for="email">Email address</label>
-            <input id="email" type="email" name = "email" placeholder="Employee Email" class="form-control">
-            <label for="nickname">Nickname</label>
-            <input id="nickname" type="text" name = "nickname" placeholder="Employee Name" class="form-control">
+            <label class="form-label" for="username">Username</label>
+            <input value="{{username}}" oninput="hideValidations()" onBlur="validate(event)" id="username" type="text" name = "username" placeholder="Employee Username" class="form-control">
+            <div class="text-danger validationLabel fade-in" style="display: hidden" id="validateUsernameLbl">
+            </div>
+            <label class="form-label" for="password">Password</label>
+            <input value="{{password}}" oninput="hideValidations()" onBlur="validate(event)" id="password" type="password" name = "password" placeholder="Employee Password" class="form-control">
+            <div class="text-danger validationLabel fade-in" style="display: hidden" id="validatePasswordLbl">
+            </div>
+            <label class="form-label" for="reEnterPassword">Re-Enter Password</label>
+            <input value="{{password}}" oninput="hideValidations()" onBlur="validate(event)" id="reEnterPassword" type="password" name = "reenterpassword" placeholder="Re-Enter Password" class="form-control">
+            <div class="text-danger validationLabel fade-in" style="display: hidden" id="validatePasswordMatchLbl">
+            </div>
+            <label class="form-label" for="phoneNumber">Phone Number</label>
+            <input value="{{phonenumber}}" oninput="hideValidations()" onBlur="validate(event)" id="phoneNumber" type="tel" name = "phonenumber" placeholder="Employee Phone" class="form-control">
+            <div class="text-danger validationLabel fade-in" style="display: hidden" id="validatePhoneNumberLbl">
+            </div>
+            <label class="form-label" for="email">Email address</label>
+            <input value="{{email}}" oninput="hideValidations()" onBlur="validate(event)" id="email" type="email" name = "email" placeholder="Employee Email" class="form-control">
+            <div class="text-danger validationLabel fade-in" style="display: hidden" id="validateEmailLbl">
+            </div>
+            <label class="form-label" for="nickname">Nickname</label>
+            <input id="nickname" type="text" name = "nickname" placeholder="Employee NickName" class="form-control">
             <input type="hidden" name="selected_employee" value={{selected_employee.id}}>
             <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
-            <input type="submit" class="btn btn-primary btn-sm" value="Submit" >
+            <input type="submit" id="submitBtn" disabled class="btn btn-primary btn-sm" value="Submit" >
+            <div class="text-danger">{{message}}</div>
         </form>
     </div>
 </div>
