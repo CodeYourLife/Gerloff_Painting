@@ -40,19 +40,24 @@ def verifyPin(request):
             return render(request, "verify_pin.html", send_data)
 
 def login(request):
+    send_data = {}
     if request.method == 'POST':
         if 'register' in request.POST:
             return render(request, 'verify_pin.html')
         else:
             username = request.POST['username']
             password = request.POST['password']
-            user = auth.authenticate(username=username, password=password)
-            if user is not None:
-                auth.login(request, user)
-                return redirect("/")
-            else:
-                messages.info(request,'invalid credentials')
-                return redirect('login')
+            try:
+                user = auth.authenticate(username=username, password=password)
+                if user is not None:
+                    auth.login(request, user)
+                    return redirect("/")
+            except Exception as e:
+                print('invalid credentials', e)
+            send_data['message'] = "Invalid credentials"
+            send_data['username'] = request.POST['username']
+            send_data['password'] = request.POST['password']
+            return render(request, "login.html", send_data)
     else:
         return render(request, 'login.html')
 
