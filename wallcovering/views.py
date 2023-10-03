@@ -9,19 +9,24 @@ from .tables import *
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from .filters import OrderItemsFilter
+from django.contrib.auth.decorators import login_required
 
+@login_required(login_url='/accounts/login')
 def wallcovering_send_all(request):
     table = OutgoingWallcoveringTable(OutgoingItem.objects.filter(outgoing_event__job_number__status="Open"))
     return render(request, "wallcovering_send_all.html", {'table':table})
 
+@login_required(login_url='/accounts/login')
 def wallcovering_receive_all(request):
     table = ReceivedTable(ReceivedItems.objects.filter(wallcovering_delivery__order__job_number__status = "Open"))
     return render(request, "wallcovering_receive_all.html", {'table':table})
 
+@login_required(login_url='/accounts/login')
 def wallcovering_order_all(request):
     table = OrdersTable(Orders.objects.filter(job_number__status = "Open"))
     return render(request, "wallcovering_order_all.html", {'table':table})
 
+@login_required(login_url='/accounts/login')
 def wallcovering_send(request, jobnumber):
     if request.method == 'POST':
         if 'select_job' in request.POST:
@@ -57,6 +62,8 @@ def wallcovering_send(request, jobnumber):
                 packages.append(thisdict)
     packages_json = json.dumps(list(packages), cls=DjangoJSONEncoder)
     return render(request, "wallcovering_send.html", {'packages':packages, 'packages_json':packages_json, 'jobs':jobs, 'already_picked':already_picked})
+
+@login_required(login_url='/accounts/login')
 def wallcovering_receive(request,orderid):
     if request.method == 'POST':
         delivery = WallcoveringDelivery.objects.create(order=Orders.objects.get(id=orderid),date=date.today(),notes = request.POST['delivery_note'])
@@ -91,6 +98,8 @@ def wallcovering_receive(request,orderid):
                 items_json.append(thisdict)
     items_json = json.dumps(list(items_json), cls=DjangoJSONEncoder)
     return render(request, "wallcovering_receive.html", {'open_orders':open_orders,'open_order_items':open_order_items,'already_picked':already_picked,'items_json':items_json})
+
+@login_required(login_url='/accounts/login')
 def wallcovering_order(request,id):
     order = Orders.objects.get(id=id)
     orderstable = OrdersTable(Orders.objects.filter(id=id))
@@ -101,6 +110,7 @@ def wallcovering_order(request,id):
 
     return render(request, "wallcovering_order.html", {'orderstable': orderstable, 'orderitemstable':orderitemstable, 'packagestable':packagestable,'receiptstable':receiptstable,'jobdeliveriestable':jobdeliveriestable,'currentorder':order})
 
+@login_required(login_url='/accounts/login')
 def post_wallcovering_order(request):
     new_order = Orders(job_number=Jobs.objects.get(job_number=request.POST["select_job"]),description=request.POST["description"],vendor=Vendors.objects.get(id=request.POST["select_vendor"]),date_ordered=date.today())
     new_order.save()
@@ -122,6 +132,7 @@ def post_wallcovering_order(request):
 
     return redirect('wallcovering_order',id=new_order.id)
 
+@login_required(login_url='/accounts/login')
 def wallcovering_order_new(request, id, job_number):
     jobs = Jobs.objects.filter(status="Open")
     vendors = Vendors.objects.filter(category__category="Wallcovering Supplier")
@@ -156,6 +167,7 @@ def wallcovering_order_new(request, id, job_number):
     return render(request, "wallcovering_order_new.html", {'vendors':vendors,'vendors_json':vendors_json,'wallcovering_json':wallcovering_json,'pricing_json':pricing_json, 'selectedwc':selectedwc, 'selectedpricing':selectedpricing, 'selectedjob':selectedjob, 'jobs': jobs,'wallcovering': wallcovering, 'pricing': pricing, 'selectedvendor': selectedvendor})
 
 
+@login_required(login_url='/accounts/login')
 def wallcovering_home(request):
     wc_table = Wallcovering.objects.filter(job_number__status="Open")
     # wc_table = []
@@ -237,9 +249,12 @@ def wallcovering_home(request):
     #packages = Packages.objects.filter(is_all_delivered_to_job=False) #items in warehouse not delivered to job yet
     return render(request, "wallcovering_home.html", {'has_filter':has_filter,'all_orders':all_orders,'wc_table':wc_table, 'wc_not_ordereds': wc_not_ordereds,'wc_ordereds': wc_ordereds, 'received_deliveries':received_deliveries ,'jobsite_deliveries':jobsite_deliveries ,'packages':packages, 'table2':table2})
 
+@login_required(login_url='/accounts/login')
 def wallcovering_pattern_all(request):
     table = WallcoveringPatternsTable(Wallcovering.objects.filter(job_number__status = "Open"))
     return render(request, "wallcovering_pattern_all.html", {'table':table})
+
+@login_required(login_url='/accounts/login')
 def wallcovering_pattern_new(request):
     jobs = Jobs.objects.all()
     vendors = Vendors.objects.filter(category__category="Wallcovering Supplier")
@@ -272,6 +287,7 @@ def wallcovering_pattern_new(request):
         orderstable="SKIP"
     return render(request, "wallcovering_pattern.html", {'jobdeliveriestable':jobdeliveriestable,'packagestable':packagestable, 'receivedtable':receivedtable,'orderstable':orderstable,'selectedpattern': selectedpattern, 'jobs': jobs, 'vendors': vendors, 'table': table })
 
+@login_required(login_url='/accounts/login')
 def wallcovering_pattern(request, id):
     jobs = Jobs.objects.all()
     vendors = Vendors.objects.filter(category__category="Wallcovering Supplier")
@@ -319,6 +335,7 @@ def wallcovering_pattern(request, id):
 
     return render(request, "wallcovering_pattern.html", {'jobdeliveriestable':jobdeliveriestable,'packagestable':packagestable, 'receivedtable':receivedtable,'orderstable':orderstable,'selectedpattern': selectedpattern, 'jobs': jobs, 'vendors': vendors, 'table': table })
 
+@login_required(login_url='/accounts/login')
 def wallcovering_status(request, table_type, id):
     if table_type == 'Outgoing':
         table = OutgoingWallcoveringTable(OutgoingItem.objects.filter(id=id))

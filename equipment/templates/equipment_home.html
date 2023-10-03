@@ -79,16 +79,16 @@ function filterStatus() {
 	<input type="checkbox" class="filter-checkbox" onclick="filterStatus()"  id="checked_out" /> Checked Out
 	<input type="checkbox" class="filter-checkbox" onclick="filterStatus()"  id="missing" /> Missing
 <div class="demo-html" style="width:90%">
-		<table id="inventory_table" class="display" style="width:90%">
+		<table id="inventory_table" class="display table" style="width:90%">
 			<thead>
 				<tr>
-					<th>Category</th>
-					<th>Number</th>
-					<th>Item</th>
-					<th>Labeled?</th>
-					<th>Status</th>
-					<th>Location</th>
-					<th>Employee</th>
+					<th scope="col">Category</th>
+					<th scope="col">Number</th>
+					<th scope="col">Item</th>
+					<th scope="col">Labeled?</th>
+					<th scope="col">Status</th>
+					<th scope="col">Location</th>
+					<th scope="col">Employee</th>
 				</tr>
 			</thead>
 			<tbody>

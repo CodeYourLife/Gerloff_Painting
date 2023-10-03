@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required
 from changeorder.models import ClientJobRoles
 from console.models import *
 from django.shortcuts import render, redirect
@@ -16,7 +17,7 @@ from wallcovering.models import Wallcovering, Packages, OutgoingItem, OrderItems
 from submittals.models import *
 from console.misc import Email
 
-
+@login_required(login_url='/accounts/login')
 def change_start_date(request, jobnumber, previous):
     jobs = Jobs.objects.get(job_number=jobnumber)
     format_date = jobs.start_date.strftime("%Y-%m-%d")
@@ -37,16 +38,16 @@ def change_start_date(request, jobnumber, previous):
     return render(request, "change_start_date.html",
                   {'jobs': jobs, 'formatdate': format_date, 'previous_page': previous_page})
 
-
+@login_required(login_url='/accounts/login')
 def update_job_info(request, jobnumber):
     return render(request, "update_job_info.html")
 
-
+@login_required(login_url='/accounts/login')
 def jobs_home(request):
     response = redirect('/')
     return response
 
-
+@login_required(login_url='/accounts/login')
 def job_page(request, jobnumber):
     if jobnumber == 'ALL':
         search_jobs = JobsFilter(request.GET, queryset=Jobs.objects.filter(status="Open"))
@@ -109,6 +110,7 @@ def job_page(request, jobnumber):
                        'equipments': equipment, 'rentals': rentals})
 
 
+@login_required(login_url='/accounts/login')
 def book_new_job(request):
     allclients = Clients.objects.order_by('company')[0:2000]
     pms = ClientEmployees.objects.values('name', 'id', 'person_pk')[0:1000]
@@ -119,6 +121,7 @@ def book_new_job(request):
                   {'data': prices_json, 'allclients': allclients, 'employees': {}})
 
 
+@login_required(login_url='/accounts/login')
 def register(request):
     if request.method == 'POST':
         checklist = []
@@ -272,7 +275,7 @@ def register(request):
         response = redirect('/')
         return response
 
-
+@login_required(login_url='/accounts/login')
 class Checklist(models.Model):
     id = models.BigAutoField(primary_key=True)
     category = models.CharField(null=True, max_length=1000)

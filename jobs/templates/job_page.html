@@ -83,9 +83,9 @@
 		{% endif %}
 
 
-		    <form style="padding-top: 24px" method="get">
+		    <form style="padding-top: 24px; padding-bottom: 10px;" method="get">
         {{ search_jobs.form }}
-        <input type="submit" value="Filter BY Job Name" />
+        <input type="submit" class="btn btn-primary btn-sm" value="Filter By Job Name" />
     </form>
 
 {% render_table jobstable %}
@@ -113,7 +113,7 @@
 	<button type="button" class="collapsible">Outstanding Extra Work Tickets</button>
 	<div class="content">
 		<div class="demo-html" style="width:90%">
-			<table id="tickets_table" class="display" style="width:90%" >
+			<table id="tickets_table" class="display table" style="width:90%" >
 			<thead>
 				<tr>
 					<th>CO#</th>
@@ -139,7 +139,7 @@
 	<button type="button" class="collapsible">Pending Change Orders Not Approved Yet</button>
 	<div class="content">
 		<div class="demo-html" style="width:90%">
-			<table id="tickets_table1" class="display" style="width:90%" >
+			<table id="tickets_table1" class="display table" style="width:90%" >
 			<thead>
 				<tr>
 					<th>CO#</th>

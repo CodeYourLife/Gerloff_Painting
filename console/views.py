@@ -1,3 +1,5 @@
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required
 import changeorder.models
 import employees.models
 import equipment.models
@@ -46,15 +48,15 @@ def index(request):
 
     return render(request, 'index.html')
 
-
+@login_required(login_url='/accounts/login')
 def warehouse_home(request):
     return render(request, 'warehouse_home.html')
-
+@login_required(login_url='/accounts/login')
 def admin_home(request):
     send_data = {}
     send_data['employees'] = Employees.objects.filter(user__isnull=True)
     return render(request, 'admin_home.html',send_data)
-
+@login_required(login_url='/accounts/login')
 def grant_web_access(request):
     send_data = {}
     send_data['employees'] = Employees.objects.filter(user__isnull=True,pin__isnull=True)

@@ -1,5 +1,6 @@
 
 from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 from rentals.models import Rentals
 from datetime import date, timedelta
 from employees.models import Employees
@@ -9,6 +10,7 @@ from equipment.models import *
 from console.models import *
 
 
+@login_required(login_url='/accounts/login')
 def super_home(request):
     jobs = Jobs.objects.all()[0:2000]
     supers = Employees.objects.all()[0:2000]
@@ -18,6 +20,7 @@ def super_home(request):
     todays_date = date.today() - timedelta(days=45)
     return render(request, "super_home.html", {'tickets':tickets,'rentals':rentals,'jobs': jobs, 'supers': supers, "equipment": equipment,'todays_date':todays_date})
 
+@login_required(login_url='/accounts/login')
 def filter_super(request):
     if request.method == 'POST':
         jobs = Jobs.objects.filter(superintendent= request.POST['selected_super'])[0:2000]

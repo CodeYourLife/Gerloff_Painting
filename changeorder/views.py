@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required
 from changeorder.models import *
 from jobs.models import Jobs, JobCharges, ClientEmployees
 from employees.models import *
@@ -209,6 +210,7 @@ def print_ticket(request, id):
                    'changeorder': changeorder})
 
 
+@login_required(login_url='/accounts/login')
 def view_ewt(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
     employees = Employees.objects.all()
@@ -224,7 +226,7 @@ def view_ewt(request, id):
                    'materials': materials, 'changeorder': changeorder, 'employees': employees,
                    'employeesjson': employees_json})
 
-
+@login_required(login_url='/accounts/login')
 def change_order_send(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
     if request.method != 'POST':
@@ -308,7 +310,7 @@ def change_order_send(request, id):
                   {'client_list': client_list,
                    'extra_contacts': extra_contacts, 'changeorder': changeorder})
 
-
+@login_required(login_url='/accounts/login')
 def change_order_new(request, jobnumber):
     if request.method == 'POST':
         if 'select_job' in request.POST:
@@ -347,7 +349,7 @@ def change_order_new(request, jobnumber):
         jobs = Jobs.objects.filter(status="Open")
         return render(request, "change_order_new.html", {'jobs': jobs})
 
-
+@login_required(login_url='/accounts/login')
 def change_order_home(request):
     all_orders = ChangeOrderFilter(request.GET, queryset =ChangeOrders.objects.filter(is_closed=False).order_by('job_number','cop_number'))
     table = ChangeOrderTable(all_orders.qs)
@@ -355,7 +357,7 @@ def change_order_home(request):
     # RequestConfig(request).configure(table)
     return render(request, "change_order_home.html", {'table': table,'all_orders':all_orders,'has_filter':has_filter})
 
-
+@login_required(login_url='/accounts/login')
 def extra_work_ticket(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
     ticket_needed = changeorder.need_ticket()
@@ -432,7 +434,7 @@ def extra_work_ticket(request, id):
                       {'tmproposal': tmproposal, 'ticket_needed': ticket_needed, 'changeorder': changeorder,
                        'notes': notes})
 
-
+@login_required(login_url='/accounts/login')
 def process_ewt(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
     if request.method == 'POST':

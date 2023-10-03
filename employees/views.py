@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required
 from employees.models import *
 from django.shortcuts import render, redirect
 import json
@@ -6,7 +7,7 @@ from datetime import date
 from equipment.models import Inventory
 from jobs.models import Jobs
 
-
+@login_required(login_url='/accounts/login')
 def new_production_report(request, jobnumber):
     send_data = {}
     if jobnumber == 'ALL':
@@ -129,7 +130,7 @@ def new_production_report(request, jobnumber):
             return render(request, "new_production_report.html", send_data)
     return render(request, "new_production_report.html", send_data)
 
-
+@login_required(login_url='/accounts/login')
 def new_assessment(request, id):
     send_data = {}
     if request.method == 'POST':
@@ -174,7 +175,7 @@ def new_assessment(request, id):
         # send_data['employees'] = json.dumps(list(Employees.objects.filter(active=True).values('id','last_name','first_name')), cls=DjangoJSONEncoder)
     return render(request, "new_assessment.html", send_data)
 
-
+@login_required(login_url='/accounts/login')
 def classes(request, id):
     send_data = {}
     send_data['classoccurrences'] = ClassOccurrence.objects.all()
@@ -183,7 +184,7 @@ def classes(request, id):
         send_data['attendees'] = ClassAttendees.objects.filter(class_event__id=id)
     return render(request, "classes.html", send_data)
 
-
+@login_required(login_url='/accounts/login')
 def new_class(request):
     send_data = {}
     send_data['employees'] = Employees.objects.filter(active=True)
@@ -226,7 +227,7 @@ def new_class(request):
         return redirect('classes', id='ALL')
     return render(request, "new_class.html", send_data)
 
-
+@login_required(login_url='/accounts/login')
 def exams(request, id):
     send_data = {}
     send_data['employees'] = Employees.objects.filter(active=True)
@@ -236,7 +237,7 @@ def exams(request, id):
         send_data['attendees'] = ClassAttendees.objects.filter(class_event__id=id)
     return render(request, "exams.html", send_data)
 
-
+@login_required(login_url='/accounts/login')
 def new_exam(request):
     send_data = {}
     send_data['employees'] = Employees.objects.filter(active=True)
@@ -261,7 +262,7 @@ def new_exam(request):
         new_exam.save()
     return render(request, "new_exam.html", send_data)
 
-
+@login_required(login_url='/accounts/login')
 def mentorships(request, id):
     send_data = {}
     send_data['mentorships'] = Mentorship.objects.all()
@@ -292,7 +293,7 @@ def mentorships(request, id):
         send_data['selected_item'] = Mentorship.objects.get(id=id)
     return render(request, "mentorships.html", send_data)
 
-
+@login_required(login_url='/accounts/login')
 def new_mentorship(request):
     send_data = {}
     send_data['employees'] = Employees.objects.filter(active=True)
@@ -305,7 +306,7 @@ def new_mentorship(request):
         return redirect('mentorships', id=new_item.id)
     return render(request, "new_mentorship.html", send_data)
 
-
+@login_required(login_url='/accounts/login')
 def assessments(request, id):
     send_data = {}
     send_data['employeereviews'] = EmployeeReview.objects.filter(employee__active=True)
@@ -326,7 +327,7 @@ def assessments(request, id):
         send_data['selected_assessment'] = selected_assessment
     return render(request, "assessments.html", send_data)
 
-
+@login_required(login_url='/accounts/login')
 def production_reports(request, id):
     send_data = {}
     if id != 'ALL':
@@ -336,24 +337,24 @@ def production_reports(request, id):
         send_data['production_reports'] = ProductionItems.objects.all().order_by('employee', 'date')
     return render(request, "production_reports.html", send_data)
 
-
+@login_required(login_url='/accounts/login')
 def employees_home(request):
     send_data = {}
     send_data['employees'] = Employees.objects.filter(active=True)
     return render(request, "employees_home.html", send_data)
 
-
+@login_required(login_url='/accounts/login')
 def employees_page(request, id):
     send_data = {}
     send_data['employee'] = Employees.objects.get(id=id)
     return render(request, "employees_page.html", send_data)
 
-
+@login_required(login_url='/accounts/login')
 def training(request):
     send_data = {}
     return render(request, "training.html", send_data)
 
-
+@login_required(login_url='/accounts/login')
 def my_page(request):
     send_data = {}
     employee = Employees.objects.get(user=request.user)
@@ -381,7 +382,7 @@ def my_page(request):
         employee.save()
     return render(request, "my_page.html", send_data)
 
-
+@login_required(login_url='/accounts/login')
 def certifications(request, id):
     send_data = {}
     send_data['certifications'] = Certifications.objects.all()
@@ -428,7 +429,7 @@ def certifications(request, id):
         cert.save()
     return render(request, "certifications.html", send_data)
 
-
+@login_required(login_url='/accounts/login')
 def new_certification(request):
     send_data = {}
     send_data['employees'] = Employees.objects.filter(active=True)
@@ -460,7 +461,7 @@ def new_certification(request):
         return redirect('certifications', id=new_cert.id)
     return render(request, "new_certification.html", send_data)
 
-
+@login_required(login_url='/accounts/login')
 def add_new_employee(request):
     send_data = {}
     send_data['jobtitles'] = EmployeeTitles.objects.all
@@ -474,7 +475,7 @@ def add_new_employee(request):
         return redirect('employees_home')
     return render(request, "add_new_employee.html", send_data)
 
-
+@login_required(login_url='/accounts/login')
 def write_ups(request, id):
     send_data = {}
     send_data['employees'] = Employees.objects.filter(active=True)
@@ -485,7 +486,7 @@ def write_ups(request, id):
         send_data['selected_item'] = WriteUp.objects.get(id=id)
     return render(request, "write_ups.html", send_data)
 
-
+@login_required(login_url='/accounts/login')
 def write_ups_new(request):
     send_data = {}
     send_data['employees'] = Employees.objects.filter(active=True)
@@ -510,7 +511,7 @@ def write_ups_new(request):
         return redirect('write_ups', id=new_writeup.id)
     return render(request, "write_ups_new.html", send_data)
 
-
+@login_required(login_url='/accounts/login')
 def daily_reports(request, id):
     send_data = {}
     send_data['dailyreports'] = DailyReports.objects.all()
