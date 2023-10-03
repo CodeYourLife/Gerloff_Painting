@@ -22,7 +22,15 @@
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
-
+		function validate(){
+            value = event.target.value;
+		    if (value != null && value != ""){
+                document.getElementById('submitBtn').removeAttribute('disabled')
+            }
+            else {
+                document.getElementById('submitBtn').setAttribute('disabled', true);
+            }
+		}
 
 	</script>
 </head>
@@ -32,13 +40,14 @@
     <div class="col-6">
         <form action = "{% url 'verify_pin' %}" method = "post" class="form-group">
             {% csrf_token %}
-			{{message}}
+
 			<br>
             <label for="pin">PIN</label>
-            <input id="pin" type="text" name = "pin" placeholder="Employee PIN" class="form-control">
+            <input id="pin" oninput="validate(event)" type="number" name = "pin" placeholder="Employee PIN" class="form-control">
             <small id="pinHelp" class="form-text text-muted">Please enter your PIN.</small>
-			<input type="submit" name = "pin_entered" class="btn btn-primary btn-sm" value="Submit" >
-        </form>
+			<input type="submit" id="submitBtn" disabled name = "pin_entered" class="btn btn-primary btn-sm" value="Submit" >
+			<div class="text-danger">{{message}}</div>
+		</form>
     </div>
 </div>
 </div>
