@@ -27,6 +27,7 @@ from superintendent.models import *
 from wallcovering.models import *
 import random
 
+@login_required(login_url='/accounts/login')
 def seperate_test(request):
     fileitem = request.FILES['filename']
     print(fileitem)
@@ -34,6 +35,7 @@ def seperate_test(request):
     fn2 = os.path.join("C:/Trinity/",fn)
     open(fn2, 'wb').write(fileitem.file.read())
     return redirect('index')
+@login_required(login_url='/accounts/login')
 def index(request):
     print(Path(__file__).resolve().parent.parent)
     if request.method == 'POST':
