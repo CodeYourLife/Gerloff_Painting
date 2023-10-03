@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 import json
 from django.core.serializers.json import DjangoJSONEncoder
@@ -16,30 +17,35 @@ import csv
 from pathlib import Path
 from django.conf import settings
 
+@login_required(login_url='/accounts/login')
 def equipment_remove_from_outgoing_cart(request,id): #status = None, Outgoing, Incoming
     item = Inventory.objects.get(id=id)
     item.batch = None
     item.save()
     return redirect('equipment_batch_outgoing',status='Outgoing')
 
+@login_required(login_url='/accounts/login')
 def equipment_remove_from_incoming_cart(request,id): #status = None, Outgoing, Incoming
     item = Inventory.objects.get(id=id)
     item.batch = None
     item.save()
     return redirect('equipment_batch_outgoing',status='Incoming')
 
+@login_required(login_url='/accounts/login')
 def equipment_add_to_outgoing(request,id): #status = None, Outgoing, Incoming
     item = Inventory.objects.get(id=id)
     item.batch = "Outgoing"
     item.save()
     return redirect('equipment_batch_outgoing',status='Outgoing')
 
+@login_required(login_url='/accounts/login')
 def equipment_add_to_incoming(request,id): #status = None, Outgoing, Incoming
     item = Inventory.objects.get(id=id)
     item.batch = "Incoming"
     item.save()
     return redirect('equipment_batch_outgoing',status='Incoming')
 
+@login_required(login_url='/accounts/login')
 def equipment_batch_outgoing(request,status): #status is Outgoing, Incoming
     if request.method == 'POST':
         if status == "Outgoing":
@@ -86,6 +92,7 @@ def equipment_batch_outgoing(request,status): #status is Outgoing, Incoming
     has_filter = any(field in request.GET for field in set(available_filter.get_fields()))
     return render(request, "equipment_batch_outgoing.html", {'status':status,'jobs':jobs,'available_filter':available_filter,'has_filter':has_filter,'pending_table':pending_table,'available_table':available_table})
 
+@login_required(login_url='/accounts/login')
 def equipment_new(request):
     inventorytype=InventoryType.objects.all()
     inventoryitems1 = json.dumps(list(InventoryItems.objects.values('id','type__id','name').all()), cls=DjangoJSONEncoder)
@@ -110,6 +117,7 @@ def equipment_new(request):
         return redirect('equipment_page', id=inventory.id)
     return render(request, "equipment_new.html", {'vendors':vendors,'inventorytype':inventorytype,'inventoryitems1':inventoryitems1,'inventoryitems2':inventoryitems2,'inventoryitems3':inventoryitems3,'inventoryitems4':inventoryitems4})
 
+@login_required(login_url='/accounts/login')
 def equipment_page(request, id):
     inventory = Inventory.objects.get(id=id)
     table = EquipmentNotesTable(InventoryNotes.objects.filter(inventory_item=inventory))
@@ -230,6 +238,7 @@ def equipment_page(request, id):
     jobs = Jobs.objects.all()
     return render(request, "equipment_page.html", {'employees':employees,'jobs': jobs,'inventories': inventory, "table": table, "vendors": vendors, "foldercontents":foldercontents})
 
+@login_required(login_url='/accounts/login')
 def equipment_home(request):
     inventories = Inventory.objects.all()
     return render(request, "equipment_home.html", {'inventories': inventories})

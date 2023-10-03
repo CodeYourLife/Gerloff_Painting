@@ -7,8 +7,9 @@ from datetime import date
 from wallcovering.models import Wallcovering
 from subcontractors.models import *
 from jobs.models import *
+from django.contrib.auth.decorators import login_required
 
-
+@login_required(login_url='/accounts/login')
 def subcontractor_invoice_new(request,subcontract_id):
     subcontract = Subcontracts.objects.get(id=subcontract_id)
     items = []
@@ -46,6 +47,7 @@ def subcontractor_invoice_new(request,subcontract_id):
     return render(request, "subcontractor_invoice_new.html", {'next_number':next_number,'items':items,'subcontract':subcontract})
 
 
+@login_required(login_url='/accounts/login')
 def subcontract_invoices(request,subcontract_id,item_id):
     subcontract = Subcontracts.objects.get(id=subcontract_id)
     if request.method == 'POST':
@@ -128,11 +130,13 @@ def subcontract_invoices(request,subcontract_id,item_id):
     return render(request, "subcontract_invoices.html", {'invoices':invoices,'subcontract':subcontract})
 
 
+@login_required(login_url='/accounts/login')
 def subcontractor_home(request):
     subcontractors = Subcontractors.objects.filter(subcontract__isnull=False)
     return render(request, "subcontractor_home.html", {'subcontractors':subcontractors})
 
 
+@login_required(login_url='/accounts/login')
 def subcontract(request,id):
     subcontract= Subcontracts.objects.get(id=id)
     items = []
@@ -224,11 +228,13 @@ def subcontract(request,id):
     return render(request, "subcontract.html", {'notes':notes,'wallcovering_json':wallcovering_json,'number_items':number_items,'subcontract':subcontract,'items':items})
 
 
+@login_required(login_url='/accounts/login')
 def subcontractor(request,id):
     response = redirect('/')
     return response
 
 
+@login_required(login_url='/accounts/login')
 def subcontractor_new(request):
     if request.method == 'POST':
         signed = False
@@ -239,6 +245,7 @@ def subcontractor_new(request):
     return render(request, "subcontractor_new.html")
 
 
+@login_required(login_url='/accounts/login')
 def subcontracts_new(request):
     subcontractors = Subcontractors.objects.filter()
     if request.method == 'POST':
@@ -279,6 +286,7 @@ def subcontracts_new(request):
     return render(request, "subcontracts_new.html",{'selectedjob': selectedjob,'jobs':jobs,'subcontractors':subcontractors})
 
 
+@login_required(login_url='/accounts/login')
 def subcontracts_home(request):
     subcontracts = Subcontracts.objects.filter(is_closed=False)
     return render(request, "subcontracts_home.html", {'subcontracts':subcontracts})

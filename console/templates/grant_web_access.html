@@ -36,22 +36,25 @@
 </nav>
 <div style="padding-top: 50px; padding-bottom: 50px" class="row align-items-center justify-content-center align-middle">
     <div class="col-6" >
+		{% if user.is_superuser %}
+			<form action = "{% url 'grant_web_access' %}" method = "post" class="form-group">
+				{% csrf_token %}
 
-        <form action = "{% url 'grant_web_access' %}" method = "post" class="form-group">
-            {% csrf_token %}
+				 <label for="select_employee">Select Employee</label>
+				<select id="select_employee" name="select_employee" class="form-control">
+					<option value="not_selected">Select Employee</option>
+					{% if employees %}
+						{% for x in employees %}
+							<option value={{x.id}}>{{x.first_name}} {{x.middle_name}} {{x.last_name}}</option>
+						{% endfor %}
+					{% endif %}
+				</select>
 
-			 <label for="select_employee">Select Employee</label>
-            <select id="select_employee" name="select_employee" class="form-control">
-                <option value="not_selected">Select Employee</option>
-                {% if employees %}
-                {% for x in employees %}
-                <option value={{x.id}}>{{x.first_name}} {{x.middle_name}} {{x.last_name}}</option>
-                {% endfor %}
-                {% endif %}
-            </select>
-
-            <input type="submit" style="margin-top: 10px" class="btn btn-primary btn-sm" name="add_new" value="Submit Now" >
-        </form>
+				<input type="submit" style="margin-top: 10px" class="btn btn-primary btn-sm" name="add_new" value="Submit Now" >
+			</form>
+		{% else %}
+			<div style="padding-top: 25px">Unauthorized</div>
+		{% endif %}
     </div>
 </div>
 </body>

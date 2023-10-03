@@ -4,13 +4,16 @@ from jobs.models import Jobs
 from django.shortcuts import render, redirect
 from .tables import RentalsTable
 from django_tables2 import RequestConfig
+from django.contrib.auth.decorators import login_required
 # Create your views here.
 
+@login_required(login_url='/accounts/login')
 def rentals_home(request):
     table = RentalsTable(Rentals.objects.filter(is_closed=False).order_by('off_rent_date','job_number'))
     RequestConfig(request).configure(table)
     return render(request, "rentals_home.html", {'table': table})
 
+@login_required(login_url='/accounts/login')
 def rental_new(request,jobnumber):
     if jobnumber == "ALL":
         jobs = Jobs.objects.all()
@@ -42,6 +45,7 @@ def rental_new(request,jobnumber):
         return render(request, "rental_new.html", {'jobs':jobs,'vendors':vendors})
 
 
+@login_required(login_url='/accounts/login')
 def rental_page(request,id,reverse):
     rental = Rentals.objects.get(id=id)
     reverse = reverse

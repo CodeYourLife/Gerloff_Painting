@@ -7,14 +7,16 @@ from datetime import date
 from jobs.models import Jobs
 from wallcovering.models import Wallcovering
 from submittals.models import SubmittalItems, SubmittalNotes, Submittals
+from django.contrib.auth.decorators import login_required
 
-
+@login_required(login_url='/accounts/login')
 def submittals_item_close(request,id):
     item = SubmittalItems.objects.get(id=id)
     item.is_closed = True
     item.save()
     return redirect('submittals_page', id=item.submittal.id)
 
+@login_required(login_url='/accounts/login')
 def submittals_page(request, id):
     selected_submittal = Submittals.objects.get(id=id)
     if request.method == 'POST':
@@ -53,12 +55,14 @@ def submittals_page(request, id):
     return render(request, "submittals_page.html", send_data)
 
 
+@login_required(login_url='/accounts/login')
 def submittals_home(request):
     send_data = {}
     send_data['submittals'] = Submittals.objects.filter(job_number__status = "Open").order_by('job_number','submittal_number')
     return render(request, "submittals_home.html", send_data)
 
 
+@login_required(login_url='/accounts/login')
 def submittals_new(request):
     jobs = Jobs.objects.filter(status="Open")
     send_data = {}
