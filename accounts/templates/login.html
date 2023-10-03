@@ -30,11 +30,11 @@
     <div class="col-6">
     <form action = "login" method = "post" class="form-group">
         {% csrf_token %}
-        <input type="username" name = "username" placeholder="username" class="form-control"><br>
-        <input type="password" name = "password" placeholder="Password" class="form-control"><br>
-        <div style="display: flex; justify-content: space-between; align-items: center">
+        <input value="{{username}}" type="username" name = "username" placeholder="Username" class="form-control"><br>
+        <input value="{{password}}" type="password" name = "password" placeholder="Password" class="form-control"><br>
+        <div style="align-items: center">
 			<input type="submit" class="btn btn-primary btn-sm" name = "login" value="Log In">
-			<input type="submit" class="btn btn-primary btn-sm" name = "register" value="Register New User With Pin">
+			<input style="margin-top: 10px" type="submit" class="btn btn-primary btn-sm" name = "register" value="Register New User With Pin">
     	<div class="text-danger">{{message}}</div>
 		</div>
 	</form>
