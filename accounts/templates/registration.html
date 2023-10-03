@@ -38,7 +38,7 @@
             //user name validation
             username = document.getElementById("username").value;
             usernameRegex = /^[a-z0-9_.]+$/
-            if (usernameRegex.test(username) == false || !username) {
+            if (usernameRegex.test(username.toLowerCase()) == false || !username) {
                 passes = false;
                 if (id == "username"){
                     document.getElementById("validateUsernameLbl").style.display = 'block';
