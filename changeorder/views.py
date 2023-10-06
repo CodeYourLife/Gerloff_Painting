@@ -110,7 +110,7 @@ def price_ewt(request, id):
     totalcost = 0
     counter = 0
     is_bonded = False
-    for x in TMPricesMaster.objects.filter(category="Labor", ewticket__isnull=False).distinct():
+    for x in TMPricesMaster.objects.filter(category="Labor", ewtmaster__isnull=False).distinct():
         hours = 0
         for y in EWTicket.objects.filter(EWT=ewt, master=x).exclude(employee=None).order_by('master'):
             hours = hours + y.monday + y.tuesday + y.wednesday + y.thursday + y.friday + y.saturday + y.sunday
@@ -275,6 +275,7 @@ def change_order_send(request, id):
                 # Email.sendEmail("Change Order","Test",recipients)
                 return redirect('extra_work_ticket', id=id)
     extra_contacts = False
+    print(changeorder.job_number.client_Pm)
     project_pm = ClientEmployees.objects.get(person_pk=changeorder.job_number.client_Pm.person_pk)
     client_list = []
     if TempRecipients.objects.filter(changeorder=changeorder, default=False).exists():
