@@ -64,7 +64,7 @@ class Jobs(models.Model):
     booked_date = models.DateField(null=True, blank=True)
     booked_by = models.CharField(null=True, max_length=50, blank=True)
     is_wage_scale = models.BooleanField(default=False)
-    is_davis_bacon_wages = models.BooleanField(default=False)
+    is_davis_bacon_wages = models.BooleanField(default=False) #delete - same thing as is_wage_scale
     spray_scale = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True)
     brush_role = models.DecimalField(
@@ -100,8 +100,10 @@ class Jobs(models.Model):
         max_digits=9, decimal_places=2, blank=True, null=True)
     contract_status = models.IntegerField()
     insurance_status = models.IntegerField()
-    submittals_required = models.IntegerField(null=True)
+    submittals_required = models.IntegerField(null=True) #replacing this with submittals_needed
+    submittals_needed = models.BooleanField(default=False)
     has_special_paint = models.IntegerField(null=True)
+    special_paint_needed = models.BooleanField(default=False)
     client = models.ForeignKey(
         Clients, related_name="Client", on_delete=models.PROTECT)
     client_Pm = models.ForeignKey(

@@ -146,7 +146,6 @@ def register(request):
                 job_number = new_job_number.letter + new_job_number.number
         else:
             job_number = request.POST['job_number']
-
         job_name = request.POST['job_name']
         address = request.POST['address']
         city = request.POST['city']
@@ -181,24 +180,15 @@ def register(request):
             insurance_status = 3
 
         if request.POST['select_company'] == 'add_new':
-            new_client = request.POST['new_client']
-            new_client_phone = request.POST['new_client_phone']
-            new_client_email = request.POST['new_client_bid_email']
-            client = ClientJobRoles.objects.create(company=new_client, bid_email=new_client_email,
-                                                   phone=new_client_phone)
-            client.save();
+            client = Clients.objects.create(company=request.POST['new_client'], bid_email=request.POST['new_client_bid_email'],
+                                                   phone=request.POST['new_client_phone'])
         else:
             client = Clients.objects.get(id=request.POST['select_company'])
-
-        if request.POST['select_pm'] == 'not_sure':
-            checklist.append("get pm info")
-            client_pm = 'not_sure'
-        elif request.POST['select_pm'] == 'use_below':
-            new_name = request.POST['new_pm']
-            new_phone = request.POST['new_pm_phone']
-            new_email = request.POST['new_pm_email']
-            client_pm = ClientEmployees.objects.create(id=client, name=new_name, phone=new_phone, email=new_email)
-            client_pm.save;
+        # if request.POST['select_pm'] == 'not_sure':
+        #     checklist.append("get pm info")
+        #     client_pm = 'not_sure'
+        if request.POST['select_pm'] == 'use_below':
+            client_pm = ClientEmployees.objects.create(id=client, name=request.POST['new_pm'], phone=request.POST['new_pm_phone'], email=request.POST['new_pm_email'])
         else:
             client_pm = ClientEmployees.objects.get(person_pk=request.POST['select_pm'])
 
@@ -206,24 +196,12 @@ def register(request):
             checklist.append("get superintendent info")
             client_super = 'not_sure'
         elif request.POST['select_super'] == 'use_below':
-            new_name = request.POST['new_super']
-            new_phone = request.POST['new_super_phone']
-            new_email = request.POST['new_super_email']
-            client_super = ClientEmployees.objects.create(id=client, name=new_name, phone=new_phone, email=new_email)
-            client_super.save;
-
+            client_super = ClientEmployees.objects.create(id=client, name=request.POST['new_super'], phone=request.POST['new_super_phone'], email=request.POST['new_super_email'])
         else:
             client_super = ClientEmployees.objects.get(person_pk=request.POST['select_super'])
 
         superintendent = request.POST['select_gpsuper']
-        if request.POST['has_paint'] == 'true':
-            has_paint = True
-        else:
-            has_paint = False
-        if request.POST['has_wallcovering'] == 'true':
-            has_wallcovering = True
-        else:
-            has_wallcovering = False
+
 
         start_date = request.POST['start_date']
 
@@ -234,15 +212,18 @@ def register(request):
 
         job = Jobs.objects.create(job_number=job_number, job_name=job_name, address=address, city=city, state=state,
                                   is_on_base=is_on_base, is_t_m_job=is_t_m_job, contract_status=contract_status,
-                                  insurance_status=insurance_status, client=client,
-                                  has_wallcovering=has_wallcovering, has_paint=has_paint, start_date=start_date,
-                                  status="Open", booked_date=date.today())
+                                  insurance_status=insurance_status, client=client,start_date=start_date,
+                                  status="Open", booked_date=date.today(),booked_by=request.user.first_name + " " + request.user.last_name)
+        if 'is_wage_rate' in request.POST:
+            job.is_wage_scale = True
+        if 'has_special_paint' in request.POST:
+            job.has_special_paint = True
+            job.special_paint_needed = True
         if client_super != 'not_sure':
-            job.client_super = client_super
-        if client_pm != 'not_sure':
-            job.client_pm = client_pm
-            job.client_submittal_contact = client_pm
-            job.client_co_contact = client_pm
+            job.client_Super = client_super
+        job.client_Pm = client_pm
+        #job.client_submittal_contact = client_pm
+        #job.client_co_contact = client_pm
         if is_t_m_job == False:
             job.contract_amount = contract_amount
         if t_m_nte_amount != "":
@@ -257,6 +238,15 @@ def register(request):
             job.wallcovering_budget = wallcovering_budget
         if superintendent != 'not_sure':
             job.superintendent = Employees.objects.get(id=superintendent)
+        if 'has_paint' in request.POST:
+            job.has_paint = True
+        if 'has_wallcovering' in request.POST:
+            job.has_wallcovering = True
+        if 'has_submittals' in request.POST:
+            job.submittals_needed = True
+        else:
+            job.submittals_required = False
+
         JobNotes.objects.create(job_number=job,
                                 note="Start Date at Booking: " + start_date + " " + request.POST['date_note'],
                                 type="auto_start_date_note", date=date.today(),
@@ -269,6 +259,7 @@ def register(request):
                                 user=request.user.first_name + " " + request.user.last_name)
         email_body = "New Job Booked \n" + job.job_number + "\n" + job.job_name + "\n" + job.client.company
         Email.sendEmail("New Job - " + job.job_name, email_body, 'joe@gerloffpainting.com')
+        job.save()
         # for x in checklist:
         #     checklist = Checklist(job_number=job_number, checklist_item=x, category="PM")
         #     checklist.save();
