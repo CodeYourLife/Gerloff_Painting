@@ -19,10 +19,10 @@ class Clients(models.Model):
     bid_fax = models.CharField(null=True, blank=True, max_length=50)
     bid_email = models.EmailField(null=True, blank=True)
     vendor_code = models.CharField(null=True, blank=True, max_length=100)
-    address = models.CharField(null=True, max_length=100)
-    city = models.CharField(null=True, max_length=100)
-    state = models.CharField(null=True, max_length=100)
-    phone = models.CharField(null=True, max_length=50)
+    address = models.CharField(null=True, max_length=100, blank=True)
+    city = models.CharField(null=True, max_length=100,blank=True)
+    state = models.CharField(null=True, max_length=100, blank=True)
+    phone = models.CharField(null=True, max_length=50,blank=True)
 
     def __str__(self):
         return f"{self.company}"
@@ -48,10 +48,12 @@ class JobNumbers(models.Model):
 class Jobs(models.Model):
     job_number = models.CharField(null=False, max_length=5, primary_key=True)
     job_name = models.CharField(null=True, max_length=250)
-    estimator = models.CharField(null=True, max_length=50)
-    foreman = models.CharField(null=True, max_length=50, blank=True)
+    estimator = models.ForeignKey(
+        Employees, on_delete=models.PROTECT, null=True,blank=True, related_name='estimator')
+    foreman = models.ForeignKey(
+        Employees, on_delete=models.PROTECT, null=True,blank=True, related_name='foreman')
     superintendent = models.ForeignKey(
-        Employees, on_delete=models.PROTECT, null=True)
+        Employees, on_delete=models.PROTECT, null=True,blank=True, related_name='superintendent')
     contract_amount = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True)
     po_number = models.CharField(null=True, max_length=50, blank=True)
@@ -100,9 +102,11 @@ class Jobs(models.Model):
         max_digits=9, decimal_places=2, blank=True, null=True)
     contract_status = models.IntegerField()
     insurance_status = models.IntegerField()
-    submittals_required = models.IntegerField(null=True) #replacing this with submittals_needed
+
+    submittals_required = models.IntegerField(null=True,blank=True) #replacing this with submittals_needed
     submittals_needed = models.BooleanField(default=False)
-    has_special_paint = models.IntegerField(null=True)
+    has_special_paint = models.IntegerField(null=True,blank=True)#replacing this with special_paint_needed
+
     special_paint_needed = models.BooleanField(default=False)
     client = models.ForeignKey(
         Clients, related_name="Client", on_delete=models.PROTECT)
@@ -111,10 +115,10 @@ class Jobs(models.Model):
     client_Pm_Phone = models.CharField(null=True, max_length=50, blank=True)
     client_Pm_Email = models.EmailField(null=True, blank=True)
     client_Co_Contact = models.ForeignKey(
-        ClientEmployees, related_name="CO", on_delete=models.PROTECT, null=True)
+        ClientEmployees, related_name="CO", on_delete=models.PROTECT, null=True, blank=True)
     client_Co_Email = models.EmailField(null=True, blank=True)
     client_Submittal_Contact = models.ForeignKey(
-        ClientEmployees, related_name="Submittals", on_delete=models.PROTECT, null=True)
+        ClientEmployees, related_name="Submittals", on_delete=models.PROTECT, null=True,blank=True)
     client_Submittal_Email = models.EmailField(null=True, blank=True)
     client_Super = models.ForeignKey(
         ClientEmployees, related_name="Super", on_delete=models.PROTECT, null=True, blank=True)
