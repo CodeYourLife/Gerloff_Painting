@@ -1,7 +1,10 @@
 
+
 <!DOCTYPE html>
+
 <html>
 <head>
+	{% load static %}
 	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 	<title>DataTables example - HTML (DOM) sourced data</title>
@@ -23,9 +26,7 @@
 	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
-
-
+	<script src="{% static 'signature.js' %}">
 	</script>
 </head>
 <body>
@@ -118,6 +119,11 @@
 <div class ="container">
 	<div class ="row">
 		<div class ="col">Approved:</div>
+		<div id="canvas">
+		  <canvas class="roundCorners" id="newSignature"
+		  style="position: relative; margin: 0; padding: 0; border: 1px solid #c4caac;"></canvas>
+		</div>
+		<img id="saveSignature" style="display: none; width: 400px; height: 100px" alt="Saved image png"/><br></br>
 		<div class ="col-10">___________________________________________</div>
 	</div>
 	<div class ="row">
@@ -128,6 +134,9 @@
 </div>
 					<form action="{% url 'print_ticket' changeorder.id %}" method="post"  >
         				{% csrf_token %}
+						<script>signatureCapture();</script>
+						<button type="button" id="saveSignatureBtn" onclick="signatureSave()">Save signature</button>
+						<button type="button" id="clearSignatureBtn" onclick="signatureClear()">Clear signature</button>
 						 <input type="submit" value="pdf" />
 					</form>
 

@@ -102,9 +102,11 @@ class Jobs(models.Model):
         max_digits=9, decimal_places=2, blank=True, null=True)
     contract_status = models.IntegerField()
     insurance_status = models.IntegerField()
+
     submittals_required = models.IntegerField(null=True,blank=True) #replacing this with submittals_needed
     submittals_needed = models.BooleanField(default=False)
     has_special_paint = models.IntegerField(null=True,blank=True)#replacing this with special_paint_needed
+
     special_paint_needed = models.BooleanField(default=False)
     client = models.ForeignKey(
         Clients, related_name="Client", on_delete=models.PROTECT)
