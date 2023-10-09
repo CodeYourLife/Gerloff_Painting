@@ -72,6 +72,16 @@
                     return false;
                 }
             }
+            if (booking_input.select_pm.value == "please_select"){
+                    booking_input.select_pm.scrollIntoView();
+                    alert("Please select estimator")
+                    return false;
+                }
+            if (booking_input.select_super.value == "please_select"){
+                    booking_input.select_super.scrollIntoView();
+                    alert("Please select client superintendent")
+                    return false;
+                }
             if (booking_input.select_pm.value == "use_below"){
                 if (booking_input.new_pm.value == ""){
                     booking_input.select_pm.scrollIntoView();
@@ -125,6 +135,31 @@
                 return false;
             }
 
+
+            if (booking_input.is_wage_rate.checked == true){
+                if (booking_input.spray_scale.value == "" && booking_input.brush_role.value == ""){
+                    alert("Uncheck wage rate button")
+                    booking_input.is_wage_rate.scrollIntoView();
+                     return false;
+                }
+            } else {
+            if (booking_input.spray_scale.value != "" || booking_input.brush_role.value != ""){
+                    alert("Check wage rate button")
+                    booking_input.is_wage_rate.scrollIntoView();
+                     return false;
+                }
+            }
+
+
+            if (booking_input.wallcovering_budget.value != ""){
+                if (booking_input.has_wallcovering2.checked==false){
+                    booking_input.has_wallcovering2.checked= true;
+                    alert("clicked wallcovering scope button")
+                }
+            }
+
+
+
         }
 
         function hide_contract_amount(){
@@ -160,7 +195,7 @@
             for(let i = booking_input.select_super.options.length; i >= 0; i--) {
                 booking_input.select_super.remove(i);
             }
-            booking_input.select_pm.options[0] = new Option("not sure","not_sure");
+            booking_input.select_pm.options[0] = new Option("Please Select","please_select");
             booking_input.select_super.options[0] = new Option("not sure","not_sure");
             let b=1
             for(let i =0; i < rolodex.length; i++){
@@ -189,7 +224,7 @@
                 booking_input.select_company.value = "add_new";
                 clear_select_pm()
                 clear_select_super()
-                booking_input.select_pm.options[1] = new Option("not sure", "not_sure");
+                booking_input.select_pm.options[1] = new Option("Please Select", "please_select");
                 booking_input.select_super.options[1] = new Option("not sure", "not_sure");
         }
 
@@ -290,6 +325,13 @@
                     </div>
                 </div>
                 <hr>
+
+                    <div class ="row">
+                        <div class="col-sm-6">
+                        <label for="is_wage_rate">"Are there wage rates for this job?" </label>
+                         <input type="checkbox" name ="is_wage_rate" id="is_wage_rate"  /></div>
+
+                    </div>
                     <div class ="row">
                         <div class="col-sm-6"><input style="margin-top: 22px" class="form-control" type= "text" name="spray_scale" placeholder="Spray Scale" size="30"/><br /></div>
                         <div class="col-sm-6"><input style="margin-top: 22px" class="form-control" type= "text" name="brush_role" placeholder="Brush/Roll Scale" size="30"/><br /></div>
@@ -339,6 +381,16 @@
                         <div class ="col-lg"></div>
                     </div>
                 </div> <!#contract status and coi>
+                <hr>
+                <br>
+                <div class ="container">
+                <div class ="row">
+                     <div class ="col-sm-12">
+                        <label for="has_submittals">"Does this job require submittals?" </label>
+                        <input type="checkbox" name ="has_submittals" id="has_submittals" />
+                     </div>
+                </div>
+                </div>
                 <br /> <hr>
 
             <div class ="container"> <!#pick client>
@@ -451,17 +503,22 @@
                         <div class ="col-sm-12">Please select the scopes of work this project includes:</div>
                     <div class ="row">
                         <div class ="col-sm-6">  
-                            <input style="margin-top: 22px" class="form-control" type='hidden' value='notchecked' name='has_paint' id="has_paint1">  
+
                             <label for="has_paint2">"Painting" </label> 
-                            <input type="checkbox" name ="has_paint" id="has_paint2" value="checked" onClick="clicked_paint()" /> 
+                            <input type="checkbox" name ="has_paint" id="has_paint2"  onClick="clicked_paint()" />
                             <br /> 
                         </div>
-                        <div class ="col-sm-6"> 
-                            <input class="form-control" type='hidden' value='notchecked' name='has_wallcovering' id="has_wallcovering1">  
+                        <div class ="col-sm-6">
                             <label for="has_wallcovering2">"Wallcovering" </label> 
-                            <input type="checkbox" name ="has_wallcovering" id="has_wallcovering2" value ="checked" onclick="clicked_wc()"/> 
+                            <input type="checkbox" name ="has_wallcovering" id="has_wallcovering2" onclick="clicked_wc()"/>
                         </div>
                     </div>
+                        <div class ="row">
+                             <div class ="col-sm-12">
+                            <label for="has_special_paint">"Does this job have special paint that has to be ordered? " </label>
+                            <input type="checkbox" name ="has_special_paint" id="has_special_paint" />
+                             </div>
+                        </div>
                 </div>
                 <br /> <hr>
 
