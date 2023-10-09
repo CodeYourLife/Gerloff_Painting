@@ -62,6 +62,12 @@ $(document).ready(function () {
 								Give Employee Web Access	</div>
 						</a>
 <br>
+<a href = "{% url 'upload_new_job' %}">
+							<div style="height:100%;width:100%">
+								Upload New Job	</div>
+						</a>
+<br>
+
 {% else %}
 <div style="padding-top: 25px">Unauthorized</div>
 {% endif %}

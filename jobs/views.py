@@ -16,6 +16,10 @@ from subcontractors.models import *
 from wallcovering.models import Wallcovering, Packages, OutgoingItem, OrderItems
 from submittals.models import *
 from console.misc import Email
+import os
+import os.path
+from django.conf import settings
+import csv
 
 @login_required(login_url='/accounts/login')
 def change_start_date(request, jobnumber, previous):
@@ -41,6 +45,91 @@ def change_start_date(request, jobnumber, previous):
 @login_required(login_url='/accounts/login')
 def update_job_info(request, jobnumber):
     return render(request, "update_job_info.html")
+
+@login_required(login_url='/accounts/login')
+def upload_new_job(request):
+    if request.method == 'POST':
+        if 'upload_file' in request.FILES:
+            fileitem = request.FILES['upload_file']
+            fn = os.path.basename(fileitem.name)
+            #fn2 = os.path.join(settings.MEDIA_ROOT, "job_import", str(request.POST['job_number']), fn)
+            fn2 = os.path.join(settings.MEDIA_ROOT, "job_import", str(request.POST['job_number']) + ".csv")
+            open(fn2, 'wb').write(fileitem.file.read())
+            print(1)
+            with open(fn2) as f:
+                print(2)
+                reader = csv.reader(f)
+                rows = list(reader)
+                print(rows[15][1])
+                # line_count1 = 0
+                # found = 0
+                # for row in reader:
+                #     if line_count1 == 0:
+                #         for x in range(2):
+                #             if row[x] == "id":
+                #                 a = x
+                #                 found = found + 1
+                #             if row[x] == "action":
+                #                 b = x
+                #                 found = found + 1
+                #         line_count1 = line_count1 + 1
+                #         if found != 2:
+                #             raise ValueError('A very specific bad thing happened.')
+                #     else:
+
+
+                # job_number = ''
+                # job_name = ''
+                # address = ''
+                # city = ''
+                # state = ''
+                # is_on_base ='' #true or false
+                # is_t_m_job = ''
+                # contract_status = ''  # 1-received, 2-not received, 3-not required
+                # insurance_status = ''  # 1-received 2-not received 3-not required
+                # client = ''
+                # start_date = ''
+                # job = Jobs.objects.create(job_number=job_number, job_name=job_name, address=address, city=city,
+                #                           state=state,
+                #                           is_on_base=is_on_base, is_t_m_job=is_t_m_job, contract_status=contract_status,
+                #                           insurance_status=insurance_status, client=client, start_date=start_date,
+                #                           status="Open", booked_date=date.today(),
+                #                           booked_by=request.user.first_name + " " + request.user.last_name)
+                #
+                # spray_scale = ''
+                # brush_role = ''
+                # t_m_nte_amount = ''
+                # client_pm = ''
+                # client_super = ''
+                # superintendent = ''
+                # contract_amount = ''
+                # painting_budget =
+                # wallcovering_budget =
+                # job.is_wage_scale
+                # job.special_paint_needed #true or false
+                # job.has_paint
+                # job.has_wallcovering
+                # job.submittals_needed
+                # JobNotes.objects.create(job_number=job,
+                #                         note="Start Date at Booking: " + start_date + " " + request.POST['date_note'],
+                #                         type="auto_start_date_note", date=date.today(),
+                #                         user=request.user.first_name + " " + request.user.last_name)
+                #
+                # JobNotes.objects.create(job_number=job,
+                #                         note="New Job Booked By: " + request.user.first_name + " " + request.user.last_name + ": " +
+                #                              request.POST['email_job_note'],
+                #                         type="auto_booking_note", date=date.today(),
+                #                         user=request.user.first_name + " " + request.user.last_name)
+                # email_body = "New Job Booked \n" + job.job_number + "\n" + job.job_name + "\n" + job.client.company
+                # Email.sendEmail("New Job - " + job.job_name, email_body, 'joe@gerloffpainting.com')
+                # job.save()
+                #
+
+
+
+
+    return render(request, "upload_new_job.html")
+
 
 @login_required(login_url='/accounts/login')
 def jobs_home(request):
