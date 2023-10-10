@@ -20,6 +20,13 @@ class TMPricesMaster(models.Model):
     def __str__(self):
         return f"{self.item}"
 
+class Signature(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    type = models.CharField(null=False, max_length=50)
+    change_order_id = models.IntegerField(null=False)
+    signature = models.CharField(null=False, max_length=10000)
+    name = models.CharField(null=False, max_length=50)
+
 
 class ChangeOrders(models.Model):
     id = models.BigAutoField(primary_key=True)

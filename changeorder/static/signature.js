@@ -111,6 +111,7 @@
 		  document.getElementById("saveSignature").style.display = "block";
 		  var canvas = document.getElementById("newSignature");// save canvas image as data url (png format by default)
 		  var dataURL = canvas.toDataURL("image/png");
+		  document.getElementById("signatureValue").value = dataURL;
 		  document.getElementById("saveSignature").src = dataURL;
 		  document.getElementById("newSignature").style.display = "none";
 		  document.getElementById("saveSignatureBtn").style.display = "none";
