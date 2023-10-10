@@ -221,7 +221,7 @@ def print_ticket(request, id):
             Signature.objects.update(change_order_id=id, type="changeorder", name=nameValue, signature=signatureValue)
 
         signature = Signature.objects.get(change_order_id=id)
-        result_file = open(f"documents/{id}_change_order_{date.today()}.pdf", "w+b")
+        result_file = open(f"{id}_change_order_{date.today()}.pdf", "w+b")
         html = render_to_string("print_ticket.html",
                   {'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
                    'changeorder': changeorder, 'signature': signature})
