@@ -17,7 +17,7 @@
 		<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
 		<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
 		<script type="text/javascript" class="init">
-			$(document).ready(function () {
+$(document).ready(function () {
 				var table = $('#tickets_table').DataTable({
 					columnDefs: [
 					{
@@ -46,6 +46,7 @@
 								return data;}}] });
 			});
 			$(document).ready(function () {
+
 				var table = $('#tickets_table3').DataTable({
 					columnDefs: [{
 							targets:0,
@@ -54,10 +55,7 @@
 									data = '<a href="job_page/' + data + '">' + data + '</a>'; }
 								return data;}}] });
 			});
-			$(document).ready(function () {
-				var table = $('#tickets_table4').DataTable({})
 
-			});
 		</script>
 	</head>
 <body>
@@ -99,14 +97,83 @@
             </div>
 			<div class ="row">
                 <div class ="col">Client: {{job.client}}</div>
-                <div class ="col">Office PM: {{job.client_pm}} {{job.client_pm.phone}} {{job.client_pm.email}}</div>
-                <div class ="col">Superintendent: {{job.client_super}} {{job.client_super.phone}} {{job.client_super.email}}</div>
+                <div class ="col">Office PM: {{job.client_Pm}} {{job.client_Pm.phone}} {{job.client_Pm.email}}</div>
+                <div class ="col">Superintendent: {{job.client_Super}} {{job.client_Super.phone}} {{job.client_Super.email}}</div>
             </div>
 			<div class ="row">
 				<div class ="col" ><form action="{% url 'update_job_info' job.job_number %}"><input type="submit" value="Update Job Information" /></form></div>
 			</div>
+			<div class = "row">
+				<div class ="col-sm-4"><a href="{% url "change_start_date" job.job_number "jobpage" %}">{{job.start_date}} Click Here to Change</a></div>
+			</div>
 		</div>
 				{% endfor %}
+<button type="button" class="collapsible">Job Notes</button>
+<div class="content">
+
+
+	 <form style="padding-top: 24px" method="get">
+		 <div class = "row">
+		 <div class="col-sm-2">
+		 	{% if admin %}
+		 Admin<input type="checkbox" name ="admin" checked />
+	{% else %}
+		 Admin<input type="checkbox" name ="admin" />
+	{% endif %}
+		 </div>
+			 <div class="col-sm-2">
+		 		 	{% if start %}
+		 Start<input type="checkbox" name ="start" checked />
+	{% else %}
+		 Start<input type="checkbox" name ="start" />
+	{% endif %}
+				 		 </div>
+			 <div class="col-sm-2">
+ 		 		 	{% if field %}
+		 Field<input type="checkbox" name ="field" checked />
+	{% else %}
+		 Field<input type="checkbox" name ="field" />
+	{% endif %}
+				 		 </div>
+			 <div class="col-sm-2">
+		  		 		 	{% if change_order %}
+		 Change Order<input type="checkbox" name ="change_order" checked />
+	{% else %}
+		 Change Order<input type="checkbox" name ="change_order" />
+	{% endif %}
+				 		 </div>
+			 <div class="col-sm-2">
+		  		 		 	{% if submittal %}
+		 Submittal<input type="checkbox" name ="submittal" checked />
+	{% else %}
+		 Submittal<input type="checkbox" name ="submittal" />
+	{% endif %}
+			 </div>
+		 <div class="col-sm-2">
+		 <input type="submit" value="Filter" />
+		 </div>
+		 </div>
+	 </form>
+<div class="demo-html" style="width:90%">
+		<table id="notes_table" class="display table" style="width:90%">
+			<thead>
+				<tr>
+					<th scope="col">By</th>
+					<th scope="col">Date</th>
+					<th scope="col">Note</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% if notes %}
+			{% for x in notes %}
+			<tr><td>{{x.user}}</td><td>{{x.date}}</td><td>{{x.note}}</td></tr>
+			{% endfor %}
+			{% endif %}
+			</tbody>
+		</table>
+</div>
+</div>
+
 {% endif %}
 		<hr><br>
 	{% if tickets %}
