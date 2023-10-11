@@ -206,13 +206,14 @@ def print_ticket(request, id):
     ewt = EWT.objects.get(change_order=changeorder)
     try:
         signature = Signature.objects.get(change_order_id=id)
-        print('we got it', signature.id)
     except:
         signature = None
     laboritems = EWTicket.objects.filter(EWT=ewt).exclude(employee=None)
     materials = EWTicket.objects.filter(EWT=ewt, master__category="Material")
     equipment = EWTicket.objects.filter(EWT=ewt, master__category="Equipment")
     if request.method == 'POST':
+        print(request.POST['signatureValue'])
+        print(request.POST['signatureName'])
         signatureValue = request.POST['signatureValue']
         nameValue = request.POST['signatureName']
         if signature is None:

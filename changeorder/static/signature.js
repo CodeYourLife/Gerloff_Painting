@@ -108,6 +108,7 @@
 		}
 
 		function signatureSave() {
+		  document.getElementById("signatureName").readOnly = true;
 		  document.getElementById("saveSignature").style.display = "block";
 		  var canvas = document.getElementById("newSignature");// save canvas image as data url (png format by default)
 		  var dataURL = canvas.toDataURL("image/png");
@@ -119,6 +120,8 @@
 		};
 
 		function signatureClear() {
+		  document.getElementById("signatureName").readOnly = false;
+		  document.getElementById("signatureName").value = "";
 		  document.getElementById("saveSignature").style.display = "none";
 		  document.getElementById("newSignature").style.display = "block";
 		  var canvas = document.getElementById("newSignature");
