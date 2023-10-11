@@ -11,6 +11,10 @@ from wallcovering.tables import ChangeOrderTable
 from wallcovering.filters import ChangeOrderFilter
 import os
 import os.path
+from django.template.loader import get_template, render_to_string
+from xhtml2pdf import pisa
+from io import StringIO
+
 
 
 def print_TMProposal(request, id):
@@ -200,14 +204,35 @@ def price_ewt(request, id):
 def print_ticket(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
     ewt = EWT.objects.get(change_order=changeorder)
+    try:
+        signature = Signature.objects.get(change_order_id=id)
+        print('we got it', signature.id)
+    except:
+        signature = None
     laboritems = EWTicket.objects.filter(EWT=ewt).exclude(employee=None)
     materials = EWTicket.objects.filter(EWT=ewt, master__category="Material")
     equipment = EWTicket.objects.filter(EWT=ewt, master__category="Equipment")
     if request.method == 'POST':
-        print("HI")
+        signatureValue = request.POST['signatureValue']
+        nameValue = request.POST['signatureName']
+        if signature is None:
+            Signature.objects.create(change_order_id=id, type="changeorder", name=nameValue, signature=signatureValue)
+        else:
+            Signature.objects.update(change_order_id=id, type="changeorder", name=nameValue, signature=signatureValue)
+
+        signature = Signature.objects.get(change_order_id=id)
+        result_file = open(f"{id}_change_order_{date.today()}.pdf", "w+b")
+        html = render_to_string("print_ticket.html",
+                  {'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
+                   'changeorder': changeorder, 'signature': signature})
+        pisa.CreatePDF(
+            html,
+            dest=result_file
+        )
+        result_file.close()
     return render(request, "print_ticket.html",
                   {'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
-                   'changeorder': changeorder})
+                   'changeorder': changeorder, 'signature': signature})
 
 
 @login_required(login_url='/accounts/login')

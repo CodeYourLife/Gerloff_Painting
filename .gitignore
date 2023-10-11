@@ -2,7 +2,6 @@ venv
 **/__pycache__/*
 *.py[cod]
 *$py.class
-**/migrations/*
 **/__init__*
 bin/python3
 bin/python

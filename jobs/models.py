@@ -51,6 +51,7 @@ class Jobs(models.Model):
     estimator = models.ForeignKey(
         Employees, on_delete=models.PROTECT, null=True,blank=True, related_name='estimator')
     foreman = models.ForeignKey(
+
         Employees, on_delete=models.PROTECT, null=True,blank=True, related_name='foreman') #we still need to code the foreman
     superintendent = models.ForeignKey(
         Employees, on_delete=models.PROTECT, null=True,blank=True, related_name='superintendent')
@@ -102,9 +103,11 @@ class Jobs(models.Model):
         max_digits=9, decimal_places=2, blank=True, null=True)
     contract_status = models.IntegerField() #1-received #2 not received #3 not required
     insurance_status = models.IntegerField()
+
     submittals_required = models.IntegerField(null=True,blank=True) #replacing this with submittals_needed
     submittals_needed = models.BooleanField(default=False)
     has_special_paint = models.IntegerField(null=True,blank=True)#replacing this with special_paint_needed
+
     special_paint_needed = models.BooleanField(default=False)
     client = models.ForeignKey(
         Clients, related_name="Client", on_delete=models.PROTECT)
@@ -113,6 +116,7 @@ class Jobs(models.Model):
     client_Pm_Phone = models.CharField(null=True, max_length=50, blank=True)#not used
     client_Pm_Email = models.EmailField(null=True, blank=True)#not used
     client_Co_Contact = models.ForeignKey(
+
         ClientEmployees, related_name="CO", on_delete=models.PROTECT, null=True, blank=True) #not used - handled with another database i think
     client_Co_Email = models.EmailField(null=True, blank=True)#not used - handled with another database i think
     client_Submittal_Contact = models.ForeignKey(

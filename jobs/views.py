@@ -24,7 +24,6 @@ from jobs.JobMisc import start_date_change, gerloff_super_change
 from jobs.filters import JobNotesFilter
 from django.db.models import Q
 
-
 @login_required(login_url='/accounts/login')
 def change_start_date(request, jobnumber, previous, ):
     jobs = Jobs.objects.get(job_number=jobnumber)
@@ -293,6 +292,91 @@ def upload_new_job(request):
 
 
 @login_required(login_url='/accounts/login')
+def upload_new_job(request):
+    if request.method == 'POST':
+        if 'upload_file' in request.FILES:
+            fileitem = request.FILES['upload_file']
+            fn = os.path.basename(fileitem.name)
+            #fn2 = os.path.join(settings.MEDIA_ROOT, "job_import", str(request.POST['job_number']), fn)
+            fn2 = os.path.join(settings.MEDIA_ROOT, "job_import", str(request.POST['job_number']) + ".csv")
+            open(fn2, 'wb').write(fileitem.file.read())
+            print(1)
+            with open(fn2) as f:
+                print(2)
+                reader = csv.reader(f)
+                rows = list(reader)
+                print(rows[15][1])
+                # line_count1 = 0
+                # found = 0
+                # for row in reader:
+                #     if line_count1 == 0:
+                #         for x in range(2):
+                #             if row[x] == "id":
+                #                 a = x
+                #                 found = found + 1
+                #             if row[x] == "action":
+                #                 b = x
+                #                 found = found + 1
+                #         line_count1 = line_count1 + 1
+                #         if found != 2:
+                #             raise ValueError('A very specific bad thing happened.')
+                #     else:
+
+
+                # job_number = ''
+                # job_name = ''
+                # address = ''
+                # city = ''
+                # state = ''
+                # is_on_base ='' #true or false
+                # is_t_m_job = ''
+                # contract_status = ''  # 1-received, 2-not received, 3-not required
+                # insurance_status = ''  # 1-received 2-not received 3-not required
+                # client = ''
+                # start_date = ''
+                # job = Jobs.objects.create(job_number=job_number, job_name=job_name, address=address, city=city,
+                #                           state=state,
+                #                           is_on_base=is_on_base, is_t_m_job=is_t_m_job, contract_status=contract_status,
+                #                           insurance_status=insurance_status, client=client, start_date=start_date,
+                #                           status="Open", booked_date=date.today(),
+                #                           booked_by=request.user.first_name + " " + request.user.last_name)
+                #
+                # spray_scale = ''
+                # brush_role = ''
+                # t_m_nte_amount = ''
+                # client_pm = ''
+                # client_super = ''
+                # superintendent = ''
+                # contract_amount = ''
+                # painting_budget =
+                # wallcovering_budget =
+                # job.is_wage_scale
+                # job.special_paint_needed #true or false
+                # job.has_paint
+                # job.has_wallcovering
+                # job.submittals_needed
+                # JobNotes.objects.create(job_number=job,
+                #                         note="Start Date at Booking: " + start_date + " " + request.POST['date_note'],
+                #                         type="auto_start_date_note", date=date.today(),
+                #                         user=request.user.first_name + " " + request.user.last_name)
+                #
+                # JobNotes.objects.create(job_number=job,
+                #                         note="New Job Booked By: " + request.user.first_name + " " + request.user.last_name + ": " +
+                #                              request.POST['email_job_note'],
+                #                         type="auto_booking_note", date=date.today(),
+                #                         user=request.user.first_name + " " + request.user.last_name)
+                # email_body = "New Job Booked \n" + job.job_number + "\n" + job.job_name + "\n" + job.client.company
+                # Email.sendEmail("New Job - " + job.job_name, email_body, 'joe@gerloffpainting.com')
+                # job.save()
+                #
+
+
+
+
+    return render(request, "upload_new_job.html")
+
+
+@login_required(login_url='/accounts/login')
 def jobs_home(request):
     response = redirect('/')
     return response
@@ -485,15 +569,18 @@ def register(request):
             client = Clients.objects.create(company=request.POST['new_client'],
                                             bid_email=request.POST['new_client_bid_email'],
                                             phone=request.POST['new_client_phone'])
+
         else:
             client = Clients.objects.get(id=request.POST['select_company'])
         # if request.POST['select_pm'] == 'not_sure':
         #     checklist.append("get pm info")
         #     client_pm = 'not_sure'
         if request.POST['select_pm'] == 'use_below':
+
             client_pm = ClientEmployees.objects.create(id=client, name=request.POST['new_pm'],
                                                        phone=request.POST['new_pm_phone'],
                                                        email=request.POST['new_pm_email'])
+
         else:
             client_pm = ClientEmployees.objects.get(person_pk=request.POST['select_pm'])
 
@@ -504,10 +591,12 @@ def register(request):
             client_super = ClientEmployees.objects.create(id=client, name=request.POST['new_super'],
                                                           phone=request.POST['new_super_phone'],
                                                           email=request.POST['new_super_email'])
+
         else:
             client_super = ClientEmployees.objects.get(person_pk=request.POST['select_super'])
 
         superintendent = request.POST['select_gpsuper']
+
 
         start_date = request.POST['start_date']
 
@@ -527,14 +616,17 @@ def register(request):
             job.is_wage_scale = True
         if 'is_bonded' in request.POST:
             job.is_bonded = True
+
         if 'has_special_paint' in request.POST:
             job.has_special_paint = True
             job.special_paint_needed = True
         if client_super != 'not_sure':
             job.client_Super = client_super
         job.client_Pm = client_pm
+
         # job.client_submittal_contact = client_pm
         # job.client_co_contact = client_pm
+
         if is_t_m_job == False:
             job.contract_amount = contract_amount
         if t_m_nte_amount != "":
