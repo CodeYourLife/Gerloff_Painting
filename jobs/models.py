@@ -7,7 +7,7 @@ from wallcovering.models import *
 
 
 def validate_job_notes(value):
-    if value == "auto_booking_note" or value == "employee_note" or value == "auto_co_note" or value == "auto_submittal_note" or value == "auto_start_date_note" or value == "daily_report":
+    if value == "auto_booking_note" or value == "auto_misc_note" or value == "employee_note" or value == "auto_co_note" or value == "auto_submittal_note" or value == "auto_start_date_note" or value == "daily_report":
         return value
     else:
         raise ValidationError("Category Not Allowed")
@@ -51,7 +51,8 @@ class Jobs(models.Model):
     estimator = models.ForeignKey(
         Employees, on_delete=models.PROTECT, null=True,blank=True, related_name='estimator')
     foreman = models.ForeignKey(
-        Employees, on_delete=models.PROTECT, null=True,blank=True, related_name='foreman')
+
+        Employees, on_delete=models.PROTECT, null=True,blank=True, related_name='foreman') #we still need to code the foreman
     superintendent = models.ForeignKey(
         Employees, on_delete=models.PROTECT, null=True,blank=True, related_name='superintendent')
     contract_amount = models.DecimalField(
@@ -81,26 +82,26 @@ class Jobs(models.Model):
         max_digits=10, decimal_places=2, blank=True, null=True)
     has_wallcovering = models.BooleanField(default=False)
     has_paint = models.BooleanField(default=False)
-    has_owner_supplied_wallcovering = models.BooleanField(default=False)
+    has_owner_supplied_wallcovering = models.BooleanField(default=False) #we need to check - can we handle through the wallcovering app
     painting_budget = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True)
     wallcovering_budget = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True)
-    is_send_auto_co_emails = models.BooleanField(default=True)
-    is_send_auto_submittal_emails = models.BooleanField(default=True)
+    is_send_auto_co_emails = models.BooleanField(default=True) #need to implement this
+    is_send_auto_submittal_emails = models.BooleanField(default=True) #need to implement this
     notes = models.CharField(null=True, max_length=2000, blank=True)
     approved_change_orders = models.DecimalField(
         max_digits=10, decimal_places=4, blank=True, null=True)
     final_bill_amount = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True)
-    is_closed = models.BooleanField(default=False)
+    is_closed = models.BooleanField(default=False)#not sure what this is
     labor_done_Date = models.DateField(null=True, blank=True)
     ar_closed_date = models.DateField(null=True, blank=True)
     was_previously_closed = models.BooleanField(default=False)
     previously_closed_date = models.DateField(null=True, blank=True)
     cumulative_costs_at_closing = models.DecimalField(
         max_digits=9, decimal_places=2, blank=True, null=True)
-    contract_status = models.IntegerField()
+    contract_status = models.IntegerField() #1-received #2 not received #3 not required
     insurance_status = models.IntegerField()
 
     submittals_required = models.IntegerField(null=True,blank=True) #replacing this with submittals_needed
@@ -112,24 +113,25 @@ class Jobs(models.Model):
         Clients, related_name="Client", on_delete=models.PROTECT)
     client_Pm = models.ForeignKey(
         ClientEmployees, related_name="PM", on_delete=models.PROTECT, null=True, blank=True)
-    client_Pm_Phone = models.CharField(null=True, max_length=50, blank=True)
-    client_Pm_Email = models.EmailField(null=True, blank=True)
+    client_Pm_Phone = models.CharField(null=True, max_length=50, blank=True)#not used
+    client_Pm_Email = models.EmailField(null=True, blank=True)#not used
     client_Co_Contact = models.ForeignKey(
-        ClientEmployees, related_name="CO", on_delete=models.PROTECT, null=True, blank=True)
-    client_Co_Email = models.EmailField(null=True, blank=True)
+
+        ClientEmployees, related_name="CO", on_delete=models.PROTECT, null=True, blank=True) #not used - handled with another database i think
+    client_Co_Email = models.EmailField(null=True, blank=True)#not used - handled with another database i think
     client_Submittal_Contact = models.ForeignKey(
-        ClientEmployees, related_name="Submittals", on_delete=models.PROTECT, null=True,blank=True)
-    client_Submittal_Email = models.EmailField(null=True, blank=True)
+        ClientEmployees, related_name="Submittals", on_delete=models.PROTECT, null=True,blank=True)#not used - handled with another database i think
+    client_Submittal_Email = models.EmailField(null=True, blank=True)#not used - handled with another database i think
     client_Super = models.ForeignKey(
         ClientEmployees, related_name="Super", on_delete=models.PROTECT, null=True, blank=True)
-    client_Super_Phone = models.CharField(max_length=50, blank=True, null=True)
-    client_Super_Email = models.EmailField(null=True, blank=True)
+    client_Super_Phone = models.CharField(max_length=50, blank=True, null=True) #not used
+    client_Super_Email = models.EmailField(null=True, blank=True) #not used
     is_on_base = models.BooleanField(default=False)
-    unsigned_tickets = models.IntegerField(null=True, blank=True)
-    assigned_inventory = models.IntegerField(null=True, blank=True)
-    assigned_rentals = models.IntegerField(null=True, blank=True)
+    unsigned_tickets = models.IntegerField(null=True, blank=True)#not used
+    assigned_inventory = models.IntegerField(null=True, blank=True) #not used
+    assigned_rentals = models.IntegerField(null=True, blank=True) #not used
     is_bonded = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=False)#this is for supers to use - whether to show on upcoming jobs list
     start_date_checked = models.DateField(null=True, blank=True)
 
     def __str__(self):
@@ -145,7 +147,7 @@ class JobNotes(models.Model):
                             validators=[validate_job_notes])
     user = models.CharField(null=True, max_length=50)  # bridgette joe
     date = models.DateField(null=True, blank=True)
-    daily_employee_count = models.IntegerField(default=0)
+    daily_employee_count = models.IntegerField(null=True, blank=True)
     # use if you are having to back date a daily report
     note_date = models.DateField(null=True, blank=True)
 
