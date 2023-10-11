@@ -148,10 +148,11 @@
 		{% csrf_token %}
 		<script>signatureCapture();</script>
 			{% if not signature %}
-		<button type="button" id="saveSignatureBtn" onclick="signatureSave()">Save signature</button>
+		<button type="button" id="saveSignatureBtn" onclick="signatureSave()">Confirm signature</button>
 		<button type="button" id="clearSignatureBtn" onclick="signatureClear()">Clear signature</button>
-		 {% endif %}
-			<input type="submit" value="pdf" />
+		 <input type="submit" value="Save PDF" />
+			{% endif %}
+
 		</div>
 	</form>
 
