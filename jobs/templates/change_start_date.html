@@ -45,16 +45,16 @@
 <input type="hidden" id="previous_page" name="previous_page" value = {{previous_page}}/>
 <br>
 {% if jobs.is_active == True %}
-	 <input type="checkbox" name ="is_active" id="is_active" value="checked" /> <label for="is_active">"Job has started: " </label>
+	 <input type="checkbox" name ="is_active" id="is_active" checked /> <label for="is_active">Remove this job from planner </label>
 {% else %}
-	 	 <input type="checkbox" name ="is_active" id="is_active" /> <label for="is_active">Click This Button If Job has Started </label>
+	 	 <input type="checkbox" name ="is_active" id="is_active" /> <label for="is_active">Remove this job from planner </label>
 {% endif %}
 	 <br>
-	         <label for="date_note">Explain This Date Change: </label> <br>
+	         <label for="date_note">Explain This Change: </label> <br>
         <textarea id="date_note" name="date_note" rows="4" cols="100" ></textarea>
 <br>
 
-	 <input type="submit" value="Change Date Now" />
+	 <input type="submit" value="Update Now" />
     </form>
 
   <button onclick="Previous()">Back to Previous Page</button>

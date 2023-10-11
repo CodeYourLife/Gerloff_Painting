@@ -86,3 +86,4 @@ class WallcoveringPatternsTable(tables.Table):
         model = OutgoingItem
         template_name = "django_tables2/bootstrap.html"
         fields = ('job_number','codelink','vendor','pattern','quantity_ordered','quantity_received','packages_received','packages_sent')
+
