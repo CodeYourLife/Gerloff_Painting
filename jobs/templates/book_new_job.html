@@ -19,6 +19,7 @@
         function check_booking_data() {
             if (booking_input.job_name.value ==""){
                 alert('Please enter a job name')
+                booking_input.job_name.scrollIntoView();
                 return false;
             }
             if (booking_input.address.value ==""){
@@ -53,7 +54,11 @@
                 alert("please select the insurance status")
                 return false;
             }
-
+            if (booking_input.select_gpestimator.value == "please_select"){
+                booking_input.select_gpestimator.scrollIntoView();
+                alert("please select the Gerloff Painting Estimator")
+                return false;
+            }
             if (booking_input.select_company.value == "please_select"){
                 booking_input.select_company.scrollIntoView();
                 alert("please select the client name")
@@ -320,8 +325,7 @@
                         <label for="on_base2">"Security Clearance Required?" </label>
                     </div>
                     <div class="col-sm-6">
-                        <input class="form-control" type='hidden' value='notchecked' name='on_base2' id="on_base1">
-                        <input type="checkbox" name ="on_base2" id="on_base2" value="checked"  />
+                        <input type="checkbox" name ="on_base2" id="on_base2" />
                     </div>
                 </div>
                 <hr>
@@ -388,6 +392,12 @@
                      <div class ="col-sm-12">
                         <label for="has_submittals">"Does this job require submittals?" </label>
                         <input type="checkbox" name ="has_submittals" id="has_submittals" />
+                     </div>
+                </div>
+                <div class ="row">
+                     <div class ="col-sm-12">
+                        <label for="is_bonded">"Does this job require a bond?" </label>
+                        <input type="checkbox" name ="is_bonded" id="is_bonded" />
                      </div>
                 </div>
                 </div>
@@ -490,8 +500,20 @@
                     <label for="select_gpsuper">Please select Gerloff superintendent</label>
                     <select class="form-control" id="select_gpsuper" name="select_gpsuper" >
                         <option value="not_sure">not sure</option>
-                        {% if employees %}
-                        {% for employee in employees %}
+                        {% if superintendents %}
+                        {% for employee in superintendents %}
+                        <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                <br /> <hr>
+                </div>
+                <div class ="container">
+                    <label for="select_gpestimator">Please select Gerloff Estimator</label>
+                    <select class="form-control" id="select_gpestimator" name="select_gpestimator" >
+                        <option value="please_select">Please Select</option>
+                        {% if estimators %}
+                        {% for employee in estimators %}
                         <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
                         {% endfor %}
                         {% endif %}
@@ -544,6 +566,10 @@
                 <hr>
                 </div>
                 <div class ="container" id = "contract_amount_section">
+                    <div class ="row">
+                        <div class ="col-sm-6">PO Number: </div>
+                        <div class ="col-sm-6"> <input class="form-control" type= "text" name="po_number" placeholder="PO Number" size="30" id="po_number"/>     <br /> </div>
+                    </div>
                     <div class ="row">
                         <div class ="col-sm-6">Total Contract Amount: </div>
                         <div class ="col-sm-6"> <input class="form-control" type= "number" name="contract_amount" placeholder="Contract Amount $$" size="30" step="0.01" id="contract_amount"/>     <br /> </div>
