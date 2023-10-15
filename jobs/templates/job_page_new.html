@@ -17,44 +17,7 @@
 		<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
 		<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
 		<script type="text/javascript" class="init">
-$(document).ready(function () {
-				var table = $('#tickets_table').DataTable({
-					columnDefs: [
-					{
-							targets:0,
-							render: function ( data, type, row, meta ) {
-								if(type === 'display'){
-									data = data;}
-								return data;}}] });
-			});
-			$(document).ready(function () {
-				var table = $('#tickets_table1').DataTable({
-					columnDefs: [{
-							targets:0,
-							render: function ( data, type, row, meta ) {
-								if(type === 'display'){
-									data = '<a href="job_page/' + data + '">' + data + '</a>'; }
-								return data;}}] });
-			});
-			$(document).ready(function () {
-				var table = $('#tickets_table2').DataTable({
-					columnDefs: [{
-							targets:0,
-							render: function ( data, type, row, meta ) {
-								if(type === 'display'){
-									data = '<a href="job_page/' + data + '">' + data + '</a>'; }
-								return data;}}] });
-			});
-			$(document).ready(function () {
 
-				var table = $('#tickets_table3').DataTable({
-					columnDefs: [{
-							targets:0,
-							render: function ( data, type, row, meta ) {
-								if(type === 'display'){
-									data = '<a href="job_page/' + data + '">' + data + '</a>'; }
-								return data;}}] });
-			});
 
 		</script>
 	</head>
@@ -111,63 +74,55 @@ $(document).ready(function () {
 							<div class ="row">
 				<div class ="col" ><form action="{% url 'update_job_info' job.job_number %}"><input type="submit" value="Update Job Information" /></form></div>
 			</div>
-			<div class ="row"><div class = "col"><hr></div></div>
-			<div class ="row">
-			<div class ="col-sm-2" ><form action="{% url 'change_order_new' job.job_number %}"><input type="submit" value="New Change Order" /></form></div>
-			</div>
 		</div>
 				{% endfor %}
 <button type="button" class="collapsible">Job Notes</button>
 <div class="content">
-	 <div class = "row">
-		  <div class = "col">
-			  {% for job in jobs %}
-			  <form action="{% url 'job_page' job.job_number %}" method="post" >
-				{% csrf_token %}
+ <form action="{% url 'job_page' jobs.job_number %}" method="post" >
+{% csrf_token %}
         <label for="add_note">ADD A NOTE: </label> <br>
-        <textarea id="add_note" name="add_note" rows="2" cols="100" ></textarea>
+        <textarea id="add_note" name="add_note" rows="3" cols="100" ></textarea>
 <input type="submit" name="Form3" value="Add Note" />
     </form>
-			  {% endfor %}
-		  </div></div>
+
 	 <form style="padding-top: 24px" method="get">
 		 <div class = "row">
-		 <div class="col-sm-2">
+		 <div class="col">
 		 	{% if admin %}
 		 Admin<input type="checkbox" name ="admin" checked />
 	{% else %}
 		 Admin<input type="checkbox" name ="admin" />
 	{% endif %}
 		 </div>
-			 <div class="col-sm-2">
+			 <div class="col">
 		 		 	{% if start %}
 		 Start<input type="checkbox" name ="start" checked />
 	{% else %}
 		 Start<input type="checkbox" name ="start" />
 	{% endif %}
 				 		 </div>
-			 <div class="col-sm-2">
+			 <div class="col">
  		 		 	{% if field %}
 		 Field<input type="checkbox" name ="field" checked />
 	{% else %}
 		 Field<input type="checkbox" name ="field" />
 	{% endif %}
 				 		 </div>
-			 <div class="col-sm-2">
+			 <div class="col">
 		  		 		 	{% if change_order %}
 		 Change Order<input type="checkbox" name ="change_order" checked />
 	{% else %}
 		 Change Order<input type="checkbox" name ="change_order" />
 	{% endif %}
 				 		 </div>
-			 <div class="col-sm-2">
+			 <div class="col">
 		  		 		 	{% if submittal %}
 		 Submittal<input type="checkbox" name ="submittal" checked />
 	{% else %}
 		 Submittal<input type="checkbox" name ="submittal" />
 	{% endif %}
 			 </div>
-		 <div class="col-sm-2">
+		 <div class="col">
 		 <input type="submit" value="Filter" />
 		 </div>
 		 </div>
@@ -235,7 +190,7 @@ $(document).ready(function () {
 			<tbody>
 			{% for open_co in open_cos %}
 				<tr>
-					<td><a href="{% url 'extra_work_ticket' open_co.id %}">{{open_co.cop_number}}</a></td>
+					<td>{{open_co.cop_number}}</td>
 					<td>{{open_co.description}}</td>
 					<td>{{open_co.notes}}</td>
 				</tr>

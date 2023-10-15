@@ -74,11 +74,39 @@ function void_notes1(where){
 </nav>
 
 <h2>{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} - Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</h2>
+
 	<form action="{% url 'extra_work_ticket' changeorder.id %}" method="post">
-{% csrf_token %}
+	{% csrf_token %}
 		<input type="submit" name="open_folder" value="Open Folder to View Files" />
 	</form>
 <br>
+
+		<font color = "red" >Upload Documents (Pictures, Signed Ticket, Etc.) For This Change Order</font>
+<br>
+				<form action="{% url 'extra_work_ticket' changeorder.id %}" method="post" enctype="multipart/form-data">
+        			{% csrf_token %}
+			Attachment: <input type= "file" name="upload_file" id="upload_file" />
+				<input type="submit" value="Upload File" />
+				</form>
+<br>
+
+		<font color = "red" >Here are the documents that have been uploaded for this equipment</font>
+				<br>
+			{% for x in foldercontents %}
+
+					<font color = "blue" >{{x}}</font>
+				<br>
+			{% endfor %}
+
+
+		<form action="{% url 'job_page' changeorder.job_number.job_number %}" >
+{% csrf_token %}
+<br>
+					<input type="submit" name="goto_job" value="Go To Job Page" />
+	</form>
+
+	<br>
+	<hr>
 {% if changeorder.is_closed == True %}
 	<h1>VOIDED</h1>
 {% else %}
@@ -89,10 +117,13 @@ function void_notes1(where){
 				<input type="submit" value="Fill Out Ticket Now" />
 			</form>
 		{% else %}
-			<form action="{% url 'print_ticket' changeorder.id %}" ><input type="submit" value="Print Ticket" /></form>
+			<form action="{% url 'print_ticket' changeorder.id "OLD" %}" ><input type="submit" value="Print Ticket for Ink Signature" /></form>
+	<br>
+			<form action="{% url 'print_ticket' changeorder.id "NEW" %}" ><input type="submit" value="Get Digital Signature" /></form>
+	<br>
 			<form action="{% url 'process_ewt' changeorder.id %}" ><input type="submit" value="View / Change Ticket"/></form><br>
 			{% if changeorder.need_ticket_signed == "Yes" %}
-				<h1>Ticket Submitted, Not Signed</h1>
+				<h1>Ticket Created, Not Signed</h1>
 				<form action="{% url 'extra_work_ticket' changeorder.id %}" method="post" onSubmit = "void_notes1('signed_notes')" >
 					{% csrf_token %}
 					<input type = "hidden" name="signed_notes" id="signed_notes" /><input type="submit" name='signed' value="Ticket Signed" /></form><br>

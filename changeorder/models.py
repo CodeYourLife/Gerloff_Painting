@@ -26,6 +26,8 @@ class Signature(models.Model):
     change_order_id = models.IntegerField(null=False)
     signature = models.CharField(null=False, max_length=10000)
     name = models.CharField(null=False, max_length=50)
+    notes = models.CharField(null=True, blank=True, max_length=1000)
+    date = models.DateField(null=True, blank=True)
 
 
 class ChangeOrders(models.Model):

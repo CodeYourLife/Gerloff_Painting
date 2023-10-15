@@ -31,4 +31,10 @@ def createfolder(subfolder):
         except OSError as error:
             print(error)
 
+def openfolder(subfolder, item):
+    parent_dir = settings.MEDIA_ROOT
+    path = os.path.join(parent_dir, subfolder)
+    path = path + "/" + str(item)
+    path = os.path.realpath(path)
+    os.startfile(path)
 

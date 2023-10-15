@@ -13,8 +13,9 @@ import os
 import os.path
 from django.template.loader import get_template, render_to_string
 from xhtml2pdf import pisa
+from console.misc import createfolder, openfolder
+from django.conf import settings
 from io import StringIO
-
 
 
 def print_TMProposal(request, id):
@@ -201,7 +202,8 @@ def price_ewt(request, id):
                    'changeorder': changeorder})
 
 
-def print_ticket(request, id):
+def print_ticket(request, id, status):
+    # status = 'OLD' paper.  status = 'NEW' digital signature
     changeorder = ChangeOrders.objects.get(id=id)
     ewt = EWT.objects.get(change_order=changeorder)
     try:
@@ -211,21 +213,36 @@ def print_ticket(request, id):
     laboritems = EWTicket.objects.filter(EWT=ewt).exclude(employee=None)
     materials = EWTicket.objects.filter(EWT=ewt, master__category="Material")
     equipment = EWTicket.objects.filter(EWT=ewt, master__category="Equipment")
+    if status == 'OLD':
+        ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                    user=request.user.first_name + " " + request.user.last_name,
+                                    note="Ticket Printed for Wet Signature")
+
     if request.method == 'POST':
         print(request.POST['signatureValue'])
         print(request.POST['signatureName'])
         signatureValue = request.POST['signatureValue']
         nameValue = request.POST['signatureName']
+        comments = request.POST['gc_notes']
         if signature is None:
-            Signature.objects.create(change_order_id=id, type="changeorder", name=nameValue, signature=signatureValue)
+            Signature.objects.create(change_order_id=id, type="changeorder", name=nameValue, signature=signatureValue,
+                                     date=date.today(), notes=comments)
         else:
-            Signature.objects.update(change_order_id=id, type="changeorder", name=nameValue, signature=signatureValue)
-
+            Signature.objects.update(change_order_id=id, type="changeorder", name=nameValue, signature=signatureValue,
+                                     date=date.today(), notes=comments)
+        ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                    user=request.user.first_name + " " + request.user.last_name,
+                                    note="Digital Signature Received. Signed by: " + request.POST['signatureName'] + ". Comments: " + request.POST['gc_notes'])
         signature = Signature.objects.get(change_order_id=id)
-        result_file = open(f"D:/Signed_Documents/{id}_change_order_{date.today()}.pdf", "w+b")
+        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
+        result_file = open(f"{path}/{id}_change_order_{date.today()}.pdf", "w+b")
+        changeorder.is_ticket_signed = True
+        changeorder.save()
+
+        # result_file = open(f"D:/Signed_Documents/{id}_change_order_{date.today()}.pdf", "w+b")
         html = render_to_string("print_ticket.html",
-                  {'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
-                   'changeorder': changeorder, 'signature': signature})
+                                {'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
+                                 'changeorder': changeorder, 'signature': signature, 'status': status})
         pisa.CreatePDF(
             html,
             dest=result_file
@@ -233,7 +250,7 @@ def print_ticket(request, id):
         result_file.close()
     return render(request, "print_ticket.html",
                   {'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
-                   'changeorder': changeorder, 'signature': signature})
+                   'changeorder': changeorder, 'signature': signature, 'status': status})
 
 
 @login_required(login_url='/accounts/login')
@@ -251,6 +268,7 @@ def view_ewt(request, id):
                   {'equipment': equipment, 'equipmentjson': equipment_json, 'materialsjson': materials_json,
                    'materials': materials, 'changeorder': changeorder, 'employees': employees,
                    'employeesjson': employees_json})
+
 
 @login_required(login_url='/accounts/login')
 def change_order_send(request, id):
@@ -337,6 +355,7 @@ def change_order_send(request, id):
                   {'client_list': client_list,
                    'extra_contacts': extra_contacts, 'changeorder': changeorder})
 
+
 @login_required(login_url='/accounts/login')
 def change_order_new(request, jobnumber):
     if request.method == 'POST':
@@ -355,12 +374,12 @@ def change_order_new(request, jobnumber):
                 next_cop = 1
             changeorder = ChangeOrders.objects.create(job_number=Jobs.objects.get(job_number=jobnumber),
                                                       is_t_and_m=t_and_m, description=request.POST['description'],
-                                                      cop_number=next_cop)
-            directory = changeorder.id
-            parent_dir = "C:/Trinity/ChangeOrder"
-            path = os.path.join(parent_dir, str(directory))
+                                                      cop_number=next_cop, notes=request.POST['notes'])
+            # directory = changeorder.id
+            # parent_dir = "C:/Trinity/ChangeOrder"
+            # path = os.path.join(parent_dir, str(directory))
             try:
-                os.mkdir(path)
+                createfolder("changeorder/" + str(changeorder.id))
             except OSError as error:
                 print(error)
             if changeorder.is_t_and_m == True:
@@ -374,15 +393,24 @@ def change_order_new(request, jobnumber):
             return redirect('extra_work_ticket', id=changeorder.id)
     else:
         jobs = Jobs.objects.filter(status="Open")
-        return render(request, "change_order_new.html", {'jobs': jobs})
+        if jobnumber == 'ALL':
+            return render(request, "change_order_new.html", {'jobs': jobs})
+        else:
+            selected_job = Jobs.objects.get(job_number=jobnumber)
+            return render(request, "change_order_new.html", {'jobs': jobs, 'selected_job': selected_job})
+
 
 @login_required(login_url='/accounts/login')
 def change_order_home(request):
-    all_orders = ChangeOrderFilter(request.GET, queryset =ChangeOrders.objects.filter(is_closed=False).order_by('job_number','cop_number'))
+    all_orders = ChangeOrderFilter(request.GET,
+                                   queryset=ChangeOrders.objects.filter(is_closed=False).order_by('job_number',
+                                                                                                  'cop_number'))
     table = ChangeOrderTable(all_orders.qs)
     has_filter = any(field in request.GET for field in set(all_orders.get_fields()))
     # RequestConfig(request).configure(table)
-    return render(request, "change_order_home.html", {'table': table,'all_orders':all_orders,'has_filter':has_filter})
+    return render(request, "change_order_home.html",
+                  {'table': table, 'all_orders': all_orders, 'has_filter': has_filter})
+
 
 @login_required(login_url='/accounts/login')
 def extra_work_ticket(request, id):
@@ -390,19 +418,25 @@ def extra_work_ticket(request, id):
     ticket_needed = changeorder.need_ticket()
     notes = ChangeOrderNotes.objects.filter(cop_number=id)
     tmproposal = []
+    path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
+    foldercontents = os.listdir(path)
     if TMProposal.objects.filter(change_order=changeorder):
         tmproposal = TMProposal.objects.get(change_order=changeorder)
     if request.method == 'GET':
         return render(request, "extra_work_ticket.html",
                       {'tmproposal': tmproposal, 'ticket_needed': ticket_needed, 'changeorder': changeorder,
-                       'notes': notes})
+                       'notes': notes, 'foldercontents': foldercontents})
     if request.method == 'POST':
+        if 'upload_file' in request.FILES:
+            fileitem = request.FILES['upload_file']
+            fn = os.path.basename(fileitem.name)
+            fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id), fn)
+            open(fn2, 'wb').write(fileitem.file.read())
         if 'view_proposal' in request.POST:
             print("NEED TO DO")
         if 'open_folder' in request.POST:
-            path = "C:/trinity/changeorder/" + str(changeorder.id)
-            path = os.path.realpath(path)
-            os.startfile(path)
+            openfolder("changeorder", str(changeorder.id))
+
         if 'signed' in request.POST:
             print(request.POST)
             changeorder.is_ticket_signed = True
@@ -459,7 +493,8 @@ def extra_work_ticket(request, id):
         notes = ChangeOrderNotes.objects.filter(cop_number=id)
         return render(request, "extra_work_ticket.html",
                       {'tmproposal': tmproposal, 'ticket_needed': ticket_needed, 'changeorder': changeorder,
-                       'notes': notes})
+                       'notes': notes, 'foldercontents': foldercontents})
+
 
 @login_required(login_url='/accounts/login')
 def process_ewt(request, id):
