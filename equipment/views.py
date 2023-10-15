@@ -16,6 +16,7 @@ import os.path
 import csv
 from pathlib import Path
 from django.conf import settings
+from django.http import HttpResponse
 
 @login_required(login_url='/accounts/login')
 def equipment_remove_from_outgoing_cart(request,id): #status = None, Outgoing, Incoming
@@ -118,14 +119,21 @@ def equipment_new(request):
     return render(request, "equipment_new.html", {'vendors':vendors,'inventorytype':inventorytype,'inventoryitems1':inventoryitems1,'inventoryitems2':inventoryitems2,'inventoryitems3':inventoryitems3,'inventoryitems4':inventoryitems4})
 
 @login_required(login_url='/accounts/login')
+def get_directory_contents(request, id, value):
+    file_path = os.path.join(settings.MEDIA_ROOT, "equipment", str(id), os.path.basename(value))
+    if os.path.exists(file_path):
+        name = value.split('.')[0]
+        mimetype = value.split('.')[1]
+        with open(file_path, 'rb') as fh:
+            return HttpResponse(fh.read(), headers={'Content-Type': f'image/{mimetype}','Content-Disposition': f'attachment; filename="{name}.{mimetype}"'})
+
+@login_required(login_url='/accounts/login')
 def equipment_page(request, id):
     inventory = Inventory.objects.get(id=id)
     table = EquipmentNotesTable(InventoryNotes.objects.filter(inventory_item=inventory))
     employees = Employees.objects.filter(active=True)
     vendors = Vendors.objects.filter(category__category="Equipment Repair")
     path = os.path.join(settings.MEDIA_ROOT, "equipment", str(inventory.id))
-    #filelist = os.listdir(path)
-    #res = [str(path) + x for x in filelist]
     foldercontents =  os.listdir(path)
     if request.method == 'POST':
         if 'apply_filter' in request.POST:
@@ -222,7 +230,6 @@ def equipment_page(request, id):
             fn = os.path.basename(fileitem.name)
             fn2 = os.path.join(settings.MEDIA_ROOT, "equipment", str(inventory.id), fn)
             open(fn2, 'wb').write(fileitem.file.read())
-
 
     jobs = Jobs.objects.all()
     return render(request, "equipment_page.html", {'employees':employees,'jobs': jobs,'inventories': inventory, "table": table, "vendors": vendors, "foldercontents":foldercontents})
