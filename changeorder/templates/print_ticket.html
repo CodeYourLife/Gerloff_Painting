@@ -118,13 +118,16 @@
 	<br><br><br>
 
 	</div>
-	<form action="{% url 'print_ticket' changeorder.id %}" method="post"  >
+  {% if status == 'NEW' %}
+	<form action="{% url 'print_ticket' changeorder.id 'NEW' %}" method="post"  >
 		<div class ="container">
 		<div class ="row">
-			<div class ="col">Approved:</div>
+			<div class ="col">Signature:</div>
 			{% if signature.signature %}
 				<img id="saveSignature"  src={{signature.signature}} name="saveSignature" width: 300px; height: 100px" alt="Saved image png"/><br></br>
 				<div>Name: {{signature.name}}</div>
+				<div>Date: {{signature.date}}</div>
+				<div>Comments: {{signature.notes}}</div>
 			{% else %}
 				<div id="canvas">
 				  <canvas class="roundCorners" id="newSignature"
@@ -136,12 +139,16 @@
 					<input style="width: 200px" id="signatureName" name="signatureName"></input>
 					<input hidden id="signatureValue" name="signatureValue"></input>
 				</div>
+					<br>
+					<label for="gc_notes">Comments: </label> <br>
+        <textarea id="gc_notes" name="gc_notes" rows="2" cols="50" ></textarea>
+
 						{% endif %}
 
 			<div class ="col-10">___________________________________________</div>
 		</div>
 		<div class ="row">
-				<div class ="col"></div>
+
 				<div class ="col-10">{{changeorder.job_number.client}}</div>
 
 		</div>
@@ -154,7 +161,12 @@
 			{% endif %}
 		</div>
 	</form>
-
+{% else %}
+  <br><br><br><br>
+		<div class ="container">
+		<div class ="row"><div class ="col-10">_______________________________________________________________</div></div>
+			<div class ="row"><div class ="col-10">{{changeorder.job_number.client}}</div></div>
+  {% endif %}
 
 <script src=”https://code.jquery.com/jquery-3.2.1.slim.min.js” integrity=”sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN” crossorigin=”anonymous”></script>
 
