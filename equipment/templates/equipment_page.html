@@ -197,7 +197,7 @@
 				<font color = "red" >Here are the documents that have been uploaded for this equipment</font>
 				<br>
 			{% for x in foldercontents %}
-				{{x}}
+				<a style="color: blue; cursor: pointer;" name="get_directory_contents" href="{% url 'get_directory_contents' inventories.id x %}" target="_blank">{{x}}</a>
 				<br>
 			{% endfor %}
 			</div>
