@@ -218,19 +218,8 @@ def equipment_page(request, id):
                                       category="Employee",)
             new_note.save()
         if 'upload_file' in request.FILES:
-            #COULDN"T GET THIS PART TO WORK
-            # uploaded_file = request.FILES['upload_file']
-            # fs = FileSystemStorage()
-            # file = fs.save(uploaded_file.name, uploaded_file)
-            # fileurl = fs.url(file)
-
-            #TRYING THIS INSTEAD
             fileitem = request.FILES['upload_file']
-            print(fileitem)
             fn = os.path.basename(fileitem.name)
-            print(settings.MEDIA_ROOT)
-            # fn2 = os.path.join("C:/Trinity/", fn)
-            #createfolder("equipment/" + str(inventory.id))
             fn2 = os.path.join(settings.MEDIA_ROOT, "equipment", str(inventory.id), fn)
             open(fn2, 'wb').write(fileitem.file.read())
 

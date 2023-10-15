@@ -24,6 +24,7 @@ from jobs.JobMisc import start_date_change, gerloff_super_change
 from jobs.filters import JobNotesFilter
 from django.db.models import Q
 
+
 @login_required(login_url='/accounts/login')
 def change_start_date(request, jobnumber, previous, ):
     jobs = Jobs.objects.get(job_number=jobnumber)
@@ -51,6 +52,21 @@ def change_start_date(request, jobnumber, previous, ):
             return redirect('super_home')
     return render(request, "change_start_date.html",
                   {'jobs': jobs, 'formatdate': format_date, 'previous_page': previous_page})
+
+
+def change_gpsuper(request, jobnumber, previous):
+    jobs = Jobs.objects.get(job_number=jobnumber)
+    previous_page = previous
+    employees = Employees.objects.exclude(job_title__description="Painter")
+    if request.method == 'POST':
+        gerloff_super_change(jobs, Employees.objects.get(id=request.POST['select_gpsuper']),
+                             request.user.first_name + " " + request.user.last_name)
+        if previous == 'jobpage':
+            return redirect('job_page', jobnumber=jobnumber)
+        else:
+            return redirect('super_home')
+    return render(request, "change_gpsuper.html",
+                  {'jobs': jobs, 'previous_page': previous_page, 'employees': employees})
 
 
 @login_required(login_url='/accounts/login')
@@ -297,7 +313,7 @@ def upload_new_job(request):
         if 'upload_file' in request.FILES:
             fileitem = request.FILES['upload_file']
             fn = os.path.basename(fileitem.name)
-            #fn2 = os.path.join(settings.MEDIA_ROOT, "job_import", str(request.POST['job_number']), fn)
+            # fn2 = os.path.join(settings.MEDIA_ROOT, "job_import", str(request.POST['job_number']), fn)
             fn2 = os.path.join(settings.MEDIA_ROOT, "job_import", str(request.POST['job_number']) + ".csv")
             open(fn2, 'wb').write(fileitem.file.read())
             print(1)
@@ -321,7 +337,6 @@ def upload_new_job(request):
                 #         if found != 2:
                 #             raise ValueError('A very specific bad thing happened.')
                 #     else:
-
 
                 # job_number = ''
                 # job_name = ''
@@ -370,9 +385,6 @@ def upload_new_job(request):
                 # job.save()
                 #
 
-
-
-
     return render(request, "upload_new_job.html")
 
 
@@ -415,46 +427,39 @@ def job_page(request, jobnumber):
                        'jobs': jobs, 'tickets': tickets, 'open_cos': open_cos, 'approved_cos': approved_cos,
                        'equipments': equipment, 'rentals': rentals})
     else:
+        if request.method == 'POST':
+            if 'add_note' in request.POST:
+                JobNotes.objects.create(job_number=Jobs.objects.get(job_number=jobnumber), note=request.POST['add_note'], type="employee_note",
+                                        user=request.user.first_name + " " + request.user.last_name, date=date.today())
         send_data = {}
-        jobstable = JobsTable(Jobs.objects.filter(job_number=jobnumber))
-        send_data['jobstable'] = jobstable
-        jobs = Jobs.objects.filter(job_number=jobnumber)[0:2000]
-        send_data['jobs'] = jobs
-        tickets = ChangeOrders.objects.filter(job_number=jobnumber, is_t_and_m=True, is_ticket_signed=False)
-        send_data['tickets'] = tickets
-        open_cos = ChangeOrders.objects.filter(job_number=jobnumber, is_closed=False,
-                                               is_approved=False) & ChangeOrders.objects.filter(
-            is_t_and_m=False) | ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=True)
-        send_data['open_cos'] = open_cos
-        approved_cos = ChangeOrders.objects.filter(job_number=jobnumber, is_closed=False, is_approved=True)
-        send_data['approved_cos'] = approved_cos
-        equipment = Inventory.objects.filter(job_number=jobnumber).order_by('inventory_type')
-        send_data['equipments'] = equipment
-        rentals = Rentals.objects.filter(job_number=jobnumber)
-        send_data['rentals'] = rentals
-        wallcovering2 = Wallcovering.objects.filter(job_number=jobnumber)
-        wc_not_ordereds = Wallcovering.objects.filter(job_number__job_number=jobnumber, orderitems1__isnull=True)
-        send_data['wc_not_ordereds'] = wc_not_ordereds
-        wc_ordereds = OrderItems.objects.filter(order__job_number=jobnumber, is_satisfied=False)
-        send_data['wc_ordereds'] = wc_ordereds
-        packages = Packages.objects.filter(delivery__order__job_number=jobnumber)
-        send_data['packages'] = packages
-        deliveries = OutgoingItem.objects.filter(outgoing_event__job_number=jobnumber)
-        send_data['deliveries'] = deliveries
-        submittals = Submittals.objects.filter(job_number=jobnumber)
-        send_data['submittals'] = submittals
-        subcontracts = Subcontracts.objects.filter(job_number=jobnumber)
-        send_data['subcontracts'] = subcontracts
+        send_data['jobstable'] = JobsTable(Jobs.objects.filter(job_number=jobnumber))
+        send_data['jobs'] = Jobs.objects.filter(job_number=jobnumber)
+        send_data['tickets'] = ChangeOrders.objects.filter(job_number=jobnumber, is_t_and_m=True,
+                                                           is_ticket_signed=False)
+        send_data['open_cos'] = ChangeOrders.objects.filter(job_number=jobnumber, is_closed=False,
+                                                            is_approved=False) & ChangeOrders.objects.filter(job_number=jobnumber,
+            is_t_and_m=False) | ChangeOrders.objects.filter(job_number=jobnumber, is_t_and_m=True, is_ticket_signed=True)
+        send_data['approved_cos'] = ChangeOrders.objects.filter(job_number=jobnumber, is_closed=False, is_approved=True)
+        send_data['equipments'] = Inventory.objects.filter(job_number=jobnumber).order_by('inventory_type')
+        send_data['rentals'] = Rentals.objects.filter(job_number=jobnumber)
+        send_data['wallcovering2'] = Wallcovering.objects.filter(job_number=jobnumber)
+        send_data['wc_not_ordereds'] = Wallcovering.objects.filter(job_number__job_number=jobnumber,
+                                                                   orderitems1__isnull=True)
+        send_data['wc_ordereds'] = OrderItems.objects.filter(order__job_number=jobnumber, is_satisfied=False)
+        send_data['packages'] = Packages.objects.filter(delivery__order__job_number=jobnumber)
+        send_data['deliveries'] = OutgoingItem.objects.filter(outgoing_event__job_number=jobnumber)
+        send_data['submittals'] = Submittals.objects.filter(job_number=jobnumber)
+        send_data['subcontracts'] = Subcontracts.objects.filter(job_number=jobnumber)
         all_notes = JobNotesFilter(request.GET, queryset=JobNotes.objects.filter(job_number=jobnumber))
         send_data['all_notes'] = all_notes
         send_data['filtered_notes'] = all_notes.qs
-        has_filter = any(field in request.GET for field in set(all_notes.get_fields()))
-        send_data['has_filter'] = has_filter
+        send_data['has_filter'] = any(field in request.GET for field in set(all_notes.get_fields()))
         if request.method == 'GET':
             made_already = False
             if 'admin' in request.GET:
-                # notes = JobNotes.objects.filter(job_number=jobnumber,Q(type="auto_booking_note") | Q(type="auto_misc_note"))
-                notes = JobNotes.objects.filter(job_number=jobnumber,type="auto_booking_note") | JobNotes.objects.filter(job_number=jobnumber,type="auto_misc_note")
+                notes = JobNotes.objects.filter(job_number=jobnumber,
+                                                type="auto_booking_note") | JobNotes.objects.filter(
+                    job_number=jobnumber, type="auto_misc_note")
                 made_already = True
                 send_data['admin'] = 'admin'
             if 'start' in request.GET:
@@ -468,10 +473,14 @@ def job_page(request, jobnumber):
             if 'field' in request.GET:
                 send_data['field'] = 'field'
                 if made_already == False:
-                    notes = JobNotes.objects.filter(job_number=jobnumber, type="employee_note") | JobNotes.objects.filter(job_number=jobnumber, type="daily_report")
+                    notes = JobNotes.objects.filter(job_number=jobnumber,
+                                                    type="employee_note") | JobNotes.objects.filter(
+                        job_number=jobnumber, type="daily_report")
                     made_already = True
                 else:
-                    notes = notes | JobNotes.objects.filter(job_number=jobnumber, type="employee_note") | JobNotes.objects.filter(job_number=jobnumber, type="daily_report")
+                    notes = notes | JobNotes.objects.filter(job_number=jobnumber,
+                                                            type="employee_note") | JobNotes.objects.filter(
+                        job_number=jobnumber, type="daily_report")
                     made_already = True
             if 'change_order' in request.GET:
                 send_data['change_order'] = 'change_order'
@@ -494,7 +503,8 @@ def job_page(request, jobnumber):
         else:
             notes = JobNotes.objects.filter(job_number=jobnumber)
         send_data['notes'] = notes
-        return render(request, "job_page.html", send_data)
+        print(send_data)
+        return render(request, 'job_page.html', send_data)
 
 
 @login_required(login_url='/accounts/login')
@@ -596,7 +606,6 @@ def register(request):
             client_super = ClientEmployees.objects.get(person_pk=request.POST['select_super'])
 
         superintendent = request.POST['select_gpsuper']
-
 
         start_date = request.POST['start_date']
 
