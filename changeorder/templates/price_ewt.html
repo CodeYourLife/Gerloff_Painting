@@ -45,7 +45,7 @@ function add_labor_row() {
 	cell1.innerHTML = "<div id='new_labor" + laborcount + "'></div>";
 	add_labor_dropdown()
 	cell2.innerHTML ="<input type= 'number' name='labor_hours" + laborcount + "' id='labor_hours" + laborcount + "'  onchange ='changehours(event)' size='10' required />"
-	cell3.innerHTML ="$<input type= 'number' name='labor_cost" + laborcount + "' id='labor_cost" + laborcount + "'  size='10' required />"
+	cell3.innerHTML ="<label for='labor_cost" + laborcount + "'>$</label><input type= 'number' name='labor_cost" + laborcount + "' id='labor_cost" + laborcount + "'  size='10' required />"
 }
 
 function add_labor_dropdown(){
@@ -131,7 +131,7 @@ function add_material_row(type) {
 	cell2.innerHTML ="<input type= 'text' name='" + type + "_description"+ materialcount + "' id='" + type + "_description"+ materialcount + "'  size='30' required />"
 	cell3.innerHTML ="<input type= 'number' name='" + type + "_quantity"+ materialcount + "' id='" + type + "_quantity"+ materialcount + "'  onchange = 'changequantity(event)' size='10' required />"
 	cell4.innerHTML ="<input type= 'text' name='" + type + "_units"+ materialcount + "' id='" + type + "_units"+ materialcount + "'  size='7' required />"
-	cell5.innerHTML ="$<input type= 'number' name='" + type + "_cost"+ materialcount + "' id='" + type + "_cost"+ materialcount + "'  size='7' required />"
+	cell5.innerHTML ="<label for='" + type + "_cost" + materialcount + "'>$</label><input type= 'number' name='" + type + "_cost"+ materialcount + "' id='" + type + "_cost"+ materialcount + "'  size='7' required />"
 }
 
 
@@ -263,7 +263,7 @@ function calculate_final_cost(){
 <body>
   <div class ="container">
 	<div class ="row">
-		<div class ="col"><H2>Gerloff Painting T&M Price Breakdown</H2></div>
+		<div class ="col"><H2>Gerloff Painting T&M Price Breakdown </H2></div>
 	</div>
 	<div class ="row">
 		<div class ="col">Job: {{changeorder.job_number}}</div>
@@ -293,7 +293,7 @@ function calculate_final_cost(){
 			  </thead>
 		<tbody>
 	  {% for x in laboritems %}
-		<tr><td><input type= "text" name="labor_item{{x.counter}}" id="labor_item{{x.counter}}" value="{{x.item}}" size="50" required /><input type= "hidden" name="labor_rate{{x.counter}}" id="labor_rate{{x.counter}}" value="{{x.rate}}"  /></td><td><input type= "number" name="labor_hours{{x.counter}}" id="labor_hours{{x.counter}}" value="{{x.hours}}" size="10" onchange = "changehours(event)" required /></td><td>$<input type= "number" name="labor_cost{{x.counter}}" id="labor_cost{{x.counter}}" value="{{x.cost}}" size="10" required /></td></tr>
+	  <tr><td><input type= "text" name="labor_item{{x.counter}}" id="labor_item{{x.counter}}" value="{{x.item}}" size="50" required /><input type= "hidden" name="labor_rate{{x.counter}}" id="labor_rate{{x.counter}}" value="{{x.rate}}"  /></td><td><input type= "number" name="labor_hours{{x.counter}}" id="labor_hours{{x.counter}}" value="{{x.hours}}" size="10" onchange = "changehours(event)" required /></td><td><label for="labor_cost{{x.counter}}">$</label><input type= "number" name="labor_cost{{x.counter}}" id="labor_cost{{x.counter}}" value="{{x.cost}}" size="10" required /></td></tr>
 	   {% endfor %}
 
 		{% endif %}
@@ -310,7 +310,7 @@ function calculate_final_cost(){
 				  </thead>
 		<tbody>
 	  {% for x in materials %}
-		<tr><td><input type= "text" name="material_category{{x.counter}}" id="material_category{{x.counter}}" value="{{x.category}}" size="50" required /><input type= "hidden" name="material_rate{{x.counter}}" id="material_rate{{x.counter}}" value="{{x.rate}}"  /></td><td><input type= "text" name="material_description{{x.counter}}" id="material_description{{x.counter}}" value="{{x.description}}" size="30" required /></td><td><input type= "number" name="material_quantity{{x.counter}}" id="material_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "changequantity(event)" size="10" required /></td><td><input type= "text" name="material_units{{x.counter}}" id="material_units{{x.counter}}" value="{{x.units}}" size="7" required /></td><td>$<input type= "number" name="material_cost{{x.counter}}" id="material_cost{{x.counter}}" value="{{x.cost}}" size="7" required /></td></tr>
+		<tr><td><input type= "text" name="material_category{{x.counter}}" id="material_category{{x.counter}}" value="{{x.category}}" size="50" required /><input type= "hidden" name="material_rate{{x.counter}}" id="material_rate{{x.counter}}" value="{{x.rate}}"  /></td><td><input type= "text" name="material_description{{x.counter}}" id="material_description{{x.counter}}" value="{{x.description}}" size="30" required /></td><td><input type= "number" name="material_quantity{{x.counter}}" id="material_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "changequantity(event)" size="10" required /></td><td><input type= "text" name="material_units{{x.counter}}" id="material_units{{x.counter}}" value="{{x.units}}" size="7" required /></td><td><label for="material_cost{{x.counter}}">$</label><input type= "number" name="material_cost{{x.counter}}" id="material_cost{{x.counter}}" value="{{x.cost}}" size="7" required /></td></tr>
 	   {% endfor %}
 		<tr><td>Inventory</th><td></td><td>Lump Sum</td><td></td><td><input type= "hidden" name="inventory_cost" id="inventory_cost" value="{{inventory}}" size="7" required /><div id="inventory_cost_display">${{inventory}}</div></td></tr>
 
