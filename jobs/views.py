@@ -550,12 +550,9 @@ def register(request):
         address = request.POST['address']
         city = request.POST['city']
         state = request.POST['state']
-        if 'on_base2' in request.POST:
-            is_on_base = True
+
         spray_scale = request.POST['spray_scale']
         brush_role = request.POST['brush_role']
-        if 'is_t_m_job' in request.POST:
-            is_t_m_job = True
 
         t_m_nte_amount = request.POST['t_m_nte_amount']
 
@@ -614,13 +611,18 @@ def register(request):
         painting_budget = request.POST['painting_budget']
         wallcovering_budget = request.POST['wallcovering_budget']
 
-        job = Jobs.objects.create(job_number=job_number, job_name=job_name, address=address, city=city, state=state,
-                                  is_on_base=is_on_base, is_t_m_job=is_t_m_job, contract_status=contract_status,
+        job = Jobs.objects.create(job_number=job_number, job_name=job_name, address=address, city=city, state=state,contract_status=contract_status,
                                   insurance_status=insurance_status, client=client, start_date=start_date,
                                   status="Open", booked_date=date.today(),
                                   booked_by=request.user.first_name + " " + request.user.last_name,
                                   estimator=Employees.objects.get(id=request.POST['select_gpestimator']),
                                   notes=request.POST['email_job_note'], po_number=request.POST['po_number'])
+        if 'is_t_m_job' in request.POST:
+            job.is_t_m_job = True
+        else:
+            is_t_m_job = False
+        if 'on_base2' in request.POST:
+            job.is_on_base = True
         if 'is_wage_rate' in request.POST:
             job.is_wage_scale = True
         if 'is_bonded' in request.POST:
