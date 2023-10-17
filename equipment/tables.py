@@ -3,13 +3,20 @@ from jobs.models import Jobs
 from equipment.models import Inventory, InventoryNotes
 from django_filters.views import FilterView
 
+
 class JobsTable(tables.Table):
     jobnumber = tables.TemplateColumn('<a href="{% url "job_page" record.job_number %}">{{record.job_number}}</a>')
-    startdate = tables.TemplateColumn('<a href="{% url "change_start_date" record.job_number "jobpage" %}">{{record.start_date}}</a>')
+    startdate = tables.TemplateColumn('<a href="{% url "change_start_date" record.job_number "jobpage" "ALL" "ALL" %}">{{record.start_date}}</a>')
+    super = tables.TemplateColumn(
+            '{% if record.superintendent is None %}<a href="{% url "change_gpsuper" record.job_number "jobpage" %}">Click to Assign</a>{% else %}<a href="{% url "change_gpsuper" record.job_number "jobpage" %}">{{record.superintendent}}</a>{% endif %}')
+
+
     class Meta:
         model = Jobs
         template_name = "django_tables2/bootstrap.html"
-        fields = ("jobnumber", "job_name","startdate","client","estimator","superintendent","contract_amount","address","city","state")
+        fields = ("jobnumber", "job_name","start_date","startdate","client","estimator","super","contract_amount","address","city","state")
+    def before_render(self,request):
+        self.columns.hide('start_date')
 class EquipmentNotesTable(tables.Table, FilterView):
     class Meta:
         model = InventoryNotes
