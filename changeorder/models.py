@@ -54,6 +54,7 @@ class ChangeOrders(models.Model):
     full_description = models.CharField(null=True, max_length=2000, blank=True)
     is_approved_to_bill = models.BooleanField(default=False)
     sent_to = models.CharField(null=True, max_length=2000, blank=True)
+    is_printed = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.job_number} {self.description}"
