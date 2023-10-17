@@ -102,7 +102,7 @@ $(document).ready(function () {
             </div>
 
 			<div class = "row">
-				<div class ="col-sm-4"><a href="{% url 'change_start_date' job.job_number 'jobpage' %}"><b>Start Date:</b> - {{job.start_date}}</a></div>
+				<div class ="col-sm-4"><a href="{% url 'change_start_date' job.job_number 'jobpage' 'ALL' 'ALL' %}"><b>Start Date:</b> - {{job.start_date}}</a></div>
 				<div class ="col-sm-4"><a href="{% url 'change_gpsuper' job.job_number 'jobpage' %}"><b>Gerloff Super:</b> - {{job.superintendent}}</a></div>
 				<div class ="col-sm-4"><b>Gerloff Estimator:</b> {{job.estimator}}</div>
 			</div>

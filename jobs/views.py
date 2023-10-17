@@ -26,7 +26,7 @@ from django.db.models import Q
 
 
 @login_required(login_url='/accounts/login')
-def change_start_date(request, jobnumber, previous, ):
+def change_start_date(request, jobnumber, previous, super, filter):
     jobs = Jobs.objects.get(job_number=jobnumber)
     format_date = jobs.start_date.strftime("%Y-%m-%d")
     previous_page = previous
@@ -49,9 +49,9 @@ def change_start_date(request, jobnumber, previous, ):
         if previous == 'jobpage':
             return redirect('job_page', jobnumber='ALL')
         else:
-            return redirect('super_home')
+            return redirect('super_home', super=super, filter=filter)
     return render(request, "change_start_date.html",
-                  {'jobs': jobs, 'formatdate': format_date, 'previous_page': previous_page})
+                  {'jobs': jobs, 'formatdate': format_date, 'previous_page': previous_page,'selected_super':super,'selected_filter':filter})
 
 
 def change_gpsuper(request, jobnumber, previous):
@@ -64,7 +64,7 @@ def change_gpsuper(request, jobnumber, previous):
         if previous == 'jobpage':
             return redirect('job_page', jobnumber=jobnumber)
         else:
-            return redirect('super_home')
+            return redirect('super_home', super='ALL', filter='ALL')
     return render(request, "change_gpsuper.html",
                   {'jobs': jobs, 'previous_page': previous_page, 'employees': employees})
 
@@ -398,7 +398,7 @@ def jobs_home(request):
 def job_page(request, jobnumber):
     if jobnumber == 'ALL':
         search_jobs = JobsFilter(request.GET, queryset=Jobs.objects.filter(status="Open"))
-        jobstable = JobsTable(search_jobs.qs)
+        jobstable = JobsTable(search_jobs.qs, order_by='start_date')
         has_filter = any(field in request.GET for field in set(search_jobs.get_fields()))
         tickets = ChangeOrders.objects.filter(job_number__status="Open", is_t_and_m=True, is_ticket_signed=False)
         open_cos = ChangeOrders.objects.filter(job_number__status="Open", is_closed=False,
@@ -429,7 +429,8 @@ def job_page(request, jobnumber):
     else:
         if request.method == 'POST':
             if 'add_note' in request.POST:
-                JobNotes.objects.create(job_number=Jobs.objects.get(job_number=jobnumber), note=request.POST['add_note'], type="employee_note",
+                JobNotes.objects.create(job_number=Jobs.objects.get(job_number=jobnumber),
+                                        note=request.POST['add_note'], type="employee_note",
                                         user=request.user.first_name + " " + request.user.last_name, date=date.today())
         send_data = {}
         send_data['jobstable'] = JobsTable(Jobs.objects.filter(job_number=jobnumber))
@@ -437,8 +438,10 @@ def job_page(request, jobnumber):
         send_data['tickets'] = ChangeOrders.objects.filter(job_number=jobnumber, is_t_and_m=True,
                                                            is_ticket_signed=False)
         send_data['open_cos'] = ChangeOrders.objects.filter(job_number=jobnumber, is_closed=False,
-                                                            is_approved=False) & ChangeOrders.objects.filter(job_number=jobnumber,
-            is_t_and_m=False) | ChangeOrders.objects.filter(job_number=jobnumber, is_t_and_m=True, is_ticket_signed=True)
+                                                            is_approved=False) & ChangeOrders.objects.filter(
+            job_number=jobnumber,
+            is_t_and_m=False) | ChangeOrders.objects.filter(job_number=jobnumber, is_t_and_m=True,
+                                                            is_ticket_signed=True)
         send_data['approved_cos'] = ChangeOrders.objects.filter(job_number=jobnumber, is_closed=False, is_approved=True)
         send_data['equipments'] = Inventory.objects.filter(job_number=jobnumber).order_by('inventory_type')
         send_data['rentals'] = Rentals.objects.filter(job_number=jobnumber)
@@ -611,7 +614,8 @@ def register(request):
         painting_budget = request.POST['painting_budget']
         wallcovering_budget = request.POST['wallcovering_budget']
 
-        job = Jobs.objects.create(job_number=job_number, job_name=job_name, address=address, city=city, state=state,contract_status=contract_status,
+        job = Jobs.objects.create(job_number=job_number, job_name=job_name, address=address, city=city, state=state,
+                                  contract_status=contract_status,
                                   insurance_status=insurance_status, client=client, start_date=start_date,
                                   status="Open", booked_date=date.today(),
                                   booked_by=request.user.first_name + " " + request.user.last_name,

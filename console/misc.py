@@ -18,7 +18,7 @@ class Email:
         text = msg.as_string()
         print("TESTING")
         print(filename)
-        if filename != 'False':
+        if filename != False:
             print("THIS WORKED")
             with open(filename, 'rb') as file:
                 print("NOW I AM HERE")

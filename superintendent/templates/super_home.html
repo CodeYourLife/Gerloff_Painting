@@ -21,17 +21,25 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 
+
 $(document).ready(function () {
     var table = $('#job_table').DataTable({});
 })
 	</script>
 </head>
 <body class="wide comments example">
-	<form name = select_super action="filter_super" method="post" >
+{% if filtered %}
+	<form name = select_super action="{% url 'super_home' 'ALL' 'UPCOMING' %}" method="post" >
+		{% else %}
+		<form name = select_super action="{% url 'super_home' 'ALL' 'ALL' %}" method="post" >
+		{% endif %}
         {% csrf_token %}
                     <label>Please select superintendent</label>
                     <select id="selected_super" name="selected_super" >
-                        <option value="please_select">"Please Select"</option>
+                        {% if selected_super %}
+						<option value={{selected_super.id}}>{{selected_super.first_name}} {{selected_super.last_name}}</option>
+						{% endif %}
+						<option value="all">"All"</option>
                         {% if supers %}
                         {% for super in supers %}
 
@@ -39,18 +47,32 @@ $(document).ready(function () {
                         {% endfor %}
                         {% endif %}
 					</select>
-		<input type="submit" value="select super" />
-	</form>
+		<input type="submit" value="Filter by Superintendent" />
+		</form>
 	<h3>Job List</h3>
+	{% if selected_super %}
+		{% if filtered %}
+			<form action= "{% url 'super_home' selected_super.id 'ALL' %}" ><input type="submit" value="Show All" /></form>
+		{% else %}
+			<form action= "{% url 'super_home' selected_super.id 'UPCOMING' %}" ><input type="submit" value="Show Upcoming Only" /></form>
+		{% endif %}
+	{% else %}
+		{% if filtered %}
+			<form action= "{% url 'super_home' 'ALL' 'ALL' %}" ><input type="submit" value="Show All" /></form>
+		{% else %}
+			<form action= "{% url 'super_home' 'ALL' 'UPCOMING' %}" ><input type="submit" value="Show Upcoming Only" /></form>
+		{% endif %}
+	{% endif %}
 	<div class="demo-html" style="width:90%">
 		<table id="job_table" class="display" style="width:90%">
 			<thead>
 				<tr>
 					<th>Job Number</th>
 					<th>Job Name</th>
+					<th>Start Date</th>
 					<th>Address</th>
-					<th>City</th>
-					<th>State</th>
+					<th>GC</th>
+					<th>Contact</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -62,9 +84,26 @@ $(document).ready(function () {
 								{{job.job_number}}	</div>
 						</a></td>
 					<td>{{job.job_name}}</td>
-					<td>{{job.address}}</td>
-					<td>{{job.city}}</td>
-					<td>{{job.state}}</td>
+					<td>
+					{% if selected_super %}
+						{% if filtered %}
+								<a href = "{% url 'change_start_date' job.job_number 'super' selected_super 'UPCOMING' %}">
+						{% else %}
+									<a href = "{% url 'change_start_date' job.job_number 'super' selected_super 'ALL' %}">
+						{% endif %}
+					{% else %}
+						{% if filtered %}
+										<a href = "{% url 'change_start_date' job.job_number 'super' 'ALL' 'UPCOMING' %}">
+						{% else %}
+											<a href = "{% url 'change_start_date' job.job_number 'super' 'ALL' 'ALL' %}">
+						{% endif %}
+					{% endif %}
+									<div style="height:100%;width:100%">
+								{{job.start_date}}	</div>
+						</a></td>
+					<td>{{job.address}} {{job.city}} {{job.state}}</td>
+<td>{{job.client}} </td>
+					<td>{{job.client_Super}} <a href="tel:+{{job.client_Super.phone}}" >{{job.client_Super.phone}}</a></td>
 				</tr>
 			{% endfor %}
 			{% endif %}

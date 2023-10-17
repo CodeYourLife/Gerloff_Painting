@@ -51,7 +51,7 @@ li a:hover {
  <div class="navbar-nav mr-auto">
     <ul>
         <li><a class="nav-item nav-link {% block nav_item_index %}{% endblock nav_item_index %}" href="{% url 'index' %}">Home</a></li>
-        <li><a class="nav-item nav-link {% block nav_item_super %}{% endblock nav_item_super %}" href="{% url 'super_home' %}">Superintendent Home</a></li>
+        <li><a class="nav-item nav-link {% block nav_item_super %}{% endblock nav_item_super %}" href="{% url 'super_home' 'ALL' 'ALL' %}">Superintendent Home</a></li>
         <li><a class="nav-item nav-link {% block nav_item_equipment %}{% endblock nav_item_equipment %}" href="{% url 'equipment_home' %}">Equipment</a></li>
         <li><a class="nav-item nav-link {% block nav_item_rentals %}{% endblock nav_item_rentals %}" href="{% url 'rentals_home' %}">Rentals</a></li>
         <li><a class="nav-item nav-link {% block nav_item_jobs %}{% endblock nav_item_jobs %}" href="{% url 'jobs_home' %}">Jobs</a></li>

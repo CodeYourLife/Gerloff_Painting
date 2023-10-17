@@ -38,7 +38,7 @@
     </ul>
   </div>
 </nav>
- <form name = booking_input action="{% url 'change_start_date' jobs.job_number previous_page %}" method="post">
+ <form name = booking_input action="{% url 'change_start_date' jobs.job_number previous_page selected_super selected_filter %}" method="post">
 {% csrf_token %}
 	                     <label for="start_date">Start date:</label>
                     <input type="date" id="start_date" name="start_date" value="{{formatdate}}">
