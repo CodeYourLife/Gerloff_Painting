@@ -672,7 +672,7 @@ def register(request):
                                 type="auto_booking_note", date=date.today(),
                                 user=request.user.first_name + " " + request.user.last_name)
         email_body = "New Job Booked \n" + job.job_number + "\n" + job.job_name + "\n" + job.client.company
-        Email.sendEmail("New Job - " + job.job_name, email_body, 'joe@gerloffpainting.com')
+        Email.sendEmail("New Job - " + job.job_name, email_body, 'joe@gerloffpainting.com', False)
         job.save()
         # for x in checklist:
         #     checklist = Checklist(job_number=job_number, checklist_item=x, category="PM")

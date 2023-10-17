@@ -16,7 +16,7 @@ from xhtml2pdf import pisa
 from console.misc import createfolder, openfolder
 from django.conf import settings
 from io import StringIO
-
+from console.misc import Email
 
 def print_TMProposal(request, id):
     newproposal = TMProposal.objects.get(id=id)
@@ -36,6 +36,21 @@ def print_TMProposal(request, id):
         bond = TMList.objects.get(change_order=changeorder, category="Bond")
         bond_exists = True
     ewt = newproposal.ticket
+
+    path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
+    result_file = open(f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf", "w+b")
+    html = render_to_string("print_TMProposal.html",
+                  {'inventory_exists': inventory_exists, 'bond_exists': bond_exists, 'laboritems': laboritems,
+                   'materialitems': materialitems, 'inventory': inventory, 'bond': bond,
+                   'equipmentitems': equipmentitems, 'extraitems': extraitems, 'newproposal': newproposal,
+                   'changeorder': changeorder, 'ewt': ewt})
+    pisa.CreatePDF(
+        html,
+        dest=result_file
+    )
+    result_file.close()
+    Email.sendEmail("COP Proposal","hi","joe@gerloffpainting.com",f"{path}\COP_{changeorder.cop_number}_{date.today()}.pdf")
+
 
     return render(request, "print_TMProposal.html",
                   {'inventory_exists': inventory_exists, 'bond_exists': bond_exists, 'laboritems': laboritems,
@@ -217,6 +232,7 @@ def print_ticket(request, id, status):
         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                     user=request.user.first_name + " " + request.user.last_name,
                                     note="Ticket Printed for Wet Signature")
+        changeorder.is_printed = True
 
     if request.method == 'POST':
         print(request.POST['signatureValue'])
@@ -238,8 +254,6 @@ def print_ticket(request, id, status):
         result_file = open(f"{path}/{id}_change_order_{date.today()}.pdf", "w+b")
         changeorder.is_ticket_signed = True
         changeorder.save()
-
-        # result_file = open(f"D:/Signed_Documents/{id}_change_order_{date.today()}.pdf", "w+b")
         html = render_to_string("print_ticket.html",
                                 {'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
                                  'changeorder': changeorder, 'signature': signature, 'status': status})

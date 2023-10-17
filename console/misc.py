@@ -2,11 +2,12 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
 import os
 import os.path
 from django.conf import settings
 class Email:
-    def sendEmail(title, body, to):
+    def sendEmail(title, body, to, filename):
         msg = MIMEMultipart()
         sender = to
         msg['From'] = 'joe@gerloffpainting.com'
@@ -15,6 +16,15 @@ class Email:
         msg['Subject'] = title
         msg.attach(MIMEText(body, 'plain'))
         text = msg.as_string()
+        print("TESTING")
+        print(filename)
+        if filename != 'False':
+            print("THIS WORKED")
+            with open(filename, 'rb') as file:
+                print("NOW I AM HERE")
+                attach = MIMEApplication(file.read(), _subtype='pdf')
+                attach.add_header('Content-Disposition', 'attachment', filename=filename)
+                msg.attach(attach)
         s = smtplib.SMTP('remote.gerloffpainting.com')
         s.sendmail(sender, to, text)
         s.quit()
