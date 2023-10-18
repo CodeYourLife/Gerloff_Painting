@@ -135,6 +135,13 @@
                     }
                 }
             }
+                            if (booking_input.is_t_m_job2.checked==true){
+                if (booking_input.contract_amount.value != ""){
+                    booking_input.contract_amount.scrollIntoView();
+                    alert("Can't be T&M and have a contract amount!")
+                    return false;
+                }
+                }
             if(Number(booking_input.wallcovering_budget.value) + Number(booking_input.painting_budget.value) != Number(booking_input.contract_amount.value)){
                 alert("Budget amounts must equal contract amount")
                 return false;
@@ -420,6 +427,8 @@
                             </select>
                         </div>
                     </div>
+                                	<button type="button" class="collapsible">Click Here to Add a New Company</button>
+	<div class="content">
                     <div class ="row" style="margin-top: 40px">
                         <div class ="col-sm-12"> Or enter New company below: </div>
                     </div>
@@ -438,6 +447,7 @@
                             <input class="form-control" type= "email" name="new_client_bid_email" placeholder="email" size="30"/>
                         </div>
                     </div>
+    </div>
             </div> <!pick client>
             <hr></hr>
             <div class ="container">
@@ -449,6 +459,8 @@
                             </select>
                         </div>
                     </div>
+                                                	<button type="button" class="collapsible">Click Here to Add a New Contact</button>
+	<div class="content">
                     <div class ="row" style="margin-top: 22px">
                         <div class ="col-sm-12">Or enter New below: </div>
                     </div>
@@ -468,6 +480,7 @@
                             <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" placeholder="email" size="30"/>
                         </div>
                     </div>
+    </div>
                     <hr></hr>
                     <div class = "row">
                         <div class ="col-sm-12">
@@ -477,6 +490,8 @@
                             </select>
                         </div>
                     </div>
+                                                	<button type="button" class="collapsible">Click Here to Add a New Contact</button>
+	<div class="content">
                     <div class ="row" style="margin-top: 22px">
                         <div class ="col-sm-6">Or enter New below: </div>
                     </div>
@@ -495,6 +510,7 @@
                             <input style="margin-top: 22px" class="form-control" type= "email" name="new_super_email" placeholder="email" size="30"/>
                         </div>
                     </div>
+    </div>
                 </div>
                 <br /> <hr><br />
                 <div class ="container">
@@ -600,7 +616,23 @@
 <script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js integrity=”sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q” crossorigin=”anonymous”></script>
 
 <script src=”https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js” integrity=”sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl” crossorigin=”anonymous”></script>
-</div>  
+<script>
+var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }
+  });
+}
+</script>
+    </div>
 </body>
 
 </div>

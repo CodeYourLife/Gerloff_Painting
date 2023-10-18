@@ -84,16 +84,56 @@ def update_job_info(request, jobnumber):
     startdate = selectedjob.start_date.strftime("%Y") + "-" + selectedjob.start_date.strftime(
         "%m") + "-" + selectedjob.start_date.strftime("%d")
     if request.method == 'POST':
+        if selectedjob.job_name != request.POST['job_name']:
+            selectedjob.job_name = request.POST['job_name']
         if selectedjob.address != request.POST['address']:
             selectedjob.address = request.POST['address']
+        if selectedjob.city != request.POST['city']:
+            selectedjob.city = request.POST['city']
+        if selectedjob.state != request.POST['state']:
+            selectedjob.state = request.POST['state']
+        if 'on_base2' in request.POST:
+            selectedjob.is_on_base = True
+        else:
+            selectedjob.is_on_base = False
+        if 'is_wage_rate' in request.POST:
+            selectedjob.is_wage_scale = True
+        else:
+            selectedjob.is_wage_scale = False
         if request.POST['brush_role'] == "":
             if selectedjob.brush_role is not None:
                 selectedjob.brush_role = None
         else:
             if selectedjob.brush_role != request.POST['brush_role']:
                 selectedjob.brush_role = request.POST['brush_role']
-        if selectedjob.city != request.POST['city']:
-            selectedjob.city = request.POST['city']
+        if request.POST['spray_scale'] == "":
+            if selectedjob.spray_scale is not None:
+                selectedjob.spray_scale = None
+        else:
+            if selectedjob.spray_scale != request.POST['spray_scale']:
+                selectedjob.spray_scale = request.POST['spray_scale']
+        if 'is_t_m_job' in request.POST:
+            selectedjob.is_t_m_job = True
+        else:
+            selectedjob.is_t_m_job = False
+        if request.POST['t_m_nte_amount'] == "":
+            if selectedjob.t_m_nte_amount is not None:
+                selectedjob.t_m_nte_amount = None
+        else:
+            if selectedjob.t_m_nte_amount != request.POST['t_m_nte_amount']:
+                selectedjob.t_m_nte_amount = request.POST['t_m_nte_amount']
+        if selectedjob.contract_status != request.POST['contract_status']:
+            selectedjob.contract_status = request.POST['contract_status']
+        if selectedjob.insurance_status != request.POST['insurance_status']:
+            selectedjob.insurance_status = request.POST['insurance_status']
+        if 'has_submittals' in request.POST:
+            selectedjob.submittals_needed = True
+        else:
+            selectedjob.submittals_needed = False
+        if 'is_bonded' in request.POST:
+            selectedjob.is_bonded = True
+        else:
+            selectedjob.is_bonded = False
         if request.POST['select_company'] == 'add_new':
             client = Clients.objects.create(company=request.POST['new_client'],
                                             bid_email=request.POST['new_client_bid_email'],
@@ -115,7 +155,7 @@ def update_job_info(request, jobnumber):
             client_super = ClientEmployees.objects.create(id=selectedjob.client, name=request.POST['new_super'],
                                                           phone=request.POST['new_super_phone'],
                                                           email=request.POST['new_super_email'])
-            selectedjob.client_super = client_super
+            selectedjob.client_Super = client_super
         elif request.POST['select_super'] == 'not_sure':
             if selectedjob.client_Super is not None:
                 selectedjob.client_Super = None
@@ -125,77 +165,6 @@ def update_job_info(request, jobnumber):
                     selectedjob.client_Super = ClientEmployees.objects.get(person_pk=request.POST['select_super'])
             else:
                 selectedjob.client_Super = ClientEmployees.objects.get(person_pk=request.POST['select_super'])
-        if request.POST['contract_amount'] == "":
-            if selectedjob.contract_amount is not None:
-                selectedjob.contract_amount = None
-        else:
-            if selectedjob.contract_amount != request.POST['contract_amount']:
-                selectedjob.contract_amount = request.POST['contract_amount']
-        if selectedjob.contract_status != request.POST['contract_status']:
-            selectedjob.contract_status = request.POST['contract_status']
-        if selectedjob.estimator.id != request.POST['select_gpestimator']:
-            selectedjob.estimator = Employees.objects.get(id=request.POST['select_gpestimator'])
-        if 'has_paint' in request.POST:
-            selectedjob.has_paint = True
-        else:
-            selectedjob.has_paint = False
-        if 'has_wallcovering' in request.POST:
-            selectedjob.has_wallcovering = True
-        else:
-            selectedjob.has_wallcovering = False
-        if selectedjob.insurance_status != request.POST['insurance_status']:
-            selectedjob.insurance_status = request.POST['insurance_status']
-        if 'is_bonded' in request.POST:
-            selectedjob.is_bonded = True
-        else:
-            selectedjob.is_bonded = False
-        if 'on_base2' in request.POST:
-            selectedjob.is_on_base = True
-        else:
-            selectedjob.is_on_base = False
-        if 'is_t_m_job' in request.POST:
-            selectedjob.is_t_m_job = True
-        else:
-            selectedjob.is_t_m_job = False
-        if 'is_wage_rate' in request.POST:
-            selectedjob.is_wage_scale = True
-        else:
-            selectedjob.is_wage_scale = False
-        if selectedjob.job_name != request.POST['job_name']:
-            selectedjob.job_name = request.POST['job_name']
-        if selectedjob.notes != request.POST['email_job_note']:
-            selectedjob.notes = request.POST['email_job_note']
-        if request.POST['painting_budget'] == "":
-            if selectedjob.painting_budget is not None:
-                selectedjob.painting_budget = None
-        else:
-            if selectedjob.painting_budget != request.POST['painting_budget']:
-                selectedjob.painting_budget = request.POST['painting_budget']
-        if request.POST['po_number'] == "":
-            if selectedjob.po_number is not None:
-                selectedjob.po_number = None
-        else:
-            if selectedjob.po_number != request.POST['po_number']:
-                selectedjob.po_number = request.POST['po_number']
-        if 'has_special_paint' in request.POST:
-            selectedjob.special_paint_needed = True
-        else:
-            selectedjob.special_paint_needed = False
-        if request.POST['spray_scale'] == "":
-            if selectedjob.spray_scale is not None:
-                selectedjob.spray_scale = None
-        else:
-            if selectedjob.spray_scale != request.POST['spray_scale']:
-                selectedjob.spray_scale = request.POST['spray_scale']
-        if selectedjob.start_date != request.POST['start_date']:
-            start_date_change(selectedjob, request.POST['start_date'], 3, request.POST['date_note'],
-                              request.user.first_name + " " + request.user.last_name, True)
-        if selectedjob.state != request.POST['state']:
-            selectedjob.state = request.POST['state']
-        if 'has_submittals' in request.POST:
-            selectedjob.submittals_needed = True
-        else:
-            selectedjob.submittals_needed = False
         if request.POST['select_gpsuper'] == 'not_sure':
             if selectedjob.superintendent is not None:
                 selectedjob.superintendent = None
@@ -207,12 +176,44 @@ def update_job_info(request, jobnumber):
             else:
                 gerloff_super_change(selectedjob, Employees.objects.get(id=request.POST['select_gpsuper']),
                                      request.user.first_name + " " + request.user.last_name)
-        if request.POST['t_m_nte_amount'] == "":
-            if selectedjob.t_m_nte_amount is not None:
-                selectedjob.t_m_nte_amount = None
+        if selectedjob.estimator.id != request.POST['select_gpestimator']:
+            selectedjob.estimator = Employees.objects.get(id=request.POST['select_gpestimator'])
+        if 'has_paint' in request.POST:
+            selectedjob.has_paint = True
         else:
-            if selectedjob.t_m_nte_amount != request.POST['t_m_nte_amount']:
-                selectedjob.t_m_nte_amount = request.POST['t_m_nte_amount']
+            selectedjob.has_paint = False
+        if 'has_wallcovering' in request.POST:
+            selectedjob.has_wallcovering = True
+        else:
+            selectedjob.has_wallcovering = False
+        if 'has_special_paint' in request.POST:
+            selectedjob.special_paint_needed = True
+        else:
+            selectedjob.special_paint_needed = False
+        if selectedjob.start_date != request.POST['start_date']:
+            start_date_change(selectedjob, request.POST['start_date'], 3, request.POST['date_note'],
+                              request.user.first_name + " " + request.user.last_name, True)
+        if selectedjob.notes != request.POST['email_job_note']:
+            selectedjob.notes = request.POST['email_job_note']
+        if request.POST['po_number'] == "":
+            if selectedjob.po_number is not None:
+                selectedjob.po_number = None
+        else:
+            if selectedjob.po_number != request.POST['po_number']:
+                selectedjob.po_number = request.POST['po_number']
+        if request.POST['contract_amount'] == "":
+            if selectedjob.contract_amount is not None:
+                selectedjob.contract_amount = None
+        else:
+            if selectedjob.contract_amount != request.POST['contract_amount']:
+                selectedjob.contract_amount = request.POST['contract_amount']
+        if request.POST['painting_budget'] == "":
+            if selectedjob.painting_budget is not None:
+                selectedjob.painting_budget = None
+        else:
+            if selectedjob.painting_budget != request.POST['painting_budget']:
+                selectedjob.painting_budget = request.POST['painting_budget']
+
         if request.POST['wallcovering_budget'] == "":
             if selectedjob.wallcovering_budget is not None:
                 selectedjob.wallcovering_budget = None
