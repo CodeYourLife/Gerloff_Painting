@@ -62,11 +62,7 @@
             <td>{{x.sunday}}</td>
         </tr>
         {% endfor %}
-        {% else %}
-        <tr>
-            <td style="text-align: center" colspan="8">No Data To Display</td>
-        <tr>
-            {% endif %}
+        {% endif %}
     </table>
 </div>
 <hr style="width:100%">
@@ -86,11 +82,7 @@
             <td>{{x.units}}</td>
         </tr>
         {% endfor %}
-        {% else %}
-        <tr>
-            <td style="text-align: center" colspan="3">No Data To Display</td>
-        <tr>
-            {% endif %}
+        {% endif %}
     </table>
 </div>
 <hr style="width:100%">
@@ -110,11 +102,7 @@
             <td>{{y.units}}</td>
         </tr>
         {% endfor %}
-        {% else %}
-        <tr>
-            <td style="text-align: center" colspan="3">No Data To Display</td>
-        <tr>
-            {% endif %}
+        {% endif %}
     </table>
 </div>
 <hr style="width:100%">
@@ -155,6 +143,8 @@
             <button type="button" id="clearSignatureBtn" onclick="signatureClear()">Clear signature</button>
             <input type="submit" value="Save PDF"/>
             {% endif %}
+        </div>
+    </div>
 </form>
 {% else %}
 <div>_______________________________________________________________</div>
