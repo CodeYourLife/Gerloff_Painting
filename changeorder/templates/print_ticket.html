@@ -1,178 +1,165 @@
-
-
 <!DOCTYPE html>
-
+{% load static %}
 <html>
 <head>
-	{% load static %}
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>DataTables example - HTML (DOM) sourced data</title>
-	    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
-      integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous"
-      xmlns:margin-left="http://www.w3.org/1999/xhtml">
+    <script src="{% static 'signature.js' %}">
+    </script>
+    <style>
+        table, td, th {
+          border: 1px solid #ddd;
+          text-align: left;
+        }
 
-	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
+        table {
+          border-collapse: collapse;
+          width: 100%;
+        }
 
-	</style>
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script src="{% static 'signature.js' %}">
-	</script>
+        th, td {
+          padding: 5px;
+        }
+    </style>
 </head>
-<body>
-  <div class ="container">
-	<div class ="row">
-		<div class ="col"><H2>Gerloff Painting Extra Work Ticket</H2></div>
-	</div>
-	<div class ="row">
-		<div class ="col">Job: {{changeorder.job_number}}</div>
-		<div class ="col">Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</div>
-	</div>
-	<div class ="row">
-		<div class ="col">Week Ending Date: {{ewt.week_ending}} </div>
-		<div class ="col">Ticket Completed By: {{ewt.completed_by}}</div>
-	</div>
-	<div class ="row">
-		<div class ="col"><p>Work Description: {{ewt.notes}}</p></div>
-	</div>
-	<div class ="row"></div>
-
-  	<div class ="row"></div>
-	  	  <div class ="row">
-			  <div class ="col-4"><b>Employee</b></div>
-			  <div class ="col"><b>M</b></div>
-			  <div class ="col"><b>T</b></div>
-			  <div class ="col"><b>W</b></div>
-			  <div class ="col"><b>Th</b></div>
-			  <div class ="col"><b>F</b></div>
-			  <div class ="col"><b>Sat</b></div>
-			  <div class ="col"><b>Sun</b></div>
-	  {% if laboritems %}
-	  {% for x in laboritems %}
-	  <div class ="row">
-		  {% if x.ot == True %}
-		  <div class ="col-4">{{x.employee}} OVERTIME</div>
-		  {% else %}
-		  <div class ="col-4">{{x.employee}}</div>
-		  {% endif %}
-		  <div class ="col">{{x.monday}}</div>
-		  <div class ="col">{{x.tuesday}}</div>
-		  <div class ="col">{{x.wednesday}}</div>
-		  <div class ="col">{{x.thursday}}</div>
-		  <div class ="col">{{x.friday}}</div>
-		  <div class ="col">{{x.saturday}}</div>
-		  <div class ="col">{{x.sunday}}</div>
-	  </div>
-		  {% endfor %}
-		  {% endif %}
-			  <div class ="row"><hr></div>
-			  <div class ="row"><br></div>
-	<div class ="row"><div class ="col">MATERIAL</div></div>
-			  <div class ="row"><br></div>
-			  <div class ="row">
-				  <div class ="col-4"><b>Description</b></div>
-				  <div class ="col"><b>Quantity</b></div>
-				  <div class ="col"><b>Units</b></div>
-			  </div>
-			  {% if materials %}
-			  {% for x in materials %}
-			  <div class ="row">
-				  <div class ="col-4">{{x.description}}</div>
-				  <div class ="col">{{x.quantity}}</div>
-				  <div class ="col">{{x.units}}</div>
-			  </div>
-		  {% endfor %}
-		  {% endif %}
-			  			  <div class ="row"><hr></div>
-			  <div class ="row"><br></div>
-			  	<div class ="row"><div class ="col">EQUIPMENT</div></div>
-			  <div class ="row"><br></div>
-			  <div class ="row">
-				  <div class ="col-4"><b>Description</b></div>
-				  <div class ="col"><b>Quantity</b></div>
-				  <div class ="col"><b>Units</b></div>
-			  </div>
-			  {% if equipment %}
-			  {% for y in equipment %}
-			  <div class ="row">
-				  <div class ="col-4">{{y.description}}</div>
-				  <div class ="col">{{y.quantity}}</div>
-				  <div class ="col">{{y.units}}</div>
-			  </div>
-		  {% endfor %}
-		  {% endif %}
-			  			  <div class ="row"><hr></div>
-
-
-  </div>
-	<br><br><br>
-
-	</div>
-  {% if status == 'NEW' %}
-	<form action="{% url 'print_ticket' changeorder.id 'NEW' %}" method="post"  >
-		<div class ="container">
-		<div class ="row">
-			<div class ="col">Signature:</div>
-			{% if signature.signature %}
-				<img id="saveSignature"  src={{signature.signature}} name="saveSignature" width: 300px; height: 100px" alt="Saved image png"/><br></br>
-				<div>Name: {{signature.name}}</div>
-				<div>Date: {{signature.date}}</div>
-				<div>Comments: {{signature.notes}}</div>
-			{% else %}
-				<div id="canvas">
-				  <canvas class="roundCorners" id="newSignature"
-				  style="position: relative; margin: 0; padding: 0; border: 1px solid #c4caac;"></canvas>
-				</div>
-				<img id="saveSignature"  name="saveSignature" style="display: none; width: 300px; height: 100px" alt="Saved image png"/><br></br>
-				<div style="display: flex">
-					<div>Print Name: </div>
-					<input style="width: 200px" id="signatureName" name="signatureName"></input>
-					<input hidden id="signatureValue" name="signatureValue"></input>
-				</div>
-					<br>
-					<label for="gc_notes">Comments: </label> <br>
-        <textarea id="gc_notes" name="gc_notes" rows="2" cols="50" ></textarea>
-
-						{% endif %}
-
-			<div class ="col-10">___________________________________________</div>
-		</div>
-		<div class ="row">
-
-				<div class ="col-10">{{changeorder.job_number.client}}</div>
-
-		</div>
-		{% csrf_token %}
-		<script>signatureCapture();</script>
-			{% if not signature %}
-		<button type="button" id="saveSignatureBtn" onclick="signatureSave()">Confirm signature</button>
-		<button type="button" id="clearSignatureBtn" onclick="signatureClear()">Clear signature</button>
-		 <input type="submit" value="Save PDF" />
-			{% endif %}
-		</div>
-	</form>
+<body style="margin: 22px; font-family: Helvetica">
+<div>
+    <H2>Gerloff Painting Extra Work Ticket</H2>
+</div>
+<div style="display:flex; justify-content: space-between">
+    <div><b>Job:</b>&nbsp;{{changeorder.job_number}}</div>
+    <div><b>Change Order #</b>&nbsp;{{changeorder.cop_number}} - {{changeorder.description}}</div>
+</div>
+<div style="display:flex; justify-content: space-between">
+    <div><b>Week Ending Date:</b>&nbsp;{{ewt.week_ending}}</div>
+    <div><b>Ticket Completed By:</b>&nbsp;{{ewt.completed_by}}</div>
+</div>
+<div><p><b>Work Description:</b>&nbsp;{{ewt.notes}}</p></div>
+<div style="margin-top: 12px; margin-bottom: 12px;">
+    <table style="width: 100%">
+        <tr>
+            <th>Employee</th>
+            <th>M</th>
+            <th>T</th>
+            <th>W</th>
+            <th>Th</th>
+            <th>F</th>
+            <th>Sat</th>
+            <th>Sun</th>
+        </tr>
+        {% if laboritems %}
+        {% for x in laboritems %}
+        <tr>
+            {% if x.ot == True %}
+            <td>{{x.employee}} OVERTIME</td>
+            {% else %}
+            <td>{{x.employee}}</td>
+            {% endif %}
+            <td>{{x.monday}}</td>
+            <td>{{x.tuesday}}</td>
+            <td>{{x.wednesday}}</td>
+            <td>{{x.thursday}}</td>
+            <td>{{x.friday}}</td>
+            <td>{{x.saturday}}</td>
+            <td>{{x.sunday}}</td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+            <td style="text-align: center" colspan="8">No Data To Display</td>
+        <tr>
+            {% endif %}
+    </table>
+</div>
+<hr style="width:100%">
+<div style="margin-top: 12px; margin-bottom: 12px;">
+    <div style="width:100%; font-weight: bold; margin-bottom: 12px;">MATERIAL</div>
+    <table>
+        <tr>
+            <th>Description</th>
+            <th>Quantity</th>
+            <th>Units</th>
+        </tr>
+        {% if materials %}
+        {% for x in materials %}
+        <tr>
+            <td>{{x.description}}</td>
+            <td>{{x.quantity}}</td>
+            <td>{{x.units}}</td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+            <td style="text-align: center" colspan="3">No Data To Display</td>
+        <tr>
+            {% endif %}
+    </table>
+</div>
+<hr style="width:100%">
+<div style="margin-top: 12px; margin-bottom: 12px;">
+    <div style="width:100%; font-weight: bold; margin-bottom: 12px;">EQUIPMENT</div>
+    <table>
+        <tr>
+            <th>Description</th>
+            <th>Quantity</th>
+            <th>Units</th>
+        </tr>
+        {% if equipment %}
+        {% for y in equipment %}
+        <tr>
+            <td>{{y.description}}</td>
+            <td>{{y.quantity}}</td>
+            <td>{{y.units}}</td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+            <td style="text-align: center" colspan="3">No Data To Display</td>
+        <tr>
+            {% endif %}
+    </table>
+</div>
+<hr style="width:100%">
+{% if status == 'NEW' %}
+<form action="{% url 'print_ticket' changeorder.id 'NEW' %}" method="post">
+    <div>
+        <div style="margin-bottom: 12px;"><b>Signature:</b></div>
+        {% if signature.signature %}
+        <img id="saveSignature" src={{signature.signature}} name="saveSignature" style="width: 300px; height: 100px"
+             alt="Saved image png"/>
+        <div><b>Name:</b>&nbsp;{{signature.name}}</div>
+        <div><b>Date:</b>&nbsp;{{signature.date}}</div>
+        <div><b>Comments:</b>&nbsp;{{signature.notes}}</div>
+        {% else %}
+        <div id="canvas">
+            <canvas class="roundCorners" id="newSignature"
+                    style="position: relative; margin: 0; padding: 0; border: 1px solid #c4caac;"></canvas>
+        </div>
+        <div>
+            <img id="saveSignature" name="saveSignature" style="display: none; width: 300px; height: 100px"
+                 alt="Saved image png"/>
+            <div style="display: flex; margin-top: 12px;">
+                <div>Print Name:&nbsp;</div>
+                <input style="width: 200px" id="signatureName" name="signatureName"></input>
+                <input hidden id="signatureValue" name="signatureValue"></input>
+            </div>
+            <br>
+            <label for="gc_notes">Comments:</label><br>
+            <textarea id="gc_notes" name="gc_notes" rows="2" style="max-width: 380px; width: 98%;"></textarea>
+            <div>{% endif %}
+                <div>___________________________________________</div>
+            </div>
+            <div style="width: 400px">{{changeorder.job_number.client}}</div>
+            {% csrf_token %}
+            <script>signatureCapture();</script>
+            {% if not signature %}
+            <button type="button" id="saveSignatureBtn" onclick="signatureSave()">Confirm signature</button>
+            <button type="button" id="clearSignatureBtn" onclick="signatureClear()">Clear signature</button>
+            <input type="submit" value="Save PDF"/>
+            {% endif %}
+</form>
 {% else %}
-  <br><br><br><br>
-		<div class ="container">
-		<div class ="row"><div class ="col-10">_______________________________________________________________</div></div>
-			<div class ="row"><div class ="col-10">{{changeorder.job_number.client}}</div></div>
-  {% endif %}
-
-<script src=”https://code.jquery.com/jquery-3.2.1.slim.min.js” integrity=”sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN” crossorigin=”anonymous”></script>
-
-<script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js integrity=”sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q” crossorigin=”anonymous”></script>
-
-<script src=”https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js” integrity=”sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl” crossorigin=”anonymous”></script>
+<div>_______________________________________________________________</div>
+<div style="width: 400px">{{changeorder.job_number.client}}</div>
+{% endif %}
 </body>
 </html>
 
