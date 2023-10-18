@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     'wallcovering',
     'superintendent',
     'submittals',
-    'accounts'
+    'accounts',
+    'django_truncate'
 ]
 
 # django.setup()
