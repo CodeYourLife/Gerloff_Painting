@@ -10,6 +10,8 @@ admin.site.register(EWT)
 admin.site.register(ClientJobRoles)
 admin.site.register(ChangeOrders)
 admin.site.register(TempRecipients)
+admin.site.register(ChangeOrderNotes)
+
 
 
 

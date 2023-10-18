@@ -34,8 +34,6 @@ def super_home(request, super, filter):
         else:
             jobs = Jobs.objects.filter(superintendent=Employees.objects.get(id=selected_superid)).order_by(
                 'start_date')
-    print("PUMPKIN")
-    print(jobs)
     send_data['jobs'] = jobs
     send_data['supers'] = Employees.objects.exclude(job_title__description="Painter")
     send_data['equipment'] = Inventory.objects.exclude(job_number=None)

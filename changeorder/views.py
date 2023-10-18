@@ -432,8 +432,12 @@ def extra_work_ticket(request, id):
     ticket_needed = changeorder.need_ticket()
     notes = ChangeOrderNotes.objects.filter(cop_number=id)
     tmproposal = []
-    path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
-    foldercontents = os.listdir(path)
+    foldercontents = []
+    try:
+        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
+        foldercontents = os.listdir(path)
+    except Exception as e:
+        print('no folder contents')
     if TMProposal.objects.filter(change_order=changeorder):
         tmproposal = TMProposal.objects.get(change_order=changeorder)
     if request.method == 'GET':
