@@ -137,6 +137,13 @@ var startdate = "{{startdate}}"
                     }
                 }
             }
+                if (booking_input.is_t_m_job2.checked==true){
+                if (booking_input.contract_amount.value != ""){
+                    booking_input.contract_amount.scrollIntoView();
+                    alert("Can't be T&M and have a contract amount!")
+                    return false;
+                }
+                }
             if(Number(booking_input.wallcovering_budget.value) + Number(booking_input.painting_budget.value) != Number(booking_input.contract_amount.value)){
                 alert("Budget amounts must equal contract amount")
                 return false;
@@ -358,28 +365,7 @@ var startdate = "{{startdate}}"
 
                     </div>
                 <!on base / scale>         
-                <hr>
-                <div class ="container">
-                    <div class ="row">
-                        <div class="col-sm-6">
-                            <label for="is_t_m_job2">"Is this a T&M Job?" </label>  
-                        </div>
-                        <div class ="col-sm-6">
-                            {% if selectedjob.is_t_m_job == True %}
-                            <input type="checkbox" name ="is_t_m_job" id="is_t_m_job2" onClick= "hide_contract_amount()" checked />
-                        {% else %}
-                            <input type="checkbox" name ="is_t_m_job" id="is_t_m_job2" onClick= "hide_contract_amount()" />
-                             {% endif %}
-                        </div>
-                    </div>
-                    <div class ="row">
-                        <div class ="col">   
-                            <input class="form-control" type="number" name="t_m_nte_amount" value = {{selectedjob.t_m_nte_amount}} step="0.01" size="30" />
-                            <br />       
-                        </div>
-                        <div class ="col-lg"></div>
-                    </div>
-                </div> <!#is T&M?>
+
                 <hr>
 
                 <div class ="container">
@@ -458,8 +444,10 @@ var startdate = "{{startdate}}"
                             </select>
                         </div>
                     </div>
+                	<button type="button" class="collapsible">Click Here to Add a New Company</button>
+	<div class="content">
                     <div class ="row" style="margin-top: 40px">
-                        <div class ="col-sm-12"> Or enter New company below: </div>
+                        <div class ="col-sm-12"> Enter New company below: </div>
                     </div>
                     <div class ="row" style="margin-top: 22px" >
                         <div class ="col-sm-12">  
@@ -476,6 +464,7 @@ var startdate = "{{startdate}}"
                             <input class="form-control" type= "email" name="new_client_bid_email" placeholder="email" size="30"/>
                         </div>
                     </div>
+    </div>
             </div> <!pick client>
             <hr></hr>
             <div class ="container">
@@ -493,6 +482,8 @@ var startdate = "{{startdate}}"
                             </select>
                         </div>
                     </div>
+                                	<button type="button" class="collapsible">Click Here to Add a New Contact</button>
+	<div class="content">
                     <div class ="row" style="margin-top: 22px">
                         <div class ="col-sm-12">Or enter New below: </div>
                     </div>
@@ -512,6 +503,7 @@ var startdate = "{{startdate}}"
                             <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" placeholder="email" size="30"/>
                         </div>
                     </div>
+    </div>
                     <hr></hr>
                     <div class = "row">
                         <div class ="col-sm-12">
@@ -520,7 +512,7 @@ var startdate = "{{startdate}}"
                             {% if selectedjob.client_Super != Null %}
                              <option value="{{selectedjob.client_Super.person_pk}}">{{selectedjob.client_Super}}</option>
                             {% else %}
-                            <option value="please_select">"Please select"</option>
+                            <option value="not_sure">"Not Sure"</option>
                             {% endif %}
                                                                                             {% if pms_filter %}
                                 {% for client in pms_filter %}
@@ -530,6 +522,8 @@ var startdate = "{{startdate}}"
                             </select>
                         </div>
                     </div>
+                <button type="button" class="collapsible">Click Here to Add a New Contact</button>
+	<div class="content">
                     <div class ="row" style="margin-top: 22px">
                         <div class ="col-sm-6">Or enter New below: </div>
                     </div>
@@ -549,6 +543,7 @@ var startdate = "{{startdate}}"
                         </div>
                     </div>
                 </div>
+            </div>
                 <br /> <hr><br />
                 <div class ="container">
                     <label for="select_gpsuper">Please select Gerloff superintendent</label>
@@ -581,6 +576,7 @@ var startdate = "{{startdate}}"
                 <div class ="container">
                     <div class ="row">
                         <div class ="col-sm-12">Please select the scopes of work this project includes:</div>
+                    </div>
                     <div class ="row">
                         <div class ="col-sm-6">  
 
@@ -640,6 +636,27 @@ var startdate = "{{startdate}}"
                     {% endif %}
                 <hr>
                 </div>
+                                    <hr>
+                <div class ="container">
+                    <div class ="row">
+                        <div class="col-sm-6">"Is this a T&M Job?"</div>
+                        <div class ="col-sm-6">
+                            {% if selectedjob.is_t_m_job == True %}
+                            <input type="checkbox" name ="is_t_m_job" id="is_t_m_job2" onClick= "hide_contract_amount()" checked />
+                        {% else %}
+                            <input type="checkbox" name ="is_t_m_job" id="is_t_m_job2" onClick= "hide_contract_amount()" />
+                             {% endif %}
+                        </div>
+                    </div>
+                    <br>
+                    <div class ="row"> <div class="col-sm-6">"NTE Amount" </div>
+                            <div class="col-sm-6">
+                            <input class="form-control" type="number" id ="t_m_nte_amount" name="t_m_nte_amount" value = {{selectedjob.t_m_nte_amount}} step="0.01" size="30" />
+                            </div>
+                        </div>
+                        <div class ="col-lg"></div>
+                    </div>
+                <br>
                 <div class ="container" id = "contract_amount_section">
                     <div class ="row">
                         <div class ="col-sm-6">PO Number: </div>
@@ -678,7 +695,25 @@ var startdate = "{{startdate}}"
 <script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js integrity=”sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q” crossorigin=”anonymous”></script>
 
 <script src=”https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js” integrity=”sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl” crossorigin=”anonymous”></script>
-</div>  
+
+
+<script>
+var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }
+  });
+}
+</script>
+  </div>
 </body>
 
 </div>

@@ -12,25 +12,31 @@ from console.models import *
 @login_required(login_url='/accounts/login')
 def super_home(request, super, filter):
     send_data = {}
-    selected_superid=super
+    selected_superid = super
     if request.method == 'POST':
         if request.POST['selected_super'] == 'all':
-            selected_superid= 'ALL'
+            selected_superid = 'ALL'
         else:
             selected_superid = request.POST['selected_super']
     if selected_superid == 'ALL':
         if filter == 'UPCOMING':
             send_data['filtered'] = 'filtered'
-            send_data['jobs'] = Jobs.objects.filter(is_active=False).order_by('start_date')
+            jobs = Jobs.objects.filter(is_active=False).order_by('start_date')
         else:
-            send_data['jobs'] = Jobs.objects.all().order_by('start_date')
+            jobs = Jobs.objects.all().order_by('start_date')
     else:
         send_data['selected_super'] = Employees.objects.get(id=selected_superid)
         if filter == 'UPCOMING':
             send_data['filtered'] = 'filtered'
-            send_data['jobs'] = Jobs.objects.filter(is_active=False, superintendent=Employees.objects.get(id=selected_superid)).order_by('start_date')
+            jobs = Jobs.objects.filter(is_active=False,
+                                                    superintendent=Employees.objects.get(id=selected_superid)).order_by(
+                'start_date')
         else:
-            send_data['jobs'] = Jobs.objects.filter(superintendent=Employees.objects.get(id=selected_superid)).order_by('start_date')
+            jobs = Jobs.objects.filter(superintendent=Employees.objects.get(id=selected_superid)).order_by(
+                'start_date')
+    print("PUMPKIN")
+    print(jobs)
+    send_data['jobs'] = jobs
     send_data['supers'] = Employees.objects.exclude(job_title__description="Painter")
     send_data['equipment'] = Inventory.objects.exclude(job_number=None)
     send_data['rentals'] = Rentals.objects.filter(off_rent_date__isnull=True)
