@@ -21,3 +21,11 @@ class Rentals(models.Model):
 	rep = models.ForeignKey(VendorContact, on_delete=models.PROTECT, null=True, blank=True)
 	def __str__(self):
 		return f"{self.job_number} {self.item}"
+
+
+class RentalNotes(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    rental = models.ForeignKey(Rentals, on_delete=models.PROTECT)
+    date = models.DateField(null=True, blank=True)
+    user = models.CharField(null=True, max_length=50)
+    note = models.CharField(null=True, max_length=2000)

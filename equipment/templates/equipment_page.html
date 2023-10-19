@@ -162,11 +162,7 @@
                 {% endfor %}
                 {% endif %}
             </select>
- 			<input type="submit" value="Assign to Employee" />
-			</form>
-		</div>
-	</div>
-	<div class ="row">
+ 			<input type="submit" value=<div class ="row">
 			<div class="column">
 
 			<form name = add_note action="{% url 'equipment_page' inventories.id %}" method="post" >
@@ -197,11 +193,15 @@
 				<font color = "red" >Here are the documents that have been uploaded for this equipment</font>
 				<br>
 			{% for x in foldercontents %}
-				<a style="color: blue; cursor: pointer;" name="get_directory_contents" href="{% url 'get_directory_contents' inventories.id x %}" target="_blank">{{x}}</a>
+				<a style="color: blue; cursor: pointer;" name="get_directory_contents" href="{% url 'get_directory_contents' inventories.id x "equipment" %}" target="_blank">{{x}}</a>
 				<br>
 			{% endfor %}
 			</div>
+		</div>"Assign to Employee" />
+			</form>
 		</div>
+	</div>
+
 
 </div>
 

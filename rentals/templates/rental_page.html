@@ -27,6 +27,19 @@
 function Previous() {
 window.history.back()
 }
+        function clear_select_pm() {
+                rental_change.select_pm.value = "add_new";
+        }
+function check_booking_data(){
+            if (rental_change.select_pm.value == "add_new"){
+                if (rental_change.new_pm.value ==""){
+                alert('Please enter the new reps name')
+                rental_change.new_pm.scrollIntoView();
+                return false;
+                }
+            }
+}
+
 	</script>
 </head>
 <body>
@@ -42,22 +55,88 @@ window.history.back()
 </nav>
 
 
- <form name = rental_change action={% url 'rental_page' rental.id 'NO' %} method="post"  onSubmit = "return check_booking_data()">
+ <form name = rental_change action="{% url 'rental_page' rental.id 'NO' %}" method="post"  onSubmit = "return check_booking_data()">
 {% csrf_token %}
-
+<div class ="container">
+    <div class = "row">
+        <div class ="col-sm-12">
 Job: {{rental.job_number}}
-<br><br>
+        </div>
+    </div>
+<br>
+    <div class = "row">
+        <div class ="col-sm-12">
 Vendor: {{rental.company.company_name}}
-<br><br>
+        </div>
+    </div>
+            <br>
+    <div class = "row">
+        <div class ="col-sm-12">
+<label>Please select rep</label>
+<select class="form-control" id="select_pm" name="select_pm" >
+    {% if rental.rep == None %}
+    <option value="no_rep">"No Specific Rep"</option>
+   {% else %}
+    <option value="{{rental.rep.id}}">"{{rental.rep.name}}"</option>
+    {% endif %}
+    <option value="add_new">"add New"</option>
+    {% if reps %}
+    {% for rep in reps %}
+    <option value={{rep.id}}>{{rep.name}}</option>
+    {% endfor %}
+    {% endif %}
+</select>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="container">
+    <button type="button" class="collapsible">Click Here to Add a New Rep</button>
+    <div class="content">
+                <div class ="row" style="margin-top: 22px">
+                    <div class ="col-sm-12">Enter New below: </div>
+                </div>
+                <div class ="row" style="margin-top: 22px">
+                    <div class ="col-sm-12">
+                        <input  type= "text" id="new_pm" name="new_pm" class="form-control" placeholder="office pm name" size="30" onClick="clear_select_pm()"/>
+                    </div>
+                </div>
+
+                <div class ="row">
+                    <div class ="col-sm-12">
+                        <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" placeholder="phone Number" size="30"/>
+                    </div>
+                </div>
+                <div class ="row">
+                    <div class ="col-sm-12">
+                        <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" placeholder="email" size="30"/>
+                    </div>
+                </div>
+            </div>
+</div>
+<br>
+<div class ="container">
+    <div class = "row">
+        <div class ="col-sm-12">
 Item: {{rental.item}}
-<br><br>
+        </div>
+    </div>
+<br>
+    <div class = "row">
+        <div class ="col-sm-12">
 {% if rental.purchase_order == "" %}
 Purchase Order: <input type= "text" name="purchase_order" id="purchase_order" placeholder="Purchase Order #" size="30" />
 {% else %}
  <input type="hidden" name="purchase_order" value = ''/>
 Purchase Order: {{rental.purchase_order}}
  {% endif %}
-<br><br>
+        </div>
+    </div>
+            <br>
+    <div class = "row">
+        <div class ="col-sm-12">
  {% if rental.day_price == None %}
                           <label for="day_price">Daily Price: $</label>
                             <input type="text" name="day_price"  maxlength="250" id="day_price">
@@ -65,7 +144,11 @@ Purchase Order: {{rental.purchase_order}}
   <input type="hidden" name="day_price" value = ''/>
  Price Per Day: ${{rental.day_price}}
   {% endif %}
-<br><br>
+        </div>
+    </div>
+            <br>
+    <div class = "row">
+        <div class ="col-sm-12">
  {% if rental.week_price == None %}
                          <label for="week_price">Weekly Price: $</label>
                             <input type="text" name="week_price"  maxlength="250" id="week_price">
@@ -73,7 +156,11 @@ Purchase Order: {{rental.purchase_order}}
   <input type="hidden" name="week_price" value = ''/>
 Price Per Week: ${{rental.week_price}}
   {% endif %}
-<br><br>
+        </div>
+    </div>
+            <br>
+    <div class = "row">
+        <div class ="col-sm-12">
  {% if rental.month_price == None %}
                          <label for="month_price">Monthly Price: $</label>
                             <input type="text" name="month_price"  maxlength="250" id="month_price">
@@ -81,12 +168,17 @@ Price Per Week: ${{rental.week_price}}
   <input type="hidden" name="month_price" value = ''/>
 Price Per Month: ${{rental.month_price}}
   {% endif %}
-<br><br>
-
-
-
+        </div>
+    </div>
+<br>
+    <div class = "row">
+        <div class ="col-sm-12">
 On Rent Date: {{rental.on_rent_date}}
-<br><br>
+        </div>
+    </div>
+<br>
+    <div class = "row">
+        <div class ="col-sm-12">
  {% if rental.off_rent_date == None %}
 	                     <label for="off_rent_date">Off Rent Date:</label>
                     <input type="date" id="off_rent_date" name="off_rent_date">
@@ -94,30 +186,108 @@ On Rent Date: {{rental.on_rent_date}}
   <input type="hidden" name="off_rent_date" value = ''/>
 Off Rent Date: {{rental.off_rent_date}}
 	  {% endif %}
-<br><br>
+        </div>
+    </div>
+            <br>
+    <div class = "row">
+        <div class ="col-sm-12">
   {% if rental.off_rent_number == None %}
 Off Rent Number: <input type= "text" name="off_rent_number" id="off_rent_number" placeholder="Off Rent Number" size="30" />
 	 {% else %}
   <input type="hidden" name="off_rent_number" value = ''/>
 Off Rent Number: {{rental.off_rent_number}}
 	  {% endif %}
-	 <br><br>
+        </div>
+    </div>
+            <br>
+    <div class = "row">
+        <div class ="col-sm-12">
   {% if rental.is_closed == False %}
 <input type="checkbox" name ="is_closed" id="is_closed"  /> <label for="is_closed"> Billed </label>
 	 {% else %}
 <input type="checkbox" name ="is_closed" id="is_closed" checked /> <label for="is_closed"> Billed </label>
 	  {% endif %}
-	 <br><br>
-        <label for="notes">Notes about this Rental </label> <br>
-        <textarea id="notes" name="notes" rows="4" cols="100" >{{rental.notes}}</textarea>
-<br>
- <br>
-	 <input type="submit" value="Update Information" />
+        </div>
+    </div>
+	 <br>
+
+	 <input type="submit" name="form_1" value="Update Information" />
     </form>
  <br>
+<hr>
+  <h4>NOTES</h4>
+   <form name = rental_change2 action="{% url 'rental_page' rental.id 'NO' %}" method="post" >
+        	{% csrf_token %}
+    <div class = "row">
+        <div class ="col-sm-12">
+			<label for="rental_note"> Make a note:  </label> <br>
+			<textarea id="rental_note" name="rental_note" rows="1" cols="100" required ></textarea>
+			<br>
+			<input type="submit" value="Add Note" />
+			</form>
+			</div>
+	</div>
+      <div class = "row">
+        <div class ="col-sm-12">
+  	{% if notes %}
+
+
+{% for note in notes %}
+<h7>[{{note.date}}- {{note.user}}] {{note.note}}</h7>
+<br>
+{% endfor %}
+{% endif %}
+        </div>
+      </div>
+  <hr>
+  <br>
+    <div class = "row">
+        <div class ="col-sm-12">
+              <h4>DOCUMENTS & PICTURES</h4>
+				<font color = "red" >Upload Documents (Pictures, Etc.) For This Rental</font>
+				<form name = add_file action="{% url 'rental_page' rental.id 'NO' %}" method="post" enctype="multipart/form-data">
+        			{% csrf_token %}
+					Attachment: <input type= "file" name="upload_file" id="upload_file" />
+					<input type="submit" value="Upload File" />
+				</form>
+			</div>
+		</div>
+		<div class ="row">
+			<div class ="col-sm-12">
+				<font color = "red" >Here are the documents that have been uploaded for this rental</font>
+				<br>
+			{% for x in foldercontents %}
+				<a style="color: blue; cursor: pointer;" name="get_directory_contents" href="{% url 'get_directory_contents' rental.id x 'rentals' %}" target="_blank">{{x}}</a>
+				<br>
+			{% endfor %}
+			</div>
+		</div>
+			</form>
+
+
+
+<hr>
+  <br><br>
 {%if reverse == 'YES' %}
   <button onclick="Previous()">Back to Previous Page</button>
 {% endif %}
+</div>
+                <script>
+var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }
+  });
+}
+</script>
 </body>
 </html>
 
