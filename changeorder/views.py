@@ -233,7 +233,7 @@ def print_ticket(request, id, status):
                                     user=request.user.first_name + " " + request.user.last_name,
                                     note="Ticket Printed for Wet Signature")
         changeorder.is_printed = True
-
+        changeorder.save()
     if request.method == 'POST':
         print(request.POST['signatureValue'])
         print(request.POST['signatureName'])
@@ -450,6 +450,11 @@ def extra_work_ticket(request, id):
             fn = os.path.basename(fileitem.name)
             fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id), fn)
             open(fn2, 'wb').write(fileitem.file.read())
+            try:
+                path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
+                foldercontents = os.listdir(path)
+            except Exception as e:
+                print('no folder contents')
         if 'view_proposal' in request.POST:
             print("NEED TO DO")
         if 'open_folder' in request.POST:
