@@ -75,25 +75,19 @@ def rental_page(request,id,reverse):
                     rental.rep = VendorContact.objects.get(id = request.POST['select_pm'])
             if request.POST['purchase_order'] != '':
                 rental.purchase_order=request.POST['purchase_order']
-                rental.save()
             if request.POST['off_rent_date'] != '':
                 rental.off_rent_date=request.POST['off_rent_date']
-                rental.save()
             if request.POST['off_rent_number']!= '':
                 rental.off_rent_number=request.POST['off_rent_number']
-                rental.save()
             if request.POST['day_price']!= '':
                 rental.day_price=request.POST['day_price']
-                rental.save()
             if request.POST['week_price']!= '':
                 rental.week_price=request.POST['week_price']
-                rental.save()
             if request.POST['month_price']!= '':
                 rental.month_price=request.POST['month_price']
-                rental.save()
             if 'is_closed' in request.POST:
                 rental.is_closed = True
-                rental.save()
+            rental.save()
         if 'rental_note' in request.POST:
             RentalNotes.objects.create(rental=rental, date=date.today(),
                                        user=request.user.first_name + " " + request.user.last_name,
