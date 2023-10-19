@@ -1,234 +1,229 @@
+<!DOCTYPE html>
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
-
 {% load render_table from django_tables2 %}
-
-<!DOCTYPE html>
 <html>
 <head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>DataTables example - HTML (DOM) sourced data</title>
-	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
-
-	</style>
-	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
-	function myFunction(location){
-			if (location==service.service_notes){
-       			if (service.select_service.value == "select_vendor"){
-       				alert("Select a vendor");
-       				return false;
-       				}}
-			if (location==change_job.job_notes){
-				if (change_job.select_job.value == "select_job"){
-       				alert("Select a job");
-       				return false;
-       				}}
-			if (location==change_employee.job_notes){
-				if (change_employee.select_employee.value == "select_employee"){
-       				alert("Select an employee");
-       				return false;
-       				}}
-    	var x;
-    	var name=prompt("Please make any notes about this: ");
-    	if (name!=null){
-       		location.value = name;
-   		}
-	}
-	</script>
+    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+    <style type="text/css" class="init">
+        .list-items {
+        border-bottom: 1px solid black; display: flex; justify-content: space-between;
+        }
+    </style>
+    <script src="{% static 'equipment.js' %}"></script>
 </head>
 {% if inventories %}
 
 <body>
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Equipment</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'equipment_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'equipment_new' %}">New</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
-		<li><a class="nav-item nav-link active" href="#">{{inventories.item}}</a></li>
-    </ul>
-  </div>
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="#">Equipment</a>
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav ">
+            <li><a class="nav-item nav-link" href="{% url 'equipment_home' %}">Home</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'equipment_new' %}">New</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
+            <li><a class="nav-item nav-link active" href="#">{{inventories.item}}</a></li>
+        </ul>
+    </div>
 </nav>
-        <div class ="container">
-            <div class ="row">
-                <div class ="col"> <b>Number: = </b>{{inventories.number}}   </div>
-                <div class ="col"> <b>Item: = </b>{{inventories.item}}   </div>
-                <div class ="col">  <b>Category: = </b>{{inventories.inventory_type}}  </div>
-            </div>
-			<div class ="row">
-                <div class ="col"><b>Purchase Date =</b>{{inventories.purchase_date}}
-
- </div>
-                <div class ="col"> <b>Serial Number =</b>{{inventories.serial_number}} </div>
-                <div class ="col">  <b>Storage Location: =</b> {{inventories.storage_location}}   </div>
-            </div>
-						<div class ="row">
-                <div class ="col"> <b>Labeled? =</b>{{inventories.is_labeled}}
-
- </div>
-                <div class ="col"> <b>Status =</b>{{inventories.status}} </div>
-                <div class ="col"> <b>Notes =</b> {{inventories.notes}}   </div>
-            </div>
-						<div class ="row">
-                <div class ="col"> <b>Date Out =</b>{{inventories.date_out}}
-
- </div>
-                {% if inventories.service_vendor != None %}
-				<div class ="col"> <b>In Service At =</b>{{inventories.service_vendor.company_name}} </div>
-				{% else %}
-				<div class ="col"> <b>Current Job =</b>{{inventories.job_number}} {{inventories.job_name}} </div>
-				{% endif %}
-                <div class ="col"> <b>Vendor =</b> {{inventories.vendor}}   </div>
-            </div>
-			{% if inventories.assigned_to != None %} <div class ="row"><div class ="col"><b>Employee =</b>{{inventories.assigned_to}}</div></div>{% endif %}
+<div class="container">
+    <div class="row">
+        <div class="col-sm-4 list-items"><b>Number:&nbsp;</b>{{inventories.number}}</div>
+        <div class="col-sm-4 list-items"><b>Item:&nbsp;</b>{{inventories.item}}</div>
+        <div class="col-sm-4 list-items"><b>Category:&nbsp;</b>{{inventories.inventory_type}}</div>
+    </div>
+    <div class="row">
+        <div class="col-sm-4 list-items"><b>Purchase Date:&nbsp;</b>{{inventories.purchase_date}}</div>
+        <div class="col-sm-4 list-items"><b>Serial Number:&nbsp;</b>{{inventories.serial_number}}</div>
+        <div class="col-sm-4 list-items"><b>Storage Location:&nbsp;</b> {{inventories.storage_location}}</div>
+    </div>
+    <div class="row">
+        <div class="col-sm-4 list-items"><b>Labeled:&nbsp;</b>{{inventories.is_labeled}}</div>
+        <div class="col-sm-4 list-items"><b>Status:&nbsp;</b>{{inventories.status}}</div>
+        <div class="col-sm-4 list-items"><b>Notes:&nbsp;</b>{{inventories.notes}}</div>
+    </div>
+    <div class="row">
+        <div class="col-sm-4 list-items"><b>Date Out:&nbsp;</b>{{inventories.date_out}}</div>
+        {% if inventories.service_vendor != None %}
+        <div class="col-sm-4 list-items"><b>In Service At:&nbsp;</b>{{inventories.service_vendor.company_name}}</div>
+        {% else %}
+        <div class="col-sm-4 list-items"><b>Current Job:&nbsp;</b>{{inventories.job_number}} {{inventories.job_name}}
         </div>
-
-		<br><hr>
-<div class ="container">
-	<div class ="row">
-		{% if inventories.service_vendor != None or inventories.job_number != None or inventories.assigned_to != None %}
-		<div class ="col">
-					<form name = return_to_home action="{% url 'equipment_page' inventories.id %}" method="post" onSubmit = myFunction(return_to_home.returned_notes) >
-        				{% csrf_token %}
-						<input type="hidden" id="returned_notes" name = "returned_notes" value="" />
-						 {% if inventories.service_vendor != None %} <input id="returned" name = "returned" type="submit" value="Service Complete" />{% endif %}
-						{% if inventories.job_number != None %} <input id="returned" name = "returned" type="submit" value="Check Back In From Job" />{% endif %}
-						{% if inventories.assigned_to != None %} <input id="returned_employee" name = "returned_employee" type="submit" value="Remove Employee" />{% endif %}
-					</form>
-		</div>
-		{% endif %}
-		<div class ="col">
-					<form name = missing_button action="{% url 'equipment_page' inventories.id %}" method="post" onSubmit = myFunction(missing_button.missing_notes) >
-        				{% csrf_token %}
-							<input type="hidden" id="missing_notes" name = "missing_notes" value="" />
-						 <input id="missing" name = "missing" type="submit" value="MISSING!" />
-					</form>
-		</div>
-		<div class ="col">
-			<form name = service action="{% url 'equipment_page' inventories.id %}" method="post" onSubmit = "return myFunction(service.service_notes)">
-        	{% csrf_token %}
-				<input type="hidden" id="service_notes" name = "service_notes" value="" />
-            <select id="select_service" name="select_service" >
-                <option value="select_vendor">select vendor</option>
-                {% if vendors %}
-                {% for vendor in vendors %}
-                <option value={{vendor.id}}>{{vendor.company_name}}</option>
-                {% endfor %}
-                {% endif %}
-            </select>
- 			<input type="submit" value="In Service" />
-			</form>
-		</div>
-		<div class ="col">
-			<form name = change_job action="{% url 'equipment_page' inventories.id %}" method="post" onSubmit = "return myFunction(change_job.job_notes)">
-        	{% csrf_token %}
-				<input type="hidden" id="job_notes" name = "job_notes" value="" />
-            <select id="select_job" name="select_job" >
-                <option value="select_job">select job</option>
-                {% if jobs %}
-                {% for job in jobs %}
-                <option value={{job.job_number}}>{{job.job_name}}</option>
-                {% endfor %}
-                {% endif %}
-            </select>
- 			<input type="submit" value="Transfer to Job" />
-			</form>
-		</div>
-				<div class ="col">
-			<form name = change_employee action="{% url 'equipment_page' inventories.id %}" method="post" onSubmit = "return myFunction(change_employee.job_notes)">
-        	{% csrf_token %}
-				<input type="hidden" id="job_notes" name = "job_notes" value="" />
-            <select id="select_employee" name="select_employee" >
-                <option value="select_employee">Select Employee</option>
-                {% if employees %}
-                {% for x in employees %}
-                <option value={{x.id}}>{{x.first_name}} {{x.last_name}}</option>
-                {% endfor %}
-                {% endif %}
-            </select>
- 			<input type="submit" value=<div class ="row">
-			<div class="column">
-
-			<form name = add_note action="{% url 'equipment_page' inventories.id %}" method="post" >
-        	{% csrf_token %}
-
-			<label for="equipment_note"> Make a note:  </label> <br>
-			<textarea id="equipment_note" name="equipment_note" rows="4" cols="100" ></textarea>
-			<br>
-			<input type="submit" value="Add Note" />
-			</form>
-			</div>
-	</div>
-	<div class = "row">
-	</div>
-		<div class ="row">
-			<div class="column">
-				<font color = "red" >Upload Documents (Pictures, Invoice, Etc.) For This Equipment</font>
-				<form name = add_file action="{% url 'equipment_page' inventories.id %}" method="post" enctype="multipart/form-data">
-        			{% csrf_token %}
-					<!--Attachment: <input type= "file" name="upload_file" id="upload_file" onchange="addAttachment(this)" placeholder="" multiple/>-->
-					Attachment: <input type= "file" name="upload_file" id="upload_file" />
-					<input type="submit" value="Upload File" />
-				</form>
-			</div>
-		</div>
-		<div class ="row">
-			<div class="column">
-				<font color = "red" >Here are the documents that have been uploaded for this equipment</font>
-				<br>
-			{% for x in foldercontents %}
-				<a style="color: blue; cursor: pointer;" name="get_directory_contents" href="{% url 'get_directory_contents' inventories.id x "equipment" %}" target="_blank">{{x}}</a>
-				<br>
-			{% endfor %}
-			</div>
-		</div>"Assign to Employee" />
-			</form>
-		</div>
-	</div>
-
-
+        {% endif %}
+        <div class="col-sm-4 list-items"><b>Vendor:&nbsp;</b>{{inventories.vendor}}</div>
+    </div>
+    {% if inventories.assigned_to != None %}
+    <div class="row">
+        <div class="col-12 list-items"><b>Employee:&nbsp;</b>{{inventories.assigned_to}}</div>
+    </div>
+    {% endif %}
 </div>
+<div class="container">
+    <div class="row">
+        {% if inventories.service_vendor != None or inventories.job_number != None or inventories.assigned_to != None %}
+        <div class="col-sm-4" style="padding-bottom: 12px;">
+            <form name=return_to_home action="{% url 'equipment_page' inventories.id %}" method="post"
+                  onSubmit=myFunction(return_to_home.returned_notes)>
+                {% csrf_token %}
+                <input type="hidden" id="returned_notes" name="returned_notes" value=""/>
+                {% if inventories.service_vendor != None %}
+                <input id="returned" name="returned" type="submit" value="Service Complete"/>
+                {% endif %}
+                {% if inventories.job_number != None %}
+                <input id="returned" name="returned" type="submit" value="Check Back In From Job"/>
+                {% endif %}
+                {% if inventories.assigned_to != None %}
+                <input id="returned_employee" name="returned_employee" type="submit" value="Remove Employee"/>
+                {% endif %}
 
+            </form>
+        </div>
+        {% endif %}
+        <div class="col-sm-4" style="padding-bottom: 12px; padding-top: 12px;">
+            <form name=missing_button action="{% url 'equipment_page' inventories.id %}" method="post"
+                  onSubmit=myFunction(missing_button.missing_notes)>
+                {% csrf_token %}
 
+                <input type="hidden" id="missing_notes" name="missing_notes" value=""/>
+                <input id="missing" class="btn btn-primary btn-sm" name="missing" type="submit" value="MISSING!"/>
+            </form>
+        </div>
+        <div class="col-sm-4" style="padding-bottom: 12px; padding-top: 12px;">
+            <form style="width: 100%" name=service action="{% url 'equipment_page' inventories.id %}" method="post"
+                  onSubmit="return myFunction(service.service_notes)">
+                {% csrf_token %}
+                <input type="hidden" id="service_notes" name="service_notes" value=""/>
+                <div style="display: flex; justify-content: space-between;">
+                    <select id="select_service" class="form-select form-select-sm" name="select_service">
+                        <option value="select_vendor">select vendor</option>
+                        {% if vendors %}
+                        {% for vendor in vendors %}
+                        <option value={{vendor.id}}>{{vendor.company_name}}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                    <input type="submit" class="btn btn-primary btn-sm" value="In Service"/>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6" style="padding-bottom: 12px; padding-top: 12px;">
+            <form name=change_job action="{% url 'equipment_page' inventories.id %}" method="post"
+                  onSubmit="return myFunction(change_job.job_notes)">
+                {% csrf_token %}
+                <input type="hidden" id="job_notes" name="job_notes" value=""/>
+                <div style="display: flex; justify-content: space-between;">
+                    <select id="select_job" class="form-select form-select-sm" name="select_job">
+                        <option value="select_job">select job</option>
+                        {% if jobs %}
+                        {% for job in jobs %}
+                        <option value={{job.job_number}}>{{job.job_name}}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                    <input type="submit" class="btn btn-primary btn-sm" value="Transfer to Job"/>
+                </div>
+            </form>
+        </div>
+        <div class="col-sm-6" style="padding-bottom: 12px; padding-top: 12px;">
+            <form name=change_employee action="{% url 'equipment_page' inventories.id %}" method="post"
+                  onSubmit="return myFunction(change_employee.job_notes)">
+                {% csrf_token %}
+                <input type="hidden" id="job_notes" name="job_notes" value=""/>
+                <div style="display: flex; justify-content: space-between;">
+                    <select id="select_employee" class="form-select form-select-sm" name="select_employee">
+                        <option value="select_employee">Select Employee</option>
+                        {% if employees %}
+                        {% for x in employees %}
+                        <option value={{x.id}}>{{x.first_name}} {{x.last_name}}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                    <input type="submit" class="btn btn-primary btn-sm" value="Assign to Employee"/>
+                </div>
+            </form>
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="col-12">
 
+            <form name=add_note action="{% url 'equipment_page' inventories.id %}" method="post">
+                {% csrf_token %}
+                <label for="equipment_note"> Make a note: </label> <br>
+                <textarea id="equipment_note" name="equipment_note" rows="4" style="width: 100%"></textarea>
+                <br>
+                <input type="submit" class="btn btn-primary" value="Add Note"/>
+            </form>
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="col-12">
+            <font color="red">Upload Documents (Pictures, Invoice, Etc.) For This Equipment</font>
+            <form name=add_file action="{% url 'equipment_page' inventories.id %}" method="post"
+                  enctype="multipart/form-data">
+                {% csrf_token %}
+                <!--Attachment: <input type= "file" name="upload_file" id="upload_file" onchange="addAttachment(this)" placeholder="" multiple/>-->
+                <div style="padding-bottom: 12px;">Attachment: <input type="file" name="upload_file" id="upload_file"/>
+                </div>
+                <input type="submit" class="btn btn-primary btn-sm" value="Upload File"/>
+            </form>
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="col-12">
+            <font color="red">Here are the documents that have been uploaded for this equipment</font>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <ul>
+                {% for x in foldercontents %}
+                <li>
 
+                    <div class="col-12">
+                        <a style="color: blue; cursor: pointer;" name="get_directory_contents"
+                           href="{% url 'get_directory_contents' inventories.id x 'equipment' %}" target="_blank">{{x}}</a>
+                        <br>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
 
-
-<br><hr>
-<h3>NOTES ABOUT THIS ITEM:</h3>
-			<form name = filter_notes action="{% url 'equipment_page' inventories.id %}" method="post" >
-        	{% csrf_token %}
-            <select id="select_category" name="select_category" >
-                <option value="Returned">Returned to Shop</option>
-				<option value="Missing">Missing</option>
-				<option value="Job">Assigned to Job</option>
-				<option value="Service">Getting Serviced</option>
-				<option value="Misc">Misc Notes</option>
-            </select>
- 			<input type="submit" value="Apply Filter" name="apply_filter" /><input type="submit" name= "clear_filter" value="Clear Filter" />
-			</form>
-		</div>
-
+    <hr>
+    <div class="row">
+        <div class="col-12">
+            <h3>NOTES ABOUT THIS ITEM:</h3>
+        </div>
+    </div>
+    <form style="width: 100%; padding-bottom: 5px;" name=filter_notes action="{% url 'equipment_page' inventories.id %}"
+          method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-12">
+                <select id="select_category" style="padding-top: 3px; padding-bottom: 6px;"
+                        class="form-select form-select-sm" name="select_category">
+                    <option value="Returned">Returned to Shop</option>
+                    <option value="Missing">Missing</option>
+                    <option value="Job">Assigned to Job</option>
+                    <option value="Service">Getting Serviced</option>
+                    <option value="Misc">Misc Notes</option>
+                </select>
+                <input type="submit" class="btn btn-primary btn-sm" value="Apply Filter" name="apply_filter"/>
+                <input type="submit" class="btn btn-secondary btn-sm" name="clear_filter" value="Clear Filter"/>
+            </div>
+        </div>
+    </form>
+</div>
 {% render_table table %}
-
 </body>
 {% endif %}
 </html>
-
 {% endblock %}

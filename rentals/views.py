@@ -1,3 +1,4 @@
+
 from equipment.models import Vendors, VendorContact, VendorCategory
 from rentals.models import Rentals, RentalNotes
 from jobs.models import Jobs
@@ -13,6 +14,7 @@ import os
 import os.path
 from django.conf import settings
 from django.http import HttpResponse
+
 # Create your views here.
 
 @login_required(login_url='/accounts/login')
@@ -40,6 +42,7 @@ def rental_new(request,jobnumber):
                 rental.rep = VendorContact.objects.create(company=vendor,name=request.POST['new_pm'],email=request.POST['new_pm_email'],phone=request.POST['new_pm_phone'])
             else:
                 rental.rep = VendorContact.objects.get(id = request.POST['select_pm'])
+
         if request.POST['purchase_order'] != '':rental.purchase_order=request.POST['purchase_order']
         if request.POST['notes']!= '': rental.notes=request.POST['notes']
         if request.POST['day_price']!= '': rental.day_price=request.POST['day_price']
@@ -48,6 +51,7 @@ def rental_new(request,jobnumber):
         rental.save()
         RentalNotes.objects.create(rental=rental,date=date.today(),user=request.user.first_name + " " + request.user.last_name,note="New Rental Added. " + request.POST['notes'])
         createfolder("rentals/" + str(rental.id))
+
         return redirect("rental_page",id=rental.id,reverse='NO')
     else:
         return render(request, "rental_new.html", {'jobs':jobs,'vendors':vendors,'data':pms_json})
