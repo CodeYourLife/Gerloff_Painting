@@ -1,132 +1,141 @@
+<!DOCTYPE html>
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_equipment %}active{% endblock nav_item_equipment %}
 {% block content %}
-<!DOCTYPE html>
 <html>
 <head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>DataTables example - HTML (DOM) sourced data</title>
-	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
+    <script src="{% static 'equipment.js' %}"></script>
+    <script>
+        function filterStatus() {
+            table = document.getElementById("inventory_table");
+            available_box =  document.getElementById("available");
+            checked_out_box =  document.getElementById("checked_out");
+            missing_box = document.getElementById("missing");
+            tr = table.getElementsByTagName("tr");
+            if (!available_box.checked && !checked_out_box.checked && !missing_box.checked){
+                for (i = 1; i < tr.length; i++) {
+                    tr[i].style.display = "";}
+                return True}
+              for (i = 1; i < tr.length; i++) {
+            td = tr[i].getElementsByTagName("td")[4];
+            tr[i].style.display = "none";
+            if (available_box.checked){
+                if (td.textContent == "Available"){
+                    tr[i].style.display = "";
+                    }
+                }
+            if (checked_out_box.checked){
+                if (td.textContent == "Checked Out" || td.textContent == "Service"){
+                    tr[i].style.display = "";
+                    }
+                }
+            if (missing_box.checked){
+                if (td.textContent == "Missing"){
+                    tr[i].style.display = "";
+                    }
+                }
+        }
+        }
+            function myFunction(location){
+                    if (location==service.service_notes){
+                           if (service.select_service.value == "select_vendor"){
+                               alert("Select a vendor");
+                               return false;
+                               }}
+                    if (location==change_job.job_notes){
+                        if (change_job.select_job.value == "select_job"){
+                               alert("Select a job");
+                               return false;
+                               }}
+                    if (location==change_employee.job_notes){
+                        if (change_employee.select_employee.value == "select_employee"){
+                               alert("Select an employee");
+                               return false;
+                               }}
+                var x;
+                var name=prompt("Please make any notes about this: ");
+                if (name!=null){
+                       location.value = name;
+                   }
+            }
+    </script>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
 
-	</style>
-	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
-$(document).ready(function () {
-    inventorytable = $('#inventory_table').DataTable({
-    });
-})
-
-function filterStatus() {
-	table = document.getElementById("inventory_table");
-	available_box =  document.getElementById("available");
-	checked_out_box =  document.getElementById("checked_out");
-	missing_box = document.getElementById("missing");
-	tr = table.getElementsByTagName("tr");
-	if (!available_box.checked && !checked_out_box.checked && !missing_box.checked){
-		for (i = 1; i < tr.length; i++) {
-			tr[i].style.display = "";}
-		return True}
-  	for (i = 1; i < tr.length; i++) {
-    td = tr[i].getElementsByTagName("td")[4];
-	tr[i].style.display = "none";
-	if (available_box.checked){
-		if (td.textContent == "Available"){
-			tr[i].style.display = "";
-			}
-		}
-	if (checked_out_box.checked){
-		if (td.textContent == "Checked Out" || td.textContent == "Service"){
-			tr[i].style.display = "";
-			}
-		}
-	if (missing_box.checked){
-		if (td.textContent == "Missing"){
-			tr[i].style.display = "";
-			}
-		}
-}
-}
-
-	</script>
 </head>
 <body>
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Equipment</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link active" href="{% url 'equipment_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'equipment_new' %}">New</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
-    </ul>
-  </div>
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="#">Equipment</a>
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav ">
+            <li><a class="nav-item nav-link active" href="{% url 'equipment_home' %}">Home</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'equipment_new' %}">New</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
+        </ul>
+    </div>
 </nav>
+<input type="checkbox" class="filter-checkbox checkbox" onclick="filterStatus()" id="available"
+       style="margin-left: 12px;"/> Available
+<input type="checkbox" class="filter-checkbox checkbox" onclick="filterStatus()" id="checked_out"
+       style="margin-left: 12px;"/> Checked Out
+<input type="checkbox" class="filter-checkbox checkbox" onclick="filterStatus()" id="missing"
+       style="margin-left: 12px;"/> Missing
+<div class="table-responsive">
+    <table id="inventory_table" class="display table table-sm">
+        <thead>
+        <tr>
+            <th scope="col">Category</th>
+            <th scope="col">Number</th>
+            <th scope="col">Item</th>
+            <th scope="col">Labeled?</th>
+            <th scope="col">Status</th>
+            <th scope="col">Location</th>
+            <th scope="col">Employee</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% if inventories %}
+        {% for inventory in inventories %}
+        <tr>
+            <td>{{inventory.inventory_type.type}}</td>
+            <td>{{inventory.number}}</td>
+            <td>
+                <a href="{% url 'equipment_page' inventory.id %}">
+                    <div style="height:100%;width:100%">
+                        {{inventory.item}}
+                    </div>
+                </a>
+            </td>
+            {% if inventory.is_labeled == True %}
+            <td>Yes</td>
+            {% else %}
+            <td>No</td>
+            {% endif %}
+            <td>{{inventory.status}}</td>
+            {% if inventory.job_number == None %}
+            {% if inventory.service_vendor == None %}
+            <td>Gerloff Painting</td>
+            {% else %}
+            <td>{{inventory.service_vendor.company_name}}</td>
+            {% endif %}
+            {% else %}
+            <td>{{inventory.job_number.job_name}}</td>
+            {% endif %}
+            <td>{% if inventory.assigned_to != None %}{{inventory.assigned_to}}{% endif %}</td>
 
-	<input type="checkbox" class="filter-checkbox" onclick="filterStatus()" id="available" /> Available
-	<input type="checkbox" class="filter-checkbox" onclick="filterStatus()"  id="checked_out" /> Checked Out
-	<input type="checkbox" class="filter-checkbox" onclick="filterStatus()"  id="missing" /> Missing
-<div class="demo-html" style="width:90%">
-		<table id="inventory_table" class="display table" style="width:90%">
-			<thead>
-				<tr>
-					<th scope="col">Category</th>
-					<th scope="col">Number</th>
-					<th scope="col">Item</th>
-					<th scope="col">Labeled?</th>
-					<th scope="col">Status</th>
-					<th scope="col">Location</th>
-					<th scope="col">Employee</th>
-				</tr>
-			</thead>
-			<tbody>
-			{% if inventories %}
-			{% for inventory in inventories %}
-				<tr>
-					<td>{{inventory.inventory_type.type}}</td>
-					<td>{{inventory.number}}</td>
-					<td>
-						<a href = "{% url 'equipment_page' inventory.id %}">
-							<div style="height:100%;width:100%">
-								{{inventory.item}}
-							</div>
-						</a>
-					</td>
-					{% if inventory.is_labeled == True %}
-					<td>Yes</td>
-					{% else %}
-					<td>No</td>
-					{% endif %}
-					<td>{{inventory.status}}</td>
-					{% if inventory.job_number == None %}
-						{% if inventory.service_vendor == None %}
-							<td>Gerloff Painting</td>
-						{% else %}
-							<td>{{inventory.service_vendor.company_name}}</td>
-						{% endif %}
-					{% else %}
-						<td>{{inventory.job_number.job_name}}</td>
-					{% endif %}
-					<td>{% if inventory.assigned_to != None %}{{inventory.assigned_to}}{% endif %}</td>
-
-				</tr>
-			{% endfor %}
-			{% endif %}
-			</tbody>
-		</table>
-	</div>
+        </tr>
+        {% endfor %}
+        {% endif %}
+        </tbody>
+    </table>
+</div>
 </body>
 
 {% endblock %}
