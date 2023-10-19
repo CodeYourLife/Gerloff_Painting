@@ -24,6 +24,78 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 
+ function check_data() {
+            if (rental_input.select_company.value =="add_new"){
+                if (rental_input.new_client.value ==""){
+                    alert('Please enter the new company name')
+                    rental_input.new_client.scrollIntoView();
+                    return false;
+                }
+                if (rental_input.new_pm.value ==""){
+                    alert('Please enter a contact for the new company')
+                    rental_input.new_pm.scrollIntoView();
+                    return false;
+                }
+            }
+            if (rental_input.select_pm.value == "add_new"){
+                if (rental_input.new_pm.value ==""){
+                alert('Please enter the new reps name')
+                rental_input.new_pm.scrollIntoView();
+                return false;
+                }
+            }
+                        if (rental_input.select_company.value == "add_new"){
+                if (rental_input.new_client.value ==""){
+                    alert('Please enter the new company name')
+                    rental_input.new_client.scrollIntoView();
+                    return false;
+                }
+            }
+            if (rental_input.select_company.value == "please_select"){
+                    alert('Please select vendor')
+                    rental_input.select_company.scrollIntoView();
+                    return false;
+            }
+            if (rental_input.select_job.value == "please_select"){
+                    alert('Please select job')
+                    rental_input.select_job.scrollIntoView();
+                    return false;
+            }
+ }
+function filter_estimators() {
+            rental_input.new_pm.value =""
+            rental_input.new_super.value =""
+            rental_input.new_pm_phone.value =""
+            let selectedcompany = rental_input.select_company.value
+            let rolodex = JSON.parse("{{data|escapejs}}");
+            for(let i = rental_input.select_pm.options.length; i >= 0; i--) {
+                rental_input.select_pm.remove(i);
+            }
+            rental_input.select_pm.options[0] = new Option("No Rep Helped Me","no_rep");
+            rental_input.select_pm.options[1] = new Option("Add New Rep","add_new");
+            let b=2
+            for(let i =0; i < rolodex.length; i++){
+                if (rolodex[i].company == selectedcompany){
+                    rental_input.select_pm.options[b] = new Option(rolodex[i].name,rolodex[i].id);
+                    b=b+1
+                }
+            }
+         }
+
+
+
+function clear_client() {
+                rental_input.select_company.value = "add_new";
+                rental_input.select_pm.value = "add_new";
+        }
+
+        function clear_select_pm() {
+                rental_input.select_pm.value = "add_new";
+        }
+
+
+
+
 	</script>
     <link rel="stylesheet" href="{% static 'project_styles.css' %}">
 </head>
@@ -37,56 +109,167 @@
     </ul>
   </div>
 </nav>
- <form name = rental_input action={% url 'rental_new' 'ALL' %} method="post"  onSubmit = "return check_data()">
+ <form name = rental_input action="{% url 'rental_new' 'ALL' %}" method="post"  onSubmit = "return check_data()">
 {% csrf_token %}
 
-    <label for="select_vendor">Select Vendor</label>
-    <select id="select_vendor" name="select_vendor" >
-        <option value="select_vendor_name">Select Vendor</option>
-        {% if vendors %}
-        {% for vendor in vendors %}
-        <option value={{vendor.id}}>{{vendor.company_name}}</option>
-        {% endfor %}
-        {% endif %}
-    </select>
+    <div class ="container"> <!#pick client>
+        <div class ="row" style="height: 50px">
+            <div class ="col-sm-12">
+                <label>Please select vendor</label>
+                <select class="form-control" id="select_company" name="select_company" onChange="filter_estimators()" >
+                    <option value="please_select">"Please Select"</option>
+                    <option value="add_new">"add New"</option>
+                    {% if vendors %}
+                    {% for vendor in vendors %}
+                    <option value={{vendor.id}}>{{vendor.company_name}}</option>
+                    {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+        </div>
+        <button type="button" class="collapsible">Click Here to Add a New Company</button>
+	    <div class="content">
+            <div class ="row" style="margin-top: 40px">
+                <div class ="col-sm-12"> Enter New Vendor below: </div>
+            </div>
+            <div class ="row" style="margin-top: 22px" >
+                <div class ="col-sm-12">
+                    <input class="form-control" type= "text" id= "new_client" name="new_client" placeholder="company name" size="30" onClick="clear_client()"/>
+                </div>
+            </div>
+            <div class ="row" style="margin-top: 22px" >
+                <div class ="col-sm-12">
+                    <input class="form-control" type= "tel" name="new_client_phone" placeholder="phone Number" size="30"/>
+                </div>
+            </div>
+            <div class ="row" style="margin-top: 22px" >
+                <div class ="col-sm-12">
+                    <input class="form-control" type= "email" name="new_client_bid_email" placeholder="email" size="30"/>
+                </div>
+            </div>
+        </div>
+    </div> <!pick client>
+            <hr></hr>
+    <div class ="container">
+            <div class = "row">
+                <div class ="col-sm-12">
+                    <label for="select_pm">Did a Specific Rep Help You?</label>
+                    <select class="form-control" id="select_pm" name="select_pm" >
+                            <option value="no_rep">"No Rep Helped Me"</option>
+                             <option value="add_new">"add New"</option>
+                    </select>
+                </div>
+            </div>
+            <button type="button" class="collapsible">Click Here to Add a New Rep</button>
+	        <div class="content">
+                <div class ="row" style="margin-top: 22px">
+                    <div class ="col-sm-12">Enter New below: </div>
+                </div>
+                <div class ="row" style="margin-top: 22px">
+                    <div class ="col-sm-12">
+                        <input  type= "text" id="new_pm" name="new_pm" class="form-control" placeholder="office pm name" size="30" onClick="clear_select_pm()"/>
+                    </div>
+                </div>
 
+                <div class ="row">
+                    <div class ="col-sm-12">
+                        <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" placeholder="phone Number" size="30"/>
+                    </div>
+                </div>
+                <div class ="row">
+                    <div class ="col-sm-12">
+                        <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" placeholder="email" size="30"/>
+                    </div>
+                </div>
+            </div>
+    </div>
 <br><br>
-
-                 <label for="select_job">Select Job</label>
-            <select id="select_job" name="select_job" >
-                <option value="selected_job">Select Job</option>
-                {% if jobs %}
-                {% for job in jobs %}
-                <option value={{job.job_number}}>{{job.job_number}} {{job.job_name}}</option>
-                {% endfor %}
-                {% endif %}
+<div class ="container">
+    <div class = "row">
+        <div class ="col-sm-12">
+             <label for="select_job">Select Job</label><select id="select_job" name="select_job" >
+            <option value="please_select">Select Job</option>
+            {% if jobs %}
+            {% for job in jobs %}
+            <option value={{job.job_number}}>{{job.job_number}} {{job.job_name}}</option>
+            {% endfor %}
+            {% endif %}
             </select>
+        </div>
+    </div>
 <br><br>
-
-   <label class="required" for="item">Item:</label>
-    <input type="text" name="item" size="50" maxlength="250" placeholder = "40' Boom, 19' Scissor, Etc." required id="item">
-<br><br>
-                        <label for="purchase_order">Purchase order #</label>
-                            <input type="text" name="purchase_order"  maxlength="250" id="purchase_order">
-<br><br>
+    <div class = "row">
+        <div class ="col-sm-12">
+            <label class="required" for="item">Item:</label>
+            <input type="text" name="item" size="50" maxlength="250" placeholder = "40' Boom, 19' Scissor, Etc." required id="item">
+        </div>
+    </div>
+            <br><br>
+    <div class = "row">
+        <div class ="col-sm-12">
+            <label for="purchase_order">Purchase order #</label><input type="text" name="purchase_order"  maxlength="250" id="purchase_order">
+        </div>
+    </div>
+            <br><br>
+    <div class = "row">
+        <div class ="col-sm-12">
                          <label for="day_price">Daily Price</label>
                             <input type="text" name="day_price"  maxlength="250" id="day_price">
-<br><br>
+        </div>
+    </div>
+    <br><br>
+    <div class = "row">
+        <div class ="col-sm-12">
                          <label for="week_price">Weekly Price</label>
                             <input type="text" name="week_price"  maxlength="250" id="week_price">
-<br><br>
+        </div>
+    </div>
+    <br><br>
+    <div class = "row">
+        <div class ="col-sm-12">
                          <label for="month_price">Monthly Price</label>
                             <input type="text" name="month_price"  maxlength="250" id="month_price">
-<br><br>
+        </div>
+    </div>
+    <br><br>
+    <div class = "row">
+        <div class ="col-sm-12">
                         <label for="on_rent_date">On rent date:</label>
                             <input type="date" name="on_rent_date" size="10" id="on_rent_date" required>
-<br><br>
+        </div>
+    </div>
+    <br><br>
+    <div class = "row">
+        <div class ="col-sm-12">
         <label for="notes">Any Notes About The Rental:</label> <br>
         <textarea id="notes" name="notes" rows="4" cols="100" ></textarea>
+        </div>
+    </div>
 <br><br>
-
+    <div class = "row">
+        <div class ="col-sm-12">
      <input type="submit" value="Add New Rental" />
+        </div>
+    </div>
+</div>
     </form>
+
+                <script>
+var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }
+  });
+}
+</script>
 </body>
 </html>
 

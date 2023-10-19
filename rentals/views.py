@@ -1,10 +1,12 @@
-from equipment.models import Vendors
+from equipment.models import Vendors, VendorContact,VendorCategory
 from rentals.models import Rentals
 from jobs.models import Jobs
 from django.shortcuts import render, redirect
 from .tables import RentalsTable
 from django_tables2 import RequestConfig
 from django.contrib.auth.decorators import login_required
+import json
+from django.core.serializers.json import DjangoJSONEncoder
 # Create your views here.
 
 @login_required(login_url='/accounts/login')
@@ -20,29 +22,25 @@ def rental_new(request,jobnumber):
     else:
         jobs = Jobs.objects.filter(job_number=id)
     vendors = Vendors.objects.filter(category__category="Equipment Rental")
-
+    pms_json = json.dumps(list(VendorContact.objects.values('name', 'id', 'company')), cls=DjangoJSONEncoder)
     if request.method == 'POST':
-        rental = Rentals.objects.create(company=Vendors.objects.get(id=request.POST['select_vendor']), job_number=Jobs.objects.get(job_number=request.POST['select_job']),item=request.POST['item'],on_rent_date=request.POST['on_rent_date'])
-        rental = Rentals.objects.latest('id')
-        posted = True
-        if request.POST['purchase_order'] != '':
-            rental.purchase_order=request.POST['purchase_order']
-            rental.save()
-        if request.POST['notes']!= '':
-            rental.notes=request.POST['notes']
-            rental.save()
-        if request.POST['day_price']!= '':
-            rental.day_price=request.POST['day_price']
-            rental.save()
-        if request.POST['week_price']!= '':
-            rental.week_price=request.POST['week_price']
-            rental.save()
-        if request.POST['month_price']!= '':
-            rental.month_price=request.POST['month_price']
-            rental.save()
+        if request.POST['select_company'] == 'add_new':
+            vendor = Vendors.objects.create(company_name = request.POST['new_client'],category=VendorCategory.objects.get(category = "Equipment Rental"),company_phone=request.POST['new_client_phone'],company_email=request.POST['new_client_bid_email'])
+        else:
+            vendor = Vendors.objects.get(id=request.POST['select_company'])
+        rental = Rentals.objects.create(company=vendor, job_number=Jobs.objects.get(job_number=request.POST['select_job']),item=request.POST['item'],on_rent_date=request.POST['on_rent_date'], notes = request.POST['notes'])
+        if request.POST['select_pm'] != 'no_rep':
+            rep = VendorContact.objects.create(company=vendor,name=request.POST['new_pm'],email=request.POST['new_pm_email'],phone=request.POST['new_pm_phone'])
+            rental.rep= rep
+        if request.POST['purchase_order'] != '':rental.purchase_order=request.POST['purchase_order']
+        if request.POST['notes']!= '': rental.notes=request.POST['notes']
+        if request.POST['day_price']!= '': rental.day_price=request.POST['day_price']
+        if request.POST['week_price']!= '':rental.week_price=request.POST['week_price']
+        if request.POST['month_price']!= '':rental.month_price=request.POST['month_price']
+        rental.save()
         return redirect("rental_page",id=rental.id,reverse='NO')
     else:
-        return render(request, "rental_new.html", {'jobs':jobs,'vendors':vendors})
+        return render(request, "rental_new.html", {'jobs':jobs,'vendors':vendors,'data':pms_json})
 
 
 @login_required(login_url='/accounts/login')
