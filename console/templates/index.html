@@ -1,28 +1,16 @@
 {% extends 'base.html' %}
 {% block nav_item_index %}active{% endblock nav_item_index %}
 {% block content %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <body>
-	<div class="page-header d-flex justify-content-center align-item-center">
-		<H1 style="text-align: center">Welcome to Gerloff Painting</H1>
-	</div>
+<div class="page-header d-flex justify-content-center align-item-center">
+<H4>Trinity Software Solutions</H4>
+</div>
 	<div style="padding-top: 50px" class="row align-items-center justify-content-center align-middle">
-		<div class="col-10">
-			<form enctype = "multipart/form-data" action="{% url 'seperate_test' %}" method = 'post' class="form-group" >
-				{% csrf_token %}
-				<input type = "text" style="margin-top: 22px" class="form-control" name = "text_test" />
-				<div style="margin-top: 22px">
-				Upload File: <input type = "file" class="form-control" name = "filename" />
-				</div>
-				<input style="margin-top: 22px" type="submit" class="btn btn-primary btn-sm" value="Test Folder"/>
-			</form>
-		</div>
+		<img src = "{% static 'images/logo.png' %}" width="60%" >
 	</div>
-<br>
-
-	<a href = "{% url 'import_csv' %}">Test Import </a>
-
 </body>
 </html>
 
