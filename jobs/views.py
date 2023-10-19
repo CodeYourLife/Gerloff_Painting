@@ -190,7 +190,8 @@ def update_job_info(request, jobnumber):
             selectedjob.special_paint_needed = True
         else:
             selectedjob.special_paint_needed = False
-        if selectedjob.start_date != request.POST['start_date']:
+
+        if startdate != request.POST['start_date']:
             start_date_change(selectedjob, request.POST['start_date'], 3, request.POST['date_note'],
                               request.user.first_name + " " + request.user.last_name, True)
         if selectedjob.notes != request.POST['email_job_note']:
@@ -550,32 +551,6 @@ def register(request):
                 job_number = new_job_number.letter + new_job_number.number
         else:
             job_number = request.POST['job_number']
-        job_name = request.POST['job_name']
-        address = request.POST['address']
-        city = request.POST['city']
-        state = request.POST['state']
-
-        spray_scale = request.POST['spray_scale']
-        brush_role = request.POST['brush_role']
-
-        t_m_nte_amount = request.POST['t_m_nte_amount']
-
-        if request.POST['contract_status'] == 'contract_not_received':
-            contract_status = 2
-            checklist.append("waiting for contract")
-        elif request.POST['contract_status'] == 'contract_received':
-            contract_status = 1
-        else:  # contract not required
-            contract_status = 3
-
-        if request.POST['insurance_status'] == 'coi_not_received':
-            insurance_status = 2
-            checklist.append("get coi")
-        elif request.POST['insurance_status'] == 'coi_received':
-            insurance_status = 1
-        else:  # contract not required
-            insurance_status = 3
-
         if request.POST['select_company'] == 'add_new':
             client = Clients.objects.create(company=request.POST['new_client'],
                                             bid_email=request.POST['new_client_bid_email'],
@@ -583,11 +558,8 @@ def register(request):
 
         else:
             client = Clients.objects.get(id=request.POST['select_company'])
-        # if request.POST['select_pm'] == 'not_sure':
-        #     checklist.append("get pm info")
-        #     client_pm = 'not_sure'
-        if request.POST['select_pm'] == 'use_below':
 
+        if request.POST['select_pm'] == 'use_below':
             client_pm = ClientEmployees.objects.create(id=client, name=request.POST['new_pm'],
                                                        phone=request.POST['new_pm_phone'],
                                                        email=request.POST['new_pm_email'])
@@ -595,82 +567,45 @@ def register(request):
         else:
             client_pm = ClientEmployees.objects.get(person_pk=request.POST['select_pm'])
 
-        if request.POST['select_super'] == 'not_sure':
-            checklist.append("get superintendent info")
-            client_super = 'not_sure'
-        elif request.POST['select_super'] == 'use_below':
-            client_super = ClientEmployees.objects.create(id=client, name=request.POST['new_super'],
-                                                          phone=request.POST['new_super_phone'],
-                                                          email=request.POST['new_super_email'])
 
-        else:
-            client_super = ClientEmployees.objects.get(person_pk=request.POST['select_super'])
-
-        superintendent = request.POST['select_gpsuper']
-
-        start_date = request.POST['start_date']
-
-        # add email message request.POST['email_job_note']
-        contract_amount = request.POST['contract_amount']
-        painting_budget = request.POST['painting_budget']
-        wallcovering_budget = request.POST['wallcovering_budget']
-
-        job = Jobs.objects.create(job_number=job_number, job_name=job_name, address=address, city=city, state=state,
-                                  contract_status=contract_status,
-                                  insurance_status=insurance_status, client=client, start_date=start_date,
+        job = Jobs.objects.create(job_number=job_number, job_name=request.POST['job_name'], address=request.POST['address'], city=request.POST['city'], state=request.POST['state'],
+                                  contract_status=request.POST['contract_status'],
+                                  insurance_status=request.POST['insurance_status'], client=client, client_Pm = client_pm, start_date=request.POST['start_date'],
                                   status="Open", booked_date=date.today(),
                                   booked_by=request.user.first_name + " " + request.user.last_name,
                                   estimator=Employees.objects.get(id=request.POST['select_gpestimator']),
                                   notes=request.POST['email_job_note'], po_number=request.POST['po_number'])
-        if 'is_t_m_job' in request.POST:
-            job.is_t_m_job = True
+
+        if request.POST['select_super'] == 'not_sure':
+            checklist.append("get superintendent info")
+        elif request.POST['select_super'] == 'use_below':
+            job.client_Super = ClientEmployees.objects.create(id=client, name=request.POST['new_super'],
+                                                          phone=request.POST['new_super_phone'],
+                                                          email=request.POST['new_super_email'])
+
         else:
-            is_t_m_job = False
-        if 'on_base2' in request.POST:
-            job.is_on_base = True
-        if 'is_wage_rate' in request.POST:
-            job.is_wage_scale = True
-        if 'is_bonded' in request.POST:
-            job.is_bonded = True
-
-        if 'has_special_paint' in request.POST:
-            job.has_special_paint = True
-            job.special_paint_needed = True
-        if client_super != 'not_sure':
-            job.client_Super = client_super
-        job.client_Pm = client_pm
-
-        # job.client_submittal_contact = client_pm
-        # job.client_co_contact = client_pm
-
-        if is_t_m_job == False:
-            job.contract_amount = contract_amount
-        if t_m_nte_amount != "":
-            job.t_m_nte_amount = t_m_nte_amount
-        if spray_scale != "":
-            job.spray_scale = spray_scale
-        if brush_role != "":
-            job.brush_role = brush_role
-        if painting_budget != "":
-            job.painting_budget = painting_budget
-        if wallcovering_budget != "":
-            job.wallcovering_budget = wallcovering_budget
-        if superintendent != 'not_sure':
-            job.superintendent = Employees.objects.get(id=superintendent)
-        if 'has_paint' in request.POST:
-            job.has_paint = True
-        if 'has_wallcovering' in request.POST:
-            job.has_wallcovering = True
-        if 'has_submittals' in request.POST:
-            job.submittals_needed = True
-        else:
-            job.submittals_required = False
-
+            job.client_Super = ClientEmployees.objects.get(person_pk=request.POST['select_super'])
+        if request.POST['spray_scale'] != "": job.spray_scale = request.POST['spray_scale']
+        if request.POST['brush_role'] != "": job.brush_role = request.POST['brush_role']
+        if request.POST['t_m_nte_amount'] !="": job.t_m_nte_amount = request.POST['t_m_nte_amount']
+        if request.POST['select_gpsuper'] != "not_sure": job.superintendent = Employees.objects.get(id=request.POST['select_gpsuper'])
+        # add email message request.POST['email_job_note']
+        if request.POST['contract_amount'] != "": contract_amount = request.POST['contract_amount']
+        if request.POST['painting_budget'] != "": painting_budget = request.POST['painting_budget']
+        if request.POST['wallcovering_budget'] != "": wallcovering_budget = request.POST['wallcovering_budget']
+        if 'is_t_m_job' in request.POST: job.is_t_m_job = True
+        if 'on_base2' in request.POST: job.is_on_base = True
+        if 'is_wage_rate' in request.POST:job.is_wage_scale = True
+        if 'is_bonded' in request.POST:job.is_bonded = True
+        if 'has_special_paint' in request.POST: job.special_paint_needed = True
+        if 'has_paint' in request.POST: job.has_paint = True
+        if 'has_wallcovering' in request.POST: job.has_wallcovering = True
+        if 'has_submittals' in request.POST:  job.submittals_needed = True
+        job.save()
         JobNotes.objects.create(job_number=job,
-                                note="Start Date at Booking: " + start_date + " " + request.POST['date_note'],
+                                note="Start Date at Booking: " + job.start_date + " " + request.POST['date_note'],
                                 type="auto_start_date_note", date=date.today(),
                                 user=request.user.first_name + " " + request.user.last_name)
-
         JobNotes.objects.create(job_number=job,
                                 note="New Job Booked By: " + request.user.first_name + " " + request.user.last_name + ": " +
                                      request.POST['email_job_note'],

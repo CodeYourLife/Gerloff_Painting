@@ -115,9 +115,7 @@ class Jobs(models.Model):
         ClientEmployees, related_name="PM", on_delete=models.PROTECT, null=True, blank=True)
     client_Pm_Phone = models.CharField(null=True, max_length=50, blank=True)#not used
     client_Pm_Email = models.EmailField(null=True, blank=True)#not used
-    client_Co_Contact = models.ForeignKey(
-
-        ClientEmployees, related_name="CO", on_delete=models.PROTECT, null=True, blank=True) #not used - handled with another database i think
+    client_Co_Contact = models.ForeignKey(ClientEmployees, related_name="CO", on_delete=models.PROTECT, null=True, blank=True) #not used - handled with another database i think
     client_Co_Email = models.EmailField(null=True, blank=True)#not used - handled with another database i think
     client_Submittal_Contact = models.ForeignKey(
         ClientEmployees, related_name="Submittals", on_delete=models.PROTECT, null=True,blank=True)#not used - handled with another database i think
