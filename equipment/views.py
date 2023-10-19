@@ -119,8 +119,8 @@ def equipment_new(request):
     return render(request, "equipment_new.html", {'vendors':vendors,'inventorytype':inventorytype,'inventoryitems1':inventoryitems1,'inventoryitems2':inventoryitems2,'inventoryitems3':inventoryitems3,'inventoryitems4':inventoryitems4})
 
 @login_required(login_url='/accounts/login')
-def get_directory_contents(request, id, value):
-    file_path = os.path.join(settings.MEDIA_ROOT, "equipment", str(id), os.path.basename(value))
+def get_directory_contents(request, id, value,app):
+    file_path = os.path.join(settings.MEDIA_ROOT, app, str(id), os.path.basename(value))
     if os.path.exists(file_path):
         name = value.split('.')[0]
         mimetype = value.split('.')[1]
