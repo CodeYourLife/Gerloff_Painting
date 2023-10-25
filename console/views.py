@@ -647,5 +647,3 @@ def reset_databases(request):
         JobNotes.objects.all().delete()
         Jobs.objects.all().delete()
     return redirect("/")
-
-
