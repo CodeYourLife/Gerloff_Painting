@@ -621,45 +621,29 @@ def import_csv(request):
 
 
 def reset_databases(request):
-
-
-    TMList.objects.all().delete()
-    TMProposal.objects.all().delete()
-    EWTicket.objects.all().delete()
-    EWT.objects.all().delete()
-    TempRecipients.objects.all().delete()
-    ChangeOrderNotes.objects.all().delete()
-    ChangeOrders.objects.all().delete()
-    Signature.objects.all().delete()
-
-    InventoryNotes.objects.all().delete()
-    Inventory.objects.all().delete()
-    OutgoingItem.objects.all().delete()
-    OutgoingWallcovering.objects.all().delete()
-    Packages.objects.all().delete()
-    ReceivedItems.objects.all().delete()
-    WallcoveringDelivery.objects.all().delete()
-    OrderItems.objects.all().delete()
-    WallcoveringPricing.objects.all().delete()
-    Wallcovering.objects.all().delete()
-    Orders.objects.all().delete()
-    RentalNotes.objects.all().delete()
-    Rentals.objects.all().delete()
-    JobNotes.objects.all().delete()
-    Jobs.objects.all().delete()
+#git hub
+    if request.user.first_name == "Joe" and request.user.last_name == "Gerloff":
+        TMList.objects.all().delete()
+        TMProposal.objects.all().delete()
+        EWTicket.objects.all().delete()
+        EWT.objects.all().delete()
+        TempRecipients.objects.all().delete()
+        ChangeOrderNotes.objects.all().delete()
+        ChangeOrders.objects.all().delete()
+        Signature.objects.all().delete()
+        InventoryNotes.objects.all().delete()
+        Inventory.objects.all().delete()
+        OutgoingItem.objects.all().delete()
+        OutgoingWallcovering.objects.all().delete()
+        Packages.objects.all().delete()
+        ReceivedItems.objects.all().delete()
+        WallcoveringDelivery.objects.all().delete()
+        OrderItems.objects.all().delete()
+        WallcoveringPricing.objects.all().delete()
+        Wallcovering.objects.all().delete()
+        Orders.objects.all().delete()
+        RentalNotes.objects.all().delete()
+        Rentals.objects.all().delete()
+        JobNotes.objects.all().delete()
+        Jobs.objects.all().delete()
     return redirect("/")
-
-
-def import_job(request):
-    print("HI")
-#10.24.2023 this has been replaced by the jobs.view "upload_new_job"
-
-    # if request.method == 'POST':
-    #     file = request.FILES['upload_file']
-    #     decoded_file = file.read().decode('utf-8').splitlines()
-    #     reader = csv.DictReader(decoded_file)
-    #     for row in reader:
-    #         print("HI")
-    #         print(row[0])
-    # return redirect('admin_home')
-
