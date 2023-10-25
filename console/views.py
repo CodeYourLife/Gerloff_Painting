@@ -28,6 +28,7 @@ from wallcovering.models import *
 import random
 
 
+
 @login_required(login_url='/accounts/login')
 def seperate_test(request):
     fileitem = request.FILES['filename']
@@ -647,3 +648,18 @@ def reset_databases(request):
     JobNotes.objects.all().delete()
     Jobs.objects.all().delete()
     return redirect("/")
+
+
+def import_job(request):
+    print("HI")
+#10.24.2023 this has been replaced by the jobs.view "upload_new_job"
+
+    # if request.method == 'POST':
+    #     file = request.FILES['upload_file']
+    #     decoded_file = file.read().decode('utf-8').splitlines()
+    #     reader = csv.DictReader(decoded_file)
+    #     for row in reader:
+    #         print("HI")
+    #         print(row[0])
+    # return redirect('admin_home')
+
