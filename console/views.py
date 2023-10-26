@@ -621,7 +621,7 @@ def import_csv(request):
 
 
 def reset_databases(request):
-#git hub
+#git hub2
     if request.user.first_name == "Joe" and request.user.last_name == "Gerloff":
         TMList.objects.all().delete()
         TMProposal.objects.all().delete()

@@ -132,7 +132,7 @@ class Jobs(models.Model):
     is_active = models.BooleanField(default=False)#this is for supers to use - whether to show on upcoming jobs list
     start_date_checked = models.DateField(null=True, blank=True)
     is_off_hours = models.BooleanField(default=False)
-    closed_job_number = models.IntegerField(null=True, blank=True)
+    closed_job_number = models.IntegerField(null=True, blank=True)#added this
 
     def __str__(self):
         return f"{self.job_name}"
