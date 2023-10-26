@@ -94,7 +94,7 @@ class Jobs(models.Model):
         max_digits=10, decimal_places=4, blank=True, null=True)
     final_bill_amount = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True)
-    is_closed = models.BooleanField(default=False)#not sure what this is
+    is_closed = models.BooleanField(default=False)#lets use this instead of status
     labor_done_Date = models.DateField(null=True, blank=True)
     ar_closed_date = models.DateField(null=True, blank=True)
     was_previously_closed = models.BooleanField(default=False)
@@ -132,6 +132,7 @@ class Jobs(models.Model):
     is_active = models.BooleanField(default=False)#this is for supers to use - whether to show on upcoming jobs list
     start_date_checked = models.DateField(null=True, blank=True)
     is_off_hours = models.BooleanField(default=False)
+    closed_job_number = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.job_name}"
