@@ -1,7 +1,7 @@
 from django.urls import path
 
 from . import views
-
+#git
 urlpatterns = [
 
     path('', views.index, name='index'),
@@ -12,6 +12,6 @@ urlpatterns = [
     path('admin_home', views.admin_home, name='admin_home'),
     path('grant_web_access', views.grant_web_access, name='grant_web_access'),
     path('reset_databases', views.reset_databases, name='reset_databases'),
-    path('import_job', views.import_job, name='import_job'),
+
 
 ]
