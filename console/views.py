@@ -621,7 +621,7 @@ def import_csv(request):
 
 
 def reset_databases(request):
-#git hub
+#git hub2
     if request.user.first_name == "Joe" and request.user.last_name == "Gerloff":
         TMList.objects.all().delete()
         TMProposal.objects.all().delete()
@@ -644,6 +644,7 @@ def reset_databases(request):
         Orders.objects.all().delete()
         RentalNotes.objects.all().delete()
         Rentals.objects.all().delete()
+        Submittals.objects.all().delete()
         JobNotes.objects.all().delete()
         Jobs.objects.all().delete()
     return redirect("/")
