@@ -656,3 +656,4 @@ def create_folders(request):
         createfolder("equipment/" + str(x.id))
     print("HI")
     return render(request, 'index.html')
+
