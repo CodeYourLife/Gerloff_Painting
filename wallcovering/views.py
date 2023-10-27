@@ -13,12 +13,12 @@ from django.contrib.auth.decorators import login_required
 
 @login_required(login_url='/accounts/login')
 def wallcovering_send_all(request):
-    table = OutgoingWallcoveringTable(OutgoingItem.objects.filter(outgoing_event__job_number__status="Open"))
+    table = OutgoingWallcoveringTable(OutgoingItem.objects.filter(outgoing_event__job_number__is_closed=False))
     return render(request, "wallcovering_send_all.html", {'table':table})
 
 @login_required(login_url='/accounts/login')
 def wallcovering_receive_all(request):
-    table = ReceivedTable(ReceivedItems.objects.filter(wallcovering_delivery__order__job_number__status = "Open"))
+    table = ReceivedTable(ReceivedItems.objects.filter(wallcovering_delivery__order__job_number__is_closed=False))
     return render(request, "wallcovering_receive_all.html", {'table':table})
 
 @login_required(login_url='/accounts/login')
@@ -40,7 +40,7 @@ def wallcovering_send(request, jobnumber):
     if jobnumber == 'ALL':
         already_picked = 'ALL'
         jobs =[]
-        for x in Jobs.objects.filter(status="Open",orders__isnull=False).distinct():
+        for x in Jobs.objects.filter(is_closed=False,orders__isnull=False).distinct():
             b=0
             for y in Orders.objects.filter(job_number=x.job_number):
                 if int(y.packages_received()) > int(y.packages_sent()):
@@ -48,7 +48,7 @@ def wallcovering_send(request, jobnumber):
             if b != 0:
                 jobs.append(x)
         packages = []
-        for y in Packages.objects.filter(delivery__order__job_number__status="Open"):
+        for y in Packages.objects.filter(delivery__order__job_number__is_closed=False):
             if int(y.total_sent())<int(y.quantity_received):
                 thisdict = {"id": y.id,"date":y.delivery.date, "type": y.type,"contents":y.contents,"quantity_received":y.quantity_received,"notes": y.notes,"total_sent":int(y.total_sent()),"available": int(y.quantity_received)-int(y.total_sent())}
                 packages.append(thisdict)
@@ -77,7 +77,7 @@ def wallcovering_receive(request,orderid):
         already_picked = 'ALL'
         open_orders = []
         open_order_items = []
-        for y in Orders.objects.filter(job_number__status="Open"):
+        for y in Orders.objects.filter(job_number__is_closed=False):
             b=0
             for x in OrderItems.objects.filter(order = y):
                 if int(x.quantity_received()) < int(x.quantity):
@@ -134,7 +134,7 @@ def post_wallcovering_order(request):
 
 @login_required(login_url='/accounts/login')
 def wallcovering_order_new(request, id, job_number):
-    jobs = Jobs.objects.filter(status="Open")
+    jobs = Jobs.objects.filter(is_closed=False)
     vendors = Vendors.objects.filter(category__category="Wallcovering Supplier")
     vendors1 = Vendors.objects.filter(category__category="Wallcovering Supplier").values()
     if job_number == "ALL":
@@ -143,10 +143,10 @@ def wallcovering_order_new(request, id, job_number):
             selectedwc = 0
             selectedpricing = 0
             selectedvendor = 0
-            wallcovering = Wallcovering.objects.filter(job_number__status="Open")
-            pricing = WallcoveringPricing.objects.filter(wallcovering__job_number__status="Open")
-            wallcovering1 = Wallcovering.objects.values('id','job_number__job_number','code','vendor__id','vendor__company_name','pattern','estimated_quantity', 'estimated_unit').filter(job_number__status="Open")
-            pricing1 = WallcoveringPricing.objects.values('wallcovering__id','quote_date','min_yards','price','unit','id').filter(wallcovering__job_number__status="Open")
+            wallcovering = Wallcovering.objects.filter(job_number__is_closed=False)
+            pricing = WallcoveringPricing.objects.filter(wallcovering__job_number__is_closed=False)
+            wallcovering1 = Wallcovering.objects.values('id','job_number__job_number','code','vendor__id','vendor__company_name','pattern','estimated_quantity', 'estimated_unit').filter(job_number__is_closed=False)
+            pricing1 = WallcoveringPricing.objects.values('wallcovering__id','quote_date','min_yards','price','unit','id').filter(wallcovering__job_number__is_closed=False)
     else:
         selectedjob = Jobs.objects.get(job_number=job_number)
         wallcovering = Wallcovering.objects.filter(job_number__job_number=job_number)
@@ -169,7 +169,7 @@ def wallcovering_order_new(request, id, job_number):
 
 @login_required(login_url='/accounts/login')
 def wallcovering_home(request):
-    wc_table = Wallcovering.objects.filter(job_number__status="Open")
+    wc_table = Wallcovering.objects.filter(job_number__is_closed=False)
     # wc_table = []
     # xjob_name = "NA"
     # xcode = "NA"
@@ -233,7 +233,7 @@ def wallcovering_home(request):
     wc_ordereds = OrderItems.objects.filter(is_satisfied=False) #orders not received yet
     received_deliveries = WallcoveringDelivery.objects.all()
     jobsite_deliveries =  OutgoingItem.objects.all()
-    all_orders = OrderItemsFilter(request.GET, queryset =OrderItems.objects.filter(order__job_number__status="Open").distinct())
+    all_orders = OrderItemsFilter(request.GET, queryset =OrderItems.objects.filter(order__job_number__is_closed=False).distinct())
     table2 = CombinedOrdersTable(all_orders.qs)
     has_filter = any(field in request.GET for field in set(all_orders.get_fields()))
     packages = []

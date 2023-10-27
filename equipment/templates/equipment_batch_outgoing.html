@@ -68,6 +68,11 @@
   </div>
 </nav>
 {% if status == 'Outgoing' %}
+	 <form name = job_filter action="{%  url 'equipment_batch_outgoing' status='Outgoing' %}" method="post"  >
+	  {% csrf_token %}
+		 <input type= "text" name="filter_job_name" id="filter_job_name" placeholder="Job Name" size="30" />
+		 <input type="submit" value="Filter Jobs" />
+	 </form>
  <form name = job_update action="{%  url 'equipment_batch_outgoing' status='Outgoing' %}" method="post"  onSubmit = "return check_booking_data()">
 
             <label for="selected_job">Select the Job Where the Equipment is Going: </label>

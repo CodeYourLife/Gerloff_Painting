@@ -64,7 +64,7 @@ def submittals_home(request):
 
 @login_required(login_url='/accounts/login')
 def submittals_new(request):
-    jobs = Jobs.objects.filter(status="Open")
+    jobs = Jobs.objects.filter(is_closed=False)
     send_data = {}
     if request.method == 'POST':
         if 'job_select' in request.POST:

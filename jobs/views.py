@@ -398,28 +398,28 @@ def jobs_home(request):
 @login_required(login_url='/accounts/login')
 def job_page(request, jobnumber):
     if jobnumber == 'ALL':
-        search_jobs = JobsFilter(request.GET, queryset=Jobs.objects.filter(status="Open"))
+        search_jobs = JobsFilter(request.GET, queryset=Jobs.objects.filter(is_closed=False))
         jobstable = JobsTable(search_jobs.qs, order_by='start_date')
         has_filter = any(field in request.GET for field in set(search_jobs.get_fields()))
-        tickets = ChangeOrders.objects.filter(job_number__status="Open", is_t_and_m=True, is_ticket_signed=False)
-        open_cos = ChangeOrders.objects.filter(job_number__status="Open", is_closed=False,
+        tickets = ChangeOrders.objects.filter(job_number__is_closed=False, is_t_and_m=True, is_ticket_signed=False)
+        open_cos = ChangeOrders.objects.filter(job_number__is_closed=False, is_closed=False,
                                                is_approved=False) & ChangeOrders.objects.filter(
             is_t_and_m=False) | ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=True)
-        approved_cos = ChangeOrders.objects.filter(job_number__status="Open", is_closed=False, is_approved=True)
-        equipment = Inventory.objects.filter(job_number__status="Open").order_by('inventory_type')
-        rentals = Rentals.objects.filter(job_number__status="Open")
-        wallcovering2 = Wallcovering.objects.filter(job_number__status="Open")
+        approved_cos = ChangeOrders.objects.filter(job_number__is_closed=False, is_closed=False, is_approved=True)
+        equipment = Inventory.objects.filter(job_number__is_closed=False).order_by('inventory_type')
+        rentals = Rentals.objects.filter(job_number__is_closed=False)
+        wallcovering2 = Wallcovering.objects.filter(job_number__is_closed=False)
         wc_not_ordereds = []
         for x in wallcovering2:
             if x.orderitems1.count() > 0:
                 print(x)
             else:
                 wc_not_ordereds.append(x)
-        wc_ordereds = OrderItems.objects.filter(wallcovering__job_number__status="Open", is_satisfied=False)
-        packages = Packages.objects.filter(delivery__order__job_number__status="Open")
-        deliveries = OutgoingItem.objects.filter(outgoing_event__job_number__status="Open")
-        submittals = Submittals.objects.filter(job_number__status="Open")
-        subcontracts = Subcontracts.objects.filter(job_number__status="Open")
+        wc_ordereds = OrderItems.objects.filter(wallcovering__job_number__is_closed=False, is_satisfied=False)
+        packages = Packages.objects.filter(delivery__order__job_number__is_closed=False)
+        deliveries = OutgoingItem.objects.filter(outgoing_event__job_number__is_closed=False)
+        submittals = Submittals.objects.filter(job_number__is_closed=False)
+        subcontracts = Subcontracts.objects.filter(job_number__is_closed=False)
         jobs = 'ALL'
         return render(request, "job_page.html",
                       {'search_jobs': search_jobs, 'has_filter': has_filter, 'jobstable': jobstable,
