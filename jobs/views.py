@@ -384,7 +384,7 @@ def upload_new_job(request):
                                     type="auto_booking_note", date=date.today(),
                                     user=request.user.first_name + " " + request.user.last_name)
             email_body = "New Job Booked \n" + job.job_number + "\n" + job.job_name + "\n" + job.client.company
-            Email.sendEmail("New Job - " + job.job_name, email_body, 'admin1@gerloffpainting.com; admin2@gerloffpainting.com; joe@gerloffpainting.com',False)
+            Email.sendEmail("New Job - " + job.job_name, email_body, 'admin1@gerloffpainting.com, admin2@gerloffpainting.com, joe@gerloffpainting.com',False)
             return render(request, "upload_new_job.html")
     return render(request, "upload_new_job.html")
 
@@ -507,7 +507,6 @@ def job_page(request, jobnumber):
         else:
             notes = JobNotes.objects.filter(job_number=jobnumber)
         send_data['notes'] = notes
-        print(send_data)
         return render(request, 'job_page.html', send_data)
 
 
