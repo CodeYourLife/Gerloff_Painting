@@ -654,4 +654,6 @@ def reset_databases(request):
 def create_folders(request):
     for x in Inventory.objects.all():
         createfolder("equipment/" + str(x.id))
+    print("HI")
     return render(request, 'index.html')
+
