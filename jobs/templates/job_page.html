@@ -291,7 +291,7 @@ $(document).ready(function () {
 			{% for equipment in equipments %}
 				<tr>
 					<td>{{equipment.inventory_type}}</td>
-					<td>{{equipment.item}}</td>
+					<td><a href="{% url 'equipment_page' equipment.id %}">{{equipment.item}}</a></td>
 					<td>{{equipment.notes}}</td>
 				</tr>
 			{% endfor %}
