@@ -283,5 +283,9 @@ def equipment_page(request, id):
 
 @login_required(login_url='/accounts/login')
 def equipment_home(request):
-    inventories = Inventory.objects.all()
+    if request.method == 'POST':
+        if 'filter_items' in request.POST:
+            inventories = Inventory.objects.filter(item__icontains=request.POST['filter_items'])
+    else:
+        inventories = Inventory.objects.all()
     return render(request, "equipment_home.html", {'inventories': inventories})
