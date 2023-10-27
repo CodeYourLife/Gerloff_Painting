@@ -651,3 +651,7 @@ def reset_databases(request):
         Jobs.objects.all().delete()
     return redirect("/")
 
+def create_folders(request):
+    for x in Inventory.objects.all():
+        createfolder("equipment/" + str(x.id))
+        return render(request, 'index.html')
