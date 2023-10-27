@@ -682,7 +682,21 @@ var startdate = "{{startdate}}"
                     </div>
                 </div>
                 <br /> <hr>
+                <div class ="container" id = "close_job">
+                    <div class ="row">
+                        <div class ="col-sm-6">
+                            <label for="is_closed">Close Job? </label>
+                            {% if selectedjob.is_closed == True %}
+                            <input type="checkbox" name ="is_closed" id="is_closed"  checked />
+                            {% else %}
+                             <input type="checkbox" name ="is_closed" id="is_closed"  />
+                            {% endif %}
 
+                             </div>
+
+                    </div>
+
+                </div>
                 <br />
                 <div class ="container">
                     <input type="submit" class="btn btn-primary btn-sm" value="Save" /></div>
