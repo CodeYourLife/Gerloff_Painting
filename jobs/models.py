@@ -72,7 +72,7 @@ class Jobs(models.Model):
         max_digits=10, decimal_places=2, blank=True, null=True)
     brush_role = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True)
-    address = models.CharField(null=True, max_length=50)
+    address = models.CharField(null=True, max_length=500)
     city = models.CharField(null=True, max_length=20)
     state = models.CharField(null=True, max_length=2)
     start_date = models.DateField(null=True, blank=True)
