@@ -28,7 +28,6 @@ from wallcovering.models import *
 import random
 
 
-
 @login_required(login_url='/accounts/login')
 def seperate_test(request):
     fileitem = request.FILES['filename']
@@ -621,7 +620,7 @@ def import_csv(request):
 
 
 def reset_databases(request):
-#git hub2
+    # git hub2
     if request.user.first_name == "Joe" and request.user.last_name == "Gerloff":
         TMList.objects.all().delete()
         TMProposal.objects.all().delete()
@@ -650,6 +649,7 @@ def reset_databases(request):
         JobNotes.objects.all().delete()
         Jobs.objects.all().delete()
     return redirect("/")
+
 
 def create_folders(request):
     for x in Inventory.objects.all():
