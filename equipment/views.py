@@ -53,6 +53,7 @@ def equipment_add_to_incoming(request, id):  # status = None, Outgoing, Incoming
 
 @login_required(login_url='/accounts/login')
 def equipment_batch_outgoing(request, status):  # status is Outgoing, Incoming
+
     jobs = Jobs.objects.filter(is_closed=False)
     if request.method == 'POST':
         if 'filter_job_name' in request.POST:
@@ -89,6 +90,7 @@ def equipment_batch_outgoing(request, status):  # status is Outgoing, Incoming
                     x.save()
             return redirect('warehouse_home')
     status = status
+
     available_filter = EquipmentFilter(request.GET, queryset=Inventory.objects.filter(status='Available', batch=None))
     if status == 'Outgoing':
         available_filter = EquipmentFilter(request.GET,
