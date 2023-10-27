@@ -81,6 +81,12 @@
         </ul>
     </div>
 </nav>
+	 <form name = job_filter action="{%  url 'equipment_home' %}" method="post"  >
+	  {% csrf_token %}
+		 <input type= "text" name="filter_items" id="filter_items" placeholder="Search Term (scaffold, ladder,etc.)" size="30" />
+		 <input type="submit" value="Filter Equipment" />
+	 </form>
+
 <input type="checkbox" class="filter-checkbox checkbox" onclick="filterStatus()" id="available"
        style="margin-left: 12px;"/> Available
 <input type="checkbox" class="filter-checkbox checkbox" onclick="filterStatus()" id="checked_out"
