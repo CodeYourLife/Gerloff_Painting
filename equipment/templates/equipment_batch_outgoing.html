@@ -38,7 +38,7 @@
 		var hidden = document.getElementById("select_job")
 		var location = document.getElementById("inventory_notes")
 		if (hidden.value == "Not Selected"){
-			alert(hidden.value)
+			alert("Job Not Selected")
 			return false
 		}
     	var x;
@@ -92,11 +92,12 @@
   		<a href="{%  url 'equipment_batch_outgoing' status %}">Clear Filter</a>
 		{% endif %}
 
-        	<div class="content">
+<!--        	<div class="content">-->
 		    <form method="get">
         {{ available_filter.form }}
         <input type="submit" value="Filter Now" />
     </form>
+<!--	</div>-->
 {% render_table available_table %}
 
 <h3>SELECTED ITEMS</h3>

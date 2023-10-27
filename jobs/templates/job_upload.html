@@ -118,6 +118,23 @@ var clicked2 = "False"
                 booking_input.select_super.options[1] = new Option("not sure", "not_sure");
         }
 
+
+function clicked_duplicate(){
+    if(booking_input.duplicate.checked){
+     booking_input.new_super.value = booking_input.new_pm.value
+     booking_input.new_super_phone.value =booking_input.new_pm_phone.value
+     booking_input.new_super_email.value=booking_input.new_pm_email.value
+    }
+    else{
+            booking_input.new_super.value =""
+            booking_input.new_super_phone.value =""
+            booking_input.new_super_email.value =""
+            }
+
+}
+
+
+
 function test_this(){
     if (clicked == "False"){
         clicked = "True"
@@ -241,7 +258,7 @@ function test_this2(){
             <div class ="container">
                     <div class = "row">
                         <div class ="col-sm-12">
-                            <label for="select_pm">{% if pm %} Selected PM was {{pm}} {% else %} Couldn't Find GC PM: {{new_pm_name}} {% endif %}</label>
+                            <label for="select_pm">{% if pm %} Selected GC PM was {{pm}} {% else %} Couldn't Find GC PM: {{new_pm_name}} {% endif %}</label>
                             <select class="form-control" id="select_pm" name="select_pm" >
                                 {% if pm %} <option value="{{pm.person_pk}}">{{pm}}</option>{% else %} <option value="please_select">Please Select</option><option value="use_below">Use Below</option>{% endif %}
                                 {% if pms_filter %}
@@ -255,7 +272,7 @@ function test_this2(){
                                 	<button type="button" onClick="test_this()" class="collapsible">Click Here to Add a New Contact </button>
 	<div class="content">
                     <div class ="row" style="margin-top: 22px">
-                        <div class ="col-sm-12">Or enter New below: </div>
+                        <div class ="col-sm-12">Enter New below: </div>
                     </div>
                     <div class ="row" style="margin-top: 22px">
                         <div class ="col-sm-12">  
@@ -292,7 +309,13 @@ function test_this2(){
                 <button type="button" class="collapsible" onClick="test_this2()">Click Here to Add a New Contact</button>
 	<div class="content">
                     <div class ="row" style="margin-top: 22px">
-                        <div class ="col-sm-6">Or enter New below: </div>
+                        <div class ="col-sm-6">Enter New below: </div>
+                    </div>
+                       <div class ="row" style="margin-top: 22px">
+                        <div class ="col-sm-12">
+                            <label for="duplicate">Click Here if Same Person as PM Above </label>
+                              <input type="checkbox" name ="duplicate" id="duplicate"  onClick="clicked_duplicate()" />
+                        </div>
                     </div>
                     <div class ="row" style="margin-top: 22px">
                         <div class ="col-sm-12">
@@ -314,7 +337,7 @@ function test_this2(){
                 <br /> <hr><br />
 
                 <div class ="container">
-                    <label for="select_gpestimator">{% if estimator %} Selected GP Estimator was {{estimator}} {% else %} Couldn't Find {{estimator_name}} {% endif %}</label>
+                    <label for="select_gpestimator">{% if estimator %} Selected GP Estimator was {{estimator}} {% else %} Couldn't Find GP Estimator {{estimator_name}} {% endif %}</label>
                     <select class="form-control" id="select_gpestimator" name="select_gpestimator" >
                         {% if estimator %} <option value="{{estimator.id}}">{{estimator}}</option>{% else %} <option value="please_select">Please Select</option>{% endif %}
                         {% if all_employees %}
