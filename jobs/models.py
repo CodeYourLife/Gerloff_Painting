@@ -63,7 +63,7 @@ class Jobs(models.Model):
     is_t_m_job = models.BooleanField(default=False)
     t_m_nte_amount = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True)
-    status = models.CharField(null=True, max_length=50)  # open,closed
+    status = models.CharField(null=True, max_length=50)  # open,closed - DO NOT USE THIS ANYMORE. USE is_closed
     booked_date = models.DateField(null=True, blank=True)
     booked_by = models.CharField(null=True, max_length=50, blank=True)
     is_wage_scale = models.BooleanField(default=False)

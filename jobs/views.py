@@ -114,6 +114,10 @@ def update_job_info(request, jobnumber):
         else:
             if selectedjob.spray_scale != request.POST['spray_scale']:
                 selectedjob.spray_scale = request.POST['spray_scale']
+        if 'is_closed' in request.POST:
+            selectedjob.is_closed = True
+        else:
+            selectedjob.is_closed = False
         if 'is_t_m_job' in request.POST:
             selectedjob.is_t_m_job = True
         else:
