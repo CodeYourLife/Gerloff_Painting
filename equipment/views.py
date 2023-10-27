@@ -53,40 +53,44 @@ def equipment_add_to_incoming(request, id):  # status = None, Outgoing, Incoming
 
 @login_required(login_url='/accounts/login')
 def equipment_batch_outgoing(request, status):  # status is Outgoing, Incoming
-    if request.method == 'POST':
-        if status == "Outgoing":
-            for x in Inventory.objects.filter(batch='Outgoing'):
-                x.job_number = Jobs.objects.get(job_number=request.POST['select_job'])
-                x.status = "Checked Out"
-                x.batch = None
-                x.save()
-                new_note = InventoryNotes(inventory_item=x, date=date.today(),
-                                          user=request.user.first_name + " " + request.user.last_name,
-                                          note="Sent to Job -" + request.POST['inventory_notes'],
-                                          category="Job", job_number=request.POST['select_job'],
-                                          job_name=x.job_number.job_name)
-                new_note.save()
-            for x in Inventory.objects.filter(batch='Incoming'):
-                x.batch = None
-                x.save()
-        else:
-            for x in Inventory.objects.filter(batch='Incoming'):
-                x.job_number = None
-                x.status = "Available"
-                x.batch = None
-                x.save()
-                new_note = InventoryNotes(inventory_item=x, date=date.today(),
-                                          user=request.user.first_name + " " + request.user.last_name,
-                                          note="Returned -" + request.POST['inventory_notes'],
-                                          category="Returned")
-                new_note.save()
-            for x in Inventory.objects.filter(batch='Outgoing'):
-                x.batch = None
-                x.save()
 
-        return redirect('warehouse_home')
+    jobs = Jobs.objects.filter(is_closed=False)
+    if request.method == 'POST':
+        if 'filter_job_name' in request.POST:
+            jobs = Jobs.objects.filter(is_closed=False,job_name__icontains=request.POST['filter_job_name'])
+        else:
+            if status == "Outgoing":
+                for x in Inventory.objects.filter(batch='Outgoing'):
+                    x.job_number = Jobs.objects.get(job_number=request.POST['select_job'])
+                    x.status = "Checked Out"
+                    x.batch = None
+                    x.save()
+                    new_note = InventoryNotes(inventory_item=x, date=date.today(),
+                                              user=request.user.first_name + " " + request.user.last_name,
+                                              note="Sent to Job -" + request.POST['inventory_notes'],
+                                              category="Job", job_number=request.POST['select_job'],
+                                              job_name=x.job_number.job_name)
+                    new_note.save()
+                for x in Inventory.objects.filter(batch='Incoming'):
+                    x.batch = None
+                    x.save()
+            else:
+                for x in Inventory.objects.filter(batch='Incoming'):
+                    x.job_number = None
+                    x.status = "Available"
+                    x.batch = None
+                    x.save()
+                    new_note = InventoryNotes(inventory_item=x, date=date.today(),
+                                              user=request.user.first_name + " " + request.user.last_name,
+                                              note="Returned -" + request.POST['inventory_notes'],
+                                              category="Returned")
+                    new_note.save()
+                for x in Inventory.objects.filter(batch='Outgoing'):
+                    x.batch = None
+                    x.save()
+            return redirect('warehouse_home')
     status = status
-    jobs = Jobs.objects.filter(status="Open")
+
     available_filter = EquipmentFilter(request.GET, queryset=Inventory.objects.filter(status='Available', batch=None))
     if status == 'Outgoing':
         available_filter = EquipmentFilter(request.GET,
