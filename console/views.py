@@ -13,7 +13,7 @@ import os
 import os.path
 import csv
 from pathlib import Path
-
+from console.misc import createfolder
 from jobs.models import *
 from accounts.models import *
 from changeorder.models import *
@@ -654,4 +654,4 @@ def reset_databases(request):
 def create_folders(request):
     for x in Inventory.objects.all():
         createfolder("equipment/" + str(x.id))
-        return render(request, 'index.html')
+    return render(request, 'index.html')
