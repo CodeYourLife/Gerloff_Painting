@@ -132,7 +132,7 @@
             <td>{{inventory.service_vendor.company_name}}</td>
             {% endif %}
             {% else %}
-            <td>{{inventory.job_number.job_name}}</td>
+            <td><a href="{% url 'job_page' inventory.job_number.job_number %}"><div style="height:100%;width:100%">{{inventory.job_number.job_name}}</div></a></td>
             {% endif %}
             <td>{% if inventory.assigned_to != None %}{{inventory.assigned_to}}{% endif %}</td>
 
