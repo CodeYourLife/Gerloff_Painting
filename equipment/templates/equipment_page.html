@@ -48,9 +48,11 @@
         <div class="col-sm-4 list-items"><b>Date Out:&nbsp;</b>{{inventories.date_out}}</div>
         {% if inventories.service_vendor != None %}
         <div class="col-sm-4 list-items"><b>In Service At:&nbsp;</b>{{inventories.service_vendor.company_name}}</div>
+        {% elif inventories.job_number != None %}
+        <div class="col-sm-4 list-items"><b>Current Job:&nbsp;</b><a href="{% url 'job_page' inventories.job_number.job_number %}">{{inventories.job_number}} {{inventories.job_name}}</a></div>
         {% else %}
-        <div class="col-sm-4 list-items"><b>Current Job:&nbsp;</b><a href="{% url 'job_page' inventories.job_number.job_number %}">{{inventories.job_number}} {{inventories.job_name}}</a>
-        </div>
+        <div class="col-sm-4 list-items"><b>Available:&nbsp;</b></div>
+    </div>
         {% endif %}
         <div class="col-sm-4 list-items"><b>Vendor:&nbsp;</b>{{inventories.vendor}}</div>
     </div>
