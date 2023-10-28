@@ -657,7 +657,6 @@ def create_folders(request):
     print("HI")
     return render(request, 'index.html')
 
-
 def customize(request):
     employee= Employees.objects.get(user=request.user)
     if employee.job_title.description == 'Superintendent':
@@ -665,4 +664,6 @@ def customize(request):
     elif employee.job_title.description == 'Warehouse':
         return redirect('warehouse_home')
     else:
+
         return redirect('/')
+

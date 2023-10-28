@@ -49,7 +49,9 @@ $(document).ready(function () {
                         {% endfor %}
                         {% endif %}
 					</select>
-		<input type="submit" id="myDIV" value="Filter by Superintendent" />
+
+		<input type="submit" id="myDIV" value="Filter Now" />
+
 		</form>
 
 		<button type="button" class="collapsible">View Jobs</button>
@@ -68,25 +70,29 @@ $(document).ready(function () {
 			<form action= "{% url 'super_home' 'ALL' 'UPCOMING' %}" ><input type="submit" value="Show Upcoming Only" /></form>
 		{% endif %}
 	{% endif %}
-			<table id="job_table" class="display" style="width:30%">
+
+			<table id="job_table" class="display" style="width:100%">
 				<tr><td style="background-color:#ffff00">Off Hours</td><td style="background-color:#00ff00">On Base</td><td style="background-color:#FF0000">Field Docs Not Ready</td><td style="background-color:#bcd5bc">Follow Up On Start Date</td></tr>
 			</table>
-	<div class="demo-html" style="width:90%">
-		<table id="job_table" class="display" style="width:90%">
+			<div class="table-responsive">
+    <table id="inventory_table" class="display table table-sm">
+<!--	<div class="demo-html" style="width:90%">-->
+<!--		<table id="job_table" class="display" style="width:90%">-->
 			<thead>
 				<tr>
-					<th>Job Number</th>
-					<th>Job Name</th>
-					<th>Start Date</th>
-					<th>GC</th>
-					<th>Equipment</th>
-					<th>Subs</th>
-					<th>VWC</th>
-					<th>Rentals</th>
-					<th>Tickets</th>
-					<th>Notes</th>
-					<th>Hours</th>
-					<th>Used</th>
+					<th scope="col">Job Number</th>
+					<th scope="col">Job Name</th>
+					<th scope="col">Start Date</th>
+					<th scope="col">GC</th>
+					<th scope="col">Equipment</th>
+					<th scope="col">Subs</th>
+					<th scope="col">VWC</th>
+					<th scope="col">Rentals</th>
+					<th scope="col">Tickets</th>
+					<th scope="col">Notes</th>
+					<th scope="col">Hours</th>
+					<th scope="col">Used</th>
+
 				</tr>
 			</thead>
 			<tbody>
@@ -212,7 +218,6 @@ $(document).ready(function () {
 	</div>
 		</div>
 
-
 		<button type="button" class="collapsible">{{tickets_count}} Outstanding Extra Work Tickets </button>
 		<div class="content">
 	<h3>Rentals</h3>
@@ -245,7 +250,6 @@ $(document).ready(function () {
 		</table>
 	</div>
 		</div>
-
 
 
 <script>
