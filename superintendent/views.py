@@ -8,6 +8,7 @@ from changeorder.models import ChangeOrders
 from equipment.models import *
 from console.models import *
 from subcontractors.models import *
+from django.db.models import Q
 
 
 @login_required(login_url='/accounts/login')
@@ -60,7 +61,7 @@ def super_home(request, super, filter):
             jobs = Jobs.objects.filter(superintendent=Employees.objects.get(id=selected_superid)).order_by(
                 'start_date')
     send_data['jobs'] = jobs
-    send_data['supers'] = Employees.objects.exclude(job_title__description="Painter")
+    send_data['supers'] = Employees.objects.exclude(Q(job_title__description="Painter") | Q(active=False))
     send_data['todays_date'] = date.today() - timedelta(days=45)
     return render(request, "super_home.html", send_data)
 
