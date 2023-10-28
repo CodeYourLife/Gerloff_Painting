@@ -80,6 +80,10 @@ $(document).ready(function () {
 					<th scope="col">Job Number</th>
 					<th scope="col">Job Name</th>
 					<th scope="col">Start Date</th>
+					{% if selected_super %}
+					{% else %}
+					<th scope="col">Super</th>
+					{% endif %}
 					<th scope="col">GC</th>
 					<th scope="col">Equipment</th>
 					<th scope="col">Subs</th>
@@ -120,6 +124,10 @@ $(document).ready(function () {
 									<div style="height:100%;width:100%">
 								{{job.start_date}}	</div>
 						</a></td>
+									{% if selected_super %}
+					{% else %}
+					<td>{{job.superintendent.first_name}}</td>
+					{% endif %}
 				{% if job.is_work_order_done == False %}<td style="background-color:#FF0000">{% else %} <td>{% endif %}{{job.client}} </td>
 					<td>{{job.equipment_count}}</td>
 					<td>{{job.subcontract_count}}</td>
@@ -129,7 +137,6 @@ $(document).ready(function () {
 					<td>{{job.field_notes_count}}</td>
 					<td>{{job.man_hours_budgeted}}</td>
 					<td>{{job.man_hours_used}}</td>
-				<td>{{job.time_since_checking}}</td>
 				</tr>
 			{% endfor %}
 			{% endif %}
@@ -214,7 +221,7 @@ $(document).ready(function () {
 		</table>
 	</div>
 		</div>
-
+<br> <hr>
 		<button type="button" class="collapsible">{{tickets_count}} Outstanding Extra Work Tickets </button>
 		<div class="content">
 	<h3>Rentals</h3>
