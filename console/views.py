@@ -665,3 +665,4 @@ def customize(request):
         return redirect('warehouse_home')
     else:
         return redirect('/')
+

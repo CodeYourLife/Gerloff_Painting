@@ -49,7 +49,9 @@ $(document).ready(function () {
                         {% endfor %}
                         {% endif %}
 					</select>
+
 		<input type="submit" id="myDIV" value="Filter Now" />
+
 		</form>
 
 		<button type="button" class="collapsible">View Jobs</button>
@@ -68,6 +70,7 @@ $(document).ready(function () {
 			<form action= "{% url 'super_home' 'ALL' 'UPCOMING' %}" ><input type="submit" value="Show Upcoming Only" /></form>
 		{% endif %}
 	{% endif %}
+
 			<table id="job_table" class="display" style="width:100%">
 				<tr><td style="background-color:#ffff00">Off Hours</td><td style="background-color:#00ff00">On Base</td><td style="background-color:#FF0000">Field Docs Not Ready</td><td style="background-color:#bcd5bc">Follow Up On Start Date</td></tr>
 			</table>
@@ -80,10 +83,12 @@ $(document).ready(function () {
 					<th scope="col">Job Number</th>
 					<th scope="col">Job Name</th>
 					<th scope="col">Start Date</th>
+
 					{% if selected_super %}
 					{% else %}
 					<th scope="col">Super</th>
 					{% endif %}
+
 					<th scope="col">GC</th>
 					<th scope="col">Equipment</th>
 					<th scope="col">Subs</th>
@@ -93,6 +98,7 @@ $(document).ready(function () {
 					<th scope="col">Notes</th>
 					<th scope="col">Hours</th>
 					<th scope="col">Used</th>
+
 				</tr>
 			</thead>
 			<tbody>
@@ -124,10 +130,12 @@ $(document).ready(function () {
 									<div style="height:100%;width:100%">
 								{{job.start_date}}	</div>
 						</a></td>
+
 									{% if selected_super %}
 					{% else %}
 					<td>{{job.superintendent.first_name}}</td>
 					{% endif %}
+
 				{% if job.is_work_order_done == False %}<td style="background-color:#FF0000">{% else %} <td>{% endif %}{{job.client}} </td>
 					<td>{{job.equipment_count}}</td>
 					<td>{{job.subcontract_count}}</td>
@@ -137,6 +145,7 @@ $(document).ready(function () {
 					<td>{{job.field_notes_count}}</td>
 					<td>{{job.man_hours_budgeted}}</td>
 					<td>{{job.man_hours_used}}</td>
+
 				</tr>
 			{% endfor %}
 			{% endif %}
@@ -146,11 +155,9 @@ $(document).ready(function () {
 		</div>
 	<br> <hr>
 
-
-
-
-
 				<button type="button" class="collapsible">{{equipment_count}} Pieces of Equipment</button>
+
+
 		<div class="content">
 	<h3>Checked Out Equipment</h3>
 	<div class="demo-html">
@@ -185,7 +192,10 @@ $(document).ready(function () {
 	</div>
 		</div>
 	<br> <hr>
+
 						<button type="button" class="collapsible">{{rentals_count}} Current Rentals </button>
+
+
 		<div class="content">
 	<h3>Rentals</h3>
 	<div class="demo-html">
@@ -221,7 +231,9 @@ $(document).ready(function () {
 		</table>
 	</div>
 		</div>
+
 <br> <hr>
+
 		<button type="button" class="collapsible">{{tickets_count}} Outstanding Extra Work Tickets </button>
 		<div class="content">
 	<h3>Rentals</h3>
