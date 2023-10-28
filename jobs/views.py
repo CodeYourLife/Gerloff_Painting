@@ -397,6 +397,7 @@ def upload_new_job(request):
             email_body = "New Job Booked \n" + job.job_number + "\n" + job.job_name + "\n" + job.client.company
             Email.sendEmail("New Job - " + job.job_name, email_body,
                             'admin1@gerloffpainting.com, admin2@gerloffpainting.com, joe@gerloffpainting.com', False)
+
             return render(request, "upload_new_job.html")
     return render(request, "upload_new_job.html")
 

@@ -664,4 +664,6 @@ def customize(request):
     elif employee.job_title.description == 'Warehouse':
         return redirect('warehouse_home')
     else:
+
         return redirect('/')
+

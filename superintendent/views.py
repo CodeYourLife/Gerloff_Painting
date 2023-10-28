@@ -10,6 +10,7 @@ from console.models import *
 from subcontractors.models import *
 from django.db.models import Q
 
+
 @login_required(login_url='/accounts/login')
 def super_home(request, super, filter):
     send_data = {}
@@ -50,6 +51,7 @@ def super_home(request, super, filter):
         send_data['tickets_count'] = ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=False, is_closed=False,
                                                            job_number__superintendent=selected_super).order_by(
             'job_number', 'cop_number').count()
+
         if filter == 'UPCOMING':
             send_data['filtered'] = 'filtered'
             jobs = Jobs.objects.filter(is_active=False,
