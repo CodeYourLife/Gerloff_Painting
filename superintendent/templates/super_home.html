@@ -49,6 +49,9 @@ $(document).ready(function () {
 					</select>
 		<input type="submit" value="Filter by Superintendent" />
 		</form>
+
+		<button type="button" class="collapsible">View Jobs</button>
+		<div class="content">
 	<h3>Job List</h3>
 	{% if selected_super %}
 		{% if filtered %}
@@ -110,7 +113,10 @@ $(document).ready(function () {
 			</tbody>
 		</table>
 	</div>
+		</div>
 	<br> <hr>
+				<button type="button" class="collapsible">View Equipment</button>
+		<div class="content">
 	<h3>Checked Out Equipment</h3>
 	<div class="demo-html">
 		<table id="equipment_table" class="display" style="width:90%">
@@ -142,7 +148,10 @@ $(document).ready(function () {
 			</tbody>
 		</table>
 	</div>
+		</div>
 	<br> <hr>
+						<button type="button" class="collapsible">View Rentals</button>
+		<div class="content">
 	<h3>Rentals</h3>
 	<div class="demo-html">
 		<table id="rentals_table" class="display" style="width:90%">
@@ -176,7 +185,23 @@ $(document).ready(function () {
 			</tbody>
 		</table>
 	</div>
+		</div>
+<script>
+var coll = document.getElementsByClassName("collapsible");
+var i;
 
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }
+  });
+}
+</script>
 </body>
 </html>
 
