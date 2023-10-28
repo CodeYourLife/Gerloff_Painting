@@ -49,7 +49,9 @@ $(document).ready(function () {
                         {% endfor %}
                         {% endif %}
 					</select>
+
 		<input type="submit" id="myDIV" value="Filter Now" />
+
 		</form>
 
 		<button type="button" class="collapsible">View Jobs</button>
@@ -68,6 +70,7 @@ $(document).ready(function () {
 			<form action= "{% url 'super_home' 'ALL' 'UPCOMING' %}" ><input type="submit" value="Show Upcoming Only" /></form>
 		{% endif %}
 	{% endif %}
+
 			<table id="job_table" class="display" style="width:100%">
 				<tr><td style="background-color:#ffff00">Off Hours</td><td style="background-color:#00ff00">On Base</td><td style="background-color:#FF0000">Field Docs Not Ready</td><td style="background-color:#bcd5bc">Follow Up On Start Date</td></tr>
 			</table>
@@ -89,6 +92,7 @@ $(document).ready(function () {
 					<th scope="col">Notes</th>
 					<th scope="col">Hours</th>
 					<th scope="col">Used</th>
+
 				</tr>
 			</thead>
 			<tbody>
@@ -139,11 +143,8 @@ $(document).ready(function () {
 		</div>
 	<br> <hr>
 
-
-
-
-
 				<button type="button" class="collapsible">{{equipment_count}} Pieces of Equipment</button>
+
 		<div class="content">
 	<h3>Checked Out Equipment</h3>
 	<div class="demo-html">
@@ -178,7 +179,9 @@ $(document).ready(function () {
 	</div>
 		</div>
 	<br> <hr>
+
 						<button type="button" class="collapsible">{{rentals_count}} Current Rentals </button>
+
 		<div class="content">
 	<h3>Rentals</h3>
 	<div class="demo-html">
