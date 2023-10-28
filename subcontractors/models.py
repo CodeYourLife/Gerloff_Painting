@@ -1,5 +1,5 @@
 from django.db import models
-from jobs.models import Jobs
+from jobs.models import *
 from wallcovering.models import Wallcovering
 
 
@@ -25,7 +25,7 @@ class Subcontractors(models.Model):
 
 class Subcontracts(models.Model):
     id = models.BigAutoField(primary_key=True)
-    job_number = models.ForeignKey(Jobs, on_delete=models.PROTECT)
+    job_number = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT)
     subcontractor = models.ForeignKey(
         Subcontractors, on_delete=models.PROTECT, related_name="subcontract")
     po_number = models.CharField(null=True, max_length=250)

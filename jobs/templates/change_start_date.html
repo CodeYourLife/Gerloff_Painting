@@ -55,9 +55,32 @@
 <br>
 
 	 <input type="submit" value="Update Now" />
+	 <br>
+	 <input type="submit" name="follow_up" value="Follow Up in 30 Days" />
     </form>
 
   <button onclick="Previous()">Back to Previous Page</button>
+<br><hr>
+<div class="demo-html" style="width:90%">
+		<table id="notes_table" class="display table" style="width:90%">
+			<thead>
+				<tr>
+					<th scope="col">By</th>
+					<th scope="col">Date</th>
+					<th scope="col">Note</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% if notes %}
+			{% for x in notes %}
+			<tr><td>{{x.user}}</td><td>{{x.date}}</td><td>{{x.note}}</td></tr>
+			{% endfor %}
+			{% endif %}
+			</tbody>
+		</table>
+</div>
+
+
 
 </body>
 </html>

@@ -47,12 +47,21 @@ def change_start_date(request, jobnumber, previous, super, filter):
         elif status != 3:
             start_date_change(jobs, request.POST['start_date'], status, request.POST['date_note'],
                               request.user.first_name + " " + request.user.last_name, False)
+        else:
+            if 'follow_up' in request.POST:
+                jobs.start_date_checked = date.today()
+                if request.POST['date_note'] != "" :
+                    JobNotes.objects.create(job_number=jobs, note="Start Date is Still: " + str(request.POST['start_date']) + ". " + request.POST['date_note'],
+                                            type="auto_start_date_note", user=request.user.first_name + " " + request.user.last_name, date=date.today())
+                jobs.save()
         if previous == 'jobpage':
             return redirect('job_page', jobnumber='ALL')
         else:
             return redirect('super_home', super=super, filter=filter)
     return render(request, "change_start_date.html",
-                  {'jobs': jobs, 'formatdate': format_date, 'previous_page': previous_page, 'selected_super': super,
+                  {'jobs': jobs, 'formatdate': format_date,
+                   'notes': JobNotes.objects.filter(job_number=jobnumber, type="auto_start_date_note"),
+                   'previous_page': previous_page, 'selected_super': super,
                    'selected_filter': filter})
 
 
@@ -336,7 +345,8 @@ def upload_new_job(request):
                                       is_on_base=is_on_base, is_t_m_job=is_t_m_job, contract_status=contract_status,
                                       insurance_status=insurance_status, client=client, start_date=start_date,
                                       status="Open", booked_date=date.today(), client_Pm=client_pm,
-                                      booked_by=request.user.first_name + " " + request.user.last_name,estimator=gp_estimator)
+                                      booked_by=request.user.first_name + " " + request.user.last_name,
+                                      estimator=gp_estimator)
 
             if request.POST['select_super'] != "not_sure":
                 if request.POST['select_super'] == 'use_below':
@@ -375,8 +385,9 @@ def upload_new_job(request):
                                                                                                      column=2).value
 
             JobNotes.objects.create(job_number=job,
-                                    note="Start Date at Booking: " + start_date.strftime("%m/%d/%Y") + " " + sheet_obj.cell(row=258,
-                                                                                                       column=2).value,
+                                    note="Start Date at Booking: " + start_date.strftime(
+                                        "%m/%d/%Y") + " " + sheet_obj.cell(row=258,
+                                                                           column=2).value,
                                     type="auto_start_date_note", date=date.today(),
                                     user=request.user.first_name + " " + request.user.last_name)
             JobNotes.objects.create(job_number=job,
@@ -384,7 +395,8 @@ def upload_new_job(request):
                                     type="auto_booking_note", date=date.today(),
                                     user=request.user.first_name + " " + request.user.last_name)
             email_body = "New Job Booked \n" + job.job_number + "\n" + job.job_name + "\n" + job.client.company
-            Email.sendEmail("New Job - " + job.job_name, email_body, 'admin1@gerloffpainting.com, admin2@gerloffpainting.com, joe@gerloffpainting.com',False)
+            Email.sendEmail("New Job - " + job.job_name, email_body,
+                            'admin1@gerloffpainting.com, admin2@gerloffpainting.com, joe@gerloffpainting.com', False)
             return render(request, "upload_new_job.html")
     return render(request, "upload_new_job.html")
 
