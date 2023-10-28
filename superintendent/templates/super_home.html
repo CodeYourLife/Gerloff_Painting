@@ -4,26 +4,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>DataTables example - HTML (DOM) sourced data</title>
-	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">	</style>
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
+		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+		<title>DataTables example - HTML (DOM) sourced data</title>
+		<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+		<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+		<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+		<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+		<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+		<script type="text/javascript" class="init">
 
-
+function myFunction() {
+  var x = document.getElementById("myDIV");
+  x.style.display = "block";
+<!--  if (x.style.display === "none") {-->
+<!--    x.style.display = "block";-->
+<!--  } else {-->
+<!--    x.style.display = "none";-->
+<!--  }-->
+}
 $(document).ready(function () {
-    var table = $('#job_table').DataTable({"ordering":false});
+<!--    var table = $('#job_table').DataTable({"ordering":false});-->
+    document.getElementById("myDIV").style.display = "none";
 })
 	</script>
 </head>
@@ -35,7 +37,7 @@ $(document).ready(function () {
 		{% endif %}
         {% csrf_token %}
                     <label>Please select superintendent</label>
-                    <select id="selected_super" name="selected_super" >
+                    <select id="selected_super" name="selected_super" onchange="myFunction()">
                         {% if selected_super %}
 						<option value={{selected_super.id}}>{{selected_super.first_name}} {{selected_super.last_name}}</option>
 						{% endif %}
@@ -47,7 +49,7 @@ $(document).ready(function () {
                         {% endfor %}
                         {% endif %}
 					</select>
-		<input type="submit" value="Filter by Superintendent" />
+		<input type="submit" id="myDIV" value="Filter by Superintendent" />
 		</form>
 
 		<button type="button" class="collapsible">View Jobs</button>
@@ -66,6 +68,9 @@ $(document).ready(function () {
 			<form action= "{% url 'super_home' 'ALL' 'UPCOMING' %}" ><input type="submit" value="Show Upcoming Only" /></form>
 		{% endif %}
 	{% endif %}
+			<table id="job_table" class="display" style="width:30%">
+				<tr><td style="background-color:#ffff00">Off Hours</td><td style="background-color:#00ff00">On Base</td><td style="background-color:#FF0000">Field Docs Not Ready</td><td style="background-color:#bcd5bc">Follow Up On Start Date</td></tr>
+			</table>
 	<div class="demo-html" style="width:90%">
 		<table id="job_table" class="display" style="width:90%">
 			<thead>
@@ -73,21 +78,30 @@ $(document).ready(function () {
 					<th>Job Number</th>
 					<th>Job Name</th>
 					<th>Start Date</th>
-					<th>Address</th>
 					<th>GC</th>
-					<th>Contact</th>
+					<th>Equipment</th>
+					<th>Subs</th>
+					<th>VWC</th>
+					<th>Rentals</th>
+					<th>Tickets</th>
+					<th>Notes</th>
+					<th>Hours</th>
+					<th>Used</th>
 				</tr>
 			</thead>
 			<tbody>
 			{% if jobs %}
 			{% for job in jobs %}
-				<tr>
-					<td><a href = "{% url 'job_page' job.job_number %}">
+
+			<tr>
+{% if job.is_off_hours == True %}<td style="background-color:#ffff00">{% else %} <td>{% endif %}{{job.job_number}}</td>
+{% if job.is_on_base == True %}<td style="background-color:#00ff00">{% else %} <td>{% endif %}
+				<a href = "{% url 'job_page' job.job_number %}">
 							<div style="height:100%;width:100%">
-								{{job.job_number}}	</div>
+								{{job.job_name}}	</div>
 						</a></td>
-					<td>{{job.job_name}}</td>
-					<td>
+
+					{% if job.check_start_date == True %}<td style="background-color:#bcd5bc">{% else %} <td>{% endif %}
 					{% if selected_super %}
 						{% if filtered %}
 								<a href = "{% url 'change_start_date' job.job_number 'super' selected_super.id 'UPCOMING' %}">
@@ -104,9 +118,16 @@ $(document).ready(function () {
 									<div style="height:100%;width:100%">
 								{{job.start_date}}	</div>
 						</a></td>
-					<td>{{job.address}} {{job.city}} {{job.state}}</td>
-<td>{{job.client}} </td>
-					<td>{{job.client_Super}} <a href="tel:+{{job.client_Super.phone}}" >{{job.client_Super.phone}}</a></td>
+				{% if job.is_work_order_done == False %}<td style="background-color:#FF0000">{% else %} <td>{% endif %}{{job.client}} </td>
+					<td>{{job.equipment_count}}</td>
+					<td>{{job.subcontract_count}}</td>
+					<td>{{job.wc_count}}</td>
+					<td>{{job.rentals_count}}</td>
+					<td>{{job.tickets_count}}</td>
+					<td>{{job.field_notes_count}}</td>
+					<td>{{job.man_hours_budgeted}}</td>
+					<td>{{job.man_hours_used}}</td>
+				<td>{{job.time_since_checking}}</td>
 				</tr>
 			{% endfor %}
 			{% endif %}
@@ -115,7 +136,9 @@ $(document).ready(function () {
 	</div>
 		</div>
 	<br> <hr>
-				<button type="button" class="collapsible">View Equipment</button>
+
+				<button type="button" class="collapsible">{{equipment_count}} Pieces of Equipment</button>
+
 		<div class="content">
 	<h3>Checked Out Equipment</h3>
 	<div class="demo-html">
@@ -150,7 +173,9 @@ $(document).ready(function () {
 	</div>
 		</div>
 	<br> <hr>
-						<button type="button" class="collapsible">View Rentals</button>
+
+						<button type="button" class="collapsible">{{rentals_count}} Current Rentals </button>
+
 		<div class="content">
 	<h3>Rentals</h3>
 	<div class="demo-html">
@@ -186,6 +211,43 @@ $(document).ready(function () {
 		</table>
 	</div>
 		</div>
+
+
+		<button type="button" class="collapsible">{{tickets_count}} Outstanding Extra Work Tickets </button>
+		<div class="content">
+	<h3>Rentals</h3>
+	<div class="demo-html">
+		<table id="rentals_table" class="display" style="width:90%">
+			<thead>
+				<tr>
+					<th>Job Number</th>
+					<th>COP Number</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% if tickets %}
+			{% for item in tickets %}
+				<tr>
+					<td>{{item.job_number}}</td>
+					<td>
+						<a href = "{% url 'extra_work_ticket' item.id %}">
+							<div style="height:100%;width:100%">
+								{{item.cop_number}}
+							</div>
+						</a>
+					</td>
+					<td>{{item.description}}</td>
+				</tr>
+			{% endfor %}
+			{% endif %}
+			</tbody>
+		</table>
+	</div>
+		</div>
+
+
+
 <script>
 var coll = document.getElementsByClassName("collapsible");
 var i;

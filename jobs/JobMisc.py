@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 def start_date_change(job, newdate, status, note, author,did_date_change):
     # status is 1- active, 2- not active, 3 - no change
     statusnote = ""
+    job.start_date_checked = date.today()
     if status == 1:
         job.is_active = True
         statusnote = "Changed Status to Active"
@@ -16,7 +17,7 @@ def start_date_change(job, newdate, status, note, author,did_date_change):
         statusnote = "Changed Status to Inactive"
     if did_date_change == True:
         job.start_date = newdate
-        job.start_date_checked = date.today()
+
         JobNotes.objects.create(job_number=job, note="Start Date Changed to " + newdate + ". " + note + ". " + statusnote,
                                 type="auto_start_date_note", user=author, date=date.today())
     else:
