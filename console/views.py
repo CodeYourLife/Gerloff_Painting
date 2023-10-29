@@ -122,7 +122,7 @@ def register_user(request):
         return render(request, 'register.html', send_data)
 
 
-def import_csv(request):
+def import_csv2(request):
     equipment.models.InventoryItems4.objects.all().delete()
     equipment.models.InventoryItems3.objects.all().delete()
     equipment.models.InventoryItems2.objects.all().delete()
@@ -669,3 +669,19 @@ def customize(request):
 
         return redirect('/')
 
+def import_csv(request):
+    with open("c:/sql_backup/workorderimport.csv",encoding='utf-8-sig') as f:
+        current_table = employees.models.CertificationActionRequired
+        current_table.objects.all().delete()
+        reader = csv.reader(f)
+        for row in reader:
+            try:
+                job = Jobs.objects.get(job_number=row[0])
+                if row[1]:
+                    job.is_work_order_done = True
+                else:
+                    print(job)
+                job.save()
+            except:
+                print(row[0])
+        return render(request, 'index.html')
