@@ -17,6 +17,7 @@ import csv
 from pathlib import Path
 from django.conf import settings
 from django.http import HttpResponse
+from media.utilities import MediaUtilities
 
 
 @login_required(login_url='/accounts/login')
@@ -147,16 +148,10 @@ def equipment_new(request):
 
 
 @login_required(login_url='/accounts/login')
-def get_directory_contents(request, id, value, app):
-    file_path = os.path.join(settings.MEDIA_ROOT, app, str(id), os.path.basename(value))
-    if os.path.exists(file_path):
-        name = value.split('.')[0]
-        mimetype = value.split('.')[1]
-        with open(file_path, 'rb') as fh:
-            return HttpResponse(fh.read(), headers={'Content-Type': f'image/{mimetype}',
-                                                    'Content-Disposition': f'attachment; filename="{name}.{mimetype}"'})
+def get_directory_contents(request, id, value,app):
+    return MediaUtilities().getDirectoryContents(id, value, app)
 
-
+  
 @login_required(login_url='/accounts/login')
 def equipment_page(request, id):
     inventory = Inventory.objects.get(id=id)
