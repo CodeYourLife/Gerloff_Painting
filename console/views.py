@@ -646,6 +646,8 @@ def reset_databases(request):
         SubmittalNotes.objects.all().delete()
         SubmittalItems.objects.all().delete()
         Submittals.objects.all().delete()
+        ClientEmployees.objects.all().delete() #dangerous
+        Clients.objects.all().delete() #dangerous
         JobNotes.objects.all().delete()
         Jobs.objects.all().delete()
     return redirect("/")

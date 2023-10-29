@@ -24,7 +24,7 @@ from jobs.JobMisc import start_date_change, gerloff_super_change
 from jobs.filters import JobNotesFilter
 from django.db.models import Q
 import openpyxl
-
+from django_tables2 import RequestConfig
 
 @login_required(login_url='/accounts/login')
 def change_start_date(request, jobnumber, previous, super, filter):
@@ -411,8 +411,14 @@ def jobs_home(request):
 @login_required(login_url='/accounts/login')
 def job_page(request, jobnumber):
     if jobnumber == 'ALL':
-        search_jobs = JobsFilter(request.GET, queryset=Jobs.objects.filter(is_closed=False))
+        data = {}
+        data = request.GET.copy()
+        if 'search2' not in request.GET:
+            data['search2'] = 0
+        search_jobs = JobsFilter(data, queryset=Jobs.objects.filter())
         jobstable = JobsTable(search_jobs.qs, order_by='start_date')
+        # RequestConfig(request).configure(jobstable)
+        RequestConfig(request, paginate=False).configure(jobstable)
         has_filter = any(field in request.GET for field in set(search_jobs.get_fields()))
         tickets = ChangeOrders.objects.filter(job_number__is_closed=False, is_t_and_m=True, is_ticket_signed=False)
         open_cos = ChangeOrders.objects.filter(job_number__is_closed=False, is_closed=False,

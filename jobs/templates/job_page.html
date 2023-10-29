@@ -18,6 +18,8 @@
 		<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
 		<script type="text/javascript" class="init">
 $(document).ready(function () {
+				initial_search = document.getElementById("id_search2")
+				if(initial_search.options[initial_search.selectedIndex].text == "Open Jobs"){initial_search.value = 0}
 				var table = $('#tickets_table').DataTable({
 					columnDefs: [
 					{
@@ -76,6 +78,14 @@ $(document).ready(function () {
 </nav>
 
 {% if jobs == 'ALL' %}
+<!--			  <form action="{% url 'job_page' 'ALL' %}" method="post" >-->
+<!--				{% csrf_token %}-->
+<!--{% if open_only == True %}-->
+<!--				<input type="submit" name="show_all_jobs" value="SHOW ALL JOBS!" />-->
+<!--{% else %}-->
+<!--				<input type="submit" name="show_open_jobs" value="OPEN JOBS ONLY!" />-->
+<!--{% endif %}-->
+<!--    			</form>-->
 		{% if has_filter %}
   		<a href="{%  url 'job_page' 'ALL' %}">Clear Filter</a>
 		{% endif %}
