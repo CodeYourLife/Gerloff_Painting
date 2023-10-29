@@ -17,6 +17,7 @@ from console.misc import createfolder, openfolder
 from django.conf import settings
 from io import StringIO
 from console.misc import Email
+from media.utilities import MediaUtilities
 
 def print_TMProposal(request, id):
     newproposal = TMProposal.objects.get(id=id)
@@ -40,17 +41,17 @@ def print_TMProposal(request, id):
     path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
     result_file = open(f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf", "w+b")
     html = render_to_string("print_TMProposal.html",
-                  {'inventory_exists': inventory_exists, 'bond_exists': bond_exists, 'laboritems': laboritems,
-                   'materialitems': materialitems, 'inventory': inventory, 'bond': bond,
-                   'equipmentitems': equipmentitems, 'extraitems': extraitems, 'newproposal': newproposal,
-                   'changeorder': changeorder, 'ewt': ewt})
+                            {'inventory_exists': inventory_exists, 'bond_exists': bond_exists, 'laboritems': laboritems,
+                             'materialitems': materialitems, 'inventory': inventory, 'bond': bond,
+                             'equipmentitems': equipmentitems, 'extraitems': extraitems, 'newproposal': newproposal,
+                             'changeorder': changeorder, 'ewt': ewt})
     pisa.CreatePDF(
         html,
         dest=result_file
     )
     result_file.close()
-    Email.sendEmail("COP Proposal","hi","joe@gerloffpainting.com",f"{path}\COP_{changeorder.cop_number}_{date.today()}.pdf")
-
+    Email.sendEmail("COP Proposal", "hi", "joe@gerloffpainting.com",
+                    f"{path}\COP_{changeorder.cop_number}_{date.today()}.pdf")
 
     return render(request, "print_TMProposal.html",
                   {'inventory_exists': inventory_exists, 'bond_exists': bond_exists, 'laboritems': laboritems,
@@ -230,8 +231,8 @@ def print_ticket(request, id, status):
     equipment = EWTicket.objects.filter(EWT=ewt, master__category="Equipment")
     if status == 'OLD':
         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
-                                    user=request.user.first_name + " " + request.user.last_name,
-                                    note="Ticket Printed for Wet Signature")
+                                        user=request.user.first_name + " " + request.user.last_name,
+                                        note="Ticket Printed for Wet Signature")
         changeorder.is_printed = True
         changeorder.save()
     if request.method == 'POST':
@@ -247,8 +248,9 @@ def print_ticket(request, id, status):
             Signature.objects.update(change_order_id=id, type="changeorder", name=nameValue, signature=signatureValue,
                                      date=date.today(), notes=comments)
         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
-                                    user=request.user.first_name + " " + request.user.last_name,
-                                    note="Digital Signature Received. Signed by: " + request.POST['signatureName'] + ". Comments: " + request.POST['gc_notes'])
+                                        user=request.user.first_name + " " + request.user.last_name,
+                                        note="Digital Signature Received. Signed by: " + request.POST[
+                                            'signatureName'] + ". Comments: " + request.POST['gc_notes'])
         signature = Signature.objects.get(change_order_id=id)
         path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
         result_file = open(f"{path}/{id}_change_order_{date.today()}.pdf", "w+b")
@@ -416,14 +418,26 @@ def change_order_new(request, jobnumber):
 
 @login_required(login_url='/accounts/login')
 def change_order_home(request):
-    all_orders = ChangeOrderFilter(request.GET,
-                                   queryset=ChangeOrders.objects.filter(is_closed=False).order_by('job_number',
-                                                                                                  'cop_number'))
-    table = ChangeOrderTable(all_orders.qs)
-    has_filter = any(field in request.GET for field in set(all_orders.get_fields()))
-    # RequestConfig(request).configure(table)
-    return render(request, "change_order_home.html",
-                  {'table': table, 'all_orders': all_orders, 'has_filter': has_filter})
+    if request.method == 'GET':
+        search_filter = ""
+        is_ticket_signed = ""
+        try:
+            search_filter = request.GET['searchFilter']
+            is_ticket_signed = request.GET['isTicketSigned']
+        except:
+            print('not able to get values')
+        changeorders = ChangeOrders.objects.filter(is_closed=False)
+        if search_filter != "":
+            changeorders = ChangeOrders.objects.filter(is_closed=False).filter(
+                job_number__job_name__contains=search_filter)
+        if is_ticket_signed != "":
+            if is_ticket_signed == 'Yes':
+                changeorders = changeorders.filter(is_ticket_signed=True)
+            else:
+                changeorders = changeorders.filter(is_ticket_signed=False)
+        return render(request, "change_order_home.html",
+                      {'signedValue': is_ticket_signed, 'searchValue': f"{search_filter}",
+                       'changeorders': changeorders.order_by('job_number', 'cop_number')})
 
 
 @login_required(login_url='/accounts/login')
@@ -683,3 +697,7 @@ def process_ewt(request, id):
             send_data['bond'] = bond
 
     return render(request, "process_ewt.html", send_data)
+
+@login_required(login_url='/accounts/login')
+def get_directory_contents(request, id, value,app):
+    return MediaUtilities().getDirectoryContents(id, value, app)

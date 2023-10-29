@@ -2,64 +2,119 @@
 {% load static %}
 {% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
 {% block content %}
-{% load render_table from django_tables2 %}
 
 <!DOCTYPE html>
 <html>
 <head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>DataTables example - HTML (DOM) sourced data</title>
-	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <title>DataTables example - HTML (DOM) sourced data</title>
+    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+    <style type="text/css" class="init">
 
-	</style>
-	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
-
-	</script>
+    </style>
+    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
+            data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+    <script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html"
+            async></script>
+    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html"
+            async></script>
+    <script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script type="text/javascript" language="javascript"
+            src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+    <script type="text/javascript" class="init">
+    </script>
 </head>
 <body>
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Change Orders</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link active" href="{% url 'change_order_home' %}">Home</a></li>
-		 <li><a class="nav-item nav-link" href="{% url 'change_order_new' 'ALL' %}">Add New</a></li>
-    </ul>
-  </div>
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="#">Change Orders</a>
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav ">
+            <li><a class="nav-item nav-link active" href="{% url 'change_order_home' %}">Home</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'change_order_new' 'ALL' %}">Add New</a></li>
+        </ul>
+    </div>
 </nav>
-<!--
-		    -->
-		{% if has_filter %}
+<div style="width: 100%;">
+    <form style="margin-top: 22px;" method="GET" action="">
+        <div style="margin-left: 12px;" class="row h-100 w-100 d-flex justify-content-left">
+            <div class="form-group" style="margin: 5px;">
+                <label for="searchFilter">Search Job:</label>
+                <input class="add_your_class form-control" id="searchFilter" name="searchFilter" style="width: 200px"
+                       type="search" value={{searchValue}}>
+            </div>
+            <div class="form-group" style="margin: 5px;">
+                <label for="isTicketSigned">Is Ticket Signed:</label>
+                <select id="isTicketSigned" name="isTicketSigned" style="width: 225px"
+                        class="form-control form-select form-select-sm">
+                    {% if signedValue == '' %}
+                    <option selected value=""></option>
+                    {% else %}
+                    <option value=""></option>
+                    {% endif %}
+                    {% if signedValue == 'Yes' %}
+                    <option selected value="Yes">Yes</option>
+                    {% else %}
+                    <option value="Yes">Yes</option>
+                    {% endif %}
+                    {% if signedValue == 'No' %}
+                    <option selected value="No">No</option>
+                    {% else %}
+                    <option value="No">No</option>
+                    {% endif %}
+                </select>
+            </div>
+            <div style="display: flex; margin-bottom: 0 !important; align-items: flex-end;" class="form-group">
+                <button style="width: 100px; margin: 5px; height: 38px;" class="btn btn-primary btn-sm" type="submit">
+                    Search
+                </button>
+            </div>
+        </div>
 
-  		<a href="{%  url 'change_order_home' %}">Clear Filter</a>
-		{% endif %}
-
-<!--<div class="content">    -->
-		    <form style="padding-top: 24px" method="get">
-        {{ all_orders.form }}
-        <input type="submit" value="Filter Now" />
     </form>
-<!--</div>-->
-
-    {% render_table table %}
-
-
-
-
-
+</div>
+<div class="table-responsive">
+    <table id="changeorder_table" class="display table table-sm">
+        <thead>
+        <tr>
+            <th scope="col">Job Number</th>
+            <th scope="col">COP Number</th>
+            <th scope="col">Description</th>
+            <th scope="col">Need Ticket</th>
+            <th scope="col">Need Ticket Signed</th>
+            <th scope="col">Date Sent</th>
+            <th scope="col">Date Approved</th>
+            <th scope="col">Is Approved</th>
+            <th scope="col">GC Number</th>
+            <th scope="col">Price</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% if changeorders %}
+        {% for changeorder in changeorders %}
+        <tr>
+            <td>{{changeorder.job_number}}</td>
+            <td><a href='{% url "extra_work_ticket" changeorder.id %}'>{{changeorder.cop_number}}</a></td>
+            <td>{{changeorder.description}}</td>
+            <td>{{changeorder.need_ticket}}</td>
+            <td>{{changeorder.need_ticket_signed}}</td>
+            <td>{{changeorder.date_sent}}</td>
+            <td>{{changeorder.date_approved}}</td>
+            <td>{{changeorder.is_approved}}</td>
+            <td>{{changeorder.gc_number}}</td>
+            <td>{{changeorder.price}}</td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+        </tbody>
+    </table>
+</div>
 </body>
 </html>
-
 {% endblock %}
