@@ -9,11 +9,10 @@ class JobsTable(tables.Table):
     startdate = tables.TemplateColumn('<a href="{% url "change_start_date" record.job_number "jobpage" "ALL" "ALL" %}">{{record.start_date}}</a>')
     super = tables.TemplateColumn(
             '{% if record.superintendent is None %}<a href="{% url "change_gpsuper" record.job_number "jobpage" %}">Click to Assign</a>{% else %}<a href="{% url "change_gpsuper" record.job_number "jobpage" %}">{{record.superintendent}}</a>{% endif %}')
-
-
     class Meta:
         model = Jobs
         template_name = "django_tables2/bootstrap.html"
+        attrs = {'class': 'table table-sm'}
         fields = ("jobnumber", "job_name","start_date","startdate","client","estimator","super","contract_amount","address","city","state")
     def before_render(self,request):
         self.columns.hide('start_date')
