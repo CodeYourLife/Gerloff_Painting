@@ -470,7 +470,7 @@ var startdate = "{{startdate}}"
             <div class ="container">
                     <div class = "row">
                         <div class ="col-sm-12">
-                            <label for="select_pm">Please select Estimator</label>
+                            <label for="select_pm">Please select the PM for {{selectedjob.client}}</label>
                             <select class="form-control" id="select_pm" name="select_pm" >
 
                                 <option value="{{selectedjob.client_Pm.person_pk}}">{{selectedjob.client_Pm}}</option>
@@ -507,7 +507,7 @@ var startdate = "{{startdate}}"
                     <hr></hr>
                     <div class = "row">
                         <div class ="col-sm-12">
-                            <label for="select_super">Please select superintendent</label>
+                            <label for="select_super">Please select the Superintendent for {{selectedjob.client}}</label>
                             <select class="form-control" id="select_super" name="select_super" >
                             {% if selectedjob.client_Super != Null %}
                              <option value="{{selectedjob.client_Super.person_pk}}">{{selectedjob.client_Super}}</option>
@@ -682,7 +682,21 @@ var startdate = "{{startdate}}"
                     </div>
                 </div>
                 <br /> <hr>
+                <div class ="container" id = "close_job">
+                    <div class ="row">
+                        <div class ="col-sm-6">
+                            <label for="is_closed">Close Job? </label>
+                            {% if selectedjob.is_closed == True %}
+                            <input type="checkbox" name ="is_closed" id="is_closed"  checked />
+                            {% else %}
+                             <input type="checkbox" name ="is_closed" id="is_closed"  />
+                            {% endif %}
 
+                             </div>
+
+                    </div>
+
+                </div>
                 <br />
                 <div class ="container">
                     <input type="submit" class="btn btn-primary btn-sm" value="Save" /></div>

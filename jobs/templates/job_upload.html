@@ -1,0 +1,386 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_item_jobs %}active{% endblock nav_item_jobs %}
+{% block content %}
+<!-- Include all compiled plugins (below), or include individual files as needed-->
+
+
+<head>
+  <title>Gerloff Painting</title>
+  <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
+      integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous"
+      xmlns:margin-left="http://www.w3.org/1999/xhtml">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>    $( ".book_new_job" ).addClass("active");  </script>
+    <script type="text/javascript">
+var startdate = "{{startdate}}"
+var clicked = "False"
+var clicked2 = "False"
+        function check_booking_data() {
+            if (booking_input.select_gpestimator.value == "please_select"){
+                booking_input.select_gpestimator.scrollIntoView();
+                alert("please select the Gerloff Painting Estimator")
+                return false;
+            }
+            if (booking_input.select_company.value == "please_select"){
+                booking_input.select_company.scrollIntoView();
+                alert("please select the client name")
+                return false;
+            }
+
+            if (booking_input.select_company.value == "use_below"){
+                if (booking_input.new_client.value == ""){
+                    booking_input.new_client.scrollIntoView();
+                    alert("please type the new client name")
+                    return false;
+                }
+                if (booking_input.select_pm.value == "not_sure"){
+                    booking_input.select_pm.scrollIntoView();
+                    alert("For a new company, you have to enter a PM for that company")
+                    return false;
+                }
+            }
+            if (booking_input.select_pm.value == "please_select"){
+                    booking_input.select_pm.scrollIntoView();
+                    alert("Please select estimator")
+                    return false;
+                }
+            if (booking_input.select_super.value == "please_select"){
+                    booking_input.select_super.scrollIntoView();
+                    alert("Please select client superintendent")
+                    return false;
+                }
+            if (booking_input.select_pm.value == "use_below"){
+                if (booking_input.new_pm.value == ""){
+                    booking_input.select_pm.scrollIntoView();
+                    alert("enter pm name")
+                    return false;
+                }
+            }
+            if (booking_input.select_super.value == "use_below"){
+                if (booking_input.new_super.value == ""){
+                    booking_input.new_super.scrollIntoView();
+                    alert("enter super name")
+                    return false;
+                }
+            }
+        }
+        function filter_estimators() {
+            booking_input.new_pm.value =""
+            booking_input.new_super.value =""
+            booking_input.new_pm_phone.value =""
+            booking_input.new_super_phone.value =""
+            booking_input.new_pm_email.value =""
+            booking_input.new_super_email.value =""
+            let selectedcompany = booking_input.select_company.value
+            let rolodex = JSON.parse("{{data|escapejs}}");
+            //console.log(selectedcompany)
+            //alert()
+            for(let i = booking_input.select_pm.options.length; i >= 0; i--) {
+                booking_input.select_pm.remove(i);
+            }
+            for(let i = booking_input.select_super.options.length; i >= 0; i--) {
+                booking_input.select_super.remove(i);
+            }
+            booking_input.select_pm.options[0] = new Option("Please Select","please_select");
+            booking_input.select_super.options[0] = new Option("not sure","not_sure");
+            let b=1
+            for(let i =0; i < rolodex.length; i++){
+                if (rolodex[i].id == selectedcompany){
+
+                    booking_input.select_pm.options[b] = new Option(rolodex[i].name,rolodex[i].person_pk);
+                    booking_input.select_super.options[b] = new Option(rolodex[i].name,rolodex[i].person_pk);
+                    b=b+1
+                }
+            }
+
+         }
+        function clear_select_pm() {
+            for(let i = booking_input.select_pm.options.length; i >= 0; i--) {
+                booking_input.select_pm.remove(i);
+            }
+            booking_input.select_pm.options[0] = new Option("use below", "use_below");
+        }
+        function clear_select_super() {
+            for(let i = booking_input.select_super.options.length; i >= 0; i--) {
+                booking_input.select_super.remove(i);
+            }
+            booking_input.select_super.options[0] = new Option("use below", "use_below");
+        }
+        function clear_client() {
+                booking_input.select_company.options[0] = new Option("Add New", "use_below");
+                booking_input.select_company.value = "use_below";
+                clear_select_pm()
+                clear_select_super()
+                booking_input.select_pm.options[1] = new Option("Please Select", "please_select");
+                booking_input.select_super.options[1] = new Option("not sure", "not_sure");
+        }
+
+
+function clicked_duplicate(){
+    if(booking_input.duplicate.checked){
+     booking_input.new_super.value = booking_input.new_pm.value
+     booking_input.new_super_phone.value =booking_input.new_pm_phone.value
+     booking_input.new_super_email.value=booking_input.new_pm_email.value
+    }
+    else{
+            booking_input.new_super.value =""
+            booking_input.new_super_phone.value =""
+            booking_input.new_super_email.value =""
+            }
+
+}
+
+
+
+function test_this(){
+    if (clicked == "False"){
+        clicked = "True"
+                        booking_input.select_pm.options[0] = new Option("Use Below", "use_below");
+                booking_input.select_pm.value = "use_below";
+        if ("{{new_pm_name}}" != "None"){booking_input.new_pm.value = "{{new_pm_name}}"}
+        else { booking_input.new_pm.value = ""}
+        if ("{{new_pm_phone}}" != "None"){booking_input.new_pm_phone.value = "{{new_pm_phone}}"}
+        else { booking_input.new_pm_phone.value = ""}
+        if ("{{new_pm_email}}" != "None"){booking_input.new_pm_email.value = "{{new_pm_email}}"}
+        else { booking_input.new_pm_email.value = ""}
+
+    }
+    else {
+    clicked = "False"
+                booking_input.select_pm.options[0] = new Option("Please Select", "please_select");
+                booking_input.select_pm.value = "please_select";
+        booking_input.new_pm.value = ""
+        booking_input.new_pm_phone.value = ""
+        booking_input.new_pm_email.value = ""
+    }
+}
+function test_this2(){
+    if (clicked2 == "False"){
+        clicked2 = "True"
+        booking_input.select_super.options[0] = new Option("Use Below", "use_below");
+        booking_input.select_super.value = "use_below";
+        if ("{{new_super_name}}" != "None"){booking_input.new_super.value = "{{new_super_name}}"}
+        else { booking_input.new_super.value = ""}
+        if ("{{new_super_phone}}" != "None"){booking_input.new_super_phone.value = "{{new_super_phone}}"}
+        else { booking_input.new_super_phone.value = ""}
+        if ("{{new_super_email}}" != "None"){booking_input.new_super_email.value = "{{new_super_email}}"}
+        else { booking_input.new_super_email.value = ""}
+
+    }
+    else {
+    clicked2 = "False"
+                booking_input.select_super.options[0] = new Option("Please Select", "please_select");
+                booking_input.select_super.value = "please_select";
+        booking_input.new_super.value = ""
+        booking_input.new_super_phone.value = ""
+        booking_input.new_super_email.value = ""
+    }
+}
+
+        window.onload = function() {
+            var today = new Date();
+            var dd = String(today.getDate()).padStart(2, '0');
+            var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+            var yyyy = today.getFullYear();
+            today = startdate;
+            booking_input.start_date.value = today
+        };
+
+
+    </script>
+
+</head>
+
+  <body>
+    <div>
+    <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+        <a style="padding-left: 14px;" class="navbar-brand sub-navbar-brand" href="#">Active Jobs</a>
+        <div id="navbarNavDropdown2">
+          <ul class="sub-nav-list navbar-nav ">
+              <li><a class="nav-item nav-link" href="{% url 'job_page' 'ALL' %}">Home</a></li>
+              <li><a class="nav-item nav-link active" href="#">Update Job Info</a></li>
+          </ul>
+        </div>
+      </nav>
+	<div style="padding-top: 50px" class="row align-items-center justify-content-center align-middle">
+		<div class="col-10">
+            <form name = booking_input action="{% url 'upload_new_job' %}" method="post" class="form-group" onSubmit = "return check_booking_data()">
+                {% csrf_token %}
+                <div class ="row">
+                    <div class="col-sm-12">
+                        <h3>{{job_name}} - {{job_number}}</h3>
+                    </div>
+                </div>
+        </div>
+
+
+            <div class ="container"> <!#pick client>
+                    <div class ="row" style="height: 50px">
+                        <div class ="col-sm-12">
+
+                                <label>{% if client %} Selected Company was {{client}} {% else %} Couldn't Find Company: {{new_client}} {% endif %}</label>
+                            <select class="form-control" id="select_company" name="select_company" onChange="filter_estimators()" >
+                                {% if client %}<option value="{{client.id}}">{{client}}</option>{% else %} <option value="please_select">Please Select</option>{% endif %}
+                                {% if all_clients %}
+                                {% for client in all_clients %}
+                                    <option value="{{client.id}}">{{client.company}}</option>
+                                {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+                    </div>
+                	<button type="button" class="collapsible">Click Here to Add a New Company</button>
+	<div class="content">
+                    <div class ="row" style="margin-top: 40px">
+                        <div class ="col-sm-12"> Enter New company below: </div>
+                    </div>
+                    <div class ="row" style="margin-top: 22px" >
+                        <div class ="col-sm-12">  
+                            <input class="form-control" type= "text" name="new_client" placeholder="company name" size="30" onClick="clear_client()"/>
+                        </div>
+                    </div>
+                    <div class ="row" style="margin-top: 22px" >
+                        <div class ="col-sm-12">  
+                            <input class="form-control" type= "tel" name="new_client_phone" placeholder="phone Number" size="30"/>
+                        </div>
+                    </div>
+                    <div class ="row" style="margin-top: 22px" >
+                        <div class ="col-sm-12">  
+                            <input class="form-control" type= "email" name="new_client_bid_email" placeholder="email" size="30"/>
+                        </div>
+                    </div>
+    </div>
+            </div> <!pick client>
+            <hr></hr>
+            <div class ="container">
+                    <div class = "row">
+                        <div class ="col-sm-12">
+                            <label for="select_pm">{% if pm %} Selected GC PM was {{pm}} {% else %} Couldn't Find GC PM: {{new_pm_name}} {% endif %}</label>
+                            <select class="form-control" id="select_pm" name="select_pm" >
+                                {% if pm %} <option value="{{pm.person_pk}}">{{pm}}</option>{% else %} <option value="please_select">Please Select</option><option value="use_below">Use Below</option>{% endif %}
+                                {% if pms_filter %}
+                                {% for client in pms_filter %}
+                                    <option value="{{client.person_pk}}">{{client.name}}</option>
+                                {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+                    </div>
+                                	<button type="button" onClick="test_this()" class="collapsible">Click Here to Add a New Contact </button>
+	<div class="content">
+                    <div class ="row" style="margin-top: 22px">
+                        <div class ="col-sm-12">Enter New below: </div>
+                    </div>
+                    <div class ="row" style="margin-top: 22px">
+                        <div class ="col-sm-12">  
+                            <input  type= "text" name="new_pm" id="new_pm" class="form-control" placeholder="office pm name" size="30" onClick="clear_select_pm()"/>
+                        </div>
+                    </div>
+
+                    <div class ="row">
+                        <div class ="col-sm-12">  
+                            <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" id="new_pm_phone" placeholder="phone Number" size="30"/>
+                        </div>
+                    </div>
+                    <div class ="row">
+                        <div class ="col-sm-12">  
+                            <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" id="new_pm_email" placeholder="email" size="30"/>
+                        </div>
+                    </div>
+    </div>
+                    <hr></hr>
+                    <div class = "row">
+                        <div class ="col-sm-12">
+
+                            <label for="select_pm">{% if super %} Selected GC Super was {{super}} {% elif new_super_name != None %} Couldn't Find GC Superintendent: {{new_super_name}} {% else %} Do Not Know GC Super Yet! {% endif %}</label>
+                            <select class="form-control" id="select_super" name="select_super" >
+                                {% if super %} <option value="{{super.person_pk}}">{{super}}</option>{% elif new_super_name != None %} <option value="please_select">Please Select</option><option value="not_sure">Don't Know Yet</option><option value="use_below">Use Below</option>{% else %}<option value="not_sure">Don't Know Yet</option>{% endif %}
+                                {% if pms_filter %}
+                                {% for client in pms_filter %}
+                                    <option value="{{client.person_pk}}">{{client.name}}</option>
+                                {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+                    </div>
+                <button type="button" class="collapsible" onClick="test_this2()">Click Here to Add a New Contact</button>
+	<div class="content">
+                    <div class ="row" style="margin-top: 22px">
+                        <div class ="col-sm-6">Enter New below: </div>
+                    </div>
+                       <div class ="row" style="margin-top: 22px">
+                        <div class ="col-sm-12">
+                            <label for="duplicate">Click Here if Same Person as PM Above </label>
+                              <input type="checkbox" name ="duplicate" id="duplicate"  onClick="clicked_duplicate()" />
+                        </div>
+                    </div>
+                    <div class ="row" style="margin-top: 22px">
+                        <div class ="col-sm-12">
+                            <input type= "text" name="new_super" id="new_super" class="form-control" placeholder="superintendent name" size="30" onClick="clear_select_super()"/>
+                        </div>
+                    </div>
+                    <div class ="row">
+                        <div class ="col-sm-12">
+                            <input style="margin-top: 22px" class="form-control" type= "tel" name="new_super_phone" id="new_super_phone" placeholder="phone Number" size="30"/>
+                        </div>
+                    </div>
+                    <div class ="row">
+                        <div class ="col-sm-12">
+                            <input style="margin-top: 22px" class="form-control" type= "email" name="new_super_email" id="new_super_email" placeholder="email" size="30"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                <br /> <hr><br />
+
+                <div class ="container">
+                    <label for="select_gpestimator">{% if estimator %} Selected GP Estimator was {{estimator}} {% else %} Couldn't Find GP Estimator {{estimator_name}} {% endif %}</label>
+                    <select class="form-control" id="select_gpestimator" name="select_gpestimator" >
+                        {% if estimator %} <option value="{{estimator.id}}">{{estimator}}</option>{% else %} <option value="please_select">Please Select</option>{% endif %}
+                        {% if all_employees %}
+                        {% for employee in all_employees %}
+                        <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                <br /> <hr>
+
+                </div>
+                <div class ="container">
+                    <input type="submit" class="btn btn-primary btn-sm" name="book_job" value="Book Job Now" /></div>
+            </form>
+        </div>
+    </div>
+
+<script src=”https://code.jquery.com/jquery-3.2.1.slim.min.js” integrity=”sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN” crossorigin=”anonymous”></script>
+
+<script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js integrity=”sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q” crossorigin=”anonymous”></script>
+
+<script src=”https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js” integrity=”sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl” crossorigin=”anonymous”></script>
+
+
+<script>
+var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }
+  });
+}
+</script>
+  </div>
+</body>
+
+</div>
+{% endblock %}
+

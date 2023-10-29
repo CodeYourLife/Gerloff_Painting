@@ -23,7 +23,8 @@ import csv
 from jobs.JobMisc import start_date_change, gerloff_super_change
 from jobs.filters import JobNotesFilter
 from django.db.models import Q
-
+import openpyxl
+from django_tables2 import RequestConfig
 
 @login_required(login_url='/accounts/login')
 def change_start_date(request, jobnumber, previous, super, filter):
@@ -46,12 +47,22 @@ def change_start_date(request, jobnumber, previous, super, filter):
         elif status != 3:
             start_date_change(jobs, request.POST['start_date'], status, request.POST['date_note'],
                               request.user.first_name + " " + request.user.last_name, False)
+        else:
+            if 'follow_up' in request.POST:
+                jobs.start_date_checked = date.today()
+                if request.POST['date_note'] != "" :
+                    JobNotes.objects.create(job_number=jobs, note="Start Date is Still: " + str(request.POST['start_date']) + ". " + request.POST['date_note'],
+                                            type="auto_start_date_note", user=request.user.first_name + " " + request.user.last_name, date=date.today())
+                jobs.save()
         if previous == 'jobpage':
             return redirect('job_page', jobnumber='ALL')
         else:
             return redirect('super_home', super=super, filter=filter)
     return render(request, "change_start_date.html",
-                  {'jobs': jobs, 'formatdate': format_date, 'previous_page': previous_page,'selected_super':super,'selected_filter':filter})
+                  {'jobs': jobs, 'formatdate': format_date,
+                   'notes': JobNotes.objects.filter(job_number=jobnumber, type="auto_start_date_note"),
+                   'previous_page': previous_page, 'selected_super': super,
+                   'selected_filter': filter})
 
 
 def change_gpsuper(request, jobnumber, previous):
@@ -112,6 +123,10 @@ def update_job_info(request, jobnumber):
         else:
             if selectedjob.spray_scale != request.POST['spray_scale']:
                 selectedjob.spray_scale = request.POST['spray_scale']
+        if 'is_closed' in request.POST:
+            selectedjob.is_closed = True
+        else:
+            selectedjob.is_closed = False
         if 'is_t_m_job' in request.POST:
             selectedjob.is_t_m_job = True
         else:
@@ -234,159 +249,156 @@ def upload_new_job(request):
         if 'upload_file' in request.FILES:
             fileitem = request.FILES['upload_file']
             fn = os.path.basename(fileitem.name)
-            # fn2 = os.path.join(settings.MEDIA_ROOT, "job_import", str(request.POST['job_number']), fn)
-            fn2 = os.path.join(settings.MEDIA_ROOT, "job_import", str(request.POST['job_number']) + ".csv")
+            fn2 = os.path.join(settings.MEDIA_ROOT, "job_upload", "Temp.xlsx")
             open(fn2, 'wb').write(fileitem.file.read())
-            print(1)
-            with open(fn2) as f:
-                print(2)
-                reader = csv.reader(f)
-                rows = list(reader)
-                print(rows[15][1])
-                # line_count1 = 0
-                # found = 0
-                # for row in reader:
-                #     if line_count1 == 0:
-                #         for x in range(2):
-                #             if row[x] == "id":
-                #                 a = x
-                #                 found = found + 1
-                #             if row[x] == "action":
-                #                 b = x
-                #                 found = found + 1
-                #         line_count1 = line_count1 + 1
-                #         if found != 2:
-                #             raise ValueError('A very specific bad thing happened.')
-                #     else:
+            send_data = {}
+            # send_data['employees'] = Employees.objects.filter(user__isnull=True)
+            wb_obj = openpyxl.load_workbook(filename=request.FILES['upload_file'].file)
+            sheet_obj = wb_obj["Data"]
+            client_name = sheet_obj.cell(row=16, column=2).value
+            pm_name = sheet_obj.cell(row=19, column=2).value
+            send_data['job_name'] = sheet_obj.cell(row=38, column=2).value
+            send_data['job_number'] = sheet_obj.cell(row=25, column=2).value
+            if Clients.objects.filter(company=client_name).exists():
+                send_data['client'] = Clients.objects.get(company=client_name)
+                send_data['pms_filter'] = ClientEmployees.objects.filter(id=Clients.objects.get(company=client_name))
+                if ClientEmployees.objects.filter(name=pm_name, id__company=client_name).exists():
+                    send_data['pm'] = ClientEmployees.objects.get(name=pm_name, id__company=client_name)
+                else:
+                    send_data['new_pm_name'] = sheet_obj.cell(row=19, column=2).value
+                    send_data['new_pm_phone'] = sheet_obj.cell(row=20, column=2).value
+                    send_data['new_pm_email'] = sheet_obj.cell(row=21, column=2).value
+                super_name = sheet_obj.cell(row=22, column=2).value
+                if ClientEmployees.objects.filter(name=super_name, id__company=client_name).exists():
+                    send_data['super'] = ClientEmployees.objects.get(name=super_name, id__company=client_name)
+                else:
+                    send_data['new_super_name'] = sheet_obj.cell(row=22, column=2).value
+                    send_data['new_super_phone'] = sheet_obj.cell(row=23, column=2).value
+                    send_data['new_super_email'] = sheet_obj.cell(row=24, column=2).value
+            else:
+                send_data['new_client'] = client_name
+                send_data['new_pm_name'] = sheet_obj.cell(row=19, column=2).value
+                send_data['new_pm_phone'] = sheet_obj.cell(row=20, column=2).value
+                send_data['new_pm_email'] = sheet_obj.cell(row=21, column=2).value
+                send_data['new_super_name'] = sheet_obj.cell(row=22, column=2).value
+                send_data['new_super_phone'] = sheet_obj.cell(row=23, column=2).value
+                send_data['new_super_email'] = sheet_obj.cell(row=24, column=2).value
+            if Employees.objects.filter(first_name=sheet_obj.cell(row=39, column=2).value).exists():
+                send_data['estimator'] = Employees.objects.get(first_name=sheet_obj.cell(row=39, column=2).value)
+            else:
+                send_data['estimator_name'] = sheet_obj.cell(row=39, column=2).value
+            send_data['all_clients'] = Clients.objects.all()
+            send_data['all_employees'] = Employees.objects.exclude(job_title__description="Painter")
+            send_data['data'] = json.dumps(list(ClientEmployees.objects.values('name', 'id', 'person_pk')),
+                                           cls=DjangoJSONEncoder)
+            return render(request, 'job_upload.html', send_data)
+        if 'book_job' in request.POST:
+            wb_obj = openpyxl.load_workbook(os.path.join(settings.MEDIA_ROOT, "job_upload", "Temp.xlsx"))
+            sheet_obj = wb_obj["Data"]
 
-                # job_number = ''
-                # job_name = ''
-                # address = ''
-                # city = ''
-                # state = ''
-                # is_on_base ='' #true or false
-                # is_t_m_job = ''
-                # contract_status = ''  # 1-received, 2-not received, 3-not required
-                # insurance_status = ''  # 1-received 2-not received 3-not required
-                # client = ''
-                # start_date = ''
-                # job = Jobs.objects.create(job_number=job_number, job_name=job_name, address=address, city=city,
-                #                           state=state,
-                #                           is_on_base=is_on_base, is_t_m_job=is_t_m_job, contract_status=contract_status,
-                #                           insurance_status=insurance_status, client=client, start_date=start_date,
-                #                           status="Open", booked_date=date.today(),
-                #                           booked_by=request.user.first_name + " " + request.user.last_name)
-                #
-                # spray_scale = ''
-                # brush_role = ''
-                # t_m_nte_amount = ''
-                # client_pm = ''
-                # client_super = ''
-                # superintendent = ''
-                # contract_amount = ''
-                # painting_budget =
-                # wallcovering_budget =
-                # job.is_wage_scale
-                # job.special_paint_needed #true or false
-                # job.has_paint
-                # job.has_wallcovering
-                # job.submittals_needed
-                # JobNotes.objects.create(job_number=job,
-                #                         note="Start Date at Booking: " + start_date + " " + request.POST['date_note'],
-                #                         type="auto_start_date_note", date=date.today(),
-                #                         user=request.user.first_name + " " + request.user.last_name)
-                #
-                # JobNotes.objects.create(job_number=job,
-                #                         note="New Job Booked By: " + request.user.first_name + " " + request.user.last_name + ": " +
-                #                              request.POST['email_job_note'],
-                #                         type="auto_booking_note", date=date.today(),
-                #                         user=request.user.first_name + " " + request.user.last_name)
-                # email_body = "New Job Booked \n" + job.job_number + "\n" + job.job_name + "\n" + job.client.company
-                # Email.sendEmail("New Job - " + job.job_name, email_body, 'joe@gerloffpainting.com')
-                # job.save()
-                #
+            if request.POST['select_company'] == 'use_below':
+                client = Clients.objects.create(company=request.POST['new_client'],
+                                                bid_email=request.POST['new_client_bid_email'],
+                                                phone=request.POST['new_client_phone'])
 
-    return render(request, "upload_new_job.html")
+            else:
+                client = Clients.objects.get(id=request.POST['select_company'])
 
+            if request.POST['select_pm'] == 'use_below':
+                client_pm = ClientEmployees.objects.create(id=client, name=request.POST['new_pm'],
+                                                           phone=request.POST['new_pm_phone'],
+                                                           email=request.POST['new_pm_email'])
 
-@login_required(login_url='/accounts/login')
-def upload_new_job(request):
-    if request.method == 'POST':
-        if 'upload_file' in request.FILES:
-            fileitem = request.FILES['upload_file']
-            fn = os.path.basename(fileitem.name)
-            # fn2 = os.path.join(settings.MEDIA_ROOT, "job_import", str(request.POST['job_number']), fn)
-            fn2 = os.path.join(settings.MEDIA_ROOT, "job_import", str(request.POST['job_number']) + ".csv")
-            open(fn2, 'wb').write(fileitem.file.read())
-            print(1)
-            with open(fn2) as f:
-                print(2)
-                reader = csv.reader(f)
-                rows = list(reader)
-                print(rows[15][1])
-                # line_count1 = 0
-                # found = 0
-                # for row in reader:
-                #     if line_count1 == 0:
-                #         for x in range(2):
-                #             if row[x] == "id":
-                #                 a = x
-                #                 found = found + 1
-                #             if row[x] == "action":
-                #                 b = x
-                #                 found = found + 1
-                #         line_count1 = line_count1 + 1
-                #         if found != 2:
-                #             raise ValueError('A very specific bad thing happened.')
-                #     else:
+            else:
+                client_pm = ClientEmployees.objects.get(person_pk=request.POST['select_pm'])
 
-                # job_number = ''
-                # job_name = ''
-                # address = ''
-                # city = ''
-                # state = ''
-                # is_on_base ='' #true or false
-                # is_t_m_job = ''
-                # contract_status = ''  # 1-received, 2-not received, 3-not required
-                # insurance_status = ''  # 1-received 2-not received 3-not required
-                # client = ''
-                # start_date = ''
-                # job = Jobs.objects.create(job_number=job_number, job_name=job_name, address=address, city=city,
-                #                           state=state,
-                #                           is_on_base=is_on_base, is_t_m_job=is_t_m_job, contract_status=contract_status,
-                #                           insurance_status=insurance_status, client=client, start_date=start_date,
-                #                           status="Open", booked_date=date.today(),
-                #                           booked_by=request.user.first_name + " " + request.user.last_name)
-                #
-                # spray_scale = ''
-                # brush_role = ''
-                # t_m_nte_amount = ''
-                # client_pm = ''
-                # client_super = ''
-                # superintendent = ''
-                # contract_amount = ''
-                # painting_budget =
-                # wallcovering_budget =
-                # job.is_wage_scale
-                # job.special_paint_needed #true or false
-                # job.has_paint
-                # job.has_wallcovering
-                # job.submittals_needed
-                # JobNotes.objects.create(job_number=job,
-                #                         note="Start Date at Booking: " + start_date + " " + request.POST['date_note'],
-                #                         type="auto_start_date_note", date=date.today(),
-                #                         user=request.user.first_name + " " + request.user.last_name)
-                #
-                # JobNotes.objects.create(job_number=job,
-                #                         note="New Job Booked By: " + request.user.first_name + " " + request.user.last_name + ": " +
-                #                              request.POST['email_job_note'],
-                #                         type="auto_booking_note", date=date.today(),
-                #                         user=request.user.first_name + " " + request.user.last_name)
-                # email_body = "New Job Booked \n" + job.job_number + "\n" + job.job_name + "\n" + job.client.company
-                # Email.sendEmail("New Job - " + job.job_name, email_body, 'joe@gerloffpainting.com')
-                # job.save()
-                #
+            gp_estimator = Employees.objects.get(id=request.POST['select_gpestimator'])
+            job_number = sheet_obj.cell(row=25, column=2).value
+            job_name = sheet_obj.cell(row=38, column=2).value
+            address = sheet_obj.cell(row=40, column=2).value
+            city = sheet_obj.cell(row=41, column=2).value
+            state = sheet_obj.cell(row=256, column=2).value
+            if sheet_obj.cell(row=42, column=2).value == "Yes":
+                is_on_base = True
+            else:
+                is_on_base = False
+            if sheet_obj.cell(row=47, column=2).value == "Yes":
+                is_t_m_job = True
+            else:
+                is_t_m_job = False
+            if sheet_obj.cell(row=3, column=2).value == "Yes":
+                contract_status = 1  # received
+            elif sheet_obj.cell(row=1, column=2).value == "Yes":
+                contract_status = 2  # not received
+            else:
+                contract_status = 3  # not needed
+            if sheet_obj.cell(row=6, column=2).value == "Yes":
+                insurance_status = 1
+            elif sheet_obj.cell(row=4, column=2).value == "Yes":
+                insurance_status = 2
+            else:
+                insurance_status = 3
 
+            start_date = sheet_obj.cell(row=33, column=2).value
+            job = Jobs.objects.create(job_number=job_number, job_name=job_name, address=address, city=city,
+                                      state=state,
+                                      is_on_base=is_on_base, is_t_m_job=is_t_m_job, contract_status=contract_status,
+                                      insurance_status=insurance_status, client=client, start_date=start_date,
+                                      status="Open", booked_date=date.today(), client_Pm=client_pm,
+                                      booked_by=request.user.first_name + " " + request.user.last_name,
+                                      estimator=gp_estimator)
+
+            if request.POST['select_super'] != "not_sure":
+                if request.POST['select_super'] == 'use_below':
+                    if 'duplicate' in request.POST:
+                        job.client_Super = client_pm
+                    else:
+                        job.client_Super = ClientEmployees.objects.create(id=client, name=request.POST['new_super'],
+                                                                          phone=request.POST['new_super_phone'],
+                                                                          email=request.POST['new_super_email'])
+
+                else:
+                    job.client_Super = ClientEmployees.objects.get(person_pk=request.POST['select_super'])
+
+            if sheet_obj.cell(row=44, column=2).value: job.brush_role = sheet_obj.cell(row=44, column=2).value
+            if sheet_obj.cell(row=45, column=2).value: job.spray_scale = sheet_obj.cell(row=45, column=2).value
+            if sheet_obj.cell(row=48, column=2).value: job.t_m_nte_amount = sheet_obj.cell(row=48, column=2).value
+            if sheet_obj.cell(row=74, column=2).value: job.contract_amount = sheet_obj.cell(row=74, column=2).value
+            if sheet_obj.cell(row=76, column=2).value: job.painting_budget = sheet_obj.cell(row=76, column=2).value
+            if sheet_obj.cell(row=77, column=2).value: job.wallcovering_budget = sheet_obj.cell(row=77, column=2).value
+            if sheet_obj.cell(row=43, column=2).value: job.is_wage_scale = True
+            if sheet_obj.cell(row=57, column=2).value: job.special_paint_needed = True
+            if sheet_obj.cell(row=29, column=2).value: job.has_paint = True
+            if sheet_obj.cell(row=30, column=2).value: job.has_wallcovering = True
+            if sheet_obj.cell(row=52, column=2).value:
+                job.submittals_needed = False
+            else:
+                job.submittals_needed = True
+            if sheet_obj.cell(row=18, column=2).value: job.po_number = sheet_obj.cell(row=18, column=2).value
+            if sheet_obj.cell(row=36, column=2).value: job.is_off_hours = True
+            job.start_date_checked = date.today()
+            job.save()
+            temp_note = "New Job Booked By: " + request.user.first_name + " " + request.user.last_name
+            if sheet_obj.cell(row=37, column=2).value: temp_note = temp_note + ": " + sheet_obj.cell(row=37,
+                                                                                                     column=2).value
+            if sheet_obj.cell(row=60, column=2).value: temp_note = temp_note + ": " + sheet_obj.cell(row=60,
+                                                                                                     column=2).value
+
+            JobNotes.objects.create(job_number=job,
+                                    note="Start Date at Booking: " + start_date.strftime(
+                                        "%m/%d/%Y") + " " + sheet_obj.cell(row=258,
+                                                                           column=2).value,
+                                    type="auto_start_date_note", date=date.today(),
+                                    user=request.user.first_name + " " + request.user.last_name)
+            JobNotes.objects.create(job_number=job,
+                                    note=temp_note,
+                                    type="auto_booking_note", date=date.today(),
+                                    user=request.user.first_name + " " + request.user.last_name)
+            email_body = "New Job Booked \n" + job.job_number + "\n" + job.job_name + "\n" + job.client.company
+            Email.sendEmail("New Job - " + job.job_name, email_body,
+                            'admin1@gerloffpainting.com, admin2@gerloffpainting.com, joe@gerloffpainting.com', False)
+
+            return render(request, "upload_new_job.html")
     return render(request, "upload_new_job.html")
 
 
@@ -399,28 +411,34 @@ def jobs_home(request):
 @login_required(login_url='/accounts/login')
 def job_page(request, jobnumber):
     if jobnumber == 'ALL':
-        search_jobs = JobsFilter(request.GET, queryset=Jobs.objects.filter(status="Open"))
+        data = {}
+        data = request.GET.copy()
+        if 'search2' not in request.GET:
+            data['search2'] = 0
+        search_jobs = JobsFilter(data, queryset=Jobs.objects.filter())
         jobstable = JobsTable(search_jobs.qs, order_by='start_date')
+        # RequestConfig(request).configure(jobstable)
+        RequestConfig(request, paginate=False).configure(jobstable)
         has_filter = any(field in request.GET for field in set(search_jobs.get_fields()))
-        tickets = ChangeOrders.objects.filter(job_number__status="Open", is_t_and_m=True, is_ticket_signed=False)
-        open_cos = ChangeOrders.objects.filter(job_number__status="Open", is_closed=False,
+        tickets = ChangeOrders.objects.filter(job_number__is_closed=False, is_t_and_m=True, is_ticket_signed=False)
+        open_cos = ChangeOrders.objects.filter(job_number__is_closed=False, is_closed=False,
                                                is_approved=False) & ChangeOrders.objects.filter(
             is_t_and_m=False) | ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=True)
-        approved_cos = ChangeOrders.objects.filter(job_number__status="Open", is_closed=False, is_approved=True)
-        equipment = Inventory.objects.filter(job_number__status="Open").order_by('inventory_type')
-        rentals = Rentals.objects.filter(job_number__status="Open")
-        wallcovering2 = Wallcovering.objects.filter(job_number__status="Open")
+        approved_cos = ChangeOrders.objects.filter(job_number__is_closed=False, is_closed=False, is_approved=True)
+        equipment = Inventory.objects.filter(job_number__is_closed=False).order_by('inventory_type')
+        rentals = Rentals.objects.filter(job_number__is_closed=False)
+        wallcovering2 = Wallcovering.objects.filter(job_number__is_closed=False)
         wc_not_ordereds = []
         for x in wallcovering2:
             if x.orderitems1.count() > 0:
                 print(x)
             else:
                 wc_not_ordereds.append(x)
-        wc_ordereds = OrderItems.objects.filter(wallcovering__job_number__status="Open", is_satisfied=False)
-        packages = Packages.objects.filter(delivery__order__job_number__status="Open")
-        deliveries = OutgoingItem.objects.filter(outgoing_event__job_number__status="Open")
-        submittals = Submittals.objects.filter(job_number__status="Open")
-        subcontracts = Subcontracts.objects.filter(job_number__status="Open")
+        wc_ordereds = OrderItems.objects.filter(wallcovering__job_number__is_closed=False, is_satisfied=False)
+        packages = Packages.objects.filter(delivery__order__job_number__is_closed=False)
+        deliveries = OutgoingItem.objects.filter(outgoing_event__job_number__is_closed=False)
+        submittals = Submittals.objects.filter(job_number__is_closed=False)
+        subcontracts = Subcontracts.objects.filter(job_number__is_closed=False)
         jobs = 'ALL'
         return render(request, "job_page.html",
                       {'search_jobs': search_jobs, 'has_filter': has_filter, 'jobstable': jobstable,
@@ -508,7 +526,6 @@ def job_page(request, jobnumber):
         else:
             notes = JobNotes.objects.filter(job_number=jobnumber)
         send_data['notes'] = notes
-        print(send_data)
         return render(request, 'job_page.html', send_data)
 
 
@@ -567,10 +584,12 @@ def register(request):
         else:
             client_pm = ClientEmployees.objects.get(person_pk=request.POST['select_pm'])
 
-
-        job = Jobs.objects.create(job_number=job_number, job_name=request.POST['job_name'], address=request.POST['address'], city=request.POST['city'], state=request.POST['state'],
+        job = Jobs.objects.create(job_number=job_number, job_name=request.POST['job_name'],
+                                  address=request.POST['address'], city=request.POST['city'],
+                                  state=request.POST['state'],
                                   contract_status=request.POST['contract_status'],
-                                  insurance_status=request.POST['insurance_status'], client=client, client_Pm = client_pm, start_date=request.POST['start_date'],
+                                  insurance_status=request.POST['insurance_status'], client=client, client_Pm=client_pm,
+                                  start_date=request.POST['start_date'],
                                   status="Open", booked_date=date.today(),
                                   booked_by=request.user.first_name + " " + request.user.last_name,
                                   estimator=Employees.objects.get(id=request.POST['select_gpestimator']),
@@ -580,27 +599,29 @@ def register(request):
             checklist.append("get superintendent info")
         elif request.POST['select_super'] == 'use_below':
             job.client_Super = ClientEmployees.objects.create(id=client, name=request.POST['new_super'],
-                                                          phone=request.POST['new_super_phone'],
-                                                          email=request.POST['new_super_email'])
+                                                              phone=request.POST['new_super_phone'],
+                                                              email=request.POST['new_super_email'])
 
         else:
             job.client_Super = ClientEmployees.objects.get(person_pk=request.POST['select_super'])
         if request.POST['spray_scale'] != "": job.spray_scale = request.POST['spray_scale']
         if request.POST['brush_role'] != "": job.brush_role = request.POST['brush_role']
-        if request.POST['t_m_nte_amount'] !="": job.t_m_nte_amount = request.POST['t_m_nte_amount']
-        if request.POST['select_gpsuper'] != "not_sure": job.superintendent = Employees.objects.get(id=request.POST['select_gpsuper'])
+        if request.POST['t_m_nte_amount'] != "": job.t_m_nte_amount = request.POST['t_m_nte_amount']
+        if request.POST['select_gpsuper'] != "not_sure": job.superintendent = Employees.objects.get(
+            id=request.POST['select_gpsuper'])
         # add email message request.POST['email_job_note']
         if request.POST['contract_amount'] != "": contract_amount = request.POST['contract_amount']
         if request.POST['painting_budget'] != "": painting_budget = request.POST['painting_budget']
         if request.POST['wallcovering_budget'] != "": wallcovering_budget = request.POST['wallcovering_budget']
         if 'is_t_m_job' in request.POST: job.is_t_m_job = True
         if 'on_base2' in request.POST: job.is_on_base = True
-        if 'is_wage_rate' in request.POST:job.is_wage_scale = True
-        if 'is_bonded' in request.POST:job.is_bonded = True
+        if 'is_wage_rate' in request.POST: job.is_wage_scale = True
+        if 'is_bonded' in request.POST: job.is_bonded = True
         if 'has_special_paint' in request.POST: job.special_paint_needed = True
         if 'has_paint' in request.POST: job.has_paint = True
         if 'has_wallcovering' in request.POST: job.has_wallcovering = True
         if 'has_submittals' in request.POST:  job.submittals_needed = True
+        job.start_date_checked = date.today()
         job.save()
         JobNotes.objects.create(job_number=job,
                                 note="Start Date at Booking: " + job.start_date + " " + request.POST['date_note'],

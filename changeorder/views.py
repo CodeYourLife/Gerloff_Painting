@@ -408,7 +408,7 @@ def change_order_new(request, jobnumber):
                                                        note="COP Added. " + request.POST['notes'])
             return redirect('extra_work_ticket', id=changeorder.id)
     else:
-        jobs = Jobs.objects.filter(status="Open")
+        jobs = Jobs.objects.filter(is_closed=False)
         if jobnumber == 'ALL':
             return render(request, "change_order_new.html", {'jobs': jobs})
         else:

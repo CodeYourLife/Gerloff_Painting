@@ -92,7 +92,7 @@ class Inventory(models.Model):
     storage_location = models.CharField(null=True, max_length=50, blank=True)
     purchase_date = models.DateField(null=True, blank=True)
     purchase_price = models.DecimalField(
-        max_digits=6, decimal_places=2, blank=True, null=True)
+        max_digits=10, decimal_places=2, blank=True, null=True)
     purchased_from = models.ForeignKey(
         Vendors, on_delete=models.PROTECT, blank=True, null=True, related_name='inventory1')
     purchased_by = models.CharField(null=True, max_length=250, blank=True)

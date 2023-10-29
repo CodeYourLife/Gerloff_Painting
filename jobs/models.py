@@ -1,10 +1,12 @@
 from django.db import models
 from django.core.exceptions import ValidationError
-from changeorder.models import TMPricesMaster
+from changeorder.models import *
 from employees.models import *
 from equipment.models import *
 from wallcovering.models import *
-
+from subcontractors.models import *
+from rentals.models import *
+from datetime import date, timedelta
 
 def validate_job_notes(value):
     if value == "auto_booking_note" or value == "auto_misc_note" or value == "employee_note" or value == "auto_co_note" or value == "auto_submittal_note" or value == "auto_start_date_note" or value == "daily_report":
@@ -50,9 +52,7 @@ class Jobs(models.Model):
     job_name = models.CharField(null=True, max_length=250)
     estimator = models.ForeignKey(
         Employees, on_delete=models.PROTECT, null=True,blank=True, related_name='estimator')
-    foreman = models.ForeignKey(
-
-        Employees, on_delete=models.PROTECT, null=True,blank=True, related_name='foreman') #we still need to code the foreman
+    foreman = models.ForeignKey(Employees, on_delete=models.PROTECT, null=True,blank=True, related_name='foreman') #we still need to code the foreman
     superintendent = models.ForeignKey(
         Employees, on_delete=models.PROTECT, null=True,blank=True, related_name='superintendent')
     contract_amount = models.DecimalField(
@@ -63,7 +63,7 @@ class Jobs(models.Model):
     is_t_m_job = models.BooleanField(default=False)
     t_m_nte_amount = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True)
-    status = models.CharField(null=True, max_length=50)  # open,closed
+    status = models.CharField(null=True, max_length=50)  # open,closed - DO NOT USE THIS ANYMORE. USE is_closed
     booked_date = models.DateField(null=True, blank=True)
     booked_by = models.CharField(null=True, max_length=50, blank=True)
     is_wage_scale = models.BooleanField(default=False)
@@ -72,7 +72,7 @@ class Jobs(models.Model):
         max_digits=10, decimal_places=2, blank=True, null=True)
     brush_role = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True)
-    address = models.CharField(null=True, max_length=50)
+    address = models.CharField(null=True, max_length=500)
     city = models.CharField(null=True, max_length=20)
     state = models.CharField(null=True, max_length=2)
     start_date = models.DateField(null=True, blank=True)
@@ -94,7 +94,7 @@ class Jobs(models.Model):
         max_digits=10, decimal_places=4, blank=True, null=True)
     final_bill_amount = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True)
-    is_closed = models.BooleanField(default=False)#not sure what this is
+    is_closed = models.BooleanField(default=False)#lets use this instead of status
     labor_done_Date = models.DateField(null=True, blank=True)
     ar_closed_date = models.DateField(null=True, blank=True)
     was_previously_closed = models.BooleanField(default=False)
@@ -131,9 +131,43 @@ class Jobs(models.Model):
     is_bonded = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)#this is for supers to use - whether to show on upcoming jobs list
     start_date_checked = models.DateField(null=True, blank=True)
+    is_off_hours = models.BooleanField(default=False)
+    closed_job_number = models.IntegerField(null=True, blank=True)#added this
+    is_work_order_done = models.BooleanField(default=False)
+    man_hours_budgeted = models.IntegerField(null=True, blank=True)
+    man_hours_used = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.job_name}"
+
+    def subcontract_count(self):
+        return Subcontracts.objects.filter(job_number=self).count()
+
+    def wc_count(self):
+        return Wallcovering.objects.filter(job_number=self).count()
+
+    def equipment_count(self):
+        return Inventory.objects.filter(job_number=self).count()
+
+    def rentals_count(self):
+        return Rentals.objects.filter(job_number=self).count()
+
+    def tickets_count(self):
+        return ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=False, is_closed=False,job_number=self).count()
+
+    def field_notes_count(self):
+        return JobNotes.objects.filter(job_number=self, type="Field Note").count()
+
+    def check_start_date(self):
+        difference = date.today() - self.start_date_checked
+        if int(difference.days) > 30:
+            return True
+        else:
+            return False
+
+    def time_since_checking(self):
+        difference = date.today() - self.start_date_checked
+        return int(difference.days)
 
 
 class JobNotes(models.Model):

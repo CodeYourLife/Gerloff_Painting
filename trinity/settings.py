@@ -49,7 +49,6 @@ INSTALLED_APPS = [
     'superintendent',
     'submittals',
     'accounts',
-    'django_truncate'
 ]
 
 # django.setup()

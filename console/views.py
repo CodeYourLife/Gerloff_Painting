@@ -13,7 +13,7 @@ import os
 import os.path
 import csv
 from pathlib import Path
-
+from console.misc import createfolder
 from jobs.models import *
 from accounts.models import *
 from changeorder.models import *
@@ -122,7 +122,7 @@ def register_user(request):
         return render(request, 'register.html', send_data)
 
 
-def import_csv(request):
+def import_csv2(request):
     equipment.models.InventoryItems4.objects.all().delete()
     equipment.models.InventoryItems3.objects.all().delete()
     equipment.models.InventoryItems2.objects.all().delete()
@@ -620,30 +620,68 @@ def import_csv(request):
 
 
 def reset_databases(request):
-
-
-    TMList.objects.all().delete()
-    TMProposal.objects.all().delete()
-    EWTicket.objects.all().delete()
-    EWT.objects.all().delete()
-    TempRecipients.objects.all().delete()
-    ChangeOrderNotes.objects.all().delete()
-    ChangeOrders.objects.all().delete()
-    Signature.objects.all().delete()
-
-    InventoryNotes.objects.all().delete()
-    Inventory.objects.all().delete()
-    OutgoingItem.objects.all().delete()
-    OutgoingWallcovering.objects.all().delete()
-    Packages.objects.all().delete()
-    ReceivedItems.objects.all().delete()
-    WallcoveringDelivery.objects.all().delete()
-    OrderItems.objects.all().delete()
-    WallcoveringPricing.objects.all().delete()
-    Wallcovering.objects.all().delete()
-    Orders.objects.all().delete()
-    RentalNotes.objects.all().delete()
-    Rentals.objects.all().delete()
-    JobNotes.objects.all().delete()
-    Jobs.objects.all().delete()
+    # git hub2
+    if request.user.first_name == "Joe" and request.user.last_name == "Gerloff":
+        TMList.objects.all().delete()
+        TMProposal.objects.all().delete()
+        EWTicket.objects.all().delete()
+        EWT.objects.all().delete()
+        TempRecipients.objects.all().delete()
+        ChangeOrderNotes.objects.all().delete()
+        ChangeOrders.objects.all().delete()
+        Signature.objects.all().delete()
+        InventoryNotes.objects.all().delete()
+        Inventory.objects.all().delete()
+        OutgoingItem.objects.all().delete()
+        OutgoingWallcovering.objects.all().delete()
+        Packages.objects.all().delete()
+        ReceivedItems.objects.all().delete()
+        WallcoveringDelivery.objects.all().delete()
+        OrderItems.objects.all().delete()
+        WallcoveringPricing.objects.all().delete()
+        Wallcovering.objects.all().delete()
+        Orders.objects.all().delete()
+        RentalNotes.objects.all().delete()
+        Rentals.objects.all().delete()
+        SubmittalNotes.objects.all().delete()
+        SubmittalItems.objects.all().delete()
+        Submittals.objects.all().delete()
+        ClientEmployees.objects.all().delete() #dangerous
+        Clients.objects.all().delete() #dangerous
+        JobNotes.objects.all().delete()
+        Jobs.objects.all().delete()
     return redirect("/")
+
+
+def create_folders(request):
+    for x in Inventory.objects.all():
+        createfolder("equipment/" + str(x.id))
+    print("HI")
+    return render(request, 'index.html')
+
+def customize(request):
+    employee= Employees.objects.get(user=request.user)
+    if employee.job_title.description == 'Superintendent':
+        return redirect('super_home',super=employee.id,filter='UPCOMING')
+    elif employee.job_title.description == 'Warehouse':
+        return redirect('warehouse_home')
+    else:
+
+        return redirect('/')
+
+def import_csv(request):
+    with open("c:/sql_backup/workorderimport.csv",encoding='utf-8-sig') as f:
+        current_table = employees.models.CertificationActionRequired
+        current_table.objects.all().delete()
+        reader = csv.reader(f)
+        for row in reader:
+            try:
+                job = Jobs.objects.get(job_number=row[0])
+                if row[1]:
+                    job.is_work_order_done = True
+                else:
+                    print(job)
+                job.save()
+            except:
+                print(row[0])
+        return render(request, 'index.html')
