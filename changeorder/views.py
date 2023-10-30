@@ -50,7 +50,7 @@ def print_TMProposal(request, id):
         dest=result_file
     )
     result_file.close()
-    Email.sendEmail("COP Proposal", "hi", "joe@gerloffpainting.com",
+    Email.sendEmail("COP Proposal", "hi", ["joe@gerloffpainting.com"],
                     f"{path}\COP_{changeorder.cop_number}_{date.today()}.pdf")
 
     return render(request, "print_TMProposal.html",

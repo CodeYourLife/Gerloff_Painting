@@ -132,7 +132,11 @@
             <td>{{inventory.service_vendor.company_name}}</td>
             {% endif %}
             {% else %}
+            {% if inventory.job_number.is_closed == True %}
+            <td style="background-color:#ffff00"><a href="{% url 'job_page' inventory.job_number.job_number %}"><div style="height:100%;width:100%">{{inventory.job_number.job_name}}</div></a></td>
+            {% else %}
             <td><a href="{% url 'job_page' inventory.job_number.job_number %}"><div style="height:100%;width:100%">{{inventory.job_number.job_name}}</div></a></td>
+            {% endif %}
             {% endif %}
             <td>{% if inventory.assigned_to != None %}{{inventory.assigned_to}}{% endif %}</td>
 

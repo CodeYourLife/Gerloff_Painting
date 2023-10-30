@@ -148,6 +148,16 @@
             </form>
         </div>
     </div>
+    <div class="row">
+        <div class="col-sm-6" style="padding-bottom: 12px; padding-top: 12px;">
+            <form name=change_employee action="{% url 'equipment_page' inventories.id %}" method="post">
+                {% csrf_token %}
+                <div style="display: flex; justify-content: space-between;">
+                     Search Job Name: <input type="text" name="search_job" ><input type="submit" class="btn btn-primary btn-sm" value="Search"/>
+                </div>
+            </form>
+        </div>
+    </div>
     <hr>
     <div class="row">
         <div class="col-12">

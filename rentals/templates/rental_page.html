@@ -38,13 +38,17 @@ function check_booking_data(){
                 return false;
                 }
             }
+                	var name=prompt("Please make any notes about this:");
+    	if (name!=null){
+       		document.getElementById("rental_notes").value = name
+   		}
 }
 
 	</script>
 </head>
 <body>
   <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="#">Active Jobs</a>
+    <a class="navbar-brand sub-navbar-brand" href="#">Rentals</a>
     <div id="navbarNavDropdown2">
       <ul class="sub-nav-list navbar-nav ">
         <li><a class="nav-item nav-link" href="{% url 'rentals_home' %}">Home</a></li>
@@ -60,7 +64,7 @@ function check_booking_data(){
 <div class ="container">
     <div class = "row">
         <div class ="col-sm-12">
-Job: {{rental.job_number}}
+<a href="{% url 'job_page' rental.job_number.job_number %}">Job: {{rental.job_number}}</a>
         </div>
     </div>
 <br>
@@ -126,7 +130,7 @@ Item: {{rental.item}}
 <br>
     <div class = "row">
         <div class ="col-sm-12">
-{% if rental.purchase_order == "" %}
+{% if rental.purchase_order == None %}
 Purchase Order: <input type= "text" name="purchase_order" id="purchase_order" placeholder="Purchase Order #" size="30" />
 {% else %}
  <input type="hidden" name="purchase_order" value = ''/>
@@ -210,7 +214,7 @@ Off Rent Number: {{rental.off_rent_number}}
         </div>
     </div>
 	 <br>
-
+<input type="hidden" id="rental_notes" name = "rental_notes" value="" />
 	 <input type="submit" name="form_1" value="Update Information" />
     </form>
  <br>
