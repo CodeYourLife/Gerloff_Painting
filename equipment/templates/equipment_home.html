@@ -6,6 +6,14 @@
 <html>
 <head>
     <script src="{% static 'equipment.js' %}"></script>
+    <style>
+        .table td {
+            max-width: 200px !important;
+            overflow-x: hidden;
+            text-wrap: nowrap !important;
+            word-wrap: normal !important;
+        }
+    </style>
     <script>
         function filterStatus() {
             table = document.getElementById("inventory_table");
