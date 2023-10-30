@@ -8,10 +8,12 @@ import os.path
 from django.conf import settings
 class Email:
     def sendEmail(title, body, to, filename):
+        print(to)
         msg = MIMEMultipart()
-        sender = to
+        # sender = to
+        sender = 'joe@gerloffpainting.com'
         msg['From'] = 'joe@gerloffpainting.com'
-        msg['To'] = to
+        msg['To'] = ", ".join(to)
         # msg['To'] = 'joe@gerloffpainting.com; taroli757@gmail.com'
         msg['Subject'] = title
         msg.attach(MIMEText(body, 'plain'))

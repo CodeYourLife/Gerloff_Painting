@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
+{% load render_table from django_tables2 %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -14,20 +15,20 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
     <script type="text/javascript" class="init">
 
-        function myFunction() {
-          var x = document.getElementById("myDIV");
-          x.style.display = "block";
-        <!--  if (x.style.display === "none") {-->
-        <!--    x.style.display = "block";-->
-        <!--  } else {-->
-        <!--    x.style.display = "none";-->
-        <!--  }-->
-        }
-        $(document).ready(function () {
-        <!--    var table = $('#job_table').DataTable({"ordering":false});-->
-            document.getElementById("myDIV").style.display = "none";
-        })
-    </script>
+
+function myFunction() {
+  var x = document.getElementById("myDIV");
+  var y = document.getElementById("selected_super");
+  x.style.display = "block";
+	name = y.options[y.selectedIndex].text
+	x.value = "Click here to show only jobs assigned to " + name
+}
+$(document).ready(function () {
+<!--    var table = $('#job_table').DataTable({"ordering":false});-->
+    document.getElementById("myDIV").style.display = "none";
+})
+	</script>
+
 </head>
 <body class="wide comments example">
 {% if filtered %}
@@ -45,32 +46,67 @@
             {% if supers %}
             {% for super in supers %}
 
-            <option value="{{super.id}}">{{super.first_name}} {{super.last_name}}</option>
-            {% endfor %}
-            {% endif %}
-        </select>
 
-        <input type="submit" id="myDIV" value="Filter Now"/>
+                            <option value="{{super.id}}">{{super.first_name}} {{super.last_name}}</option>
+                        {% endfor %}
+                        {% endif %}
+					</select>
+		<input type="submit" id="myDIV" class="btn btn-primary btn-sm" value="Filter Now" />
+		</form>
+		<button type="button" class="collapsible">View Jobs</button>
+		<div class="content">
+		{% if has_filter %}
+			{% if selected_super %}
+				{% if filtered %}
+					<a href="{% url 'super_home' selected_super.id 'ALL' %}">Clear Filter</a>
+				{% else %}
+					<a href="{% url 'super_home' selected_super.id 'UPCOMING' %}">Clear Filter</a>
+				{% endif %}
+			{% else %}
+				{% if filtered %}
+					<a href="{% url 'super_home' 'ALL' 'ALL' %}">Clear Filter</a>
+				{% else %}
+					<a href="{% url 'super_home' 'ALL' 'UPCOMING' %}">Clear Filter</a>
+				{% endif %}
+			{% endif %}
+		{% endif %}
 
-    </form>
 
-    <button type="button" class="collapsible">View Jobs</button>
-    <div class="content">
-        <h3>Job List</h3>
-        {% if selected_super %}
-        {% if filtered %}
-        <form action="{% url 'super_home' selected_super.id 'ALL' %}"><input type="submit" value="Show All"/></form>
-        {% else %}
-        <form action="{% url 'super_home' selected_super.id 'UPCOMING' %}"><input type="submit"
-                                                                                  value="Show Upcoming Only"/></form>
-        {% endif %}
-        {% else %}
-        {% if filtered %}
-        <form action="{% url 'super_home' 'ALL' 'ALL' %}"><input type="submit" value="Show All"/></form>
-        {% else %}
-        <form action="{% url 'super_home' 'ALL' 'UPCOMING' %}"><input type="submit" value="Show Upcoming Only"/></form>
-        {% endif %}
-        {% endif %}
+			{% if selected_super %}
+				{% if filtered %}
+			<table><tr height="3px"><form  action="{% url 'super_home' selected_super.id 'ALL' %}" method="get">{{ search_jobs.form }}<input type="submit" class="btn btn-primary btn-sm" value="Click Here to Filter Jobs According to Below:" /> </form></tr></table>
+
+				{% else %}
+			<table><tr height="3px"><form  action="{% url 'super_home' selected_super.id 'UPCOMING' %}" method="get">{{ search_jobs.form }}<input type="submit" class="btn btn-primary btn-sm" value="Click Here to Filter Jobs According to Below:" /> </form></tr></table>
+
+				{% endif %}
+			{% else %}
+				{% if filtered %}
+			<table><tr height="3px"><form  action="{% url 'super_home' 'ALL' 'ALL' %}" method="get">{{ search_jobs.form }}<input type="submit" class="btn btn-primary btn-sm" value="Click Here to Filter Jobs According to Below:" /> </form></tr></table>
+
+				{% else %}
+			<table><tr height="3px"><form  action="{% url 'super_home' 'ALL' 'UPCOMING' %}" method="get">{{ search_jobs.form }}<input type="submit" class="btn btn-primary btn-sm" value="Click Here to Filter Jobs According to Below:" /> </form></tr></table>
+
+				{% endif %}
+			{% endif %}
+
+<!--  		<table><tr height="3px"><form method="get">{{ search_jobs.form }}<input type="submit" class="btn btn-primary btn-sm" value="Filter Jobs" /> </form></tr></table>-->
+<hr>
+	<h3>Job List</h3>
+	{% if selected_super %}
+		{% if filtered %}
+			<form action= "{% url 'super_home' selected_super.id 'ALL' %}" ><input type="submit" value="Show All" /></form>
+		{% else %}
+			<form action= "{% url 'super_home' selected_super.id 'UPCOMING' %}" ><input type="submit" value="Show Upcoming Only" /></form>
+		{% endif %}
+	{% else %}
+		{% if filtered %}
+			<form action= "{% url 'super_home' 'ALL' 'ALL' %}" ><input type="submit" value="Show All" /></form>
+		{% else %}
+			<form action= "{% url 'super_home' 'ALL' 'UPCOMING' %}" ><input type="submit" value="Show Upcoming Only" /></form>
+		{% endif %}
+	{% endif %}
+
 
         <table id="job_table" class="display" style="width:100%">
             <tr>

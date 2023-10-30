@@ -25,6 +25,7 @@
 	<script type="text/javascript" class="init">
 
  function check_data() {
+
             if (rental_input.select_company.value =="add_new"){
                 if (rental_input.new_client.value ==""){
                     alert('Please enter the new company name')
@@ -44,13 +45,7 @@
                 return false;
                 }
             }
-                        if (rental_input.select_company.value == "add_new"){
-                if (rental_input.new_client.value ==""){
-                    alert('Please enter the new company name')
-                    rental_input.new_client.scrollIntoView();
-                    return false;
-                }
-            }
+
             if (rental_input.select_company.value == "please_select"){
                     alert('Please select vendor')
                     rental_input.select_company.scrollIntoView();
@@ -99,7 +94,7 @@ function clear_client() {
 </head>
 <body>
     <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-        <a class="navbar-brand sub-navbar-brand" href="#">Active Jobs</a>
+        <a class="navbar-brand sub-navbar-brand" href="#">Rentals</a>
         <div id="navbarNavDropdown2">
           <ul class="sub-nav-list navbar-nav ">
         <li><a class="nav-item nav-link" href="{% url 'rentals_home' %}">Home</a></li>
@@ -107,10 +102,33 @@ function clear_client() {
     </ul>
   </div>
 </nav>
- <form name = rental_input action="{% url 'rental_new' 'ALL' %}" method="post"  onSubmit = "return check_data()">
-{% csrf_token %}
+
+
 
     <div class ="container"> <!#pick client>
+         <form name = "job_search" action="{% url 'rental_new' 'ALL' %}" method="post" >
+{% csrf_token %}
+        <div class = "row">
+            <div class ="col-sm-6">
+                Search Job: <input type="text" name="search_job" ><input type="submit" class="btn btn-primary btn-sm" value="Search"/>
+            </div>
+        </div>
+        </form>
+         <form name = "rental_input" id= "rental_input" action="{% url 'rental_new' 'ALL' %}" method="post"  onSubmit = "return check_data()">
+{% csrf_token %}
+            <div class = "row">
+        <div class ="col-sm-6">
+             <label for="select_job">Select Job</label><select id="select_job" name="select_job" >
+            <option value="please_select">Select Job</option>
+            {% if jobs %}
+            {% for job in jobs %}
+            <option value={{job.job_number}}>{{job.job_number}} {{job.job_name}}</option>
+            {% endfor %}
+            {% endif %}
+            </select>
+
+        </div>
+    </div>
         <div class ="row" style="height: 50px">
             <div class ="col-sm-12">
                 <label>Please select vendor</label>
@@ -183,18 +201,7 @@ function clear_client() {
     </div>
 <br><br>
 <div class ="container">
-    <div class = "row">
-        <div class ="col-sm-12">
-             <label for="select_job">Select Job</label><select id="select_job" name="select_job" >
-            <option value="please_select">Select Job</option>
-            {% if jobs %}
-            {% for job in jobs %}
-            <option value={{job.job_number}}>{{job.job_number}} {{job.job_name}}</option>
-            {% endfor %}
-            {% endif %}
-            </select>
-        </div>
-    </div>
+
 <br><br>
     <div class = "row">
         <div class ="col-sm-12">
@@ -246,7 +253,8 @@ function clear_client() {
 <br><br>
     <div class = "row">
         <div class ="col-sm-12">
-     <input type="submit" value="Add New Rental" />
+     <input type="submit"  class="btn btn-primary btn-sm"  value="Add New Rental" />
+
         </div>
     </div>
 </div>

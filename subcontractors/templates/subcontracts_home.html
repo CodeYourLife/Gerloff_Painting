@@ -36,16 +36,18 @@
     </script>
 </head>
 <body>
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="#">Active Jobs</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav ">
-            <li><a class="nav-item nav-link" href="{% url 'subcontractor_home' %}">Subcontractor List</a></li>
-            <li><a class="nav-item nav-link active" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
-        </ul>
-    </div>
+
+	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+		<a class="navbar-brand sub-navbar-brand" href="#">Subcontractors</a>
+		<div id="navbarNavDropdown2">
+		  <ul class="sub-nav-list navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'subcontractor_home' %}">Subcontractor List</a></li>
+		 <li><a class="nav-item nav-link active" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
+         <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
+    </ul>
+  </div>
+
 </nav>
 
 <div class="table-responsive">

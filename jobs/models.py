@@ -150,7 +150,7 @@ class Jobs(models.Model):
         return Inventory.objects.filter(job_number=self).count()
 
     def rentals_count(self):
-        return Rentals.objects.filter(job_number=self).count()
+        return Rentals.objects.filter(is_closed=False, job_number=self).count()
 
     def tickets_count(self):
         return ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=False, is_closed=False,job_number=self).count()

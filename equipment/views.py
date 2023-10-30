@@ -160,7 +160,10 @@ def equipment_page(request, id):
     vendors = Vendors.objects.filter(category__category="Equipment Repair")
     path = os.path.join(settings.MEDIA_ROOT, "equipment", str(inventory.id))
     foldercontents = os.listdir(path)
+    jobs = Jobs.objects.filter(is_closed=False).order_by('job_name')
     if request.method == 'POST':
+        if 'search_job' in request.POST:
+            jobs = Jobs.objects.filter(is_closed=False,job_name__icontains=request.POST['search_job']).order_by('job_name')
         if 'apply_filter' in request.POST:
             table = EquipmentNotesTable(
                 InventoryNotes.objects.filter(inventory_item=inventory, category=request.POST['select_category']))
@@ -270,7 +273,7 @@ def equipment_page(request, id):
             fn2 = os.path.join(settings.MEDIA_ROOT, "equipment", str(inventory.id), fn)
             open(fn2, 'wb').write(fileitem.file.read())
 
-    jobs = Jobs.objects.all()
+
     return render(request, "equipment_page.html",
                   {'employees': employees, 'jobs': jobs, 'inventories': inventory, "table": table, "vendors": vendors,
                    "foldercontents": foldercontents})

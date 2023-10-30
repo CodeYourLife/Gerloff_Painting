@@ -4,6 +4,22 @@ import django_filters
 from django.db.models import Q
 
 
+class JobsFilter2(django_filters.FilterSet):
+    search = django_filters.CharFilter(label='Job Name =', method='search_filter')
+    search4 = django_filters.CharFilter(label='GC =', method='search_filter4')
+
+    def search_filter(self, queryset, name, value):
+        return queryset.filter(job_name__icontains=value)
+
+    def search_filter4(self, queryset, name, value):
+        return queryset.filter(client__company__icontains=value)
+
+    class Meta:
+        model = Jobs
+        fields = ['search','search4']
+
+
+
 class JobsFilter(django_filters.FilterSet):
     search = django_filters.CharFilter(label='Job Name', method='search_filter')
     search2 = django_filters.ChoiceFilter(label="Job Status", method='search_filter2',
