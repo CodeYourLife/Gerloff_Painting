@@ -21,6 +21,7 @@ def registration(request):
         employee.user = user
         employee.phone = request.POST['phonenumber']
         employee.nickname = request.POST['nickname']
+        employee.email = request.POST['email']
         user.first_name = employee.first_name
         user.last_name = employee.last_name
         user.save()
