@@ -16,8 +16,23 @@
         .active, .collapsible:hover {
           background-color: Salmon;
         }
-
-
+        label {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+        input {
+            margin-left: 10px;
+            margin-right: 10px;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
     </style>
     <link rel="stylesheet" href="{% static 'project_styles.css' %}">
     <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
@@ -37,33 +52,34 @@
         })
 
     </script>
+
 </head>
 <body>
 
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link active" href="{% url 'employees_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
-    </ul>
-  </div>
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav ">
+            <li><a class="nav-item nav-link active" href="{% url 'employees_home' %}">Home</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
+        </ul>
+    </div>
 
 </nav>
 
 
 <div>
-    <div class="table-responsive">
-        <table id="employees_table" class="display">
+    <div style="margin-top: 12px" class="table-responsive">
+        <table id="employees_table" class="table display">
             <thead>
             <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Nickname</th>
-                <th>Level</th>
+                <th class="col">ID</th>
+                <th class="col">Name</th>
+                <th class="col">Nickname</th>
+                <th class="col">Level</th>
             </tr>
             </thead>
             <tbody>
