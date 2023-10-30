@@ -1,3 +1,8 @@
+from jobs.models import Jobs
+from equipment.models import InventoryNotes, Inventory
+import django_filters
+from django.db.models import Q
+
 class JobsFilter2(django_filters.FilterSet):
     search = django_filters.CharFilter(label='Job Name =', method='search_filter')
     search4 = django_filters.CharFilter(label='GC =', method='search_filter4')
