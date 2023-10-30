@@ -14,7 +14,12 @@
     <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
     <style type="text/css" class="init">
-
+        .table td {
+            max-width: 200px !important;
+            overflow-x: hidden;
+            text-wrap: nowrap !important;
+            word-wrap: normal !important;
+        }
     </style>
     <link rel="stylesheet" href="{% static 'project_styles.css' %}">
     <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
