@@ -125,15 +125,17 @@ def update_job_info(request, jobnumber):
                 selectedjob.spray_scale = request.POST['spray_scale']
         if 'is_closed' in request.POST:
             if selectedjob.is_closed == False:
-                message = "Job: " + selectedjob.job_name + " is closed. The following equipment is assigned to the job and must be returned immediately!\n "
-                recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com", "warehouse@gerloffpainting.com", "joe@gerloffpainting.com"]
-                recipients.append(selectedjob.superintendent.email)
-                print(recipients)
-
-                for x in Inventory.objects.filter(job_number=selectedjob):
-                    message = message + "\n -" + x.item + " GP Number #" + x.number
-                Email.sendEmail("Closed Job - " + selectedjob.job_name, message,
-                                recipients, False)
+                if Inventory.objects.filter(job_name = selectedjob).exists():
+                    message = "Job: " + selectedjob.job_name + " is closed. The following equipment is assigned to the job and must be returned immediately!\n "
+                    recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com", "warehouse@gerloffpainting.com", "joe@gerloffpainting.com"]
+                    if selectedjob.superintendent.email is None:
+                        message = message + "\n No email address for " + selectedjob.superintendent
+                    else:
+                        recipients.append(selectedjob.superintendent.email)
+                    for x in Inventory.objects.filter(job_number=selectedjob):
+                        message = message + "\n -" + x.item + " GP Number #" + x.number
+                    Email.sendEmail("Closed Job - " + selectedjob.job_name, message,
+                                    recipients, False)
             selectedjob.is_closed = True
         else:
             selectedjob.is_closed = False
