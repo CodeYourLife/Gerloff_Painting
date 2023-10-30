@@ -8,67 +8,72 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>DataTables example - HTML (DOM) sourced data</title>
-	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
-.collapsible {
-  background-color: #777;
-  color: white;
-  cursor: pointer;
-  padding: 18px;
-  width: 100%;
-  border: none;
-  text-align: left;
-  outline: none;
-  font-size: 15px;
-}
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <title>DataTables example - HTML (DOM) sourced data</title>
+    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+    <style type="text/css" class="init">
+        .collapsible {
+          background-color: #777;
+          color: white;
+          cursor: pointer;
+          padding: 18px;
+          width: 100%;
+          border: none;
+          text-align: left;
+          outline: none;
+          font-size: 15px;
+        }
 
-.active, .collapsible:hover {
-  background-color: Salmon;
-}
+        .active, .collapsible:hover {
+          background-color: Salmon;
+        }
 
-.content {
-  padding: 0 18px;
-  display: none;
-  overflow: hidden;
-  background-color: #f1f1f1;
-}
-	</style>
-	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
-$(document).ready(function () {
-    var table = $('#table0').DataTable({});
-});
-$(document).ready(function () {
-    var table = $('#table1').DataTable({});
-});
-$(document).ready(function () {
-    var table = $('#table2').DataTable({});
-});
-$(document).ready(function () {
-    var table = $('#table3').DataTable({});
-});
-$(document).ready(function () {
-    var table = $('#table4').DataTable({});
-});
-$(document).ready(function () {
-    var table = $('#table5').DataTable({});
-});
-	</script>
+        .content {
+          padding: 0 18px;
+          display: none;
+          overflow: hidden;
+          background-color: #f1f1f1;
+        }
+    </style>
+    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
+            data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+    <script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html"
+            async></script>
+    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html"
+            async></script>
+    <script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script type="text/javascript" language="javascript"
+            src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+    <script type="text/javascript" class="init">
+        $(document).ready(function () {
+            var table = $('#table0').DataTable({});
+        });
+        $(document).ready(function () {
+            var table = $('#table1').DataTable({});
+        });
+        $(document).ready(function () {
+            var table = $('#table2').DataTable({});
+        });
+        $(document).ready(function () {
+            var table = $('#table3').DataTable({});
+        });
+        $(document).ready(function () {
+            var table = $('#table4').DataTable({});
+        });
+        $(document).ready(function () {
+            var table = $('#table5').DataTable({});
+        });
+    </script>
 </head>
 <body>
+
 	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
 		<a class="navbar-brand sub-navbar-brand" href="#">Wallcovering</a>
 		<div id="navbarNavDropdown2">
@@ -80,292 +85,311 @@ $(document).ready(function () {
         <li><a class="nav-item nav-link"  href="{% url 'wallcovering_send_all' %}">Sent to Job</a></li>
     </ul>
   </div>
+
 </nav>
 
-        <div class ="container">
-            <div class ="row">
-				<div class ="col">
-					<form action="{% url 'wallcovering_pattern_new' %}">
-    <input type="submit" value="Add New Material" />
-</form>
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <form action="{% url 'wallcovering_pattern_new' %}">
+                <input type="submit" value="Add New Material"/>
+            </form>
+        </div>
+        <div class="col">
+            <form action="{% url 'wallcovering_order_new' " ALL
+            " "ALL" %}">
+            <input type="submit" value="Place Wallcovering Order"/>
+            </form>
+        </div>
+        <div class="col">
+
+            <form action="{% url 'wallcovering_receive' " ALL
+            " %}">
+            <input type="submit" value="Receive Wallcovering Delivery"/>
+            </form>
+        </div>
+        <div class="col">
+            <form action="{% url 'wallcovering_send' " ALL
+            " %}">
+            <input type="submit" value="Send Wallcovering to Job"/>
+            </form>
+        </div>
+    </div>
 </div>
-				<div class ="col">
-										<form action="{% url 'wallcovering_order_new' "ALL" "ALL" %}">
-    <input type="submit" value="Place Wallcovering Order" />
-</form>
+
+{% if wc_table %}
+<hr>
+<button type="button" class="collapsible">Wallcovering Summary</button>
+<div class="content">
+    <div class="table-responsive">
+        <table id="table0" class="display">
+            <thead>
+            <tr>
+                <th>Job</th>
+                <th>Item</th>
+                <th>Qnty Ordered</th>
+                <th>Qnty Received</th>
+                <th>Packages Received</th>
+                <th>Packages to Job</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in wc_table %}
+            <tr>
+                <td><a href="{% url 'job_page' item.job_number.job_number %}">
+                    <div style="height:100%;width:100%">
+                        {{item.job_number}}
+                    </div>
+                </a></td>
+                <td><a href="{% url 'wallcovering_pattern' item.id %}">
+                    <div style="height:100%;width:100%">
+                        {{item.code}}
+                    </div>
+                </a></td>
+                <td>{{item.quantity_ordered}}</td>
+                <td>{{item.quantity_received}}</td>
+                <td>{{item.packages_received}}</td>
+                <td>{{item.packages_sent}}</td>
+
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
-				<div class ="col">
+{% endif %}
 
-										<form action="{% url 'wallcovering_receive' "ALL" %}">
-    <input type="submit" value="Receive Wallcovering Delivery" />
-</form>
+{% if wc_not_ordereds %}
+<hr>
+<button type="button" class="collapsible">Wallcovering Not Ordered</button>
+<div class="content">
+    <div class="table-responsive">
+        <table id="table1" class="display">
+            <thead>
+            <tr>
+                <th>Code</th>
+                <th>Vendor</th>
+                <th>Pattern</th>
+                <th>Job</th>
+                <th>Notes</th>
+                <th>Order Now</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for wc_not_ordered in wc_not_ordereds %}
+            <tr>
+                <td><a href="{% url 'wallcovering_pattern' wc_not_ordered.id %}">
+                    <div style="height:100%;width:100%">
+                        {{wc_not_ordered.code}}
+                    </div>
+                </a></td>
+                <td>{{wc_not_ordered.vendor.company_name}}</td>
+                <td>{{wc_not_ordered.pattern}}</td>
+                <td><a href="{% url 'job_page' wc_not_ordered.job_number.job_number %}">
+                    <div style="height:100%;width:100%">
+                        {{wc_not_ordered.job_number.job_name}}
+                    </div>
+                </a></td>
+                <td>{{wc_not_ordered.notes}}</td>
+                <td><a href="{% url 'wallcovering_order_new' wc_not_ordered.id wc_not_ordered.job_number.job_number %}">
+                    <div style="height:100%;width:100%">
+                        Order Now
+                    </div>
+                </a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
-				<div class ="col">
-										<form action="{% url 'wallcovering_send' "ALL" %}">
-    <input type="submit" value="Send Wallcovering to Job" />
-</form>
+{% endif %}
+
+{% if wc_ordereds %}
+<hr>
+<button type="button" class="collapsible">Wallcovering Ordered But Not Received</button>
+<div class="content">
+    <div class="table-responsive">
+        <table id="table2" class="display">
+            <thead>
+            <tr>
+                <th>Code</th>
+                <th>Description</th>
+                <th>Date Ordered</th>
+                <th>Job</th>
+                <th>Notes</th>
+                <th>Receive Now</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for wc_ordered in wc_ordereds %}
+            <tr>
+                <td>{{wc_ordered.wallcovering.code}}</td>
+                <td>{{wc_ordered.item_description}}</td>
+                <td><a href="{% url 'wallcovering_order' wc_ordered.order.id %}">
+                    <div style="height:100%;width:100%">
+                        {{wc_ordered.order.date_ordered}}
+                    </div>
+                </a></td>
+                <td>{{wc_ordered.order.job_number.job_name}}</td>
+                <td>{{wc_ordered.order.notes}}</td>
+                <td><a href="{% url 'wallcovering_receive' wc_ordered.order.id %}">
+                    <div style="height:100%;width:100%">
+                        Receive Delivery Now
+                    </div>
+                </a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
-			</div>
-		</div>
-
-	{% if wc_table %}
-	<hr>
-	<button type="button" class="collapsible">Wallcovering Summary</button>
-	<div class="content">
-		<div class="demo-html" style="width:90%">
-			<table id="table0" class="display" style="width:90%" >
-			<thead>
-				<tr>
-					<th>Job </th>
-					<th>Item</th>
-					<th>Qnty Ordered</th>
-					<th>Qnty Received</th>
-					<th>Packages Received</th>
-					<th>Packages to Job</th>
-				</tr>
-			</thead>
-			<tbody>
-			{% for item in wc_table %}
-				<tr>
-					<td><a href = "{% url 'job_page' item.job_number.job_number %}">
-							<div style="height:100%;width:100%">
-								{{item.job_number}}	</div>
-						</a></td>
-					<td><a href = "{% url 'wallcovering_pattern' item.id %}">
-							<div style="height:100%;width:100%">
-								{{item.code}}	</div>
-						</a></td>
-					<td>{{item.quantity_ordered}}</td>
-					<td>{{item.quantity_received}}</td>
-					<td>{{item.packages_received}}</td>
-					<td>{{item.packages_sent}}</td>
-
-				</tr>
-			{% endfor %}
-			</tbody>
-		</table>
-		</div>
-	</div>
-				{% endif %}
-
-	{% if wc_not_ordereds %}
-	<hr>
-	<button type="button" class="collapsible">Wallcovering Not Ordered</button>
-	<div class="content">
-		<div class="demo-html" style="width:90%">
-			<table id="table1" class="display" style="width:90%" >
-			<thead>
-				<tr>
-					<th>Code</th>
-					<th>Vendor</th>
-					<th>Pattern</th>
-					<th>Job</th>
-					<th>Notes</th>
-					<th>Order Now</th>
-				</tr>
-			</thead>
-			<tbody>
-			{% for wc_not_ordered in wc_not_ordereds %}
-				<tr>
-					<td><a href = "{% url 'wallcovering_pattern' wc_not_ordered.id %}">
-							<div style="height:100%;width:100%">
-								{{wc_not_ordered.code}}	</div>
-						</a></td>
-					<td>{{wc_not_ordered.vendor.company_name}}</td>
-					<td>{{wc_not_ordered.pattern}}</td>
-					<td><a href = "{% url 'job_page' wc_not_ordered.job_number.job_number %}">
-							<div style="height:100%;width:100%">
-								{{wc_not_ordered.job_number.job_name}}	</div>
-					</a></td>
-					<td>{{wc_not_ordered.notes}}</td>
-					<td><a href = "{% url 'wallcovering_order_new' wc_not_ordered.id wc_not_ordered.job_number.job_number %}">
-							<div style="height:100%;width:100%">
-								Order Now	</div>
-					</a></td>
-				</tr>
-			{% endfor %}
-			</tbody>
-		</table>
-		</div>
-	</div>
-				{% endif %}
-
-	{% if wc_ordereds %}
-	<hr>
-	<button type="button" class="collapsible">Wallcovering Ordered But Not Received</button>
-	<div class="content">
-		<div class="demo-html" style="width:90%">
-			<table id="table2" class="display" style="width:90%" >
-			<thead>
-				<tr>
-					<th>Code</th>
-					<th>Description</th>
-					<th>Date Ordered</th>
-					<th>Job</th>
-					<th>Notes</th>
-					<th>Receive Now</th>
-				</tr>
-			</thead>
-			<tbody>
-			{% for wc_ordered in wc_ordereds %}
-				<tr>
-					<td>{{wc_ordered.wallcovering.code}}</td>
-					<td>{{wc_ordered.item_description}}</td>
-					<td><a href = "{% url 'wallcovering_order' wc_ordered.order.id %}">
-							<div style="height:100%;width:100%">
-								{{wc_ordered.order.date_ordered}}	</div></a></td>
-					<td>{{wc_ordered.order.job_number.job_name}}</td>
-					<td>{{wc_ordered.order.notes}}</td>
-					<td><a href = "{% url 'wallcovering_receive' wc_ordered.order.id %}">
-							<div style="height:100%;width:100%">
-								Receive Delivery Now	</div></a></td>
-				</tr>
-			{% endfor %}
-			</tbody>
-		</table>
-		</div>
-	</div>
-				{% endif %}
+{% endif %}
 
 
-	<hr>
-	<button type="button" class="collapsible">All Orders For Open Jobs</button>
-	<div class="content">
-		{% if has_filter %}
-  		<a href="{%  url 'wallcovering_home' %}">Clear Filter</a>
-		{% endif %}
+<hr>
+<button type="button" class="collapsible">All Orders For Open Jobs</button>
+<div class="content">
+    {% if has_filter %}
+    <a href="{%  url 'wallcovering_home' %}">Clear Filter</a>
+    {% endif %}
 
 
-		    <form method="get">
+    <form method="get">
         {{ all_orders.form }}
-        <input type="submit" value="Filter Now" />
+        <input type="submit" value="Filter Now"/>
     </form>
-{% render_table table2 %}
+    {% render_table table2 %}
 
-	</div>
+</div>
 
-		{% if received_deliveries %}
-	<hr>
-	<button type="button" class="collapsible">Received Deliveries</button>
-	<div class="content">
-		<div class="demo-html" style="width:90%">
-			<table id="table4" class="display" style="width:90%" >
-			<thead>
-				<tr>
-					<th>Job Name</th>
-					<th>Order Description </th>
-					<th>Date</th>
-
-
-				</tr>
-			</thead>
-			<tbody>
-			{% for delivery in received_deliveries %}
-				<tr>
-					<td>{{delivery.order.job_number.job_name}}	</td>
-					<td>{{delivery.order.description}}	</td>
-					<td>{{delivery.date}}	</td>
-				</tr>
-			{% endfor %}
-			</tbody>
-		</table>
-		</div>
-	</div>
-				{% endif %}
+{% if received_deliveries %}
+<hr>
+<button type="button" class="collapsible">Received Deliveries</button>
+<div class="content">
+    <div class="table-responsive">
+        <table id="table4" class="display">
+            <thead>
+            <tr>
+                <th>Job Name</th>
+                <th>Order Description</th>
+                <th>Date</th>
 
 
-	{% if packages %}
-	<hr>
-	<button type="button" class="collapsible">Wallcovering in Warehouse</button>
-	<div class="content">
-		<div class="demo-html" style="width:90%">
-			<table id="table3" class="display" style="width:90%" >
-			<thead>
-				<tr>
-					<th>Job Name</th>
-					<th>Order</th>
-					<th>Description</th>
-					<th>Date Received </th>
-					<th>Notes</th>
-					<th>Send to Job</th>
-
-				</tr>
-			</thead>
-			<tbody>
-			{% for package in packages %}
-				<tr>
-					<td><a href = "{% url 'job_page' package.delivery.order.job_number.job_number %}">
-					<div style="height:100%;width:100%">
-					{{package.delivery.order.job_number}}	</div></a></td>
-					<td><a href = "{% url 'wallcovering_order' package.delivery.order.id %}">
-					<div style="height:100%;width:100%">
-					{{package.delivery.order.description}}	</div></a></td>
-					<td>{{package.contents}}	</td>
-					<td>{{package.delivery.date}}</td>
-					<td>{{package.notes}}</td>
-					<td><a href = "{% url 'wallcovering_send' package.delivery.order.job_number.job_number %}">
-					<div style="height:100%;width:100%">
-					Send to Job	</div></a></td>
-				</tr>
-			{% endfor %}
-			</tbody>
-		</table>
-		</div>
-	</div>
-				{% endif %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for delivery in received_deliveries %}
+            <tr>
+                <td>{{delivery.order.job_number.job_name}}</td>
+                <td>{{delivery.order.description}}</td>
+                <td>{{delivery.date}}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
 
 
+{% if packages %}
+<hr>
+<button type="button" class="collapsible">Wallcovering in Warehouse</button>
+<div class="content">
+    <div class="table-responsive">
+        <table id="table3" class="display">
+            <thead>
+            <tr>
+                <th>Job Name</th>
+                <th>Order</th>
+                <th>Description</th>
+                <th>Date Received</th>
+                <th>Notes</th>
+                <th>Send to Job</th>
 
-	{% if jobsite_deliveries %}
-	<hr>
-	<button type="button" class="collapsible">Jobsite Deliveries</button>
-	<div class="content">
-		<div class="demo-html" style="width:90%">
-			<table id="table5" class="display" style="width:90%" >
-			<thead>
-				<tr>
-					<th>Job Name</th>
-					<th>Date</th>
-					<th>Description</th>
-					<th>Packages</th>
-				</tr>
-			</thead>
-			<tbody>
-			{% for delivery in jobsite_deliveries %}
-				<tr>
-					<td>{{delivery.outgoing_event.job_number.job_name}}	</td>
-					<td><a href = "{% url 'wallcovering_status' table_type='Outgoing' id=delivery.id %}"><div style="height:100%;width:100%">{{delivery.outgoing_event.date}}	</div></a></td>
-					<td>{{delivery.package.contents}} {{delivery.description}}	</td>
-					<td>{{delivery.quantity_sent}}	</td>
+            </tr>
+            </thead>
+            <tbody>
+            {% for package in packages %}
+            <tr>
+                <td><a href="{% url 'job_page' package.delivery.order.job_number.job_number %}">
+                    <div style="height:100%;width:100%">
+                        {{package.delivery.order.job_number}}
+                    </div>
+                </a></td>
+                <td><a href="{% url 'wallcovering_order' package.delivery.order.id %}">
+                    <div style="height:100%;width:100%">
+                        {{package.delivery.order.description}}
+                    </div>
+                </a></td>
+                <td>{{package.contents}}</td>
+                <td>{{package.delivery.date}}</td>
+                <td>{{package.notes}}</td>
+                <td><a href="{% url 'wallcovering_send' package.delivery.order.job_number.job_number %}">
+                    <div style="height:100%;width:100%">
+                        Send to Job
+                    </div>
+                </a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
 
 
-				</tr>
-			{% endfor %}
-			</tbody>
-		</table>
-		</div>
-	</div>
-				{% endif %}
+{% if jobsite_deliveries %}
+<hr>
+<button type="button" class="collapsible">Jobsite Deliveries</button>
+<div class="content">
+    <div class="table-responsive">
+        <table id="table5" class="display">
+            <thead>
+            <tr>
+                <th>Job Name</th>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Packages</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for delivery in jobsite_deliveries %}
+            <tr>
+                <td>{{delivery.outgoing_event.job_number.job_name}}</td>
+                <td><a href="{% url 'wallcovering_status' table_type='Outgoing' id=delivery.id %}">
+                    <div style="height:100%;width:100%">{{delivery.outgoing_event.date}}</div>
+                </a></td>
+                <td>{{delivery.package.contents}} {{delivery.description}}</td>
+                <td>{{delivery.quantity_sent}}</td>
 
+
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
 
 
 </body>
 </html>
 <script>
-var coll = document.getElementsByClassName("collapsible");
-var i;
+    var coll = document.getElementsByClassName("collapsible");
+    var i;
 
-for (i = 0; i < coll.length; i++) {
-  coll[i].addEventListener("click", function() {
-    this.classList.toggle("active");
-    var content = this.nextElementSibling;
-    if (content.style.display === "block") {
-      content.style.display = "none";
-    } else {
-      content.style.display = "block";
+    for (i = 0; i < coll.length; i++) {
+      coll[i].addEventListener("click", function() {
+        this.classList.toggle("active");
+        var content = this.nextElementSibling;
+        if (content.style.display === "block") {
+          content.style.display = "none";
+        } else {
+          content.style.display = "block";
+        }
+      });
     }
-  });
-}
 </script>
 
 </body>

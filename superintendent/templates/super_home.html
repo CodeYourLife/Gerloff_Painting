@@ -5,15 +5,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-		<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-		<title>DataTables example - HTML (DOM) sourced data</title>
-		<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-		<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-		<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-		<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-		<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-		<script type="text/javascript" class="init">
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <title>DataTables example - HTML (DOM) sourced data</title>
+    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+    <script type="text/javascript" class="init">
+
 
 function myFunction() {
   var x = document.getElementById("myDIV");
@@ -27,22 +28,24 @@ $(document).ready(function () {
     document.getElementById("myDIV").style.display = "none";
 })
 	</script>
+
 </head>
 <body class="wide comments example">
 {% if filtered %}
-	<form name = select_super action="{% url 'super_home' 'ALL' 'UPCOMING' %}" method="post" >
-		{% else %}
-		<form name = select_super action="{% url 'super_home' 'ALL' 'ALL' %}" method="post" >
-		{% endif %}
+<form name=select_super action="{% url 'super_home' 'ALL' 'UPCOMING' %}" method="post">
+    {% else %}
+    <form name=select_super action="{% url 'super_home' 'ALL' 'ALL' %}" method="post">
+        {% endif %}
         {% csrf_token %}
-                    <label>Please select superintendent</label>
-                    <select id="selected_super" name="selected_super" onchange="myFunction()">
-                        {% if selected_super %}
-						<option value={{selected_super.id}}>{{selected_super.first_name}} {{selected_super.last_name}}</option>
-						{% endif %}
-						<option value="all">"All"</option>
-                        {% if supers %}
-                        {% for super in supers %}
+        <label>Please select superintendent</label>
+        <select id="selected_super" name="selected_super" onchange="myFunction()">
+            {% if selected_super %}
+            <option value={{selected_super.id}}>{{selected_super.first_name}} {{selected_super.last_name}}</option>
+            {% endif %}
+            <option value="all">"All"</option>
+            {% if supers %}
+            {% for super in supers %}
+
 
                             <option value="{{super.id}}">{{super.first_name}} {{super.last_name}}</option>
                         {% endfor %}
@@ -104,218 +107,235 @@ $(document).ready(function () {
 		{% endif %}
 	{% endif %}
 
-			<table id="job_table" class="display" style="width:100%">
-				<tr><td style="background-color:#ffff00">Off Hours</td><td style="background-color:#00ff00">On Base</td><td style="background-color:#FF0000">Field Docs Not Ready</td><td style="background-color:#bcd5bc">Follow Up On Start Date</td></tr>
-			</table>
-			<div class="table-responsive">
-    <table id="inventory_table" class="display table table-sm">
-<!--	<div class="demo-html" style="width:90%">-->
-<!--		<table id="job_table" class="display" style="width:90%">-->
-			<thead>
-				<tr>
-					<th scope="col">Job Number</th>
-					<th scope="col">Job Name</th>
-					<th scope="col">Start Date</th>
 
-					{% if selected_super %}
-					{% else %}
-					<th scope="col">Super</th>
-					{% endif %}
+        <table id="job_table" class="display" style="width:100%">
+            <tr>
+                <td style="background-color:#ffff00">Off Hours</td>
+                <td style="background-color:#00ff00">On Base</td>
+                <td style="background-color:#FF0000">Field Docs Not Ready</td>
+                <td style="background-color:#bcd5bc">Follow Up On Start Date</td>
+            </tr>
+        </table>
+        <div class="table-responsive">
+            <table id="inventory_table" class="display table table-sm">
+                <thead>
+                <tr>
+                    <th scope="col">Job Number</th>
+                    <th scope="col">Job Name</th>
+                    <th scope="col">Start Date</th>
 
-					<th scope="col">GC</th>
-					<th scope="col">Equipment</th>
-					<th scope="col">Subs</th>
-					<th scope="col">VWC</th>
-					<th scope="col">Rentals</th>
-					<th scope="col">Tickets</th>
-					<th scope="col">Notes</th>
-					<th scope="col">Hours</th>
-					<th scope="col">Used</th>
+                    {% if selected_super %}
+                    {% else %}
+                    <th scope="col">Super</th>
+                    {% endif %}
 
-				</tr>
-			</thead>
-			<tbody>
-			{% if jobs %}
-			{% for job in jobs %}
+                    <th scope="col">GC</th>
+                    <th scope="col">Equipment</th>
+                    <th scope="col">Subs</th>
+                    <th scope="col">VWC</th>
+                    <th scope="col">Rentals</th>
+                    <th scope="col">Tickets</th>
+                    <th scope="col">Notes</th>
+                    <th scope="col">Hours</th>
+                    <th scope="col">Used</th>
 
-			<tr>
-{% if job.is_off_hours == True %}<td style="background-color:#ffff00">{% else %} <td>{% endif %}{{job.job_number}}</td>
-{% if job.is_on_base == True %}<td style="background-color:#00ff00">{% else %} <td>{% endif %}
-				<a href = "{% url 'job_page' job.job_number %}">
-							<div style="height:100%;width:100%">
-								{{job.job_name}}	</div>
-						</a></td>
+                </tr>
+                </thead>
+                <tbody>
+                {% if jobs %}
+                {% for job in jobs %}
 
-					{% if job.check_start_date == True %}<td style="background-color:#bcd5bc">{% else %} <td>{% endif %}
-					{% if selected_super %}
-						{% if filtered %}
-								<a href = "{% url 'change_start_date' job.job_number 'super' selected_super.id 'UPCOMING' %}">
-						{% else %}
-									<a href = "{% url 'change_start_date' job.job_number 'super' selected_super.id 'ALL' %}">
-						{% endif %}
-					{% else %}
-						{% if filtered %}
-										<a href = "{% url 'change_start_date' job.job_number 'super' 'ALL' 'UPCOMING' %}">
-						{% else %}
-											<a href = "{% url 'change_start_date' job.job_number 'super' 'ALL' 'ALL' %}">
-						{% endif %}
-					{% endif %}
-									<div style="height:100%;width:100%">
-								{{job.start_date}}	</div>
-						</a></td>
+                <tr>
+                    {% if job.is_off_hours == True %}
+                    <td style="background-color:#ffff00">{% else %}
+                    <td>{% endif %}{{job.job_number}}</td>
+                    {% if job.is_on_base == True %}
+                    <td style="background-color:#00ff00">{% else %}
+                    <td>{% endif %}
+                        <a href="{% url 'job_page' job.job_number %}">
+                            <div style="height:100%;width:100%">
+                                {{job.job_name}}
+                            </div>
+                        </a></td>
 
-									{% if selected_super %}
-					{% else %}
-					<td>{{job.superintendent.first_name}}</td>
-					{% endif %}
+                    {% if job.check_start_date == True %}
+                    <td style="background-color:#bcd5bc">{% else %}
+                    <td>{% endif %}
+                        {% if selected_super %}
+                        {% if filtered %}
+                        <a href="{% url 'change_start_date' job.job_number 'super' selected_super.id 'UPCOMING' %}">
+                            {% else %}
+                            <a href="{% url 'change_start_date' job.job_number 'super' selected_super.id 'ALL' %}">
+                                {% endif %}
+                                {% else %}
+                                {% if filtered %}
+                                <a href="{% url 'change_start_date' job.job_number 'super' 'ALL' 'UPCOMING' %}">
+                                    {% else %}
+                                    <a href="{% url 'change_start_date' job.job_number 'super' 'ALL' 'ALL' %}">
+                                        {% endif %}
+                                        {% endif %}
+                                        <div style="height:100%;width:100%">
+                                            {{job.start_date}}
+                                        </div>
+                                    </a></td>
 
-				{% if job.is_work_order_done == False %}<td style="background-color:#FF0000">{% else %} <td>{% endif %}{{job.client}} </td>
-					<td>{{job.equipment_count}}</td>
-					<td>{{job.subcontract_count}}</td>
-					<td>{{job.wc_count}}</td>
-					<td>{{job.rentals_count}}</td>
-					<td>{{job.tickets_count}}</td>
-					<td>{{job.field_notes_count}}</td>
-					<td>{{job.man_hours_budgeted}}</td>
-					<td>{{job.man_hours_used}}</td>
+                    {% if selected_super %}
+                    {% else %}
+                    <td>{{job.superintendent.first_name}}</td>
+                    {% endif %}
 
-				</tr>
-			{% endfor %}
-			{% endif %}
-			</tbody>
-		</table>
-	</div>
-		</div>
-	<br> <hr>
+                    {% if job.is_work_order_done == False %}
+                    <td style="background-color:#FF0000">{% else %}
+                    <td>{% endif %}{{job.client}}</td>
+                    <td>{{job.equipment_count}}</td>
+                    <td>{{job.subcontract_count}}</td>
+                    <td>{{job.wc_count}}</td>
+                    <td>{{job.rentals_count}}</td>
+                    <td>{{job.tickets_count}}</td>
+                    <td>{{job.field_notes_count}}</td>
+                    <td>{{job.man_hours_budgeted}}</td>
+                    <td>{{job.man_hours_used}}</td>
 
-
-				<button type="button" class="collapsible">{{equipment_count}} Pieces of Equipment</button>
-
-		<div class="content">
-	<h3>Checked Out Equipment</h3>
-	<div class="demo-html">
-		<table id="equipment_table" class="display" style="width:90%">
-			<thead>
-				<tr>
-					<th style="display:none;">ID</th>
-					<th>Job Number</th>
-					<th>Equip Number</th>
-					<th>Item</th>
-				</tr>
-			</thead>
-			<tbody>
-			{% if equipment %}
-			{% for item in equipment %}
-				<tr>
-					<td style="display:none;">{{item.id}}</td>
-					<td>{{item.job_number}}</td>
-					<td>{{item.number}}</td>
-					<td>
-						<a href = "{% url 'equipment_page' item.id %}">
-							<div style="height:100%;width:100%">
-								{{item.item}}
-							</div>
-						</a>
-					</td>
-				</tr>
-			{% endfor %}
-			{% endif %}
-			</tbody>
-		</table>
-	</div>
-		</div>
-	<br> <hr>
-
-						<button type="button" class="collapsible">{{rentals_count}} Current Rentals </button>
-
-		<div class="content">
-	<h3>Rentals</h3>
-	<div class="demo-html">
-		<table id="rentals_table" class="display" style="width:90%">
-			<thead>
-				<tr>
-					<th>Job Number</th>
-					<th>Item</th>
-					<th>PO</th>
-					<th>Date</th>
-					<th>Notes</th>
-				</tr>
-			</thead>
-			<tbody>
-			{% if rentals %}
-			{% for item in rentals %}
-				<tr>
-					<td>{{item.job_number}}</td>
-					<td>
-						<a href = "{% url 'rental_page' item.id 'YES' %}">
-							<div style="height:100%;width:100%">
-								{{item.item}}
-							</div>
-						</a>
-					</td>
-					<td>{{item.purchase_order}}</td>
-					<td>{{item.on_rent_date}}</td>
-					<td>{{item.notes}}</td>
-				</tr>
-			{% endfor %}
-			{% endif %}
-			</tbody>
-		</table>
-	</div>
-		</div>
-
-<br> <hr>
-
-		<button type="button" class="collapsible">{{tickets_count}} Outstanding Extra Work Tickets </button>
-		<div class="content">
-	<h3>Rentals</h3>
-	<div class="demo-html">
-		<table id="rentals_table" class="display" style="width:90%">
-			<thead>
-				<tr>
-					<th>Job Number</th>
-					<th>COP Number</th>
-					<th>Description</th>
-				</tr>
-			</thead>
-			<tbody>
-			{% if tickets %}
-			{% for item in tickets %}
-				<tr>
-					<td>{{item.job_number}}</td>
-					<td>
-						<a href = "{% url 'extra_work_ticket' item.id %}">
-							<div style="height:100%;width:100%">
-								{{item.cop_number}}
-							</div>
-						</a>
-					</td>
-					<td>{{item.description}}</td>
-				</tr>
-			{% endfor %}
-			{% endif %}
-			</tbody>
-		</table>
-	</div>
-		</div>
+                </tr>
+                {% endfor %}
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <br>
+    <hr>
 
 
-<script>
-var coll = document.getElementsByClassName("collapsible");
-var i;
+    <button type="button" class="collapsible">{{equipment_count}} Pieces of Equipment</button>
 
-for (i = 0; i < coll.length; i++) {
-  coll[i].addEventListener("click", function() {
-    this.classList.toggle("active");
-    var content = this.nextElementSibling;
-    if (content.style.display === "block") {
-      content.style.display = "none";
-    } else {
-      content.style.display = "block";
-    }
-  });
-}
-</script>
+    <div class="content">
+        <h3>Checked Out Equipment</h3>
+        <div class="demo-html">
+            <table id="equipment_table" class="display" style="width:90%">
+                <thead>
+                <tr>
+                    <th style="display:none;">ID</th>
+                    <th>Job Number</th>
+                    <th>Equip Number</th>
+                    <th>Item</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if equipment %}
+                {% for item in equipment %}
+                <tr>
+                    <td style="display:none;">{{item.id}}</td>
+                    <td>{{item.job_number}}</td>
+                    <td>{{item.number}}</td>
+                    <td>
+                        <a href="{% url 'equipment_page' item.id %}">
+                            <div style="height:100%;width:100%">
+                                {{item.item}}
+                            </div>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <br>
+    <hr>
+
+    <button type="button" class="collapsible">{{rentals_count}} Current Rentals</button>
+
+    <div class="content">
+        <h3>Rentals</h3>
+        <div class="demo-html">
+            <table id="rentals_table" class="display" style="width:90%">
+                <thead>
+                <tr>
+                    <th>Job Number</th>
+                    <th>Item</th>
+                    <th>PO</th>
+                    <th>Date</th>
+                    <th>Notes</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if rentals %}
+                {% for item in rentals %}
+                <tr>
+                    <td>{{item.job_number}}</td>
+                    <td>
+                        <a href="{% url 'rental_page' item.id 'YES' %}">
+                            <div style="height:100%;width:100%">
+                                {{item.item}}
+                            </div>
+                        </a>
+                    </td>
+                    <td>{{item.purchase_order}}</td>
+                    <td>{{item.on_rent_date}}</td>
+                    <td>{{item.notes}}</td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <br>
+    <hr>
+
+    <button type="button" class="collapsible">{{tickets_count}} Outstanding Extra Work Tickets</button>
+    <div class="content">
+        <h3>Rentals</h3>
+        <div class="demo-html">
+            <table id="rentals_table" class="display" style="width:90%">
+                <thead>
+                <tr>
+                    <th>Job Number</th>
+                    <th>COP Number</th>
+                    <th>Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if tickets %}
+                {% for item in tickets %}
+                <tr>
+                    <td>{{item.job_number}}</td>
+                    <td>
+                        <a href="{% url 'extra_work_ticket' item.id %}">
+                            <div style="height:100%;width:100%">
+                                {{item.cop_number}}
+                            </div>
+                        </a>
+                    </td>
+                    <td>{{item.description}}</td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <script>
+        var coll = document.getElementsByClassName("collapsible");
+        var i;
+
+        for (i = 0; i < coll.length; i++) {
+          coll[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            var content = this.nextElementSibling;
+            if (content.style.display === "block") {
+              content.style.display = "none";
+            } else {
+              content.style.display = "block";
+            }
+          });
+        }
+    </script>
 </body>
 </html>
 
