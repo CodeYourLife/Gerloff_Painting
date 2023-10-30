@@ -4,6 +4,7 @@ import django_filters
 from django.db.models import Q
 from django import forms
 
+
 class JobsFilter2(django_filters.FilterSet):
     search = django_filters.CharFilter(label='Job Name =', method='search_filter')
     search4 = django_filters.CharFilter(label='GC =', method='search_filter4')
