@@ -201,7 +201,9 @@
             <form action="{% url 'job_page' job.job_number %}" method="post">
                 {% csrf_token %}
 <!--                <label for="add_note">ADD A NOTE: </label> <br>-->
-                <input type="text" id="add_note" name="add_note" size="60">
+                <br>
+                <textarea class="form-control" id="add_note" name="add_note" rows="2" cols="10" ></textarea>
+
                 <input type="submit" name="Form3" value="Add Note"/>
             </form>
             {% endfor %}
