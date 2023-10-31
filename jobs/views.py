@@ -28,10 +28,16 @@ from django_tables2 import RequestConfig
 
 @login_required(login_url='/accounts/login')
 def change_start_date(request, jobnumber, previous, super, filter):
+    #jobnumber is the job number you are changing
+    #previous is either "jobpage"(job_page) or "super"(super_home)
+    #super is if super_home was filtered to a certain superintendent
+    #filter is if super_home was filtered to UPCOMING or ALL. OR, it is set to JOB for job page
+
     jobs = Jobs.objects.get(job_number=jobnumber)
     format_date = jobs.start_date.strftime("%Y-%m-%d")
     previous_page = previous
     if request.method == 'POST':
+        print(request.POST)
         if 'is_active' in request.POST:
             if jobs.is_active == False:
                 status = 1
@@ -48,14 +54,17 @@ def change_start_date(request, jobnumber, previous, super, filter):
             start_date_change(jobs, request.POST['start_date'], status, request.POST['date_note'],
                               request.user.first_name + " " + request.user.last_name, False)
         else:
-            if 'follow_up' in request.POST:
+            if 'follow_up' in request.POST or request.POST['date_note'] != "":
                 jobs.start_date_checked = date.today()
                 if request.POST['date_note'] != "" :
                     JobNotes.objects.create(job_number=jobs, note="Start Date is Still: " + str(request.POST['start_date']) + ". " + request.POST['date_note'],
                                             type="auto_start_date_note", user=request.user.first_name + " " + request.user.last_name, date=date.today())
                 jobs.save()
         if previous == 'jobpage':
-            return redirect('job_page', jobnumber='ALL')
+            if filter == 'JOB':
+                return redirect('job_page', jobnumber=jobnumber)
+            else:
+                return redirect('job_page', jobnumber='ALL')
         else:
             return redirect('super_home', super=super, filter=filter)
     return render(request, "change_start_date.html",
@@ -457,7 +466,7 @@ def job_page(request, jobnumber):
                        'subcontracts': subcontracts, 'submittals': submittals, 'packages': packages,
                        'deliveries': deliveries, 'wc_not_ordereds': wc_not_ordereds, 'wc_ordereds': wc_ordereds,
                        'jobs': jobs, 'tickets': tickets, 'open_cos': open_cos, 'approved_cos': approved_cos,
-                       'equipments': equipment, 'rentals': rentals})
+                       'equipments': equipment, 'rentals': rentals,})
     else:
         if request.method == 'POST':
             if 'add_note' in request.POST:
