@@ -6,6 +6,9 @@ from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
 from equipment.models import Inventory
 from jobs.models import Jobs
+from django.http import HttpResponse
+import json
+
 
 @login_required(login_url='/accounts/login')
 def new_production_report(request, jobnumber):
@@ -341,6 +344,24 @@ def production_reports(request, id):
 def employees_home(request):
     send_data = {}
     send_data['employees'] = Employees.objects.filter(active=True)
+    if request.is_ajax():
+        employeeId = request.GET['id']
+        certifications = Certifications.objects.filter(employee=employeeId)
+        equipment = Inventory.objects.filter(assigned_to=employeeId)
+        writeUps = WriteUp.objects.filter(employee=employeeId)
+        certs = []
+        for cert in certifications:
+            certs.append({'category': cert.category.description})
+        equips = []
+        for equip in equipment:
+            equips.append({'description': equip.item})
+        wrtUps = []
+        for writeUp in writeUps:
+            wrtUps.append({'description': writeUp.description})
+        print(certs, equips, wrtUps)
+        data_details = {'certifications': certs, 'equipment': equips, 'writeUps': wrtUps}
+        return HttpResponse(json.dumps(data_details))
+
     return render(request, "employees_home.html", send_data)
 
 @login_required(login_url='/accounts/login')
