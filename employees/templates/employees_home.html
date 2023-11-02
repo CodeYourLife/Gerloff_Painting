@@ -56,6 +56,34 @@
         $(document).ready(function () {
             var table = $('#employees_table').DataTable({});
         })
+      function showEmployeeData(x) {
+        $.ajax({
+            method: 'GET',
+            url: '/employees/employees_home',
+            data: {'id': x},
+            success: function (data) {
+                  parsedData = JSON.parse(data);
+                  let text = "<table border='1'>"
+                  parsedData.certifications.forEach((element) => {
+                    text += "<tr><td>" + element.category + "</td></tr>";
+                  });
+                  text += "</table>"
+                  document.getElementById("certifications").innerHTML = text;
+                  text = "<table border='1'>"
+                  parsedData.writeUps.forEach((element) => {
+                    text += "<tr><td>" + element.description + "</td></tr>";
+                  });
+                  text += "</table>"
+                  document.getElementById("writeUps").innerHTML = text;
+                  text = "<table border='1'>"
+                  parsedData.equipment.forEach((element) => {
+                    text += "<tr><td>" + element + "</td></tr>";
+                  });
+                  text += "</table>"
+                  document.getElementById("equipment").innerHTML = text;
+            }
+        });
+      }
 
     </script>
 
@@ -83,22 +111,43 @@
             <thead>
             <tr>
                 <th class="col">ID</th>
-                <th class="col">Name</th>
+                <th class="col">First Name</th>
+                <th class="col">Middle Name</th>
+                <th class="col">Last Name</th>
+                <th class="col">Phone</th>
+                <th class="col">Email</th>
                 <th class="col">Nickname</th>
+                <th class="col">Employer</th>
+                <th class="col">Job Title</th>
                 <th class="col">Level</th>
             </tr>
             </thead>
             <tbody>
             {% for x in employees %}
-            <tr>
+            <tr onclick="showEmployeeData( '{{ x.id }}' )">
                 <td><a href="{% url 'employees_page' x.id %}">{{x.id}}</td>
-                <td>{{x.last_name}} {{x.first_name}}</td>
+                <td>{{x.first_name}}</td>
+                <td>{{x.middle_name}}</td>
+                <td>{{x.last_name}}</td>
+                <td>{{x.phone}}</td>
+                <td>{{x.email}}</td>
                 <td>{{x.nickname}}</td>
+                <td>{{x.employer}}</td>
+                <td>{{x.jobtitle}}</td>
                 <td>{{x.level}}</td>
             </tr>
             {% endfor %}
             </tbody>
         </table>
+        <h5>Certifications</h5>
+        <div id="certifications">
+        </div>
+        <h5>Checked-Out Equipment</h5>
+        <div id="equipment">
+        </div>
+        <h5>Write Ups</h5>
+        <div id="writeUps">
+        </div>
     </div>
 </div>
 </body>

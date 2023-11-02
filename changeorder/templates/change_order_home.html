@@ -18,7 +18,13 @@
             max-width: 200px !important;
             overflow-x: hidden;
             text-wrap: nowrap !important;
-            word-wrap: normal !important;
+            white-space: pre !important;
+            -moz-overflow: hidden !important;
+        }
+        @-moz-document url-prefix() {
+            .table td {
+                overflow: hidden;
+            }
         }
     </style>
     <link rel="stylesheet" href="{% static 'project_styles.css' %}">
