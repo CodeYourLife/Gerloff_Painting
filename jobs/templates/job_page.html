@@ -111,7 +111,25 @@
             overflow-x: hidden;
             text-wrap: nowrap !important;
             white-space: pre !important;
+            -moz-overflow: hidden !important;
         }
+        @-moz-document url-prefix() {
+            .table td {
+                overflow: hidden;
+            }
+        }
+
+
+        .container {
+            overflow-x: auto;
+            -moz-overflow: auto !important;
+        }
+        @-moz-document url-prefix() {
+            .container {
+                overflow: auto;
+            }
+        }
+
     </style>
 </head>
 <body>
