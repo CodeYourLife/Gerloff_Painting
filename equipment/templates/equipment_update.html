@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+
+	</style>
+	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+
+$(document).ready(function () {
+    document.getElementById("hide_this").style.display = "none";
+})
+
+function show_hidden() {
+  	var x = document.getElementById("hide_this");
+  	var y = document.getElementById("select_vendor");
+  	if (y.value == "add_new"){
+  		x.style.display = "block";}
+  	else {x.style.display = "none"}
+}
+        function check_booking_data() {
+        var y = document.getElementById("select_vendor");
+        var x = document.getElementById("new_vendor");
+            if (y.value =="add_new"){
+            	if(x.value == ""){
+                	alert('Please type vendor name')
+                	return false;
+                }
+			}
+
+            }
+
+	</script>
+</head>
+<body>
+	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+		<a class="navbar-brand sub-navbar-brand" href="#">Equipment</a>
+		<div id="navbarNavDropdown2">
+		  <ul class="sub-nav-list navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'equipment_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link active" >UPDATE {{item.item}}</a></li>
+    </ul>
+  </div>
+</nav>
+<div class ="container">
+ <form name = equipment_input action="{% url 'update_equipment' item.id %}" method="post"  onSubmit = "return check_booking_data()">
+{% csrf_token %}
+			<label for="inventory_type0">Select Equipment Type</label>
+            <select id="inventory_type0" name="inventory_type0" >
+				<option value = {{item.inventory_type.id}}>{{item.inventory_type.type}}</option>
+                {% for type in inventorytypes %}
+                <option value={{type.id}}>{{type.type}}</option>
+                {% endfor %}
+
+            </select>
+
+	 <br><br>
+
+	 Item Description: <input type= "text" name="item" id="item" value= "{{item.item}}" size="30" required />
+	 <br><br>
+	 {% if item.number %}
+	 Gerloff Number:<input type= "text" name="number" id="number" value= "{{item.number}}" size="30"  />
+	 {% else %}
+	 Gerloff Number:<input type= "text" name="number" id="number" placeholder = "GP Number" size="30"  />
+	 {% endif %}
+	<br><br>
+                    <label for="purchase_date">Date Purchased:</label>
+                    <input type="date" id="purchase_date" name="purchase_date" value="{{format_date}}" required>
+
+	 Purchase Price:<input type= "number" name="purchase_price" id="purchase_price" value= {{item.purchase_price}} size="30" required/>
+	<br><br>
+	             <label for="select_vendor">Where did you purchase?</label>
+            <select id="select_vendor" name="select_vendor" onChange="show_hidden()">
+                	 {% if item.purchased_from %}
+				<option value = {{item.purchased_from.id}}>{{item.purchased_from.company_name}}</option>
+				{% endif %}
+				<option value="please_select">Select Vendor</option>
+				<option value="add_new">Add New Below</option>
+				{% if vendors %}
+                {% for vendor in vendors %}
+                <option value={{vendor.id}}>{{vendor.company_name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+
+<br><br>
+	 <div id="hide_this">
+<!--	 <input type = "hidden" id="purchased_from" name="purchased_from" value="new" />-->
+	 Type Vendor Name if Not in List:<input type= "text" name="new_vendor" id="new_vendor" placeholder="" size="30" onChange="check_vendor()"/>
+	</div>
+	 <br><br>
+	 	 {% if item.purchased_by is not None %}
+	 Purchased By:<input type= "text" name="purchased_by" id="purchased_by" value = "{{item.purchased_by}}" size="30" />
+	 	 {% else %}
+	 Purchased By:<input type= "text" name="purchased_by" id="purchased_by" placeholder="" size="30" />
+	 	 {% endif %}
+	<br><br>
+	 {% if item.serial_number is not None %}
+	 Serial Number:<input type= "text" name="serial_number" id="serial_number" value = "{{item.serial_number}}" size="30" />
+	 {% else %}
+	 Serial Number:<input type= "text" name="serial_number" id="serial_number" placeholder="" size="30" />
+	 {% endif %}
+
+	<br><br>
+	 	 {% if item.po_number is not None %}
+	 PO Number:<input type= "text" name="po_number" id="po_number" value = "{{item.po_number}}" size="30" />
+	 {% else %}
+	 PO Number:<input type= "text" name="po_number" id="po_number" placeholder="" size="30" />
+	 {% endif %}
+
+	<br><br>
+	 {% if item.is_labeled == False %}
+	 <input type="checkbox" name ="is_labeled" id="is_labeled"   /> <label for="is_labeled">"Does this have a Gerloff tag?" </label>
+	 {% else %}
+	 <input type="checkbox" name ="is_labeled" id="is_labeled" checked /> <label for="is_labeled">"Does this have a Gerloff tag?" </label>
+	 {% endif %}
+
+	 <br><br>
+
+<br><br>
+
+
+<input type="submit" value="Save" />
+    </form>
+</div>
+
+</body>
+</html>
+
+{% endblock %}

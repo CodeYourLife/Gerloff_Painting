@@ -53,13 +53,18 @@
         {% else %}
         <div class="col-sm-4 list-items"><b>Available:&nbsp;</b></div>
         {% endif %}
-        <div class="col-sm-4 list-items"><b>Vendor:&nbsp;</b>{{inventories.vendor}}</div>
+        <div class="col-sm-4 list-items"><b>Bought From:&nbsp;</b>{{inventories.purchased_from}}</div>
     </div>
     {% if inventories.assigned_to != None %}
     <div class="row">
         <div class="col-12 list-items"><b>Employee:&nbsp;</b>{{inventories.assigned_to}}</div>
     </div>
     {% endif %}
+    <div class = "row">
+        <form action="{% url 'update_equipment' inventories.id %}">
+            <input id="update_equipment" class="btn btn-primary btn-sm" name="update_equipment" type="submit" value="Update Information"/>
+        </form>
+    </div>
 </div>
 <div class="container">
     <div class="row">
