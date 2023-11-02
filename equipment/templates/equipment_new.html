@@ -24,22 +24,33 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
     var row_counter = 0;
+$(document).ready(function () {
+    document.getElementById("hide_this").style.display = "none";
+})
 
-	function check_vendor(){
-		var hidden = document.getElementById("purchased_from")
-		var text_box = document.getElementById("vendor_name")
-		var select_box = document.getElementById("select_vendor")
-		if (select_box.options[select_box.selectedIndex].text != text_box.value){
-			hidden.value = "new"
-		}
-	}
-    function update_vendor(){
-    	var vendor = document.getElementById("select_vendor")
-    	var placeholder = document.getElementById("purchased_from")
-    	placeholder.value = vendor.value
-    	name_destination = document.getElementById("vendor_name")
-    	name_destination.value = vendor.options[vendor.selectedIndex].text
-	}
+        function check_booking_data() {
+        var y = document.getElementById("select_vendor");
+        var x = document.getElementById("new_vendor");
+            if (y.value =="add_new"){
+            	if(x.value == ""){
+                	alert('Please type vendor name')
+                	return false;
+                }
+			}
+
+            }
+
+function update_vendor() {
+
+  	var x = document.getElementById("hide_this");
+  	var y = document.getElementById("select_vendor");
+  	if (y.value == "add_new"){
+  		x.style.display = "block";}
+  	else {x.style.display = "none"}
+
+}
+
+
     function add_dropdown(current_item) {
     		if (row_counter > 0){
     		for(let i = current_item+1; i < row_counter+1; i++){
@@ -166,7 +177,8 @@
 	<br><br>
 	             <label for="select_vendor">Where did you purchase?</label>
             <select id="select_vendor" name="select_vendor" onchange="update_vendor()" >
-                 <option value="new">Select Vendor</option>
+                 <option value="please_select">Select Vendor</option>
+				<option value="add_new">Add New Below</option>
 				{% if vendors %}
                 {% for vendor in vendors %}
                 <option value={{vendor.id}}>{{vendor.company_name}}</option>
@@ -175,9 +187,10 @@
             </select>
 
 <br><br>
-	 <input type = "hidden" id="purchased_from" name="purchased_from" value="new" />
-	 Type Vendor Name if Not in List:<input type= "text" name="vendor_name" id="vendor_name" placeholder="" size="30" onChange="check_vendor()"/>
-	<br><br>
+	 <div id="hide_this">
+	 Type Vendor Name if Not in List:<input type= "text" name="new_vendor" id="new_vendor" placeholder="" size="30" />
+	 </div>
+		 <br><br>
 	 Purchased By:<input type= "text" name="purchased_by" id="purchased_by" placeholder="" size="30" />
 	<br><br>
 	 Serial Number:<input type= "text" name="serial_number" id="serial_number" placeholder="" size="30" />
