@@ -133,6 +133,7 @@ def new_production_report(request, jobnumber):
             return render(request, "new_production_report.html", send_data)
     return render(request, "new_production_report.html", send_data)
 
+
 @login_required(login_url='/accounts/login')
 def new_assessment(request, id):
     send_data = {}
@@ -178,6 +179,7 @@ def new_assessment(request, id):
         # send_data['employees'] = json.dumps(list(Employees.objects.filter(active=True).values('id','last_name','first_name')), cls=DjangoJSONEncoder)
     return render(request, "new_assessment.html", send_data)
 
+
 @login_required(login_url='/accounts/login')
 def classes(request, id):
     send_data = {}
@@ -186,6 +188,7 @@ def classes(request, id):
         send_data['selected_item'] = ClassOccurrence.objects.get(id=id)
         send_data['attendees'] = ClassAttendees.objects.filter(class_event__id=id)
     return render(request, "classes.html", send_data)
+
 
 @login_required(login_url='/accounts/login')
 def new_class(request):
@@ -230,6 +233,7 @@ def new_class(request):
         return redirect('classes', id='ALL')
     return render(request, "new_class.html", send_data)
 
+
 @login_required(login_url='/accounts/login')
 def exams(request, id):
     send_data = {}
@@ -239,6 +243,7 @@ def exams(request, id):
         send_data['selected_item'] = ExamScore.objects.get(id=id)
         send_data['attendees'] = ClassAttendees.objects.filter(class_event__id=id)
     return render(request, "exams.html", send_data)
+
 
 @login_required(login_url='/accounts/login')
 def new_exam(request):
@@ -264,6 +269,7 @@ def new_exam(request):
             new_exam.exam = Exam.objects.get(id=request.POST['select_exam'])
         new_exam.save()
     return render(request, "new_exam.html", send_data)
+
 
 @login_required(login_url='/accounts/login')
 def mentorships(request, id):
@@ -296,6 +302,7 @@ def mentorships(request, id):
         send_data['selected_item'] = Mentorship.objects.get(id=id)
     return render(request, "mentorships.html", send_data)
 
+
 @login_required(login_url='/accounts/login')
 def new_mentorship(request):
     send_data = {}
@@ -308,6 +315,7 @@ def new_mentorship(request):
                                        note="New mentorship added")
         return redirect('mentorships', id=new_item.id)
     return render(request, "new_mentorship.html", send_data)
+
 
 @login_required(login_url='/accounts/login')
 def assessments(request, id):
@@ -330,6 +338,7 @@ def assessments(request, id):
         send_data['selected_assessment'] = selected_assessment
     return render(request, "assessments.html", send_data)
 
+
 @login_required(login_url='/accounts/login')
 def production_reports(request, id):
     send_data = {}
@@ -340,6 +349,7 @@ def production_reports(request, id):
         send_data['production_reports'] = ProductionItems.objects.all().order_by('employee', 'date')
     return render(request, "production_reports.html", send_data)
 
+
 @login_required(login_url='/accounts/login')
 def employees_home(request):
     send_data = {}
@@ -347,22 +357,24 @@ def employees_home(request):
     if request.is_ajax():
         employeeId = request.GET['id']
         certifications = Certifications.objects.filter(employee=employeeId)
-        equipment = Inventory.objects.filter(assigned_to=employeeId)
+        equipment = Inventory.objects.filter(assigned_to=employeeId, date_returned__isnull=True)
         writeUps = WriteUp.objects.filter(employee=employeeId)
         certs = []
         for cert in certifications:
-            certs.append({'category': cert.category.description})
+            certs.append({'category': cert.category.description, 'description': cert.description,
+                          'dateExpires': str(cert.date_expires)})
         equips = []
         for equip in equipment:
-            equips.append({'description': equip.item})
+            equips.append({'item': equip.item, 'storageLocation': equip.storage_location, 'dateOut': str(equip.date_out)})
         wrtUps = []
         for writeUp in writeUps:
-            wrtUps.append({'description': writeUp.description})
-        print(certs, equips, wrtUps)
+            wrtUps.append({'supervisor': writeUp.supervisor.first_name + " " + writeUp.supervisor.last_name , 'date': str(writeUp.date), 'description': writeUp.description,
+                           'job': writeUp.job.job_name})
         data_details = {'certifications': certs, 'equipment': equips, 'writeUps': wrtUps}
         return HttpResponse(json.dumps(data_details))
 
     return render(request, "employees_home.html", send_data)
+
 
 @login_required(login_url='/accounts/login')
 def employees_page(request, id):
@@ -370,10 +382,12 @@ def employees_page(request, id):
     send_data['employee'] = Employees.objects.get(id=id)
     return render(request, "employees_page.html", send_data)
 
+
 @login_required(login_url='/accounts/login')
 def training(request):
     send_data = {}
     return render(request, "training.html", send_data)
+
 
 @login_required(login_url='/accounts/login')
 def my_page(request):
@@ -402,6 +416,7 @@ def my_page(request):
         employee.email = request.POST['email']
         employee.save()
     return render(request, "my_page.html", send_data)
+
 
 @login_required(login_url='/accounts/login')
 def certifications(request, id):
@@ -450,6 +465,7 @@ def certifications(request, id):
         cert.save()
     return render(request, "certifications.html", send_data)
 
+
 @login_required(login_url='/accounts/login')
 def new_certification(request):
     send_data = {}
@@ -482,6 +498,7 @@ def new_certification(request):
         return redirect('certifications', id=new_cert.id)
     return render(request, "new_certification.html", send_data)
 
+
 @login_required(login_url='/accounts/login')
 def add_new_employee(request):
     send_data = {}
@@ -489,12 +506,13 @@ def add_new_employee(request):
     send_data['employers'] = Employers.objects.all
     if request.method == 'POST':
         Employees.objects.create(first_name=request.POST['first_name'],
-                                                middle_name=request.POST['middle_name'],
-                                                last_name=request.POST['last_name'],
-                                                job_title=EmployeeTitles.objects.get(id=request.POST['jobTitle']),
-                                                employer=Employers.objects.get(id=request.POST['employer']))
+                                 middle_name=request.POST['middle_name'],
+                                 last_name=request.POST['last_name'],
+                                 job_title=EmployeeTitles.objects.get(id=request.POST['jobTitle']),
+                                 employer=Employers.objects.get(id=request.POST['employer']))
         return redirect('employees_home')
     return render(request, "add_new_employee.html", send_data)
+
 
 @login_required(login_url='/accounts/login')
 def write_ups(request, id):
@@ -506,6 +524,7 @@ def write_ups(request, id):
     if id != 'ALL':
         send_data['selected_item'] = WriteUp.objects.get(id=id)
     return render(request, "write_ups.html", send_data)
+
 
 @login_required(login_url='/accounts/login')
 def write_ups_new(request):
@@ -531,6 +550,7 @@ def write_ups_new(request):
             new_writeup.save()
         return redirect('write_ups', id=new_writeup.id)
     return render(request, "write_ups_new.html", send_data)
+
 
 @login_required(login_url='/accounts/login')
 def daily_reports(request, id):
