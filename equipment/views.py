@@ -20,6 +20,7 @@ from django.http import HttpResponse
 from media.utilities import MediaUtilities
 
 
+
 def update_equipment(request, id):
     item = Inventory.objects.get(id=id)
     if request.method == 'POST':
@@ -149,8 +150,13 @@ def equipment_new(request):
                                  cls=DjangoJSONEncoder)
     vendors = Vendors.objects.filter(category__category='Equipment Supplier')
     if request.method == 'POST':
+        if request.POST['purchased_from'] == 'new':
+            vendor = Vendors.objects.create(company_name=request.POST['vendor_name'],
+                                            category=VendorCategory.objects.get(category='Equipment Supplier'))
+        else:
+            vendor = Vendors.objects.get(id=request.POST['purchased_from'])
         inventory = Inventory.objects.create(item=request.POST['item'], inventory_type=InventoryType.objects.get(
-            id=request.POST['inventory_type0']), purchase_date=request.POST['purchase_date'],
+            id=request.POST['inventory_type0']), purchase_date=request.POST['purchase_date'], purchased_from=vendor,
                                              status="Available", number=request.POST['number'],
                                              purchase_price=request.POST['purchase_price'],
                                              purchased_by=request.POST['purchased_by'],
@@ -176,6 +182,14 @@ def equipment_new(request):
                                       user=request.user.first_name + " " + request.user.last_name,
                                       note="Purchased From " + vendor + ". " + inventory.notes,
                                       category="Misc")
+        createfolder("equipment/" + str(inventory.id))
+        if 'is_labeled' in request.POST:
+            inventory.is_labeled = True
+            inventory.save()
+        new_note = InventoryNotes.objects.create(inventory_item=inventory, date=date.today(),
+                                                 user=request.user.first_name + " " + request.user.last_name,
+                                                 note="Purchased From " + vendor.company_name + ". " + inventory.notes,
+                                                 category="Misc")
         return redirect('equipment_page', id=inventory.id)
     return render(request, "equipment_new.html",
                   {'vendors': vendors, 'inventorytype': inventorytype, 'inventoryitems1': inventoryitems1,
