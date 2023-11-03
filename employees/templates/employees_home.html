@@ -13,11 +13,20 @@
     <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
     <style type="text/css" class="init">
-        .active, .collapsible:hover {
+        nav .active, .collapsible:hover {
           background-color: Salmon;
         }
+        .nav-pills a {
+            color: black;
+        }
+        .nav-pills li {
+            padding: 2px;
+        }
+        .nav-pills .active {
+            background-color: #6c757d !important;
+            padding: 5px;
+        }
         .table td {
-            max-width: 200px !important;
             overflow-x: hidden;
             text-wrap: nowrap !important;
             word-wrap: normal !important;
@@ -42,6 +51,14 @@
         tr th {
             width: fit-content !important;
         }
+        .tab-content * {
+          color : black;
+          background-color: white !important;
+        }
+
+        .active * {
+            background-color: white !important;
+        }
     </style>
     <link rel="stylesheet" href="{% static 'project_styles.css' %}">
     <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
@@ -59,13 +76,14 @@
         $(document).ready(function () {
             var table = $('#employees_table').DataTable({});
         })
-      function showEmployeeData(x) {
+      function showEmployeeData(employeeId, employeeFirstName, employeeLastName) {
         $.ajax({
             method: 'GET',
             url: '/employees/employees_home',
-            data: {'id': x},
+            data: {'id': employeeId},
             success: function (data) {
                   parsedData = JSON.parse(data);
+                  document.getElementById("title").innerHTML = employeeFirstName + " " + employeeLastName + " Information";
                   let text = "<table border='1' class='table display'>"
                   text += "<thead><tr><th class='col'>Category</th><th class='col'>Description</th><th class='col'>Date Expires</th></tr></thead>"
                   parsedData.certifications.forEach((element) => {
@@ -76,7 +94,7 @@
                   text = "<table border='1' class='table display'>"
                   text += "<thead><tr><th class='col'>Supervisor</th><th class='col'>Date</th><th class='col'>Description</th><th class='col'>Job</th></tr></thead>"
                   parsedData.writeUps.forEach((element) => {
-                    text += "<tr><td>" + element.supervisor + "</td><td>" + element.date + "</td><td>" + element.description + "</td><td>" + element.job + "</td></tr>";
+                    text += "<tr><td>" + element.supervisor + "</td><td>" + element.date + "</td><td style='width: fit-content;'>" + element.description + "</td><td style='width: fit-content;'>" + element.job + "</td></tr>";
                   });
                   text += "</table>"
                   document.getElementById("writeUps").innerHTML = text;
@@ -109,9 +127,56 @@
     </div>
 
 </nav>
-
-
+<!-- Modal -->
+<div class="modal fade" id="employee-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="title"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-pills">
+                    <li>
+                        <a href="#1a" class="active" data-toggle="tab">Equipment</a>
+                    </li>
+                    <li><a href="#2a" data-toggle="tab">Certifications</a>
+                    </li>
+                    <li><a href="#3a" data-toggle="tab">Write Ups</a>
+                    </li>
+                </ul>
+                <div class="tab-content clearfix">
+                    <div class="tab-pane active" id="1a">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="equipment">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="2a">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="certifications">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="3a">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="writeUps">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 <div>
+    {% if user.is_superuser %}
     <div style="margin-top: 12px" class="table-responsive">
         <table id="employees_table" class="table display">
             <thead>
@@ -129,38 +194,24 @@
             </tr>
             </thead>
             <tbody>
-            {% for x in employees %}
-            <tr onclick="showEmployeeData( '{{ x.id }}' )">
-                <td><a href="{% url 'employees_page' x.id %}">{{x.id}}</td>
-                <td>{{x.first_name}}</td>
-                <td>{{x.middle_name}}</td>
-                <td>{{x.last_name}}</td>
-                <td>{{x.phone}}</td>
-                <td>{{x.email}}</td>
-                <td>{{x.nickname}}</td>
-                <td>{{x.employer}}</td>
-                <td>{{x.jobtitle}}</td>
-                <td>{{x.level}}</td>
+            {% for employee in employees %}
+            <tr onclick="showEmployeeData( '{{ employee.id }}', '{{ employee.first_name }}', '{{ employee.last_name }}' )">
+                <td><a href="{% url 'employees_page' employee.id %}">{{employee.id}}</a></td>
+                <td data-toggle="modal" data-target="#employee-modal">{{employee.first_name}}</td>
+                <td data-toggle="modal" data-target="#employee-modal">{{employee.middle_name}}</td>
+                <td data-toggle="modal" data-target="#employee-modal">{{employee.last_name}}</td>
+                <td>{{employee.phone}}</td>
+                <td>{{employee.email}}</td>
+                <td>{{employee.nickname}}</td>
+                <td style="width: fit-content;">{{employee.employer}}</td>
+                <td style="width: fit-content;">{{employee.jobtitle}}</td>
+                <td>{{employee.level}}</td>
             </tr>
             {% endfor %}
             </tbody>
         </table>
-        <h5>Certifications</h5>
-        <div style="margin-top: 12px" class="table-responsive">
-            <div id="certifications">
-            </div>
-        </div>
-        <h5>Checked-Out Equipment</h5>
-        <div style="margin-top: 12px" class="table-responsive">
-            <div id="equipment">
-            </div>
-        </div>
-        <h5>Write Ups</h5>
-        <div style="margin-top: 12px" class="table-responsive">
-            <div id="writeUps">
-            </div>
-        </div>
     </div>
+    {% endif %}
 </div>
 </body>
 </html>

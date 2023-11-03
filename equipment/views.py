@@ -323,6 +323,7 @@ def equipment_page(request, id):
             fn = os.path.basename(fileitem.name)
             fn2 = os.path.join(settings.MEDIA_ROOT, "equipment", str(inventory.id), fn)
             open(fn2, 'wb').write(fileitem.file.read())
+            foldercontents = os.listdir(path)
 
     return render(request, "equipment_page.html",
                   {'employees': employees, 'jobs': jobs, 'inventories': inventory, "table": table, "vendors": vendors,

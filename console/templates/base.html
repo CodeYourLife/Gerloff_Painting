@@ -47,7 +47,11 @@
         <li><a class="nav-item nav-link {% block nav_item_rentals %}{% endblock nav_item_rentals %}" href="{% url 'rentals_home' %}">Rentals</a></li>
         <li><a class="nav-item nav-link {% block nav_item_jobs %}{% endblock nav_item_jobs %}" href="{% url 'job_page' 'ALL' %}">Jobs</a></li>
         <li><a class="nav-item nav-link {% block nav_item_subs %}{% endblock nav_item_subs %}" href="{% url 'subcontractor_home' %}">Subcontractors</a></li>
+        {% if user.is_superuser %}
         <li><a class="nav-item nav-link {% block nav_item_employees %}{% endblock nav_item_employees %}" href="{% url 'employees_home' %}">Employees</a></li>
+        {% else %}
+        <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
+        {% endif %}
         <li><a class="nav-item nav-link {% block nav_item_wallcovering %}{% endblock nav_item_wallcovering %}" href="{% url 'wallcovering_home' %}">Wallcovering</a></li>
         <li><a class="nav-item nav-link {% block nav_item_changeorder %}{% endblock nav_item_changeorder %}" href="{% url 'change_order_home' %}">Change Orders</a></li>
         <li><a class="nav-item nav-link {% block nav_item_submittals %}{% endblock nav_item_submittals %}" href="{% url 'submittals_home' %}">Submittals</a></li>
@@ -68,7 +72,6 @@
         <li>Hello, {{user.first_name}}</li>
         <li><a class="nav-item nav-link {% block nav_item_logout %}{% endblock nav_item_logout %}" href="{% url 'logout' %}">Logout</a></li>
         {% else %}
-<!--        <li><a class="nav-item nav-link {% block nav_item_register %}{% endblock nav_item_register %}" href="{% url 'verify_pin' %}">Register</a></li>-->
         <li><a class="nav-item nav-link {% block nav_item_login %}{% endblock nav_item_login %}" href="{% url 'login' %}">Login</a></li>
         {% endif%}
 
