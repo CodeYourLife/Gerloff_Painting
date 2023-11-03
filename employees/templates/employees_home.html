@@ -39,6 +39,9 @@
             border-radius: 0.25rem;
             transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
         }
+        tr th {
+            width: fit-content !important;
+        }
     </style>
     <link rel="stylesheet" href="{% static 'project_styles.css' %}">
     <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
@@ -63,21 +66,24 @@
             data: {'id': x},
             success: function (data) {
                   parsedData = JSON.parse(data);
-                  let text = "<table border='1'>"
+                  let text = "<table border='1' class='table display'>"
+                  text += "<thead><tr><th class='col'>Category</th><th class='col'>Description</th><th class='col'>Date Expires</th></tr></thead>"
                   parsedData.certifications.forEach((element) => {
-                    text += "<tr><td>" + element.category + "</td></tr>";
+                    text += "<tr><td>" + element.category + "</td><td>" + element.description + "</td><td>" + element.dateExpires + "</td></tr>";
                   });
                   text += "</table>"
                   document.getElementById("certifications").innerHTML = text;
-                  text = "<table border='1'>"
+                  text = "<table border='1' class='table display'>"
+                  text += "<thead><tr><th class='col'>Supervisor</th><th class='col'>Date</th><th class='col'>Description</th><th class='col'>Job</th></tr></thead>"
                   parsedData.writeUps.forEach((element) => {
-                    text += "<tr><td>" + element.description + "</td></tr>";
+                    text += "<tr><td>" + element.supervisor + "</td><td>" + element.date + "</td><td>" + element.description + "</td><td>" + element.job + "</td></tr>";
                   });
                   text += "</table>"
                   document.getElementById("writeUps").innerHTML = text;
-                  text = "<table border='1'>"
+                  text = "<table border='1' class='table display'>"
+                  text += "<thead><tr><th class='col'>Category</th><th class='col'>Storage Location</th><th class='col'>Date Checked Out</th></tr></thead>"
                   parsedData.equipment.forEach((element) => {
-                    text += "<tr><td>" + element + "</td></tr>";
+                    text += "<tr><td>" + element.item + "</td><td>" + element.storageLocation + "</td><td>" + element.dateOut + "</td></tr>";
                   });
                   text += "</table>"
                   document.getElementById("equipment").innerHTML = text;
@@ -140,13 +146,19 @@
             </tbody>
         </table>
         <h5>Certifications</h5>
-        <div id="certifications">
+        <div style="margin-top: 12px" class="table-responsive">
+            <div id="certifications">
+            </div>
         </div>
         <h5>Checked-Out Equipment</h5>
-        <div id="equipment">
+        <div style="margin-top: 12px" class="table-responsive">
+            <div id="equipment">
+            </div>
         </div>
         <h5>Write Ups</h5>
-        <div id="writeUps">
+        <div style="margin-top: 12px" class="table-responsive">
+            <div id="writeUps">
+            </div>
         </div>
     </div>
 </div>
