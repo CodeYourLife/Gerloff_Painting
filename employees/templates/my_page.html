@@ -5,239 +5,336 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>DataTables example - HTML (DOM) sourced data</title>
-	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
-.active, .collapsible:hover {
-  background-color: Salmon;
-}
-.collapsible {
-  background-color: #777;
-  color: white;
-  cursor: pointer;
-  padding: 8px;
-  width: 100%;
-  border: none;
-  text-align: left;
-  outline: none;
-  font-size: 15px;
-}
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <title>DataTables example - HTML (DOM) sourced data</title>
+    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+    <style type="text/css" class="init">
+        .active, .collapsible:hover {
+          background-color: Salmon;
+        }
+        .collapsible {
+          background-color: #777;
+          color: white;
+          cursor: pointer;
+          padding: 8px;
+          width: 100%;
+          border: none;
+          text-align: left;
+          outline: none;
+          font-size: 15px;
+        }
 
-.content {
-  padding: 0 18px;
-  display: none;
-  overflow: hidden;
-  background-color: #f1f1f1;
-}
+        .content {
+          padding: 0 18px;
+          display: none;
+          overflow: hidden;
+          background-color: #f1f1f1;
+        }
 
-	</style>
-	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
-$(document).ready(function () {
-    var table = $('#employees2_table').DataTable({});
-})
+    </style>
+    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
+            data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+    <script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html"
+            async></script>
+    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html"
+            async></script>
+    <script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script type="text/javascript" language="javascript"
+            src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+    <script type="text/javascript" class="init">
+        $(document).ready(function () {
+            var table = $('#employees2_table').DataTable({});
+        })
 
-	</script>
+    </script>
 </head>
 <body>
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>
-        <li><a class="nav-item nav-link active" href="{% url 'my_page' %}">My Page</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
-		<li><a class="nav-item nav-link" href="{% url 'write_ups' 'ALL' %}">Write_Ups</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
-    </ul>
-  </div>
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav ">
+            {% if user.is_superuser %}
+            <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
+            {% else %}
+            <li><a class="nav-item nav-link" href="{% url 'my_page' %}">Home</a></li>
+            {% endif %}
+            <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>
+            <li><a class="nav-item nav-link active" href="{% url 'my_page' %}">My Page</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'write_ups' 'ALL' %}">Write_Ups</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
+        </ul>
+    </div>
 </nav>
 {{employee}}
 <!--{{employee.}}-->
-<form action="{% url 'my_page' %}" method="post" onSubmit = "return check_booking_data()" >
-	{% csrf_token %}
-<button type="button" class="collapsible">My Info</button>
-<div class="content">
-	<b>{{employee.first_name}} {{employee.last_name}}</b> Nickname: <input type="text" size = "20" name ="nickname" value = "{{employee.nickname}}" />
-	<br>Phone: <input type="text" size = "12" name ="phone" value = "{{employee.phone}}" />Email: <input type="email" size = "30" name ="email" value = "{{employee.email}}" />
-	<br> Current Level: {{employee.level}}<br>
-	<input type="submit" name="update_info" value="Update Info" />
-</div>
-	</form>
+<form action="{% url 'my_page' %}" method="post" onSubmit="return check_booking_data()">
+    {% csrf_token %}
+    <button type="button" class="collapsible">My Info</button>
+    <div class="content">
+        <b>{{employee.first_name}} {{employee.last_name}}</b> Nickname: <input type="text" size="20" name="nickname"
+                                                                               value="{{employee.nickname}}"/>
+        <br>Phone: <input type="text" size="12" name="phone" value="{{employee.phone}}"/>Email: <input type="email"
+                                                                                                       size="30"
+                                                                                                       name="email"
+                                                                                                       value="{{employee.email}}"/>
+        <br> Current Level: {{employee.level}}<br>
+        <input type="submit" name="update_info" value="Update Info"/>
+    </div>
+</form>
 
 <button type="button" class="collapsible">Assigned Tools</button>
 <div class="content">
-    <table id="employees_table" class="display" >
-		<tbody>
-	{% for x in inventory %}
-		<tr><td>{{x.item}}</td><td><a href="{%  url 'equipment_page' x.id %}">View</a></td></tr>
-	{% endfor %}</tbody>
-	</table>
-	</div>
+    <table id="employees_table" class="display">
+        <tbody>
+        {% for x in inventory %}
+        <tr>
+            <td>{{x.item}}</td>
+            <td><a href="{%  url 'equipment_page' x.id %}">View</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
 <button type="button" class="collapsible">Performed Assessments</button>
 <div class="content">
-	    <table id="employees_table" class="display" >
-			<tbody>
-	{% for x in assessments_performed %}
-		<tr><td>{{x.assessment.date}}</td><td>{{x.employee}}</td><td><a href="{%  url 'assessments' x.id %}">View</a></td></tr>
-	{% endfor %}</tbody>
-	</table>
-	</div>
+    <table id="employees_table" class="display">
+        <tbody>
+        {% for x in assessments_performed %}
+        <tr>
+            <td>{{x.assessment.date}}</td>
+            <td>{{x.employee}}</td>
+            <td><a href="{%  url 'assessments' x.id %}">View</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
 <button type="button" class="collapsible">Received Assessments</button>
 <div class="content">
-		    <table id="employees_table" class="display" ><tbody>
-	{% for x in assessments_received %}
-		<tr><td>{{x.assessment.date}}</td><td>{{x.assessment.reviewer}}</td><td>{{x.assessment.note}}</td><td><a href="{%  url 'assessments' x.id %}">View</a></td></tr>
-	{% endfor %}</tbody>
-	</table>
+    <table id="employees_table" class="display">
+        <tbody>
+        {% for x in assessments_received %}
+        <tr>
+            <td>{{x.assessment.date}}</td>
+            <td>{{x.assessment.reviewer}}</td>
+            <td>{{x.assessment.note}}</td>
+            <td><a href="{%  url 'assessments' x.id %}">View</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 
 
-	</div>
+</div>
 <button type="button" class="collapsible">Write-Ups Written</button>
 <div class="content">
-			    <table id="employees_table" class="display" ><tbody>
-	{% for x in writeups_written %}
-		<tr><td>{{x.date}}</td><td>{{x.employee}}</td><td>{{x.description}}</td><td><a href="{%  url 'write_ups' x.id %}">View</a></td></tr>
-	{% endfor %}</tbody>
-	</table>
+    <table id="employees_table" class="display">
+        <tbody>
+        {% for x in writeups_written %}
+        <tr>
+            <td>{{x.date}}</td>
+            <td>{{x.employee}}</td>
+            <td>{{x.description}}</td>
+            <td><a href="{%  url 'write_ups' x.id %}">View</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 
 
-	</div>
+</div>
 <button type="button" class="collapsible">Write-Ups Received</button>
 <div class="content">
-				    <table id="employees_table" class="display" ><tbody>
-	{% for x in writeups_received %}
-		<tr><td>{{x.date}}</td><td>{{x.supervisor}}</td><td>{{x.description}}</td><td><a href="{%  url 'write_ups' x.id %}">View</a></td></tr>
-	{% endfor %}</tbody>
-	</table>
+    <table id="employees_table" class="display">
+        <tbody>
+        {% for x in writeups_received %}
+        <tr>
+            <td>{{x.date}}</td>
+            <td>{{x.supervisor}}</td>
+            <td>{{x.description}}</td>
+            <td><a href="{%  url 'write_ups' x.id %}">View</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 
-	</div>
+</div>
 <button type="button" class="collapsible">Vacation Requests</button>
 <div class="content">
     {{vacation_requests}}
 
-	</div>
+</div>
 <button type="button" class="collapsible">Production Reports Written</button>
 <div class="content">
-					    <table id="employees_table" class="display" ><tbody>
-	{% for x in production_reports_written %}
-		<tr><td>{{x.date}}</td><td>{{x.job}}</td><td><a href="{%  url 'daily_reports' x.id %}">View</a></td></tr>
-	{% endfor %}</tbody>
-	</table>
+    <table id="employees_table" class="display">
+        <tbody>
+        {% for x in production_reports_written %}
+        <tr>
+            <td>{{x.date}}</td>
+            <td>{{x.job}}</td>
+            <td><a href="{%  url 'daily_reports' x.id %}">View</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 
 
-	</div>
+</div>
 <button type="button" class="collapsible">Production Reports Received</button>
 <div class="content">
 
-						    <table id="employees_table" class="display" ><tbody>
-	{% for x in production_reports_received %}
-								<tr><td>{{x.date}}</td><td>{{x.job}}</td><td>{{x.description}}</td><td>[{{x.value1}} {{x.unit}}]{% if x.value2 != None %}[{{x.value2}} {{x.unit2}}]{% endif %} {% if x.value3 != None %}[{{x.value3}} {{x.unit3}}]{% endif %}</td><td><a href="{%  url 'production_reports' x.id %}">View</a></td></tr>
-	{% endfor %}</tbody>
-	</table>
+    <table id="employees_table" class="display">
+        <tbody>
+        {% for x in production_reports_received %}
+        <tr>
+            <td>{{x.date}}</td>
+            <td>{{x.job}}</td>
+            <td>{{x.description}}</td>
+            <td>[{{x.value1}} {{x.unit}}]{% if x.value2 != None %}[{{x.value2}} {{x.unit2}}]{% endif %} {% if x.value3
+                != None %}[{{x.value3}} {{x.unit3}}]{% endif %}
+            </td>
+            <td><a href="{%  url 'production_reports' x.id %}">View</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 
 
-	</div>
+</div>
 <button type="button" class="collapsible">Classes Taught</button>
 <div class="content">
 
-							    <table id="employees_table" class="display" ><tbody>
-	{% for x in classes_taught %}
-								<tr><td>{{x.date}} - </td><td><a href="{%  url 'classes' x.id %}">View - </a></td><td>{{x.description}} - </td><td>{{x.note}} </td></tr>
-	{% endfor %}
-									</tbody>
-	</table>
+    <table id="employees_table" class="display">
+        <tbody>
+        {% for x in classes_taught %}
+        <tr>
+            <td>{{x.date}} -</td>
+            <td><a href="{%  url 'classes' x.id %}">View - </a></td>
+            <td>{{x.description}} -</td>
+            <td>{{x.note}}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 
-	</div>
+</div>
 <button type="button" class="collapsible">Classes Attended</button>
 <div class="content">
 
-								    <table id="employees_table" class="display" ><tbody>
-	{% for x in classes_attended %}
-								<tr><td>{{x.class_event.date}} - </td><td><a href="{%  url 'classes' x.class_event.id %}">View - </a></td><td>{{x.class_event.description}} - </td><td>{{x.class_event.note}} </td></tr>
-	{% endfor %}
-									</tbody>
-	</table>
+    <table id="employees_table" class="display">
+        <tbody>
+        {% for x in classes_attended %}
+        <tr>
+            <td>{{x.class_event.date}} -</td>
+            <td><a href="{%  url 'classes' x.class_event.id %}">View - </a></td>
+            <td>{{x.class_event.description}} -</td>
+            <td>{{x.class_event.note}}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 
 
-	</div>
+</div>
 <button type="button" class="collapsible">Exam Scores</button>
 <div class="content">
 
-									    <table id="employees_table" class="display" ><tbody>
-	{% for x in exams %}
-								<tr><td>{{x.date}} - </td><td>{% if x.exam != None %}{{x.exam}}{% else %}{{x.exam2}}{% endif %} - </td><td><a href="{%  url 'exams' x.id %}">View - </a></td><td>Score: {{x.score}} / {% if x.exam != None %}{{x.exam.max_score}}{% else %}{{x.custom_score_max}}{% endif %}</td></tr>
-	{% endfor %}
-									</tbody>
-										</table>
+    <table id="employees_table" class="display">
+        <tbody>
+        {% for x in exams %}
+        <tr>
+            <td>{{x.date}} -</td>
+            <td>{% if x.exam != None %}{{x.exam}}{% else %}{{x.exam2}}{% endif %} -</td>
+            <td><a href="{%  url 'exams' x.id %}">View - </a></td>
+            <td>Score: {{x.score}} / {% if x.exam != None %}{{x.exam.max_score}}{% else %}{{x.custom_score_max}}{% endif
+                %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 
 </div>
 <button type="button" class="collapsible">Mentorships -As Mentor</button>
 <div class="content">
-										    <table id="employees_table" class="display" ><tbody>
-	{% for x in mentorship_mentor %}
-	<tr><td>{{x.start_date}} - </td><td><b>Apprentice: </b>{{x.apprentice}} - </td><td><a href="{%  url 'mentorships' x.id %}">View - </a></td><td>{% if x.is_closed == False %} Active {% else %} Closed {% endif %}</td></tr>
-	{% endfor %}
-									</tbody>
-										</table>
+    <table id="employees_table" class="display">
+        <tbody>
+        {% for x in mentorship_mentor %}
+        <tr>
+            <td>{{x.start_date}} -</td>
+            <td><b>Apprentice: </b>{{x.apprentice}} -</td>
+            <td><a href="{%  url 'mentorships' x.id %}">View - </a></td>
+            <td>{% if x.is_closed == False %} Active {% else %} Closed {% endif %}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 
 
-	</div>
+</div>
 <button type="button" class="collapsible">Mentorships -As Apprentice</button>
 <div class="content">
 
-											    <table id="employees_table" class="display" ><tbody>
-	{% for x in mentorship_apprentice %}
-	<tr><td>{{x.start_date}} - </td><td><b>Mentor: </b>{{x.mentor}} - </td><td><a href="{%  url 'mentorships' x.id %}">View - </a></td><td>{% if x.is_closed == False %} Active {% else %} Closed {% endif %}</td></tr>
-	{% endfor %}
-									</tbody>
-										</table>
+    <table id="employees_table" class="display">
+        <tbody>
+        {% for x in mentorship_apprentice %}
+        <tr>
+            <td>{{x.start_date}} -</td>
+            <td><b>Mentor: </b>{{x.mentor}} -</td>
+            <td><a href="{%  url 'mentorships' x.id %}">View - </a></td>
+            <td>{% if x.is_closed == False %} Active {% else %} Closed {% endif %}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 
 
-
-	</div>
+</div>
 <button type="button" class="collapsible">Certifications</button>
 <div class="content">
-    											    <table id="employees_table" class="display" ><tbody>
-	{% for x in certifications %}
-	<tr><td>{{x.category}} - </td><td>{{x.description}} - </td><td><a href="{%  url 'certifications' x.id %}">View - </a></td><td>{{x.date_received}} - </td><td>{{x.date_expires}} - </td><td>{{x.action}} - </td></tr>
-	{% endfor %}
-									</tbody>
-										</table>
+    <table id="employees_table" class="display">
+        <tbody>
+        {% for x in certifications %}
+        <tr>
+            <td>{{x.category}} -</td>
+            <td>{{x.description}} -</td>
+            <td><a href="{%  url 'certifications' x.id %}">View - </a></td>
+            <td>{{x.date_received}} -</td>
+            <td>{{x.date_expires}} -</td>
+            <td>{{x.action}} -</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 
 </div>
 <button type="button" class="collapsible">Actions Required</button>
-	<div class="content">
+<div class="content">
     {{actions}}
 </div>
 <script>
-var coll = document.getElementsByClassName("collapsible");
-var i;
+    var coll = document.getElementsByClassName("collapsible");
+    var i;
 
-for (i = 0; i < coll.length; i++) {
-  coll[i].addEventListener("click", function() {
-    this.classList.toggle("active");
-    var content = this.nextElementSibling;
-    if (content.style.display === "block") {
-      content.style.display = "none";
-    } else {
-      content.style.display = "block";
+    for (i = 0; i < coll.length; i++) {
+      coll[i].addEventListener("click", function() {
+        this.classList.toggle("active");
+        var content = this.nextElementSibling;
+        if (content.style.display === "block") {
+          content.style.display = "none";
+        } else {
+          content.style.display = "block";
+        }
+      });
     }
-  });
-}
 </script>
 </body>
 
