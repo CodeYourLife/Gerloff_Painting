@@ -149,11 +149,11 @@
             {% else %}
             {% if inventory.job_number.is_closed == True %}
             <td style="background-color:#ffff00"><a href="{% url 'job_page' inventory.job_number.job_number %}">
-                {{inventory.job_number.job_name.trim}}
+                {{inventory.job_number.job_name}}
             </a></td>
             {% else %}
             <td><a href="{% url 'job_page' inventory.job_number.job_number %}">
-                {{inventory.job_number.job_name.trim}}
+                {{inventory.job_number.job_name}}
             </a></td>
             {% endif %}
             {% endif %}
