@@ -144,16 +144,16 @@
             {% if inventory.service_vendor == None %}
             <td>Gerloff Painting</td>
             {% else %}
-            <td>{{inventory.service_vendor.company_name}}</td>
+            <td>{{inventory.service_vendor.company_name.trim}}</td>
             {% endif %}
             {% else %}
             {% if inventory.job_number.is_closed == True %}
             <td style="background-color:#ffff00"><a href="{% url 'job_page' inventory.job_number.job_number %}">
-                {{inventory.job_number.job_name}}
+                {{inventory.job_number.job_name.trim}}
             </a></td>
             {% else %}
             <td><a href="{% url 'job_page' inventory.job_number.job_number %}">
-                {{inventory.job_number.job_name}}
+                {{inventory.job_number.job_name.trim}}
             </a></td>
             {% endif %}
             {% endif %}
