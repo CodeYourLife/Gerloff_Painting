@@ -21,6 +21,35 @@ from media.utilities import MediaUtilities
 
 
 
+def update_equipment(request, id):
+    item = Inventory.objects.get(id=id)
+    if request.method == 'POST':
+        if 'is_labeled' in request.POST:
+            item.is_labeled = True
+        if request.POST['select_vendor'] == 'add_new':
+            item.purchased_from = Vendors.objects.create(company_name=request.POST['new_vendor'],
+                                                         category=VendorCategory.objects.get(
+                                                             category='Equipment Supplier'))
+        elif request.POST['select_vendor'] != 'please_select':
+            item.purchased_from = Vendors.objects.get(id=request.POST['select_vendor'])
+        item.number = request.POST['number']
+        item.purchase_date = request.POST['purchase_date']
+        item.purchase_price = request.POST['purchase_price']
+        item.purchased_by = request.POST['purchased_by']
+        item.serial_number = request.POST['serial_number']
+        item.po_number = request.POST['po_number']
+        item.item = request.POST['item']
+        item.inventory_type = InventoryType.objects.get(id=request.POST['inventory_type0'])
+        item.save()
+        return redirect('equipment_page', id=id)
+    send_data = {}
+    send_data['item'] = item
+    send_data['inventorytypes'] = InventoryType.objects.all()
+    send_data['vendors'] = Vendors.objects.filter(category__category='Equipment Supplier')
+    send_data['format_date'] = item.purchase_date.strftime("%Y-%m-%d")
+    return render(request, "equipment_update.html", send_data)
+
+
 @login_required(login_url='/accounts/login')
 def equipment_remove_from_outgoing_cart(request, id):  # status = None, Outgoing, Incoming
     item = Inventory.objects.get(id=id)
@@ -58,7 +87,7 @@ def equipment_batch_outgoing(request, status):  # status is Outgoing, Incoming
     jobs = Jobs.objects.filter(is_closed=False)
     if request.method == 'POST':
         if 'filter_job_name' in request.POST:
-            jobs = Jobs.objects.filter(is_closed=False,job_name__icontains=request.POST['filter_job_name'])
+            jobs = Jobs.objects.filter(is_closed=False, job_name__icontains=request.POST['filter_job_name'])
         else:
             if status == "Outgoing":
                 for x in Inventory.objects.filter(batch='Outgoing'):
@@ -133,6 +162,26 @@ def equipment_new(request):
                                              purchased_by=request.POST['purchased_by'],
                                              serial_number=request.POST['serial_number'],
                                              po_number=request.POST['po_number'], notes=request.POST['notes'])
+        if request.POST['select_vendor'] == 'add_new':
+            print("PUMPKIN1")
+            inventory.purchased_from = Vendors.objects.create(company_name=request.POST['new_vendor'],
+                                                              category=VendorCategory.objects.get(
+                                                                  category='Equipment Supplier'))
+            vendor = inventory.purchased_from.company_name
+        elif request.POST['select_vendor'] != 'please_select':
+            print("PUMPKIN2")
+            inventory.purchased_from = Vendors.objects.get(id=request.POST['select_vendor'])
+            vendor = inventory.purchased_from.company_name
+        else:
+            vendor = "?"
+        createfolder("equipment/" + str(inventory.id))
+        if 'is_labeled' in request.POST:
+            inventory.is_labeled = True
+        inventory.save()
+        InventoryNotes.objects.create(inventory_item=inventory, date=date.today(),
+                                      user=request.user.first_name + " " + request.user.last_name,
+                                      note="Purchased From " + vendor + ". " + inventory.notes,
+                                      category="Misc")
         createfolder("equipment/" + str(inventory.id))
         if 'is_labeled' in request.POST:
             inventory.is_labeled = True
@@ -149,10 +198,10 @@ def equipment_new(request):
 
 
 @login_required(login_url='/accounts/login')
-def get_directory_contents(request, id, value,app):
+def get_directory_contents(request, id, value, app):
     return MediaUtilities().getDirectoryContents(id, value, app)
 
-  
+
 @login_required(login_url='/accounts/login')
 def equipment_page(request, id):
     inventory = Inventory.objects.get(id=id)
@@ -164,7 +213,8 @@ def equipment_page(request, id):
     jobs = Jobs.objects.filter(is_closed=False).order_by('job_name')
     if request.method == 'POST':
         if 'search_job' in request.POST:
-            jobs = Jobs.objects.filter(is_closed=False,job_name__icontains=request.POST['search_job']).order_by('job_name')
+            jobs = Jobs.objects.filter(is_closed=False, job_name__icontains=request.POST['search_job']).order_by(
+                'job_name')
         if 'apply_filter' in request.POST:
             table = EquipmentNotesTable(
                 InventoryNotes.objects.filter(inventory_item=inventory, category=request.POST['select_category']))
@@ -273,7 +323,6 @@ def equipment_page(request, id):
             fn = os.path.basename(fileitem.name)
             fn2 = os.path.join(settings.MEDIA_ROOT, "equipment", str(inventory.id), fn)
             open(fn2, 'wb').write(fileitem.file.read())
-
 
     return render(request, "equipment_page.html",
                   {'employees': employees, 'jobs': jobs, 'inventories': inventory, "table": table, "vendors": vendors,
