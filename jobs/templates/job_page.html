@@ -194,7 +194,7 @@
 
     <div class="row">
         <div class="col">
-            <form action="{% url 'update_job_info' job.job_number %}"><input type="submit"
+            <form action="{% url 'update_job_info' job.job_number %}"><input type="submit" class="btn btn-info btn-sm"
                                                                              value="Update Job Information"/></form>
         </div>
     </div>
@@ -205,7 +205,11 @@
     </div>
     <div class="row">
         <div class="col-sm-2">
-            <form action="{% url 'change_order_new' job.job_number %}"><input type="submit" value="New Change Order"/>
+            <form action="{% url 'change_order_new' job.job_number %}"><input type="submit" class="btn btn-primary btn-sm" value="New Change Order"/>
+            </form>
+        </div>
+                <div class="col-sm-2">
+            <form action="{% url 'request_pickup' job.job_number %}"><input type="submit" class="btn btn-primary btn-sm" value="Request Job Pickup"/>
             </form>
         </div>
     </div>
