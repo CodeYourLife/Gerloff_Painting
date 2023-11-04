@@ -145,26 +145,27 @@ class BatchInventory(models.Model):
     current = models.BooleanField(default=False)
 
 
-class BatchInventoryItems:
-    id = models.BigAutoField(primary_key=True)
-    batchinventory = models.ForeignKey(
-        BatchInventory, on_delete=models.PROTECT, related_name='batchitem1')
-    inventory = models.ForeignKey(
-        Inventory, on_delete=models.PROTECT, related_name='batchitem2')
-
-
-class PickupRequest:
+class PickupRequest(models.Model):
     id = models.BigAutoField(primary_key=True)
     date = models.DateField()
     job_number = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT)
-    reqest_notes = models.CharField(null=True, max_length=500)
+    request_notes = models.CharField(null=True, max_length=500)
     completed_notes = models.CharField(null=True, max_length=500)
     completed_date = models.DateField()
     is_closed = models.BooleanField(default=False)
     all_items = models.BooleanField(default=False)
 
 
-class PickupRequestItems:
+class PickupRequestItems(models.Model):
     id = models.BigAutoField(primary_key=True)
     request = models.ForeignKey('PickupRequest', on_delete=models.PROTECT)
     item = models.ForeignKey('Inventory', on_delete=models.PROTECT)
+
+
+class BatchInventoryItems(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    batchinventory = models.ForeignKey(
+        BatchInventory, on_delete=models.PROTECT, related_name='batchitem1')
+    inventory = models.ForeignKey(Inventory, on_delete=models.PROTECT, related_name='batchitem2')
+
+
