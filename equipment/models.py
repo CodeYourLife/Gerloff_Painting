@@ -2,6 +2,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from employees.models import Employees
 
+
 def validate_inventory_notes(value):
     if value == "Returned" or value == "Missing" or value == "Job" or value == "Service" or value == "Misc" or value == "Employee":
         return value
@@ -9,12 +10,14 @@ def validate_inventory_notes(value):
         raise ValidationError(
             "Category must be Returned, Missing, Job, Service, Employee, or Misc")
 
+
 class VendorCategory(models.Model):  # Equipment Rental, Wallcovering Supplier
     id = models.BigAutoField(primary_key=True)
     category = models.CharField(null=True, max_length=250)
 
     def __str__(self):
         return f"{self.category}"
+
 
 class Vendors(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -26,6 +29,7 @@ class Vendors(models.Model):
 
     def __str__(self):
         return f"{self.company_name}"
+
 
 class VendorContact(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -125,7 +129,7 @@ class InventoryNotes(models.Model):
     user = models.CharField(null=True, max_length=20)
     note = models.CharField(null=True, max_length=2000)
     category = models.CharField(null=True, max_length=2000, validators=[
-                                validate_inventory_notes])  # newjob, service, misc, returned
+        validate_inventory_notes])  # newjob, service, misc, returned
     job_number = models.CharField(null=True, max_length=5, blank=True)
     # either job name, or service vendor
     job_name = models.CharField(null=True, max_length=2000, blank=True)
@@ -140,6 +144,7 @@ class BatchInventory(models.Model):
     # true means it is the latest one
     current = models.BooleanField(default=False)
 
+
 class BatchInventoryItems:
     id = models.BigAutoField(primary_key=True)
     batchinventory = models.ForeignKey(
@@ -148,4 +153,18 @@ class BatchInventoryItems:
         Inventory, on_delete=models.PROTECT, related_name='batchitem2')
 
 
-        
+class PickupRequest:
+    id = models.BigAutoField(primary_key=True)
+    date = models.DateField()
+    job_number = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT)
+    reqest_notes = models.CharField(null=True, max_length=500)
+    completed_notes = models.CharField(null=True, max_length=500)
+    completed_date = models.DateField()
+    is_closed = models.BooleanField(default=False)
+    all_items = models.BooleanField(default=False)
+
+
+class PickupRequestItems:
+    id = models.BigAutoField(primary_key=True)
+    request = models.ForeignKey('PickupRequest', on_delete=models.PROTECT)
+    item = models.ForeignKey('Inventory', on_delete=models.PROTECT)

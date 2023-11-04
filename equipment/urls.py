@@ -14,7 +14,8 @@ path("equipment_remove_from_incoming_cart/<id>", views.equipment_remove_from_inc
 path("equipment_add_to_outgoing/<id>", views.equipment_add_to_outgoing, name='equipment_add_to_outgoing'),
 path("equipment_add_to_incoming/<id>", views.equipment_add_to_incoming, name='equipment_add_to_incoming'),
 path("get_directory_contents/<id> <value> <app>", views.get_directory_contents, name='get_directory_contents'),
-path("update_equipment/<id>", views.update_equipment, name='update_equipment')
+path("update_equipment/<id>", views.update_equipment, name='update_equipment'),
+path("request_pickup/<jobnumber>", views.request_pickup, name='request_pickup')
 ]
 
 # only in development
