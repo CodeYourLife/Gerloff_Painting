@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+{% load render_table from django_tables2 %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+    .list-items {
+    border-bottom: 1px solid black; display: flex; justify-content: space-between;
+    }
+	</style>
+	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+
+	function job_update2(){
+		var hidden = document.getElementById("select_job")
+		var selectedjob = document.getElementById("selected_job")
+		document.getElementById("try_this").innerHTML = "PLEASE SELECT ITEMS GOING TO" + " " + selectedjob.options[selectedjob.selectedIndex].text.toUpperCase();
+		hidden.value = selectedjob.value
+	}
+
+	function check_booking_data(){
+		var hidden = document.getElementById("select_job")
+		var location = document.getElementById("inventory_notes")
+		if (hidden.value == "Not Selected"){
+			alert("Job Not Selected")
+			return false
+		}
+    	var x;
+    	var name=prompt("Please make any notes about this:");
+    	if (name!=null){
+       		location.value = name;
+   		}
+	}
+
+	</script>
+</head>
+<body>
+	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+		<a class="navbar-brand sub-navbar-brand" href="#">Equipment</a>
+		<div id="navbarNavDropdown2">
+		  <ul class="sub-nav-list navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'equipment_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'equipment_new' %}">New</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
+	  	<li><a class="nav-item nav-link active" >Request Equipment Pickup</a></li>
+    </ul>
+  </div>
+</nav>
+
+ <form name = job_update action="{%  url 'request_pickup' selected_job.job_number' %}" method="post"  onSubmit = "return check_booking_data()">
+<h1>{{selected_job}}</h1>
+ <h3 id="try_this">PLEASE SELECT ITEMS YOU WOULD LIKE PICKED UP </h3>
+
+
+<!--	</div>-->
+{% render_table available_table %}
+
+<h3>SELECTED ITEMS</h3>
+
+{% render_table pending_table %}
+
+
+{% if status == 'Outgoing' %}
+ <form name = batch_update action="{%  url 'equipment_batch_outgoing' status='Outgoing' %}" method="post"  onSubmit = "return check_booking_data()">
+{% else %}
+ <form name = batch_update action="{%  url 'equipment_batch_outgoing' status='Incoming' %}" method="post" >
+{% endif %}
+	 {% csrf_token %}
+ <input type = "hidden" id="select_job" name="select_job" value ="Not Selected">
+<input type="hidden" id="inventory_notes" name = "inventory_notes" value="" />
+     {% if status == 'Outgoing' %}
+<input type="submit" value="Assign to Job" />
+{% else %}
+<input type="submit" value="Check Equipment Back In to Shop" />
+{% endif %}
+</form>
+</body>
+</html>
+
+{% endblock %}
