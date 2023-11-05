@@ -28,6 +28,16 @@ $(document).ready(function () {
     document.getElementById("hide_this").style.display = "none";
 })
 
+        window.onload = function() {
+            var today = new Date();
+            var dd = String(today.getDate()).padStart(2, '0');
+            var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+            var yyyy = today.getFullYear();
+            today = yyyy + '-' + mm + '-' + dd;
+            equipment_input.purchase_date.value = today
+        };
+
+
         function check_booking_data() {
         var y = document.getElementById("select_vendor");
         var x = document.getElementById("new_vendor");
@@ -173,7 +183,7 @@ function update_vendor() {
                     <label for="purchase_date">Date Purchased:</label>
                     <input type="date" id="purchase_date" name="purchase_date" required>
 
-	 Purchase Price:<input type= "number" name="purchase_price" id="purchase_price" placeholder=0.00 size="30" required/>
+	 Purchase Price:<input type= "number" name="purchase_price" id="purchase_price" value=0.00 size="30" />
 	<br><br>
 	             <label for="select_vendor">Where did you purchase?</label>
             <select id="select_vendor" name="select_vendor" onchange="update_vendor()" >

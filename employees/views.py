@@ -365,10 +365,12 @@ def employees_home(request):
                           'dateExpires': str(cert.date_expires)})
         equips = []
         for equip in equipment:
-            equips.append({'item': equip.item, 'storageLocation': equip.storage_location, 'dateOut': str(equip.date_out)})
+            equips.append({'id': str(equip.id), 'item': equip.item, 'storageLocation': equip.storage_location,
+                           'dateOut': str(equip.date_out)})
         wrtUps = []
         for writeUp in writeUps:
-            wrtUps.append({'supervisor': writeUp.supervisor.first_name + " " + writeUp.supervisor.last_name , 'date': str(writeUp.date), 'description': writeUp.description,
+            wrtUps.append({'supervisor': writeUp.supervisor.first_name + " " + writeUp.supervisor.last_name,
+                           'date': str(writeUp.date), 'description': writeUp.description,
                            'job': writeUp.job.job_name})
         data_details = {'certifications': certs, 'equipment': equips, 'writeUps': wrtUps}
         return HttpResponse(json.dumps(data_details))
