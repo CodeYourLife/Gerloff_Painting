@@ -16,6 +16,11 @@ from equipment.filters import JobsFilter2
 def super_home(request, super, filter):
     print(request.GET)
     send_data = {}
+    if super == 'AUTO':
+        employee= Employees.objects.get(user=request.user)
+        if employee.job_title.description == 'Superintendent':
+            super=employee.id
+        else: super = 'ALL'
     selected_superid = super
     if request.method == 'POST':
         if request.POST['selected_super'] == 'all':
