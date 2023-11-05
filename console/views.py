@@ -56,7 +56,10 @@ def index(request):
 
 @login_required(login_url='/accounts/login')
 def warehouse_home(request):
-    return render(request, 'warehouse_home.html')
+    send_data={}
+    if PickupRequest.objects.filter(confirmed=True,is_closed=False).exists():
+        send_data['pending_pickups'] = PickupRequest.objects.filter(confirmed=True,is_closed=False)
+    return render(request, 'warehouse_home.html',send_data)
 
 
 @login_required(login_url='/accounts/login')
