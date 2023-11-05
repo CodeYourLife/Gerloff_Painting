@@ -158,11 +158,13 @@ class PickupRequest(models.Model):
     requested_by = models.ForeignKey('employees.Employees', on_delete=models.PROTECT,null=True, blank=True)
 
 
+
 class PickupRequestItems(models.Model):
     id = models.BigAutoField(primary_key=True)
     request = models.ForeignKey('PickupRequest', on_delete=models.PROTECT)
     item = models.ForeignKey('Inventory', on_delete=models.PROTECT,related_name='pickuprequested')
     returned = models.BooleanField(default=False)
+
 
 class BatchInventoryItems(models.Model):
     id = models.BigAutoField(primary_key=True)

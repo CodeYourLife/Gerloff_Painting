@@ -225,6 +225,12 @@ def request_pickup(request, jobnumber, item, pickup, status):
     return render(request, 'request_pickup.html', send_data)
 
 
+def request_pickup(request, jobnumber):
+    send_data={}
+    send_data['equipment']= Inventory.objects.filter(job_number=Jobs.objects.get(job_number=jobnumber))
+    send_data['selected_job'] = Jobs.objects.get(job_number=jobnumber)
+    return render(request, 'request_pickup.html', send_data)
+
 def update_equipment(request, id):
     item = Inventory.objects.get(id=id)
     if request.method == 'POST':
