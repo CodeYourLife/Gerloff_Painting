@@ -101,10 +101,12 @@
                   text = "<table border='1' class='table display'>"
                   text += "<thead><tr><th class='col'>Category</th><th class='col'>Storage Location</th><th class='col'>Date Checked Out</th></tr></thead>"
                   parsedData.equipment.forEach((element) => {
-                    text += "<tr><td>" + element.item + "</td><td>" + element.storageLocation + "</td><td>" + element.dateOut + "</td></tr>";
+                  document.getElementById("joetest2").innerHTML = "\"hi\" " + element.id + " YOU "
+                  text += "<tr><td><a href=\"{% url 'equipment_page' " + element.id + " %}\">" + element.item + "</a></td><td>" + element.storageLocation + "</td><td>" + element.dateOut + "</td></tr>";
                   });
-                  text += "</table>"
+                  text += "</table><b>hi </b>"
                   document.getElementById("equipment").innerHTML = text;
+                  document.getElementById("joetest").innerHTML =  "<button type='button'>Click Me!</button>"
             }
         });
       }
@@ -147,6 +149,8 @@
                     </li>
                     <li><a href="#3a" data-toggle="tab">Write Ups</a>
                     </li>
+                    <li><a href="#4a" data-toggle="tab">Test</a>
+                    </li>
                 </ul>
                 <div class="tab-content clearfix">
                     <div class="tab-pane active" id="1a">
@@ -166,6 +170,10 @@
                             <div id="writeUps">
                             </div>
                         </div>
+                    </div>
+                    <div class="tab-pane" id="4a">
+                            <div id="joetest">
+                            </div>
                     </div>
                 </div>
             </div>
@@ -213,6 +221,7 @@
     </div>
     {% endif %}
 </div>
+<div id="joetest2">hello</div>
 </body>
 </html>
 
