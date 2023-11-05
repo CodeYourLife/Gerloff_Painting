@@ -97,7 +97,7 @@ def complete_pickup(request, pickup):
                 selected_request.save()
                 PickupRequestItems.objects.filter(request=selected_request).delete()
                 message = "Jobsite Pickup Completed. \n Job: " + str(selected_request.job_number) + "\n\n" + selected_request.completed_notes
-                recipients = ["joe@gerloffpainting.com", "joe@gerloffpainting.com"]
+                recipients = ["warehouse@gerloffpainting.com", "joe@gerloffpainting.com"]
                 if selected_job.superintendent:
                     if selected_job.superintendent.email:
                         recipients.append(selected_job.superintendent.email)
@@ -207,7 +207,7 @@ def request_pickup(request, jobnumber, item, pickup, status):
                 selected_request.save()
             message = message + "\n Requested by: " + str(selected_request.requested_by) + "\n\n" + request.POST[
                 'request_notes']
-            recipients = ["joe@gerloffpainting.com", "joe@gerloffpainting.com"]
+            recipients = ["warehouse@gerloffpainting.com", "joe@gerloffpainting.com"]
             if selected_job.superintendent:
                 if selected_job.superintendent.email:
                     recipients.append(selected_job.superintendent.email)
