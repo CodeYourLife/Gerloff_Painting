@@ -34,6 +34,17 @@
     </ul>
   </div>
 </nav>
+<hr>
+		{% if pending_pickups %}
+		 <br>
+			<h3>Equipment Pickup Requests</h3>
+			<table id="pickup_requests" class="display" style="width:90%">
+			{% for x in pending_pickups %}
+			<tr><td><a href = "{%  url 'complete_pickup' x.id %}"> {{x.date}} - {{x.job_number}} - {% if x.all_items == True %}All Items {% else %} Certain Items {% endif %}</a></td></tr>
+			{% endfor %}
+			</table>
+		{% endif %}
+<hr><br><br>
 
 <a href = "{% url 'rental_new' "ALL" %}">
 							<div style="height:100%;width:100%">

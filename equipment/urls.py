@@ -15,7 +15,8 @@ path("equipment_add_to_outgoing/<id>", views.equipment_add_to_outgoing, name='eq
 path("equipment_add_to_incoming/<id>", views.equipment_add_to_incoming, name='equipment_add_to_incoming'),
 path("get_directory_contents/<id> <value> <app>", views.get_directory_contents, name='get_directory_contents'),
 path("update_equipment/<id>", views.update_equipment, name='update_equipment'),
-path("request_pickup/<jobnumber>", views.request_pickup, name='request_pickup')
+path("request_pickup/<jobnumber> <item> <pickup> <status>", views.request_pickup, name='request_pickup'),
+path("complete_pickup/<pickup>", views.complete_pickup, name='complete_pickup')
 ]
 
 # only in development

@@ -149,18 +149,20 @@ class PickupRequest(models.Model):
     id = models.BigAutoField(primary_key=True)
     date = models.DateField()
     job_number = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT)
-    request_notes = models.CharField(null=True, max_length=500)
-    completed_notes = models.CharField(null=True, max_length=500)
-    completed_date = models.DateField()
+    request_notes = models.CharField(null=True, blank=True,max_length=10000)
+    completed_notes = models.CharField(null=True, blank=True,max_length=10000)
+    completed_date = models.DateField(null=True, blank=True)
     is_closed = models.BooleanField(default=False)
     all_items = models.BooleanField(default=False)
+    confirmed = models.BooleanField(default=False)
+    requested_by = models.ForeignKey('employees.Employees', on_delete=models.PROTECT,null=True, blank=True)
 
 
 class PickupRequestItems(models.Model):
     id = models.BigAutoField(primary_key=True)
     request = models.ForeignKey('PickupRequest', on_delete=models.PROTECT)
-    item = models.ForeignKey('Inventory', on_delete=models.PROTECT)
-
+    item = models.ForeignKey('Inventory', on_delete=models.PROTECT,related_name='pickuprequested')
+    returned = models.BooleanField(default=False)
 
 class BatchInventoryItems(models.Model):
     id = models.BigAutoField(primary_key=True)

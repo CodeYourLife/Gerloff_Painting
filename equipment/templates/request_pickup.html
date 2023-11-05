@@ -27,25 +27,9 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 
-	function job_update2(){
-		var hidden = document.getElementById("select_job")
-		var selectedjob = document.getElementById("selected_job")
-		document.getElementById("try_this").innerHTML = "PLEASE SELECT ITEMS GOING TO" + " " + selectedjob.options[selectedjob.selectedIndex].text.toUpperCase();
-		hidden.value = selectedjob.value
-	}
 
 	function check_booking_data(){
-		var hidden = document.getElementById("select_job")
-		var location = document.getElementById("inventory_notes")
-		if (hidden.value == "Not Selected"){
-			alert("Job Not Selected")
-			return false
-		}
-    	var x;
-    	var name=prompt("Please make any notes about this:");
-    	if (name!=null){
-       		location.value = name;
-   		}
+alert("Please be patient until this completes")
 	}
 
 	</script>
@@ -63,34 +47,85 @@
     </ul>
   </div>
 </nav>
-
- <form name = job_update action="{%  url 'request_pickup' selected_job.job_number' %}" method="post"  onSubmit = "return check_booking_data()">
 <h1>{{selected_job}}</h1>
- <h3 id="try_this">PLEASE SELECT ITEMS YOU WOULD LIKE PICKED UP </h3>
-
-
-<!--	</div>-->
-{% render_table available_table %}
-
-<h3>SELECTED ITEMS</h3>
-
-{% render_table pending_table %}
-
-
-{% if status == 'Outgoing' %}
- <form name = batch_update action="{%  url 'equipment_batch_outgoing' status='Outgoing' %}" method="post"  onSubmit = "return check_booking_data()">
+{% if existing_request_all %}
+	<h3>There is already an existing request to remove all equipment from the job</h3>
+{% elif existing_request %}
+	<h3>There is already an existing request to remove the following equipment:</h3>
+	<table id="allitems" class="display" style="width:90%">
+	<tr>{{existing_request.date}}</tr>
+	{% for x in existing_request_items %}
+	<tr><td>#{{x.item.number}}- {{x.item.item}}</td></tr>
+	{% endfor %}
+	</table>
+	<h4>Would you like to add on to this request?</h4>
+	<form name = job_update action="{%  url 'request_pickup' selected_job.job_number 'ALL' existing_request.id 'REVISE' %}" method="post" >
+		{% csrf_token %}
+		<input type="submit" class="btn btn-primary btn-lg" name = "revise" value="Yes Revise Order" />
+		<input type="submit" class="btn btn-primary btn-lg" name = "cancel" value="Cancel" />
+	</form>
 {% else %}
- <form name = batch_update action="{%  url 'equipment_batch_outgoing' status='Incoming' %}" method="post" >
-{% endif %}
-	 {% csrf_token %}
- <input type = "hidden" id="select_job" name="select_job" value ="Not Selected">
-<input type="hidden" id="inventory_notes" name = "inventory_notes" value="" />
-     {% if status == 'Outgoing' %}
-<input type="submit" value="Assign to Job" />
-{% else %}
-<input type="submit" value="Check Equipment Back In to Shop" />
-{% endif %}
-</form>
+	<h3>Current Equipment Assigned to Job</h3>
+	<table id="allitems" class="display" style="width:90%">
+	{% for x in all_items %}
+	<tr><td>#{{x.number}}- {{x.item}}</td></tr>
+	{% endfor %}
+	</table>
+	{% if not selected_request %}
+		{% if selected_item %}
+		<form name = job_update action="{%  url 'request_pickup' selected_job.job_number selected_item.id 'ALL' 'ADD' %}" method="post"  >
+ 		{% else %}
+		<form name = job_update action="{%  url 'request_pickup' selected_job.job_number 'ALL' 'ALL' 'ADD' %}" method="post" >
+		{% endif %}
+		{% csrf_token %}
+		<input type="submit" class="btn btn-primary btn-lg" name = "all_items" value="Pickup All Items From Job" />
+		<input type="submit" class="btn btn-primary btn-lg" name = "this_item_only" value="Pickup Certain Items Only" />
+		</form>
+	{% else %}
+	 	<form name = job_update action="{%  url 'request_pickup' selected_job.job_number 'ALL' selected_request.id 'CHANGE' %}" method="post" >
+		{% csrf_token %}
+		 {% if selected_request.all_items == False %}
+			<input type="submit" class="btn btn-danger btn-sm" name = "change_to_all_items" value="Pickup All Items From Job Instead" />
+		 {% else %}
+			 <input type="submit" class="btn btn-danger btn-sm" name = "change_to_certain_items" value="Pickup Only Certain Items Instead" />
+		 {% endif %}
+		</form>
+		{% if selected_request.all_items == False %}
+		 	<br><hr><br>
+ 			{% if available_items %}
+			 	<h3 id="try_this">PLEASE SELECT ITEMS YOU WOULD LIKE PICKED UP </h3>
+				<table id="available_table" class="display" style="width:90%">
+				{% for x in available_items %}
+					<tr><td>#{{x.number}}- {{x.item}}</td><td><a href = "{%  url 'request_pickup' selected_job.job_number x.id selected_request.id 'ITEMADD' %}">Add to Pickup </a></td></tr>
+				{% endfor %}
+				</table>
+			{% endif %}
+			{% if selected_items %}
+			 	<br>
+				<h3>SELECTED ITEMS</h3>
+				<table id="selected_table" class="display" style="width:90%">
+				{% for x in selected_items %}
+				<tr><td><b>#{{x.item.number}}- {{x.item.item}}</b></td><td><a href = "{%  url 'request_pickup' selected_job.job_number x.id selected_request.id 'ITEMREMOVE' %}">Remove from Pickup </a></td></tr>
+				{% endfor %}
+				</table>
+			{% endif %}
+		{% else %}
+		 	<h3>Pickup All Items From the Jobsite!</h3>
+		 {% endif %}
+		<form name = job_update action="{%  url 'request_pickup' selected_job.job_number 'ALL' selected_request.id 'CHANGE' %}" method="post"  onSubmit = "return check_booking_data()">
+		{% csrf_token %}
+		 <br><hr><br>
+		 <label for="request_notes"> Make a note: </label> <br>
+		<textarea id="request_notes" name="request_notes" rows="4" style="width: 100%"></textarea>
+		 <br>
+		 {% if selected_request.all_items == True %}
+		 	<input type="submit" class="btn btn-primary btn-sm" name = "send_now" value="Send Request Now!" />
+		 {% elif selected_items %}
+		  	<input type="submit" class="btn btn-primary btn-sm" name = "send_now" value="Send Request Now!" />
+		{% endif %}
+		</form>
+ 	{% endif %}
+ {% endif %}
 </body>
 </html>
 

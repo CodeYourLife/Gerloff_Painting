@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+{% load render_table from django_tables2 %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+    .list-items {
+    border-bottom: 1px solid black; display: flex; justify-content: space-between;
+    }
+	</style>
+	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+
+	function check_booking_data(){
+		var hidden = document.getElementById("notes")
+
+    	var name=prompt("Please explain");
+    	if (name!=null){
+       		hidden.value = name;
+   		}
+	}
+
+	function check_booking_data2(){
+   		alert("Please be patient while this processes. Do not click anything until it is complete.")
+	}
+	</script>
+</head>
+<body>
+	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+		<a class="navbar-brand sub-navbar-brand" href="#">Equipment</a>
+		<div id="navbarNavDropdown2">
+		  <ul class="sub-nav-list navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'equipment_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'equipment_new' %}">New</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
+	  	<li><a class="nav-item nav-link active" >Complete Equipment Pickup</a></li>
+    </ul>
+  </div>
+</nav>
+<h1>{{selected_request.job_number}}</h1>
+<div class="container">
+    <div class="row">
+        <div class="col-sm-4 list-items"><b>Requested By:&nbsp;</b>{{selected_request.requested_by}}</div>
+		<div class="col-sm-4 list-items"><b>Date:&nbsp;</b>{{selected_request.date}}</div>
+        <div class="col-sm-4 list-items"><b>Type:&nbsp;</b>{% if selected_request.all_items == True %}All Items{% else %}Certain Items Only{% endif %}</div>
+
+    </div>
+	<div class="row">
+		 <div class="col-sm-12 list-items">{{selected_request.request_notes}}</div>
+	</div>
+</div>
+
+
+{% if selected_items %}
+	<br>
+	 <b>Check-In These Items </b>
+	<br>
+
+	 	<table id="allitems" class="display" style="width:90%">
+			{% for x in selected_items %}
+			{% if selected_request.all_items == True %}
+			<tr><td>#{{x.number}}- {{x.item}}</td>
+				{% else %}
+				<tr><td>#{{x.item.number}}- {{x.item.item}}</td>
+			{% endif %}
+				<td> <form name = job_update action="{%  url 'complete_pickup' selected_request.id %}" method="post"  >
+	{% csrf_token %}<input id="check_in{{x.id}}" class="btn btn-success btn-sm" name="check_in{{x.id}}" type="submit" value="Check In"/></td></form>
+			 <form name = job_update action="{%  url 'complete_pickup' selected_request.id %}" method="post"  onSubmit = "return check_booking_data()">
+	{% csrf_token %}
+			<td><input type="hidden" id="notes" name="notes" value=""/>
+					<input id="missing{{x.id}}" class="btn btn-danger btn-sm" name="missing{{x.id}}" type="submit" value="MISSING/OTHER"/>
+			 </form></td>
+			</tr>
+			{% endfor %}
+			</table>
+
+		 <br><hr><br>
+
+
+<h4> Cannot Close This Request Until All Items Are Addressed </h4>
+	{% else %}
+		<br>
+	 <b>Provide any notes about this pickup, then click complete </b>
+	<br>
+
+		<form name = job_update action="{%  url 'complete_pickup' selected_request.id %}" method="post" onSubmit = "return check_booking_data2()" >
+			{% csrf_token %}
+				 <label for="request_notes"> Make any notes about this pickup: </label> <br>
+                <textarea id="request_notes" name="request_notes" rows="4" style="width: 100%"></textarea>
+		 <br>
+
+		 	<input type="submit" class="btn btn-primary btn-sm" name = "send_now" value="Pickup Request Complete" />
+
+		{% endif %}
+
+
+</body>
+</html>
+
+{% endblock %}

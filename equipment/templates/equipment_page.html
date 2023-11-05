@@ -54,18 +54,19 @@
         <div class="col-sm-4 list-items"><b>Available:&nbsp;</b></div>
         {% endif %}
         <div class="col-sm-4 list-items"><b>Bought From:&nbsp;</b>{{inventories.purchased_from}}</div>
-    </div>
+
     {% if inventories.assigned_to != None %}
-    <div class="row">
-        <div class="col-12 list-items"><b>Employee:&nbsp;</b>{{inventories.assigned_to}}</div>
-    </div>
+
+        <div class="col-sm-4 list-items"><b>Employee:&nbsp;</b>{{inventories.assigned_to}}</div>
+
     {% endif %}
+        </div>
     <div class = "row">
-        <div class="col-6 list-items"><form action="{% url 'update_equipment' inventories.id %}">
+        <div class="col-4 list-items"><form action="{% url 'update_equipment' inventories.id %}">
             <input id="update_equipment" class="btn btn-info btn-sm" name="update_equipment" type="submit" value="Update the Above Information"/>
         </form>
         </div>
-                <div class="col-6 list-items">
+                <div class="col-4 list-items">
             <form name=missing_button action="{% url 'equipment_page' inventories.id %}" method="post"
                   onSubmit=myFunction(missing_button.missing_notes)>
                 {% csrf_token %}
@@ -74,30 +75,47 @@
                 <input id="missing" class="btn btn-danger btn-sm" name="missing" type="submit" value="MARK AS MISSING!"/>
             </form>
         </div>
+         <div class="col-4 list-items">
+        {% if inventories.job_number %}
+
+            <form name=request_pickup action="{% url 'request_pickup' jobnumber=inventories.job_number.job_number item=inventories.id pickup='ALL' status='ALL' %}" method="post">
+                {% csrf_token %}
+                <input id="pickup_request" class="btn btn-warning btn-sm" name="pickup_request" type="submit" value="Request a Pickup from Job"/>
+            </form>
+
+        {% endif %}
+              </div>
     </div>
 </div>
+<br>
 <div class="container">
     <div class="row">
         {% if inventories.service_vendor != None or inventories.job_number != None or inventories.assigned_to != None %}
-        <div class="col-sm-4" style="padding-bottom: 12px;">
+
             <form name=return_to_home action="{% url 'equipment_page' inventories.id %}" method="post"
                   onSubmit=myFunction(return_to_home.returned_notes)>
                 {% csrf_token %}
                 <input type="hidden" id="returned_notes" name="returned_notes" value=""/>
+                <div class="col-sm-6" style="padding-bottom: 12px;">
                 {% if inventories.service_vendor != None %}
-                <input id="returned" name="returned" type="submit" value="Service Complete"/>
+                <input id="returned" class="btn btn-warning btn-sm" name="returned" type="submit" value="Service Complete"/>
                 {% endif %}
                 {% if inventories.job_number != None %}
-                <input id="returned" name="returned" type="submit" value="Check Back In From Job"/>
+                <input id="returned" class="btn btn-warning btn-sm" name="returned" type="submit" value="Check Back In From Job"/>
                 {% endif %}
+                </div>
+                <div class="col-sm-6" style="padding-bottom: 12px;">
                 {% if inventories.assigned_to != None %}
-                <input id="returned_employee" name="returned_employee" type="submit" value="Remove Employee"/>
+                <input id="returned_employee" class="btn btn-warning btn-sm" name="returned_employee" type="submit" value="Remove Employee"/>
                 {% endif %}
-
+                </div>
             </form>
-        </div>
-        {% endif %}
 
+        {% endif %}
+    </div>
+    <br>
+    <div class = "row"><div class="col-sm-12" style="padding-bottom: 12px; padding-top: 12px;"><h4>Assign to Job, Service, or Employee</h4></div></div>
+    <div class="row">
         <div class="col-sm-4" style="padding-bottom: 12px; padding-top: 12px;">
             <form style="width: 100%" name=service action="{% url 'equipment_page' inventories.id %}" method="post"
                   onSubmit="return myFunction(service.service_notes)">
