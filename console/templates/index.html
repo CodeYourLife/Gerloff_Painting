@@ -5,12 +5,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <body>
-<div class="page-header d-flex justify-content-center align-item-center">
-<H4>Trinity Software Solutions</H4>
+<!--<div class="page-header d-flex justify-content-center ">-->
+
+<!--<div class="d-flex justify-content-center">-->
+<!--<div class="d-flex flex-column mb-100">-->
+<!--<div class="d-flex justify-content-center"><H4>Trinity Software Solutions</H4></div>-->
+
+<!--<form action="{% url 'job_page' 'ALL' %}">-->
+<!--<div class="d-flex justify-content-center"><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="Jobs"/></div>-->
+<!--</form>-->
+<!--<br><br>-->
+<!--<form action="{% url 'equipment_home' %}">-->
+<!--<div class="d-flex justify-content-center"><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="Equipment"/></div>-->
+<!--</form>-->
+<!--<br>-->
+<!--<form action="{% url 'super_home' 'AUTO' 'UPCOMING' %}">-->
+<!--<div class="d-flex justify-content-center"><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="Superintendent"/></div>-->
+<!--</form>-->
+<!--<br>-->
+<!--<form action="{% url 'warehouse_home' %}">-->
+<!--<div class="d-flex justify-content-center"><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="Warehouse"/></div>-->
+<!--</form>-->
+
+<!--</div>-->
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <div class="d-flex justify-content-center"><H4>Trinity Software Solutions</H4></div>
+    </div>
+  </div>
+
+      <div class="row">
+    <div class="col">
+      <form action="{% url 'job_page' 'ALL' %}">
+<div class="d-flex justify-content-center"><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="Jobs"/></div>
+</form>
+    </div>
+  </div>
+    <div class="row"> <div class="col"><div class="d-flex justify-content-center">-</div></div></div>
+      <div class="row">
+    <div class="col">
+      <form action="{% url 'equipment_home' %}">
+<div class="d-flex justify-content-center"><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="Equipment"/></div>
+</form>
+    </div>
+  </div>
+    <div class="row"> <div class="col"><div class="d-flex justify-content-center">-</div></div></div>
+      <div class="row">
+    <div class="col">
+      <form action="{% url 'super_home' 'AUTO' 'UPCOMING' %}">
+<div class="d-flex justify-content-center"><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="Superintendent"/></div>
+</form>
+    </div>
+  </div>
+    <div class="row"> <div class="col"><div class="d-flex justify-content-center">-</div></div></div>
+      <div class="row">
+    <div class="col">
+     <form action="{% url 'warehouse_home' %}">
+<div class="d-flex justify-content-center"><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="Warehouse"/></div>
+</form>
+    </div>
+  </div>
 </div>
-	<div style="padding-top: 50px" class="row align-items-center justify-content-center align-middle">
-		<img src = "{% static 'images/logo.png' %}" width="60%" >
-	</div>
+
+
+<!--	<div style="padding-top: 50px" class="row align-items-center justify-content-center align-middle">-->
+<!--		<img src = "{% static 'images/logo.png' %}" width="60%" >-->
+<!--	</div>-->
 </body>
 </html>
 
