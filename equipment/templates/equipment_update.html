@@ -132,6 +132,12 @@ function show_hidden() {
 	 <input type="checkbox" name ="is_labeled" id="is_labeled" checked /> <label for="is_labeled">"Does this have a Gerloff tag?" </label>
 	 {% endif %}
 
+	 	<br><br>
+	 {% if item.needs_label == False %}
+	 <input type="checkbox" name ="needs_label" id="needs_label"   /> <label for="needs_label">"Does this item need a Gerloff tag?" </label>
+	 {% else %}
+	 <input type="checkbox" name ="needs_label" id="needs_label" checked /> <label for="needs_label">"Does this item need a Gerloff tag?" </label>
+	 {% endif %}
 	 <br><br>
 
 <br><br>

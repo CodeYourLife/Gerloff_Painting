@@ -236,6 +236,12 @@ def update_equipment(request, id):
     if request.method == 'POST':
         if 'is_labeled' in request.POST:
             item.is_labeled = True
+        else:
+            item.is_labeled = False
+        if 'needs_label' in request.POST:
+            item.needs_label = True
+        else:
+            item.needs_label = False
         if request.POST['select_vendor'] == 'add_new':
             item.purchased_from = Vendors.objects.create(company_name=request.POST['new_vendor'],
                                                          category=VendorCategory.objects.get(

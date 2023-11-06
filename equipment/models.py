@@ -117,6 +117,7 @@ class Inventory(models.Model):
                              blank=True)  # outgoing or incoming
     assigned_to = models.ForeignKey(
         Employees, on_delete=models.PROTECT, blank=True, null=True)
+    needs_label = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.inventory_type} {self.item}"

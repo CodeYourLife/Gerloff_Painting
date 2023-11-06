@@ -31,15 +31,15 @@
                     tr[i].style.display = "";}
                 return True}
               for (i = 1; i < tr.length; i++) {
-            td = tr[i].getElementsByTagName("td")[4];
+            td = tr[i].getElementsByTagName("td")[3];
             tr[i].style.display = "none";
             if (available_box.checked){
-                if (td.textContent == "Available"){
+                if (td.textContent == "-"){
                     tr[i].style.display = "";
                     }
                 }
             if (checked_out_box.checked){
-                if (td.textContent == "Checked Out" || td.textContent == "Service"){
+                if (td.textContent != "-" && td.textContent != "Missing"){
                     tr[i].style.display = "";
                     }
                 }
@@ -118,12 +118,9 @@
         <thead>
         <tr>
             <th scope="col">Category</th>
-            <th scope="col">Number</th>
             <th scope="col">Item</th>
             <th scope="col">Labeled?</th>
-            <th scope="col">Status</th>
             <th scope="col">Location</th>
-            <th scope="col">Employee</th>
         </tr>
         </thead>
         <tbody>
@@ -131,32 +128,41 @@
         {% for inventory in inventories %}
         <tr>
             <td>{{inventory.inventory_type.type}}</td>
-            <td>{{inventory.number}}</td>
-            <td><a href="{% url 'equipment_page' inventory.id %}">{{inventory.item}}</a></td>
+            <td><a href="{% url 'equipment_page' inventory.id %}">#{% if inventory.number %}{{inventory.number}}{% else %}NA{% endif %}: {{inventory.item}}</a></td>
             {% if inventory.is_labeled == True %}
-            <td>Yes</td>
+                <td>Yes</td>
             {% else %}
-            <td>No</td>
+                {% if inventory.needs_label == True %}
+                    <td style="background-color:#ff0000">No</td>
+                {% else %}
+                    <td>No</td>
+                {% endif %}
             {% endif %}
-            <td>{{inventory.status}}</td>
             {% if inventory.job_number == None %}
-            {% if inventory.service_vendor == None %}
-            <td>Gerloff Painting</td>
+                {% if inventory.service_vendor == None %}
+                    {% if inventory.assigned_to == None %}
+                        {% if inventory.status != "Missing" %}
+                            <td>-</td>
+                        {% else %}
+                            <td style="background-color:#ff0000">Missing</td>
+                        {% endif %}
+                    {% else %}
+                        <td>{{inventory.assigned_to}}</td>
+                    {% endif %}
+                {% else %}
+                    <td style="background-color:#ffff00">Service </td>
+                {% endif %}
             {% else %}
-            <td>{{inventory.service_vendor.company_name.trim}}</td>
+                {% if inventory.job_number.is_closed == True %}
+                    <td style="background-color:#ffff00"><a href="{% url 'job_page' inventory.job_number.job_number %}">
+                        {{inventory.job_number.job_name}}
+                    </a></td>
+                {% else %}
+                    <td><a href="{% url 'job_page' inventory.job_number.job_number %}">
+                        {{inventory.job_number.job_name}}
+                    </a></td>
+                {% endif %}
             {% endif %}
-            {% else %}
-            {% if inventory.job_number.is_closed == True %}
-            <td style="background-color:#ffff00"><a href="{% url 'job_page' inventory.job_number.job_number %}">
-                {{inventory.job_number.job_name}}
-            </a></td>
-            {% else %}
-            <td><a href="{% url 'job_page' inventory.job_number.job_number %}">
-                {{inventory.job_number.job_name}}
-            </a></td>
-            {% endif %}
-            {% endif %}
-            <td>{% if inventory.assigned_to != None %}{{inventory.assigned_to}}{% endif %}</td>
         </tr>
         {% endfor %}
         {% endif %}
