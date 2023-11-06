@@ -58,10 +58,130 @@
                                         return data;}}] });
                     });
 
+window.onload = function() {
+document.getElementById("show_new_pm").style.display = "none";
+document.getElementById("show_new_super").style.display = "none";
+};
+
+function before_postpm(){
+pmselect = pmform.select_pm.value
+newpm = pmform.new_pm.value
+if (pmselect == 'add_new'){
+   if(newpm == ""){
+     alert("You must type the new PM's name at least")
+     return false
+   }
+}
+if (pmselect == 'please_select'){
+    alert("You must select a PM")
+    return false
+}}
+function before_postsuper(){
+superselect = modalform.select_super.value
+newsuper = modalform.new_super.value
+if (superselect == 'add_new'){
+   if(newsuper == ""){
+     alert("You must type the new Super's name at least")
+     return false
+   }
+}
+}
+
+
+function new_pm1(){
+existingPM= "{{job.client_Pm.person_pk}}"
+newPM = pmform.select_pm.value
+    if (newPM == "add_new"){
+        document.getElementById("show_new_pm").style.display = "block";
+        document.getElementById("show_existing_pm").style.display = "none";
+}
+else if (existingPM != newPM){
+     document.getElementById("show_new_pm").style.display = "none";
+     document.getElementById("show_existing_pm").style.display = "none";
+}
+else {
+    document.getElementById("show_new_pm").style.display = "none";
+    document.getElementById("show_existing_pm").style.display = "block";
+    }
+}
+
+function new_super1(){
+existingPM= "{{job.client_Super.person_pk}}"
+newPM = modalform.select_super.value
+    if (newPM == "add_new"){
+        document.getElementById("show_new_super").style.display = "block";
+        document.getElementById("show_existing_super").style.display = "none";
+}
+else if (existingPM != newPM){
+     document.getElementById("show_new_super").style.display = "none";
+     document.getElementById("show_existing_super").style.display = "none";
+}
+else {
+    document.getElementById("show_new_super").style.display = "none";
+    document.getElementById("show_existing_super").style.display = "block";
+    }
+}
+
+function closemodaltest(){
+   $('#employee-modal').modal('toggle');
+    $('#employee-modal2').modal('toggle');
+}
+function showEmployeeData(status, client, client_email, client_phone,pm,superintendent,super_phone,super_email, pm_phone,pm_email) {
+    if (status == 'CLIENT'){
+        $('[href="#3a"]').tab('show')
+    }
+    if (status == 'PM'){
+        $('[href="#1a"]').tab('show')
+    }
+    if (status == 'SUPERINTENDENT'){
+        $('[href="#2a"]').tab('show')
+    }
+    document.getElementById("title").innerHTML = client;
+    let text = "<table border='1' class='table display'>";
+    text += "<tr><td>Company: " + client + "</td></tr>";
+    text += "<tr><td><a href='tel:+ " + client_phone + "'>Phone: " + client_phone + "</a></td></tr>";
+                       text += "<tr><td><a href='mailto: " + client_email + "'>Email: " + client_email + "</a></td></tr>"
+    text += "</table>"
+    document.getElementById("client_info").innerHTML = text;
+    text = "<table border='1' class='table display'>";
+    text += "<tr><td>PM: " + pm + "</td></tr>";
+    text += "<tr><td><a href='tel:+ " + pm_phone + "'>Phone: " + pm_phone + "</a></td></tr>";
+    text += "<tr><td><a href='mailto: " + pm_email + "'>Email: " + pm_email + "</a></td></tr>";
+    text += "</table>";
+    document.getElementById("pm_info").innerHTML = text;
+    text = "<table border='1' class='table display'>";
+    text += "<tr><td>Superintendent: " + superintendent + "</td></tr>";
+    text += "<tr><td><a href='tel:+ " + super_phone + "'>Phone: " + super_phone + "</a></td></tr>";
+    text += "<tr><td><a href='mailto: " + super_email + "'>Email: " + super_email + "</a></td></tr>"
+    text += "</table>"
+    document.getElementById("super_info").innerHTML = text;
+}
+
     </script>
-    <style>
+    <style type="text/css" class="init">
         label {
             margin-right: 5px;
+        }
+
+                .nav-pills a {
+            color: black;
+        }
+        .nav-pills li {
+            padding: 2px;
+            margin-left: 20px
+        }
+        .nav-pills .active {
+            background-color: #6c757d !important;
+            padding: 5px;
+        }
+
+                .tab-content * {
+          color : black;
+          background-color: white !important;
+        }
+
+        .active * {
+            background-color: white !important;
         }
         select {
             display: block;
@@ -163,7 +283,179 @@
     {% render_table jobstable %}
 </div>
 {% else %}
-{% for job in jobs %}
+
+<!-- Modal -->
+<div class="modal fade" id="employee-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="title"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-pills">
+                    <li>
+                        <a href="#1a" class="active" data-toggle="tab">PM</a>
+                    </li>
+                    <li><a href="#2a" data-toggle="tab">Super</a>
+                    </li>
+                    <li><a href="#3a" data-toggle="tab">Company</a>
+                    </li>
+                </ul>
+                <div class="tab-content clearfix">
+                    <div class="tab-pane active" id="1a">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="pm_info">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="2a">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="super_info">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="3a">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="client_info">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <button onclick = "closemodaltest()" class="btn btn-primary"> Change Client Information </button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="employee-modal2" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="title">Update information </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-pills">
+                    <li>
+                        <a href="#4a" class="active" data-toggle="tab">PM</a>
+                    </li>
+                    <li><a href="#5a" data-toggle="tab">Super</a>
+                    </li>
+                    <li><a href="#6a" data-toggle="tab">Company</a>
+                    </li>
+                </ul>
+                <div class="tab-content clearfix">
+                    <div class="tab-pane active" id="4a">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="pm_info">
+                             <form id="pmform" action="{% url 'job_page' job.job_number %}" method="post" onSubmit="return before_postpm()">
+                            {% csrf_token %}
+                                <table>
+                                    <tr><td>
+                                        <label for="select_pm">Change PM</label>
+                                         <select id="select_pm" name="select_pm" onchange="new_pm1()">
+                                        {% if job.client_Pm %}
+                                        <option value={{job.client_Pm.person_pk}}>{{job.client_Pm.name}}</option>
+                                        {% else %}
+                                        <option value="please_select">Please Select</option>
+                                        {% endif %}
+                                        <option value="add_new">Add New</option>
+                                        {% if client_employees %}
+                                        {% for employee in client_employees %}
+                                        <option value={{employee.person_pk}}>{{employee.name}}</option>
+                                        {% endfor %}
+                                        {% endif %}
+                                        </select>
+                                    </td></tr>
+                                </table>
+                                <table id="show_new_pm">
+                                    <tr><td>New Person: <input type= "text" name="new_pm" id="new_pm" placeholder="Name" size="30" /></td></tr>
+                                    <tr><td>Email: <input type= "text" name="new_pm_email" id="new_pm_email" placeholder="Email" size="30" /></td></tr>
+                                    <tr><td>Phone: <input type= "text" name="new_pm_phone" id="new_pm_phone" placeholder="Phone" size="30" /></td></tr>
+                                </table>
+                                <table id="show_existing_pm">
+                                    <tr><td>Company Email: <input type= "text" name="pm_email" id="pm_email" {% if job.client_Pm.email %}value='{{job.client_Pm.email}}' {% else %} placeholder="Email" {% endif %} size="30" /></td></tr>
+                                    <tr><td>Main Phone: <input type= "text" name="pm_phone" id="pm_phone" {% if job.client_Pm.phone %}value='{{job.client_Pm.phone}}' {% else %} placeholder="Main Phone" {% endif %} size="30" /></td></tr>
+                                </table>
+                                <table><tr><td><input type="submit" name="submit_pm" class="btn btn-danger" value="Save Changes to PM" /></td></tr></table>
+                             </form>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="5a">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="super_info">
+                                <form id="modalform" action="{% url 'job_page' job.job_number %}" method="post" onSubmit="return before_postsuper()">
+                                    {% csrf_token %}
+                                    <table>
+                                        <tr><td>
+                                            <label for="select_super">Change Super</label>
+                                            <select id="select_super" name="select_super" onchange="new_super1()">
+                                            {% if job.client_Super %}
+                                            <option value={{job.client_Super.person_pk}}>{{job.client_Super.name}}</option>
+                                            {% endif %}
+                                            <option value="not_sure">Not Sure</option>
+                                            <option value="add_new">Add New</option>
+                                            {% if client_employees %}
+                                            {% for employee in client_employees %}
+                                            <option value={{employee.person_pk}}>{{employee.name}}</option>
+                                            {% endfor %}
+                                            {% endif %}
+                                            </select>
+                                        </td></tr>
+                                    </table>
+                                    <table id="show_new_super">
+                                        <tr><td>New Person: <input type= "text" name="new_super" id="new_super" placeholder="Name" size="30" /></td></tr>
+                                        <tr><td>Email: <input type= "text" name="new_super_email" id="new_super_email" placeholder="Email" size="30" /></td></tr>
+                                        <tr><td>Phone: <input type= "text" name="new_super_phone" id="new_super_phone" placeholder="Phone" size="30" /></td></tr>
+                                    </table>
+                                    <table id="show_existing_super">
+                                        <tr><td>Company Email: <input type= "text" name="super_email" id="super_email" {% if job.client_Super.email %}value='{{job.client_Super.email}}' {% else %} placeholder="Email" {% endif %} size="30" /></td></tr>
+                                        <tr><td>Main Phone: <input type= "text" name="super_phone" id="super_phone" {% if job.client_Super.phone %}value='{{job.client_Super.phone}}' {% else %} placeholder="Main Phone" {% endif %} size="30"  /></td></tr>
+                                    </table>
+                                     <table><tr><td><input type="submit" name="submit_super" class="btn btn-danger" value="Save Changes to Super" /></td></tr></table>
+                                 </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="6a">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="client_info">
+                                 <form id="clientform" action="{% url 'job_page' job.job_number %}" method="post" >
+                                    {% csrf_token %}
+                                    <table>
+                                        <tr><td>Company Email: <input type= "text" name="client_bid_email" id="client_bid_email" {% if job.client.bid_email %}value='{{job.client.bid_email}}' {% else %} placeholder="Email" {% endif %} size="30" /></td></tr>
+                                        <tr><td>Main Phone: <input type= "text" name="client_phone" id="client_phone" {% if job.client.phone %}value='{{job.client.phone}}' {% else %} placeholder="Main Phone" {% endif %} size="30" /></td></tr>
+                                    </table>
+                                    <table><tr><td><input type="submit" name="submit_client" class="btn btn-danger" value="Save Changes to Client" /></td></tr></table>
+                                 </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close without Saving</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <div class="container">
     <div class="row">
         <div class="col"><b>Job Name:</b> {{job.job_name}}</div>
@@ -171,12 +463,10 @@
         <div class="col"><b>Address:</b> {{job.address}} {{job.city}} {{job.state}}</div>
     </div>
     <div class="row">
-        <div class="col"><b>Client:</b> {{job.client}}</div>
-        <div class="col"><b>GC PM:</b> {{job.client_Pm}} <a
-                href="tel:+{{job.client_Pm.phone}}">{{job.client_Pm.phone}}</a> <a
-                href="mailto: {{job.client_Pm.email}}">{{job.client_Pm.email}}</a></div>
-        <div class="col"><b>GC Super:</b> {{job.client_Super}} <a href="tel:+{{job.client_Super.phone}}">{{job.client_Super.phone}}</a>
-            <a href="mailto: {{job.client_Super.email}}">{{job.client_Super.email}}</a></div>
+
+        <div class="col"data-toggle="modal" data-target="#employee-modal"><a href ="#" onclick="showEmployeeData( 'CLIENT','{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');"><b>Client:</b> {{job.client}}</a></div>
+        <div class="col"data-toggle="modal" data-target="#employee-modal"><a href ="#" onclick="showEmployeeData('PM',  '{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');"><b>GC PM:</b> {{job.client_Pm}}</a></div>
+        <div class="col"data-toggle="modal" data-target="#employee-modal"><a href ="#" onclick="showEmployeeData( 'SUPERINTENDENT','{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');"><b>GC Super:</b> {{job.client_Super}} </a></div>
     </div>
 
     <div class="row">
@@ -215,12 +505,12 @@
         </div>
     </div>
 </div>
-{% endfor %}
+
 <button type="button" class="collapsible">Job Notes</button>
 <div class="content">
     <div class="row">
         <div class="col">
-            {% for job in jobs %}
+
             <form action="{% url 'job_page' job.job_number %}" method="post">
                 {% csrf_token %}
 
@@ -231,7 +521,7 @@
 
                 <input type="submit" name="Form3" value="Add Note"/>
             </form>
-            {% endfor %}
+
         </div>
     </div>
     <form style="padding-top: 24px" method="get">
