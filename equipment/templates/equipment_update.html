@@ -84,7 +84,11 @@ function show_hidden() {
                     <label for="purchase_date">Date Purchased:</label>
                     <input type="date" id="purchase_date" name="purchase_date" value="{{format_date}}" required>
 
+	 {% if item.purchase_price %}
 	 Purchase Price:<input type= "number" name="purchase_price" id="purchase_price" value= {{item.purchase_price}} size="30" required/>
+	 {% else %}
+	 Purchase Price:<input type= "number" name="purchase_price" id="purchase_price" value= 0 size="30" required/>
+	 {% endif %}
 	<br><br>
 	             <label for="select_vendor">Where did you purchase?</label>
             <select id="select_vendor" name="select_vendor" onChange="show_hidden()">
