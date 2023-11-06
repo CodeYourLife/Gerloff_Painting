@@ -76,6 +76,10 @@
         $(document).ready(function () {
             var table = $('#employees_table').DataTable({});
         })
+         function showEmployeeData2(equipmentid) {
+         var teststring = "{% url 'equipment_page' 9 %}"
+         document.location.href = teststring.replace(9, equipmentid);
+         }
       function showEmployeeData(employeeId, employeeFirstName, employeeLastName) {
         $.ajax({
             method: 'GET',
@@ -99,14 +103,14 @@
                   text += "</table>"
                   document.getElementById("writeUps").innerHTML = text;
                   text = "<table border='1' class='table display'>"
-                  text += "<thead><tr><th class='col'>Category</th><th class='col'>Storage Location</th><th class='col'>Date Checked Out</th></tr></thead>"
+                  text += "<thead><tr><th class='col'>Category</th><th class='col'>Storage Location</th><th class='col'>Date Checked Out</th></tr></thead><tbody>"
                   parsedData.equipment.forEach((element) => {
-                  document.getElementById("joetest2").innerHTML = "\"hi\" " + element.id + " YOU "
-                  text += "<tr><td><a href=\"{% url 'equipment_page' " + element.id + " %}\">" + element.item + "</a></td><td>" + element.storageLocation + "</td><td>" + element.dateOut + "</td></tr>";
+                  text += "<tr onclick=\"showEmployeeData2('" + element.id + "')\">"
+                  text += "<td>" + element.item + "</td><td>" + element.storageLocation + "</td><td>" + element.dateOut + "</td></tr>";
                   });
                   text += "</table><b>hi </b>"
                   document.getElementById("equipment").innerHTML = text;
-                  document.getElementById("joetest").innerHTML =  "<button type='button'>Click Me!</button>"
+
             }
         });
       }
@@ -170,10 +174,6 @@
                             <div id="writeUps">
                             </div>
                         </div>
-                    </div>
-                    <div class="tab-pane" id="4a">
-                            <div id="joetest">
-                            </div>
                     </div>
                 </div>
             </div>
