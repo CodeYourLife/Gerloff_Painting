@@ -13,26 +13,51 @@
     <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
     <style type="text/css" class="init">
-        .active, .collapsible:hover {
+        nav .active, .collapsible:hover {
           background-color: Salmon;
         }
-        .collapsible {
-          background-color: #777;
-          color: white;
-          cursor: pointer;
-          padding: 8px;
-          width: 100%;
-          border: none;
-          text-align: left;
-          outline: none;
-          font-size: 15px;
+        .nav-pills a {
+            color: black;
+        }
+        .nav-pills li {
+            padding: 2px;
+        }
+        .nav-pills .active {
+            background-color: #6c757d !important;
+            padding: 5px;
+        }
+        .table td {
+            overflow-x: hidden;
+            text-wrap: nowrap !important;
+            word-wrap: normal !important;
+        }
+        label {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+        input {
+            margin-left: 10px;
+            margin-right: 10px;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+        tr th {
+            width: fit-content !important;
+        }
+        .tab-content * {
+          color : black;
+          background-color: white !important;
         }
 
-        .content {
-          padding: 0 18px;
-          display: none;
-          overflow: hidden;
-          background-color: #f1f1f1;
+        .active * {
+            background-color: white !important;
         }
 
     </style>
@@ -52,7 +77,6 @@
         $(document).ready(function () {
             var table = $('#employees2_table').DataTable({});
         })
-
     </script>
 </head>
 <body>
@@ -73,253 +97,642 @@
         </ul>
     </div>
 </nav>
-{{employee}}
+<div style="width: 100%; text-align:center; margin-top: 5px;"><h4>{{employee}}'s Page</h4></div>
 <!--{{employee.}}-->
-<form action="{% url 'my_page' %}" method="post" onSubmit="return check_booking_data()">
-    {% csrf_token %}
-    <button type="button" class="collapsible">My Info</button>
-    <div class="content">
-        <b>{{employee.first_name}} {{employee.last_name}}</b> Nickname: <input type="text" size="20" name="nickname"
-                                                                               value="{{employee.nickname}}"/>
-        <br>Phone: <input type="text" size="12" name="phone" value="{{employee.phone}}"/>Email: <input type="email"
-                                                                                                       size="30"
-                                                                                                       name="email"
-                                                                                                       value="{{employee.email}}"/>
-        <br> Current Level: {{employee.level}}<br>
-        <input type="submit" name="update_info" value="Update Info"/>
+<div id="accordion">
+    <div class="card">
+        <div class="card-header" id="headingZero">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseZero" aria-expanded="false"
+                        aria-controls="collapseZero">
+                    My Info
+                </button>
+            </h5>
+        </div>
+        <div id="collapseZero" class="collapse hide" aria-labelledby="headingZero" data-parent="#accordion">
+            <div class="card-body">
+                <form style="margin-bottom: 5px;" action="{% url 'my_page' %}" method="post"
+                      onSubmit="return check_booking_data()">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="firstname">First Name</label>
+                        <input style="width: 80%" type="text" name="firstname" value="{{employee.first_name}}"
+                               class="form-control" id="firstname" readonly placeholder="First Name">
+                    </div>
+                    <div class="form-group">
+                        <label for="middlename">Middle Name</label>
+                        <input style="width: 80%" type="text" name="middlename" value="{{employee.middle_name}}"
+                               class="form-control" id="middlename" readonly placeholder="Middle Name">
+                    </div>
+                    <div class="form-group">
+                        <label for="lastname">Last Name</label>
+                        <input style="width: 80%" type="text" name="lastname" value="{{employee.last_name}}"
+                               class="form-control" id="lastname" readonly placeholder="Last Name">
+                    </div>
+                    <div class="form-group">
+                        <label for="nickname">Nickname</label>
+                        <input style="width: 80%" type="text" name="nickname" value="{{employee.nickname}}"
+                               class="form-control" id="nickname" placeholder="Enter Nickname">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input style="width: 80%" type="text" name="phone" value="{{employee.phone}}"
+                               class="form-control" id="phone" placeholder="Phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input style="width: 80%" name="email" value="{{employee.email}}" class="form-control"
+                               id="email" placeholder="Email">
+                    </div>
+                    <div class="form-group">
+                        <label for="currentLevel">Current Level</label>
+                        <input style="width: 80%" type="text" readonly name="currentLevel" value="{{employee.level}}"
+                               class="form-control" id="currentLevel" placeholder="Current Level">
+                    </div>
+                    <input type="submit" class="btn btn-primary" name="update_info" value="Update Info"/>
+                </form>
+            </div>
+        </div>
     </div>
-</form>
+    <div class="card">
+        <div class="card-header" id="headingOne">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false"
+                        aria-controls="collapseOne">
+                    Assigned Tools
+                </button>
+            </h5>
+        </div>
+        <div id="collapseOne" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">
+            <div class="card-body">
+                {% if inventory %}
+                <table id="employees_table" class="table display">
+                    <tr>
+                        <th>Item</th>
+                        <th>Link</th>
+                    </tr>
+                    <tbody>
 
-<button type="button" class="collapsible">Assigned Tools</button>
-<div class="content">
-    <table id="employees_table" class="display">
-        <tbody>
-        {% for x in inventory %}
-        <tr>
-            <td>{{x.item}}</td>
-            <td><a href="{%  url 'equipment_page' x.id %}">View</a></td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+                    {% for x in inventory %}
+                    <tr>
+                        <td>{{x.item}}</td>
+                        <td><a href="{%  url 'equipment_page' x.id %}">View</a></td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div>No Assigned Tools To Show</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" id="headingTwo">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false"
+                        aria-controls="collapseTwo">
+                    Performed Assessments
+                </button>
+            </h5>
+        </div>
+        <div id="collapseTwo" class="collapse hide" aria-labelledby="headingTwo" data-parent="#accordion">
+            <div class="card-body">
+                {% if assessments_performed %}
+                <table id="employees_table" class="table display">
+                    <tr>
+                        <th>Date</th>
+                        <th>Employee</th>
+                        <th>Link</th>
+                    </tr>
+                    <tbody>
+                    {% for x in assessments_performed %}
+                    <tr>
+                        <td>{{x.assessment.date}}</td>
+                        <td>{{x.employee}}</td>
+                        <td><a href="{%  url 'assessments' x.id %}">View</a></td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div>No Performed Assessments To Show</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" id="headingThree">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false"
+                        aria-controls="collapseThree">
+                    Received Assessments
+                </button>
+            </h5>
+        </div>
+        <div id="collapseThree" class="collapse hide" aria-labelledby="headingThree" data-parent="#accordion">
+            <div class="card-body">
+                {% if assessments_received %}
+                <table class="table display">
+                    <tr>
+                        <th>Date</th>
+                        <th>Reviewer</th>
+                        <th>Note</th>
+                        <th>Link</th>
+                    </tr>
+                    <tbody>
+                    {% for x in assessments_received %}
+                    <tr>
+                        <td>{{x.assessment.date}}</td>
+                        <td>{{x.assessment.reviewer}}</td>
+                        <td>{{x.assessment.note}}</td>
+                        <td><a href="{%  url 'assessments' x.id %}">View</a></td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div>No Received Assessments To Show</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" id="headingFour">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false"
+                        aria-controls="collapseFour">
+                    Write-Ups Written
+                </button>
+            </h5>
+        </div>
+        <div id="collapseFour" class="collapse hide" aria-labelledby="headingFour" data-parent="#accordion">
+            <div class="card-body">
+                {% if writeups_written %}
+                <table class="table display">
+                    <tr>
+                        <th>Date</th>
+                        <th>Employee</th>
+                        <th>Description</th>
+                        <th>Link</th>
+                    </tr>
+                    <tbody>
+                    {% for x in writeups_written %}
+                    <tr>
+                        <td>{{x.date}}</td>
+                        <td>{{x.employee}}</td>
+                        <td>{{x.description}}</td>
+                        <td><a href="{%  url 'write_ups' x.id %}">View</a></td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div>No Write-Ups Written To Show</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" id="headingFive">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFive" aria-expanded="false"
+                        aria-controls="collapseFive">
+                    Write-Ups Received
+                </button>
+            </h5>
+        </div>
+        <div id="collapseFive" class="collapse hide" aria-labelledby="headingFive" data-parent="#accordion">
+            <div class="card-body">
+                {% if writeups_received %}
+                <table class="table display">
+                    <tr>
+                        <th>Date</th>
+                        <th>Supervisor</th>
+                        <th>Description</th>
+                        <th>Link</th>
+                    </tr>
+                    <tbody>
+                    {% for x in writeups_received %}
+                    <tr>
+                        <td>{{x.date}}</td>
+                        <td>{{x.supervisor}}</td>
+                        <td>{{x.description}}</td>
+                        <td><a href="{%  url 'write_ups' x.id %}">View</a></td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div>No Write-Ups Received To Show</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" id="headingSix">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSix" aria-expanded="false"
+                        aria-controls="collapseSix">
+                    Vacation Requests
+                </button>
+            </h5>
+        </div>
+        <div id="collapseSix" class="collapse hide" aria-labelledby="headingSix" data-parent="#accordion">
+            <div class="card-body">
+                {% if vacation_requests %}
+                <table class="table display">
+                    <tr>
+                        <th>Vacation Date</th>
+                        <th>Duration</th>
+                        <th>Note</th>
+                        <th>Is Approved</th>
+                        <th>Request Date</th>
+                    </tr>
+                    <tbody>
+                    {% for x in vacation_requests %}
+                    <tr>
+                        <td>{{x.vacation_date}}</td>
+                        <td>{{x.duration}}</td>
+                        <td>{{x.employee_note}}</td>
+                        <td>{{x.is_approved}}</td>
+                        <td>{{x.request_date}}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div>No Vacation Requests To Show</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" id="headingSeven">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSeven" aria-expanded="false"
+                        aria-controls="collapseSeven">
+                    Production Reports Written
+                </button>
+            </h5>
+        </div>
+        <div id="collapseSeven" class="collapse hide" aria-labelledby="headingSeven" data-parent="#accordion">
+            <div class="card-body">
+                {% if production_reports_written %}
+                <table class="table display">
+                    <tr>
+                        <th>Date</th>
+                        <th>Job</th>
+                        <th>Link</th>
+                    </tr>
+                    <tbody>
+                    {% for x in production_reports_written %}
+                    <tr>
+                        <td>{{x.date}}</td>
+                        <td>{{x.job}}</td>
+                        <td><a href="{%  url 'daily_reports' x.id %}">View</a></td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div>No Production Reports Written To Show</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" id="headingEight">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseEight" aria-expanded="false"
+                        aria-controls="collapseEight">
+                    Production Reports Received
+                </button>
+            </h5>
+        </div>
+        <div id="collapseEight" class="collapse hide" aria-labelledby="headingEight" data-parent="#accordion">
+            <div class="card-body">
+                {% if production_reports_received %}
+                <table class="table display">
+                    <tr>
+                        <th>Date</th>
+                        <th>Job</th>
+                        <th>Description</th>
+                        <th>Unit/Value</th>
+                        <th>Link</th>
+                    </tr>
+                    <tbody>
+                    {% for x in production_reports_received %}
+                    <tr>
+                        <td>{{x.date}}</td>
+                        <td>{{x.job}}</td>
+                        <td>{{x.description}}</td>
+                        <td>[{{x.value1}} {{x.unit}}]
+                            {% if x.value2 != None %}
+                            <div>[{{x.value2}} {{x.unit2}}]</div>
+                            {% endif %}
+                            {% if x.value3 != None %}
+                            <div>[{{x.value3}} {{x.unit3}}]</div>
+                            {% endif %}
+                        </td>
+                        <td><a href="{%  url 'production_reports' x.id %}">View</a></td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div>No Production Reports Received To Show</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" id="headingNine">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseNine" aria-expanded="false"
+                        aria-controls="collapseNine">
+                    Classes Taught
+                </button>
+            </h5>
+        </div>
+        <div id="collapseNine" class="collapse hide" aria-labelledby="headingNine" data-parent="#accordion">
+            <div class="card-body">
+                {% if classes_taught %}
+                <table class="table display">
+                    <tr>
+                        <th>Date</th>
+                        <th>Link</th>
+                        <th>Description</th>
+                        <th>Note</th>
+                    </tr>
+                    <tbody>
+                    {% for x in classes_taught %}
+                    <tr>
+                        <td>{{x.date}} -</td>
+                        <td><a href="{%  url 'classes' x.id %}">View</a></td>
+                        <td>{{x.description}}</td>
+                        <td>{{x.note}}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div>No Classes Taught To Show</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" id="headingTen">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTen" aria-expanded="false"
+                        aria-controls="collapseTen">
+                    Classes Attended
+                </button>
+            </h5>
+        </div>
+        <div id="collapseTen" class="collapse hide" aria-labelledby="headingTen" data-parent="#accordion">
+            <div class="card-body">
+                {% if classes_attended %}
+                <table class="table display">
+                    <tr>
+                        <th>Date</th>
+                        <th>Link</th>
+                        <th>Description</th>
+                        <th>Note</th>
+                    </tr>
+                    <tbody>
+                    {% for x in classes_attended %}
+                    <tr>
+                        <td>{{x.class_event.date}} -</td>
+                        <td><a href="{%  url 'classes' x.class_event.id %}">View</a></td>
+                        <td>{{x.class_event.description}}</td>
+                        <td>{{x.class_event.note}}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div>No Classes Attended To Show</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" id="headingEleven">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseEleven" aria-expanded="false"
+                        aria-controls="collapseEleven">
+                    Exam Scores
+                </button>
+            </h5>
+        </div>
+        <div id="collapseEleven" class="collapse hide" aria-labelledby="headingEleven" data-parent="#accordion">
+            <div class="card-body">
+                {% if exams %}
+                <table class="table display">
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Link</th>
+                        <th>Score</th>
+                    </tr>
+                    <tbody>
+                    {% for x in exams %}
+                    <tr>
+                        <td>{{x.date}} -</td>
+                        <td>
+                            {% if x.exam != None %}
+                            <div>{{x.exam}}{% else %}{{x.exam2}}</div>
+                            {% endif %}
+                        </td>
+                        <td><a href="{%  url 'exams' x.id %}">View</a></td>
+                        <td>Score: {{x.score}} /
+                            {% if x.exam != None %}
+                            {{x.exam.max_score}}{% else %}{{x.custom_score_max}}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div>No Exam Scores To Show</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+
+    <div class="card">
+        <div class="card-header" id="headingTwelve">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwelve" aria-expanded="false"
+                        aria-controls="collapseTwelve">
+                    Mentorships -As Mentor
+                </button>
+            </h5>
+        </div>
+        <div id="collapseTwelve" class="collapse hide" aria-labelledby="headingTwelve" data-parent="#accordion">
+            <div class="card-body">
+                {% if mentorship_mentor %}
+                <table class="table display">
+                    <tr>
+                        <th>Date</th>
+                        <th>Apprentice</th>
+                        <th>Link</th>
+                        <th>Status</th>
+                    </tr>
+                    <tbody>
+                    {% for x in mentorship_mentor %}
+                    <tr>
+                        <td>{{x.start_date}}</td>
+                        <td>{{x.apprentice}}</td>
+                        <td><a href="{%  url 'mentorships' x.id %}">View</a></td>
+                        <td>{% if x.is_closed == False %} Active {% else %} Closed {% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div>No Mentorships -As Mentor To Show</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+
+    <div class="card">
+        <div class="card-header" id="headingThirteen">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseThirteen"
+                        aria-expanded="false"
+                        aria-controls="collapseThirteen">
+                    Mentorships -As Apprentice
+                </button>
+            </h5>
+        </div>
+        <div id="collapseThirteen" class="collapse hide" aria-labelledby="headingThirteen" data-parent="#accordion">
+            <div class="card-body">
+                {% if mentorship_apprentice %}
+                <table class="table display">
+                    <tr>
+                        <th>Date</th>
+                        <th>Mentor</th>
+                        <th>Link</th>
+                        <th>Status</th>
+                    </tr>
+                    <tbody>
+                    {% for x in mentorship_apprentice %}
+                    <tr>
+                        <td>{{x.start_date}}</td>
+                        <td>{{x.mentor}}</td>
+                        <td><a href="{%  url 'mentorships' x.id %}">View</a></td>
+                        <td>{% if x.is_closed == False %} Active {% else %} Closed {% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div>No Mentorships -As Apprentice To Show</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+
+    <div class="card-header" id="headingFourteen">
+        <h5 class="mb-0">
+            <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFourteen" aria-expanded="false"
+                    aria-controls="collapseFourteen">
+                Certifications
+            </button>
+        </h5>
+    </div>
+    <div id="collapseFourteen" class="collapse hide" aria-labelledby="headingFourteen" data-parent="#accordion">
+        <div class="card-body">
+            {% if certifications %}
+            <table class="table display">
+                <tr>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Link</th>
+                    <th>Date Received</th>
+                    <th>Date Expires</th>
+                    <th>Action</th>
+                </tr>
+                <tbody>
+                {% for x in certifications %}
+                <tr>
+                    <td>{{x.category}}</td>
+                    <td>{{x.description}}</td>
+                    <td><a href="{%  url 'certifications' x.id %}">View</a></td>
+                    <td>{{x.date_received}} -</td>
+                    <td>{{x.date_expires}}</td>
+                    <td>{{x.action}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div>No Certifications To Show</div>
+            {% endif %}
+        </div>
+    </div>
+
+
+    <div class="card-header" id="headingFifteen">
+        <h5 class="mb-0">
+            <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFifteen" aria-expanded="false"
+                    aria-controls="collapseFifteen">
+                Certification (Actions Required)
+            </button>
+        </h5>
+    </div>
+
+    <div id="collapseFifteen" class="collapse hide" aria-labelledby="headingFifteen" data-parent="#accordion">
+        <div class="card-body">
+            {% if actions %}
+            <table class="table display">
+                <tr>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Link</th>
+                    <th>Date Received</th>
+                    <th>Date Expires</th>
+                    <th>Action</th>
+                </tr>
+                <tbody>
+                {% for x in actions %}
+                <tr>
+                    <td>{{x.category}} -</td>
+                    <td>{{x.description}} -</td>
+                    <td><a href="{%  url 'certifications' x.id %}">View</a></td>
+                    <td>{{x.date_received}}</td>
+                    <td>{{x.date_expires}}</td>
+                    <td>{{x.action}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div>No Certifications Requiring Action</div>
+            {% endif %}
+        </div>
+    </div>
 </div>
-<button type="button" class="collapsible">Performed Assessments</button>
-<div class="content">
-    <table id="employees_table" class="display">
-        <tbody>
-        {% for x in assessments_performed %}
-        <tr>
-            <td>{{x.assessment.date}}</td>
-            <td>{{x.employee}}</td>
-            <td><a href="{%  url 'assessments' x.id %}">View</a></td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-</div>
-<button type="button" class="collapsible">Received Assessments</button>
-<div class="content">
-    <table id="employees_table" class="display">
-        <tbody>
-        {% for x in assessments_received %}
-        <tr>
-            <td>{{x.assessment.date}}</td>
-            <td>{{x.assessment.reviewer}}</td>
-            <td>{{x.assessment.note}}</td>
-            <td><a href="{%  url 'assessments' x.id %}">View</a></td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
 
 
-</div>
-<button type="button" class="collapsible">Write-Ups Written</button>
-<div class="content">
-    <table id="employees_table" class="display">
-        <tbody>
-        {% for x in writeups_written %}
-        <tr>
-            <td>{{x.date}}</td>
-            <td>{{x.employee}}</td>
-            <td>{{x.description}}</td>
-            <td><a href="{%  url 'write_ups' x.id %}">View</a></td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
-
-</div>
-<button type="button" class="collapsible">Write-Ups Received</button>
-<div class="content">
-    <table id="employees_table" class="display">
-        <tbody>
-        {% for x in writeups_received %}
-        <tr>
-            <td>{{x.date}}</td>
-            <td>{{x.supervisor}}</td>
-            <td>{{x.description}}</td>
-            <td><a href="{%  url 'write_ups' x.id %}">View</a></td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
-</div>
-<button type="button" class="collapsible">Vacation Requests</button>
-<div class="content">
-    {{vacation_requests}}
-
-</div>
-<button type="button" class="collapsible">Production Reports Written</button>
-<div class="content">
-    <table id="employees_table" class="display">
-        <tbody>
-        {% for x in production_reports_written %}
-        <tr>
-            <td>{{x.date}}</td>
-            <td>{{x.job}}</td>
-            <td><a href="{%  url 'daily_reports' x.id %}">View</a></td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
-
-</div>
-<button type="button" class="collapsible">Production Reports Received</button>
-<div class="content">
-
-    <table id="employees_table" class="display">
-        <tbody>
-        {% for x in production_reports_received %}
-        <tr>
-            <td>{{x.date}}</td>
-            <td>{{x.job}}</td>
-            <td>{{x.description}}</td>
-            <td>[{{x.value1}} {{x.unit}}]{% if x.value2 != None %}[{{x.value2}} {{x.unit2}}]{% endif %} {% if x.value3
-                != None %}[{{x.value3}} {{x.unit3}}]{% endif %}
-            </td>
-            <td><a href="{%  url 'production_reports' x.id %}">View</a></td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
-
-</div>
-<button type="button" class="collapsible">Classes Taught</button>
-<div class="content">
-
-    <table id="employees_table" class="display">
-        <tbody>
-        {% for x in classes_taught %}
-        <tr>
-            <td>{{x.date}} -</td>
-            <td><a href="{%  url 'classes' x.id %}">View - </a></td>
-            <td>{{x.description}} -</td>
-            <td>{{x.note}}</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
-</div>
-<button type="button" class="collapsible">Classes Attended</button>
-<div class="content">
-
-    <table id="employees_table" class="display">
-        <tbody>
-        {% for x in classes_attended %}
-        <tr>
-            <td>{{x.class_event.date}} -</td>
-            <td><a href="{%  url 'classes' x.class_event.id %}">View - </a></td>
-            <td>{{x.class_event.description}} -</td>
-            <td>{{x.class_event.note}}</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
-
-</div>
-<button type="button" class="collapsible">Exam Scores</button>
-<div class="content">
-
-    <table id="employees_table" class="display">
-        <tbody>
-        {% for x in exams %}
-        <tr>
-            <td>{{x.date}} -</td>
-            <td>{% if x.exam != None %}{{x.exam}}{% else %}{{x.exam2}}{% endif %} -</td>
-            <td><a href="{%  url 'exams' x.id %}">View - </a></td>
-            <td>Score: {{x.score}} / {% if x.exam != None %}{{x.exam.max_score}}{% else %}{{x.custom_score_max}}{% endif
-                %}
-            </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
-</div>
-<button type="button" class="collapsible">Mentorships -As Mentor</button>
-<div class="content">
-    <table id="employees_table" class="display">
-        <tbody>
-        {% for x in mentorship_mentor %}
-        <tr>
-            <td>{{x.start_date}} -</td>
-            <td><b>Apprentice: </b>{{x.apprentice}} -</td>
-            <td><a href="{%  url 'mentorships' x.id %}">View - </a></td>
-            <td>{% if x.is_closed == False %} Active {% else %} Closed {% endif %}</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
-
-</div>
-<button type="button" class="collapsible">Mentorships -As Apprentice</button>
-<div class="content">
-
-    <table id="employees_table" class="display">
-        <tbody>
-        {% for x in mentorship_apprentice %}
-        <tr>
-            <td>{{x.start_date}} -</td>
-            <td><b>Mentor: </b>{{x.mentor}} -</td>
-            <td><a href="{%  url 'mentorships' x.id %}">View - </a></td>
-            <td>{% if x.is_closed == False %} Active {% else %} Closed {% endif %}</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
-
-</div>
-<button type="button" class="collapsible">Certifications</button>
-<div class="content">
-    <table id="employees_table" class="display">
-        <tbody>
-        {% for x in certifications %}
-        <tr>
-            <td>{{x.category}} -</td>
-            <td>{{x.description}} -</td>
-            <td><a href="{%  url 'certifications' x.id %}">View - </a></td>
-            <td>{{x.date_received}} -</td>
-            <td>{{x.date_expires}} -</td>
-            <td>{{x.action}} -</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
-</div>
-<button type="button" class="collapsible">Actions Required</button>
-<div class="content">
-    {{actions}}
-</div>
 <script>
     var coll = document.getElementsByClassName("collapsible");
     var i;
