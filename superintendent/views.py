@@ -18,6 +18,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 def super_ajax(request):
     if request.is_ajax():
         job = Jobs.objects.get(job_number=request.GET['job_number'])
+
         if 'build_notes' in request.GET:
             print("PUMPKIN")
             job_notes = JobNotes.objects.filter(Q(type="auto_start_date_note")| Q(type = "employee_note"),job_number=job)
@@ -52,6 +53,7 @@ def super_ajax(request):
             # new_date = str(Jobs.objects.get(job_number=request.GET['job_number']).start_date)
             data_details = {'new_date':new_date,'is_active':request.GET['is_active']}
             return HttpResponse(json.dumps(data_details))
+
 
 @login_required(login_url='/accounts/login')
 def super_home(request, super, filter):

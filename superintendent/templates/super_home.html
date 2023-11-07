@@ -40,6 +40,7 @@ document.getElementById("jobs_section").style.display ="block";
 
     </script>
 
+
     <script type="text/javascript" class="init">
 
 function showemployeedata(jobnumber,jobname,startdate,is_active,x){
@@ -69,8 +70,10 @@ function showemployeedata(jobnumber,jobname,startdate,is_active,x){
     if (day.length < 2)
         day = '0' + day;
     adjusted_date=[year, month, day].join('-')
+
     document.getElementById("title").innerHTML = jobname
     pmform.date_note.value=""
+
     pmform.start_date.value=adjusted_date
     pmform.row_number.value=x.rowIndex
     pmform.job_number.value=jobnumber
@@ -81,6 +84,7 @@ function showemployeedata(jobnumber,jobname,startdate,is_active,x){
 
 
 function anothertest(){
+
 
         $.ajax({
             method: 'GET',
@@ -125,6 +129,7 @@ $(document).ready(function () {
                 </button>
             </div>
             <div class="modal-body">
+
                 <ul class="nav nav-pills">
                     <li>
                         <a href="#1a" class="active" data-toggle="tab">Change Date</a>
