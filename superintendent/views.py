@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from rentals.models import Rentals
 from datetime import date, timedelta
 from employees.models import Employees
-from jobs.models import Jobs
+from jobs.models import Jobs, JobNotes
 from changeorder.models import ChangeOrders
 from equipment.models import *
 from console.models import *
@@ -18,30 +18,40 @@ from django.core.serializers.json import DjangoJSONEncoder
 def super_ajax(request):
     if request.is_ajax():
         job = Jobs.objects.get(job_number=request.GET['job_number'])
-        if job.is_active == True:
-            if request.GET['is_active'] == "true":
-                status=3
-            else:
-                status=2
+        if 'build_notes' in request.GET:
+            print("PUMPKIN")
+            job_notes = JobNotes.objects.filter(Q(type="auto_start_date_note")| Q(type = "employee_note"),job_number=job)
+            notes=[]
+            for note in job_notes:
+                notes.append({'note': note.note, 'user': note.user,
+                              'date': str(note.date)})
+            data_details = {'notes': notes}
+            return HttpResponse(json.dumps(data_details))
         else:
-            if request.GET['is_active'] == "true":
-                status=1
+            if job.is_active == True:
+                if request.GET['is_active'] == "true":
+                    status=3
+                else:
+                    status=2
             else:
-                status=3
-        if str(job.start_date) != str(request.GET['start_date']):
-            datechange=True
-        else: datechange=False
-        start_date_change(job, request.GET['start_date'], status, request.GET['notes'],
-                          request.user.first_name + " " + request.user.last_name, datechange)
-        job.save()
-        new_date = Jobs.objects.get(job_number=request.GET['job_number']).start_date
-        print(new_date.strftime("%b"))
-        print(new_date.strftime("%d"))
-        print(new_date.strftime("%Y"))
-        new_date= Jobs.objects.get(job_number=request.GET['job_number']).start_date.strftime("%b %d,%Y")
-        # new_date = str(Jobs.objects.get(job_number=request.GET['job_number']).start_date)
-        data_details = {'new_date':new_date,'is_active':request.GET['is_active']}
-        return HttpResponse(json.dumps(data_details))
+                if request.GET['is_active'] == "true":
+                    status=1
+                else:
+                    status=3
+            if str(job.start_date) != str(request.GET['start_date']):
+                datechange=True
+            else: datechange=False
+            start_date_change(job, request.GET['start_date'], status, request.GET['notes'],
+                              request.user.first_name + " " + request.user.last_name, datechange)
+            job.save()
+            new_date = Jobs.objects.get(job_number=request.GET['job_number']).start_date
+            print(new_date.strftime("%b"))
+            print(new_date.strftime("%d"))
+            print(new_date.strftime("%Y"))
+            new_date= Jobs.objects.get(job_number=request.GET['job_number']).start_date.strftime("%b %d,%Y")
+            # new_date = str(Jobs.objects.get(job_number=request.GET['job_number']).start_date)
+            data_details = {'new_date':new_date,'is_active':request.GET['is_active']}
+            return HttpResponse(json.dumps(data_details))
 
 @login_required(login_url='/accounts/login')
 def super_home(request, super, filter):

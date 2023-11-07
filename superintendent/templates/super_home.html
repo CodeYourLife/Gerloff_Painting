@@ -39,9 +39,26 @@ document.getElementById("jobs_section").style.display ="block";
 });
 
     </script>
+
     <script type="text/javascript" class="init">
 
 function showemployeedata(jobnumber,jobname,startdate,is_active,x){
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'job_number':jobnumber,'build_notes': "True"},
+        success: function (data) {
+            parsedData = JSON.parse(data);
+            let text = "<table border='1' class='table display'>"
+            text += "<thead><tr><th width='10%'>Date</th><th width='10%'>User</th><th class='col'>Note</th></tr></thead>"
+            parsedData.notes.forEach((element) => {
+                text += "<tr><td width='10%'>" + element.date + "</td><td width='10%'>" + element.user + "</td><td>" + element.note + "</td></tr>";
+            })
+            text += "</table>"
+            document.getElementById("notes_tab").innerHTML = text;
+        }
+    })
+
 
     var d = new Date(startdate),
         month = '' + (d.getMonth() + 1),
@@ -52,6 +69,8 @@ function showemployeedata(jobnumber,jobname,startdate,is_active,x){
     if (day.length < 2)
         day = '0' + day;
     adjusted_date=[year, month, day].join('-')
+    document.getElementById("title").innerHTML = jobname
+    pmform.date_note.value=""
     pmform.start_date.value=adjusted_date
     pmform.row_number.value=x.rowIndex
     pmform.job_number.value=jobnumber
@@ -62,7 +81,6 @@ function showemployeedata(jobnumber,jobname,startdate,is_active,x){
 
 
 function anothertest(){
-
 
         $.ajax({
             method: 'GET',
@@ -107,23 +125,49 @@ $(document).ready(function () {
                 </button>
             </div>
             <div class="modal-body">
-                <form id="pmform" action="{% url 'super_home' 'ALL' 'ALL' %}" method="post" >
-                {% csrf_token %}
-                <table>
-                    <tr><td>
-                    Start date:<input type="date" id="start_date" name="start_date" value="1999-01-01">
-                    <br>
-	                <input type="checkbox" name ="is_active" id="is_active" checked /> <label for="is_active">Remove this job from Upcoming Jobs List </label>
-	                <input type="hidden" name ="row_number" id="row_number" />
-                        <input type="hidden" name ="job_number" id="job_number" />
-                        <br>
-	                Explain This Change:<br>
-                    <textarea id="date_note" name="date_note" class="form-control" style="min-width: 100%"></textarea>
+                <ul class="nav nav-pills">
+                    <li>
+                        <a href="#1a" class="active" data-toggle="tab">Change Date</a>
+                    </li>
+                    <li><a href="#2a" data-toggle="tab">Notes</a>
+                    </li>
+                </ul>
 
-	                <br>
-                        <button type="button" class="btn btn-primary" onclick = "anothertest()" data-dismiss="modal" > Save Changes </button>
-                    </td></tr></table>
-                </form>
+                <div class="tab-content clearfix">
+                    <div class="tab-pane active" id="1a">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="date_tab">
+                                <form id="pmform" action="{% url 'super_home' 'ALL' 'ALL' %}" method="post" >
+                                {% csrf_token %}
+                                <table>
+                                    <tr><td>
+                                    Start date:<input type="date" id="start_date" name="start_date" value="1999-01-01">
+                                    <br>
+                                    <input type="checkbox" name ="is_active" id="is_active" checked /> <label for="is_active">Remove this job from Upcoming Jobs List </label>
+                                    <input type="hidden" name ="row_number" id="row_number" />
+                                        <input type="hidden" name ="job_number" id="job_number" />
+                                        <br>
+                                    Explain This Change:<br>
+                                    <textarea id="date_note" name="date_note" class="form-control" style="min-width: 100%"></textarea>
+
+                                    <br>
+                                        <button type="button" class="btn btn-primary" onclick = "anothertest()" data-dismiss="modal" > Save Changes </button>
+                                </td></tr></table>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="2a">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="notes_tab">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+
+
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
