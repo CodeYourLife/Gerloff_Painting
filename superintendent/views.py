@@ -10,7 +10,38 @@ from console.models import *
 from subcontractors.models import *
 from django.db.models import Q
 from equipment.filters import JobsFilter2
+from django.http import HttpResponse
+from jobs.JobMisc import start_date_change, gerloff_super_change
+import json
+from django.core.serializers.json import DjangoJSONEncoder
 
+def super_ajax(request):
+    if request.is_ajax():
+        job = Jobs.objects.get(job_number=request.GET['job_number'])
+        if job.is_active == True:
+            if request.GET['is_active'] == "true":
+                status=3
+            else:
+                status=2
+        else:
+            if request.GET['is_active'] == "true":
+                status=1
+            else:
+                status=3
+        if str(job.start_date) != str(request.GET['start_date']):
+            datechange=True
+        else: datechange=False
+        start_date_change(job, request.GET['start_date'], status, request.GET['notes'],
+                          request.user.first_name + " " + request.user.last_name, datechange)
+        job.save()
+        new_date = Jobs.objects.get(job_number=request.GET['job_number']).start_date
+        print(new_date.strftime("%b"))
+        print(new_date.strftime("%d"))
+        print(new_date.strftime("%Y"))
+        new_date= Jobs.objects.get(job_number=request.GET['job_number']).start_date.strftime("%b %d,%Y")
+        # new_date = str(Jobs.objects.get(job_number=request.GET['job_number']).start_date)
+        data_details = {'new_date':new_date,'is_active':request.GET['is_active']}
+        return HttpResponse(json.dumps(data_details))
 
 @login_required(login_url='/accounts/login')
 def super_home(request, super, filter):
@@ -22,11 +53,17 @@ def super_home(request, super, filter):
             super=employee.id
         else: super = 'ALL'
     selected_superid = super
+    if request.is_ajax():
+        print("HOW BOUT THIS")
+        return HttpResponse("PUMPKIN")
     if request.method == 'POST':
-        if request.POST['selected_super'] == 'all':
-            selected_superid = 'ALL'
+        if 'selected_super' in request.POST:
+            if request.POST['selected_super'] == 'all':
+                selected_superid = 'ALL'
+            else:
+                selected_superid = request.POST['selected_super']
         else:
-            selected_superid = request.POST['selected_super']
+            print(request.POST['date_note'])
     if selected_superid == 'ALL':
         send_data['equipment'] = Inventory.objects.exclude(job_number=None)
         send_data['equipment_count'] = Inventory.objects.exclude(job_number=None).count()
