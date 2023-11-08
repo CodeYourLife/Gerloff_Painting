@@ -440,22 +440,33 @@ def jobs_home(request):
 @login_required(login_url='/accounts/login')
 def job_page(request, jobnumber):
     if jobnumber == 'ALL':
-        data = {}
-        data = request.GET.copy()
-        if 'search2' not in request.GET:
-            data['search2'] = 0
-        search_jobs = JobsFilter(data, queryset=Jobs.objects.filter())
-        jobstable = JobsTable(search_jobs.qs, order_by='start_date')
+        print(request.GET)
+        send_data = {}
+        if request.method == 'GET':
+            if 'search' in request.GET: send_data['search_exists'] = request.GET['search']  # jobname
+            if 'search2' in request.GET:
+                send_data['search2_exists'] = request.GET['search2']  # super name
+                if request.GET['search2'] != 'ALL' and request.GET['search2'] != 'UNASSIGNED':
+                    send_data['selected_supername'] = Employees.objects.get(id=request.GET['search2']).first_name + " " + Employees.objects.get(id=request.GET['search2']).last_name
+            if 'search3' in request.GET: send_data['search3_exists'] = request.GET['search3']  # open only
+            if 'search4' in request.GET: send_data['search4_exists'] = request.GET['search4']  # gc name
+            if 'search5' in request.GET: send_data['search5_exists'] = request.GET['search5']  # upcoming only
+            if 'search6' in request.GET: send_data['search6_exists'] = request.GET['search6']  # unassigned
+
+        search_jobs = JobsFilter(request.GET, queryset=Jobs.objects.filter())
+        send_data['search_jobs'] = JobsFilter(request.GET, queryset=Jobs.objects.filter())
+        send_data['jobstable'] = search_jobs.qs.order_by('start_date')
         # RequestConfig(request).configure(jobstable)
-        RequestConfig(request, paginate=False).configure(jobstable)
-        has_filter = any(field in request.GET for field in set(search_jobs.get_fields()))
-        tickets = ChangeOrders.objects.filter(job_number__is_closed=False, is_t_and_m=True, is_ticket_signed=False)
-        open_cos = ChangeOrders.objects.filter(job_number__is_closed=False, is_closed=False,
+        # RequestConfig(request, paginate=False).configure(jobstable)
+        send_data['has_filter'] = any(field in request.GET for field in set(search_jobs.get_fields()))
+        send_data['supers'] = Employees.objects.exclude(Q(job_title__description="Painter") | Q(active=False))
+        send_data['tickets'] = ChangeOrders.objects.filter(job_number__is_closed=False, is_t_and_m=True, is_ticket_signed=False)
+        send_data['open_cos'] = ChangeOrders.objects.filter(job_number__is_closed=False, is_closed=False,
                                                is_approved=False) & ChangeOrders.objects.filter(
             is_t_and_m=False) | ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=True)
-        approved_cos = ChangeOrders.objects.filter(job_number__is_closed=False, is_closed=False, is_approved=True)
-        equipment = Inventory.objects.filter(job_number__is_closed=False).order_by('inventory_type')
-        rentals = Rentals.objects.filter(job_number__is_closed=False, off_rent_number__isnull=True)
+        send_data['approved_cos'] = ChangeOrders.objects.filter(job_number__is_closed=False, is_closed=False, is_approved=True)
+        send_data['equipment'] = Inventory.objects.filter(job_number__is_closed=False).order_by('inventory_type')
+        send_data['rentals'] = Rentals.objects.filter(job_number__is_closed=False, off_rent_number__isnull=True)
         wallcovering2 = Wallcovering.objects.filter(job_number__is_closed=False)
         wc_not_ordereds = []
         for x in wallcovering2:
@@ -463,18 +474,14 @@ def job_page(request, jobnumber):
                 print(x)
             else:
                 wc_not_ordereds.append(x)
-        wc_ordereds = OrderItems.objects.filter(wallcovering__job_number__is_closed=False, is_satisfied=False)
-        packages = Packages.objects.filter(delivery__order__job_number__is_closed=False)
-        deliveries = OutgoingItem.objects.filter(outgoing_event__job_number__is_closed=False)
-        submittals = Submittals.objects.filter(job_number__is_closed=False)
-        subcontracts = Subcontracts.objects.filter(job_number__is_closed=False)
-        jobs = 'ALL'
-        return render(request, "job_page.html",
-                      {'search_jobs': search_jobs, 'has_filter': has_filter, 'jobstable': jobstable,
-                       'subcontracts': subcontracts, 'submittals': submittals, 'packages': packages,
-                       'deliveries': deliveries, 'wc_not_ordereds': wc_not_ordereds, 'wc_ordereds': wc_ordereds,
-                       'jobs': jobs, 'tickets': tickets, 'open_cos': open_cos, 'approved_cos': approved_cos,
-                       'equipments': equipment, 'rentals': rentals, })
+        send_data['wc_not_ordereds']=wc_not_ordereds
+        send_data['wc_ordereds'] = OrderItems.objects.filter(wallcovering__job_number__is_closed=False, is_satisfied=False)
+        send_data['packages'] = Packages.objects.filter(delivery__order__job_number__is_closed=False)
+        send_data['deliveries'] = OutgoingItem.objects.filter(outgoing_event__job_number__is_closed=False)
+        send_data['submittals'] = Submittals.objects.filter(job_number__is_closed=False)
+        send_data['subcontracts'] = Subcontracts.objects.filter(job_number__is_closed=False)
+        send_data['jobs'] = 'ALL'
+        return render(request, "job_page.html",send_data)
     else:
         selectedjob = Jobs.objects.get(job_number=jobnumber)
         if request.method == 'POST':
@@ -588,6 +595,7 @@ def job_page(request, jobnumber):
         else:
             notes = JobNotes.objects.filter(job_number=selectedjob)
         send_data['notes'] = notes
+        send_data['supers'] = Employees.objects.exclude(Q(job_title__description="Painter") | Q(active=False))
         return render(request, 'job_page.html', send_data)
 
 

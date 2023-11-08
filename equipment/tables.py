@@ -13,7 +13,7 @@ class JobsTable(tables.Table):
         model = Jobs
         template_name = "django_tables2/bootstrap.html"
         attrs = {'class': 'table table-sm'}
-        fields = ("job_number", "jobname","start_date","startdate","client","estimator","super","contract_amount","city","state")
+        fields = ("job_number", "jobname","start_date","startdate","client","super","contract_amount","city","state")
     def before_render(self,request):
         self.columns.hide('start_date')
 class EquipmentNotesTable(tables.Table, FilterView):

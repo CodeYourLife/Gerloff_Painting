@@ -20,6 +20,11 @@ def super_ajax(request):
     # if request.method == 'GET':
     #     return redirect('super_home',super= request.GET['selected_super'])
     if request.is_ajax():
+        if 'select_super' in request.GET:
+            job = Jobs.objects.get(job_number=request.GET['job_number'])
+            super = Employees.objects.get(id=request.GET['select_super'])
+            gerloff_super_change(job,super,request.user.first_name + " " + request.user.last_name)
+            return HttpResponse()
         if 'build_notes' in request.GET:
             job = Jobs.objects.get(job_number=request.GET['job_number'])
             job_notes = JobNotes.objects.filter(Q(type="auto_start_date_note")| Q(type = "employee_note"),job_number=job)
