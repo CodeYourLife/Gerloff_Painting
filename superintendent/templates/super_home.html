@@ -5,9 +5,15 @@
 <!DOCTYPE html>
 <html>
 <head>
+
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
     <title>DataTables example - HTML (DOM) sourced data</title>
+    <style>
+          .tb { border-collapse: collapse; width:300px; }
+  .tb th, .tb td { padding: 5px; border: solid 1px #777; }
+  .tb th { background-color: lightblue; }
+    </style>
     <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
     <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
     <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
@@ -24,7 +30,6 @@
     <script type="text/javascript" language="javascript"
             src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-
     <script type="text/javascript" class="init">
 
 function showemployeedata(jobnumber,jobname,startdate,is_active,x){
@@ -53,17 +58,14 @@ function showemployeedata(jobnumber,jobname,startdate,is_active,x){
     if (day.length < 2)
         day = '0' + day;
     adjusted_date=[year, month, day].join('-')
-
     document.getElementById("title").innerHTML = jobname
     pmform.date_note.value=""
-
     pmform.start_date.value=adjusted_date
     pmform.row_number.value=x.rowIndex
     pmform.job_number.value=jobnumber
     if (is_active == "True"){pmform.is_active.checked = true}
     else{pmform.is_active.checked = false}
 }
-
 
 function anothertest(){
 
@@ -80,9 +82,10 @@ function anothertest(){
                 }
             }
             })
+
 }
 function new_filter_now(){
-if (document.getElementById("jobs_section").style.display = "block"){document.getElementById("is_button_collapsed").value = "NO"}
+if (document.getElementById("jobs_section").style.display == "block"){document.getElementById("is_button_collapsed").value = "NO";}
 else {document.getElementById("is_button_collapsed").value = "YES"}
 document.getElementById('filter_form').submit();
 }
@@ -120,7 +123,6 @@ if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "
                     <div class="tab-pane active" id="1a">
                         <div style="margin-top: 12px" class="table-responsive">
                             <div id="date_tab">
-
                                 <form id="pmform" action="{% url 'super_home' 'ALL' %}" method="post" >
 
                                 {% csrf_token %}
@@ -134,7 +136,6 @@ if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "
                                         <br>
                                     Explain This Change:<br>
                                     <textarea id="date_note" name="date_note" class="form-control" style="min-width: 100%"></textarea>
-
                                     <br>
                                         <button type="button" class="btn btn-primary" onclick = "anothertest()" data-dismiss="modal" > Save Changes </button>
                                 </td></tr></table>
@@ -148,7 +149,6 @@ if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "
                             </div>
                         </div>
                     </div>
-
                 </div>
 
             </div>
@@ -158,8 +158,6 @@ if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "
         </div>
     </div>
 </div>
-
-
 
 <form id="filter_form" class="form-control form-contol-sm" action="{% url 'super_home' 'ALL' %}" method="get" >
     <label>Please select superintendent</label>
@@ -178,9 +176,16 @@ if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "
     <button type="button" class="collapsible">{{jobs_count}} Jobs</button>
     <div id="jobs_section" class="content">
 <input type="hidden" name="is_button_collapsed" id="is_button_collapsed" />
-    Job Name:<input type="text" id="search" name="search" {% if search_exists %} value={{search_exists}}{% endif %} onchange="new_filter_now()" />
-    Client:<input type="text" id="search4" name="search4"  {% if search4_exists %} value={{search4_exists}}{% endif %} onchange="new_filter_now()" />
-    Upcoming Only:<input type="checkbox" id="search5" name="search5"  {% if search5_exists %} checked {% endif %} onchange="new_filter_now()" />
+    <table>
+        <tr>
+
+
+        <td>Job Name:<input type="text" id="search" name="search" {% if search_exists %} value={{search_exists}}{% endif %} onchange="new_filter_now()" /></td>
+     <td>Client:<input type="text" id="search4" name="search4"  {% if search4_exists %} value={{search4_exists}}{% endif %} onchange="new_filter_now()" /></td>
+     <td>Upcoming Only:<input type="checkbox" id="search5" name="search5"  {% if search5_exists %} checked {% endif %} onchange="new_filter_now()" /></td>
+                </tr>
+    </table>
+
 </form>
 
 <hr>
@@ -208,11 +213,11 @@ if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "
                     {% endif %}
 
                     <th scope="col">GC</th>
-                    <th scope="col">Equipment</th>
+                    <th scope="col">Equip</th>
                     <th scope="col">Subs</th>
                     <th scope="col">VWC</th>
-                    <th scope="col">Rentals</th>
-                    <th scope="col">Tickets</th>
+                    <th scope="col">Rents</th>
+                    <th scope="col">Tix</th>
                     <th scope="col">Notes</th>
                     <th scope="col">Hours</th>
                     <th scope="col">Used</th>
@@ -246,12 +251,10 @@ if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "
                     {% else %}
                     <td>{{job.superintendent.first_name}}</td>
                     {% endif %}
-
 <!--                    {% if job.is_work_order_done == False %}-->
 <!--                    <td style="background-color:#FF0000">{% else %}-->
 <!--                    <td>{% endif %}{{job.client}}</td>-->
                        <td>{{job.client}}</td>
-
                     <td>{{job.equipment_count}}</td>
                     <td>{{job.subcontract_count}}</td>
                     <td>{{job.wc_count}}</td>
@@ -277,7 +280,7 @@ if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "
     <div class="content">
         <h3>Checked Out Equipment</h3>
         <div class="demo-html">
-            <table id="equipment_table" class="display" style="width:90%">
+            <table id="equipment_table" class="tb" style="width:90%">
                 <thead>
                 <tr>
                     <th style="display:none;">ID</th>
@@ -291,7 +294,7 @@ if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "
                 {% for item in equipment %}
                 <tr>
                     <td style="display:none;">{{item.id}}</td>
-                    <td>{{item.job_number}}</td>
+                    <td class="list-items">{{item.job_number}}</td>
                     <td>{{item.number}}</td>
                     <td>
                         <a href="{% url 'equipment_page' item.id %}">
@@ -315,7 +318,7 @@ if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "
     <div class="content">
         <h3>Rentals</h3>
         <div class="demo-html">
-            <table id="rentals_table" class="display" style="width:90%">
+            <table id="rentals_table" class="tb" style="width:90%">
                 <thead>
                 <tr>
                     <th>Job Number</th>
