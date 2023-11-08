@@ -9,6 +9,7 @@
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
     <title>DataTables example - HTML (DOM) sourced data</title>
+
     <style>
           .tb { border-collapse: collapse; width:300px; }
   .tb th, .tb td { padding: 5px; border: solid 1px #777; }
@@ -67,6 +68,7 @@ function showemployeedata(jobnumber,jobname,startdate,is_active,x){
     else{pmform.is_active.checked = false}
 }
 
+
 function anothertest(){
 
         $.ajax({
@@ -82,13 +84,14 @@ function anothertest(){
                 }
             }
             })
-
 }
 function new_filter_now(){
 if (document.getElementById("jobs_section").style.display == "block"){document.getElementById("is_button_collapsed").value = "NO";}
 else {document.getElementById("is_button_collapsed").value = "YES"}
 document.getElementById('filter_form').submit();
 }
+
+
 
 $(document).ready(function () {
 if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "block";}
