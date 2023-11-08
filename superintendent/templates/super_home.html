@@ -24,22 +24,6 @@
     <script type="text/javascript" language="javascript"
             src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-    <script>
-        $("#pmform").submit(function(event) {
-  event.preventDefault();
-  var $form = $(this),
-    url = $form.attr('action');
-alert(url)
-  var posting = $.post(url, {
-    start_date: $('#start_date').val(),
-    is_active: $('#is_active').val()
-    date_note: $('#date_note').val()
-  });
-document.getElementById("jobs_section").style.display ="block";
-});
-
-    </script>
-
     <script type="text/javascript" class="init">
 
 function showemployeedata(jobnumber,jobname,startdate,is_active,x){
@@ -58,8 +42,6 @@ function showemployeedata(jobnumber,jobname,startdate,is_active,x){
             document.getElementById("notes_tab").innerHTML = text;
         }
     })
-
-
     var d = new Date(startdate),
         month = '' + (d.getMonth() + 1),
         day = '' + d.getDate(),
@@ -78,8 +60,6 @@ function showemployeedata(jobnumber,jobname,startdate,is_active,x){
     else{pmform.is_active.checked = false}
 }
 
-
-
 function anothertest(){
 
         $.ajax({
@@ -91,28 +71,24 @@ function anothertest(){
             document.getElementById("inventory_table").rows[pmform.row_number.value].cells[2].innerHTML = parsedData.new_date
             document.getElementById("inventory_table").rows[pmform.row_number.value].cells[2].style.backgroundColor = ""
             if (parsedData.is_active == "true"){
-                if ('{{filtered}}'){document.getElementById("inventory_table").deleteRow(pmform.row_number.value)}
+                if ('{{search5_exists}}'){document.getElementById("inventory_table").deleteRow(pmform.row_number.value)}
                 }
             }
             })
 }
-
-function myFunction() {
-  var x = document.getElementById("myDIV");
-  var y = document.getElementById("selected_super");
-  x.style.display = "block";
-	name = y.options[y.selectedIndex].text
-	x.value = "Click here to show only jobs assigned to " + name
+function new_filter_now(){
+if (document.getElementById("jobs_section").style.display = "block"){document.getElementById("is_button_collapsed").value = "NO"}
+else {document.getElementById("is_button_collapsed").value = "YES"}
+document.getElementById('filter_form').submit();
 }
+
 $(document).ready(function () {
-<!--    var table = $('#job_table').DataTable({"ordering":false});-->
-    document.getElementById("myDIV").style.display = "none";
+if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "block";}
 })
 	</script>
 
 </head>
 <body class="wide comments example">
-
 <!-- Modal -->
 <div class="modal fade" id="employee-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
@@ -132,12 +108,11 @@ $(document).ready(function () {
                     <li><a href="#2a" data-toggle="tab">Notes</a>
                     </li>
                 </ul>
-
                 <div class="tab-content clearfix">
                     <div class="tab-pane active" id="1a">
                         <div style="margin-top: 12px" class="table-responsive">
                             <div id="date_tab">
-                                <form id="pmform" action="{% url 'super_home' 'ALL' 'ALL' %}" method="post" >
+                                <form id="pmform" action="{% url 'super_home' 'ALL' %}" method="post" >
                                 {% csrf_token %}
                                 <table>
                                     <tr><td>
@@ -149,7 +124,6 @@ $(document).ready(function () {
                                         <br>
                                     Explain This Change:<br>
                                     <textarea id="date_note" name="date_note" class="form-control" style="min-width: 100%"></textarea>
-
                                     <br>
                                         <button type="button" class="btn btn-primary" onclick = "anothertest()" data-dismiss="modal" > Save Changes </button>
                                 </td></tr></table>
@@ -163,11 +137,7 @@ $(document).ready(function () {
                             </div>
                         </div>
                     </div>
-
                 </div>
-
-
-
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -176,89 +146,38 @@ $(document).ready(function () {
     </div>
 </div>
 
-{% if filtered %}
-<form name=select_super action="{% url 'super_home' 'ALL' 'UPCOMING' %}" method="post">
-    {% else %}
-    <form name=select_super action="{% url 'super_home' 'ALL' 'ALL' %}" method="post">
+
+<form id="filter_form" class="form-control form-contol-sm" action="{% url 'super_home' 'ALL' %}" method="get" >
+    <label>Please select superintendent</label>
+    <select id="search2" name="search2" onchange = "new_filter_now()">
+        {% if selected_super %}
+        <option value={{selected_super.id}}>{{selected_super.first_name}} {{selected_super.last_name}}</option>
         {% endif %}
-        {% csrf_token %}
-        <label>Please select superintendent</label>
-        <select id="selected_super" name="selected_super" onchange="myFunction()">
-            {% if selected_super %}
-            <option value={{selected_super.id}}>{{selected_super.first_name}} {{selected_super.last_name}}</option>
-            {% endif %}
-            <option value="all">"All"</option>
-            {% if supers %}
-            {% for super in supers %}
+        <option value="ALL">"All"</option>
+        <option value="UNASSIGNED">"UNASSIGNED"</option>
+        {% if supers %}
+        {% for super in supers %}
+        <option value="{{super.id}}">{{super.first_name}} {{super.last_name}}</option>
+        {% endfor %}
+        {% endif %}
+    </select>
+    <button type="button" class="collapsible">{{jobs_count}} Jobs</button>
+    <div id="jobs_section" class="content">
+<input type="hidden" name="is_button_collapsed" id="is_button_collapsed" />
+    Job Name:<input type="text" id="search" name="search" {% if search_exists %} value={{search_exists}}{% endif %} onchange="new_filter_now()" />
+    Client:<input type="text" id="search4" name="search4"  {% if search4_exists %} value={{search4_exists}}{% endif %} onchange="new_filter_now()" />
+    Upcoming Only:<input type="checkbox" id="search5" name="search5"  {% if search5_exists %} checked {% endif %} onchange="new_filter_now()" />
+</form>
 
-
-                            <option value="{{super.id}}">{{super.first_name}} {{super.last_name}}</option>
-                        {% endfor %}
-                        {% endif %}
-					</select>
-		<input type="submit" id="myDIV" class="btn btn-primary btn-sm" value="Filter Now" />
-		</form>
-		<button type="button" class="collapsible">View Jobs</button>
-		<div id="jobs_section" class="content">
-		{% if has_filter %}
-			{% if selected_super %}
-				{% if filtered %}
-					<a href="{% url 'super_home' selected_super.id 'ALL' %}">Clear Filter</a>
-				{% else %}
-					<a href="{% url 'super_home' selected_super.id 'UPCOMING' %}">Clear Filter</a>
-				{% endif %}
-			{% else %}
-				{% if filtered %}
-					<a href="{% url 'super_home' 'ALL' 'ALL' %}">Clear Filter</a>
-				{% else %}
-					<a href="{% url 'super_home' 'ALL' 'UPCOMING' %}">Clear Filter</a>
-				{% endif %}
-			{% endif %}
-		{% endif %}
-
-
-			{% if selected_super %}
-				{% if filtered %}
-			<table><tr height="3px"><form  action="{% url 'super_home' selected_super.id 'ALL' %}" method="get">{{ search_jobs.form }}<input type="submit" class="btn btn-primary btn-sm" value="Click Here to Filter Jobs According to Below:" /> </form></tr></table>
-
-				{% else %}
-			<table><tr height="3px"><form  action="{% url 'super_home' selected_super.id 'UPCOMING' %}" method="get">{{ search_jobs.form }}<input type="submit" class="btn btn-primary btn-sm" value="Click Here to Filter Jobs According to Below:" /> </form></tr></table>
-
-				{% endif %}
-			{% else %}
-				{% if filtered %}
-			<table><tr height="3px"><form  action="{% url 'super_home' 'ALL' 'ALL' %}" method="get">{{ search_jobs.form }}<input type="submit" class="btn btn-primary btn-sm" value="Click Here to Filter Jobs According to Below:" /> </form></tr></table>
-
-				{% else %}
-			<table><tr height="3px"><form  action="{% url 'super_home' 'ALL' 'UPCOMING' %}" method="get">{{ search_jobs.form }}<input type="submit" class="btn btn-primary btn-sm" value="Click Here to Filter Jobs According to Below:" /> </form></tr></table>
-
-				{% endif %}
-			{% endif %}
-
-<!--  		<table><tr height="3px"><form method="get">{{ search_jobs.form }}<input type="submit" class="btn btn-primary btn-sm" value="Filter Jobs" /> </form></tr></table>-->
 <hr>
 	<h3>Job List</h3>
-	{% if selected_super %}
-		{% if filtered %}
-			<form action= "{% url 'super_home' selected_super.id 'ALL' %}" ><input type="submit" value="Show All" /></form>
-		{% else %}
-			<form action= "{% url 'super_home' selected_super.id 'UPCOMING' %}" ><input type="submit" value="Show Upcoming Only" /></form>
-		{% endif %}
-	{% else %}
-		{% if filtered %}
-			<form action= "{% url 'super_home' 'ALL' 'ALL' %}" ><input type="submit" value="Show All" /></form>
-		{% else %}
-			<form action= "{% url 'super_home' 'ALL' 'UPCOMING' %}" ><input type="submit" value="Show Upcoming Only" /></form>
-		{% endif %}
-	{% endif %}
-
-
         <table id="job_table" class="display" style="width:100%">
             <tr>
-                <td style="background-color:#ffff00">Off Hours</td>
-                <td style="background-color:#00ff00">On Base</td>
-                <td style="background-color:#FF0000">Field Docs Not Ready</td>
-                <td style="background-color:#bcd5bc">Follow Up On Start Date</td>
+                <td width="10%" style="background-color:#ffff00">Off Hours</td>
+                <td width="10%" style="background-color:#00ff00">On Base</td>
+<!--                <td style="background-color:#FF0000">Field Docs Not Ready</td>-->
+                <td width="10%" style="background-color:#bcd5bc">Check Date</td>
+                <td>-</td>
             </tr>
         </table>
         <div class="table-responsive">
@@ -290,7 +209,7 @@ $(document).ready(function () {
                 {% if jobs %}
                 {% for job in jobs %}
 
-<!--               <tr onclick="showemployeedata('{{job.job_number}}','{{job.job_name}}','{{job.start_date|date:'YYYY-MM-DD'}}')">-->
+
                    <tr onclick="showemployeedata('{{job.job_number}}','{{job.job_name}}','{{job.start_date}}','{{job.is_active}}',this)">
                     {% if job.is_off_hours == True %}
                     <td style="background-color:#ffff00">{% else %}
@@ -313,9 +232,10 @@ $(document).ready(function () {
                     {% else %}
                     <td>{{job.superintendent.first_name}}</td>
                     {% endif %}
-                    {% if job.is_work_order_done == False %}
-                    <td style="background-color:#FF0000">{% else %}
-                    <td>{% endif %}{{job.client}}</td>
+<!--                    {% if job.is_work_order_done == False %}-->
+<!--                    <td style="background-color:#FF0000">{% else %}-->
+<!--                    <td>{% endif %}{{job.client}}</td>-->
+                       <td>{{job.client}}</td>
                     <td>{{job.equipment_count}}</td>
                     <td>{{job.subcontract_count}}</td>
                     <td>{{job.wc_count}}</td>

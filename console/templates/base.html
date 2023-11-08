@@ -60,7 +60,7 @@
           Roles
         </a>
         <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-            <a class="dropdown-item" href="{% url 'super_home' 'ALL' 'ALL' %}">Superintendent</a>
+            <a class="dropdown-item" href="{% url 'super_home' 'ALL' %}">Superintendent</a>
             <a class="dropdown-item" href="{% url 'warehouse_home' %}">Warehouse</a>
             {% if user.is_superuser %}
                 <a class="dropdown-item" href="{% url 'admin:index' %}">Website Admin</a>
