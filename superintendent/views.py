@@ -13,6 +13,7 @@ from equipment.filters import JobsFilter2
 from django.http import HttpResponse
 from jobs.JobMisc import start_date_change, gerloff_super_change
 import json
+
 from django.shortcuts import render, redirect
 from django.core.serializers.json import DjangoJSONEncoder
 
@@ -20,11 +21,13 @@ def super_ajax(request):
     # if request.method == 'GET':
     #     return redirect('super_home',super= request.GET['selected_super'])
     if request.is_ajax():
+
         if 'select_super' in request.GET:
             job = Jobs.objects.get(job_number=request.GET['job_number'])
             super = Employees.objects.get(id=request.GET['select_super'])
             gerloff_super_change(job,super,request.user.first_name + " " + request.user.last_name)
             return HttpResponse()
+
         if 'build_notes' in request.GET:
             job = Jobs.objects.get(job_number=request.GET['job_number'])
             job_notes = JobNotes.objects.filter(Q(type="auto_start_date_note")| Q(type = "employee_note"),job_number=job)
@@ -38,6 +41,7 @@ def super_ajax(request):
             return redirect('super_home', super=request.GET['selected_super'])
         else:
             job = Jobs.objects.get(job_number=request.GET['job_number'])
+
             if job.is_active == True:
                 if request.GET['is_active'] == "true":
                     status=3
@@ -55,6 +59,7 @@ def super_ajax(request):
                               request.user.first_name + " " + request.user.last_name, datechange)
             job.save()
             new_date = Jobs.objects.get(job_number=request.GET['job_number']).start_date
+
             new_date= Jobs.objects.get(job_number=request.GET['job_number']).start_date.strftime("%b %d,%Y")
             # new_date = str(Jobs.objects.get(job_number=request.GET['job_number']).start_date)
             data_details = {'new_date':new_date,'is_active':request.GET['is_active']}
@@ -69,6 +74,7 @@ def super_home(request, super):
         if employee.job_title.description == 'Superintendent':
             super=employee.id
         else: super = 'ALL'
+
     selected_superid = super #selected_superid = either 'ALL' or the ID of super
     if request.method == 'GET':
         print(request.GET)
@@ -87,6 +93,7 @@ def super_home(request, super):
         if 'search4' in request.GET: send_data['search4_exists'] = request.GET['search4']# gc name
         if 'search5' in request.GET: send_data['search5_exists'] = request.GET['search5'] #upcoming only
         if 'search6' in request.GET: send_data['search6_exists'] = request.GET['search6']  # unassigned
+
     if selected_superid == 'ALL':
         send_data['equipment'] = Inventory.objects.exclude(job_number=None)
         send_data['equipment_count'] = Inventory.objects.exclude(job_number=None).count()

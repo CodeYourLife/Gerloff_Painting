@@ -49,6 +49,7 @@ function showemployeedata(jobnumber,jobname,startdate,is_active,x){
             document.getElementById("notes_tab").innerHTML = text;
         }
     })
+
     var d = new Date(startdate),
         month = '' + (d.getMonth() + 1),
         day = '' + d.getDate(),
@@ -66,6 +67,7 @@ function showemployeedata(jobnumber,jobname,startdate,is_active,x){
     if (is_active == "True"){pmform.is_active.checked = true}
     else{pmform.is_active.checked = false}
 }
+
 
 function anothertest(){
 
@@ -89,6 +91,8 @@ else {document.getElementById("is_button_collapsed").value = "YES"}
 document.getElementById('filter_form').submit();
 }
 
+
+
 $(document).ready(function () {
 if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "block";}
 })
@@ -96,6 +100,7 @@ if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "
 
 </head>
 <body class="wide comments example">
+
 <!-- Modal -->
 <div class="modal fade" id="employee-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
@@ -108,6 +113,7 @@ if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "
                 </button>
             </div>
             <div class="modal-body">
+
                 <ul class="nav nav-pills">
                     <li>
                         <a href="#1a" class="active" data-toggle="tab">Change Date</a>
@@ -115,11 +121,13 @@ if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "
                     <li><a href="#2a" data-toggle="tab">Notes</a>
                     </li>
                 </ul>
+
                 <div class="tab-content clearfix">
                     <div class="tab-pane active" id="1a">
                         <div style="margin-top: 12px" class="table-responsive">
                             <div id="date_tab">
                                 <form id="pmform" action="{% url 'super_home' 'ALL' %}" method="post" >
+
                                 {% csrf_token %}
                                 <table>
                                     <tr><td>
@@ -145,6 +153,7 @@ if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "
                         </div>
                     </div>
                 </div>
+
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -152,7 +161,6 @@ if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "
         </div>
     </div>
 </div>
-
 
 <form id="filter_form" class="form-control form-contol-sm" action="{% url 'super_home' 'ALL' %}" method="get" >
     <label>Please select superintendent</label>
@@ -180,6 +188,7 @@ if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "
      <td>Upcoming Only:<input type="checkbox" id="search5" name="search5"  {% if search5_exists %} checked {% endif %} onchange="new_filter_now()" /></td>
                 </tr>
     </table>
+
 </form>
 
 <hr>
