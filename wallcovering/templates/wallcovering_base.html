@@ -4,7 +4,7 @@
   <div  id="navbarNavDropdown">
     <ul class="navbar-nav ">
         <li><a class="nav-item nav-link {% block nav_item_wchome %}{% endblock nav_item_wchome %}" href="{% url 'wallcovering_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link {% block nav_item_wcpattern %}{% endblock nav_item_wcpattern %}" href="{% url 'super_home' %}">Materials</a></li>
+        <li><a class="nav-item nav-link {% block nav_item_wcpattern %}{% endblock nav_item_wcpattern %}" href="{% url 'super_home' 'ALL' %}">Materials</a></li>
         <li><a class="nav-item nav-link {% block nav_item_wcorder %}{% endblock nav_item_wcorder %}" href="{% url 'equipment_home' %}">Orders</a></li>
         <li><a class="nav-item nav-link {% block nav_item_wcreceive %}{% endblock nav_item_wcreceive %}" href="{% url 'rentals_home' %}">Receipts</a></li>
         <li><a class="nav-item nav-link {% block nav_item_send %}{% endblock nav_item_send %}" href="{% url 'job_page' 'ALL' %}">Sent to Job</a></li>

@@ -13,14 +13,17 @@ from equipment.filters import JobsFilter2
 from django.http import HttpResponse
 from jobs.JobMisc import start_date_change, gerloff_super_change
 import json
+
+from django.shortcuts import render, redirect
 from django.core.serializers.json import DjangoJSONEncoder
 
 def super_ajax(request):
+    # if request.method == 'GET':
+    #     return redirect('super_home',super= request.GET['selected_super'])
     if request.is_ajax():
-        job = Jobs.objects.get(job_number=request.GET['job_number'])
-
         if 'build_notes' in request.GET:
-            print("PUMPKIN")
+            job = Jobs.objects.get(job_number=request.GET['job_number'])
+
             job_notes = JobNotes.objects.filter(Q(type="auto_start_date_note")| Q(type = "employee_note"),job_number=job)
             notes=[]
             for note in job_notes:
@@ -28,7 +31,12 @@ def super_ajax(request):
                               'date': str(note.date)})
             data_details = {'notes': notes}
             return HttpResponse(json.dumps(data_details))
+
+        elif 'filter_type' in request.GET:
+            return redirect('super_home', super=request.GET['selected_super'])
         else:
+            job = Jobs.objects.get(job_number=request.GET['job_number'])
+
             if job.is_active == True:
                 if request.GET['is_active'] == "true":
                     status=3
@@ -46,9 +54,7 @@ def super_ajax(request):
                               request.user.first_name + " " + request.user.last_name, datechange)
             job.save()
             new_date = Jobs.objects.get(job_number=request.GET['job_number']).start_date
-            print(new_date.strftime("%b"))
-            print(new_date.strftime("%d"))
-            print(new_date.strftime("%Y"))
+
             new_date= Jobs.objects.get(job_number=request.GET['job_number']).start_date.strftime("%b %d,%Y")
             # new_date = str(Jobs.objects.get(job_number=request.GET['job_number']).start_date)
             data_details = {'new_date':new_date,'is_active':request.GET['is_active']}
@@ -56,26 +62,33 @@ def super_ajax(request):
 
 
 @login_required(login_url='/accounts/login')
-def super_home(request, super, filter):
-    print(request.GET)
+def super_home(request, super):
     send_data = {}
     if super == 'AUTO':
         employee= Employees.objects.get(user=request.user)
         if employee.job_title.description == 'Superintendent':
             super=employee.id
         else: super = 'ALL'
-    selected_superid = super
-    if request.is_ajax():
-        print("HOW BOUT THIS")
-        return HttpResponse("PUMPKIN")
-    if request.method == 'POST':
-        if 'selected_super' in request.POST:
-            if request.POST['selected_super'] == 'all':
+
+    selected_superid = super #selected_superid = either 'ALL' or the ID of super
+    if request.method == 'GET':
+        print(request.GET)
+        if 'is_button_collapsed' in request.GET:
+            if request.GET['is_button_collapsed'] =="NO":
+                send_data['open_button']= "TRUE"
+        if 'search' in request.GET: send_data['search_exists'] = request.GET['search'] #jobname
+        if 'search2' in request.GET:
+            send_data['search2_exists'] = request.GET['search2']  # super name
+            if request.GET['search2'] == 'ALL' or request.GET['search2'] == 'UNASSIGNED':
                 selected_superid = 'ALL'
+
             else:
-                selected_superid = request.POST['selected_super']
-        else:
-            print(request.POST['date_note'])
+                selected_superid = request.GET['search2']
+        if 'search3' in request.GET: send_data['search3_exists'] = request.GET['search3']  # open only
+        if 'search4' in request.GET: send_data['search4_exists'] = request.GET['search4']# gc name
+        if 'search5' in request.GET: send_data['search5_exists'] = request.GET['search5'] #upcoming only
+        if 'search6' in request.GET: send_data['search6_exists'] = request.GET['search6']  # unassigned
+
     if selected_superid == 'ALL':
         send_data['equipment'] = Inventory.objects.exclude(job_number=None)
         send_data['equipment_count'] = Inventory.objects.exclude(job_number=None).count()
@@ -85,13 +98,7 @@ def super_home(request, super, filter):
         send_data['tickets_count'] = ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=False,
                                                                  is_closed=False).count()
         send_data['subcontractor_count'] = Subcontracts.objects.exclude(job_number=None)
-
-        if filter == 'UPCOMING':
-            send_data['filtered'] = 'filtered'
-            search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False, is_active=False).order_by(
-                'start_date'))
-        else:
-            search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False).order_by('start_date'))
+        search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False).order_by('start_date'))
     else:
         selected_super = Employees.objects.get(id=selected_superid)
         send_data['equipment'] = Inventory.objects.filter(job_number__superintendent=selected_super).order_by(
@@ -110,27 +117,15 @@ def super_home(request, super, filter):
                                                                  is_closed=False,
                                                                  job_number__superintendent=selected_super).order_by(
             'job_number', 'cop_number').count()
+        search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False).order_by('start_date'))
 
-        if filter == 'UPCOMING':
-            send_data['filtered'] = 'filtered'
-            search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False, is_active=False,
-                                       superintendent=Employees.objects.get(id=selected_superid)).order_by(
-                'start_date'))
-            # jobs = Jobs.objects.filter(is_closed=False, is_active=False,
-            #                            superintendent=Employees.objects.get(id=selected_superid)).order_by(
-            #     'start_date')
-        else:
-            search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False,
-                                       superintendent=Employees.objects.get(id=selected_superid)).order_by(
-                'start_date'))
-            # jobs = Jobs.objects.filter(is_closed=False,
-            #                            superintendent=Employees.objects.get(id=selected_superid)).order_by(
-            #     'start_date')
+
     if any(field in request.GET for field in set(search_jobs.get_fields())) == True:
         send_data['has_filter'] = True
     send_data['search_jobs'] = search_jobs
     send_data['jobs'] = search_jobs.qs
-    # send_data['jobs'] = jobs
+    # send_data['jobs'] = Jobs.objects.filter(is_closed=False).order_by('start_date')
+    send_data['jobs_count'] = search_jobs.qs.count()
     send_data['supers'] = Employees.objects.exclude(Q(job_title__description="Painter") | Q(active=False))
     send_data['todays_date'] = date.today() - timedelta(days=45)
     return render(request, "super_home.html", send_data)

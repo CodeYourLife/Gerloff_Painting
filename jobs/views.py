@@ -71,7 +71,7 @@ def change_start_date(request, jobnumber, previous, super, filter):
             else:
                 return redirect('job_page', jobnumber='ALL')
         else:
-            return redirect('super_home', super=super, filter=filter)
+            return redirect('super_home', super=super)
     return render(request, "change_start_date.html",
                   {'jobs': jobs, 'formatdate': format_date,
                    'notes': JobNotes.objects.filter(job_number=jobnumber, type="auto_start_date_note"),
@@ -89,7 +89,7 @@ def change_gpsuper(request, jobnumber, previous):
         if previous == 'jobpage':
             return redirect('job_page', jobnumber=jobnumber)
         else:
-            return redirect('super_home', super='ALL', filter='ALL')
+            return redirect('super_home', super='ALL')
     return render(request, "change_gpsuper.html",
                   {'jobs': jobs, 'previous_page': previous_page, 'employees': employees})
 
