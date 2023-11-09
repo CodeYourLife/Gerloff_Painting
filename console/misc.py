@@ -7,24 +7,25 @@ import os
 import os.path
 from django.conf import settings
 class Email:
-    def sendEmail(title, body, to, filename):
-        msg = MIMEMultipart()
-        # sender = to
-        sender = 'joe@gerloffpainting.com'
-        msg['From'] = 'operations@gerloffpainting.com'
-        msg['To'] = ", ".join(to)
-        # msg['To'] = 'joe@gerloffpainting.com; taroli757@gmail.com'
-        msg['Subject'] = title
-        msg.attach(MIMEText(body, 'plain'))
-        text = msg.as_string()
-        if filename != False:
-            with open(filename, 'rb') as file:
-                attach = MIMEApplication(file.read(), _subtype='pdf')
-                attach.add_header('Content-Disposition', 'attachment', filename=filename)
-                msg.attach(attach)
-        s = smtplib.SMTP('remote.gerloffpainting.com')
-        s.sendmail(sender, to, text)
-        s.quit()
+    def sendEmail(title, body, to, filename=None):
+        try:
+            msg = MIMEMultipart()
+            sender = 'joe@gerloffpainting.com'
+            msg['From'] = 'operations@gerloffpainting.com'
+            msg['To'] = ", ".join(to)
+            msg['Subject'] = title
+            msg.attach(MIMEText(body, 'plain'))
+            text = msg.as_string()
+            if filename != None:
+                with open(filename, 'rb') as file:
+                    attach = MIMEApplication(file.read(), _subtype='pdf')
+                    attach.add_header('Content-Disposition', 'attachment', filename=filename)
+                    msg.attach(attach)
+            s = smtplib.SMTP('remote.gerloffpainting.com')
+            s.sendmail(sender, to, text)
+            s.quit()
+        except Exception as e:
+            print(e)
 
 
 def createfolder(subfolder):

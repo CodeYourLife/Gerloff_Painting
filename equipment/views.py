@@ -108,7 +108,7 @@ def complete_pickup(request, pickup):
                     if selected_request.requested_by.email is not None:
                         recipients.append(selected_request.requested_by.email)
                 Email.sendEmail("Pickup Complete! " + selected_job.job_name, message,
-                                recipients, False)
+                                recipients)
                 return redirect('warehouse_home')
     if selected_request.all_items == True:
         selected_items = Inventory.objects.filter(job_number=selected_request.job_number)
@@ -216,7 +216,7 @@ def request_pickup(request, jobnumber, item, pickup, status):
                     if selected_request.requested_by.email is not None:
                         recipients.append(selected_request.requested_by.email)
             Email.sendEmail("Pickup Request! " + selected_job.job_name, message,
-                            recipients, False)
+                            recipients)
             return redirect('warehouse_home')
 
     if pickup != 'ALL': send_data['selected_items'] = PickupRequestItems.objects.filter(request=selected_request)
