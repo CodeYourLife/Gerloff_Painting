@@ -93,83 +93,82 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 </head>
 <body>
-<!--<div class="d-flex justify-content-center"><div>Trinity Software Solutions</div></div>-->
-<!--    <div class="col-xs-4 align-self-center" style="border: 1px solid blue">-->
-<div class="container" style="border: 1px solid grey">
-  <div class="row" style="border: 1px solid grey">
-    <div class="col-s-12" style="border: 1px solid grey">
+
+<div class="container" >
+  <div class="row" >
+    <div class="col-s-12" >
     <div class="d-flex justify-content-center"><div><h4>Trinity Software Solutions</h4></div></div>
     </div>
   </div>
 
-    <div class="row" style="border: 1px solid grey">
-        <div class="col-s-6 align-self-center" style="border: 1px solid grey">
+    <div class="row" >
+        <div class="col-s-6 align-self-center" >
             <form action="{% url 'job_page' 'ALL' %}">
                 <div class="d-flex justify-content-end"><div><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="JOBS"></div></div>
             </form>
         </div>
-        <div class="col-s-6 align-self-center" style="border: 1px solid grey">
-            <div class="row" style="border: 1px solid grey"> <b>{{needs_super}}</b> -Need a Superintendent</div>
-            <div class="row" style="border: 1px solid grey"> <b>{{next_two_weeks}}</b> -Starting in Next 2 Weeks</div>
+        <div class="col-s-6 align-self-center" >
+            <div class="row" > <b>{{needs_super}}</b> -Need a Superintendent</div>
+            <div class="row" > <b>{{next_two_weeks}}</b> -Starting in Next 2 Weeks</div>
         </div>
     </div>
 <div class="row"> <div class="col"><div class="d-flex justify-content-center">-</div></div></div>
-    <div class="row" style="border: 1px solid grey">
-        <div class="col-s-6 align-self-center" style="border: 1px solid grey">
+    <div class="row" >
+        <div class="col-s-6 align-self-center" >
         <form action="{% url 'equipment_home' %}">
         <div class="d-flex justify-content-end"><div><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="EQUIPMENT"/></div></div>
         </form>
         </div>
-          <div class="col-s-6 align-self-center" style="border: 1px solid grey">
-                <div class="row" style="border: 1px solid grey"><b>{{missing}}</b> -Missing</div>
-                <div class="row" style="border: 1px solid grey"> <b>{{checked_out}}</b> -On Open Jobs</div>
-                <div class="row" style="border: 1px solid grey"><b>{{closed_job}}</b> -On Closed Jobs</div>
-                <div class="row" style="border: 1px solid grey"> <b>{{service}}</b> -In Service</div>
+          <div class="col-s-6 align-self-center" >
+                <div class="row" ><b>{{missing}}</b> -Missing</div>
+                <div class="row" > <b>{{checked_out}}</b> -On Open Jobs</div>
+                <div class="row" ><b>{{closed_job}}</b> -On Closed Jobs</div>
+                <div class="row" > <b>{{service}}</b> -In Service</div>
         </div>
     </div>
 <div class="row"> <div class="col"><div class="d-flex justify-content-center">-</div></div></div>
-    <div class="row" style="border: 1px solid grey">
-        <div class="col-s-6 align-self-center" style="border: 1px solid grey">
+    <div class="row" >
+        <div class="col-s-6 align-self-center" >
         <form action="{% url 'rentals_home' %}">
         <div class="d-flex justify-content-end"><div><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="RENTALS"/></div></div>
         </form>
         </div>
-          <div class="col-s-6 align-self-center" style="border: 1px solid grey">
-                <div class="row" style="border: 1px solid grey"><b>{{rentals}}</b> -On Rent</div>
+          <div class="col-s-6 align-self-center" >
+                <div class="row" ><b>{{rentals}}</b> -On Rent</div>
 
         </div>
     </div>
             <div class="row"> <div class="col"><div class="d-flex justify-content-center">-</div></div></div>
 
-    <div class="row" style="border: 1px solid grey">
-        <div class="col-s-6 align-self-center" style="border: 1px solid grey">
+    <div class="row" >
+        <div class="col-s-6 align-self-center" >
         <form action="{% url 'super_home' 'AUTO' %}">
         <div class="d-flex justify-content-end"><div><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="SUPER"/></div></div>
         </form>
         </div>
-          <div class="col-s-6 align-self-center" style="border: 1px solid grey">
-                    <div class="row" style="border: 1px solid grey"> <b>{{super_equipment}}</b> -Assigned Equipment</div>
-                    <div class="row" style="border: 1px solid grey"> <b>{{super_rentals}}</b> -Rentals</div>
-                <div class="row" style="border: 1px solid grey"> <b>{{tickets}}</b> -Open Tickets</div>
-                <div class="row" style="border: 1px solid grey"> <b>{{super_jobs}}</b> -Jobs Starting Next 2 Weeks</div>
+          <div class="col-s-6 align-self-center" >
+                    <div class="row" > <b>{{super_equipment}}</b> -Assigned Equipment</div>
+                    <div class="row" > <b>{{super_rentals}}</b> -Rentals</div>
+                <div class="row" > <b>{{tickets}}</b> -Open Tickets</div>
+                <div class="row" > <b>{{super_jobs}}</b> -Jobs Starting Next 2 Weeks</div>
         </div>
     </div>
 
-    <div class="row" style="border: 1px solid grey"> <div class="col"style="border: 1px solid grey"><div class="d-flex justify-content-center">-</div></div></div>
+    <div class="row" > <div class="col"><div class="d-flex justify-content-center">-</div></div></div>
 
-    <div class="row" style="border: 1px solid grey">
-        <div class="col-s-6 align-self-center" style="border: 1px solid grey">
+    <div class="row" >
+        <div class="col-s-6 align-self-center" >
         <form action="{% url 'warehouse_home' %}">
         <div class="d-flex justify-content-end"><div><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="WAREHOUSE"/></div></div>
         </form>
         </div>
-          <div class="col-s-6 align-self-center" style="border: 1px solid grey">
-                <div class="row" style="border: 1px solid grey"><b>{{pickup_requests}}</b> -Pickup Requests</div>
+          <div class="col-s-6 align-self-center" >
+                <div class="row" ><b>{{pickup_requests}}</b> -Pickup Requests</div>
 
         </div>
     </div>
 
-    <div class="row" style="border: 1px solid grey"> <div class="col" style="border: 1px solid grey"><div class="d-flex justify-content-center">-</div></div></div>
+    <div class="row" > <div class="col" ><div class="d-flex justify-content-center">-</div></div></div>
 
 
 </div>
