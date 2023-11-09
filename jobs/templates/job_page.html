@@ -207,6 +207,7 @@ function change_client_pm(){
 function change_client_super(){
 
 }
+
 function change_client(){
 
 }
@@ -299,7 +300,9 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
             let text = "<table border='1' class='table display'>"
             text += "<thead><tr><th>Date</th><th>User</th><th>Note</th></tr></thead>"
             parsedData.notes.forEach((element) => {
+
                 text += "<tr><td>" + element.date + "</td><td>" + element.user + "</td><td>" + element.note + "</td></tr>";
+
             })
             text += "</table>"
             document.getElementById("notes_tab").innerHTML = text;
@@ -328,6 +331,7 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
 }
 
     </script>
+
 
 </head>
 <body>
@@ -496,10 +500,12 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
         <tbody>
         {% for x in jobstable %}
             <tr onclick="populate_job_data('{{x.job_number}}','{{x.job_name}}','{{x.start_date}}','{{x.is_active}}',this)">
+
                 <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_number}}</a></td>
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_name}}</a></td>
                 <td style="white-space:nowrap" data-toggle="modal" data-target="#startdate-modal" onclick="populate_start_date_modal('{{x.job_number}}','{{x.job_name}}','{{x.start_date}}','{{x.is_active}}',this,1)"><a href="#">{{x.start_date}}</a></td>
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px" >{{x.client}}</td>
+
                 <td data-toggle="modal" data-target="#super-modal" onclick="populate_super_modal('{{x.job_name}}','{{x.superintendent.id}}','{{x.job_number}}','{{x.superintendent.first_name}}',this,1)"><a href="#">{{x.superintendent.first_name}}</a></td>
                 <td>{{x.contract_amount}}</td>
             </tr>

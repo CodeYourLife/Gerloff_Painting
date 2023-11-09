@@ -32,5 +32,5 @@ def gerloff_super_change(job, superintendent, author):
                             user=author, date=date.today())
     job.superintendent = superintendent
     email_body = str(superintendent) + "\n You have been assigned to \n" + str(job.job_number)+ "\n" + str(job) + "\n" + str(job.client.company)
-    Email.sendEmail("New Job - " + job.job_name, email_body, ['joe@gerloffpainting.com'], False)
+    Email.sendEmail("New Job - " + job.job_name, email_body, ['joe@gerloffpainting.com'])
     job.save()
