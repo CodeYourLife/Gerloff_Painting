@@ -489,7 +489,7 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
     <table id="jobs_table" class="display table table-sm">
         <thead>
         <tr>
-            <th scope="col">Job Number</th>
+            <th scope="col">Job #</th>
             <th scope="col">Job Name</th>
             <th scope="col">Start Date</th>
             <th scope="col">Client</th>
@@ -500,10 +500,12 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
         <tbody>
         {% for x in jobstable %}
             <tr onclick="populate_job_data('{{x.job_number}}','{{x.job_name}}','{{x.start_date}}','{{x.is_active}}',this)">
-                <td onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_number}}</a></td>
-                <td style="white-space:nowrap" width="200" onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_name}}</a></td>
+
+                <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_number}}</a></td>
+                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_name}}</a></td>
                 <td style="white-space:nowrap" data-toggle="modal" data-target="#startdate-modal" onclick="populate_start_date_modal('{{x.job_number}}','{{x.job_name}}','{{x.start_date}}','{{x.is_active}}',this,1)"><a href="#">{{x.start_date}}</a></td>
-                <td style="white-space:nowrap" width="90">{{x.client}}</td>
+                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px" >{{x.client}}</td>
+
                 <td data-toggle="modal" data-target="#super-modal" onclick="populate_super_modal('{{x.job_name}}','{{x.superintendent.id}}','{{x.job_number}}','{{x.superintendent.first_name}}',this,1)"><a href="#">{{x.superintendent.first_name}}</a></td>
                 <td>{{x.contract_amount}}</td>
             </tr>
