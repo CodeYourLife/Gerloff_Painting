@@ -347,7 +347,7 @@
         </div>
         <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
             <div class="card-body">
-                <div id="jobs_section" class="content">
+                <div id="jobs_section">
                     <div style="text-align: center"><h3>Job List</h3></div>
                     <fieldset style="width: 95%; margin: 10px; border: 1px solid rgba(0,0,0,.125);">
                         <legend style="font-size: 12px; width: fit-content;">Job Table Legend</legend>
@@ -456,7 +456,7 @@
                         {% for item in equipment %}
                         <tr>
                             <td style="display:none;">{{item.id}}</td>
-                            <td >{{item.job_number}}</td>
+                            <td>{{item.job_number}}</td>
                             <td>{{item.number}}</td>
                             <td>
                                 <a href="{% url 'equipment_page' item.id %}">
