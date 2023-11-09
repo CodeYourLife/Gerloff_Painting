@@ -355,14 +355,14 @@ function submit_new_super(){
                 {% if jobs %}
                 {% for job in jobs %}
                    <tr onclick="showemployeedata('{{job.job_number}}','{{job.job_name}}','{{job.start_date}}','{{job.is_active}}',this)">
-                    {% if job.is_off_hours == True %}<td style="background-color:#ffff00">{% else %}<td>{% endif %}{{job.job_number}}</td>
-                    {% if job.is_on_base == True %}<td style="background-color:#00ff00">{% else %}<td style="white-space:nowrap" width="200">{% endif %}<a href="{% url 'job_page' job.job_number %}"><div style="height:100%;width:100%">{{job.job_name}} </div></a></td>
+                    {% if job.is_off_hours == True %}<td style="background-color:#ffff00;white-space: nowrap;" width = "20px">{% else %}<td style="white-space: nowrap;" width = "20px">{% endif %}{{job.job_number}}</td>
+                    {% if job.is_on_base == True %}<td style="background-color:#00ff00;white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{% else %}<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{% endif %}<a href="{% url 'job_page' job.job_number %}"><div style="height:100%;width:100%">{{job.job_name}} </div></a></td>
                    {% if job.check_start_date == True %}<td data-toggle="modal" style="background-color:#bcd5bc;white-space:nowrap" data-target="#employee-modal"><a href="#">{{job.start_date}}</a></td>{% else %}<td data-toggle="modal" data-target="#employee-modal" style="white-space:nowrap"><a href="#">{{job.start_date}}</a></td>{% endif %}
                     {% if selected_super == None%}<td data-toggle="modal" data-target="#super-modal" onclick="populate_super_modal('{{job.job_name}}','{{job.superintendent.id}}','{{job.job_number}}','{{job.superintendent.first_name}}',this,1)"><a href="#">{{job.superintendent.first_name}}</a></td>{% endif %}
                        <!--                    {% if job.is_work_order_done == False %}-->
 <!--                    <td style="background-color:#FF0000">{% else %}-->
 <!--                    <td>{% endif %}{{job.client}}</td>-->
-                   <td style="white-space:nowrap" width="90">{{job.client}}</td>
+                   <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px" >{{job.client}}</td>
                     <td>{{job.equipment_count}}</td>
                     <td>{{job.subcontract_count}}</td>
                     <td>{{job.wc_count}}</td>
