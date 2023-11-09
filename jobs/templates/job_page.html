@@ -16,13 +16,74 @@
     <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
     <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-    	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
 	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
 	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
 	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
 	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+        <style type="text/css" class="init">
+        .dataTables_wrapper {
+    font-family: tahoma;
+    font-size: 13px;
+}
+
+        nav .active, .collapsible:hover {
+          background-color: Salmon;
+        }
+        .nav-pills a {
+            color: black;
+        }
+        .nav-pills li {
+            padding: 2px;
+        }
+        .nav-pills .active {
+            background-color: #6c757d !important;
+            padding: 5px;
+        }
+        .table td {
+
+        }
+        label {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+        input {
+            margin-left: 10px;
+            margin-right: 10px;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+        tr th {
+            width: fit-content !important;
+        }
+        .tab-content * {
+          color : black;
+          background-color: white !important;
+        }
+
+        .active * {
+            background-color: white !important;
+        }
+                .list-items {
+        border-bottom: 1px solid black; display: flex; justify-content: space-between;
+        }
+        .text-wrap{
+    white-space:normal;
+}
+.width-200{
+    width:200px;
+}
+    </style>
+
     <style>
 .dataTables_filter {
    float: left !important;
@@ -42,13 +103,15 @@ window.location.href = url
 
 window.onload = function() {
 var table = $('#jobs_table').DataTable({paging: false})
+var table = $('#notes_table').DataTable({paging: false})
 document.getElementById("show_new_pm").style.display = "none";
 document.getElementById("show_new_super").style.display = "none";
 };
 
 function before_postpm(){
-pmselect = pmform.select_pm.value
-newpm = pmform.new_pm.value
+alert("HI")
+pmselect = change_client_pm_form.select_pm.value
+newpm = change_client_pm_form.new_pm.value
 if (pmselect == 'add_new'){
    if(newpm == ""){
      alert("You must type the new PM's name at least")
@@ -58,10 +121,15 @@ if (pmselect == 'add_new'){
 if (pmselect == 'please_select'){
     alert("You must select a PM")
     return false
-}}
+}
+if (change_client_pm_form.pm_email.value == ""){
+alert("The PM must have an email address")
+return false
+}
+}
 function before_postsuper(){
-superselect = modalform.select_super.value
-newsuper = modalform.new_super.value
+superselect = change_client_super_form.select_super.value
+newsuper = change_client_super_form.new_super.value
 if (superselect == 'add_new'){
    if(newsuper == ""){
      alert("You must type the new Super's name at least")
@@ -72,53 +140,79 @@ if (superselect == 'add_new'){
 
 function new_pm1(){
 existingPM= "{{job.client_Pm.person_pk}}"
-newPM = pmform.select_pm.value
-    if (newPM == "add_new"){
-        document.getElementById("show_new_pm").style.display = "block";
-        document.getElementById("show_existing_pm").style.display = "none";
+newPM = change_client_pm_form.select_pm.value
+if (newPM == "add_new"){
+    document.getElementById("show_new_pm").style.display = "block";
+    document.getElementById("show_existing_pm").style.display = "none";
 }
+
 else if (existingPM != newPM){
-     document.getElementById("show_new_pm").style.display = "none";
-     document.getElementById("show_existing_pm").style.display = "none";
-}
-else {
+    $.ajax({
+    method: 'GET',
+    url: '/superintendent/super_ajax',
+    data: {'client_employee_id':change_client_pm_form.select_pm.value},
+    success: function (data) {
+    parsedData = JSON.parse(data);
+
+    change_client_pm_form.pm_email.value = parsedData.email
+    change_client_pm_form.pm_phone.value = parsedData.phone
     document.getElementById("show_new_pm").style.display = "none";
     document.getElementById("show_existing_pm").style.display = "block";
-    }
-}
-
-function new_super1(){
-existingPM= "{{job.client_Super.person_pk}}"
-newPM = modalform.select_super.value
-    if (newPM == "add_new"){
-        document.getElementById("show_new_super").style.display = "block";
-        document.getElementById("show_existing_super").style.display = "none";
-}
-else if (existingPM != newPM){
-     document.getElementById("show_new_super").style.display = "none";
-     document.getElementById("show_existing_super").style.display = "none";
+    }})
 }
 else {
-    document.getElementById("show_new_super").style.display = "none";
-    document.getElementById("show_existing_super").style.display = "block";
-    }
+     document.getElementById("show_new_pm").style.display = "none";
+     document.getElementById("show_existing_pm").style.display = "block";
+     change_client_pm_form.pm_email.value = "{{job.client_Pm.email}}"
+    change_client_pm_form.pm_phone.value = "{{job.client_Pm.phone}}"
+}
+}
+function new_super1(){
+existingPM= "{{job.client_Super.person_pk}}"
+newPM = change_client_super_form.select_super.value
+if (newPM == "add_new"){
+    document.getElementById("show_new_super").style.display = "block";
+    document.getElementById("show_existing_super").style.display = "none";
 }
 
-function closemodaltest(){
-   $('#employee-modal').modal('toggle');
-    $('#employee-modal2').modal('toggle');
+else if (existingPM != newPM){
+    $.ajax({
+    method: 'GET',
+    url: '/superintendent/super_ajax',
+    data: {'client_employee_id':change_client_super_form.select_super.value},
+    success: function (data) {
+    parsedData = JSON.parse(data);
+
+    change_client_super_form.super_email.value = parsedData.email
+    change_client_super_form.super_phone.value = parsedData.phone
+    document.getElementById("show_new_super").style.display = "none";
+    document.getElementById("show_existing_super").style.display = "block";
+    }})
+}
+else {
+     document.getElementById("show_new_super").style.display = "none";
+     document.getElementById("show_existing_super").style.display = "block";
+     change_client_super_form.super_email.value = "{{job.client_Super.email}}"
+    change_client_super_form.super_phone.value = "{{job.client_Super.phone}}"
+}
+}
+
+function change_client_pm(){
+
+}
+function change_client_super(){
+
+}
+function change_client(){
+
 }
 function showEmployeeData(status, client, client_email, client_phone,pm,superintendent,super_phone,super_email, pm_phone,pm_email) {
-    if (status == 'CLIENT'){
-        $('[href="#3a"]').tab('show')
-    }
-    if (status == 'PM'){
-        $('[href="#1a"]').tab('show')
-    }
-    if (status == 'SUPERINTENDENT'){
-        $('[href="#2a"]').tab('show')
-    }
-    document.getElementById("title").innerHTML = client;
+    document.getElementById("client_title").innerHTML = client;
+    document.getElementById("client_pm_title").innerHTML = client;
+    document.getElementById("client_super_title").innerHTML = client;
+    document.getElementById("change_client_title").innerHTML = client;
+    document.getElementById("change_client_pm_title").innerHTML = client;
+    document.getElementById("change_client_super_title").innerHTML = client;
     let text = "<table border='1' class='table display'>";
     text += "<tr><td>Company: " + client + "</td></tr>";
     text += "<tr><td><a href='tel:+ " + client_phone + "'>Phone: " + client_phone + "</a></td></tr>";
@@ -130,13 +224,13 @@ function showEmployeeData(status, client, client_email, client_phone,pm,superint
     text += "<tr><td><a href='tel:+ " + pm_phone + "'>Phone: " + pm_phone + "</a></td></tr>";
     text += "<tr><td><a href='mailto: " + pm_email + "'>Email: " + pm_email + "</a></td></tr>";
     text += "</table>";
-    document.getElementById("pm_info").innerHTML = text;
+    document.getElementById("client_pm_info").innerHTML = text;
     text = "<table border='1' class='table display'>";
     text += "<tr><td>Superintendent: " + superintendent + "</td></tr>";
     text += "<tr><td><a href='tel:+ " + super_phone + "'>Phone: " + super_phone + "</a></td></tr>";
     text += "<tr><td><a href='mailto: " + super_email + "'>Email: " + super_email + "</a></td></tr>"
     text += "</table>"
-    document.getElementById("super_info").innerHTML = text;
+    document.getElementById("client_super_info").innerHTML = text;
 
 }
 
@@ -199,15 +293,14 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
         success: function (data) {
             parsedData = JSON.parse(data);
             let text = "<table border='1' class='table display'>"
-            text += "<thead><tr><th width='10%'>Date</th><th width='10%'>User</th><th class='col'>Note</th></tr></thead>"
+            text += "<thead><tr><th>Date</th><th>User</th><th>Note</th></tr></thead>"
             parsedData.notes.forEach((element) => {
-                text += "<tr><td width='10%'>" + element.date + "</td><td width='10%'>" + element.user + "</td><td>" + element.note + "</td></tr>";
+                text += "<tr><td>" + element.date + "</td><td>" + element.user + "</td><td class='text-wrap'>" + element.note + "</td></tr>";
             })
             text += "</table>"
             document.getElementById("notes_tab").innerHTML = text;
         }
     })
-
     var d = new Date(startdate),
         month = '' + (d.getMonth() + 1),
         day = '' + d.getDate(),
@@ -322,7 +415,12 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
                 overflow: auto;
             }
         }
-
+        .text-wrap{
+    white-space:normal;
+}
+.width-200{
+    width:200px;
+}
     </style>
 </head>
 <body>
@@ -506,47 +604,22 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
 {% else %}
 
 <!-- Modal -->
-<div class="modal fade" id="employee-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+<div class="modal fade" id="client_pm-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="title"></h5>
+                <h5 class="modal-title" id="client_pm_title"></h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <ul class="nav nav-pills">
-                    <li>
-                        <a href="#1a" class="active" data-toggle="tab">PM</a>
-                    </li>
-                    <li><a href="#2a" data-toggle="tab">Super</a>
-                    </li>
-                    <li><a href="#3a" data-toggle="tab">Company</a>
-                    </li>
-                </ul>
-                <div class="tab-content clearfix">
-                    <div class="tab-pane active" id="1a">
                         <div style="margin-top: 12px" class="table-responsive">
-                            <div id="pm_info">
+                            <div id="client_pm_info">
                             </div>
                         </div>
-                    </div>
-                    <div class="tab-pane" id="2a">
-                        <div style="margin-top: 12px" class="table-responsive">
-                            <div id="super_info">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="tab-pane" id="3a">
-                        <div style="margin-top: 12px" class="table-responsive">
-                            <div id="client_info">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <button onclick = "closemodaltest()" class="btn btn-primary"> Change Client Information </button>
+                <button onclick = "change_client_pm()" class="btn btn-primary" data-toggle="modal" data-target="#change_client_pm-modal" data-dismiss="modal"> Change PM Information </button>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -554,70 +627,123 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
         </div>
     </div>
 </div>
-
-<div class="modal fade" id="employee-modal2" tabindex="-1" role="dialog" aria-labelledby="title"
+<!-- Modal -->
+<div class="modal fade" id="client_super-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="title">Update information </h5>
+                <h5 class="modal-title" id="client_super_title"></h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <ul class="nav nav-pills">
-                    <li>
-                        <a href="#4a" class="active" data-toggle="tab">PM</a>
-                    </li>
-                    <li><a href="#5a" data-toggle="tab">Super</a>
-                    </li>
-                    <li><a href="#6a" data-toggle="tab">Company</a>
-                    </li>
-                </ul>
-                <div class="tab-content clearfix">
-                    <div class="tab-pane active" id="4a">
                         <div style="margin-top: 12px" class="table-responsive">
-                            <div id="pm_info2">
-                             <form id="pmform" action="{% url 'job_page' job.job_number %}" method="post" onSubmit="return before_postpm()">
-                            {% csrf_token %}
-                                <table>
-                                    <tr><td>
-                                        <label for="select_pm">Change PM</label>
-                                         <select id="select_pm" name="select_pm" onchange="new_pm1()">
-                                        {% if job.client_Pm %}
-                                        <option value={{job.client_Pm.person_pk}}>{{job.client_Pm.name}}</option>
-                                        {% else %}
-                                        <option value="please_select">Please Select</option>
-                                        {% endif %}
-                                        <option value="add_new">Add New</option>
-                                        {% if client_employees %}
-                                        {% for employee in client_employees %}
-                                        <option value={{employee.person_pk}}>{{employee.name}}</option>
-                                        {% endfor %}
-                                        {% endif %}
-                                        </select>
-                                    </td></tr>
-                                </table>
-                                <table id="show_new_pm">
-                                    <tr><td>New Person: <input type= "text" name="new_pm" id="new_pm" placeholder="Name" size="30" /></td></tr>
-                                    <tr><td>Email: <input type= "text" name="new_pm_email" id="new_pm_email" placeholder="Email" size="30" /></td></tr>
-                                    <tr><td>Phone: <input type= "text" name="new_pm_phone" id="new_pm_phone" placeholder="Phone" size="30" /></td></tr>
-                                </table>
-                                <table id="show_existing_pm">
-                                    <tr><td>Company Email: <input type= "text" name="pm_email" id="pm_email" {% if job.client_Pm.email %}value='{{job.client_Pm.email}}' {% else %} placeholder="Email" {% endif %} size="30" /></td></tr>
-                                    <tr><td>Main Phone: <input type= "text" name="pm_phone" id="pm_phone" {% if job.client_Pm.phone %}value='{{job.client_Pm.phone}}' {% else %} placeholder="Main Phone" {% endif %} size="30" /></td></tr>
-                                </table>
-                                <table><tr><td><input type="submit" name="submit_pm" class="btn btn-danger" value="Save Changes to PM" /></td></tr></table>
-                             </form>
-
+                            <div id="client_super_info">
                             </div>
                         </div>
-                    </div>
-                    <div class="tab-pane" id="5a">
+                <button onclick = "change_client_super()" class="btn btn-primary" data-toggle="modal" data-target="#change_client_super-modal" data-dismiss="modal"> Change Super Information </button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="client-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="client_title"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
                         <div style="margin-top: 12px" class="table-responsive">
-                            <div id="super_info">
-                                <form id="modalform" action="{% url 'job_page' job.job_number %}" method="post" onSubmit="return before_postsuper()">
+                            <div id="client_info">
+                            </div>
+                        </div>
+                <button onclick = "change_client()" class="btn btn-primary" data-toggle="modal" data-target="#change_client-modal" data-dismiss="modal"> Change Client Information </button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="change_client_pm-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="change_client_pm_title">Update information </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-top: 12px" class="table-responsive">
+                    <div id="change_client_pm_info">
+                     <form id="change_client_pm_form" action="{% url 'job_page' job.job_number %}" method="post" onSubmit="return before_postpm()">
+                    {% csrf_token %}
+                        <table>
+                            <tr><td>
+                                <label for="select_pm">Change PM</label>
+                                 <select id="select_pm" name="select_pm" onchange="new_pm1()">
+                                {% if job.client_Pm %}
+                                <option value={{job.client_Pm.person_pk}}>{{job.client_Pm.name}}</option>
+                                {% else %}
+                                <option value="please_select">Please Select</option>
+                                {% endif %}
+                                <option value="add_new">Add New</option>
+                                {% if client_employees %}
+                                {% for employee in client_employees %}
+                                <option value={{employee.person_pk}}>{{employee.name}}</option>
+                                {% endfor %}
+                                {% endif %}
+                                </select>
+                            </td></tr>
+                        </table>
+                        <table id="show_new_pm">
+                            <tr><td>New Person: <input type= "text" name="new_pm" id="new_pm" placeholder="Name" size="30" /></td></tr>
+                            <tr><td>Email: <input type= "text" name="new_pm_email" id="new_pm_email" placeholder="Email" size="30" /></td></tr>
+                            <tr><td>Phone: <input type= "text" name="new_pm_phone" id="new_pm_phone" placeholder="Phone" size="30" /></td></tr>
+                        </table>
+                        <table id="show_existing_pm">
+                            <tr><td>Email: <input type= "text" name="pm_email" id="pm_email" {% if job.client_Pm.email %}value='{{job.client_Pm.email}}' {% else %} placeholder="Email" {% endif %} size="30" /></td></tr>
+                            <tr><td>Phone: <input type= "text" name="pm_phone" id="pm_phone" {% if job.client_Pm.phone %}value='{{job.client_Pm.phone}}' {% else %} placeholder="Main Phone" {% endif %} size="30" /></td></tr>
+                        </table>
+                        <table><tr><td><input type="submit" name="submit_pm" class="btn btn-danger" value="Save Changes to PM" /></td></tr></table>
+                     </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close without Saving</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="change_client_super-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="change_client_super_title">Update information </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="change_client_super_info">
+                                <form id="change_client_super_form" action="{% url 'job_page' job.job_number %}" method="post" onSubmit="return before_postsuper()">
                                     {% csrf_token %}
                                     <table>
                                         <tr><td>
@@ -642,18 +768,34 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
                                         <tr><td>Phone: <input type= "text" name="new_super_phone" id="new_super_phone" placeholder="Phone" size="30" /></td></tr>
                                     </table>
                                     <table id="show_existing_super">
-                                        <tr><td>Company Email: <input type= "text" name="super_email" id="super_email" {% if job.client_Super.email %}value='{{job.client_Super.email}}' {% else %} placeholder="Email" {% endif %} size="30" /></td></tr>
-                                        <tr><td>Main Phone: <input type= "text" name="super_phone" id="super_phone" {% if job.client_Super.phone %}value='{{job.client_Super.phone}}' {% else %} placeholder="Main Phone" {% endif %} size="30"  /></td></tr>
+                                        <tr><td>Email: <input type= "text" name="super_email" id="super_email" {% if job.client_Super.email %}value='{{job.client_Super.email}}' {% else %} placeholder="Email" {% endif %} size="30" /></td></tr>
+                                        <tr><td>Phone: <input type= "text" name="super_phone" id="super_phone" {% if job.client_Super.phone %}value='{{job.client_Super.phone}}' {% else %} placeholder="Main Phone" {% endif %} size="30"  /></td></tr>
                                     </table>
                                      <table><tr><td><input type="submit" name="submit_super" class="btn btn-danger" value="Save Changes to Super" /></td></tr></table>
                                  </form>
                             </div>
                         </div>
-                    </div>
-                    <div class="tab-pane" id="6a">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close without Saving</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="change_client-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="change_client_title">Update information </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
                         <div style="margin-top: 12px" class="table-responsive">
-                            <div id="client_info">
-                                 <form id="clientform" action="{% url 'job_page' job.job_number %}" method="post" >
+                            <div id="change_client_info">
+                                 <form id="change_client_form" action="{% url 'job_page' job.job_number %}" method="post" >
                                     {% csrf_token %}
                                     <table>
                                         <tr><td>Company Email: <input type= "text" name="client_bid_email" id="client_bid_email" {% if job.client.bid_email %}value='{{job.client.bid_email}}' {% else %} placeholder="Email" {% endif %} size="30" /></td></tr>
@@ -664,9 +806,6 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close without Saving</button>
             </div>
@@ -677,24 +816,24 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
 
 <div class="container">
     <div class="row">
-        <div class="col"><b>Job Name:</b> {{job.job_name}}</div>
-        <div class="col"><b>Job Number:</b> {{job.job_number}}</div>
-        <div class="col"><b>Address:</b> {{job.address}} {{job.city}} {{job.state}}</div>
+        <div class="col-sm-4 list-items"><b>Job Name:</b> {{job.job_name}}</div>
+        <div class="col-sm-4 list-items"><b>Job Number:</b> {{job.job_number}}</div>
+        <div class="col-sm-4 list-items"><b>Address:</b> {{job.address}} {{job.city}} {{job.state}}</div>
     </div>
     <div class="row">
 
-        <div class="col"data-toggle="modal" data-target="#employee-modal"><a href ="#" onclick="showEmployeeData( 'CLIENT','{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');"><b>Client:</b> {{job.client}}</a></div>
-        <div class="col"data-toggle="modal" data-target="#employee-modal"><a href ="#" onclick="showEmployeeData('PM',  '{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');"><b>GC PM:</b> {{job.client_Pm}}</a></div>
-        <div class="col"data-toggle="modal" data-target="#employee-modal"><a href ="#" onclick="showEmployeeData( 'SUPERINTENDENT','{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');"><b>GC Super:</b> {{job.client_Super}} </a></div>
+        <div class="col-sm-4 list-items" data-toggle="modal" data-target="#client-modal"><a href ="#" onclick="showEmployeeData( 'CLIENT','{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');"><b>Client:</b> {{job.client}}</a></div>
+        <div class="col-sm-4 list-items" data-toggle="modal" data-target="#client_pm-modal"><a href ="#" onclick="showEmployeeData('PM',  '{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');"><b>GC PM:</b> {{job.client_Pm}}</a></div>
+        <div class="col-sm-4 list-items" data-toggle="modal" data-target="#client_super-modal"><a href ="#" onclick="showEmployeeData( 'SUPERINTENDENT','{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');"><b>GC Super:</b> {{job.client_Super}} </a></div>
     </div>
 
     <div class="row">
-        <div class="col-sm-4" id="TEST_YO" data-toggle="modal" data-target="#startdate-modal"><a href ="#" onclick="populate_start_date_modal('{{job.job_number}}','{{job.job_name}}','{{job.start_date}}','{{job.is_active}}',this,2)"><b>Start Date:</b> - {{job.start_date}}</a></div>
-        <div class="col-sm-4" id="TEST_BRO" data-toggle="modal" data-target="#super-modal" ><a href = "#" onclick="populate_super_modal('{{job.job_name}}','{{job.superintendent.id}}','{{job.job_number}}','{{job.superintendent.first_name}}',this,2)"><b>Gerloff Super:</b> -{{job.superintendent}}</a></div>
-        <div class="col-sm-4"><b>Gerloff Estimator:</b> {{job.estimator}}</div>
+        <div class="col-sm-4 list-items" id="TEST_YO" data-toggle="modal" data-target="#startdate-modal"><a href ="#" onclick="populate_start_date_modal('{{job.job_number}}','{{job.job_name}}','{{job.start_date}}','{{job.is_active}}',this,2)"><b>Start Date:</b> - {{job.start_date}}</a></div>
+        <div class="col-sm-4 list-items" id="TEST_BRO" data-toggle="modal" data-target="#super-modal" ><a href = "#" onclick="populate_super_modal('{{job.job_name}}','{{job.superintendent.id}}','{{job.job_number}}','{{job.superintendent.first_name}}',this,2)"><b>Gerloff Super:</b> -{{job.superintendent}}</a></div>
+        <div class="col-sm-4 list-items"><b>Gerloff Estimator:</b> {{job.estimator}}</div>
     </div>
     <div class="row">
-        <div class="col"><b>Contract Amount:</b> {% if job.is_t_m_job == True %} T&M {% else %}
+        <div class="col-sm-4 list-items"><b>Contract Amount:</b> {% if job.is_t_m_job == True %} T&M {% else %}
             {{job.contract_amount}}{% endif %}
         </div>
     </div>
@@ -798,7 +937,7 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
             <tr>
                 <td>{{x.user}}</td>
                 <td>{{x.date}}</td>
-                <td>{{x.note}}</td>
+                <td><div class='text-wrap width-400'>{{x.note}}</div></td>
             </tr>
             {% endfor %}
             {% endif %}

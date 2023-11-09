@@ -495,30 +495,33 @@ def job_page(request, jobnumber):
                                                                            name=request.POST['new_pm'],
                                                                            phone=request.POST['new_pm_phone'],
                                                                            email=request.POST['new_pm_email'])
+                    selectedjob.save()
                 else:
                     selectedjob.client_Pm = ClientEmployees.objects.get(person_pk=request.POST['select_pm'])
-                selectedjob.client_Pm.email = request.POST['pm_email']
-                selectedjob.client_Pm.phone = request.POST['pm_phone']
+                    selectedjob.save()
+                    selectedjob.client_Pm.email = request.POST['pm_email']
+                    selectedjob.client_Pm.phone = request.POST['pm_phone']
+                    selectedjob.client_Pm.save()
             if 'submit_super' in request.POST:
                 if request.POST['select_super'] == 'add_new':
                     selectedjob.client_Super = ClientEmployees.objects.create(id=selectedjob.client,
                                                                               name=request.POST['new_super'],
                                                                               phone=request.POST['new_super_phone'],
                                                                               email=request.POST['new_super_email'])
+                    selectedjob.save()
                 elif request.POST['select_super'] != 'not_sure':
                     selectedjob.client_Super = ClientEmployees.objects.get(person_pk=request.POST['select_super'])
-                elif selectedjob.client_Super:
-                    selectedjob.client_Super = None
-                if selectedjob.client_Super:
+                    selectedjob.save()
                     selectedjob.client_Super.email = request.POST['super_email']
                     selectedjob.client_Super.phone = request.POST['super_phone']
                     selectedjob.client_Super.save()
+                elif selectedjob.client_Super:
+                    selectedjob.client_Super = None
+                    selectedjob.save()
             if 'submit_client' in request.POST:
                 selectedjob.client.bid_email = request.POST['client_bid_email']
                 selectedjob.client.phone = request.POST['client_phone']
-            selectedjob.save()
-            selectedjob.client.save()
-            selectedjob.client_Pm.save()
+                selectedjob.save()
         send_data = {}
         send_data['client_employees'] = ClientEmployees.objects.filter(id=selectedjob.client)
         # send_data['jobstable'] = JobsTable(selectedjob)
