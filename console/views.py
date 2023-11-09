@@ -43,7 +43,7 @@ def index(request):
     send_data={}
     next_two_weeks = 0
     for x in Jobs.objects.filter(is_closed=False, is_active=False):
-        if x.next_two_weeks == True:
+        if x.next_two_weeks() == True:
             next_two_weeks += 1
     send_data['missing'] = Inventory.objects.filter(status = "Missing").count()
     send_data['checked_out'] = Inventory.objects.filter(job_number__is_closed=False).count()
@@ -57,9 +57,10 @@ def index(request):
     send_data['super_equipment']=Inventory.objects.filter(job_number__superintendent = active_super).count()
     send_data['super_rentals'] = Rentals.objects.filter(job_number__superintendent = active_super).count()
     send_data['tickets'] = 0
+    send_data['current_user'] = request.user.first_name
     next_two_weeks = 0
     for x in Jobs.objects.filter(is_closed=False, is_active=False,superintendent=active_super):
-        if x.next_two_weeks == True:
+        if x.next_two_weeks() == True:
             next_two_weeks += 1
     send_data['super_jobs'] = next_two_weeks
     return render(request, 'index.html',send_data)
