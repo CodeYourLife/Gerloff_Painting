@@ -101,6 +101,7 @@
 window.onload = function() {
 var table = $('#inventory_table').DataTable({paging: false})
 if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "block";}
+
 }
 
 function showemployeedata(jobnumber,jobname,startdate,is_active,x){
@@ -159,6 +160,7 @@ else {document.getElementById("is_button_collapsed").value = "YES"}
 document.getElementById('filter_form').submit();
 }
 
+
 function populate_super_modal(jobname,superid,jobnumber,firstname,x,origin){
     pmform3.select_super.value=superid
     if (origin == 1){
@@ -189,6 +191,7 @@ function submit_new_super(){
            }
             })
 }
+
 	</script>
 
 </head>
@@ -301,7 +304,9 @@ function submit_new_super(){
 
 <form id="filter_form" class="form-control form-contol-sm" action="{% url 'super_home' 'ALL' %}" method="get" >
     <div class="container"><div class="row">
+
         <div class="col-sm-6 list-items"><label>Superintendent</label>
+
             <select id="search2" name="search2" onchange = "new_filter_now()">
             {% if selected_super %}
             <option value={{selected_super.id}}>{{selected_super.first_name}} {{selected_super.last_name}}</option>
@@ -357,6 +362,7 @@ function submit_new_super(){
                 {% for job in jobs %}
                    <tr onclick="showemployeedata('{{job.job_number}}','{{job.job_name}}','{{job.start_date}}','{{job.is_active}}',this)">
                     {% if job.is_off_hours == True %}<td style="background-color:#ffff00">{% else %}<td>{% endif %}{{job.job_number}}</td>
+
                     {% if job.is_on_base == True %}<td style="background-color:#00ff00">{% else %}<td style="white-space:nowrap" width="200">{% endif %}<a href="{% url 'job_page' job.job_number %}"><div style="height:100%;width:100%">{{job.job_name}} </div></a></td>
                    {% if job.check_start_date == True %}<td data-toggle="modal" style="background-color:#bcd5bc;white-space:nowrap" data-target="#employee-modal"><a href="#">{{job.start_date}}</a></td>{% else %}<td data-toggle="modal" data-target="#employee-modal" style="white-space:nowrap"><a href="#">{{job.start_date}}</a></td>{% endif %}
                     {% if selected_super == None%}<td data-toggle="modal" data-target="#super-modal" onclick="populate_super_modal('{{job.job_name}}','{{job.superintendent.id}}','{{job.job_number}}','{{job.superintendent.first_name}}',this,1)"><a href="#">{{job.superintendent.first_name}}</a></td>{% endif %}
@@ -364,6 +370,7 @@ function submit_new_super(){
 <!--                    <td style="background-color:#FF0000">{% else %}-->
 <!--                    <td>{% endif %}{{job.client}}</td>-->
                    <td style="white-space:nowrap" width="90">{{job.client}}</td>
+
                     <td>{{job.equipment_count}}</td>
                     <td>{{job.subcontract_count}}</td>
                     <td>{{job.wc_count}}</td>
