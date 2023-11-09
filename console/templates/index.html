@@ -2,78 +2,175 @@
 {% block nav_item_index %}active{% endblock nav_item_index %}
 {% block content %}
 {% load static %}
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <title>DataTables example - HTML (DOM) sourced data</title>
+        <style type="text/css" class="init">
+        .dataTables_wrapper {
+    font-family: tahoma;
+    font-size: 13px;
+}
+
+        nav .active, .collapsible:hover {
+          background-color: Salmon;
+        }
+        .nav-pills a {
+            color: black;
+        }
+        .nav-pills li {
+            padding: 2px;
+        }
+        .nav-pills .active {
+            background-color: #6c757d !important;
+            padding: 5px;
+        }
+        .table td {
+
+        }
+        label {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+        input {
+            margin-left: 10px;
+            margin-right: 10px;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+        tr th {
+            width: fit-content !important;
+        }
+        .tab-content * {
+          color : black;
+          background-color: white !important;
+        }
+
+        .active * {
+            background-color: white !important;
+        }
+                .list-items {
+        border-bottom: 1px solid black; display: flex; justify-content: space-between;
+        }
+        .text-wrap{
+    white-space:normal;
+}
+.width-200{
+    width:200px;
+}
+    </style>
+    <style>
+.dataTables_filter {
+   float: left !important;
+}
+
+          .tb { border-collapse: collapse; width:300px; }
+  .tb th, .tb td { padding: 5px; border: solid 1px #777; }
+  .tb th { background-color: lightblue; }
+</style>
+    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+
+    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+</head>
 <body>
-<!--<div class="page-header d-flex justify-content-center ">-->
-
-<!--<div class="d-flex justify-content-center">-->
-<!--<div class="d-flex flex-column mb-100">-->
-<!--<div class="d-flex justify-content-center"><H4>Trinity Software Solutions</H4></div>-->
-
-<!--<form action="{% url 'job_page' 'ALL' %}">-->
-<!--<div class="d-flex justify-content-center"><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="Jobs"/></div>-->
-<!--</form>-->
-<!--<br><br>-->
-<!--<form action="{% url 'equipment_home' %}">-->
-<!--<div class="d-flex justify-content-center"><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="Equipment"/></div>-->
-<!--</form>-->
-<!--<br>-->
-<!--<form action="{% url 'super_home' 'AUTO' %}">-->
-<!--<div class="d-flex justify-content-center"><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="Superintendent"/></div>-->
-<!--</form>-->
-<!--<br>-->
-<!--<form action="{% url 'warehouse_home' %}">-->
-<!--<div class="d-flex justify-content-center"><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="Warehouse"/></div>-->
-<!--</form>-->
-
-<!--</div>-->
-<div class="container">
-  <div class="row">
-    <div class="col">
-      <div class="d-flex justify-content-center"><H4>Trinity Software Solutions</H4></div>
+<!--<div class="d-flex justify-content-center"><div>Trinity Software Solutions</div></div>-->
+<!--    <div class="col-xs-4 align-self-center" style="border: 1px solid blue">-->
+<div class="container" style="border: 1px solid grey">
+  <div class="row" style="border: 1px solid grey">
+    <div class="col-s-12" style="border: 1px solid grey">
+    <div class="d-flex justify-content-center"><div><h4>Trinity Software Solutions</h4></div></div>
     </div>
   </div>
 
-      <div class="row">
-    <div class="col">
-      <form action="{% url 'job_page' 'ALL' %}">
-<div class="d-flex justify-content-center"><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="Jobs"/></div>
-</form>
+    <div class="row" style="border: 1px solid grey">
+        <div class="col-s-6 align-self-center" style="border: 1px solid grey">
+            <form action="{% url 'job_page' 'ALL' %}">
+                <div class="d-flex justify-content-end"><div><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="JOBS"></div></div>
+            </form>
+        </div>
+        <div class="col-s-6 align-self-center" style="border: 1px solid grey">
+            <div class="row" style="border: 1px solid grey"> <b>{{needs_super}}</b> -Need a Superintendent</div>
+            <div class="row" style="border: 1px solid grey"> <b>{{next_two_weeks}}</b> -Starting in Next 2 Weeks</div>
+        </div>
     </div>
-  </div>
-    <div class="row"> <div class="col"><div class="d-flex justify-content-center">-</div></div></div>
-      <div class="row">
-    <div class="col">
-      <form action="{% url 'equipment_home' %}">
-<div class="d-flex justify-content-center"><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="Equipment"/></div>
-</form>
+<div class="row"> <div class="col"><div class="d-flex justify-content-center">-</div></div></div>
+    <div class="row" style="border: 1px solid grey">
+        <div class="col-s-6 align-self-center" style="border: 1px solid grey">
+        <form action="{% url 'equipment_home' %}">
+        <div class="d-flex justify-content-end"><div><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="EQUIPMENT"/></div></div>
+        </form>
+        </div>
+          <div class="col-s-6 align-self-center" style="border: 1px solid grey">
+                <div class="row" style="border: 1px solid grey"><b>{{missing}}</b> -Missing</div>
+                <div class="row" style="border: 1px solid grey"> <b>{{checked_out}}</b> -On Open Jobs</div>
+                <div class="row" style="border: 1px solid grey"><b>{{closed_job}}</b> -On Closed Jobs</div>
+                <div class="row" style="border: 1px solid grey"> <b>{{service}}</b> -In Service</div>
+        </div>
     </div>
-  </div>
+<div class="row"> <div class="col"><div class="d-flex justify-content-center">-</div></div></div>
+    <div class="row" style="border: 1px solid grey">
+        <div class="col-s-6 align-self-center" style="border: 1px solid grey">
+        <form action="{% url 'rentals_home' %}">
+        <div class="d-flex justify-content-end"><div><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="RENTALS"/></div></div>
+        </form>
+        </div>
+          <div class="col-s-6 align-self-center" style="border: 1px solid grey">
+                <div class="row" style="border: 1px solid grey"><b>{{rentals}}</b> -On Rent</div>
+
+        </div>
+    </div>
             <div class="row"> <div class="col"><div class="d-flex justify-content-center">-</div></div></div>
-      <div class="row">
-    <div class="col">
-      <form action="{% url 'rentals_home' %}">
-<div class="d-flex justify-content-center"><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="Rentals"/></div>
-</form>
+
+    <div class="row" style="border: 1px solid grey">
+        <div class="col-s-6 align-self-center" style="border: 1px solid grey">
+        <form action="{% url 'super_home' 'AUTO' %}">
+        <div class="d-flex justify-content-end"><div><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="SUPER"/></div></div>
+        </form>
+        </div>
+          <div class="col-s-6 align-self-center" style="border: 1px solid grey">
+                    <div class="row" style="border: 1px solid grey"> <b>{{super_equipment}}</b> -Assigned Equipment</div>
+                    <div class="row" style="border: 1px solid grey"> <b>{{super_rentals}}</b> -Rentals</div>
+                <div class="row" style="border: 1px solid grey"> <b>{{tickets}}</b> -Open Tickets</div>
+                <div class="row" style="border: 1px solid grey"> <b>{{super_jobs}}</b> -Jobs Starting Next 2 Weeks</div>
+        </div>
     </div>
-  </div>
-    <div class="row"> <div class="col"><div class="d-flex justify-content-center">-</div></div></div>
-      <div class="row">
-    <div class="col">
-      <form action="{% url 'super_home' 'AUTO' %}">
-<div class="d-flex justify-content-center"><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="Superintendent"/></div>
-</form>
+
+    <div class="row" style="border: 1px solid grey"> <div class="col"style="border: 1px solid grey"><div class="d-flex justify-content-center">-</div></div></div>
+
+    <div class="row" style="border: 1px solid grey">
+        <div class="col-s-6 align-self-center" style="border: 1px solid grey">
+        <form action="{% url 'warehouse_home' %}">
+        <div class="d-flex justify-content-end"><div><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="WAREHOUSE"/></div></div>
+        </form>
+        </div>
+          <div class="col-s-6 align-self-center" style="border: 1px solid grey">
+                <div class="row" style="border: 1px solid grey"><b>{{pickup_requests}}</b> -Pickup Requests</div>
+
+        </div>
     </div>
-  </div>
-    <div class="row"> <div class="col"><div class="d-flex justify-content-center">-</div></div></div>
-      <div class="row">
-    <div class="col">
-     <form action="{% url 'warehouse_home' %}">
-<div class="d-flex justify-content-center"><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="Warehouse"/></div>
-</form>
-    </div>
-  </div>
+
+    <div class="row" style="border: 1px solid grey"> <div class="col" style="border: 1px solid grey"><div class="d-flex justify-content-center">-</div></div></div>
+
 
 </div>
 

@@ -40,18 +40,29 @@ def seperate_test(request):
 
 @login_required(login_url='/accounts/login')
 def index(request):
-    print(Path(__file__).resolve().parent.parent)
-    if request.method == 'POST':
-        print(request.POST)
-        directory = "GeeksforGeeks"
-        parent_dir = "C:/Trinity/"
-        path = os.path.join(parent_dir, directory)
-        try:
-            os.mkdir(path)
-        except OSError as error:
-            print(error)
-
-    return render(request, 'index.html')
+    send_data={}
+    next_two_weeks = 0
+    for x in Jobs.objects.filter(is_closed=False, is_active=False):
+        if x.next_two_weeks == True:
+            next_two_weeks += 1
+    send_data['missing'] = Inventory.objects.filter(status = "Missing").count()
+    send_data['checked_out'] = Inventory.objects.filter(job_number__is_closed=False).count()
+    send_data['closed_job'] = Inventory.objects.filter(job_number__is_closed=True).count()
+    send_data['service'] = Inventory.objects.filter(service_vendor__isnull=False).count()
+    send_data['pickup_requests'] = PickupRequest.objects.filter(is_closed=False).count()
+    send_data['rentals'] = Rentals.objects.filter(off_rent_number = None).count()
+    send_data['next_two_weeks'] = next_two_weeks
+    send_data['needs_super'] = Jobs.objects.filter(superintendent__isnull = True).count()
+    active_super = Employees.objects.get(user=request.user)
+    send_data['super_equipment']=Inventory.objects.filter(job_number__superintendent = active_super).count()
+    send_data['super_rentals'] = Rentals.objects.filter(job_number__superintendent = active_super).count()
+    send_data['tickets'] = 0
+    next_two_weeks = 0
+    for x in Jobs.objects.filter(is_closed=False, is_active=False,superintendent=active_super):
+        if x.next_two_weeks == True:
+            next_two_weeks += 1
+    send_data['super_jobs'] = next_two_weeks
+    return render(request, 'index.html',send_data)
 
 
 @login_required(login_url='/accounts/login')

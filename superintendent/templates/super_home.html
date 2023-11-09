@@ -8,6 +8,7 @@
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
     <title>DataTables example - HTML (DOM) sourced data</title>
+
     <style type="text/css" class="init">
         .dataTables_wrapper {
             font-family: tahoma;
@@ -72,6 +73,7 @@
         .dataTables_filter {
            float: left !important;
         }
+
     </style>
     <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
     <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
@@ -91,6 +93,7 @@
             src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
     <script type="text/javascript" class="init">
+
 
         window.onload = function() {
         var table = $('#inventory_table').DataTable({paging: false})
@@ -112,6 +115,7 @@
                     })
                     text += "</table>"
                     document.getElementById("notes_tab").innerHTML = text;
+
                 }
             })
             var d = new Date(startdate),
@@ -131,6 +135,7 @@
             if (is_active == "True"){pmform.is_active.checked = true}
             else{pmform.is_active.checked = false}
         }
+
 
 
         function anothertest(){
@@ -186,6 +191,7 @@
         }
 
     </script>
+
 
 </head>
 <body>
@@ -265,6 +271,7 @@
                     <div class="tab-pane active" id="8a">
                         <div style="margin-top: 12px" class="table-responsive">
                             <div id="date_tab">
+
                                 <form id="pmform" action="{% url 'super_home' 'ALL' %}" method="post">
                                     {% csrf_token %}
                                     <table>
@@ -288,6 +295,7 @@
                                             </td>
                                         </tr>
                                     </table>
+
                                 </form>
                             </div>
                         </div>
@@ -307,6 +315,7 @@
         </div>
     </div>
 </div>
+
 
 
 <form id="filter_form" class="form-control form-contol-sm" action="{% url 'super_home' 'ALL' %}" method="get">
@@ -334,6 +343,7 @@
             <label class="form-check-label" for="search5">Upcoming Only</label>
         </div>
     </div>
+
 </form>
 <div id="accordion">
     <div class="card">
@@ -355,6 +365,7 @@
                              style="margin-left: 10px; justify-content: space-around; margin-bottom: 10px;">
                             <div style="margin: 8px; width:fit-content; background-color:#ffff00; padding: 5px; border-radius: 5px;">
                                 Off Hours
+
                             </div>
                             <div style="margin: 8px; width:fit-content; background-color:#00ff00; padding: 5px; border-radius: 5px;">
                                 On Base
