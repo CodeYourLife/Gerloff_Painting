@@ -123,6 +123,7 @@ def request_pickup(request, jobnumber, item, pickup, status):
     # item either ALL or ID
     # Pickup either 'ADD' or ID or 'ALL' or 'CHANGE' or 'ITEMADD' or 'ITEMREMOVE'
     # status either 'ALL' or 'CHANGE' or 'ADD' or 'REVISE'
+    print("PUMPKIN")
     selected_job = Jobs.objects.get(job_number=jobnumber)
     send_data = {}
     if status == 'REVISE':
@@ -225,11 +226,11 @@ def request_pickup(request, jobnumber, item, pickup, status):
     return render(request, 'request_pickup.html', send_data)
 
 
-def request_pickup(request, jobnumber):
-    send_data={}
-    send_data['equipment']= Inventory.objects.filter(job_number=Jobs.objects.get(job_number=jobnumber))
-    send_data['selected_job'] = Jobs.objects.get(job_number=jobnumber)
-    return render(request, 'request_pickup.html', send_data)
+# def request_pickup(request, jobnumber):
+#     send_data={}
+#     send_data['equipment']= Inventory.objects.filter(job_number=Jobs.objects.get(job_number=jobnumber))
+#     send_data['selected_job'] = Jobs.objects.get(job_number=jobnumber)
+#     return render(request, 'request_pickup.html', send_data)
 
 def update_equipment(request, id):
     item = Inventory.objects.get(id=id)
