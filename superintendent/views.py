@@ -76,15 +76,11 @@ def super_ajax(request):
 def super_home(request, super):
     send_data = {}
     if super == 'AUTO':
+        special = True
         employee = Employees.objects.get(user=request.user)
-        if employee.job_title.description == 'Superintendent':
-            super = employee.id
-        else:
-            super = 'ALL'
-
+        super = employee.id
     selected_superid = super  # selected_superid = either 'ALL' or the ID of super
     if request.method == 'GET':
-        print(request.GET)
         if 'is_button_collapsed' in request.GET:
             if request.GET['is_button_collapsed'] == "NO":
                 send_data['open_button'] = "TRUE"
@@ -129,7 +125,10 @@ def super_home(request, super):
                                                                  is_closed=False,
                                                                  job_number__superintendent=selected_super).order_by(
             'job_number', 'cop_number').count()
-        search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False).order_by('start_date'))
+        if special == True:
+            search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False,superintendent=selected_super).order_by('start_date'))
+        else:
+            search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False).order_by('start_date'))
 
     if any(field in request.GET for field in set(search_jobs.get_fields())) == True:
         send_data['has_filter'] = True

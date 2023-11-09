@@ -178,6 +178,7 @@ class Jobs(models.Model):
         difference = date.today() - self.start_date_checked
         return int(difference.days)
 
+
     def next_two_weeks(self):
         if self.is_active == False:
             if date.today() > self.start_date:
@@ -188,8 +189,8 @@ class Jobs(models.Model):
                     return True
                 else:
                     return False
-
-
+        else:
+            return False
 
 class JobNotes(models.Model):
     id = models.BigAutoField(primary_key=True)
