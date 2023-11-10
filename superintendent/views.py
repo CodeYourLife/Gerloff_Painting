@@ -75,6 +75,7 @@ def super_ajax(request):
 @login_required(login_url='/accounts/login')
 def super_home(request, super):
     send_data = {}
+    special = False
     if super == 'AUTO':
         special = True
         employee = Employees.objects.get(user=request.user)
