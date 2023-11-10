@@ -127,7 +127,7 @@ class InventoryNotes(models.Model):
     id = models.BigAutoField(primary_key=True)
     inventory_item = models.ForeignKey(Inventory, on_delete=models.PROTECT)
     date = models.DateField(null=True, blank=True)
-    user = models.CharField(null=True, max_length=20)
+    user = models.ForeignKey('employees.Employees', on_delete=models.PROTECT)
     note = models.CharField(null=True, max_length=2000)
     category = models.CharField(null=True, max_length=2000, validators=[
         validate_inventory_notes])  # newjob, service, misc, returned

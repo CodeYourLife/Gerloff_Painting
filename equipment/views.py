@@ -5,7 +5,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
 from equipment.tables import *
 from equipment.models import *
-from jobs.models import Jobs
+from jobs.models import Jobs, JobNotes
 from equipment.filters import EquipmentFilter, EquipmentFilter2
 import json
 from django.core.serializers.json import DjangoJSONEncoder
@@ -20,6 +20,7 @@ from django.http import HttpResponse
 from media.utilities import MediaUtilities
 from console.misc import Email
 from datetime import datetime
+from employees.models import *
 
 
 def complete_pickup(request, pickup):
@@ -51,7 +52,7 @@ def complete_pickup(request, pickup):
                     item.item) + "Returned. \n"
                 selected_request.save()
                 InventoryNotes.objects.create(inventory_item=item, date=date.today(),
-                                              user=request.user.first_name + " " + request.user.last_name,
+                                              user=Employees.objects.get(user=request.user),
                                               note="Returned - requested for pickup by " + str(
                                                   selected_request.requested_by),
                                               category="Returned")
@@ -85,7 +86,7 @@ def complete_pickup(request, pickup):
                                                        request.POST['notes'] + "\n"
                 selected_request.save()
                 InventoryNotes.objects.create(inventory_item=item, date=date.today(),
-                                              user=request.user.first_name + " " + request.user.last_name,
+                                              user=Employees.objects.get(user=request.user),
                                               note="This item was requested to be picked up by: " + str(
                                                   selected_request.requested_by) + ". It is not on the jobsite. " +
                                                    request.POST['notes'],
@@ -184,6 +185,7 @@ def request_pickup(request, jobnumber, item, pickup, status):
             selected_request.confirmed = True
             selected_request.requested_by = Employees.objects.get(user=request.user)
             selected_request.save()
+
             message = "Pickup Request For Job: " + selected_job.job_name + ".\n"
             if selected_request.all_items == True:
                 if selected_request.request_notes is None:
@@ -197,6 +199,11 @@ def request_pickup(request, jobnumber, item, pickup, status):
                 tempnote = "Please pickup the following items: \n"
                 message = message + "Please pickup the following items: \n\n"
                 for x in PickupRequestItems.objects.filter(request=selected_request):
+                    InventoryNotes.objects.create(inventory_item=x.item, date=date.today(),
+                                                  user=Employees.objects.get(user=request.user),
+                                                  note="Requested for pickup by " + str(
+                                                      selected_request.requested_by),
+                                                  category="Misc",job_number=selected_job.job_number,job_name=selected_job.job_name)
                     if x.item.number:
                         tempnote = tempnote + "#:" + x.item.number + "- " + x.item.item + "\n"
                         message = message + "#:" + x.item.number + "- " + x.item.item + "\n"
@@ -217,6 +224,9 @@ def request_pickup(request, jobnumber, item, pickup, status):
                         recipients.append(selected_request.requested_by.email)
             Email.sendEmail("Pickup Request! " + selected_job.job_name, message,
                             recipients)
+            JobNotes.objects.create(job_number=selected_job,
+                                    note=message,
+                                    type="auto_misc_note", user=Employees.objects.get(user=request.user), date=date.today())
             return redirect('warehouse_home')
 
     if pickup != 'ALL': send_data['selected_items'] = PickupRequestItems.objects.filter(request=selected_request)
@@ -226,11 +236,6 @@ def request_pickup(request, jobnumber, item, pickup, status):
     return render(request, 'request_pickup.html', send_data)
 
 
-# def request_pickup(request, jobnumber):
-#     send_data={}
-#     send_data['equipment']= Inventory.objects.filter(job_number=Jobs.objects.get(job_number=jobnumber))
-#     send_data['selected_job'] = Jobs.objects.get(job_number=jobnumber)
-#     return render(request, 'request_pickup.html', send_data)
 
 def update_equipment(request, id):
     item = Inventory.objects.get(id=id)
@@ -313,7 +318,7 @@ def equipment_batch_outgoing(request, status):  # status is Outgoing, Incoming
                     x.batch = None
                     x.save()
                     new_note = InventoryNotes.objects.create(inventory_item=x, date=date.today(),
-                                                             user=request.user.first_name + " " + request.user.last_name,
+                                                             user=Employees.objects.get(user=request.user),
                                                              note="Sent to Job -" + request.POST['inventory_notes'],
                                                              category="Job", job_number=request.POST['select_job'],
                                                              job_name=x.job_number.job_name)
@@ -328,7 +333,7 @@ def equipment_batch_outgoing(request, status):  # status is Outgoing, Incoming
                     x.batch = None
                     x.save()
                     new_note = InventoryNotes.objects.create(inventory_item=x, date=date.today(),
-                                                             user=request.user.first_name + " " + request.user.last_name,
+                                                             user=Employees.objects.get(user=request.user),
                                                              note="Returned -" + request.POST['inventory_notes'],
                                                              category="Returned")
                     new_note.save()
@@ -394,7 +399,7 @@ def equipment_new(request):
             inventory.is_labeled = True
         inventory.save()
         InventoryNotes.objects.create(inventory_item=inventory, date=date.today(),
-                                      user=request.user.first_name + " " + request.user.last_name,
+                                      user=Employees.objects.get(user=request.user),
                                       note="Purchased From " + vendor + ". " + inventory.notes,
                                       category="Misc")
         return redirect('equipment_page', id=inventory.id)
@@ -437,7 +442,7 @@ def equipment_page(request, id):
             inventory.service_vendor = None
             inventory.save()  # this will update only
             new_note = InventoryNotes(inventory_item=inventory, date=date.today(),
-                                      user=request.user.first_name + " " + request.user.last_name,
+                                      user=Employees.objects.get(user=request.user),
                                       note="Returned -" + request.POST['returned_notes'],
                                       category="Returned")
             new_note.save()
@@ -451,13 +456,13 @@ def equipment_page(request, id):
                 inventory.date_returned = date.today()
             if inventory.job_number != None or inventory.service_vendor != None:
                 new_note = InventoryNotes(inventory_item=inventory, date=date.today(),
-                                          user=request.user.first_name + " " + request.user.last_name,
+                                          user=Employees.objects.get(user=request.user),
                                           note="No longer assigned to employee. " + inventory.assigned_to.first_name + " " + inventory.assigned_to.last_name + ". " +
                                                request.POST['returned_notes'],
                                           category="Employee")
             else:
                 new_note = InventoryNotes(inventory_item=inventory, date=date.today(),
-                                          user=request.user.first_name + " " + request.user.last_name,
+                                          user=Employees.objects.get(user=request.user),
                                           note="No longer assigned to employee. " + inventory.assigned_to.first_name + " " + inventory.assigned_to.last_name + ". " +
                                                request.POST['returned_notes'],
                                           category="Returned")
@@ -472,7 +477,7 @@ def equipment_page(request, id):
             inventory.assigned_to = None
             inventory.save()
             new_note = InventoryNotes(inventory_item=inventory, date=date.today(),
-                                      user=request.user.first_name + " " + request.user.last_name,
+                                      user=Employees.objects.get(user=request.user),
                                       note="Missing -" + request.POST['missing_notes'],
                                       category="Missing")
             new_note.save()
@@ -484,7 +489,7 @@ def equipment_page(request, id):
             inventory.date_returned = None
             inventory.save()
             new_note = InventoryNotes(inventory_item=inventory, date=date.today(),
-                                      user=request.user.first_name + " " + request.user.last_name,
+                                      user=Employees.objects.get(user=request.user),
                                       note="New Job -" + request.POST['job_notes'],
                                       category="Job",
                                       job_name=Jobs.objects.get(job_number=request.POST['select_job']).job_name,
@@ -492,7 +497,7 @@ def equipment_page(request, id):
             new_note.save()
         if 'equipment_note' in request.POST:
             new_note = InventoryNotes(inventory_item=inventory, date=date.today(),
-                                      user=request.user.first_name + " " + request.user.last_name,
+                                      user=Employees.objects.get(user=request.user),
                                       note=request.POST['equipment_note'],
                                       category="Misc")
             new_note.save()
@@ -505,7 +510,7 @@ def equipment_page(request, id):
             inventory.date_returned = None
             inventory.save()
             new_note = InventoryNotes(inventory_item=inventory, date=date.today(),
-                                      user=request.user.first_name + " " + request.user.last_name,
+                                      user=Employees.objects.get(user=request.user),
                                       note="In Service -" + request.POST['service_notes'],
                                       category="Service",
                                       job_name=Vendors.objects.get(id=request.POST['select_service']).company_name)
@@ -520,7 +525,7 @@ def equipment_page(request, id):
                 inventory.date_returned = None
             inventory.save()
             new_note = InventoryNotes(inventory_item=inventory, date=date.today(),
-                                      user=request.user.first_name + " " + request.user.last_name,
+                                      user=Employees.objects.get(user=request.user),
                                       note="Assigned to Employee -" + inventory.assigned_to.first_name + " " + inventory.assigned_to.last_name + ". " +
                                            request.POST['job_notes'],
                                       category="Employee", )
