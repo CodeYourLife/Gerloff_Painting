@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from equipment.models import Vendors, VendorContact
-
+import employees.models
 
 class Rentals(models.Model):
 	id = models.BigAutoField(primary_key=True)
@@ -26,5 +26,5 @@ class RentalNotes(models.Model):
     id = models.BigAutoField(primary_key=True)
     rental = models.ForeignKey(Rentals, on_delete=models.PROTECT)
     date = models.DateField(null=True, blank=True)
-    user = models.CharField(null=True, max_length=50)
+    user = models.ForeignKey(employees.models.Employees, on_delete=models.PROTECT)
     note = models.CharField(null=True, max_length=2000)
