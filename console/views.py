@@ -685,7 +685,7 @@ def customize(request):
         if x.user == "Edward Diggs":
             x.user = 26
         if x.user == "Joe Gerloff":
-            x.user =1
+            x.user = 3
         x.save()
 
     return redirect('/')
