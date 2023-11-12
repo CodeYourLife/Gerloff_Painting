@@ -69,7 +69,7 @@ def price_ewt(request, id):
         changeorder.full_description = ewt.notes + " " + request.POST['notes']
         changeorder.save()
         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
-                                        user=request.user.first_name + " " + request.user.last_name,
+                                        user=Employees.objects.get(user=request.user),
                                         note="COP Sent. Price: $" + request.POST['final_cost'])
         newproposal = TMProposal.objects.create(change_order=changeorder, total=request.POST['final_cost'],
                                                 notes=request.POST['notes'], ticket=ewt)
@@ -231,7 +231,7 @@ def print_ticket(request, id, status):
     equipment = EWTicket.objects.filter(EWT=ewt, master__category="Equipment")
     if status == 'OLD':
         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
-                                        user=request.user.first_name + " " + request.user.last_name,
+                                        user=Employees.objects.get(user=request.user),
                                         note="Ticket Printed for Wet Signature")
         changeorder.is_printed = True
         changeorder.save()
@@ -248,7 +248,7 @@ def print_ticket(request, id, status):
             Signature.objects.update(change_order_id=id, type="changeorder", name=nameValue, signature=signatureValue,
                                      date=date.today(), notes=comments)
         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
-                                        user=request.user.first_name + " " + request.user.last_name,
+                                        user=Employees.objects.get(user=request.user),
                                         note="Digital Signature Received. Signed by: " + request.POST[
                                             'signatureName'] + ". Comments: " + request.POST['gc_notes'])
         signature = Signature.objects.get(change_order_id=id)
@@ -330,7 +330,7 @@ def change_order_send(request, id):
                 changeorder.date_sent = date.today()
                 changeorder.save()
                 ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
-                                                user=request.user.first_name + " " + request.user.last_name,
+                                                user=Employees.objects.get(user=request.user),
                                                 note="COP Sent. Price: $" + request.POST['price'])
                 # Email.sendEmail("Change Order","Test",recipients)
                 return redirect('extra_work_ticket', id=id)
@@ -400,11 +400,11 @@ def change_order_new(request, jobnumber):
                 print(error)
             if changeorder.is_t_and_m == True:
                 note = ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
-                                                       user=request.user.first_name + " " + request.user.last_name,
+                                                       user=Employees.objects.get(user=request.user),
                                                        note="T&M COP Added. " + request.POST['notes'])
             else:
                 note = ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
-                                                       user=request.user.first_name + " " + request.user.last_name,
+                                                       user=Employees.objects.get(user=request.user),
                                                        note="COP Added. " + request.POST['notes'])
             return redirect('extra_work_ticket', id=changeorder.id)
     else:
@@ -480,13 +480,13 @@ def extra_work_ticket(request, id):
             changeorder.date_signed = date.today()
             changeorder.save()
             ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
-                                            user=request.user.first_name + " " + request.user.last_name,
+                                            user=Employees.objects.get(user=request.user),
                                             note="Ticket Signed - " + request.POST['signed_notes'])
         if 'submit_form4' in request.POST:
             changeorder.is_closed = True
             changeorder.save()
             ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
-                                            user=request.user.first_name + " " + request.user.last_name,
+                                            user=Employees.objects.get(user=request.user),
                                             note="VOIDED - " + request.POST['void_notes'])
             return redirect('extra_work_ticket', id=id)
         if 'submit_form1' in request.POST:
@@ -499,7 +499,7 @@ def extra_work_ticket(request, id):
             changeorder.price = request.POST['approved_price']
             changeorder.save()
             ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
-                                            user=request.user.first_name + " " + request.user.last_name,
+                                            user=Employees.objects.get(user=request.user),
                                             note="COP Approved. Price: $" + request.POST['approved_price'] + " -" +
                                                  request.POST['approval_note'])
             return redirect('extra_work_ticket', id=id)
@@ -517,16 +517,16 @@ def extra_work_ticket(request, id):
                 if changeorder.is_t_and_m == True:
                     changeordernote = ChangeOrderNotes.objects.create(
                         note="Changed to T&M: " + request.POST['no_tm_notes'], cop_number=changeorder,
-                        date=date.today(), user=request.user.first_name + " " + request.user.last_name)
+                        date=date.today(), user=Employees.objects.get(user=request.user))
                 else:
                     changeordernote = ChangeOrderNotes.objects.create(
                         note="No Longer T&M: " + request.POST['no_tm_notes'], cop_number=changeorder, date=date.today(),
-                        user=request.user.first_name + " " + request.user.last_name)
+                        user=Employees.objects.get(user=request.user))
         if 'submit_form2' in request.POST:
             if request.POST['new_note'] != "":
                 changeordernote = ChangeOrderNotes.objects.create(note=request.POST['new_note'],
                                                                   cop_number=changeorder, date=date.today(),
-                                                                  user=request.user.first_name + " " + request.user.last_name)
+                                                                  user=Employees.objects.get(user=request.user))
         notes = ChangeOrderNotes.objects.filter(cop_number=id)
         return render(request, "extra_work_ticket.html",
                       {'tmproposal': tmproposal, 'ticket_needed': ticket_needed, 'changeorder': changeorder,
@@ -547,7 +547,7 @@ def process_ewt(request, id):
                                  notes=request.POST['ticket_description'],
                                  completed_by=request.user.first_name + " " + request.user.last_name)
         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
-                                        user=request.user.first_name + " " + request.user.last_name,
+                                        user=Employees.objects.get(user=request.user),
                                         note="Extra Work Ticket Added")
         if 'existing_painter' in request.POST:
             answer = request.POST.getlist('existing_painter')

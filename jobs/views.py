@@ -50,10 +50,10 @@ def change_start_date(request, jobnumber, previous, super, filter):
             status = 3
         if str(jobs.start_date) != str(request.POST['start_date']):
             start_date_change(jobs, request.POST['start_date'], status, request.POST['date_note'],
-                              request.user.first_name + " " + request.user.last_name, True)
+                              Employees.objects.get(user=request.user), True)
         elif status != 3:
             start_date_change(jobs, request.POST['start_date'], status, request.POST['date_note'],
-                              request.user.first_name + " " + request.user.last_name, False)
+                              Employees.objects.get(user=request.user), False)
         else:
             if 'follow_up' in request.POST or request.POST['date_note'] != "":
                 jobs.start_date_checked = date.today()
@@ -62,7 +62,7 @@ def change_start_date(request, jobnumber, previous, super, filter):
                                             note="Start Date is Still: " + str(request.POST['start_date']) + ". " +
                                                  request.POST['date_note'],
                                             type="auto_start_date_note",
-                                            user=request.user.first_name + " " + request.user.last_name,
+                                            user=Employees.objects.get(user=request.user),
                                             date=date.today())
                 jobs.save()
         if previous == 'jobpage':
@@ -85,7 +85,7 @@ def change_gpsuper(request, jobnumber, previous):
     employees = Employees.objects.exclude(job_title__description="Painter")
     if request.method == 'POST':
         gerloff_super_change(jobs, Employees.objects.get(id=request.POST['select_gpsuper']),
-                             request.user.first_name + " " + request.user.last_name)
+                             Employees.objects.get(user=request.user))
         if previous == 'jobpage':
             return redirect('job_page', jobnumber=jobnumber)
         else:
@@ -215,10 +215,10 @@ def update_job_info(request, jobnumber):
             if selectedjob.superintendent is not None:
                 if str(selectedjob.superintendent.id) != str(request.POST['select_gpsuper']):
                     gerloff_super_change(selectedjob, Employees.objects.get(id=request.POST['select_gpsuper']),
-                                         request.user.first_name + " " + request.user.last_name)
+                                         Employees.objects.get(user=request.user))
             else:
                 gerloff_super_change(selectedjob, Employees.objects.get(id=request.POST['select_gpsuper']),
-                                     request.user.first_name + " " + request.user.last_name)
+                                     Employees.objects.get(user=request.user))
         if selectedjob.estimator.id != request.POST['select_gpestimator']:
             selectedjob.estimator = Employees.objects.get(id=request.POST['select_gpestimator'])
         if 'has_paint' in request.POST:
@@ -235,8 +235,7 @@ def update_job_info(request, jobnumber):
             selectedjob.special_paint_needed = False
 
         if startdate != request.POST['start_date']:
-            start_date_change(selectedjob, request.POST['start_date'], 3, request.POST['date_note'],
-                              request.user.first_name + " " + request.user.last_name, True)
+            start_date_change(selectedjob, request.POST['start_date'], 3, request.POST['date_note'],Employees.objects.get(user=request.user), True)
         if selectedjob.notes != request.POST['email_job_note']:
             selectedjob.notes = request.POST['email_job_note']
         if request.POST['po_number'] == "":
@@ -417,11 +416,11 @@ def upload_new_job(request):
                                         "%m/%d/%Y") + " " + sheet_obj.cell(row=258,
                                                                            column=2).value,
                                     type="auto_start_date_note", date=date.today(),
-                                    user=request.user.first_name + " " + request.user.last_name)
+                                    user=Employees.objects.get(user=request.user))
             JobNotes.objects.create(job_number=job,
                                     note=temp_note,
                                     type="auto_booking_note", date=date.today(),
-                                    user=request.user.first_name + " " + request.user.last_name)
+                                    user=Employees.objects.get(user=request.user))
             email_body = "New Job Booked \n" + job.job_number + "\n" + job.job_name + "\n" + job.client.company
             Email.sendEmail("New Job - " + job.job_name, email_body,
                             ['admin1@gerloffpainting.com', 'admin2@gerloffpainting.com', 'joe@gerloffpainting.com'],
@@ -508,12 +507,13 @@ def job_page(request, jobnumber):
                 selectedjob.save()
                 JobNotes.objects.create(job_number=selectedjob,
                                         note=message + " " + request.POST['closed_note'], type="employee_note",
-                                        user=request.user.first_name + " " + request.user.last_name, date=date.today())
+                                        user=Employees.objects.get(user=request.user), date=date.today())
+
 
             if 'add_note' in request.POST:
                 JobNotes.objects.create(job_number=selectedjob,
                                         note=request.POST['add_note'], type="employee_note",
-                                        user=request.user.first_name + " " + request.user.last_name, date=date.today())
+                                        user=Employees.objects.get(user=request.user), date=date.today())
             if 'submit_pm' in request.POST:
                 if request.POST['select_pm'] == 'add_new':
                     selectedjob.client_Pm = ClientEmployees.objects.create(id=selectedjob.client,
@@ -723,12 +723,12 @@ def register(request):
         JobNotes.objects.create(job_number=job,
                                 note="Start Date at Booking: " + job.start_date + " " + request.POST['date_note'],
                                 type="auto_start_date_note", date=date.today(),
-                                user=request.user.first_name + " " + request.user.last_name)
+                                user=Employees.objects.get(user=request.user))
         JobNotes.objects.create(job_number=job,
                                 note="New Job Booked By: " + request.user.first_name + " " + request.user.last_name + ": " +
                                      request.POST['email_job_note'],
                                 type="auto_booking_note", date=date.today(),
-                                user=request.user.first_name + " " + request.user.last_name)
+                                user=Employees.objects.get(user=request.user))
         email_body = "New Job Booked \n" + job.job_number + "\n" + job.job_name + "\n" + job.client.company
         Email.sendEmail("New Job - " + job.job_name, email_body, ['joe@gerloffpainting.com'], False)
         job.save()

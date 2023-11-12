@@ -53,7 +53,7 @@ def rental_new(request,jobnumber):
             if request.POST['week_price']!= '':rental.week_price=request.POST['week_price']
             if request.POST['month_price']!= '':rental.month_price=request.POST['month_price']
             rental.save()
-            RentalNotes.objects.create(rental=rental,date=date.today(),user=request.user.first_name + " " + request.user.last_name,note="New Rental Added. " + request.POST['notes'])
+            RentalNotes.objects.create(rental=rental,date=date.today(),user=Employees.objects.get(user=request.user),note="New Rental Added. " + request.POST['notes'])
             createfolder("rentals/" + str(rental.id))
             return redirect("rental_page",id=rental.id,reverse='NO')
     else:
@@ -101,12 +101,12 @@ def rental_page(request,id,reverse):
             if note != "":
                 note = note + " " + request.POST['rental_notes']
                 RentalNotes.objects.create(rental=rental, date=date.today(),
-                                           user=request.user.first_name + " " + request.user.last_name,
+                                           user=Employees.objects.get(user=request.user),
                                            note=note)
             rental.save()
         if 'rental_note' in request.POST:
             RentalNotes.objects.create(rental=rental, date=date.today(),
-                                       user=request.user.first_name + " " + request.user.last_name,
+                                       user=Employees.objects.get(user=request.user),
                                        note=request.POST['rental_note'])
         if 'upload_file' in request.FILES:
             fileitem = request.FILES['upload_file']

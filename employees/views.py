@@ -279,7 +279,7 @@ def mentorships(request, id):
     if request.method == 'POST':
         if 'new_note' in request.POST:
             MentorshipNotes.objects.create(mentorship=Mentorship.objects.get(id=id), date=date.today(),
-                                           user=request.user,
+                                           user=Employees.objects.get(user=request.user),
                                            note=request.POST['note'])
         else:
             if 'closed' in request.POST:
@@ -287,14 +287,14 @@ def mentorships(request, id):
                 selected_item.is_closed = True
                 selected_item.end_date = date.today()
                 MentorshipNotes.objects.create(mentorship=selected_item, date=date.today(),
-                                               user=request.user,
+                                               user=Employees.objects.get(user=request.user),
                                                note="Mentorship Ended." + request.POST['note'])
             else:
                 selected_item = Mentorship.objects.get(id=id)
                 selected_item.is_closed = False
                 selected_item.end_date = ""
                 MentorshipNotes.objects.create(mentorship=selected_item, date=date.today(),
-                                               user=request.user,
+                                               user=Employees.objects.get(user=request.user),
                                                note="Mentorship Activated Again." + request.POST['note'])
             selected_item.save()
     if id != 'ALL':
@@ -311,7 +311,7 @@ def new_mentorship(request):
         new_item = Mentorship.objects.create(apprentice=Employees.objects.get(id=request.POST['select_apprentice']),
                                              mentor=Employees.objects.get(id=request.POST['select_mentor']),
                                              start_date=date.today(), note=request.POST['note'])
-        MentorshipNotes.objects.create(mentorship=new_item, date=date.today(), user=request.user,
+        MentorshipNotes.objects.create(mentorship=new_item, date=date.today(), user=Employees.objects.get(user=request.user),
                                        note="New mentorship added")
         return redirect('mentorships', id=new_item.id)
     return render(request, "new_mentorship.html", send_data)
@@ -431,16 +431,16 @@ def certifications(request, id):
     if request.method == 'POST':
         cert = Certifications.objects.get(id=id)
         if 'new_note' in request.POST:
-            CertificationNotes.objects.create(certification=cert, date=date.today(), user=request.user,
+            CertificationNotes.objects.create(certification=cert, date=date.today(), user=Employees.objects.get(user=request.user),
                                               note=request.POST['note'])
         if 'closed_item' in request.POST:
             cert.is_closed == False
             CertificationNotes.objects.create(certification=cert, date=date.today(),
-                                              user=request.user, note="Cert closed." + request.POST['closed_note'])
+                                              user=Employees.objects.get(user=request.user), note="Cert closed." + request.POST['closed_note'])
         if 'closed_action' in request.POST:
             cert.action_required = False
             CertificationNotes.objects.create(certification=cert, date=date.today(),
-                                              user=request.user,
+                                              user=Employees.objects.get(user=request.user),
                                               note="Action: <" + cert.action + "> Completed! " + request.POST[
                                                   'closed_action_note'])
             cert.action = ""
@@ -448,20 +448,20 @@ def certifications(request, id):
             cert.action_required = True
             cert.action = CertificationActionRequired.objects.get(id=request.POST['closed_action_note']).action
             CertificationNotes.objects.create(certification=cert, date=date.today(),
-                                              user=request.user, note="Action: <" + cert.action + "> Required! ")
+                                              user=Employees.objects.get(user=request.user), note="Action: <" + cert.action + "> Required! ")
         if 'custom_action_now' in request.POST:
             cert.action_required = True
             cert.action = request.POST['custom_action']
             CertificationNotes.objects.create(certification=cert, date=date.today(),
-                                              user=request.user, note="Action: <" + cert.action + "> Required! ")
+                                              user=Employees.objects.get(user=request.user), note="Action: <" + cert.action + "> Required! ")
         if 'change_start_date' in request.POST:
             cert.date_received = request.POST['start_date']
-            CertificationNotes.objects.create(certification=cert, date=date.today(), user=request.user,
+            CertificationNotes.objects.create(certification=cert, date=date.today(), user=Employees.objects.get(user=request.user),
                                               note="Start Date Changed to: " + cert.date_received + "- " + request.POST[
                                                   'start_date_note'])
         if 'change_end_date' in request.POST:
             cert.date_expires = request.POST['end_date']
-            CertificationNotes.objects.create(certification=cert, date=date.today(), user=request.user,
+            CertificationNotes.objects.create(certification=cert, date=date.today(), user=Employees.objects.get(user=request.user),
                                               note="Expiration Date Changed to: " + cert.date_expires + "- " +
                                                    request.POST['end_date_note'])
         cert.save()
