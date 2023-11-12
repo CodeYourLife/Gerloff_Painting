@@ -61,8 +61,7 @@ def super_ajax(request):
                 datechange = True
             else:
                 datechange = False
-            start_date_change(job, request.GET['start_date'], status, request.GET['notes'],
-                              user=Employees.objects.get(user=request.user), datechange)
+            start_date_change(job, request.GET['start_date'], status, request.GET['notes'],Employees.objects.get(user=request.user), datechange)
             job.save()
             new_date = Jobs.objects.get(job_number=request.GET['job_number']).start_date
 
