@@ -99,6 +99,16 @@ function new_filter_now(){
 document.getElementById('filter_form').submit();
 }
 
+function labor_done_changed(current_status){
+if (labor_close_form.select_status.value == 'nothing_done' || labor_close_form.select_status.value == 'waiting_for_punchlist'){
+if (current_status == "True"){alert("Sending email notification to Bridgette and Victor.  This may take a second so be patient")}
+}
+if (labor_close_form.select_status.value == 'done_done'){
+alert("Sending email notification to Bridgette and Victor.  This may take a second so be patient")
+}
+document.getElementById('labor_close_form').submit();
+}
+
 function go_to_job(jobnumber){
 url = "{% url 'job_page' 'ALL' %}"
 url = url.replace('ALL', jobnumber);
@@ -113,7 +123,6 @@ document.getElementById("show_new_super").style.display = "none";
 };
 
 function before_postpm(){
-alert("HI")
 pmselect = change_client_pm_form.select_pm.value
 newpm = change_client_pm_form.new_pm.value
 if (pmselect == 'add_new'){
@@ -350,6 +359,7 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
         </ul>
     </div>
 </nav>
+
 <!-- Modal -->
 <div class="modal fade" id="super-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
@@ -516,6 +526,58 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
 
 </div>
 {% else %}
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="labor_close-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="labor_close_title">Close Job</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="labor_close_form" action="{% url 'job_page' jobnumber=job.job_number %}" method="post" >
+                                {% csrf_token %}
+                                <table>
+                                    <tr><td>
+                                        <label for="select_status">Select Status:</label>
+                                        <select id="select_status" name="select_status" >
+                                            {% if job.is_labor_done == True %}
+                                                <option value="nothing_done">Labor is Not Complete</option>
+                                                <option value="waiting_for_punchlist">Waiting For Punchlist</option>
+                                            {% elif job.is_waiting_for_punchlist == True %}
+                                                <option value="nothing_done">Labor is Not Complete</option>
+                                                <option value="done_done">Labor is 100% Complete</option>
+                                            {% else %}
+                                                <option value="waiting_for_punchlist">Waiting For Punchlist</option>
+                                                <option value="done_done">Labor is 100% Complete</option>
+                                            {% endif %}
+                                            </select>
+                                    <br>
+                                    </td>
+                                        </tr>
+                                    <tr><td>                                        <br>
+                                    Explain This Change:<br>
+                                    <textarea id="closed_note" name="closed_note" class="form-control" style="min-width: 100%"></textarea></td></tr>
+                                    </table>
+</form>
+                            </div>
+
+            <div class="modal-footer">
+                <button onclick = "labor_done_changed('{{job.is_labor_done}}')" class="btn btn-primary" data-dismiss="modal"> SAVE </button>
+<!--                <input type="submit" name="submit_labor_close" class="btn btn-danger" value="SAVE" />-->
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <!-- Modal -->
 <div class="modal fade" id="client_pm-modal" tabindex="-1" role="dialog" aria-labelledby="title"
@@ -772,6 +834,23 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
             <form action="{% url 'request_pickup' jobnumber=job.job_number item='ALL' pickup='ALL' status='ALL' %}"><input type="submit" class="btn btn-primary btn-sm" value="Request Job Pickup"/>
 
             </form>
+        </div>
+        <div class="col-sm-2">
+
+    {% if job.is_waiting_for_punchlist == True %}
+        {% if job.is_labor_done == True %}
+                <button class="btn btn-dark btn-sm" data-toggle="modal" data-target="#labor_close-modal">Labor was done  {{job.labor_done_Date}}</button>
+            {% else %}
+                            <button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#labor_close-modal">Waiting for Punchlist</button>
+         {% endif %}
+    {% else %}
+        {% if job.is_labor_done == True %}
+                            <button class="btn btn-dark btn-sm" data-toggle="modal" data-target="#labor_close-modal">Labor was done  {{job.labor_done_Date}}</button>
+        {% else %}
+                            <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#labor_close-modal">Click Here to Mark Labor Complete</button>
+        {% endif %}
+    {% endif %}
+
         </div>
     </div>
 </div>

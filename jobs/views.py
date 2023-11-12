@@ -485,6 +485,31 @@ def job_page(request, jobnumber):
     else:
         selectedjob = Jobs.objects.get(job_number=jobnumber)
         if request.method == 'POST':
+            if 'select_status' in request.POST:
+                if request.POST['select_status'] == 'nothing_done':
+                    message="Labor is not done."
+                    if selectedjob.is_labor_done==True:
+                        Email.sendEmail("Labor not done - " + selectedjob.job_name, "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is not done. " + request.POST['closed_note'], ['joe@gerloffpainting.com','bridgette@gerloffpainting.com', 'victor@gerloffpainting.com'])
+                    selectedjob.labor_done_Date = None
+                    selectedjob.is_waiting_for_punchlist = False
+                    selectedjob.is_labor_done = False
+                if request.POST['select_status'] == 'waiting_for_punchlist':
+                    message = "Waiting for punchlist."
+                    selectedjob.labor_done_Date = None
+                    selectedjob.is_waiting_for_punchlist = True
+                    selectedjob.is_labor_done = False
+                if request.POST['select_status'] == 'done_done':
+                    message = "Labor is 100% done."
+                    Email.sendEmail("Labor Done - " + selectedjob.job_name,
+                                    "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is 100% Done. " + request.POST['closed_note'], ['joe@gerloffpainting.com','bridgette@gerloffpainting.com', 'victor@gerloffpainting.com'])
+                    selectedjob.labor_done_Date = date.today()
+                    selectedjob.is_waiting_for_punchlist = True
+                    selectedjob.is_labor_done = True
+                selectedjob.save()
+                JobNotes.objects.create(job_number=selectedjob,
+                                        note=message + " " + request.POST['closed_note'], type="employee_note",
+                                        user=request.user.first_name + " " + request.user.last_name, date=date.today())
+
             if 'add_note' in request.POST:
                 JobNotes.objects.create(job_number=selectedjob,
                                         note=request.POST['add_note'], type="employee_note",
