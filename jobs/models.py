@@ -1,5 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+
+import employees.models
 from changeorder.models import *
 from employees.models import *
 from equipment.models import *
@@ -201,7 +203,7 @@ class JobNotes(models.Model):
     # booking note, field note, CO note, submittal note, start date note, daily report, etc
     type = models.CharField(null=True, max_length=50,
                             validators=[validate_job_notes])
-    user = models.CharField(null=True, max_length=50)  # bridgette joe
+    user = models.ForeignKey(employees.models.Employees, on_delete=models.PROTECT)
     date = models.DateField(null=True, blank=True)
     daily_employee_count = models.IntegerField(null=True, blank=True)
     # use if you are having to back date a daily report
