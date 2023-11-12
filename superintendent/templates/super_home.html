@@ -318,7 +318,7 @@
 
 
 
-<form id="filter_form" class="form-control form-contol-sm" action="{% url 'super_home' 'ALL' %}" method="get">
+<form id="filter_form" class="form-control form-control-sm" action="{% url 'super_home' 'ALL' %}" method="get">
     <div class="container">
         <div class="form-group">
             <label for="search2">Superintendent</label>
@@ -341,6 +341,11 @@
             <input type="checkbox" class="form-check-input" id="search5" name="search5" {% if search5_exists %} checked
                    {% endif %} onchange="new_filter_now()">
             <label class="form-check-label" for="search5">Upcoming Only</label>
+        </div>
+                <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="search7" name="search7" {% if search7_exists %} checked
+                   {% endif %} onchange="new_filter_now()">
+            <label class="form-check-label" for="search7">Labor Complete</label>
         </div>
     </div>
 
@@ -407,7 +412,7 @@
                                 <td style="background-color:#00ff00">{% else %}
                                 <td style="white-space:nowrap" width="200">{% endif %}<a
                                         href="{% url 'job_page' job.job_number %}">
-                                    <div style="height:100%;width:100%">{{job.job_name}}</div>
+                                    <div style="height:100%;width:100%">{% if job.is_labor_done == True %}<b>[DONE]</b>{% elif job.is_waiting_for_punchlist == True %}<b>[PUNCH]</b>{% endif %} {{job.job_name}}</div>
                                 </a></td>
                                 {% if job.check_start_date == True %}
                                 <td data-toggle="modal" style="background-color:#bcd5bc;white-space:nowrap"

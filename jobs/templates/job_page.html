@@ -462,11 +462,12 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
     </div>
 </div>
 {% if jobs == 'ALL' %}
-<div style="margin: 12px;" class="row h-100 d-flex justify-content-left">
-    <form id="filter_form" method="get">
+<form class="form-control form-control-sm" id="filter_form" method="get">
+    <div class="container">
+        <div class="form-group">
             <label for="search2" >Super:</label>
-    <select id="search2" name="search2" onchange="new_filter_now()">
-        {% if search2_exists %}
+            <select id="search2" class="form-control" name="search2" onchange="new_filter_now()">
+            {% if search2_exists %}
             {% if search2_exists == 'ALL' %}
                 <option value="ALL">"All"</option>
                 <option value="UNASSIGNED">"UNASSIGNED"</option>
@@ -478,24 +479,29 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
                 <option value="ALL">"All"</option>
                 <option value="UNASSIGNED">"UNASSIGNED"</option>
             {% endif %}
-        {% else %}
-        <option value="ALL">"All"</option>
-        <option value="UNASSIGNED">"UNASSIGNED"</option>
-        {% endif %}
-        {% if supers %}
-        {% for super in supers %}
-        <option value="{{super.id}}">{{super.first_name}} {{super.last_name}}</option>
-        {% endfor %}
-        {% endif %}
-    </select>
-<!--        <label for="search">Job Name</label><input type="text" id="search" name="search" {% if search_exists %} value={{search_exists}}{% endif %} />-->
-<!--     <label for="search4">Client</label><input type="text" id="search4" name="search4"  {% if search4_exists %} value={{search4_exists}}{% endif %} />-->
-     <br>
-        <label for="search3">Show Closed?</label><input type="checkbox" id="search3" name="search3"  {% if search3_exists %} checked {% endif %}  onchange="new_filter_now()" />
+            {% else %}
+            <option value="ALL">"All"</option>
+            <option value="UNASSIGNED">"UNASSIGNED"</option>
+            {% endif %}
+            {% if supers %}
+            {% for super in supers %}
+            <option value="{{super.id}}">{{super.first_name}} {{super.last_name}}</option>
+            {% endfor %}
+            {% endif %}
+            </select>
+        </div>
 
-
+        <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="search3" name="search3"  {% if search3_exists %} checked {% endif %}  onchange="new_filter_now()" />
+        <label for="search3" class="form-check-label">Include Closed Jobs</label>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="search7" name="search7" {% if search7_exists %} checked {% endif %} onchange="new_filter_now()">
+            <label class="form-check-label" for="search7">Show Only Jobs That Are Done</label>
+        </div>
+        </div>
     </form>
-</div>
+
 <div class="table-responsive">
     <table id="jobs_table" class="display table table-sm">
         <thead>
@@ -513,7 +519,7 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
             <tr onclick="populate_job_data('{{x.job_number}}','{{x.job_name}}','{{x.start_date}}','{{x.is_active}}',this)">
 
                 <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_number}}</a></td>
-                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_name}}</a></td>
+                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_job('{{x.job_number}}')"><a href="#">{% if x.is_labor_done == True %}<b>[DONE]</b>{% elif x.is_waiting_for_punchlist == True %}<b>[PUNCH]</b>{% endif %} {{x.job_name}}</a></td>
                 <td style="white-space:nowrap" data-toggle="modal" data-target="#startdate-modal" onclick="populate_start_date_modal('{{x.job_number}}','{{x.job_name}}','{{x.start_date}}','{{x.is_active}}',this,1)"><a href="#">{{x.start_date}}</a></td>
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px" >{{x.client}}</td>
 
@@ -577,7 +583,6 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
         </div>
     </div>
 </div>
-
 
 <!-- Modal -->
 <div class="modal fade" id="client_pm-modal" tabindex="-1" role="dialog" aria-labelledby="title"

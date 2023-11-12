@@ -13,7 +13,8 @@ class JobsFilter2(django_filters.FilterSet):
     search4 = django_filters.CharFilter(label='GC =', method='search_filter4')
     search5 = django_filters.filters.BooleanFilter(label='Upcoming Only',widget=forms.CheckboxInput,method='search_filter5')
     # search6 = django_filters.filters.BooleanFilter(label='Unassigned',widget=forms.CheckboxInput,method='search_filter6')
-
+    search7 = django_filters.filters.BooleanFilter(label='Labor Done', widget=forms.CheckboxInput,
+                                                   method='search_filter7')
     def search_filter(self, queryset, name, value):
         return queryset.filter(job_name__icontains=value)
 
@@ -39,6 +40,12 @@ class JobsFilter2(django_filters.FilterSet):
         else:
             return queryset.all()
 
+    def search_filter7(self, queryset, name, value):
+        if value == True:
+            return queryset.filter(Q(is_labor_done = True)|Q(is_waiting_for_punchlist=True))
+        else:
+            return queryset.all()
+
     # def search_filter6(self, queryset, name, value):
     #     if value == True:
     #         return queryset.filter(superintendent=None)
@@ -57,7 +64,8 @@ class JobsFilter(django_filters.FilterSet):
     search4 = django_filters.CharFilter(label='GC =', method='search_filter4')
     search5 = django_filters.filters.BooleanFilter(label='Upcoming Only',widget=forms.CheckboxInput,method='search_filter5')
     # search6 = django_filters.filters.BooleanFilter(label='Unassigned',widget=forms.CheckboxInput,method='search_filter6')
-
+    search7 = django_filters.filters.BooleanFilter(label='Labor Done', widget=forms.CheckboxInput,
+                                                   method='search_filter7')
     def search_filter(self, queryset, name, value):
         return queryset.filter(job_name__icontains=value)
 
@@ -82,6 +90,12 @@ class JobsFilter(django_filters.FilterSet):
     def search_filter5(self, queryset, name, value):
         if value == True:
             return queryset.filter(is_active=False)
+        else:
+            return queryset.all()
+
+    def search_filter7(self, queryset, name, value):
+        if value == True:
+            return queryset.filter(Q(is_labor_done = True)|Q(is_waiting_for_punchlist=True))
         else:
             return queryset.all()
 

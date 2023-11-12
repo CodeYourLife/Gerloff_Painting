@@ -95,7 +95,8 @@ def super_home(request, super):
         if 'search3' in request.GET: send_data['search3_exists'] = request.GET['search3']  # open only
         if 'search4' in request.GET: send_data['search4_exists'] = request.GET['search4']  # gc name
         if 'search5' in request.GET: send_data['search5_exists'] = request.GET['search5']  # upcoming only
-        if 'search6' in request.GET: send_data['search6_exists'] = request.GET['search6']  # unassigned
+        if 'search6' in request.GET: send_data['search6_exists'] = request.GET['search6']
+        if 'search7' in request.GET: send_data['search7_exists'] = request.GET['search7']# unassigned
 
     if selected_superid == 'ALL':
         send_data['equipment'] = Inventory.objects.exclude(job_number=None)
