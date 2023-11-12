@@ -451,7 +451,7 @@ def job_page(request, jobnumber):
             if 'search4' in request.GET: send_data['search4_exists'] = request.GET['search4']  # gc name
             if 'search5' in request.GET: send_data['search5_exists'] = request.GET['search5']  # upcoming only
             if 'search6' in request.GET: send_data['search6_exists'] = request.GET['search6']  # unassigned
-
+            if 'search7' in request.GET: send_data['search7_exists'] = request.GET['search7']  # labor done
         search_jobs = JobsFilter(request.GET, queryset=Jobs.objects.filter())
         send_data['search_jobs'] = JobsFilter(request.GET, queryset=Jobs.objects.filter())
         send_data['jobstable'] = search_jobs.qs.order_by('start_date')
