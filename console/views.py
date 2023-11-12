@@ -716,6 +716,7 @@ def customize(request):
             print(x.user)
         x.save()
 
+
     return redirect('/')
 
 def import_csv(request):

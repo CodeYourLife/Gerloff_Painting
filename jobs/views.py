@@ -235,8 +235,7 @@ def update_job_info(request, jobnumber):
             selectedjob.special_paint_needed = False
 
         if startdate != request.POST['start_date']:
-            start_date_change(selectedjob, request.POST['start_date'], 3, request.POST['date_note'],
-                              user=Employees.objects.get(user=request.user), True)
+            start_date_change(selectedjob, request.POST['start_date'], 3, request.POST['date_note'],Employees.objects.get(user=request.user), True)
         if selectedjob.notes != request.POST['email_job_note']:
             selectedjob.notes = request.POST['email_job_note']
         if request.POST['po_number'] == "":
@@ -508,8 +507,8 @@ def job_page(request, jobnumber):
                 selectedjob.save()
                 JobNotes.objects.create(job_number=selectedjob,
                                         note=message + " " + request.POST['closed_note'], type="employee_note",
-
                                         user=Employees.objects.get(user=request.user), date=date.today())
+
 
             if 'add_note' in request.POST:
                 JobNotes.objects.create(job_number=selectedjob,
