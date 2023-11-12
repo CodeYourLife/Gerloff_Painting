@@ -675,6 +675,7 @@ def create_folders(request):
     return render(request, 'index.html')
 
 def customize(request):
+
     for x in ChangeOrderNotes.objects.all():
         if x.user == "Bridgette Clause":
             x.user = 12
