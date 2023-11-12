@@ -675,17 +675,45 @@ def create_folders(request):
     return render(request, 'index.html')
 
 def customize(request):
-    for x in JobNotes.objects.all():
+
+    for x in ChangeOrderNotes.objects.all():
         if x.user == "Bridgette Clause":
             x.user = 12
-        if x.user == "Charity Archibald":
+        elif x.user == "Charity Archibald":
             x.user = 14
-        if x.user == "Steve Beaudoin":
+        elif x.user == "Steve Beaudoin":
             x.user = 21
-        if x.user == "Edward Diggs":
+        elif x.user == "Edward Diggs":
             x.user = 26
-        if x.user == "Joe Gerloff":
+        elif x.user == "Joe Gerloff":
             x.user = 3
+        elif x.user == "Anthony Taroli":
+            x.user = 5
+        elif x.user == "D'Angelo Smith":
+            x.user = 40
+        else:
+            print("Change Order Notes")
+            print(x.user)
+        x.save()
+
+    for x in RentalNotes.objects.all():
+        if x.user == "Bridgette Clause":
+            x.user = 12
+        elif x.user == "Charity Archibald":
+            x.user = 14
+        elif x.user == "Steve Beaudoin":
+            x.user = 21
+        elif x.user == "Edward Diggs":
+            x.user = 26
+        elif x.user == "Joe Gerloff":
+            x.user = 3
+        elif x.user == "Anthony Taroli":
+            x.user = 5
+        elif x.user == "D'Angelo Smith":
+            x.user = 40
+        else:
+            print("Change Order Notes")
+            print(x.user)
         x.save()
 
     return redirect('/')
