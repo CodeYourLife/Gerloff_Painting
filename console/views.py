@@ -675,6 +675,19 @@ def create_folders(request):
     return render(request, 'index.html')
 
 def customize(request):
+    for x in JobNotes.objects.all():
+        if x.user == "Bridgette Clause":
+            x.user = 12
+        if x.user == "Charity Archibald":
+            x.user = 14
+        if x.user == "Steve Beaudoin":
+            x.user = 21
+        if x.user == "Edward Diggs":
+            x.user = 26
+        if x.user == "Joe Gerloff":
+            x.user =1
+        x.save()
+
     return redirect('/')
 
 def import_csv(request):
