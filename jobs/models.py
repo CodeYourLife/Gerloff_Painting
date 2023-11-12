@@ -143,6 +143,8 @@ class Jobs(models.Model):
     is_work_order_done = models.BooleanField(default=False)
     man_hours_budgeted = models.IntegerField(null=True, blank=True)
     man_hours_used = models.IntegerField(null=True, blank=True)
+    is_waiting_for_punchlist = models.BooleanField(default=False)
+    is_labor_done = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.job_name}"
