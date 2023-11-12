@@ -29,7 +29,7 @@ def super_ajax(request):
         if 'select_super' in request.GET:
             job = Jobs.objects.get(job_number=request.GET['job_number'])
             super = Employees.objects.get(id=request.GET['select_super'])
-            gerloff_super_change(job, super, request.user.first_name + " " + request.user.last_name)
+            gerloff_super_change(job, super, Employees.objects.get(user=request.user))
             return HttpResponse()
 
         if 'build_notes' in request.GET:
@@ -62,7 +62,7 @@ def super_ajax(request):
             else:
                 datechange = False
             start_date_change(job, request.GET['start_date'], status, request.GET['notes'],
-                              request.user.first_name + " " + request.user.last_name, datechange)
+                              user=Employees.objects.get(user=request.user), datechange)
             job.save()
             new_date = Jobs.objects.get(job_number=request.GET['job_number']).start_date
 

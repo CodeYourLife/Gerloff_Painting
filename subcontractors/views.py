@@ -41,7 +41,7 @@ def subcontractor_invoice_new(request,subcontract_id):
                     SubcontractorInvoiceItem.objects.create(invoice=invoice, sov_item=x, quantity=request.POST['quantity' + str(x.id)],notes=request.POST['note' + str(x.id)])
                 elif request.POST['note' + str(x.id)] != '':
                     SubcontractorInvoiceItem.objects.create(invoice=invoice, sov_item=x, quantity=0,notes=request.POST['note' + str(x.id)])
-            SubcontractNotes .objects.create(subcontract=subcontract, date =date.today(), user= request.user.first_name + " " + request.user.last_name,note = "New Invoice- " + request.POST['subcontract_note'],invoice = invoice)
+            SubcontractNotes.objects.create(subcontract=subcontract, date =date.today(), user=Employees.objects.get(user=request.user),note = "New Invoice- " + request.POST['subcontract_note'],invoice = invoice)
             # Email.sendEmail('test', 'test body', 'joe@gerloffpainting.com')
             return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id='ALL')
     return render(request, "subcontractor_invoice_new.html", {'next_number':next_number,'items':items,'subcontract':subcontract})
@@ -54,7 +54,7 @@ def subcontract_invoices(request,subcontract_id,item_id):
         if 'form99' in request.POST:
             selected_invoice = SubcontractorInvoice.objects.get(id=item_id)
             SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
-                                            user=request.user.first_name + " " + request.user.last_name,
+                                            user=Employees.objects.get(user=request.user),
                                             note=request.POST['invoice_notes'],invoice=selected_invoice)
             return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id=item_id)
         if 'form5' in request.POST:
@@ -71,7 +71,7 @@ def subcontract_invoices(request,subcontract_id,item_id):
             invoice.is_sent = True
             invoice.save()
             SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
-                                            user=request.user.first_name + " " + request.user.last_name,
+                                            user=Employees.objects.get(user=request.user),
                                             note="Invoice " + str(invoice.pay_app_number) + " Approved!",invoice=selected_invoice)
             return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id=item_id)
         if 'form6' in request.POST:
@@ -223,7 +223,7 @@ def subcontract(request,id):
                 subcontract.po_number=request.POST['po_number']
                 print(request.POST)
                 if request.POST['subcontract_notes'] != '':
-                    SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(), user=request.user.first_name + " " + request.user.last_name,note = request.POST['subcontract_notes'])
+                    SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(), user=Employees.objects.get(user=request.user),note = request.POST['subcontract_notes'])
                     notes = SubcontractNotes.objects.filter(subcontract=subcontract)
     return render(request, "subcontract.html", {'notes':notes,'wallcovering_json':wallcovering_json,'number_items':number_items,'subcontract':subcontract,'items':items})
 
@@ -262,7 +262,7 @@ def subcontracts_new(request):
             return render(request, "subcontracts_new.html", {'wallcovering_json':wallcovering_json,'selectedjob': selectedjob, 'subcontractors': subcontractors})
         else:
             subcontract1 = Subcontracts.objects.create(job_number=Jobs.objects.get(job_number=request.POST['selected_job']),subcontractor=Subcontractors.objects.get(id=request.POST['select_subcontractor']),po_number=request.POST['po_number'], date=date.today(),retainage_percentage=0, is_retainage = False)
-            SubcontractNotes.objects.create(subcontract=subcontract1, date =date.today(), user= request.user.first_name + " " + request.user.last_name,note = "New Contract- " + request.POST['subcontract_notes'])
+            SubcontractNotes.objects.create(subcontract=subcontract1, date =date.today(), user=Employees.objects.get(user=request.user),note = "New Contract- " + request.POST['subcontract_notes'])
             if 'is_retainage' in request.POST:
                 subcontract1.is_retainage = True
                 subcontract1.retainage_percentage = request.POST['retainage_amt']
