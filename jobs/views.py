@@ -508,6 +508,7 @@ def job_page(request, jobnumber):
                 selectedjob.save()
                 JobNotes.objects.create(job_number=selectedjob,
                                         note=message + " " + request.POST['closed_note'], type="employee_note",
+
                                         user=Employees.objects.get(user=request.user), date=date.today())
 
             if 'add_note' in request.POST:
