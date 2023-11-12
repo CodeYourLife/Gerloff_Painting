@@ -1,7 +1,7 @@
 from django.db import models
 from jobs.models import *
 from wallcovering.models import Wallcovering
-
+import employees.models
 
 class Subcontractors(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -153,7 +153,7 @@ class SubcontractNotes(models.Model):
     subcontract = models.ForeignKey(
         Subcontracts, on_delete=models.PROTECT, related_name="subcontract_notes")
     date = models.DateField(null=True, blank=True)
-    user = models.CharField(null=True, max_length=200)
+    user = models.ForeignKey(employees.models.Employees, on_delete=models.PROTECT)
     note = models.CharField(null=True, max_length=2000)
     invoice = models.ForeignKey(SubcontractorInvoice, null=True,
                                 on_delete=models.PROTECT, related_name="subcontract_notes2")

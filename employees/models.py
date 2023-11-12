@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from employees.models import *
-
+import employees.models
 
 class Employers(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -218,7 +218,7 @@ class MentorshipNotes(models.Model):
     id = models.BigAutoField(primary_key=True)
     mentorship = models.ForeignKey(Mentorship, on_delete=models.PROTECT)
     date = models.DateField()
-    user = models.CharField(null=True, max_length=200)
+    user = models.ForeignKey(Employees, on_delete=models.PROTECT)
     note = models.CharField(null=True, max_length=2000)
 
 
@@ -255,7 +255,7 @@ class CertificationNotes(models.Model):
     certification = models.ForeignKey(
         Certifications, on_delete=models.PROTECT, null=True)
     date = models.DateField()
-    user = models.CharField(null=True, max_length=200)
+    user = models.ForeignKey(Employees, on_delete=models.PROTECT)
     note = models.CharField(null=True, max_length=2000)
 
 

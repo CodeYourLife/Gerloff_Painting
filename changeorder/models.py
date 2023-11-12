@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+import employees.models
 
 def validate_tm_category(value):
     if value == "Labor" or value == "Material" or value == "Equipment" or value == "Inventory" or value == "Misc" or value == "Bond":
@@ -85,7 +86,7 @@ class ChangeOrderNotes(models.Model):
     id = models.BigAutoField(primary_key=True)
     cop_number = models.ForeignKey('changeorder.ChangeOrders', on_delete=models.PROTECT)
     date = models.DateField(null=True, blank=True)
-    user = models.CharField(null=True, max_length=20)
+    user = models.ForeignKey(employees.models.Employees, on_delete=models.PROTECT)
     note = models.CharField(null=True, max_length=2000)
 
 class ClientJobRoles(models.Model):

@@ -1,7 +1,7 @@
 from django.db import models
 from jobs.models import Jobs
 from wallcovering.models import Wallcovering
-
+import employees.models
 
 
 class Submittals(models.Model):
@@ -36,5 +36,5 @@ class SubmittalNotes(models.Model):
     id = models.BigAutoField(primary_key=True)
     submittal = models.ForeignKey(Submittals, on_delete=models.PROTECT)
     date = models.DateField(null=True, blank=True)
-    user = models.CharField(null=True, max_length=40)
+    user = models.ForeignKey(employees.models.Employees, on_delete=models.PROTECT)
     note = models.CharField(null=True, max_length=2000)
