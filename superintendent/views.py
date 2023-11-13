@@ -107,7 +107,7 @@ def super_home(request, super):
         send_data['tickets_count'] = ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=False,
                                                                  is_closed=False).count()
         send_data['subcontractor_count'] = Subcontracts.objects.exclude(job_number=None)
-        search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False).order_by('start_date'))
+        search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False))
     else:
         selected_super = Employees.objects.get(id=selected_superid)
         send_data['equipment'] = Inventory.objects.filter(job_number__superintendent=selected_super).order_by(
@@ -127,15 +127,14 @@ def super_home(request, super):
                                                                  job_number__superintendent=selected_super).order_by(
             'job_number', 'cop_number').count()
         if special == True:
-            search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False,superintendent=selected_super).order_by('start_date'))
+            search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False,superintendent=selected_super))
         else:
-            search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False).order_by('start_date'))
+            search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False))
 
     if any(field in request.GET for field in set(search_jobs.get_fields())) == True:
         send_data['has_filter'] = True
     send_data['search_jobs'] = search_jobs
     send_data['jobs'] = search_jobs.qs
-    # send_data['jobs'] = Jobs.objects.filter(is_closed=False).order_by('start_date')
     send_data['jobs_count'] = search_jobs.qs.count()
     send_data['supers'] = Employees.objects.exclude(Q(job_title__description="Painter") | Q(active=False))
     send_data['todays_date'] = date.today() - timedelta(days=45)
