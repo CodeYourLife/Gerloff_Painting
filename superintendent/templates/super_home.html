@@ -315,9 +315,6 @@
         </div>
     </div>
 </div>
-
-
-
 <form id="filter_form" class="form-control form-control-sm" action="{% url 'super_home' 'ALL' %}" method="get">
     <div class="container">
         <div class="form-group">
@@ -348,19 +345,18 @@
             <label class="form-check-label" for="search7">Labor Complete</label>
         </div>
     </div>
-
 </form>
 <div id="accordion">
     <div class="card">
         <div class="card-header" id="headingOne">
             <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" aria-expanded="true" data-target="#collapseOne" aria-expanded="false"
+                <button class="btn btn-link" data-toggle="collapse" aria-expanded="false" data-target="#collapseOne"
                         aria-controls="collapseOne">
                     {{jobs_count}} Jobs
                 </button>
             </h5>
         </div>
-        <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+        <div id="collapseOne" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">
             <div class="card-body">
                 <div id="jobs_section">
                     <div style="text-align: center"><h3>Job List</h3></div>
