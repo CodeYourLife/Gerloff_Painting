@@ -13,6 +13,7 @@ from console.misc import createfolder
 import os
 import os.path
 from django.conf import settings
+from employees.models import *
 from django.http import HttpResponse
 
 # Create your views here.
