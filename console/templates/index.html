@@ -9,7 +9,7 @@
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
     <title>DataTables example - HTML (DOM) sourced data</title>
-        <style type="text/css" class="init">
+    <style type="text/css" class="init">
         .dataTables_wrapper {
     font-family: tahoma;
     font-size: 13px;
@@ -70,114 +70,126 @@
 }
     </style>
     <style>
-.dataTables_filter {
-   float: left !important;
-}
+        .dataTables_filter {
+           float: left !important;
+        }
 
-          .tb { border-collapse: collapse; width:300px; }
-  .tb th, .tb td { padding: 5px; border: solid 1px #777; }
-  .tb th { background-color: lightblue; }
-</style>
+                  .tb { border-collapse: collapse; width:300px; }
+          .tb th, .tb td { padding: 5px; border: solid 1px #777; }
+          .tb th { background-color: lightblue; }
+    </style>
     <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
     <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
     <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="{% static 'project_styles.css' %}">
 
-    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
+            data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+    <script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html"
+            async></script>
+    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html"
+            async></script>
+    <script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script type="text/javascript" language="javascript"
+            src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 </head>
 <body>
 
-<div class="container" >
-  <div class="row" >
-    <div class="col-s-12" >
-    <div class="d-flex justify-content-center"><div><h4>Trinity Software Solutions</h4></div></div>
-    </div>
-  </div>
-
-    <div class="row" >
-        <div class="col-s-6 align-self-center" >
-            <form action="{% url 'job_page' 'ALL' %}">
-                <div class="d-flex justify-content-end"><div><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="JOBS"></div></div>
-            </form>
-        </div>
-        <div class="col-s-6 align-self-center" >
-            <div class="row" > <b>{{needs_super}}</b> -Need a Superintendent</div>
-            <div class="row" > <b>{{next_two_weeks}}</b> -Starting in Next 2 Weeks</div>
+<div class="container" style="margin-bottom: 22px;">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-center">
+                <div>
+                    <h4>Trinity Software Solutions</h4>
+                    <div style="padding-top: 50px; text-align: center;">
+                        <img src="{% static 'images/logo.png' %}" width="40%">
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-<div class="row"> <div class="col"><div class="d-flex justify-content-center">-</div></div></div>
-    <div class="row" >
-        <div class="col-s-6 align-self-center" >
-        <form action="{% url 'equipment_home' %}">
-        <div class="d-flex justify-content-end"><div><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="EQUIPMENT"/></div></div>
-        </form>
+    <div class="row h-100 d-flex" style="justify-content: space-around;">
+        <div class="card" style="width: 18rem; margin-top: 22px;">
+            <h5 class="card-header">Jobs</h5>
+            <div class="card-body" style="height: 135px;">
+                <div class="card-text">
+                    <div style="display: flex"><b>{{needs_super}}</b> -Need a Superintendent</div>
+                    <div style="display: flex"><b>{{next_two_weeks}}</b> -Starting in Next 2 Weeks</div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div style="text-align: center;">
+                    <a class="card-link btn btn-info btn-sm" href="{% url 'job_page' 'ALL' %}">Go To Jobs</a>
+                </div>
+            </div>
         </div>
-          <div class="col-s-6 align-self-center" >
-                <div class="row" ><b>{{missing}}</b> -Missing</div>
-                <div class="row" > <b>{{checked_out}}</b> -On Open Jobs</div>
-                <div class="row" ><b>{{closed_job}}</b> -On Closed Jobs</div>
-                <div class="row" > <b>{{service}}</b> -In Service</div>
-        </div>
-    </div>
-<div class="row"> <div class="col"><div class="d-flex justify-content-center">-</div></div></div>
-    <div class="row" >
-        <div class="col-s-6 align-self-center" >
-        <form action="{% url 'rentals_home' %}">
-        <div class="d-flex justify-content-end"><div><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="RENTALS"/></div></div>
-        </form>
-        </div>
-          <div class="col-s-6 align-self-center" >
-                <div class="row" ><b>{{rentals}}</b> -On Rent</div>
-
-        </div>
-    </div>
-            <div class="row"> <div class="col"><div class="d-flex justify-content-center">-</div></div></div>
-
-    <div class="row" >
-        <div class="col-s-6 align-self-center" >
-        <form action="{% url 'super_home' 'AUTO' %}">
-        <div class="d-flex justify-content-end"><div><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="{{current_user}}"/></div></div>
-        </form>
-        </div>
-          <div class="col-s-6 align-self-center" >
-                    <div class="row" > <b>{{super_equipment}}</b> -Assigned Equipment</div>
-                    <div class="row" > <b>{{super_rentals}}</b> -Rentals</div>
-                <div class="row" > <b>{{tickets}}</b> -Open Tickets</div>
-                <div class="row" > <b>{{super_jobs}}</b> -Jobs Starting Next 2 Weeks</div>
+        <div class="card" style="width: 18rem; margin-top: 22px;">
+            <h5 class="card-header">Equipment</h5>
+            <div class="card-body" style="height: 135px;">
+                <div class="card-text">
+                    <div style="display: flex"><b>{{missing}}</b> -Missing</div>
+                    <div style="display: flex"><b>{{checked_out}}</b> -On Open Jobs</div>
+                    <div style="display: flex"><b>{{closed_job}}</b> -On Closed Jobs</div>
+                    <div style="display: flex"><b>{{service}}</b> -In Service</div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div style="text-align: center;">
+                    <a href="{% url 'equipment_home' %}" id="update_equipment" class="btn btn-info btn-sm"
+                       name="update_equipment">Go To Equipment</a>
+                </div>
+            </div>
         </div>
     </div>
-
-    <div class="row" > <div class="col"><div class="d-flex justify-content-center">-</div></div></div>
-
-    <div class="row" >
-        <div class="col-s-6 align-self-center" >
-        <form action="{% url 'warehouse_home' %}">
-        <div class="d-flex justify-content-end"><div><input id="update_equipment" class="btn btn-info btn-lg" name="update_equipment" type="submit" value="WAREHOUSE"/></div></div>
-        </form>
+    <div class="row h-100 d-flex" style="justify-content: space-around;">
+        <div class="card" style="width: 18rem; margin-top: 22px;">
+            <h5 class="card-header">Rentals</h5>
+            <div class="card-body" style="height: 135px;">
+                <div class="card-text">
+                    <b>{{rentals}}</b> -On Rent
+                </div>
+            </div>
+            <div class="card-footer">
+                <div style="text-align: center;">
+                    <a href="{% url 'rentals_home' %}" class="btn btn-info btn-sm">Go to Rentals</a>
+                </div>
+            </div>
         </div>
-          <div class="col-s-6 align-self-center" >
-                <div class="row" ><b>{{pickup_requests}}</b> -Pickup Requests</div>
-
+        <div class="card" style="width: 18rem; margin-top: 22px;">
+            <h5 class="card-header">My Home</h5>
+            <div class="card-body" style="height: 135px;">
+                <div class="card-text">
+                    <div style="display: flex"><b>{{super_equipment}}</b> -Assigned Equipment</div>
+                    <div style="display: flex"><b>{{super_rentals}}</b> -Rentals</div>
+                    <div style="display: flex"><b>{{tickets}}</b> -Open Tickets</div>
+                    <div style="display: flex"><b>{{super_jobs}}</b> -Jobs Starting Next 2 Weeks</div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div style="text-align: center;">
+                    <a href="{% url 'super_home' 'AUTO' %}" class="btn btn-info btn-sm">Go to {{current_user}}
+                        Home</a>
+                </div>
+            </div>
+        </div>
+        <div class="card" style="width: 18rem; margin-top: 22px;">
+            <h5 class="card-header">Warehouse</h5>
+            <div class="card-body" style="height: 135px;">
+                <div class="card-text">
+                    <div style="display: flex"><b>{{pickup_requests}}</b> -Pickup Requests</div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div style="text-align: center;">
+                    <a href="{% url 'warehouse_home' %}" class="btn btn-info btn-sm">Go to Warehouse</a>
+                </div>
+            </div>
         </div>
     </div>
-
-    <div class="row" > <div class="col" ><div class="d-flex justify-content-center">-</div></div></div>
-
-
 </div>
-
-
-<!--	<div style="padding-top: 50px" class="row align-items-center justify-content-center align-middle">-->
-<!--		<img src = "{% static 'images/logo.png' %}" width="60%" >-->
-<!--	</div>-->
 </body>
 </html>
-
 {% endblock %}
