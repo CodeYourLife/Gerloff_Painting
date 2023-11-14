@@ -8,6 +8,7 @@ from wallcovering.models import Wallcovering
 from subcontractors.models import *
 from jobs.models import *
 from django.contrib.auth.decorators import login_required
+from employees.models import *
 
 @login_required(login_url='/accounts/login')
 def subcontractor_invoice_new(request,subcontract_id):

@@ -143,7 +143,9 @@ function show_hidden() {
 	 <input type="checkbox" name ="needs_label" id="needs_label" checked /> <label for="needs_label">"Does this item need a Gerloff tag?" </label>
 	 {% endif %}
 	 <br><br>
-
+	 Notes about this equipment:<br>
+                                                <textarea id="notes" name="notes" class="form-control"
+                                                          style="min-width: 100%">{{item.notes}}</textarea>
 <br><br>
 
 

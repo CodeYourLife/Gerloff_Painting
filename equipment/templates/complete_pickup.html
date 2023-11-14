@@ -27,14 +27,26 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 
-	function check_booking_data(){
-		var hidden = document.getElementById("notes")
+function missing_explanation(status){
+job_update.notes.value = missing_form.date_note.value
+job_update.status.value = status
+selected_job = '{{selected_request.job_number.job_number}}'
+if (status == 1){job_update.submit();}
+if (status == 2){
+if(selected_job != job_update.current_location.value){alert("This has already been assigned to a different job. Please select that option")}
+if(job_update.current_location.value == "NA"){alert("This equipment is no longer assigned to the job")}
+if(selected_job == job_update.current_location.value){job_update.submit();}
+}
+if (status == 3){
+if(selected_job != job_update.current_location.value){job_update.submit();}
+else {alert("This equipment has not been assigned to a different job")}
+}
+}
 
-    	var name=prompt("Please explain");
-    	if (name!=null){
-       		hidden.value = name;
-   		}
-	}
+function populate_title(name){
+document.getElementById("missing_title").innerHTML = name
+}
+
 
 	function check_booking_data2(){
    		alert("Please be patient while this processes. Do not click anything until it is complete.")
@@ -54,7 +66,8 @@
     </ul>
   </div>
 </nav>
-<h1>{{selected_request.job_number}}</h1>
+	<li><a href="{% url 'job_page' selected_request.job_number.job_number %}"><h3>{{selected_request.job_number}}</h3></a></li>
+
 <div class="container">
     <div class="row">
         <div class="col-sm-4 list-items"><b>Requested By:&nbsp;</b>{{selected_request.requested_by}}</div>
@@ -68,25 +81,90 @@
 </div>
 
 
+<!-- Modal -->
+<div class="modal fade" id="missing-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="missing_title"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                                <form id="missing_form" >
+                                    {% csrf_token %}
+                                    <table>
+                                        <tr>
+                                            <td>
+
+												                                                Please Explain:<br>
+                                                <textarea id="date_note" name="date_note" class="form-control"
+                                                          style="min-width: 100%"></textarea>
+
+                                            </td>
+                                        </tr><tr><td>
+										                                                                <button type="button" class="btn btn-primary"
+                                                        onclick="missing_explanation(1)" data-dismiss="modal"> Missing
+                                                </button>
+				<br>
+										</td></tr><tr><td>
+												<button type="button" class="btn btn-primary"
+                                                        onclick="missing_explanation(2)" data-dismiss="modal"> Still On Job
+                                                </button>
+				<br></td></tr><tr><td>
+												<button type="button" class="btn btn-primary"
+                                                        onclick="missing_explanation(3)" data-dismiss="modal"> Already On a Different Job
+                                                </button>
+										</td></tr>
+                                    </table>
+                                </form>
+                            </div>
+
+            <div class="modal-footer">
+
+            </div>
+        </div>
+    </div>
+</div>
+
 {% if selected_items %}
 	<br>
 	 <b>Check-In These Items </b>
 	<br>
-
-	 	<table id="allitems" class="display" style="width:90%">
-			{% for x in selected_items %}
+	<table id="allitems" class="display" style="width:90%">
+		{% for x in selected_items %}
+			<tr>
 			{% if selected_request.all_items == True %}
-			<tr><td>#{{x.number}}- {{x.item}}</td>
-				{% else %}
-				<tr><td>#{{x.item.number}}- {{x.item.item}}</td>
+			<td><a href="{% url 'equipment_page' x.id %}">#{{x.number}}- {{x.item}}</a></td>
+			{% else %}
+			<td><a href="{% url 'equipment_page' x.item.id %}">#{{x.item.number}}- {{x.item.item}}</a></td>
 			{% endif %}
-				<td> <form name = job_update action="{%  url 'complete_pickup' selected_request.id %}" method="post"  >
-	{% csrf_token %}<input id="check_in{{x.id}}" class="btn btn-success btn-sm" name="check_in{{x.id}}" type="submit" value="Check In"/></td></form>
-			 <form name = job_update action="{%  url 'complete_pickup' selected_request.id %}" method="post"  onSubmit = "return check_booking_data()">
+			<td> <form id=job_update2 name =job_update2 action="{%  url 'complete_pickup' selected_request.id %}" method="post"  >
+			{% csrf_token %}<input id="check_in{{x.id}}" class="btn btn-success btn-xs" name="check_in{{x.id}}" type="submit" value="Check In"/></form></td>
+			 <form id=job_update name =job_update action="{%  url 'complete_pickup' selected_request.id %}" method="post"  onSubmit = "return check_booking_data()">
 	{% csrf_token %}
-			<td><input type="hidden" id="notes" name="notes" value=""/>
-					<input id="missing{{x.id}}" class="btn btn-danger btn-sm" name="missing{{x.id}}" type="submit" value="MISSING/OTHER"/>
-			 </form></td>
+			<input type="hidden" id="notes" name="notes" value=""/>
+				<input type="hidden" id="status" name="status" value=""/>
+				 <input type="hidden" id="missing{{x.id}}" name ="missing{{x.id}}" value={{x.id}} />
+				 {% if selected_request.all_items == True %}
+				 <input type="hidden" id="current_location" name ="current_location" value={{x.job_number.job_number}} />
+
+				 {% else %}
+					 {% if x.item.job_number %}
+					 <input type="hidden" id="current_location" name ="current_location" value='{{x.item.job_number.job_number}}' />
+					 {% else %}
+					 <input type="hidden" id="current_location" name ="current_location" value="NA" />
+					 {% endif %}
+				 {% endif %}
+				 <td>
+				 {% if selected_request.all_items == True %}
+			 <button type="button" data-toggle="modal" data-target="#missing-modal" class="btn btn-primary btn-xs" onclick="populate_title('{{x.item}}')"> OTHER </button>
+				 {% else %}
+				  <button type="button" data-toggle="modal" data-target="#missing-modal" class="btn btn-primary btn-xs" onclick="populate_title('{{x.item.item}}')"> OTHER </button>
+				 {% endif %}
+			 </td></form>
 			</tr>
 			{% endfor %}
 			</table>
