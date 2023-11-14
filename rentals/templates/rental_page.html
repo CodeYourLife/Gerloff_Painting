@@ -27,6 +27,17 @@
 function Previous() {
 window.history.back()
 }
+
+window.onload = function() {
+if ('{{rental.rep}}' == 'None'){
+document.getElementById("rep_info").style.display = "none"
+}
+else {
+document.getElementById("rep_info").style.display = "block"
+document.getElementById("more_rep_info").innerHTML = '{{rental.rep.name}}'
+};
+}
+
         function clear_select_pm() {
                 rental_change.select_pm.value = "add_new";
         }
@@ -42,6 +53,33 @@ function check_booking_data(){
     	if (name!=null){
        		document.getElementById("rental_notes").value = name
    		}
+}
+function change_rep(){
+if (rental_change.select_pm.value == "no_rep"){document.getElementById("rep_info").style.display = "none"}
+else if (rental_change.select_pm.value == "add_new"){
+document.getElementById("rep_info").style.display = "block"
+document.getElementById("more_rep_info").innerHTML = "Enter New below:"
+                    rental_change.new_pm_phone.value = ""
+                    rental_change.new_pm_email.value = ""
+                    rental_change.new_pm.value = ""
+                    rental_change.new_pm_phone.placeholder = "Phone"
+                    rental_change.new_pm_email.placeholder = "Email"
+                    rental_change.new_pm.placeholder = "Name"
+}
+else {
+document.getElementById("rep_info").style.display = "block"
+document.getElementById("more_rep_info").innerHTML = "Rep Info:"
+            $.ajax({
+                method: 'GET',
+                url: '/rentals/rental_ajax',
+                data: {'rep_id':rental_change.select_pm.value},
+                success: function (data) {
+                    parsedData = JSON.parse(data);
+                    rental_change.new_pm_phone.value = parsedData.phone
+                    rental_change.new_pm_email.value = parsedData.email
+                    rental_change.new_pm.value = parsedData.name
+                }})
+}
 }
 
 	</script>
@@ -59,7 +97,7 @@ function check_booking_data(){
 </nav>
 
 
- <form name = rental_change action="{% url 'rental_page' rental.id 'NO' %}" method="post"  onSubmit = "return check_booking_data()">
+ <form name = rental_change id=rental_change action="{% url 'rental_page' rental.id 'NO' %}" method="post"  onSubmit = "return check_booking_data()">
 {% csrf_token %}
 <div class ="container">
     <div class = "row">
@@ -73,17 +111,30 @@ function check_booking_data(){
 Vendor: {{rental.company.company_name}}
         </div>
     </div>
+    <div class = "row">
+{% if rental.company.company_phone %}
+        <input  type= "text" id="company_phone" name="company_phone" class="form-control" value = "{{rental.company.company_phone}}" size="30" />
+        {% else %}
+        <input  type= "text" id="company_phone" name="company_phone" class="form-control" placeholder = "Phone" size="30" />
+        {% endif %}
+    </div>
+        <div class = "row">
+        {% if rental.company.company_email %}
+        <input  type= "text" id="company_email" name="company_email" class="form-control" value = "{{rental.company.company_email}}" size="30" />
+        {% else %}
+        <input  type= "text" id="company_email" name="company_email" class="form-control" placeholder = "Email" size="30" />
+        {% endif %}
+    </div>
             <br>
     <div class = "row">
         <div class ="col-sm-12">
 <label>Please select rep</label>
-<select class="form-control" id="select_pm" name="select_pm" >
-    {% if rental.rep == None %}
-    <option value="no_rep">"No Specific Rep"</option>
-   {% else %}
-    <option value="{{rental.rep.id}}">"{{rental.rep.name}}"</option>
+<select class="form-control" id="select_pm" name="select_pm" onchange="change_rep()" >
+    {% if rental.rep  %}
+    <option value="{{rental.rep.id}}">{{rental.rep.name}}</option>
     {% endif %}
-    <option value="add_new">"add New"</option>
+    <option value="no_rep">No Specific Rep</option>
+    <option value="add_new">Add New</option>
     {% if reps %}
     {% for rep in reps %}
     <option value={{rep.id}}>{{rep.name}}</option>
@@ -97,25 +148,37 @@ Vendor: {{rental.company.company_name}}
 
 
 <div class="container">
-    <button type="button" class="collapsible">Click Here to Add a New Rep</button>
-    <div class="content">
+
+    <div id="rep_info" class="content">
                 <div class ="row" style="margin-top: 22px">
-                    <div class ="col-sm-12">Enter New below: </div>
+                    <div id="more_rep_info" class ="col-sm-12">Enter New below: </div>
                 </div>
                 <div class ="row" style="margin-top: 22px">
-                    <div class ="col-sm-12">
-                        <input  type= "text" id="new_pm" name="new_pm" class="form-control" placeholder="office pm name" size="30" onClick="clear_select_pm()"/>
+                    <div id="pm_name" class ="col-sm-12">
+                        {% if rental.rep == None %}
+                        <input  type= "text" id="new_pm" name="new_pm" class="form-control" placeholder="rep name" size="30" />
+                    {% else %}
+                        <input  type= "text" id="new_pm" name="new_pm" class="form-control" value="{{rental.rep.name}}" size="30" />
+                        {% endif %}
                     </div>
                 </div>
 
                 <div class ="row">
                     <div class ="col-sm-12">
-                        <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" placeholder="phone Number" size="30"/>
+                        {% if rental.rep == None %}
+                        <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" id="new_pm_phone" placeholder="phone Number" size="30"/>
+                        {% else %}
+                        <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" id="new_pm_phone" value="{{rental.rep.phone}}" size="30"/>
+                        {% endif %}
                     </div>
                 </div>
                 <div class ="row">
                     <div class ="col-sm-12">
-                        <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" placeholder="email" size="30"/>
+                        {% if rental.rep == None %}
+                        <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" id="new_pm_email" placeholder="email" size="30"/>
+                        {% else %}
+                        <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" id="new_pm_email" value="{{rental.rep.email}}" size="30"/>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -215,7 +278,7 @@ Off Rent Number: {{rental.off_rent_number}}
     </div>
 	 <br>
 <input type="hidden" id="rental_notes" name = "rental_notes" value="" />
-	 <input type="submit" name="form_1" value="Update Information" />
+	 <input type="submit" name="form_1" class="btn-primary" value="Update Information" />
     </form>
  <br>
 <hr>
@@ -227,7 +290,7 @@ Off Rent Number: {{rental.off_rent_number}}
 			<label for="rental_note"> Make a note:  </label> <br>
 			<textarea id="rental_note" name="rental_note" rows="1" cols="100" required ></textarea>
 			<br>
-			<input type="submit" value="Add Note" />
+			<input type="submit" class="btn-warning" value="Add Note" />
 			</form>
 			</div>
 	</div>
@@ -252,7 +315,7 @@ Off Rent Number: {{rental.off_rent_number}}
 				<form name = add_file action="{% url 'rental_page' rental.id 'NO' %}" method="post" enctype="multipart/form-data">
         			{% csrf_token %}
 					Attachment: <input type= "file" name="upload_file" id="upload_file" />
-					<input type="submit" value="Upload File" />
+					<input type="submit" class="btn-info" value="Upload File" />
 				</form>
 			</div>
 		</div>
