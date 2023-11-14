@@ -20,9 +20,8 @@ from django.http import HttpResponse
 
 @login_required(login_url='/accounts/login')
 def rentals_home(request):
-    table = RentalsTable(Rentals.objects.filter(is_closed=False).order_by('job_number', 'company'))
-    RequestConfig(request).configure(table)
-    return render(request, "rentals_home.html", {'table': table})
+    rentals = Rentals.objects.filter(is_closed=False).order_by('job_number', 'company')
+    return render(request, "rentals_home.html", {'rentals': rentals})
 
 
 @login_required(login_url='/accounts/login')
