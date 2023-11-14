@@ -68,24 +68,7 @@
   </div>
 </nav>
 {% if status == 'Outgoing' %}
-	 <form name = job_filter action="{%  url 'equipment_batch_outgoing' status='Outgoing' %}" method="post"  >
-	  {% csrf_token %}
-		 <input type= "text" name="filter_job_name" id="filter_job_name" placeholder="Job Name" size="30" />
-		 <input type="submit" value="Filter Jobs" />
-	 </form>
- <form name = job_update action="{%  url 'equipment_batch_outgoing' status='Outgoing' %}" method="post"  onSubmit = "return check_booking_data()">
 
-            <label for="selected_job">Select the Job Where the Equipment is Going: </label>
-            <select id="selected_job" name="selected_job" onchange="job_update2()">
-                <option value=none_selected>Select Job</option>
-				{% if jobs %}
-                {% for job in jobs %}
-                <option value={{job.job_number}}>{{job.job_name}}</option>
-                {% endfor %}
-                {% endif %}
-            </select>
- </form>
- <br><br>
 
 <h3 id="try_this">PLEASE SELECT ITEMS GOING TO JOB:</h3>
 
@@ -108,8 +91,25 @@
 <h3>SELECTED ITEMS</h3>
 
 {% render_table pending_table %}
+<br>
+	<hr>
+	 <form name = job_filter action="{%  url 'equipment_batch_outgoing' status='Outgoing' %}" method="post"  >
+	  {% csrf_token %}
+		 <input type= "text" name="filter_job_name" id="filter_job_name" placeholder="Job Name" size="30" />
+		 <input type="submit" value="Filter Jobs" />
+	 </form>
+ <form name = job_update action="{%  url 'equipment_batch_outgoing' status='Outgoing' %}" method="post"  onSubmit = "return check_booking_data()">
 
-
+            <label for="selected_job">Select the Job Where the Equipment is Going: </label>
+            <select id="selected_job" name="selected_job" onchange="job_update2()">
+                <option value=none_selected>Select Job</option>
+				{% if jobs %}
+                {% for job in jobs %}
+                <option value={{job.job_number}}>{{job.job_name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+ </form>
 {% if status == 'Outgoing' %}
  <form name = batch_update action="{%  url 'equipment_batch_outgoing' status='Outgoing' %}" method="post"  onSubmit = "return check_booking_data()">
 {% else %}

@@ -58,22 +58,60 @@
             }
  }
 function filter_estimators() {
-            rental_input.new_pm.value =""
-            let selectedcompany = rental_input.select_company.value
-            let rolodex = JSON.parse("{{data|escapejs}}");
-            for(let i = rental_input.select_pm.options.length; i >= 0; i--) {
-                rental_input.select_pm.remove(i);
+            if (rental_input.select_company.value == "please_select"){
+            document.getElementById("rep_info").style.display = "none"
+            document.getElementById("vendor_info").style.display = "none"
+            return
             }
-            rental_input.select_pm.options[0] = new Option("No Rep Helped Me","no_rep");
-            rental_input.select_pm.options[1] = new Option("Add New Rep","add_new");
-            let b=2
-            for(let i =0; i < rolodex.length; i++){
-                if (rolodex[i].company == selectedcompany){
-                    rental_input.select_pm.options[b] = new Option(rolodex[i].name,rolodex[i].id);
-                    b=b+1
+            if (rental_input.select_company.value != "add_new"){
+                rental_input.new_pm.value =""
+                document.getElementById("vendor_info").style.display = "block"
+                document.getElementById("vendor_title").innerHTML = "Vendor Info:"
+                let selectedcompany = rental_input.select_company.value
+                let rolodex = JSON.parse("{{data|escapejs}}");
+                for(let i = rental_input.select_pm.options.length; i >= 0; i--) {
+                    rental_input.select_pm.remove(i);
                 }
+                rental_input.select_pm.options[0] = new Option("No Rep Helped Me","no_rep");
+                rental_input.select_pm.options[1] = new Option("Add New Rep","add_new");
+                let b=2
+                for(let i =0; i < rolodex.length; i++){
+                    if (rolodex[i].company == selectedcompany){
+                        rental_input.select_pm.options[b] = new Option(rolodex[i].name,rolodex[i].id);
+                        b=b+1
+                    }
+                }
+                $.ajax({
+                method: 'GET',
+                url: '/rentals/rental_ajax',
+                data: {'vendor_id':rental_input.select_company.value},
+                success: function (data) {
+                    parsedData = JSON.parse(data);
+                    rental_input.new_client.value = parsedData.name
+                    rental_input.new_client_phone.value = parsedData.phone
+                    rental_input.new_client_bid_email.value = parsedData.email
+                }})
+
             }
-         }
+            else{
+                document.getElementById("vendor_info").style.display = "block"
+                document.getElementById("vendor_title").innerHTML = "New Vendor:"
+                rental_input.new_client.placeholder = "New Vendor Name"
+                rental_input.new_client_phone.placeholder = "New Vendor Phone"
+                rental_input.new_client_bid_email.placeholder = "New Vendor Email"
+                for(let i = rental_input.select_pm.options.length; i >= 0; i--) {
+                    rental_input.select_pm.remove(i);
+                }
+                rental_input.select_pm.options[0] = new Option("Add New Rep","add_new");
+                document.getElementById("rep_info").style.display = "block"
+                                    rental_input.new_pm_phone.value = ""
+                    rental_input.new_pm_email.value = ""
+                    rental_input.new_pm.value = ""
+                rental_input.new_pm.placeholder = "New Rep Name"
+                rental_input.new_pm_phone.placeholder = "New Rep Phone"
+                rental_input.new_pm_email.placeholder = "New Rep Email"
+            }
+ }
 
 
 
@@ -86,8 +124,37 @@ function clear_client() {
                 rental_input.select_pm.value = "add_new";
         }
 
-
-
+window.onload = function() {
+document.getElementById("rep_info").style.display = "none"
+document.getElementById("vendor_info").style.display = "none"
+}
+function change_rep(){
+if (rental_input.select_pm.value == "no_rep"){document.getElementById("rep_info").style.display = "none"}
+else if (rental_input.select_pm.value == "add_new"){
+document.getElementById("rep_info").style.display = "block"
+document.getElementById("more_rep_info").innerHTML = "Enter New Below:"
+                    rental_input.new_pm_phone.value = ""
+                    rental_input.new_pm_email.value = ""
+                    rental_input.new_pm.value = ""
+                    rental_input.new_pm_phone.placeholder = "New Rep Phone"
+                    rental_input.new_pm_email.placeholder = "New Rep Email"
+                    rental_input.new_pm.placeholder = "New Rep Name"
+}
+else {
+document.getElementById("rep_info").style.display = "block"
+document.getElementById("more_rep_info").innerHTML = "Rep Info:"
+            $.ajax({
+                method: 'GET',
+                url: '/rentals/rental_ajax',
+                data: {'rep_id':rental_input.select_pm.value},
+                success: function (data) {
+                    parsedData = JSON.parse(data);
+                    rental_input.new_pm_phone.value = parsedData.phone
+                    rental_input.new_pm_email.value = parsedData.email
+                    rental_input.new_pm.value = parsedData.name
+                }})
+}
+}
 
 	</script>
     <link rel="stylesheet" href="{% static 'project_styles.css' %}">
@@ -133,8 +200,8 @@ function clear_client() {
             <div class ="col-sm-12">
                 <label>Please select vendor</label>
                 <select class="form-control" id="select_company" name="select_company" onChange="filter_estimators()" >
-                    <option value="please_select">"Please Select"</option>
-                    <option value="add_new">"add New"</option>
+                    <option value="please_select">Please Select</option>
+                    <option value="add_new">Add New</option>
                     {% if vendors %}
                     {% for vendor in vendors %}
                     <option value={{vendor.id}}>{{vendor.company_name}}</option>
@@ -143,58 +210,57 @@ function clear_client() {
                 </select>
             </div>
         </div>
-        <button type="button" class="collapsible">Click Here to Add a New Company</button>
-	    <div class="content">
+
+	    <div class="content" id="vendor_info">
             <div class ="row" style="margin-top: 40px">
-                <div class ="col-sm-12"> Enter New Vendor below: </div>
+                <div class ="col-sm-12" id="vendor_title"> Enter New Vendor below: </div>
             </div>
             <div class ="row" style="margin-top: 22px" >
                 <div class ="col-sm-12">
-                    <input class="form-control" type= "text" id= "new_client" name="new_client" placeholder="company name" size="30" onClick="clear_client()"/>
+                    <input class="form-control" type= "text" id= "new_client" name="new_client" placeholder="company name" size="30" />
                 </div>
             </div>
             <div class ="row" style="margin-top: 22px" >
                 <div class ="col-sm-12">
-                    <input class="form-control" type= "tel" name="new_client_phone" placeholder="phone Number" size="30"/>
+                    <input class="form-control" type= "tel" id="new_client_phone" name="new_client_phone" placeholder="phone Number" size="30"/>
                 </div>
             </div>
             <div class ="row" style="margin-top: 22px" >
                 <div class ="col-sm-12">
-                    <input class="form-control" type= "email" name="new_client_bid_email" placeholder="email" size="30"/>
+                    <input class="form-control" type= "email" id="new_client_bid_email" name="new_client_bid_email" placeholder="email" size="30"/>
                 </div>
             </div>
         </div>
     </div> <!pick client>
-            <hr></hr>
+<br>
     <div class ="container">
             <div class = "row">
                 <div class ="col-sm-12">
                     <label for="select_pm">Did a Specific Rep Help You?</label>
-                    <select class="form-control" id="select_pm" name="select_pm" >
+                    <select class="form-control" id="select_pm" name="select_pm" onChange="change_rep()">
                             <option value="no_rep">"No Rep Helped Me"</option>
                              <option value="add_new">"add New"</option>
                     </select>
                 </div>
             </div>
-            <button type="button" class="collapsible">Click Here to Add a New Rep</button>
-	        <div class="content">
+	        <div class="content" id="rep_info">
                 <div class ="row" style="margin-top: 22px">
-                    <div class ="col-sm-12">Enter New below: </div>
+                    <div class ="col-sm-12" id="more_rep_info">Enter New below: </div>
                 </div>
                 <div class ="row" style="margin-top: 22px">
                     <div class ="col-sm-12">
-                        <input  type= "text" id="new_pm" name="new_pm" class="form-control" placeholder="office pm name" size="30" onClick="clear_select_pm()"/>
+                        <input  type= "text" id="new_pm" name="new_pm" class="form-control" placeholder="office pm name" size="30" />
                     </div>
                 </div>
 
                 <div class ="row">
                     <div class ="col-sm-12">
-                        <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" placeholder="phone Number" size="30"/>
+                        <input style="margin-top: 22px" class="form-control" type= "tel" id="new_pm_phone" name="new_pm_phone" placeholder="phone Number" size="30"/>
                     </div>
                 </div>
                 <div class ="row">
                     <div class ="col-sm-12">
-                        <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" placeholder="email" size="30"/>
+                        <input style="margin-top: 22px" class="form-control" type= "email" id="new_pm_email" name="new_pm_email" placeholder="email" size="30"/>
                     </div>
                 </div>
             </div>
