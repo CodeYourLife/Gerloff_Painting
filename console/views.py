@@ -53,16 +53,25 @@ def index(request):
     send_data['rentals'] = Rentals.objects.filter(off_rent_number = None).count()
     send_data['next_two_weeks'] = next_two_weeks
     send_data['needs_super'] = Jobs.objects.filter(superintendent__isnull = True).count()
-    active_super = Employees.objects.get(user=request.user)
-    send_data['super_equipment']=Inventory.objects.filter(job_number__superintendent = active_super).count()
-    send_data['super_rentals'] = Rentals.objects.filter(job_number__superintendent = active_super).count()
-    send_data['tickets'] = 0
+    if Jobs.objects.filter(is_closed=False,superintendent=Employees.objects.get(user=request.user)).exists():
+        active_super = Employees.objects.get(user=request.user)
+        send_data['super_equipment']=Inventory.objects.filter(job_number__superintendent = active_super).count()#
+        send_data['super_rentals'] = Rentals.objects.filter(job_number__superintendent = active_super).count()#
+        send_data['tickets'] = 0#
+        next_two_weeks = 0
+        for x in Jobs.objects.filter(is_closed=False, is_active=False,superintendent=active_super):
+            if x.next_two_weeks() == True:
+                next_two_weeks += 1
+    else:
+        send_data['super_equipment'] = Inventory.objects.filter(job_number__is_closed=False).count()
+        send_data['super_rentals'] = Rentals.objects.filter(off_rent_number = None).count()
+        send_data['tickets'] = 0  #
+        next_two_weeks = 0
+        for x in Jobs.objects.filter(is_closed=False, is_active=False):
+            if x.next_two_weeks() == True:
+                next_two_weeks += 1
+    send_data['super_jobs'] = next_two_weeks#
     send_data['current_user'] = request.user.first_name
-    next_two_weeks = 0
-    for x in Jobs.objects.filter(is_closed=False, is_active=False,superintendent=active_super):
-        if x.next_two_weeks() == True:
-            next_two_weeks += 1
-    send_data['super_jobs'] = next_two_weeks
     return render(request, 'index.html',send_data)
 
 
