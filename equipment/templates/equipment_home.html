@@ -5,81 +5,105 @@
 {% block content %}
 <html>
 <head>
-    <script src="{% static 'equipment.js' %}"></script>
-    <style>
-        .table td {
-            max-width: 200px !important;
-            overflow-x: hidden;
-            text-wrap: wrap;
-            -moz-overflow: hidden !important;
-        }
-        @-moz-document url-prefix() {
-            .table td {
-                overflow: hidden;
-            }
-        }
-    </style>
-    <script>
-        function filterStatus() {
-            table = document.getElementById("inventory_table");
-            available_box =  document.getElementById("available");
-            checked_out_box =  document.getElementById("checked_out");
-            missing_box = document.getElementById("missing");
-            tr = table.getElementsByTagName("tr");
-            if (!available_box.checked && !checked_out_box.checked && !missing_box.checked){
-                for (i = 1; i < tr.length; i++) {
-                    tr[i].style.display = "";}
-                return True}
-              for (i = 1; i < tr.length; i++) {
-            td = tr[i].getElementsByTagName("td")[3];
-            tr[i].style.display = "none";
-            if (available_box.checked){
-                if (td.textContent == "-"){
-                    tr[i].style.display = "";
-                    }
-                }
-            if (checked_out_box.checked){
-                if (td.textContent != "-" && td.textContent != "Missing"){
-                    tr[i].style.display = "";
-                    }
-                }
-            if (missing_box.checked){
-                if (td.textContent == "Missing"){
-                    tr[i].style.display = "";
-                    }
-                }
-        }
-        }
-            function myFunction(location){
-                    if (location==service.service_notes){
-                           if (service.select_service.value == "select_vendor"){
-                               alert("Select a vendor");
-                               return false;
-                               }}
-                    if (location==change_job.job_notes){
-                        if (change_job.select_job.value == "select_job"){
-                               alert("Select a job");
-                               return false;
-                               }}
-                    if (location==change_employee.job_notes){
-                        if (change_employee.select_employee.value == "select_employee"){
-                               alert("Select an employee");
-                               return false;
-                               }}
-                var x;
-                var name=prompt("Please make any notes about this: ");
-                if (name!=null){
-                       location.value = name;
-                   }
-            }
-    </script>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <title>DataTables example - HTML (DOM) sourced data</title>
+        <style type="text/css" class="init">
+
+                 .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
+
+        .dataTables_wrapper {
+    font-family: tahoma;
+    font-size: 13px;
+}
+
+        nav .active, .collapsible:hover {
+          background-color: Salmon;
+        }
+        .nav-pills a {
+            color: black;
+        }
+        .nav-pills li {
+            padding: 2px;
+        }
+        .nav-pills .active {
+            background-color: #6c757d !important;
+            padding: 5px;
+        }
+        .table td {
+
+        }
+        label {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+        input {
+            margin-left: 10px;
+            margin-right: 10px;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+        tr th {
+            width: fit-content !important;
+        }
+        .tab-content * {
+          color : black;
+          background-color: white !important;
+        }
+
+        .active * {
+            background-color: white !important;
+        }
+                .list-items {
+        border-bottom: 1px solid black; display: flex; justify-content: space-between;
+        }
+        .text-wrap{
+    white-space:normal;
+}
+.width-200{
+    width:200px;
+}
+    </style>
+    <style>
+.dataTables_filter {
+   float: left !important;
+}
+
+          .tb { border-collapse: collapse; width:300px; }
+  .tb th, .tb td { padding: 5px; border: solid 1px #777; }
+  .tb th { background-color: lightblue; }
+</style>
     <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
     <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
     <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+
+    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+    <script type="text/javascript" class="init">
+window.onload = function() {
+var table = $('#inventory_table').DataTable({paging: false})
+};
+
+
+function new_filter_now(){
+document.getElementById('filter_form').submit();
+}
+    </script>
+
 
 </head>
 <body>
@@ -94,25 +118,38 @@
         </ul>
     </div>
 </nav>
-<div style="width: 100%">
-    <form name=job_filter action="{%  url 'equipment_home' %}" method="post">
-        <div style="margin-left: 12px; margin-bottom: 12px;" class="row h-100 w-100 d-flex justify-content-left">
-            {% csrf_token %}
-            <input style="margin-left: 12px; margin-top: 12px; width: 80%;" class="form-control" type="text"
-                   name="filter_items" id="filter_items" placeholder="Search Term (scaffold, ladder,etc.)"/>
-            <input style="margin-left: 12px; margin-top: 12px;" type="submit" class="btn btn-primary btn-sm"
-                   value="Search Equipment"/>
+
+<form class="form-control form-control-sm" id="filter_form" method="get">
+    <div class="container">
+        <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="available_filter" name="available_filter"  {% if available_filter %} checked {% endif %}  onchange="new_filter_now()" />
+        <label for="available_filter" class="form-check-label">Available</label>
         </div>
-    </form>
-</div>
-<div style="margin-left: 12px;">
-    <input type="checkbox" class="filter-checkbox checkbox" onclick="filterStatus()" id="available"
-           style="margin-left: 12px;"/> Available
-    <input type="checkbox" class="filter-checkbox checkbox" onclick="filterStatus()" id="checked_out"
-           style="margin-left: 12px;"/> Checked Out
-    <input type="checkbox" class="filter-checkbox checkbox" onclick="filterStatus()" id="missing"
-           style="margin-left: 12px;"/> Missing
-</div>
+                <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="checked_out_filter" name="checked_out_filter"  {% if checked_out_filter %} checked {% endif %}  onchange="new_filter_now()" />
+        <label for="checked_out_filter" class="form-check-label">Checked Out/Service</label>
+        </div>
+                <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="missing_filter" name="missing_filter"  {% if missing_filter %} checked {% endif %}  onchange="new_filter_now()" />
+        <label for="missing_filter" class="form-check-label">Missing</label>
+        </div>
+                <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="ladders_filter" name="ladders_filter"  {% if ladders_filter %} checked {% endif %}  onchange="new_filter_now()" />
+        <label for="ladders_filter" class="form-check-label">Ladders/Scaffold</label>
+        </div>
+                <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="equipment_filter" name="equipment_filter"  {% if equipment_filter %} checked {% endif %}  onchange="new_filter_now()" />
+        <label for="equipment_filter" class="form-check-label">Equipment</label>
+        </div>
+                <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="other_filter" name="other_filter"  {% if other_filter %} checked {% endif %}  onchange="new_filter_now()" />
+        <label for="other_filter" class="form-check-label">Other</label>
+        </div>
+    </div>
+</form>
+
+
+
 <div class="table-responsive">
     <table id="inventory_table" class="display table table-sm">
         <thead>
