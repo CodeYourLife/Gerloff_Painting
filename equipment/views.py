@@ -24,6 +24,7 @@ from employees.models import *
 
 
 def complete_pickup(request, pickup):
+    print("PUMPKIN")
     send_data = {}
     selected_request = PickupRequest.objects.get(id=pickup)
     if selected_request.completed_notes is None:
@@ -31,6 +32,7 @@ def complete_pickup(request, pickup):
     selected_request.save()
     selected_job = selected_request.job_number
     if request.method == 'POST':
+        print(request.POST)
         for x in request.POST:
             if x[0:8] == 'check_in':
                 if selected_request.all_items == True:
@@ -49,7 +51,7 @@ def complete_pickup(request, pickup):
                     item.batch = None
                     item.save()
                 selected_request.completed_notes = selected_request.completed_notes + " " + str(
-                    item.item) + "Returned. \n"
+                    item.item) + "- Returned. \n"
                 selected_request.save()
                 InventoryNotes.objects.create(inventory_item=item, date=date.today(),
                                               user=Employees.objects.get(user=request.user),
@@ -59,44 +61,56 @@ def complete_pickup(request, pickup):
             if x[0:7] == 'missing':
                 if selected_request.all_items == True:
                     item = Inventory.objects.get(id=x[7:len(x)])
-                    item.status = "Missing"  # change field
-                    item.job_number = None
-                    item.service_vendor = None
-                    item.assigned_to = None
-                    item.save()
                 else:
                     item = PickupRequestItems.objects.get(id=x[7:len(x)])
                     item.returned = True
                     item.save()
                     item = item.item
-                    if item.job_number == selected_request.job_number:
-                        different_job = False
-                        item.status = "Missing"  # change field
-                        item.job_number = None
-                        item.service_vendor = None
-                        item.assigned_to = None
-                        item.save()
-                    else:
-                        different_job = True
-                if different_job == True:
-                    selected_request.completed_notes = selected_request.completed_notes + "ERROR- " + item.item + " Has been relocated. \n" + \
-                                                       request.POST['notes'] + "\n"
-                else:
-                    selected_request.completed_notes = selected_request.completed_notes + "MISSING- " + item.item + "MISSING. \n" + \
-                                                       request.POST['notes'] + "\n"
-                selected_request.save()
-                InventoryNotes.objects.create(inventory_item=item, date=date.today(),
-                                              user=Employees.objects.get(user=request.user),
-                                              note="This item was requested to be picked up by: " + str(
-                                                  selected_request.requested_by) + ". It is not on the jobsite. " +
-                                                   request.POST['notes'],
-                                              category="Missing")
+                if request.POST['status'] == '1': #missing
+                    item.status = "Missing"  # change field
+                    item.job_number = None
+                    item.service_vendor = None
+                    item.assigned_to = None
+                    item.save()
+                    selected_request.completed_notes = selected_request.completed_notes + "MISSING- " + item.item + " is missing. " + request.POST['notes'] + "\n"
+                    selected_request.save()
+                    InventoryNotes.objects.create(inventory_item=item, date=date.today(),
+                                                  user=Employees.objects.get(user=request.user),
+                                                  note="This item was requested to be picked up by: " + str(
+                                                      selected_request.requested_by) + ". It is not on the jobsite. " +
+                                                       request.POST['notes'],
+                                                  category="Missing")
+                elif request.POST['status'] == '2':    #still on job
+                    print("PUMPKIN2")
+                    if selected_request.all_items == True:
+                        PickupRequestItems.objects.create(request=selected_request, item=item)
+                    selected_request.completed_notes = selected_request.completed_notes + " Didn't pickup " + item.item + " we left it on the job. " + request.POST['notes'] + "\n"
+                    selected_request.save()
+                    InventoryNotes.objects.create(inventory_item=item, date=date.today(),
+                                                  user=Employees.objects.get(user=request.user),
+                                                  note="This item was requested to be picked up by: " + str(
+                                                      selected_request.requested_by) + ". We left it on the job. " +
+                                                       request.POST['notes'],
+                                                  category="Misc")
+                elif request.POST['status'] == '3':  # different job
+                    selected_request.completed_notes = selected_request.completed_notes + " Didn't pickup " + item.item + " it is already on a different job, " + request.POST['current_location'] + ". " + request.POST['notes'] + "\n"
+                    selected_request.save()
+                    InventoryNotes.objects.create(inventory_item=item, date=date.today(),
+                                                  user=Employees.objects.get(user=request.user),
+                                                  note="This item was requested to be picked up by: " + str(
+                                                      selected_request.requested_by) + ". It was already on a different job, " + request.POST['current_location'] + ". " +
+                                                       request.POST['notes'],
+                                                  category="Misc")
             if x == 'send_now':
                 selected_request.completed_notes = selected_request.completed_notes + " " + request.POST['request_notes']
                 selected_request.completed_date = date.today()
                 selected_request.is_closed = True
                 selected_request.save()
                 PickupRequestItems.objects.filter(request=selected_request).delete()
+                JobNotes.objects.create(job_number=selected_job,
+                                        note="Job Pickup Completed! " + selected_request.completed_notes,
+                                        type="auto_misc_note", date=date.today(),
+                                        user=Employees.objects.get(user=request.user))
                 message = "Jobsite Pickup Completed. \n Job: " + str(selected_request.job_number) + "\n\n" + selected_request.completed_notes
                 recipients = ["warehouse@gerloffpainting.com", "joe@gerloffpainting.com"]
                 if selected_job.superintendent:
@@ -112,7 +126,7 @@ def complete_pickup(request, pickup):
                                 recipients)
                 return redirect('warehouse_home')
     if selected_request.all_items == True:
-        selected_items = Inventory.objects.filter(job_number=selected_request.job_number)
+        selected_items = Inventory.objects.filter(pickuprequested__isnull=True, job_number=selected_request.job_number)
     else:
         selected_items = PickupRequestItems.objects.filter(request=selected_request, returned=False)
     send_data['selected_request'] = selected_request
@@ -261,6 +275,7 @@ def update_equipment(request, id):
         item.serial_number = request.POST['serial_number']
         item.po_number = request.POST['po_number']
         item.item = request.POST['item']
+        item.notes = request.POST['notes']
         item.inventory_type = InventoryType.objects.get(id=request.POST['inventory_type0'])
         item.save()
         return redirect('equipment_page', id=id)

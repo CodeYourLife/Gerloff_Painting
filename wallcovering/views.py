@@ -10,6 +10,7 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from .filters import OrderItemsFilter
 from django.contrib.auth.decorators import login_required
+from employees.models import *
 
 @login_required(login_url='/accounts/login')
 def wallcovering_send_all(request):

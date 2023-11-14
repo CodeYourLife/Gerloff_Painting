@@ -8,7 +8,7 @@ from jobs.models import Jobs
 from wallcovering.models import Wallcovering
 from submittals.models import SubmittalItems, SubmittalNotes, Submittals
 from django.contrib.auth.decorators import login_required
-
+from employees.models import *
 
 @login_required(login_url='/accounts/login')
 def submittals_item_close(request, id):
