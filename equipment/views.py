@@ -6,7 +6,7 @@ from datetime import date
 from equipment.tables import *
 from equipment.models import *
 from jobs.models import Jobs, JobNotes
-from equipment.filters import EquipmentFilter, EquipmentFilter2
+from equipment.filters import EquipmentFilter, EquipmentFilter2, EquipmentFilter3
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from console.misc import createfolder
@@ -558,14 +558,19 @@ def equipment_page(request, id):
 
 @login_required(login_url='/accounts/login')
 def equipment_home(request):
-    inventories = None
-    if request.method == 'POST':
-        if 'filter_items' in request.POST:
-            inventories = Inventory.objects.filter(item__icontains=request.POST['filter_items'])
-    else:
-        inventories = Inventory.objects.all()
-    for inventory in inventories:
-        inventory.item = inventory.item.strip()
-        if inventory.service_vendor is not None:
-            inventory.service_vendor.company_name = inventory.service_vendor.company_name.strip()
-    return render(request, "equipment_home.html", {'inventories': inventories})
+    send_data={}
+    if request.method == 'GET':
+        if 'available_filter' in request.GET: send_data['available_filter'] = True
+        if 'checked_out_filter' in request.GET: send_data['checked_out_filter'] = True
+        if 'missing_filter' in request.GET: send_data['missing_filter'] = True
+        if 'ladders_filter' in request.GET: send_data['ladders_filter'] = True
+        if 'equipment_filter' in request.GET: send_data['equipment_filter'] = True
+        if 'other_filter' in request.GET: send_data['other_filter'] = True
+    search_equipment = EquipmentFilter3(request.GET, queryset=Inventory.objects.all())
+    send_data['search_equipment'] = search_equipment
+    send_data['inventories'] = search_equipment.qs
+    # for inventory in inventories:
+    #     inventory.item = inventory.item.strip()
+    #     if inventory.service_vendor is not None:
+    #         inventory.service_vendor.company_name = inventory.service_vendor.company_name.strip()
+    return render(request, "equipment_home.html", send_data)
