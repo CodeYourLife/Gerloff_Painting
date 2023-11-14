@@ -99,7 +99,7 @@ def super_home(request, super):
         if 'search7' in request.GET: send_data['search7_exists'] = request.GET['search7']# unassigned
 
     if selected_superid == 'ALL':
-        send_data['equipment'] = Inventory.objects.exclude(job_number=None)
+        send_data['equipment'] = Inventory.objects.exclude(job_number=None).order_by('job_number')
         send_data['equipment_count'] = Inventory.objects.exclude(job_number=None).count()
         send_data['rentals'] = Rentals.objects.filter(off_rent_number__isnull=True)
         send_data['rentals_count'] = Rentals.objects.filter(off_rent_number__isnull=True).count()

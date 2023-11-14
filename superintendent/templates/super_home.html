@@ -93,10 +93,26 @@
             src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
     <script type="text/javascript" class="init">
-
+function go_to_job(jobnumber){
+url = "{% url 'job_page' 'ALL' %}"
+url = url.replace('ALL', jobnumber);
+window.location.href = url
+}
+function go_to_equipment(item_id){
+url = "{% url 'equipment_page' 'ALL' %}"
+url = url.replace('ALL', item_id);
+window.location.href = url
+}
+function go_to_rental(rental_id){
+url = "{% url 'rental_page' 3 "YES" %}"
+url = url.replace(3, rental_id);
+window.location.href = url
+}
 
         window.onload = function() {
         var table = $('#inventory_table').DataTable({paging: false})
+        var table = $('#equipment_table').DataTable({paging: false})
+        var table = $('#rentals_table').DataTable({paging: false})
         if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "block";}
 
         }
@@ -466,9 +482,7 @@
                     <table id="equipment_table" class="display table table-sm">
                         <thead class="colored-header">
                         <tr>
-                            <th style="display:none;">ID</th>
                             <th>Job Number</th>
-                            <th>Equip Number</th>
                             <th>Item</th>
                         </tr>
                         </thead>
@@ -476,15 +490,9 @@
                         {% if equipment %}
                         {% for item in equipment %}
                         <tr>
-                            <td style="display:none;">{{item.id}}</td>
-                            <td>{{item.job_number}}</td>
-                            <td>{{item.number}}</td>
-                            <td>
-                                <a href="{% url 'equipment_page' item.id %}">
-                                    <div style="height:100%;width:100%">
-                                        {{item.item}}
-                                    </div>
-                                </a>
+                            <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{item.job_number.job_number}}')"><a href="#">{{item.job_number}}</a></td>
+                            <td style="white-space: nowrap;" width = "20px" onclick="go_to_equipment('{{item.id}}')">
+                                <a href="#">{% if item.number %}#{{item.number}}- {% endif %}{{item.item}}</a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -513,8 +521,8 @@
                         <tr>
                             <th>Job Number</th>
                             <th>Item</th>
-                            <th>PO</th>
-                            <th>Date</th>
+                            <th>On Date</th>
+                            <th>Off Date</th>
                             <th>Notes</th>
                         </tr>
                         </thead>
@@ -522,17 +530,11 @@
                         {% if rentals %}
                         {% for item in rentals %}
                         <tr>
-                            <td>{{item.job_number}}</td>
-                            <td>
-                                <a href="{% url 'rental_page' item.id 'YES' %}">
-                                    <div style="height:100%;width:100%">
-                                        {{item.item}}
-                                    </div>
-                                </a>
-                            </td>
-                            <td>{{item.purchase_order}}</td>
-                            <td>{{item.on_rent_date}}</td>
-                            <td>{{item.notes}}</td>
+                            <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{item.job_number.job_number}}')"><a href="#">{{item.job_number}}</a></td>
+                            <td style="white-space: nowrap;" width = "20px" onclick="go_to_rental('{{item.id}}')"><a href="#">{{item.item}}</a></td>
+                            <td style="white-space: nowrap;" width = "20px" >{{item.on_rent_date}}</td>
+                            <td style="white-space: nowrap;" width = "20px" >{{item.off_rent_date}}</td>
+                            <td style="white-space: nowrap;" width = "20px" >{{item.notes}}</td>
                         </tr>
                         {% endfor %}
                         {% endif %}
