@@ -195,6 +195,15 @@
 
 </head>
 <body>
+    <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+        <a style="padding-left: 14px;" class="navbar-brand sub-navbar-brand" href="#">Active Jobs</a>
+        <div id="navbarNavDropdown2">
+          <ul class="sub-nav-list navbar-nav ">
+              <li><a class="nav-item nav-link" href="{% url 'job_page' 'ALL' %}">Home</a></li>
+              <li><a class="nav-item nav-link active" href="{% url 'super_home' 'AUTO' %}">Superintendent View</a></li>
+          </ul>
+        </div>
+      </nav>
 <!-- Modal -->
 <div class="modal fade" id="super-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">

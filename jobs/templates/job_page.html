@@ -12,6 +12,9 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
     <title>DataTables example - HTML (DOM) sourced data</title>
         <style type="text/css" class="init">
+
+                 .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
+
         .dataTables_wrapper {
     font-family: tahoma;
     font-size: 13px;
@@ -98,6 +101,15 @@
 function new_filter_now(){
 document.getElementById('filter_form').submit();
 }
+
+function add_new_note(){
+var name=prompt("Job Note:");
+if (name!=null){
+document.getElementById("add_note").value = name
+document.getElementById('new_note_form').submit();
+}
+}
+
 
 function labor_done_changed(current_status){
 if (labor_close_form.select_status.value == 'nothing_done' || labor_close_form.select_status.value == 'waiting_for_punchlist'){
@@ -355,6 +367,7 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
             <li><a class="nav-item nav-link active" href="#">{{job.job_name}}</a></li>
             {% endfor %}
             {% endif %}
+             <li><a class="nav-item nav-link" href="{% url 'super_home' 'AUTO' %}">Superintendent View</a></li>
             <li><a class="nav-item nav-link" href="{% url 'book_new_job' %}">Book New Job</a></li>
         </ul>
     </div>
@@ -865,15 +878,13 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
     <div class="row">
         <div class="col">
 
-            <form action="{% url 'job_page' job.job_number %}" method="post">
+            <form id=new_note_form action="{% url 'job_page' job.job_number %}" method="post">
                 {% csrf_token %}
 
               <br>
-               <label for="add_note">ADD A NOTE: </label> <br>
 
-                <textarea class="form-control" id="add_note" name="add_note" rows="2" cols="10" ></textarea>
-
-                <input type="submit" name="Form3" value="Add Note"/>
+<input type="hidden" name="add_note" id="add_note" value="" />
+                <button type="button" class="btn btn-primary" onclick = "add_new_note()" >ADD NEW NOTE</button>
             </form>
 
         </div>
@@ -920,9 +931,11 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
             </div>
         </div>
     </form>
-    <div class="demo-html" style="width:90%">
-        <table id="notes_table" class="display table" style="width:90%">
-            <thead>
+
+
+    <div class="table-responsive">
+        <table id="notes_table" class="display table table-sm">
+            <thead class="colored-header">
             <tr>
                 <th scope="col">By</th>
                 <th scope="col">Date</th>
@@ -945,14 +958,16 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
 </div>
 
 {% endif %}
-<hr>
-<br>
+
+
 {% if tickets %}
 <button type="button" class="collapsible">Outstanding Extra Work Tickets</button>
 <div class="content">
-    <div class="demo-html" style="width:90%">
-        <table id="tickets_table" class="display table" style="width:90%">
-            <thead>
+
+        <div class="table-responsive">
+        <table id="tickets_table" class="display table">
+            <thead class="colored-header">
+
             <tr>
                 <th>CO#</th>
                 <th>Description</th>
@@ -976,9 +991,11 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
 <hr>
 <button type="button" class="collapsible">Pending Change Orders Not Approved Yet</button>
 <div class="content">
-    <div class="demo-html" style="width:90%">
-        <table id="tickets_table1" class="display table" style="width:90%">
-            <thead>
+
+            <div class="table-responsive">
+        <table id="tickets_table1" class="display table">
+            <thead class="colored-header">
+
             <tr>
                 <th>CO#</th>
                 <th>Description</th>
@@ -1004,9 +1021,11 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
 <hr>
 <button type="button" class="collapsible">Approved Change Orders</button>
 <div class="content">
-    <div class="demo-html" style="width:90%">
-        <table id="tickets_table2" class="display" style="width:90%">
-            <thead>
+
+                <div class="table-responsive">
+        <table id="tickets_table2" class="display table">
+            <thead class="colored-header">
+
             <tr>
                 <th>CO#</th>
                 <th>Description</th>
@@ -1031,9 +1050,11 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
 <hr>
 <button type="button" class="collapsible">Equipment</button>
 <div class="content">
-    <div class="demo-html" style="width:90%">
-        <table id="tickets_table3" class="display" style="width:90%">
-            <thead>
+                    <div class="table-responsive">
+        <table id="tickets_table3" class="display table">
+            <thead class="colored-header">
+
+
             <tr>
                 <th>Type</th>
                 <th>Item</th>
@@ -1058,9 +1079,10 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
 <hr>
 <button type="button" class="collapsible">Rentals</button>
 <div class="content">
-    <div class="demo-html" style="width:90%">
-        <table id="tickets_table4" class="display" style="width:90%">
-            <thead>
+                        <div class="table-responsive">
+        <table id="tickets_table4" class="display table">
+            <thead class="colored-header">
+
             <tr>
                 <th>Item</th>
                 <th>On Rent Date</th>
@@ -1089,9 +1111,10 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
 <hr>
 <button type="button" class="collapsible">Wallcovering Not Ordered</button>
 <div class="content">
-    <div class="demo-html" style="width:90%">
-        <table id="tickets_table5" class="display" style="width:90%">
-            <thead>
+                            <div class="table-responsive">
+        <table id="tickets_table5" class="display table">
+            <thead class="colored-header">
+
             <tr>
                 <th>Code</th>
                 <th>Vendor</th>
@@ -1118,9 +1141,10 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
 <hr>
 <button type="button" class="collapsible">Wallcovering Ordered But Not Received</button>
 <div class="content">
-    <div class="demo-html" style="width:90%">
-        <table id="tickets_table6" class="display" style="width:90%">
-            <thead>
+                                <div class="table-responsive">
+        <table id="tickets_table6" class="display table">
+            <thead class="colored-header">
+
             <tr>
                 <th>Description</th>
                 <th>Date Ordered</th>
@@ -1145,9 +1169,10 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
 <hr>
 <button type="button" class="collapsible">Received Wallcovering</button>
 <div class="content">
-    <div class="demo-html" style="width:90%">
-        <table id="tickets_table7" class="display" style="width:90%">
-            <thead>
+                                    <div class="table-responsive">
+        <table id="tickets_table7" class="display table">
+            <thead class="colored-header">
+
             <tr>
                 <th>Description</th>
                 <th>Quantity</th>
@@ -1198,9 +1223,10 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
 <hr>
 <button type="button" class="collapsible">Submittals</button>
 <div class="content">
-    <div class="demo-html" style="width:90%">
-        <table id="tickets_table8" class="display" style="width:90%">
-            <thead>
+    <div class="table-responsive">
+        <table id="tickets_table8" class="display table">
+            <thead class="colored-header">
+
             <tr>
                 <th>#</th>
                 <th>Description</th>
@@ -1229,9 +1255,10 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
 <hr>
 <button type="button" class="collapsible">Subcontractors</button>
 <div class="content">
-    <div class="demo-html" style="width:90%">
-        <table id="tickets_table9" class="display" style="width:90%">
-            <thead>
+    <div class="table-responsive">
+        <table id="tickets_table9" class="display table">
+            <thead class="colored-header">
+
             <tr>
                 <th>PO #</th>
                 <th>Company</th>
