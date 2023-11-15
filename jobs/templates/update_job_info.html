@@ -6,15 +6,27 @@
 
 
 <head>
-  <title>Gerloff Painting</title>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>DataTables example - HTML (DOM) sourced data</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+
+	</style>
   <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
-      integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous"
-      xmlns:margin-left="http://www.w3.org/1999/xhtml">
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script>    $( ".book_new_job" ).addClass("active");  </script>
-    <script type="text/javascript">
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+   $( ".book_new_job" ).addClass("active");
+
 var startdate = "{{startdate}}"
         function check_booking_data() {
             if (booking_input.job_name.value ==""){
@@ -79,7 +91,7 @@ var startdate = "{{startdate}}"
             }
             if (booking_input.select_pm.value == "please_select"){
                     booking_input.select_pm.scrollIntoView();
-                    alert("Please select estimator")
+                    alert("Please select PM")
                     return false;
                 }
             if (booking_input.select_super.value == "please_select"){
@@ -87,14 +99,14 @@ var startdate = "{{startdate}}"
                     alert("Please select client superintendent")
                     return false;
                 }
-            if (booking_input.select_pm.value == "use_below"){
+            if (booking_input.select_pm.value == "add_new"){
                 if (booking_input.new_pm.value == ""){
                     booking_input.select_pm.scrollIntoView();
                     alert("enter pm name")
                     return false;
                 }
             }
-            if (booking_input.select_super.value == "use_below"){
+            if (booking_input.select_super.value == "add_new"){
                 if (booking_input.new_super.value == ""){
                     booking_input.new_super.scrollIntoView();
                     alert("enter super name")
@@ -171,77 +183,82 @@ var startdate = "{{startdate}}"
                     alert("clicked wallcovering scope button")
                 }
             }
-
-
-
         }
 
-        function hide_contract_amount(){
-            if (booking_input.is_t_m_job2.checked==true){
-                booking_input.contract_amount.value = "";
-                booking_input.painting_budget.value = "";
-                booking_input.wallcovering_budget.value = "";
-                booking_input.contract_amount.style.display ="none";
-                booking_input.painting_budget.style.display ="none";
-                booking_input.wallcovering_budget.style.display ="none";
-            }
-            else {
-                booking_input.contract_amount.style.display ="block";
-                booking_input.painting_budget.style.display ="block";
-                booking_input.wallcovering_budget.style.display ="block";
-            }
-        }
+function hide_contract_amount(){
+    if (booking_input.is_t_m_job2.checked==true){
+        booking_input.contract_amount.value = "";
+        booking_input.painting_budget.value = "";
+        booking_input.wallcovering_budget.value = "";
+        booking_input.contract_amount.style.display ="none";
+        booking_input.painting_budget.style.display ="none";
+        booking_input.wallcovering_budget.style.display ="none";
+    }
+    else {
+        booking_input.contract_amount.style.display ="block";
+        booking_input.painting_budget.style.display ="block";
+        booking_input.wallcovering_budget.style.display ="block";
+    }
+}
 
-        function filter_estimators() {
-            booking_input.new_pm.value =""
-            booking_input.new_super.value =""
-            booking_input.new_pm_phone.value =""
-            booking_input.new_super_phone.value =""
-            booking_input.new_pm_email.value =""
-            booking_input.new_super_email.value =""
-            let selectedcompany = booking_input.select_company.value
-            let rolodex = JSON.parse("{{data|escapejs}}");
-            //console.log(selectedcompany)
-            //alert()
-            for(let i = booking_input.select_pm.options.length; i >= 0; i--) {
-                booking_input.select_pm.remove(i);
-            }
-            for(let i = booking_input.select_super.options.length; i >= 0; i--) {
-                booking_input.select_super.remove(i);
-            }
-            booking_input.select_pm.options[0] = new Option("Please Select","please_select");
-            booking_input.select_super.options[0] = new Option("not sure","not_sure");
-            let b=1
-            for(let i =0; i < rolodex.length; i++){
-                if (rolodex[i].id == selectedcompany){
-
-                    booking_input.select_pm.options[b] = new Option(rolodex[i].name,rolodex[i].person_pk);
-                    booking_input.select_super.options[b] = new Option(rolodex[i].name,rolodex[i].person_pk);
-                    b=b+1
-                }
-            }
-
-         }
-        function clear_select_pm() {
-            for(let i = booking_input.select_pm.options.length; i >= 0; i--) {
-                booking_input.select_pm.remove(i);
-            }
-            booking_input.select_pm.options[0] = new Option("use below", "use_below");
+function changed_client() {
+    if (booking_input.select_company.value == "please_select") {
+        document.getElementById("client_info").style.display = "none"
+        return;
+    }
+else if (booking_input.select_company.value == "add_new") {
+        document.getElementById("client_info").style.display = "block"
+        document.getElementById("client_title").innerHTML = "New Client Info"
+        booking_input.new_client.placeholder = "Company Name"
+        booking_input.new_client_phone.placeholder = "Company Phone"
+        booking_input.new_client_bid_email.placeholder = "Company Email"
+        return;
+    }
+    else {
+        document.getElementById("client_info").style.display = "block"
+        document.getElementById("client_title").innerHTML = "Client Info"
+        booking_input.new_pm.value =""
+        booking_input.new_super.value =""
+        booking_input.new_pm_phone.value =""
+        booking_input.new_super_phone.value =""
+        booking_input.new_pm_email.value =""
+        booking_input.new_super_email.value =""
+        $.ajax({
+        method: 'GET',
+        url: '/rentals/rental_ajax',
+        data: {'client_id':booking_input.select_company.value},
+        success: function (data) {
+            parsedData = JSON.parse(data);
+            booking_input.new_client_phone.value = parsedData.phone
+            booking_input.new_client_bid_email.value = parsedData.email
+            booking_input.new_client.value = parsedData.name
+        }})
+        let selectedcompany = booking_input.select_company.value
+        let rolodex = JSON.parse("{{data|escapejs}}");
+        //console.log(selectedcompany)
+        //alert()
+        for(let i = booking_input.select_pm.options.length; i >= 0; i--) {
+            booking_input.select_pm.remove(i);
         }
-        function clear_select_super() {
-            for(let i = booking_input.select_super.options.length; i >= 0; i--) {
-                booking_input.select_super.remove(i);
+        for(let i = booking_input.select_super.options.length; i >= 0; i--) {
+            booking_input.select_super.remove(i);
+        }
+        booking_input.select_pm.options[0] = new Option("Please Select","please_select");
+        booking_input.select_super.options[0] = new Option("not sure","not_sure");
+        booking_input.select_pm.options[1] = new Option("Add New","add_new");
+        booking_input.select_super.options[1] = new Option("Add New","add_new");
+        let b=2
+        for(let i =0; i < rolodex.length; i++){
+            if (rolodex[i].id == selectedcompany){
+                booking_input.select_pm.options[b] = new Option(rolodex[i].name,rolodex[i].person_pk);
+                booking_input.select_super.options[b] = new Option(rolodex[i].name,rolodex[i].person_pk);
+                b=b+1
             }
-            booking_input.select_super.options[0] = new Option("use below", "use_below");
         }
-        function clear_client() {
-                booking_input.select_company.options[0] = new Option("Add New", "add_new");
-                booking_input.select_company.value = "add_new";
-                clear_select_pm()
-                clear_select_super()
-                booking_input.select_pm.options[1] = new Option("Please Select", "please_select");
-                booking_input.select_super.options[1] = new Option("not sure", "not_sure");
-        }
+        document.getElementById("pm_info").style.display = "none"
+        document.getElementById("super_info").style.display = "none"
+    }
+ }
 
         function clicked_paint(){
             if (booking_input.has_paint2.checked==false){
@@ -280,16 +297,79 @@ var startdate = "{{startdate}}"
             var yyyy = today.getFullYear();
             today = startdate;
             booking_input.start_date.value = today
+            document.getElementById("pm_info").style.display = "block"
+            document.getElementById("pm_title").innerHTML = "PM Info"
+            document.getElementById("client_info").style.display = "block"
+            document.getElementById("client_title").innerHTML = "Client Info"
+            if (booking_input.select_super.value == "not_sure") {document.getElementById("super_info").style.display = "none"}
+            else {document.getElementById("super_info").style.display = "block"}
         };
 
+function changed_pm(){
+
+    if (booking_input.select_pm.value == "please_select") {
+        document.getElementById("pm_info").style.display = "none"
+        return;
+    }
+    else if (booking_input.select_pm.value == "add_new") {
+        document.getElementById("pm_info").style.display = "block"
+        document.getElementById("pm_title").innerHTML = "New PM Info"
+        booking_input.new_pm.placeholder = "Name"
+        booking_input.new_pm_phone.placeholder = "Phone"
+        booking_input.new_pm_email.placeholder = "Email"
+        return;
+    }
+    else {
+        document.getElementById("pm_info").style.display = "block"
+        document.getElementById("pm_title").innerHTML = "PM Info"
+        $.ajax({
+        method: 'GET',
+        url: '/rentals/rental_ajax',
+        data: {'client_pm_id':booking_input.select_pm.value},
+        success: function (data) {
+            parsedData = JSON.parse(data);
+            booking_input.new_pm_phone.value = parsedData.phone
+            booking_input.new_pm_email.value = parsedData.email
+            booking_input.new_pm.value = parsedData.name
+        }})
+    }
+}
+function changed_super(){
+    if (booking_input.select_super.value == "not_sure") {
+        document.getElementById("super_info").style.display = "none"
+        return;
+    }
+    else if (booking_input.select_super.value == "add_new") {
+        document.getElementById("super_info").style.display = "block"
+        document.getElementById("super_title").innerHTML = "New Super Info"
+        booking_input.new_super.placeholder = "Name"
+        booking_input.new_super_phone.placeholder = "Phone"
+        booking_input.new_super_email.placeholder = "Email"
+        return;
+    }
+    else {
+        document.getElementById("super_info").style.display = "block"
+        document.getElementById("super_title").innerHTML = "Super Info"
+        $.ajax({
+        method: 'GET',
+        url: '/rentals/rental_ajax',
+        data: {'client_pm_id':booking_input.select_super.value},
+        success: function (data) {
+            parsedData = JSON.parse(data);
+            booking_input.new_super_phone.value = parsedData.phone
+            booking_input.new_super_email.value = parsedData.email
+            booking_input.new_super.value = parsedData.name
+        }})
+    }
+}
 
     </script>
 
 </head>
 
-  <body>
-    <div>
-    <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+<body>
+<form name = booking_input action="{% url 'update_job_info' selectedjob.job_number %}" method="post" class="form-group" onSubmit = "return check_booking_data()">
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
         <a style="padding-left: 14px;" class="navbar-brand sub-navbar-brand" href="#">Active Jobs</a>
         <div id="navbarNavDropdown2">
           <ul class="sub-nav-list navbar-nav ">
@@ -299,144 +379,148 @@ var startdate = "{{startdate}}"
           </ul>
         </div>
       </nav>
-	<div style="padding-top: 50px" class="row align-items-center justify-content-center align-middle">
-		<div class="col-10">
-            <form name = booking_input action="{% url 'update_job_info' selectedjob.job_number %}" method="post" class="form-group" onSubmit = "return check_booking_data()">
-                {% csrf_token %}
-                <div class ="row">
-                    <div class="col-sm-12">
-                        <h3>{{selectedjob.job_number}}</h3>
+<div style="padding-top: 50px" class="row align-items-center justify-content-center align-middle">
+    {% csrf_token %}
+    <div class = "container">
+        <div class ="row">
+            <div class="col-sm-12">
+                <h3>{{selectedjob.job_number}}</h3>
+            </div>
+        </div>
+        <div class ="row">
+            <div class="col-sm-12">
+                <input class="form-control" type="text" name="job_name" value = "{{selectedjob.job_name}}" size="100" id="job_name"/><br />
+            </div>
+        </div>
+        <div class ="row">
+            <div class="col-sm-12">
+                <input class="form-control" type="text" name="address" value = "{{selectedjob.address}}" size="100" id="address" /><br />
+            </div>
+        </div>
+        <div class ="row">
+            <div class="col-sm-6">
+                <input class="form-control" type="text" name="city" value = {{selectedjob.city}} id="city"/><br />
+            </div>
+            <div class="col-sm-6">
+                <input class="form-control" type="text" name="state" value = {{selectedjob.state}} id="state" maxlength="2" /><br />
+            </div>
+        </div>
+        <!#city state>
+        <hr>
+        <div class ="row">
+            <div class="col-sm-6">
+                <label for="on_base2">"Security Clearance Required?" </label>
+
+                {% if selectedjob.is_on_base == True %}
+                <input type="checkbox" name ="on_base2" id="on_base2" checked />
+                {% else %}
+                <input type="checkbox" name ="on_base2" id="on_base2" />
+                {% endif %}
+            </div>
+        </div>
+        <hr>
+        <div class ="row">
+            <div class="col-sm-6">
+            <label for="is_wage_rate">"Are there wage rates for this job?" </label>
+                {% if selectedjob.is_wage_scale == True %}
+
+             <input type="checkbox" name ="is_wage_rate" id="is_wage_rate"  checked/>
+                {% else %}
+            <input type="checkbox" name ="is_wage_rate" id="is_wage_rate" />
+            {% endif %}
+            </div>
+        </div>
+        <div class ="row">
+                <div class="col-sm-6">
+                    <label for="spray_scale">Spray</label>
+                {% if selectedjob.spray_scale is None %}
+                <input style="margin-top: 22px" class="form-control" type= "text" name="spray_scale" id="spray_scale" placeholder = "Spray" size="30"/><br />
+                {% else %}
+                <input style="margin-top: 22px" class="form-control" type= "text" name="spray_scale" id="spray_scale" value = "{{selectedjob.spray_scale}}" size="30"/><br />
+                {% endif %}
                     </div>
-                </div>
-                <div class ="row">
-                    <div class="col-sm-12">
-                        <input class="form-control" type="text" name="job_name" value = "{{selectedjob.job_name}}" size="100" id="job_name"/><br />
-                    </div>
-                </div>
-                <div class ="row">
-                    <div class="col-sm-12">
-                        <input class="form-control" type="text" name="address" value = "{{selectedjob.address}}" size="100" id="address" /><br />
-                    </div>
-                </div>
-                <div class ="row">
-                    <div class="col-sm-6">    
-                        <input class="form-control" type="text" name="city" value = {{selectedjob.city}} id="city"/><br />
-                    </div>
-                    <div class="col-sm-6">   
-                        <input class="form-control" type="text" name="state" value = {{selectedjob.state}} id="state" maxlength="2" /><br />
-                    </div>
-                </div>
-                <!#city state>
-                <hr>
-                <div class ="row">
                     <div class="col-sm-6">
-                        <label for="on_base2">"Security Clearance Required?" </label>
-                    </div>
-                    <div class="col-sm-6">
-                        {% if selectedjob.is_on_base == True %}
-                        <input type="checkbox" name ="on_base2" id="on_base2" checked />
-                        {% else %}
-                        <input type="checkbox" name ="on_base2" id="on_base2" />
-                        {% endif %}
-                    </div>
+                        <label for="brush_role">Brush/Roll </label>
+                {% if selectedjob.brush_role is None %}
+                <input style="margin-top: 22px" class="form-control" type= "text" id="brush_role" name="brush_role" placeholder = "Brush & Roll" size="30"/><br />
+                {% else %}
+                <input style="margin-top: 22px" class="form-control" type= "text" id="brush_role" name="brush_role" value = "{{selectedjob.brush_role}}" size="30"/><br />
+                {% endif %}
                 </div>
-                <hr>
 
-                    <div class ="row">
-                        <div class="col-sm-6">
-                        <label for="is_wage_rate">"Are there wage rates for this job?" </label>
-                            {% if selectedjob.is_wage_scale == True %}
+            </div>
+        <!on base / scale>
+        <hr>
+    </div>
+    <div class ="container">
+        <div class ="row">
+            <div class ="col-sm-6">
+                <label for="contract_status">Contract status</label>
+                <select id="contract_status" class="form-control" name="contract_status" >
+                    {% if selectedjob.contract_status == "1" %}
+                   <option value="1">Contract Received</option>#1
+                     {% elif selectedjob.contract_status == "2" %}
+                    <option value="2">Contract not Received Yet</option> #2
+                    {% elif selectedjob.contract_status == "3" %}
+                    <option value="3">Contract not Required</option>#3
+                    {% endif %}
 
-                         <input type="checkbox" name ="is_wage_rate" id="is_wage_rate"  checked/></div>
-                            {% else %}
-                        <input type="checkbox" name ="is_wage_rate" id="is_wage_rate" /></div>
-                        {% endif %}
-                    </div>
-                    <div class ="row">
-                        {% if selectedjob.spray_scale is None %}
-                        <div class="col-sm-6"><input style="margin-top: 22px" class="form-control" type= "text" name="spray_scale" placeholder = "Spray" size="30"/><br /></div>
-                        {% else %}
-                        <div class="col-sm-6"><input style="margin-top: 22px" class="form-control" type= "text" name="spray_scale" value = "{{selectedjob.spray_scale}}" size="30"/><br /></div>
-                        {% endif %}
-                        {% if selectedjob.brush_role is None %}
-                        <div class="col-sm-6"><input style="margin-top: 22px" class="form-control" type= "text" name="brush_role" placeholder = "Brush & Roll" size="30"/><br /></div>
-                        {% else %}
-                        <div class="col-sm-6"><input style="margin-top: 22px" class="form-control" type= "text" name="brush_role" value = "{{selectedjob.brush_role}}" size="30"/><br /></div>
-                        {% endif %}
+                    <option value="1">Contract Received</option>#1
+                    <option value="2">Contract not Received Yet</option> #2
+                    <option value="3">Contract not Required</option>#3
+                </select>
+            </div>
+            <div class ="col-sm-6">
+            <label for="insurance_status">coi status</label>
+                <select id="insurance_status" class="form-control" name="insurance_status" >
+                    {% if selectedjob.insurance_status == "1" %}
+                    <option value="1">coi Received</option>
+                     {% elif selectedjob.insurance_status == "2" %}
+                     <option value="2">coi not Received Yet</option>
+                    {% elif selectedjob.insurance_status == "3" %}
+                     <option value="3">coi not Required</option>
+                    {% endif %}
+                    <option value="1">coi Received</option>
+                    <option value="2">coi not Received Yet</option>
+                    <option value="3">coi not Required</option>
+                </select>
+            </div>
+            <div class ="col-lg"></div>
+        </div>
+    </div> <!#contract status and coi>
+    <hr>
+    <br>
+    <div class ="container">
+    <div class ="row">
+         <div class ="col-sm-12">
+            <label for="has_submittals">"Does this job require submittals?" </label>
+            {% if selectedjob.submittals_needed == True %}
+             <input type="checkbox" name ="has_submittals" id="has_submittals" checked/>
+             {% else %}
+             <input type="checkbox" name ="has_submittals" id="has_submittals"/>
+             {% endif %}
+         </div>
+    </div>
+    <div class ="row">
+         <div class ="col-sm-12">
+            <label for="is_bonded">"Does this job require a bond?" </label>
+             {% if selectedjob.is_bonded == True %}
+            <input type="checkbox" name ="is_bonded" id="is_bonded" checked/>
+             {% else %}
+             <input type="checkbox" name ="is_bonded" id="is_bonded" />
+             {% endif %}
+         </div>
+    </div>
+    </div>
+    <br /> <hr>
 
-                    </div>
-                <!on base / scale>         
-
-                <hr>
-
-                <div class ="container">
-                    <div class ="row">
-                        <div class ="col-sm-6">
-                            <label for="contract_status">Contract status</label>
-                            <select id="contract_status" class="form-control" name="contract_status" >
-                                {% if selectedjob.contract_status == "1" %}
-                               <option value="1">Contract Received</option>#1
-                                 {% elif selectedjob.contract_status == "2" %}
-                                <option value="2">Contract not Received Yet</option> #2
-                                {% elif selectedjob.contract_status == "3" %}
-                                <option value="3">Contract not Required</option>#3
-                                {% endif %}
-
-                                <option value="1">Contract Received</option>#1
-                                <option value="2">Contract not Received Yet</option> #2
-                                <option value="3">Contract not Required</option>#3
-                            </select>
-                        </div>
-                        <div class ="col-sm-6">
-                        <label for="insurance_status">coi status</label>
-                            <select id="insurance_status" class="form-control" name="insurance_status" >
-                                {% if selectedjob.insurance_status == "1" %}
-                                <option value="1">coi Received</option>
-                                 {% elif selectedjob.insurance_status == "2" %}
-                                 <option value="2">coi not Received Yet</option>
-                                {% elif selectedjob.insurance_status == "3" %}
-                                 <option value="3">coi not Required</option>
-                                {% endif %}
-                                <option value="1">coi Received</option>
-                                <option value="2">coi not Received Yet</option>
-                                <option value="3">coi not Required</option>
-                            </select>
-                        </div>
-                        <div class ="col-lg"></div>
-                    </div>
-                </div> <!#contract status and coi>
-                <hr>
-                <br>
-                <div class ="container">
-                <div class ="row">
-                     <div class ="col-sm-12">
-                        <label for="has_submittals">"Does this job require submittals?" </label>
-                        {% if selectedjob.submittals_needed == True %}
-                         <input type="checkbox" name ="has_submittals" id="has_submittals" checked/>
-                         {% else %}
-                         <input type="checkbox" name ="has_submittals" id="has_submittals"/>
-                         {% endif %}
-                     </div>
-                </div>
-                                    <div class ="row">
-                     <div class ="col-sm-12">
-                        <label for="is_bonded">"Does this job require a bond?" </label>
-                         {% if selectedjob.is_bonded == True %}
-                        <input type="checkbox" name ="is_bonded" id="is_bonded" checked/>
-                         {% else %}
-                         <input type="checkbox" name ="is_bonded" id="is_bonded" />
-                         {% endif %}
-                     </div>
-                </div>
-                </div>
-                <br /> <hr>
-
-            <div class ="container"> <!#pick client>
+    <div class ="container" style="background-color:red;"> <!#pick client>
                     <div class ="row" style="height: 50px">
                         <div class ="col-sm-12">
                                 <label>Please select company</label>
-                            <select class="form-control" id="select_company" name="select_company" onChange="filter_estimators()" >
+                            <select class="form-control" id="select_company" name="select_company" onChange="changed_client()" >
                                 <option value="{{selectedjob.client.id}}">{{selectedjob.client}}</option>
+                                <option value="add_new">Add New</option>
                                 {% if allclients %}
                                 {% for client in allclients %}
                                     <option value="{{client.id}}">{{client.company}}</option>
@@ -445,36 +529,47 @@ var startdate = "{{startdate}}"
                             </select>
                         </div>
                     </div>
-                	<button type="button" class="collapsible">Click Here to Add a New Company</button>
-	<div class="content">
+<br />
+                <div id="client_info" class="content">
                     <div class ="row" style="margin-top: 40px">
-                        <div class ="col-sm-12"> Enter New company below: </div>
+                        <div id="client_title" class ="col-sm-12"> Enter New company below: </div>
                     </div>
                     <div class ="row" style="margin-top: 22px" >
                         <div class ="col-sm-12">  
-                            <input class="form-control" type= "text" name="new_client" placeholder="company name" size="30" onClick="clear_client()"/>
+                            <input class="form-control" type= "text" name="new_client" value="{{selectedjob.client.company}}" size="30" />
                         </div>
                     </div>
                     <div class ="row" style="margin-top: 22px" >
-                        <div class ="col-sm-12">  
-                            <input class="form-control" type= "tel" name="new_client_phone" placeholder="phone Number" size="30"/>
+                        <div class ="col-sm-12">
+                            {% if selectedjob.client.phone == "" %}
+                            <input class="form-control" type= "tel" name="new_client_phone" placeholder="Phone" size="30"/>
+                            {% else %}
+                            <input class="form-control" type= "tel" name="new_client_phone" value="{{selectedjob.client.phone}}" size="30"/>
+                            {% endif %}
+
                         </div>
                     </div>
                     <div class ="row" style="margin-top: 22px" >
-                        <div class ="col-sm-12">  
-                            <input class="form-control" type= "email" name="new_client_bid_email" placeholder="email" size="30"/>
+                        <div class ="col-sm-12">
+                            {% if selectedjob.client.phone == "" %}
+                            <input class="form-control" type= "email" name="new_client_bid_email" placeholder="Email" size="30"/>
+                            {% else %}
+                            <input class="form-control" type= "email" name="new_client_bid_email" value="{{selectedjob.client.bid_email}}" size="30"/>
+                            {% endif %}
+
                         </div>
                     </div>
-    </div>
+                </div>
             </div> <!pick client>
-            <hr></hr>
-            <div class ="container">
+    <br /><br /><br />
+    <div class ="container" style="background-color:grey;"><! pick pm>
                     <div class = "row">
                         <div class ="col-sm-12">
                             <label for="select_pm">Please select the PM for {{selectedjob.client}}</label>
-                            <select class="form-control" id="select_pm" name="select_pm" >
+                            <select class="form-control" id="select_pm" name="select_pm" onchange="changed_pm()" >
 
                                 <option value="{{selectedjob.client_Pm.person_pk}}">{{selectedjob.client_Pm}}</option>
+                                <option value="add_new">Add New</option>
                                                                 {% if pms_filter %}
                                 {% for client in pms_filter %}
                                     <option value="{{client.person_pk}}">{{client.name}}</option>
@@ -483,39 +578,52 @@ var startdate = "{{startdate}}"
                             </select>
                         </div>
                     </div>
-                                	<button type="button" class="collapsible">Click Here to Add a New Contact</button>
-	<div class="content">
+    <br />
+	    <div id="pm_info" class="content">
                     <div class ="row" style="margin-top: 22px">
-                        <div class ="col-sm-12">Or enter New below: </div>
+                        <div id="pm_title" class ="col-sm-12">Or enter New below: </div>
                     </div>
                     <div class ="row" style="margin-top: 22px">
-                        <div class ="col-sm-12">  
-                            <input  type= "text" name="new_pm" class="form-control" placeholder="office pm name" size="30" onClick="clear_select_pm()"/>
+                        <div class ="col-sm-12">
+                            <input  type= "text" name="new_pm" class="form-control" value="{{selectedjob.client_Pm.name}}" size="30" />
                         </div>
                     </div>
 
                     <div class ="row">
-                        <div class ="col-sm-12">  
-                            <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" placeholder="phone Number" size="30"/>
+                        <div class ="col-sm-12">
+                            {% if selectedjob.client.phone == "" %}
+                            <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" placeholder="Phone" size="30"/>
+                            {% else %}
+                            <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" value="{{selectedjob.client_Pm.phone}}" size="30"/>
+                            {% endif %}
+
                         </div>
                     </div>
                     <div class ="row">
-                        <div class ="col-sm-12">  
-                            <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" placeholder="email" size="30"/>
+                        <div class ="col-sm-12">
+                            {% if selectedjob.client.phone == "" %}
+                            <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" placeholder="Email" size="30"/>
+                            {% else %}
+                            <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" value="{{selectedjob.client_Pm.email}}" size="30"/>
+                            {% endif %}
+
                         </div>
                     </div>
+        </div>
     </div>
-                    <hr></hr>
-                    <div class = "row">
+    <br />
+    <div class ="container" style="background-color:yellow;"><!pick super>
+        <div class = "row">
                         <div class ="col-sm-12">
                             <label for="select_super">Please select the Superintendent for {{selectedjob.client}}</label>
-                            <select class="form-control" id="select_super" name="select_super" >
+                            <select class="form-control" id="select_super" name="select_super" onchange="changed_super()" >
                             {% if selectedjob.client_Super != Null %}
                              <option value="{{selectedjob.client_Super.person_pk}}">{{selectedjob.client_Super}}</option>
-                            {% else %}
-                            <option value="not_sure">"Not Sure"</option>
                             {% endif %}
-                                                                                            {% if pms_filter %}
+                                <option value="not_sure">"Not Sure"</option>
+                                <option value="add_new">Add New</option>
+
+                                {% if pms_filter %}
                                 {% for client in pms_filter %}
                                     <option value="{{client.person_pk}}">{{client.name}}</option>
                                 {% endfor %}
@@ -523,188 +631,201 @@ var startdate = "{{startdate}}"
                             </select>
                         </div>
                     </div>
-                <button type="button" class="collapsible">Click Here to Add a New Contact</button>
-	<div class="content">
+        <br />
+	<div id="super_info" class="content">
                     <div class ="row" style="margin-top: 22px">
-                        <div class ="col-sm-6">Or enter New below: </div>
+                        <div id="super_title" class ="col-sm-6">Or enter New below: </div>
                     </div>
                     <div class ="row" style="margin-top: 22px">
                         <div class ="col-sm-12">
-                            <input type= "text" name="new_super" class="form-control" placeholder="superintendent name" size="30" onClick="clear_select_super()"/>
+                            {% if selectedjob.client_Super != Null %}
+                            <input type= "text" name="new_super" class="form-control" value="{{selectedjob.client_Super.name}}" size="30" />
+                            {% else %}
+                            <input type= "text" name="new_super" class="form-control" placeholder="superintendent name" size="30" />
+                            {% endif %}
                         </div>
                     </div>
                     <div class ="row">
                         <div class ="col-sm-12">
+
+                            {% if selectedjob.client_Super != Null and selectedjob.client_Super.phone != "" %}
+                            <input style="margin-top: 22px" class="form-control" type= "tel" name="new_super_phone" value="{{selectedjob.client_Super.phone}}" size="30"/>
+                        {% else %}
                             <input style="margin-top: 22px" class="form-control" type= "tel" name="new_super_phone" placeholder="phone Number" size="30"/>
+                            {% endif %}
                         </div>
                     </div>
                     <div class ="row">
                         <div class ="col-sm-12">
+                            {% if selectedjob.client_Super != Null and selectedjob.client_Super.email != "" %}
+                            <input style="margin-top: 22px" class="form-control" type= "email" name="new_super_email" value="{{selectedjob.client_Super.email}}" size="30"/>
+                        {% else %}
                             <input style="margin-top: 22px" class="form-control" type= "email" name="new_super_email" placeholder="email" size="30"/>
-                        </div>
-                    </div>
-                </div>
-            </div>
-                <br /> <hr><br />
-                <div class ="container">
-                    <label for="select_gpsuper">Please select Gerloff superintendent</label>
-                    <select class="form-control" id="select_gpsuper" name="select_gpsuper" >
-                        {% if selectedjob.superintendent != Null %}
-                        <option value="{{selectedjob.superintendent.id}}">{{selectedjob.superintendent}}</option>
-                        {% else %}
-                        <option value="not_sure">not sure</option>
-                        {% endif %}
-                        {% if superintendents %}
-                        {% for employee in superintendents %}
-                        <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
-                        {% endfor %}
-                        {% endif %}
-                    </select>
-                <br /> <hr>
-                </div>
-                <div class ="container">
-                    <label for="select_gpestimator">Please select Gerloff Estimator</label>
-                    <select class="form-control" id="select_gpestimator" name="select_gpestimator" >
-                        <option value="{{selectedjob.estimator.id}}">{{selectedjob.estimator}}</option>
-                        {% if estimators %}
-                        {% for employee in estimators %}
-                        <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
-                        {% endfor %}
-                        {% endif %}
-                    </select>
-                <br /> <hr>
-                </div>
-                <div class ="container">
-                    <div class ="row">
-                        <div class ="col-sm-12">Please select the scopes of work this project includes:</div>
-                    </div>
-                    <div class ="row">
-                        <div class ="col-sm-6">  
-
-                            <label for="has_paint2">"Painting" </label>
-                            {% if selectedjob.has_paint == True %}
-                            <input type="checkbox" name ="has_paint" id="has_paint2"  onClick="clicked_paint()" checked />
-                            {% else %}
-                             <input type="checkbox" name ="has_paint" id="has_paint2"  onClick="clicked_paint()" />
-                            {% endif %}
-                            <br /> 
-                        </div>
-                        <div class ="col-sm-6">
-                            <label for="has_wallcovering2">"Wallcovering" </label>
-                            {% if selectedjob.has_wallcovering == True %}
-                            <input type="checkbox" name ="has_wallcovering" id="has_wallcovering2" onclick="clicked_wc()" checked/>
-                            {% else %}
-                             <input type="checkbox" name ="has_wallcovering" id="has_wallcovering2" onclick="clicked_wc()"/>
                             {% endif %}
                         </div>
                     </div>
-                        <div class ="row">
-                             <div class ="col-sm-12">
-                            <label for="has_special_paint">"Does this job have special paint that has to be ordered? " </label>
-                                                        {% if selectedjob.special_paint_needed == True %}
-                            <input type="checkbox" name ="has_special_paint" id="has_special_paint" checked/>
-                            {% else %}
-                             <input type="checkbox" name ="has_special_paint" id="has_special_paint" />
-                            {% endif %}
-
-                             </div>
-                        </div>
-                </div>
-                <br /> <hr>
-
-                <div class ="container">
-                    <div class ="row">
-                        <div class ="col-sm-12">
-                            <label for="start_date">Start date:</label>
-                            <input class="form-control" type="date" id="start_date" name="start_date" value = "{{selectedjob.start_date}}">
-                        </div>
-                    </div>
-                    <div class ="row">
-                        <div class = "col-12"> 
-                            <label for="date_note">Please clarify how you got this date: </label>
-                            <br>
-                            <textarea class="form-control" id="date_note" name="date_note" rows="4" cols="50" ></textarea>
-                        </div>
-                    </div>
-                </div>
-                <br /> <hr>
-                <div class ="container">
-                <label for="email_job_note">Summarize the job scope: </label> <br>
-                    {% if selectedjob.notes is None %}
-                <textarea class="form-control" id="email_job_note" name="email_job_note" rows="4" cols="100" ></textarea>
-                    {% else %}
-                <textarea class="form-control" id="email_job_note" name="email_job_note" rows="4" cols="100" >{{selectedjob.notes}}</textarea>
-                    {% endif %}
-                <hr>
-                </div>
-                                    <hr>
-                <div class ="container">
-                    <div class ="row">
-                        <div class="col-sm-6">"Is this a T&M Job?"</div>
-                        <div class ="col-sm-6">
-                            {% if selectedjob.is_t_m_job == True %}
-                            <input type="checkbox" name ="is_t_m_job" id="is_t_m_job2" onClick= "hide_contract_amount()" checked />
-                        {% else %}
-                            <input type="checkbox" name ="is_t_m_job" id="is_t_m_job2" onClick= "hide_contract_amount()" />
-                             {% endif %}
-                        </div>
-                    </div>
-                    <br>
-                    <div class ="row"> <div class="col-sm-6">"NTE Amount" </div>
-                            <div class="col-sm-6">
-                            <input class="form-control" type="number" id ="t_m_nte_amount" name="t_m_nte_amount" value = {{selectedjob.t_m_nte_amount}} step="0.01" size="30" />
-                            </div>
-                        </div>
-                        <div class ="col-lg"></div>
-                    </div>
-                <br>
-                <div class ="container" id = "contract_amount_section">
-                    <div class ="row">
-                        <div class ="col-sm-6">PO Number: </div>
-                        {% if selectedjob.po_number is None %}
-                        <div class ="col-sm-6"> <input class="form-control" type= "text" name="po_number" placeholder="PO Number" size="30" id="po_number"/>     <br /> </div>
-                        {% else %}
-                        <div class ="col-sm-6"> <input class="form-control" type= "text" name="po_number" value = "{{selectedjob.po_number}}" size="30" id="po_number"/>     <br /> </div>
-                        {% endif %}
-                    </div>
-                    <div class ="row">
-                        <div class ="col-sm-6">Total Contract Amount: </div>
-                        <div class ="col-sm-6"> <input class="form-control" type= "number" name="contract_amount" value = "{{selectedjob.contract_amount}}" $$" size="30" step="0.01" id="contract_amount"/>     <br /> </div>
-                    </div>
-                </div>
-                <div class ="container" id = "contract_amount_section2">
-                    <div class ="row">
-                        <div class ="col-sm-6">Painting Budget: </div>
-                        <div class ="col-sm-6"> <input class="form-control" type= "number" name="painting_budget" value = "{{selectedjob.painting_budget}}" size="30" id="painting_budget" step="0.01" onchange = "clicked_paintbudget()"/> <br /> </div>
-                    </div>
-                    <div class ="row">
-                        <div class ="col-sm-6">Wallcovering Budget: </div>
-                        <div class ="col-sm-6"> <input class="form-control" type= "number" name="wallcovering_budget" id="wallcovering_budget" value = "{{selectedjob.wallcovering_budget}}" size="30" step="0.01" onchange = "clicked_wcbudget()"/> <br /> </div>
-                    </div>
-                </div>
-                <br /> <hr>
-                <div class ="container" id = "close_job">
-                    <div class ="row">
-                        <div class ="col-sm-6">
-                            <label for="is_closed">Close Job? </label>
-                            {% if selectedjob.is_closed == True %}
-                            <input type="checkbox" name ="is_closed" id="is_closed"  checked />
-                            {% else %}
-                             <input type="checkbox" name ="is_closed" id="is_closed"  />
-                            {% endif %}
-
-                             </div>
-
-                    </div>
-
-                </div>
-                <br />
-                <div class ="container">
-                    <input type="submit" class="btn btn-primary btn-sm" value="Save" /></div>
-            </form>
         </div>
     </div>
+    <br> <br>
+    <div class ="container">
+        <label for="select_gpsuper">Please select Gerloff superintendent</label>
+        <select class="form-control" id="select_gpsuper" name="select_gpsuper" >
+            {% if selectedjob.superintendent != Null %}
+            <option value="{{selectedjob.superintendent.id}}">{{selectedjob.superintendent}}</option>
+            {% else %}
+            <option value="not_sure">not sure</option>
+            {% endif %}
+            {% if superintendents %}
+            {% for employee in superintendents %}
+            <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
+            {% endfor %}
+            {% endif %}
+        </select>
+    <br>
+    </div>
+    <div class ="container">
+        <label for="select_gpestimator">Please select Gerloff Estimator</label>
+        <select class="form-control" id="select_gpestimator" name="select_gpestimator" >
+            <option value="{{selectedjob.estimator.id}}">{{selectedjob.estimator}}</option>
+            {% if estimators %}
+            {% for employee in estimators %}
+            <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
+            {% endfor %}
+            {% endif %}
+        </select>
+    <br /> <hr>
+    </div>
+    <div class ="container">
+        <div class ="row">
+            <div class ="col-sm-12">Please select the scopes of work this project includes:</div>
+        </div>
+        <div class ="row">
+            <div class ="col-sm-6">
 
+                <label for="has_paint2">"Painting" </label>
+                {% if selectedjob.has_paint == True %}
+                <input type="checkbox" name ="has_paint" id="has_paint2"  onClick="clicked_paint()" checked />
+                {% else %}
+                 <input type="checkbox" name ="has_paint" id="has_paint2"  onClick="clicked_paint()" />
+                {% endif %}
+                <br />
+            </div>
+            <div class ="col-sm-6">
+                <label for="has_wallcovering2">"Wallcovering" </label>
+                {% if selectedjob.has_wallcovering == True %}
+                <input type="checkbox" name ="has_wallcovering" id="has_wallcovering2" onclick="clicked_wc()" checked/>
+                {% else %}
+                 <input type="checkbox" name ="has_wallcovering" id="has_wallcovering2" onclick="clicked_wc()"/>
+                {% endif %}
+            </div>
+        </div>
+            <div class ="row">
+                 <div class ="col-sm-12">
+                <label for="has_special_paint">"Does this job have special paint that has to be ordered? " </label>
+                                            {% if selectedjob.special_paint_needed == True %}
+                <input type="checkbox" name ="has_special_paint" id="has_special_paint" checked/>
+                {% else %}
+                 <input type="checkbox" name ="has_special_paint" id="has_special_paint" />
+                {% endif %}
+
+                 </div>
+            </div>
+    </div>
+    <br /> <hr>
+
+    <div class ="container">
+        <div class ="row">
+            <div class ="col-sm-12">
+                <label for="start_date">Start date:</label>
+                <input class="form-control" type="date" id="start_date" name="start_date" value = "{{selectedjob.start_date}}">
+            </div>
+        </div>
+        <div class ="row">
+            <div class = "col-12">
+                <label for="date_note">Please clarify how you got this date: </label>
+                <br>
+                <textarea class="form-control" id="date_note" name="date_note" rows="4" cols="50" ></textarea>
+            </div>
+        </div>
+    </div>
+    <br /> <hr>
+    <div class ="container">
+    <label for="email_job_note">Summarize the job scope: </label> <br>
+        {% if selectedjob.notes is None %}
+    <textarea class="form-control" id="email_job_note" name="email_job_note" rows="4" cols="100" ></textarea>
+        {% else %}
+    <textarea class="form-control" id="email_job_note" name="email_job_note" rows="4" cols="100" >{{selectedjob.notes}}</textarea>
+        {% endif %}
+    <hr>
+    </div>
+                        <hr>
+    <div class ="container">
+        <div class ="row">
+            <div class="col-sm-6">"Is this a T&M Job?"</div>
+            <div class ="col-sm-6">
+                {% if selectedjob.is_t_m_job == True %}
+                <input type="checkbox" name ="is_t_m_job" id="is_t_m_job2" onClick= "hide_contract_amount()" checked />
+            {% else %}
+                <input type="checkbox" name ="is_t_m_job" id="is_t_m_job2" onClick= "hide_contract_amount()" />
+                 {% endif %}
+            </div>
+        </div>
+        <br>
+        <div class ="row"> <div class="col-sm-6">"NTE Amount" </div>
+                <div class="col-sm-6">
+                <input class="form-control" type="number" id ="t_m_nte_amount" name="t_m_nte_amount" value = {{selectedjob.t_m_nte_amount}} step="0.01" size="30" />
+                </div>
+            </div>
+            <div class ="col-lg"></div>
+    </div>
+    <br>
+    <div class ="container" id = "contract_amount_section">
+        <div class ="row">
+            <div class ="col-sm-6">PO Number: </div>
+            {% if selectedjob.po_number is None %}
+            <div class ="col-sm-6"> <input class="form-control" type= "text" name="po_number" placeholder="PO Number" size="30" id="po_number"/>     <br /> </div>
+            {% else %}
+            <div class ="col-sm-6"> <input class="form-control" type= "text" name="po_number" value = "{{selectedjob.po_number}}" size="30" id="po_number"/>     <br /> </div>
+            {% endif %}
+        </div>
+        <div class ="row">
+            <div class ="col-sm-6">Total Contract Amount: </div>
+            <div class ="col-sm-6"> <input class="form-control" type= "number" name="contract_amount" value = "{{selectedjob.contract_amount}}" $$" size="30" step="0.01" id="contract_amount"/>     <br /> </div>
+        </div>
+    </div>
+    <div class ="container" id = "contract_amount_section2">
+        <div class ="row">
+            <div class ="col-sm-6">Painting Budget: </div>
+            <div class ="col-sm-6"> <input class="form-control" type= "number" name="painting_budget" value = "{{selectedjob.painting_budget}}" size="30" id="painting_budget" step="0.01" onchange = "clicked_paintbudget()"/> <br /> </div>
+        </div>
+        <div class ="row">
+            <div class ="col-sm-6">Wallcovering Budget: </div>
+            <div class ="col-sm-6"> <input class="form-control" type= "number" name="wallcovering_budget" id="wallcovering_budget" value = "{{selectedjob.wallcovering_budget}}" size="30" step="0.01" onchange = "clicked_wcbudget()"/> <br /> </div>
+        </div>
+    </div>
+    <br /> <hr>
+    <div class ="container" id = "close_job">
+        <div class ="row">
+            <div class ="col-sm-6">
+                <label for="is_closed">Close Job? </label>
+                {% if selectedjob.is_closed == True %}
+                <input type="checkbox" name ="is_closed" id="is_closed"  checked />
+                {% else %}
+                 <input type="checkbox" name ="is_closed" id="is_closed"  />
+                {% endif %}
+
+                 </div>
+
+        </div>
+
+    </div>
+    <br />
+    <div class ="container">
+        <input type="submit" class="btn btn-primary btn-sm" value="Save" /></div>
+
+</div>
+
+</form>
 <script src=”https://code.jquery.com/jquery-3.2.1.slim.min.js” integrity=”sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN” crossorigin=”anonymous”></script>
 
 <script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js integrity=”sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q” crossorigin=”anonymous”></script>
@@ -713,24 +834,10 @@ var startdate = "{{startdate}}"
 
 
 <script>
-var coll = document.getElementsByClassName("collapsible");
-var i;
 
-for (i = 0; i < coll.length; i++) {
-  coll[i].addEventListener("click", function() {
-    this.classList.toggle("active");
-    var content = this.nextElementSibling;
-    if (content.style.display === "block") {
-      content.style.display = "none";
-    } else {
-      content.style.display = "block";
-    }
-  });
-}
 </script>
-  </div>
+
 </body>
 
-</div>
 {% endblock %}
 

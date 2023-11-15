@@ -186,7 +186,11 @@ def update_job_info(request, jobnumber):
         elif selectedjob.client.id != request.POST['select_company']:
             selectedjob.client = Clients.objects.get(id=request.POST['select_company'])
             selectedjob.save()
-        if request.POST['select_pm'] == 'use_below':
+        selectedjob.client.company=request.POST['new_client']
+        selectedjob.client.bid_email=request.POST['new_client_bid_email']
+        selectedjob.client.phone=request.POST['new_client_phone']
+        selectedjob.client.save()
+        if request.POST['select_pm'] == 'add_new':
             client_pm = ClientEmployees.objects.create(id=selectedjob.client, name=request.POST['new_pm'],
                                                        phone=request.POST['new_pm_phone'],
                                                        email=request.POST['new_pm_email'])
@@ -194,7 +198,11 @@ def update_job_info(request, jobnumber):
         else:
             if selectedjob.client_Pm.person_pk != request.POST['select_pm']:
                 selectedjob.client_Pm = ClientEmployees.objects.get(person_pk=request.POST['select_pm'])
-        if request.POST['select_super'] == 'use_below':
+        selectedjob.client_Pm.name=request.POST['new_pm']
+        selectedjob.client_Pm.phone=request.POST['new_pm_phone']
+        selectedjob.client_Pm.email=request.POST['new_pm_email']
+        selectedjob.client_Pm.save()
+        if request.POST['select_super'] == 'add_new':
             client_super = ClientEmployees.objects.create(id=selectedjob.client, name=request.POST['new_super'],
                                                           phone=request.POST['new_super_phone'],
                                                           email=request.POST['new_super_email'])
@@ -208,6 +216,10 @@ def update_job_info(request, jobnumber):
                     selectedjob.client_Super = ClientEmployees.objects.get(person_pk=request.POST['select_super'])
             else:
                 selectedjob.client_Super = ClientEmployees.objects.get(person_pk=request.POST['select_super'])
+            selectedjob.client_Super.name = request.POST['new_super']
+            selectedjob.client_Super.phone = request.POST['new_super_phone']
+            selectedjob.client_Super.email = request.POST['new_super_email']
+            selectedjob.client_Super.save()
         if request.POST['select_gpsuper'] == 'not_sure':
             if selectedjob.superintendent is not None:
                 selectedjob.superintendent = None
@@ -235,7 +247,8 @@ def update_job_info(request, jobnumber):
             selectedjob.special_paint_needed = False
 
         if startdate != request.POST['start_date']:
-            start_date_change(selectedjob, request.POST['start_date'], 3, request.POST['date_note'],Employees.objects.get(user=request.user), True)
+            start_date_change(selectedjob, request.POST['start_date'], 3, request.POST['date_note'],
+                              Employees.objects.get(user=request.user), True)
         if selectedjob.notes != request.POST['email_job_note']:
             selectedjob.notes = request.POST['email_job_note']
         if request.POST['po_number'] == "":
@@ -286,30 +299,21 @@ def upload_new_job(request):
             pm_name = sheet_obj.cell(row=19, column=2).value
             send_data['job_name'] = sheet_obj.cell(row=38, column=2).value
             send_data['job_number'] = sheet_obj.cell(row=25, column=2).value
+            send_data['new_client'] = client_name
+            send_data['new_pm_name'] = sheet_obj.cell(row=19, column=2).value
+            send_data['new_pm_phone'] = sheet_obj.cell(row=20, column=2).value
+            send_data['new_pm_email'] = sheet_obj.cell(row=21, column=2).value
+            send_data['new_super_name'] = sheet_obj.cell(row=22, column=2).value
+            send_data['new_super_phone'] = sheet_obj.cell(row=23, column=2).value
+            send_data['new_super_email'] = sheet_obj.cell(row=24, column=2).value
             if Clients.objects.filter(company=client_name).exists():
                 send_data['client'] = Clients.objects.get(company=client_name)
                 send_data['pms_filter'] = ClientEmployees.objects.filter(id=Clients.objects.get(company=client_name))
                 if ClientEmployees.objects.filter(name=pm_name, id__company=client_name).exists():
                     send_data['pm'] = ClientEmployees.objects.get(name=pm_name, id__company=client_name)
-                else:
-                    send_data['new_pm_name'] = sheet_obj.cell(row=19, column=2).value
-                    send_data['new_pm_phone'] = sheet_obj.cell(row=20, column=2).value
-                    send_data['new_pm_email'] = sheet_obj.cell(row=21, column=2).value
                 super_name = sheet_obj.cell(row=22, column=2).value
                 if ClientEmployees.objects.filter(name=super_name, id__company=client_name).exists():
                     send_data['super'] = ClientEmployees.objects.get(name=super_name, id__company=client_name)
-                else:
-                    send_data['new_super_name'] = sheet_obj.cell(row=22, column=2).value
-                    send_data['new_super_phone'] = sheet_obj.cell(row=23, column=2).value
-                    send_data['new_super_email'] = sheet_obj.cell(row=24, column=2).value
-            else:
-                send_data['new_client'] = client_name
-                send_data['new_pm_name'] = sheet_obj.cell(row=19, column=2).value
-                send_data['new_pm_phone'] = sheet_obj.cell(row=20, column=2).value
-                send_data['new_pm_email'] = sheet_obj.cell(row=21, column=2).value
-                send_data['new_super_name'] = sheet_obj.cell(row=22, column=2).value
-                send_data['new_super_phone'] = sheet_obj.cell(row=23, column=2).value
-                send_data['new_super_email'] = sheet_obj.cell(row=24, column=2).value
             if Employees.objects.filter(first_name=sheet_obj.cell(row=39, column=2).value).exists():
                 send_data['estimator'] = Employees.objects.get(first_name=sheet_obj.cell(row=39, column=2).value)
             else:
@@ -323,21 +327,28 @@ def upload_new_job(request):
             wb_obj = openpyxl.load_workbook(os.path.join(settings.MEDIA_ROOT, "job_upload", "Temp.xlsx"))
             sheet_obj = wb_obj["Data"]
 
-            if request.POST['select_company'] == 'use_below':
+            if request.POST['select_company'] == 'add_new':
                 client = Clients.objects.create(company=request.POST['new_client'],
                                                 bid_email=request.POST['new_client_bid_email'],
                                                 phone=request.POST['new_client_phone'])
 
             else:
                 client = Clients.objects.get(id=request.POST['select_company'])
-
-            if request.POST['select_pm'] == 'use_below':
+                client.company = request.POST['new_client']
+                client.bid_email = request.POST['new_client_bid_email']
+                client.phone = request.POST['new_client_phone']
+                client.save()
+            if request.POST['select_pm'] == 'add_new':
                 client_pm = ClientEmployees.objects.create(id=client, name=request.POST['new_pm'],
                                                            phone=request.POST['new_pm_phone'],
                                                            email=request.POST['new_pm_email'])
 
             else:
                 client_pm = ClientEmployees.objects.get(person_pk=request.POST['select_pm'])
+                client_pm.name=request.POST['new_pm']
+                client_pm.phone=request.POST['new_pm_phone']
+                client_pm.email=request.POST['new_pm_email']
+                client_pm.save()
 
             gp_estimator = Employees.objects.get(id=request.POST['select_gpestimator'])
             job_number = sheet_obj.cell(row=25, column=2).value
@@ -376,14 +387,14 @@ def upload_new_job(request):
                                       estimator=gp_estimator)
 
             if request.POST['select_super'] != "not_sure":
-                if request.POST['select_super'] == 'use_below':
-                    if 'duplicate' in request.POST:
-                        job.client_Super = client_pm
-                    else:
+                if 'duplicate' in request.POST:
+                    job.client_Super = client_pm
+                elif request.POST['select_super'] == 'add_new':
                         job.client_Super = ClientEmployees.objects.create(id=client, name=request.POST['new_super'],
                                                                           phone=request.POST['new_super_phone'],
                                                                           email=request.POST['new_super_email'])
-
+                elif request.POST['select_super'] == 'duplicate':
+                    job.client_Super = client_pm
                 else:
                     job.client_Super = ClientEmployees.objects.get(person_pk=request.POST['select_super'])
 
@@ -446,7 +457,9 @@ def job_page(request, jobnumber):
             if 'search2' in request.GET:
                 send_data['search2_exists'] = request.GET['search2']  # super name
                 if request.GET['search2'] != 'ALL' and request.GET['search2'] != 'UNASSIGNED':
-                    send_data['selected_supername'] = Employees.objects.get(id=request.GET['search2']).first_name + " " + Employees.objects.get(id=request.GET['search2']).last_name
+                    send_data['selected_supername'] = Employees.objects.get(
+                        id=request.GET['search2']).first_name + " " + Employees.objects.get(
+                        id=request.GET['search2']).last_name
             if 'search3' in request.GET: send_data['search3_exists'] = request.GET['search3']  # open only
             if 'search4' in request.GET: send_data['search4_exists'] = request.GET['search4']  # gc name
             if 'search5' in request.GET: send_data['search5_exists'] = request.GET['search5']  # upcoming only
@@ -459,11 +472,13 @@ def job_page(request, jobnumber):
         # RequestConfig(request, paginate=False).configure(jobstable)
         send_data['has_filter'] = any(field in request.GET for field in set(search_jobs.get_fields()))
         send_data['supers'] = Employees.objects.exclude(Q(job_title__description="Painter") | Q(active=False))
-        send_data['tickets'] = ChangeOrders.objects.filter(job_number__is_closed=False, is_t_and_m=True, is_ticket_signed=False)
+        send_data['tickets'] = ChangeOrders.objects.filter(job_number__is_closed=False, is_t_and_m=True,
+                                                           is_ticket_signed=False)
         send_data['open_cos'] = ChangeOrders.objects.filter(job_number__is_closed=False, is_closed=False,
-                                               is_approved=False) & ChangeOrders.objects.filter(
+                                                            is_approved=False) & ChangeOrders.objects.filter(
             is_t_and_m=False) | ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=True)
-        send_data['approved_cos'] = ChangeOrders.objects.filter(job_number__is_closed=False, is_closed=False, is_approved=True)
+        send_data['approved_cos'] = ChangeOrders.objects.filter(job_number__is_closed=False, is_closed=False,
+                                                                is_approved=True)
         send_data['equipment'] = Inventory.objects.filter(job_number__is_closed=False).order_by('inventory_type')
         send_data['rentals'] = Rentals.objects.filter(job_number__is_closed=False, off_rent_number__isnull=True)
         wallcovering2 = Wallcovering.objects.filter(job_number__is_closed=False)
@@ -473,22 +488,27 @@ def job_page(request, jobnumber):
                 print(x)
             else:
                 wc_not_ordereds.append(x)
-        send_data['wc_not_ordereds']=wc_not_ordereds
-        send_data['wc_ordereds'] = OrderItems.objects.filter(wallcovering__job_number__is_closed=False, is_satisfied=False)
+        send_data['wc_not_ordereds'] = wc_not_ordereds
+        send_data['wc_ordereds'] = OrderItems.objects.filter(wallcovering__job_number__is_closed=False,
+                                                             is_satisfied=False)
         send_data['packages'] = Packages.objects.filter(delivery__order__job_number__is_closed=False)
         send_data['deliveries'] = OutgoingItem.objects.filter(outgoing_event__job_number__is_closed=False)
         send_data['submittals'] = Submittals.objects.filter(job_number__is_closed=False)
         send_data['subcontracts'] = Subcontracts.objects.filter(job_number__is_closed=False)
         send_data['jobs'] = 'ALL'
-        return render(request, "job_page.html",send_data)
+        return render(request, "job_page.html", send_data)
     else:
         selectedjob = Jobs.objects.get(job_number=jobnumber)
         if request.method == 'POST':
             if 'select_status' in request.POST:
                 if request.POST['select_status'] == 'nothing_done':
-                    message="Labor is not done."
-                    if selectedjob.is_labor_done==True:
-                        Email.sendEmail("Labor not done - " + selectedjob.job_name, "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is not done. " + request.POST['closed_note'], ['joe@gerloffpainting.com','bridgette@gerloffpainting.com', 'victor@gerloffpainting.com'], False)
+                    message = "Labor is not done."
+                    if selectedjob.is_labor_done == True:
+                        Email.sendEmail("Labor not done - " + selectedjob.job_name,
+                                        "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is not done. " +
+                                        request.POST['closed_note'],
+                                        ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
+                                         'victor@gerloffpainting.com'], False)
                     selectedjob.labor_done_Date = None
                     selectedjob.is_waiting_for_punchlist = False
                     selectedjob.is_labor_done = False
@@ -500,7 +520,10 @@ def job_page(request, jobnumber):
                 if request.POST['select_status'] == 'done_done':
                     message = "Labor is 100% done."
                     Email.sendEmail("Labor Done - " + selectedjob.job_name,
-                                    "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is 100% Done. " + request.POST['closed_note'], ['joe@gerloffpainting.com','bridgette@gerloffpainting.com', 'victor@gerloffpainting.com'], False)
+                                    "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is 100% Done. " +
+                                    request.POST['closed_note'],
+                                    ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
+                                     'victor@gerloffpainting.com'], False)
                     selectedjob.labor_done_Date = date.today()
                     selectedjob.is_waiting_for_punchlist = True
                     selectedjob.is_labor_done = True
@@ -508,7 +531,6 @@ def job_page(request, jobnumber):
                 JobNotes.objects.create(job_number=selectedjob,
                                         note=message + " " + request.POST['closed_note'], type="employee_note",
                                         user=Employees.objects.get(user=request.user), date=date.today())
-
 
             if 'add_note' in request.POST:
                 JobNotes.objects.create(job_number=selectedjob,
