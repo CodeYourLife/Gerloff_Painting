@@ -299,6 +299,13 @@
 	<div class="page-header d-flex justify-content-center align-item-center">
 		<H1>Book New Job</H1>
 	</div>
+
+                <div class="text-center">
+                    <form action = "{% url 'upload_new_job' %}" >
+                <button class="btn btn-primary" >UPLOAD FILE </button>
+                    </form>
+                </div>
+
 	<div style="padding-top: 50px" class="row align-items-center justify-content-center align-middle">
 		<div class="col-10">
             <form name = booking_input action="{% url 'register' %}" method="post" class="form-group" onSubmit = "return check_booking_data()">
