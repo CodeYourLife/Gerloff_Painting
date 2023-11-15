@@ -315,6 +315,7 @@ function changed_pm(){
         document.getElementById("pm_info").style.display = "block"
         document.getElementById("pm_title").innerHTML = "New PM Info"
         booking_input.new_pm.placeholder = "Name"
+        booking_input.new_pm_phone.value = ""
         booking_input.new_pm_phone.placeholder = "Phone"
         booking_input.new_pm_email.placeholder = "Email"
         return;
@@ -551,7 +552,7 @@ function changed_super(){
                     </div>
                     <div class ="row" style="margin-top: 22px" >
                         <div class ="col-sm-12">
-                            {% if selectedjob.client.phone == "" %}
+                            {% if selectedjob.client.email == "" %}
                             <input class="form-control" type= "email" name="new_client_bid_email" placeholder="Email" size="30"/>
                             {% else %}
                             <input class="form-control" type= "email" name="new_client_bid_email" value="{{selectedjob.client.bid_email}}" size="30"/>
@@ -591,7 +592,7 @@ function changed_super(){
 
                     <div class ="row">
                         <div class ="col-sm-12">
-                            {% if selectedjob.client.phone == "" %}
+                            {% if selectedjob.client_Pm.phone == ""  %}
                             <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" placeholder="Phone" size="30"/>
                             {% else %}
                             <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" value="{{selectedjob.client_Pm.phone}}" size="30"/>
@@ -601,7 +602,7 @@ function changed_super(){
                     </div>
                     <div class ="row">
                         <div class ="col-sm-12">
-                            {% if selectedjob.client.phone == "" %}
+                            {% if selectedjob.client_Pm.email == "" %}
                             <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" placeholder="Email" size="30"/>
                             {% else %}
                             <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" value="{{selectedjob.client_Pm.email}}" size="30"/>
