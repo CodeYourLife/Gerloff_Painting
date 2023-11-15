@@ -8,7 +8,8 @@ from equipment.models import Inventory
 from jobs.models import Jobs
 from django.http import HttpResponse
 import json
-
+import os
+from django.conf import settings
 
 @login_required(login_url='/accounts/login')
 def new_production_report(request, jobnumber):
@@ -311,7 +312,8 @@ def new_mentorship(request):
         new_item = Mentorship.objects.create(apprentice=Employees.objects.get(id=request.POST['select_apprentice']),
                                              mentor=Employees.objects.get(id=request.POST['select_mentor']),
                                              start_date=date.today(), note=request.POST['note'])
-        MentorshipNotes.objects.create(mentorship=new_item, date=date.today(), user=Employees.objects.get(user=request.user),
+        MentorshipNotes.objects.create(mentorship=new_item, date=date.today(),
+                                       user=Employees.objects.get(user=request.user),
                                        note="New mentorship added")
         return redirect('mentorships', id=new_item.id)
     return render(request, "new_mentorship.html", send_data)
@@ -431,12 +433,14 @@ def certifications(request, id):
     if request.method == 'POST':
         cert = Certifications.objects.get(id=id)
         if 'new_note' in request.POST:
-            CertificationNotes.objects.create(certification=cert, date=date.today(), user=Employees.objects.get(user=request.user),
+            CertificationNotes.objects.create(certification=cert, date=date.today(),
+                                              user=Employees.objects.get(user=request.user),
                                               note=request.POST['note'])
         if 'closed_item' in request.POST:
             cert.is_closed == False
             CertificationNotes.objects.create(certification=cert, date=date.today(),
-                                              user=Employees.objects.get(user=request.user), note="Cert closed." + request.POST['closed_note'])
+                                              user=Employees.objects.get(user=request.user),
+                                              note="Cert closed." + request.POST['closed_note'])
         if 'closed_action' in request.POST:
             cert.action_required = False
             CertificationNotes.objects.create(certification=cert, date=date.today(),
@@ -448,20 +452,24 @@ def certifications(request, id):
             cert.action_required = True
             cert.action = CertificationActionRequired.objects.get(id=request.POST['closed_action_note']).action
             CertificationNotes.objects.create(certification=cert, date=date.today(),
-                                              user=Employees.objects.get(user=request.user), note="Action: <" + cert.action + "> Required! ")
+                                              user=Employees.objects.get(user=request.user),
+                                              note="Action: <" + cert.action + "> Required! ")
         if 'custom_action_now' in request.POST:
             cert.action_required = True
             cert.action = request.POST['custom_action']
             CertificationNotes.objects.create(certification=cert, date=date.today(),
-                                              user=Employees.objects.get(user=request.user), note="Action: <" + cert.action + "> Required! ")
+                                              user=Employees.objects.get(user=request.user),
+                                              note="Action: <" + cert.action + "> Required! ")
         if 'change_start_date' in request.POST:
             cert.date_received = request.POST['start_date']
-            CertificationNotes.objects.create(certification=cert, date=date.today(), user=Employees.objects.get(user=request.user),
+            CertificationNotes.objects.create(certification=cert, date=date.today(),
+                                              user=Employees.objects.get(user=request.user),
                                               note="Start Date Changed to: " + cert.date_received + "- " + request.POST[
                                                   'start_date_note'])
         if 'change_end_date' in request.POST:
             cert.date_expires = request.POST['end_date']
-            CertificationNotes.objects.create(certification=cert, date=date.today(), user=Employees.objects.get(user=request.user),
+            CertificationNotes.objects.create(certification=cert, date=date.today(),
+                                              user=Employees.objects.get(user=request.user),
                                               note="Expiration Date Changed to: " + cert.date_expires + "- " +
                                                    request.POST['end_date_note'])
         cert.save()
@@ -507,11 +515,23 @@ def add_new_employee(request):
     send_data['jobtitles'] = EmployeeTitles.objects.all
     send_data['employers'] = Employers.objects.all
     if request.method == 'POST':
-        Employees.objects.create(first_name=request.POST['first_name'],
-                                 middle_name=request.POST['middle_name'],
-                                 last_name=request.POST['last_name'],
-                                 job_title=EmployeeTitles.objects.get(id=request.POST['jobTitle']),
-                                 employer=Employers.objects.get(id=request.POST['employer']))
+        employee = Employees.objects.create(first_name=request.POST['first_name'],
+                                            middle_name=request.POST['middle_name'],
+                                            last_name=request.POST['last_name'],
+                                            job_title=EmployeeTitles.objects.get(id=request.POST['jobTitle']),
+                                            employer=Employers.objects.get(id=request.POST['employer']))
+        try:
+            # check if employees directory exists
+            employeesFolderPath = os.path.join(settings.MEDIA_ROOT, "employees")
+            if not os.path.isdir(employeesFolderPath):
+                # create employees directory
+                os.mkdir(employeesFolderPath)
+            # create employee folder
+            employeeFolderPath = os.path.join(settings.MEDIA_ROOT, "employees", str(employee.id))
+            os.mkdir(employeeFolderPath)
+        except Exception as e:
+            print('unable to create employee folder', e)
+
         return redirect('employees_home')
     return render(request, "add_new_employee.html", send_data)
 

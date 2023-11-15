@@ -488,7 +488,7 @@ def job_page(request, jobnumber):
                 if request.POST['select_status'] == 'nothing_done':
                     message="Labor is not done."
                     if selectedjob.is_labor_done==True:
-                        Email.sendEmail("Labor not done - " + selectedjob.job_name, "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is not done. " + request.POST['closed_note'], ['joe@gerloffpainting.com','bridgette@gerloffpainting.com', 'victor@gerloffpainting.com'])
+                        Email.sendEmail("Labor not done - " + selectedjob.job_name, "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is not done. " + request.POST['closed_note'], ['joe@gerloffpainting.com','bridgette@gerloffpainting.com', 'victor@gerloffpainting.com'], False)
                     selectedjob.labor_done_Date = None
                     selectedjob.is_waiting_for_punchlist = False
                     selectedjob.is_labor_done = False
@@ -500,7 +500,7 @@ def job_page(request, jobnumber):
                 if request.POST['select_status'] == 'done_done':
                     message = "Labor is 100% done."
                     Email.sendEmail("Labor Done - " + selectedjob.job_name,
-                                    "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is 100% Done. " + request.POST['closed_note'], ['joe@gerloffpainting.com','bridgette@gerloffpainting.com', 'victor@gerloffpainting.com'])
+                                    "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is 100% Done. " + request.POST['closed_note'], ['joe@gerloffpainting.com','bridgette@gerloffpainting.com', 'victor@gerloffpainting.com'], False)
                     selectedjob.labor_done_Date = date.today()
                     selectedjob.is_waiting_for_punchlist = True
                     selectedjob.is_labor_done = True
