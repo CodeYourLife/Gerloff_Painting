@@ -1,6 +1,6 @@
 from equipment.models import Vendors, VendorContact, VendorCategory
 from rentals.models import Rentals, RentalNotes
-from jobs.models import Jobs
+from jobs.models import Jobs, Clients, ClientEmployees
 from django.shortcuts import render, redirect
 from .tables import RentalsTable
 from django_tables2 import RequestConfig
@@ -80,6 +80,7 @@ def rental_new(request, jobnumber):
 
 
 def rental_ajax(request):
+    print("PUMPKIN")
     if request.is_ajax():
         send_data = {}
         if 'rep_id' in request.GET:
@@ -90,6 +91,15 @@ def rental_ajax(request):
             send_data['phone'] = Vendors.objects.get(id=request.GET['vendor_id']).company_phone
             send_data['email'] = Vendors.objects.get(id=request.GET['vendor_id']).company_email
             send_data['name'] = Vendors.objects.get(id=request.GET['vendor_id']).company_name
+        if 'client_id' in request.GET:
+            print("HERE")
+            send_data['phone'] = Clients.objects.get(id=request.GET['client_id']).phone
+            send_data['email'] = Clients.objects.get(id=request.GET['client_id']).bid_email
+            send_data['name'] = Clients.objects.get(id=request.GET['client_id']).company
+        if 'client_pm_id' in request.GET:
+            send_data['phone'] = ClientEmployees.objects.get(person_pk=request.GET['client_pm_id']).phone
+            send_data['email'] = ClientEmployees.objects.get(person_pk=request.GET['client_pm_id']).email
+            send_data['name'] = ClientEmployees.objects.get(person_pk=request.GET['client_pm_id']).name
         return HttpResponse(json.dumps(send_data))
 
 
