@@ -508,7 +508,7 @@ def job_page(request, jobnumber):
                                         "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is not done. " +
                                         request.POST['closed_note'],
                                         ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
-                                         'victor@gerloffpainting.com'])
+                                         'victor@gerloffpainting.com'], False)
                     selectedjob.labor_done_Date = None
                     selectedjob.is_waiting_for_punchlist = False
                     selectedjob.is_labor_done = False
@@ -523,7 +523,7 @@ def job_page(request, jobnumber):
                                     "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is 100% Done. " +
                                     request.POST['closed_note'],
                                     ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
-                                     'victor@gerloffpainting.com'])
+                                     'victor@gerloffpainting.com'], False)
                     selectedjob.labor_done_Date = date.today()
                     selectedjob.is_waiting_for_punchlist = True
                     selectedjob.is_labor_done = True

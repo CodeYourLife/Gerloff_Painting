@@ -3,6 +3,7 @@ from django.shortcuts import render
 from employees.models import *
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User, auth
+from console.misc import Email
 
 def registration(request):
     send_data = {}
@@ -40,11 +41,28 @@ def verifyPin(request):
             send_data['message'] = "PIN NOT CORRECT"
             return render(request, "verify_pin.html", send_data)
 
+def forgotPassword(request):
+    return render(request, "forgot_password.html")
+
 def login(request):
     send_data = {}
     if request.method == 'POST':
         if 'register' in request.POST:
             return render(request, 'verify_pin.html')
+        elif 'forgot' in request.POST:
+            # send email to user
+            try:
+                username = request.POST['username']
+                forgottenUser = User.objects.get(username=username)
+                employee = Employees.objects.get(user=forgottenUser.id)
+                Email.sendEmail("Forgot Password Alert", f"Someone requested their password. If this is not you, please contact your admin. Go to this page forgot_password.com and use this passcode to reset your password {employee.pin}.", [employee.email], False)
+                send_data['message'] = "Email sent to user with their password"
+            except Exception as e:
+                send_data['message'] = "Unable to send email, check username and try again or contact your admin"
+                print('could not send email', e)
+            send_data['username'] = request.POST['username']
+            send_data['password'] = request.POST['password']
+            return render(request, "login.html", send_data)
         else:
             username = request.POST['username']
             password = request.POST['password']
