@@ -549,7 +549,9 @@ function changed_super(){
                     </div>
                     <div class ="row" style="margin-top: 22px" >
                         <div class ="col-sm-12">
+
                             {% if selectedjob.client.bid_email == "" %}
+
                             <input class="form-control" type= "email" name="new_client_bid_email" placeholder="Email" size="30"/>
                             {% else %}
                             <input class="form-control" type= "email" name="new_client_bid_email" value="{{selectedjob.client.bid_email}}" size="30"/>
