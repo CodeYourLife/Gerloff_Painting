@@ -145,7 +145,7 @@ def update_job_info(request, jobnumber):
                     recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com",
                                   "warehouse@gerloffpainting.com", "joe@gerloffpainting.com"]
                     if selectedjob.superintendent.email is None:
-                        message = message + "\n No email address for " + selectedjob.superintendent
+                        message = message + "\n No email address for " + str(selectedjob.superintendent)
                     else:
                         recipients.append(selectedjob.superintendent.email)
                     for x in Inventory.objects.filter(job_number=selectedjob):
