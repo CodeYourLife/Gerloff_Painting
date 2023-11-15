@@ -208,15 +208,16 @@ function changed_client() {
     }
 else if (booking_input.select_company.value == "add_new") {
         document.getElementById("client_info").style.display = "block"
-        document.getElementById("client_title").innerHTML = "New Client Info"
-        booking_input.new_client.placeholder = "Company Name"
+        booking_input.new_client.value = ""
+        booking_input.new_client_phone.value = ""
+        booking_input.new_client_bid_email.value = ""
+                booking_input.new_client.placeholder = "Company Name"
         booking_input.new_client_phone.placeholder = "Company Phone"
         booking_input.new_client_bid_email.placeholder = "Company Email"
         return;
     }
     else {
         document.getElementById("client_info").style.display = "block"
-        document.getElementById("client_title").innerHTML = "Client Info"
         booking_input.new_pm.value =""
         booking_input.new_super.value =""
         booking_input.new_pm_phone.value =""
@@ -298,9 +299,7 @@ else if (booking_input.select_company.value == "add_new") {
             today = startdate;
             booking_input.start_date.value = today
             document.getElementById("pm_info").style.display = "block"
-            document.getElementById("pm_title").innerHTML = "PM Info"
             document.getElementById("client_info").style.display = "block"
-            document.getElementById("client_title").innerHTML = "Client Info"
             if (booking_input.select_super.value == "not_sure") {document.getElementById("super_info").style.display = "none"}
             else {document.getElementById("super_info").style.display = "block"}
         };
@@ -313,16 +312,16 @@ function changed_pm(){
     }
     else if (booking_input.select_pm.value == "add_new") {
         document.getElementById("pm_info").style.display = "block"
-        document.getElementById("pm_title").innerHTML = "New PM Info"
+        booking_input.new_pm.value = ""
         booking_input.new_pm.placeholder = "Name"
         booking_input.new_pm_phone.value = ""
         booking_input.new_pm_phone.placeholder = "Phone"
+        booking_input.new_pm_email.value = ""
         booking_input.new_pm_email.placeholder = "Email"
         return;
     }
     else {
         document.getElementById("pm_info").style.display = "block"
-        document.getElementById("pm_title").innerHTML = "PM Info"
         $.ajax({
         method: 'GET',
         url: '/rentals/rental_ajax',
@@ -342,15 +341,16 @@ function changed_super(){
     }
     else if (booking_input.select_super.value == "add_new") {
         document.getElementById("super_info").style.display = "block"
-        document.getElementById("super_title").innerHTML = "New Super Info"
+        booking_input.new_super.value = ""
         booking_input.new_super.placeholder = "Name"
+        booking_input.new_super_phone.value = ""
         booking_input.new_super_phone.placeholder = "Phone"
+        booking_input.new_super_email.value = ""
         booking_input.new_super_email.placeholder = "Email"
         return;
     }
     else {
         document.getElementById("super_info").style.display = "block"
-        document.getElementById("super_title").innerHTML = "Super Info"
         $.ajax({
         method: 'GET',
         url: '/rentals/rental_ajax',
@@ -410,7 +410,7 @@ function changed_super(){
         <hr>
         <div class ="row">
             <div class="col-sm-6">
-                <label for="on_base2">"Security Clearance Required?" </label>
+                <label for="on_base2"><b>Security Clearance Required?</b> </label>
 
                 {% if selectedjob.is_on_base == True %}
                 <input type="checkbox" name ="on_base2" id="on_base2" checked />
@@ -422,7 +422,7 @@ function changed_super(){
         <hr>
         <div class ="row">
             <div class="col-sm-6">
-            <label for="is_wage_rate">"Are there wage rates for this job?" </label>
+                <label for="is_wage_rate"><b>Are there wage rates for this job?</b> </label>
                 {% if selectedjob.is_wage_scale == True %}
 
              <input type="checkbox" name ="is_wage_rate" id="is_wage_rate"  checked/>
@@ -433,7 +433,7 @@ function changed_super(){
         </div>
         <div class ="row">
                 <div class="col-sm-6">
-                    <label for="spray_scale">Spray</label>
+                    <label for="spray_scale"><b>Spray</b></label>
                 {% if selectedjob.spray_scale is None %}
                 <input style="margin-top: 22px" class="form-control" type= "text" name="spray_scale" id="spray_scale" placeholder = "Spray" size="30"/><br />
                 {% else %}
@@ -441,7 +441,7 @@ function changed_super(){
                 {% endif %}
                     </div>
                     <div class="col-sm-6">
-                        <label for="brush_role">Brush/Roll </label>
+                        <label for="brush_role"><b>Brush/Roll</b> </label>
                 {% if selectedjob.brush_role is None %}
                 <input style="margin-top: 22px" class="form-control" type= "text" id="brush_role" name="brush_role" placeholder = "Brush & Roll" size="30"/><br />
                 {% else %}
@@ -456,7 +456,7 @@ function changed_super(){
     <div class ="container">
         <div class ="row">
             <div class ="col-sm-6">
-                <label for="contract_status">Contract status</label>
+                <label for="contract_status"><b>Contract status</b></label>
                 <select id="contract_status" class="form-control" name="contract_status" >
                     {% if selectedjob.contract_status == "1" %}
                    <option value="1">Contract Received</option>#1
@@ -472,7 +472,7 @@ function changed_super(){
                 </select>
             </div>
             <div class ="col-sm-6">
-            <label for="insurance_status">coi status</label>
+                <label for="insurance_status"><b>coi status</b></label>
                 <select id="insurance_status" class="form-control" name="insurance_status" >
                     {% if selectedjob.insurance_status == "1" %}
                     <option value="1">coi Received</option>
@@ -494,7 +494,7 @@ function changed_super(){
     <div class ="container">
     <div class ="row">
          <div class ="col-sm-12">
-            <label for="has_submittals">"Does this job require submittals?" </label>
+             <label for="has_submittals"><b>Does this job require submittals?</b> </label>
             {% if selectedjob.submittals_needed == True %}
              <input type="checkbox" name ="has_submittals" id="has_submittals" checked/>
              {% else %}
@@ -504,7 +504,7 @@ function changed_super(){
     </div>
     <div class ="row">
          <div class ="col-sm-12">
-            <label for="is_bonded">"Does this job require a bond?" </label>
+            <label for="is_bonded"><b>Does this job require a bond?</b> </label>
              {% if selectedjob.is_bonded == True %}
             <input type="checkbox" name ="is_bonded" id="is_bonded" checked/>
              {% else %}
@@ -515,12 +515,12 @@ function changed_super(){
     </div>
     <br /> <hr>
 
-    <div class ="container" style="background-color:red;"> <!#pick client>
+    <div class ="container" style="background-color:hsla(128,100%, 80%);"> <!#pick client>
                     <div class ="row" style="height: 50px">
                         <div class ="col-sm-12">
-                                <label>Please select company</label>
+                            <label><b>Please select company</b></label>
                             <select class="form-control" id="select_company" name="select_company" onChange="changed_client()" >
-                                <option value="{{selectedjob.client.id}}">{{selectedjob.client}}</option>
+                                <option value="{{selectedjob.client.id}}"><b>{{selectedjob.client}}</b></option>
                                 <option value="add_new">Add New</option>
                                 {% if allclients %}
                                 {% for client in allclients %}
@@ -531,10 +531,7 @@ function changed_super(){
                         </div>
                     </div>
 <br />
-                <div id="client_info" class="content">
-                    <div class ="row" style="margin-top: 40px">
-                        <div id="client_title" class ="col-sm-12"> Enter New company below: </div>
-                    </div>
+                <div id="client_info" class="content" style="background-color:hsla(128,100%, 90%);">
                     <div class ="row" style="margin-top: 22px" >
                         <div class ="col-sm-12">  
                             <input class="form-control" type= "text" name="new_client" value="{{selectedjob.client.company}}" size="30" />
@@ -552,7 +549,9 @@ function changed_super(){
                     </div>
                     <div class ="row" style="margin-top: 22px" >
                         <div class ="col-sm-12">
-                            {% if selectedjob.client.email == "" %}
+
+                            {% if selectedjob.client.bid_email == "" %}
+
                             <input class="form-control" type= "email" name="new_client_bid_email" placeholder="Email" size="30"/>
                             {% else %}
                             <input class="form-control" type= "email" name="new_client_bid_email" value="{{selectedjob.client.bid_email}}" size="30"/>
@@ -563,10 +562,10 @@ function changed_super(){
                 </div>
             </div> <!pick client>
     <br /><br /><br />
-    <div class ="container" style="background-color:grey;"><! pick pm>
+    <div class ="container" style="background-color:hsla(0,100%, 80%);"><! pick pm>
                     <div class = "row">
                         <div class ="col-sm-12">
-                            <label for="select_pm">Please select the PM for {{selectedjob.client}}</label>
+                            <label for="select_pm"><b>Please select the PM for {{selectedjob.client}}</b></label>
                             <select class="form-control" id="select_pm" name="select_pm" onchange="changed_pm()" >
 
                                 <option value="{{selectedjob.client_Pm.person_pk}}">{{selectedjob.client_Pm}}</option>
@@ -580,10 +579,7 @@ function changed_super(){
                         </div>
                     </div>
     <br />
-	    <div id="pm_info" class="content">
-                    <div class ="row" style="margin-top: 22px">
-                        <div id="pm_title" class ="col-sm-12">Or enter New below: </div>
-                    </div>
+	    <div id="pm_info" class="content" style="background-color:hsla(0,100%, 90%);">
                     <div class ="row" style="margin-top: 22px">
                         <div class ="col-sm-12">
                             <input  type= "text" name="new_pm" class="form-control" value="{{selectedjob.client_Pm.name}}" size="30" />
@@ -613,10 +609,10 @@ function changed_super(){
         </div>
     </div>
     <br />
-    <div class ="container" style="background-color:yellow;"><!pick super>
+    <div class ="container" style="background-color:hsla(202,100%, 80%);"><!pick super>
         <div class = "row">
                         <div class ="col-sm-12">
-                            <label for="select_super">Please select the Superintendent for {{selectedjob.client}}</label>
+                            <label for="select_super"><b>Please select the Superintendent for {{selectedjob.client}}</b></label>
                             <select class="form-control" id="select_super" name="select_super" onchange="changed_super()" >
                             {% if selectedjob.client_Super != Null %}
                              <option value="{{selectedjob.client_Super.person_pk}}">{{selectedjob.client_Super}}</option>
@@ -633,10 +629,8 @@ function changed_super(){
                         </div>
                     </div>
         <br />
-	<div id="super_info" class="content">
-                    <div class ="row" style="margin-top: 22px">
-                        <div id="super_title" class ="col-sm-6">Or enter New below: </div>
-                    </div>
+	<div id="super_info" class="content" style="background-color:hsla(202,100%, 90%);">
+
                     <div class ="row" style="margin-top: 22px">
                         <div class ="col-sm-12">
                             {% if selectedjob.client_Super != Null %}
@@ -669,7 +663,7 @@ function changed_super(){
     </div>
     <br> <br>
     <div class ="container">
-        <label for="select_gpsuper">Please select Gerloff superintendent</label>
+        <label for="select_gpsuper"><b>Please select Gerloff superintendent</b></label>
         <select class="form-control" id="select_gpsuper" name="select_gpsuper" >
             {% if selectedjob.superintendent != Null %}
             <option value="{{selectedjob.superintendent.id}}">{{selectedjob.superintendent}}</option>
@@ -685,7 +679,7 @@ function changed_super(){
     <br>
     </div>
     <div class ="container">
-        <label for="select_gpestimator">Please select Gerloff Estimator</label>
+        <label for="select_gpestimator"><b>Please select Gerloff Estimator</b></label>
         <select class="form-control" id="select_gpestimator" name="select_gpestimator" >
             <option value="{{selectedjob.estimator.id}}">{{selectedjob.estimator}}</option>
             {% if estimators %}
@@ -698,12 +692,12 @@ function changed_super(){
     </div>
     <div class ="container">
         <div class ="row">
-            <div class ="col-sm-12">Please select the scopes of work this project includes:</div>
+            <div class ="col-sm-12"><b>Please select the scopes of work this project includes:</b></div>
         </div>
         <div class ="row">
             <div class ="col-sm-6">
 
-                <label for="has_paint2">"Painting" </label>
+                <label for="has_paint2">Painting </label>
                 {% if selectedjob.has_paint == True %}
                 <input type="checkbox" name ="has_paint" id="has_paint2"  onClick="clicked_paint()" checked />
                 {% else %}
@@ -712,7 +706,7 @@ function changed_super(){
                 <br />
             </div>
             <div class ="col-sm-6">
-                <label for="has_wallcovering2">"Wallcovering" </label>
+                <label for="has_wallcovering2">Wallcovering</label>
                 {% if selectedjob.has_wallcovering == True %}
                 <input type="checkbox" name ="has_wallcovering" id="has_wallcovering2" onclick="clicked_wc()" checked/>
                 {% else %}
@@ -722,7 +716,7 @@ function changed_super(){
         </div>
             <div class ="row">
                  <div class ="col-sm-12">
-                <label for="has_special_paint">"Does this job have special paint that has to be ordered? " </label>
+                     <label for="has_special_paint"><b>Does this job have special paint that has to be ordered?</b></label>
                                             {% if selectedjob.special_paint_needed == True %}
                 <input type="checkbox" name ="has_special_paint" id="has_special_paint" checked/>
                 {% else %}
@@ -737,13 +731,13 @@ function changed_super(){
     <div class ="container">
         <div class ="row">
             <div class ="col-sm-12">
-                <label for="start_date">Start date:</label>
+                <label for="start_date"><b>Start date:</b></label>
                 <input class="form-control" type="date" id="start_date" name="start_date" value = "{{selectedjob.start_date}}">
             </div>
         </div>
         <div class ="row">
             <div class = "col-12">
-                <label for="date_note">Please clarify how you got this date: </label>
+                <label for="date_note"><b>Please clarify how you got this date: </b></label>
                 <br>
                 <textarea class="form-control" id="date_note" name="date_note" rows="4" cols="50" ></textarea>
             </div>
@@ -751,7 +745,7 @@ function changed_super(){
     </div>
     <br /> <hr>
     <div class ="container">
-    <label for="email_job_note">Summarize the job scope: </label> <br>
+    <label for="email_job_note"><b>Summarize the job scope:</b> </label> <br>
         {% if selectedjob.notes is None %}
     <textarea class="form-control" id="email_job_note" name="email_job_note" rows="4" cols="100" ></textarea>
         {% else %}
@@ -762,7 +756,7 @@ function changed_super(){
                         <hr>
     <div class ="container">
         <div class ="row">
-            <div class="col-sm-6">"Is this a T&M Job?"</div>
+            <div class="col-sm-6"><b>Is this a T&M Job?</b></div>
             <div class ="col-sm-6">
                 {% if selectedjob.is_t_m_job == True %}
                 <input type="checkbox" name ="is_t_m_job" id="is_t_m_job2" onClick= "hide_contract_amount()" checked />
@@ -772,7 +766,7 @@ function changed_super(){
             </div>
         </div>
         <br>
-        <div class ="row"> <div class="col-sm-6">"NTE Amount" </div>
+        <div class ="row"> <div class="col-sm-6"><b>NTE Amount</b></div>
                 <div class="col-sm-6">
                 <input class="form-control" type="number" id ="t_m_nte_amount" name="t_m_nte_amount" value = {{selectedjob.t_m_nte_amount}} step="0.01" size="30" />
                 </div>
@@ -782,7 +776,7 @@ function changed_super(){
     <br>
     <div class ="container" id = "contract_amount_section">
         <div class ="row">
-            <div class ="col-sm-6">PO Number: </div>
+            <div class ="col-sm-6"><b>PO Number:</b> </div>
             {% if selectedjob.po_number is None %}
             <div class ="col-sm-6"> <input class="form-control" type= "text" name="po_number" placeholder="PO Number" size="30" id="po_number"/>     <br /> </div>
             {% else %}
@@ -790,17 +784,17 @@ function changed_super(){
             {% endif %}
         </div>
         <div class ="row">
-            <div class ="col-sm-6">Total Contract Amount: </div>
+            <div class ="col-sm-6"><b>Total Contract Amount: </b></div>
             <div class ="col-sm-6"> <input class="form-control" type= "number" name="contract_amount" value = "{{selectedjob.contract_amount}}" $$" size="30" step="0.01" id="contract_amount"/>     <br /> </div>
         </div>
     </div>
     <div class ="container" id = "contract_amount_section2">
         <div class ="row">
-            <div class ="col-sm-6">Painting Budget: </div>
+            <div class ="col-sm-6"><b>Painting Budget:</b> </div>
             <div class ="col-sm-6"> <input class="form-control" type= "number" name="painting_budget" value = "{{selectedjob.painting_budget}}" size="30" id="painting_budget" step="0.01" onchange = "clicked_paintbudget()"/> <br /> </div>
         </div>
         <div class ="row">
-            <div class ="col-sm-6">Wallcovering Budget: </div>
+            <div class ="col-sm-6"><b>Wallcovering Budget:</b> </div>
             <div class ="col-sm-6"> <input class="form-control" type= "number" name="wallcovering_budget" id="wallcovering_budget" value = "{{selectedjob.wallcovering_budget}}" size="30" step="0.01" onchange = "clicked_wcbudget()"/> <br /> </div>
         </div>
     </div>
@@ -808,7 +802,7 @@ function changed_super(){
     <div class ="container" id = "close_job">
         <div class ="row">
             <div class ="col-sm-6">
-                <label for="is_closed">Close Job? </label>
+                <label for="is_closed"><b>Close Job? </b></label>
                 {% if selectedjob.is_closed == True %}
                 <input type="checkbox" name ="is_closed" id="is_closed"  checked />
                 {% else %}

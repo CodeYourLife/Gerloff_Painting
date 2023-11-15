@@ -35,7 +35,6 @@ function changed_client() {
     }
 else if (booking_input.select_company.value == "add_new") {
         document.getElementById("client_info").style.display = "block"
-        document.getElementById("client_title").innerHTML = "New Client Info"
         booking_input.new_client.value = '{{new_client}}'
         booking_input.new_client_phone.value = '{{new_pm_phone}}'
         booking_input.new_client_bid_email.value = '{{new_pm_email}}'
@@ -44,7 +43,6 @@ else if (booking_input.select_company.value == "add_new") {
     else {
 
         document.getElementById("client_info").style.display = "block"
-        document.getElementById("client_title").innerHTML = "Client Info"
         booking_input.new_pm.value =""
         booking_input.new_super.value =""
         booking_input.new_pm_phone.value =""
@@ -92,15 +90,12 @@ else if (booking_input.select_company.value == "add_new") {
 window.onload = function() {
 if ('{{client}}'){
         document.getElementById("client_info").style.display = "block"
-        document.getElementById("client_title").innerHTML = "Client Info"
 }
 if ('{{pm}}'){
         document.getElementById("pm_info").style.display = "block"
-        document.getElementById("pm_title").innerHTML = "PM Info"
 }
 if ('{{super}}'){
         document.getElementById("super_info").style.display = "block"
-        document.getElementById("super_title").innerHTML = "Super Info"
 }
 };
 
@@ -161,7 +156,6 @@ function changed_pm(){
     }
     else if (booking_input.select_pm.value == "add_new") {
         document.getElementById("pm_info").style.display = "block"
-        document.getElementById("pm_title").innerHTML = "New PM Info"
         booking_input.new_pm.value = '{{new_pm_name}}'
         booking_input.new_pm_phone.value = '{{new_pm_phone}}'
         booking_input.new_pm_email.value = '{{new_pm_email}}'
@@ -169,7 +163,6 @@ function changed_pm(){
     }
     else {
         document.getElementById("pm_info").style.display = "block"
-        document.getElementById("pm_title").innerHTML = "PM Info"
         $.ajax({
         method: 'GET',
         url: '/rentals/rental_ajax',
@@ -193,7 +186,6 @@ function changed_super(){
     }
     else if (booking_input.select_super.value == "add_new") {
         document.getElementById("super_info").style.display = "block"
-        document.getElementById("super_title").innerHTML = "New Super Info"
         booking_input.new_super.value = '{{new_super_name}}'
         booking_input.new_super_phone.value = '{{new_super_phone}}'
         booking_input.new_super_email.value = '{{new_super_email}}'
@@ -201,7 +193,6 @@ function changed_super(){
     }
     else {
         document.getElementById("super_info").style.display = "block"
-        document.getElementById("super_title").innerHTML = "Super Info"
         $.ajax({
         method: 'GET',
         url: '/rentals/rental_ajax',
@@ -264,7 +255,7 @@ function clicked_duplicate(){
         </div>
     </div>
 <!--#Select Client Drop Down-->
-        <div class ="container" style="background-color:red;"> <!#pick client>
+        <div class ="container" style="background-color:hsla(128,100%, 80%);"> <!#pick client>
                     <div class ="row" style="height: 50px">
                         <div class ="col-sm-12">
 
@@ -284,14 +275,8 @@ function clicked_duplicate(){
 <br><br>
 <!--#Client Email and Phone-->
 
-        <div id="client_info" class="content">
-                    <div class ="row" style="margin-top: 40px">
-                        {% if client %}
-                        <div class ="col-sm-12" id="client_title"> Client Info: </div>
-                        {% else %}
-                        <div class ="col-sm-12" id="client_title"> New Client Info: </div>
-                        {% endif %}
-                    </div>
+        <div id="client_info" class="content" style="background-color:hsla(128,100%, 90%);">
+
                     <div class ="row" style="margin-top: 22px" >
                         <div class ="col-sm-12">  
                             {% if client %}
@@ -323,7 +308,7 @@ function clicked_duplicate(){
 </div> <!pick client>
         <br><br>
 <!--#Select PM Drop Down-->
-    <div class ="container" style="background-color:grey;">
+    <div class ="container" style="background-color:hsla(0,100%, 80%);">
                     <div class = "row">
                         <div class ="col-sm-12">
                             <label for="select_pm">{% if pm %} Selected GC PM was {{pm}} {% else %} Couldn't Find GC PM: {{new_pm_name}} {% endif %}</label>
@@ -342,14 +327,8 @@ function clicked_duplicate(){
 	<br>
 <!--#PM Email and Phone-->
 
-        <div id="pm_info" class="content">
-                    <div class ="row" style="margin-top: 22px">
-                        {% if pm %}
-                        <div id="pm_title" class ="col-sm-12">PM Info: </div>
-                        {% else %}
-                        <div id="pm_title" class ="col-sm-12">New Below: </div>
-                        {% endif %}
-                    </div>
+        <div id="pm_info" class="content" style="background-color:hsla(0,100%, 90%);" >
+
                     <div class ="row" style="margin-top: 22px">
                         <div class ="col-sm-12">
                             {% if pm %}
@@ -382,7 +361,7 @@ function clicked_duplicate(){
     </div>
 <br>
 <!--    #Super Drop Down-->
-    <div class = "container" style="background-color:yellow;">
+    <div class = "container" style="background-color:hsla(202,100%, 80%);">
                     <div class = "row">
                         <div class ="col-sm-12">
 
@@ -402,14 +381,8 @@ function clicked_duplicate(){
 
 <!--#Super Email and Phone-->
 
-	<div id="super_info" class="content">
-                    <div class ="row" style="margin-top: 22px">
-                        {% if super %}
-                        <div id="super_title" class ="col-sm-6">Super Info: </div>
-                        {% else %}
-                        <div id="super_title" class ="col-sm-6">Enter New below: </div>
-                        {% endif %}
-                    </div>
+	<div id="super_info" class="content" style="background-color:hsla(202,100%, 90%);">
+
                        <div class ="row" style="margin-top: 22px">
                         <div class ="col-sm-12">
                             <label for="duplicate">Click Here if Same Person as PM Above </label>
