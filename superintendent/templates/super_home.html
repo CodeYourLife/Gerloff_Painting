@@ -397,14 +397,14 @@ window.location.href = url
                         <legend style="font-size: 12px; width: fit-content;">Job Table Legend</legend>
                         <div class="row h-100 d-flex"
                              style="margin-left: 10px; justify-content: space-around; margin-bottom: 10px;">
-                            <div style="margin: 8px; width:fit-content; background-color:#ffff00; padding: 5px; border-radius: 5px;">
+                            <div style="margin: 8px; width:fit-content; background-color:hsl(63, 85%, 79%); padding: 5px; border-radius: 5px;">
                                 Off Hours
 
                             </div>
-                            <div style="margin: 8px; width:fit-content; background-color:#00ff00; padding: 5px; border-radius: 5px;">
+                            <div style="margin: 8px; width:fit-content; background-color:hsl(90,100%,75%); padding: 5px; border-radius: 5px;">
                                 On Base
                             </div>
-                            <div style="margin: 8px; width:fit-content; background-color:#bcd5bc;  padding: 5px; border-radius: 5px;">
+                            <div style="margin: 8px; width:fit-content; background-color:hsl(340, 100%, 92%);  padding: 5px; border-radius: 5px;">
                                 Check Date
                             </div>
                         </div>
@@ -440,17 +440,21 @@ window.location.href = url
                                 <tr onclick="showemployeedata('{{job.job_number}}','{{job.job_name}}','{{job.start_date}}','{{job.is_active}}',this)">
                                 {% endif %}
                                 {% if job.is_off_hours == True and job.is_labor_done == False and job.is_waiting_for_punchlist == False %}
-                                <td style="background-color:#ffff00">{% else %}
+
+                                <td style="background-color:hsl(63, 85%, 79%)">{% else %}
                                 <td>{% endif %}{{job.job_number}}</td>
 
                                 {% if job.is_on_base == True and job.is_labor_done == False and job.is_waiting_for_punchlist == False %}
-                                <td style="background-color:#00ff00">{% else %}
+                                <td style="background-color:hsl(90,100%,75%)">{% else %}
+
                                 <td style="white-space:nowrap" width="200">{% endif %}<a
                                         href="{% url 'job_page' job.job_number %}">
                                     <div style="height:100%;width:100%">{% if job.is_labor_done == True %}<b>[DONE]</b>{% elif job.is_waiting_for_punchlist == True %}<b>[PUNCH]</b>{% endif %} {{job.job_name}}</div>
                                 </a></td>
                                 {% if job.check_start_date == True and job.is_labor_done == False and job.is_waiting_for_punchlist == False %}
-                                <td data-toggle="modal" style="background-color:#bcd5bc;white-space:nowrap"
+
+                                <td data-toggle="modal" style="background-color:hsl(340, 100%, 92%);white-space:nowrap"
+
                                     data-target="#employee-modal"><a href="#">{{job.start_date}}</a></td>
                                 {% else %}
                                 <td data-toggle="modal" data-target="#employee-modal" style="white-space:nowrap"><a
