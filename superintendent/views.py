@@ -136,7 +136,7 @@ def super_home(request, super):
     send_data['search_jobs'] = search_jobs
     send_data['jobs'] = search_jobs.qs
     send_data['jobs_count'] = search_jobs.qs.count()
-    send_data['supers'] = Employees.objects.exclude(Q(job_title__description="Painter") | Q(active=False))
+    send_data['supers'] = Employees.objects.filter(job_title__description="Superintendent", active=True)
     send_data['todays_date'] = date.today() - timedelta(days=45)
     return render(request, "super_home.html", send_data)
 
