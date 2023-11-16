@@ -76,9 +76,13 @@ def super_home(request, super):
     send_data = {}
     special = False
     if super == 'AUTO':
-        special = True
         employee = Employees.objects.get(user=request.user)
-        super = employee.id
+        if employee.job_title.description == "Superintendent":
+            super = employee.id
+            special = True
+        else:
+            super = 'ALL'
+            special = False
     selected_superid = super  # selected_superid = either 'ALL' or the ID of super
     if request.method == 'GET':
         if 'is_button_collapsed' in request.GET:
