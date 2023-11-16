@@ -8,8 +8,10 @@
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
     <title>DataTables example - HTML (DOM) sourced data</title>
-
     <style type="text/css" class="init">
+
+    .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
+
         .dataTables_wrapper {
             font-family: tahoma;
             font-size: 13px;
@@ -32,7 +34,6 @@
             margin-left: 10px;
             margin-right: 10px;
         }
-        table {border-left: 1px solid rgba(0, 0, 0, 0.3); border-right: 1px solid rgba(0, 0, 0, 0.3)}
         input {
             margin-left: 10px;
             margin-right: 10px;
@@ -60,27 +61,30 @@
                 .list-items {
         border-bottom: 1px solid black; display: flex; justify-content: space-between;
         }
-        .text-wrap{
-        white-space:normal;
-        }
-        .width-200{
-            width:200px;
-        }
-        .tb { border-collapse: collapse; width:300px; }
+.text-wrap{
+white-space:normal;
+}
+.width-200{
+    width:200px;
+}
 
-         .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
+.dataTables_filter {
+   float: left !important;
+}
+.tb { border-collapse: collapse; width:300px; }
 
-        .dataTables_filter {
-           float: left !important;
+.tb th, .tb td { padding: 5px; border: solid 1px #777; }
+.tb th { background-color: lightblue; }
+
+
+.table td {
         }
-
     </style>
     <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
     <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
     <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-
     <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
             data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
     <script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
@@ -284,7 +288,6 @@ window.location.href = url
                 </button>
             </div>
             <div class="modal-body">
-
                 <ul class="nav nav-pills">
                     <li>
                         <a href="#8a" class="active" data-toggle="tab">Change Date</a>
@@ -346,11 +349,19 @@ window.location.href = url
             <label for="search2">Superintendent</label>
             <select style="width: 80%" class="form-control" id="search2" name="search2" onchange="new_filter_now()">
                 {% if selected_super %}
-                <option value={{selected_super.id}}>{{selected_super.first_name}} {{selected_super.last_name}}
-                </option>
-                {% endif %}
+                <option value={{selected_super.id}}>{{selected_super.first_name}} {{selected_super.last_name}}</option>
                 <option value="ALL">"All"</option>
                 <option value="UNASSIGNED">"UNASSIGNED"</option>
+                {% endif %}
+                {% if filter_status %}
+                    {% if filter_status == 'ALL' %}
+                    <option value="ALL">"All"</option>
+                    <option value="UNASSIGNED">"UNASSIGNED"</option>
+                    {% else %}
+                    <option value="UNASSIGNED">"UNASSIGNED"</option>
+                    <option value="ALL">"All"</option>
+                    {% endif %}
+                {% endif %}
                 {% if supers %}
                 {% for super in supers %}
                 <option value="{{super.id}}">{{super.first_name}} {{super.last_name}}</option>
@@ -389,14 +400,14 @@ window.location.href = url
                         <legend style="font-size: 12px; width: fit-content;">Job Table Legend</legend>
                         <div class="row h-100 d-flex"
                              style="margin-left: 10px; justify-content: space-around; margin-bottom: 10px;">
-                            <div style="margin: 8px; width:fit-content; background-color:#ffff00; padding: 5px; border-radius: 5px;">
+                            <div style="margin: 8px; width:fit-content; background-color:hsl(63, 85%, 79%); padding: 5px; border-radius: 5px;">
                                 Off Hours
 
                             </div>
-                            <div style="margin: 8px; width:fit-content; background-color:#00ff00; padding: 5px; border-radius: 5px;">
+                            <div style="margin: 8px; width:fit-content; background-color:hsl(90,100%,75%); padding: 5px; border-radius: 5px;">
                                 On Base
                             </div>
-                            <div style="margin: 8px; width:fit-content; background-color:#bcd5bc;  padding: 5px; border-radius: 5px;">
+                            <div style="margin: 8px; width:fit-content; background-color:hsl(340, 100%, 92%);  padding: 5px; border-radius: 5px;">
                                 Check Date
                             </div>
                         </div>
@@ -424,19 +435,29 @@ window.location.href = url
                             <tbody>
                             {% if jobs %}
                             {% for job in jobs %}
-                            <tr onclick="showemployeedata('{{job.job_number}}','{{job.job_name}}','{{job.start_date}}','{{job.is_active}}',this)">
-                                {% if job.is_off_hours == True %}
-                                <td style="background-color:#ffff00">{% else %}
+                            {% if job.is_labor_done == True %}
+                            <tr style="background-color:hsla(0,0%, 32%);" onclick="showemployeedata('{{job.job_number}}','{{job.job_name}}','{{job.start_date}}','{{job.is_active}}',this)">
+                              {% elif job.is_waiting_for_punchlist == True %}
+                                 <tr style="background-color:hsla(0,0%, 65%);" onclick="showemployeedata('{{job.job_number}}','{{job.job_name}}','{{job.start_date}}','{{job.is_active}}',this)">
+                                {% else %}
+                                <tr onclick="showemployeedata('{{job.job_number}}','{{job.job_name}}','{{job.start_date}}','{{job.is_active}}',this)">
+                                {% endif %}
+                                {% if job.is_off_hours == True and job.is_labor_done == False and job.is_waiting_for_punchlist == False %}
+
+                                <td style="background-color:hsl(63, 85%, 79%)">{% else %}
                                 <td>{% endif %}{{job.job_number}}</td>
 
-                                {% if job.is_on_base == True %}
-                                <td style="background-color:#00ff00">{% else %}
+                                {% if job.is_on_base == True and job.is_labor_done == False and job.is_waiting_for_punchlist == False %}
+                                <td style="background-color:hsl(90,100%,75%)">{% else %}
+
                                 <td style="white-space:nowrap" width="200">{% endif %}<a
                                         href="{% url 'job_page' job.job_number %}">
                                     <div style="height:100%;width:100%">{% if job.is_labor_done == True %}<b>[DONE]</b>{% elif job.is_waiting_for_punchlist == True %}<b>[PUNCH]</b>{% endif %} {{job.job_name}}</div>
                                 </a></td>
-                                {% if job.check_start_date == True %}
-                                <td data-toggle="modal" style="background-color:#bcd5bc;white-space:nowrap"
+                                {% if job.check_start_date == True and job.is_labor_done == False and job.is_waiting_for_punchlist == False %}
+
+                                <td data-toggle="modal" style="background-color:hsl(340, 100%, 92%);white-space:nowrap"
+
                                     data-target="#employee-modal"><a href="#">{{job.start_date}}</a></td>
                                 {% else %}
                                 <td data-toggle="modal" data-target="#employee-modal" style="white-space:nowrap"><a

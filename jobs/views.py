@@ -117,6 +117,10 @@ def update_job_info(request, jobnumber):
             selectedjob.city = request.POST['city']
         if selectedjob.state != request.POST['state']:
             selectedjob.state = request.POST['state']
+        if 'off_hours' in request.POST:
+            selectedjob.is_off_hours = True
+        else:
+            selectedjob.is_off_hours = False
         if 'on_base2' in request.POST:
             selectedjob.is_on_base = True
         else:
@@ -450,7 +454,6 @@ def jobs_home(request):
 @login_required(login_url='/accounts/login')
 def job_page(request, jobnumber):
     if jobnumber == 'ALL':
-        print(request.GET)
         send_data = {}
         if request.method == 'GET':
             if 'search' in request.GET: send_data['search_exists'] = request.GET['search']  # jobname
@@ -498,6 +501,7 @@ def job_page(request, jobnumber):
         send_data['jobs'] = 'ALL'
         return render(request, "job_page.html", send_data)
     else:
+        go_to_pickup = False
         selectedjob = Jobs.objects.get(job_number=jobnumber)
         if request.method == 'POST':
             if 'select_status' in request.POST:
@@ -517,6 +521,13 @@ def job_page(request, jobnumber):
                     selectedjob.labor_done_Date = None
                     selectedjob.is_waiting_for_punchlist = True
                     selectedjob.is_labor_done = False
+                    selectedjob.save()
+                    if Inventory.objects.filter(job_number=selectedjob):
+                        if PickupRequest.objects.filter(job_number=selectedjob, is_closed=False,
+                                                        all_items=True).exists():
+                            go_to_pickup = False
+                        else:
+                            go_to_pickup = True
                 if request.POST['select_status'] == 'done_done':
                     message = "Labor is 100% done."
                     Email.sendEmail("Labor Done - " + selectedjob.job_name,
@@ -527,6 +538,12 @@ def job_page(request, jobnumber):
                     selectedjob.labor_done_Date = date.today()
                     selectedjob.is_waiting_for_punchlist = True
                     selectedjob.is_labor_done = True
+                    selectedjob.save()
+                    if Inventory.objects.filter(job_number=selectedjob):
+                        if PickupRequest.objects.filter(job_number=selectedjob, is_closed=False, all_items=True).exists():
+                            go_to_pickup = False
+                        else:
+                            go_to_pickup = True
                 selectedjob.save()
                 JobNotes.objects.create(job_number=selectedjob,
                                         note=message + " " + request.POST['closed_note'], type="employee_note",
@@ -646,7 +663,10 @@ def job_page(request, jobnumber):
             notes = JobNotes.objects.filter(job_number=selectedjob)
         send_data['notes'] = notes
         send_data['supers'] = Employees.objects.filter(job_title__description="Superintendent", active=True)
-        return render(request, 'job_page.html', send_data)
+        if go_to_pickup:
+            return redirect('request_pickup', jobnumber=selectedjob.job_number, item='ALL', pickup='ALL', status='ALL')
+        else:
+            return render(request, 'job_page.html', send_data)
 
 
 @login_required(login_url='/accounts/login')
