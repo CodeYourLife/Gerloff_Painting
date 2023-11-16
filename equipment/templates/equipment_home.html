@@ -190,7 +190,7 @@ document.getElementById('filter_form').submit();
                     <td style="background-color:#ffff00">Service </td>
                 {% endif %}
             {% else %}
-                {% if inventory.job_number.is_closed == True %}
+                {% if inventory.job_number.is_closed == True or inventory.job_number.is_labor_done == True %}
                     <td style="background-color:#ffff00"><a href="{% url 'job_page' inventory.job_number.job_number %}">
                         {{inventory.job_number.job_name}}
                     </a></td>

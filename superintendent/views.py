@@ -61,7 +61,8 @@ def super_ajax(request):
                 datechange = True
             else:
                 datechange = False
-            start_date_change(job, request.GET['start_date'], status, request.GET['notes'],Employees.objects.get(user=request.user), datechange)
+            start_date_change(job, request.GET['start_date'], status, request.GET['notes'],
+                              Employees.objects.get(user=request.user), datechange)
             job.save()
             new_date = Jobs.objects.get(job_number=request.GET['job_number']).start_date
 
@@ -91,18 +92,20 @@ def super_home(request, super):
         if 'search' in request.GET: send_data['search_exists'] = request.GET['search']  # jobname
         if 'search2' in request.GET:
             send_data['search2_exists'] = request.GET['search2']  # super name
-            if request.GET['search2'] == 'ALL' or request.GET['search2'] == 'UNASSIGNED':
+            if request.GET['search2'] == 'ALL':
                 selected_superid = 'ALL'
-
+            elif request.GET['search2'] == 'UNASSIGNED':
+                selected_superid = 'UNASSIGNED'
             else:
                 selected_superid = request.GET['search2']
         if 'search3' in request.GET: send_data['search3_exists'] = request.GET['search3']  # open only
         if 'search4' in request.GET: send_data['search4_exists'] = request.GET['search4']  # gc name
         if 'search5' in request.GET: send_data['search5_exists'] = request.GET['search5']  # upcoming only
         if 'search6' in request.GET: send_data['search6_exists'] = request.GET['search6']
-        if 'search7' in request.GET: send_data['search7_exists'] = request.GET['search7']# unassigned
+        if 'search7' in request.GET: send_data['search7_exists'] = request.GET['search7']  # unassigned
 
-    if selected_superid == 'ALL':
+    if selected_superid == 'ALL' or selected_superid == 'UNASSIGNED':
+        send_data['filter_status'] = selected_superid
         send_data['equipment'] = Inventory.objects.exclude(job_number=None).order_by('job_number')
         send_data['equipment_count'] = Inventory.objects.exclude(job_number=None).count()
         send_data['rentals'] = Rentals.objects.filter(off_rent_number__isnull=True)
@@ -111,7 +114,7 @@ def super_home(request, super):
         send_data['tickets_count'] = ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=False,
                                                                  is_closed=False).count()
         send_data['subcontractor_count'] = Subcontracts.objects.exclude(job_number=None)
-        search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False))
+        search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False, is_labor_done=False))
     else:
         selected_super = Employees.objects.get(id=selected_superid)
         send_data['equipment'] = Inventory.objects.filter(job_number__superintendent=selected_super).order_by(
@@ -131,9 +134,10 @@ def super_home(request, super):
                                                                  job_number__superintendent=selected_super).order_by(
             'job_number', 'cop_number').count()
         if special == True:
-            search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False,superintendent=selected_super))
+            search_jobs = JobsFilter2(request.GET,
+                                      queryset=Jobs.objects.filter(is_closed=False, superintendent=selected_super, is_labor_done=False))
         else:
-            search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False))
+            search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False, is_labor_done=False))
 
     if any(field in request.GET for field in set(search_jobs.get_fields())) == True:
         send_data['has_filter'] = True

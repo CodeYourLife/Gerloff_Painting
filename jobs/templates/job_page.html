@@ -529,8 +529,13 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
         </thead>
         <tbody>
         {% for x in jobstable %}
+        {% if x.is_labor_done == True %}
+            <tr style="background-color:hsla(0,0%, 32%);" onclick="populate_job_data('{{x.job_number}}','{{x.job_name}}','{{x.start_date}}','{{x.is_active}}',this)">
+ {% elif x.is_waiting_for_punchlist == True %}
+                <tr style="background-color:hsla(0,0%, 65%);" onclick="populate_job_data('{{x.job_number}}','{{x.job_name}}','{{x.start_date}}','{{x.is_active}}',this)">
+                {% else %}
             <tr onclick="populate_job_data('{{x.job_number}}','{{x.job_name}}','{{x.start_date}}','{{x.is_active}}',this)">
-
+            {% endif %}
                 <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_number}}</a></td>
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_job('{{x.job_number}}')"><a href="#">{% if x.is_labor_done == True %}<b>[DONE]</b>{% elif x.is_waiting_for_punchlist == True %}<b>[PUNCH]</b>{% endif %} {{x.job_name}}</a></td>
                 <td style="white-space:nowrap" data-toggle="modal" data-target="#startdate-modal" onclick="populate_start_date_modal('{{x.job_number}}','{{x.job_name}}','{{x.start_date}}','{{x.is_active}}',this,1)"><a href="#">{{x.start_date}}</a></td>
