@@ -8,8 +8,10 @@
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
     <title>DataTables example - HTML (DOM) sourced data</title>
-
     <style type="text/css" class="init">
+
+    .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
+
         .dataTables_wrapper {
             font-family: tahoma;
             font-size: 13px;
@@ -32,7 +34,6 @@
             margin-left: 10px;
             margin-right: 10px;
         }
-        table {border-left: 1px solid rgba(0, 0, 0, 0.3); border-right: 1px solid rgba(0, 0, 0, 0.3)}
         input {
             margin-left: 10px;
             margin-right: 10px;
@@ -60,27 +61,30 @@
                 .list-items {
         border-bottom: 1px solid black; display: flex; justify-content: space-between;
         }
-        .text-wrap{
-        white-space:normal;
-        }
-        .width-200{
-            width:200px;
-        }
-        .tb { border-collapse: collapse; width:300px; }
+.text-wrap{
+white-space:normal;
+}
+.width-200{
+    width:200px;
+}
 
-         .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
+.dataTables_filter {
+   float: left !important;
+}
+.tb { border-collapse: collapse; width:300px; }
 
-        .dataTables_filter {
-           float: left !important;
+.tb th, .tb td { padding: 5px; border: solid 1px #777; }
+.tb th { background-color: lightblue; }
+
+
+.table td {
         }
-
     </style>
     <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
     <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
     <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-
     <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
             data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
     <script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
@@ -284,7 +288,6 @@ window.location.href = url
                 </button>
             </div>
             <div class="modal-body">
-
                 <ul class="nav nav-pills">
                     <li>
                         <a href="#8a" class="active" data-toggle="tab">Change Date</a>
