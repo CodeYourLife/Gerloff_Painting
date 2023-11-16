@@ -419,6 +419,17 @@ function changed_super(){
                 {% endif %}
             </div>
         </div>
+        <div class ="row">
+            <div class="col-sm-6">
+                <label for="off_hours"><b>Job is Off Hours?</b> </label>
+
+                {% if selectedjob.is_off_hours == True %}
+                <input type="checkbox" name ="off_hours" id="off_hours" checked />
+                {% else %}
+                <input type="checkbox" name ="off_hours" id="off_hours" />
+                {% endif %}
+            </div>
+        </div>
         <hr>
         <div class ="row">
             <div class="col-sm-6">
