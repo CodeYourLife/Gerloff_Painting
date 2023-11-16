@@ -454,7 +454,6 @@ def jobs_home(request):
 @login_required(login_url='/accounts/login')
 def job_page(request, jobnumber):
     if jobnumber == 'ALL':
-        print(request.GET)
         send_data = {}
         if request.method == 'GET':
             if 'search' in request.GET: send_data['search_exists'] = request.GET['search']  # jobname

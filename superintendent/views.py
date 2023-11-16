@@ -13,14 +13,10 @@ from equipment.filters import JobsFilter2
 from django.http import HttpResponse
 from jobs.JobMisc import start_date_change, gerloff_super_change
 import json
-
 from django.shortcuts import render, redirect
-from django.core.serializers.json import DjangoJSONEncoder
 
 
 def super_ajax(request):
-    # if request.method == 'GET':
-    #     return redirect('super_home',super= request.GET['selected_super'])
     if request.is_ajax():
         if 'client_employee_id' in request.GET:
             person = ClientEmployees.objects.get(person_pk=request.GET['client_employee_id'])
@@ -31,22 +27,20 @@ def super_ajax(request):
             super = Employees.objects.get(id=request.GET['select_super'])
             gerloff_super_change(job, super, Employees.objects.get(user=request.user))
             return HttpResponse()
-
         if 'build_notes' in request.GET:
             job = Jobs.objects.get(job_number=request.GET['job_number'])
             job_notes = JobNotes.objects.filter(Q(type="auto_start_date_note") | Q(type="employee_note"),
                                                 job_number=job)
             notes = []
-            for note in job_notes:
-                notes.append({'note': note.note, 'user': note.user,
-                              'date': str(note.date)})
+            for x in job_notes:
+                notes.append({'note': x.note, 'user': str(x.user),
+                              'date': str(x.date)})
             data_details = {'notes': notes}
             return HttpResponse(json.dumps(data_details))
         elif 'filter_type' in request.GET:
             return redirect('super_home', super=request.GET['selected_super'])
         else:
             job = Jobs.objects.get(job_number=request.GET['job_number'])
-
             if job.is_active == True:
                 if request.GET['is_active'] == "true":
                     status = 3
@@ -135,7 +129,8 @@ def super_home(request, super):
             'job_number', 'cop_number').count()
         if special == True:
             search_jobs = JobsFilter2(request.GET,
-                                      queryset=Jobs.objects.filter(is_closed=False, superintendent=selected_super, is_labor_done=False))
+                                      queryset=Jobs.objects.filter(is_closed=False, superintendent=selected_super,
+                                                                   is_labor_done=False))
         else:
             search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False, is_labor_done=False))
 
