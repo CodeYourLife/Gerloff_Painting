@@ -4,6 +4,10 @@ from employees.models import *
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User, auth
 from console.misc import Email
+from console.random_password_generator import RandomPasswordGenerator
+from datetime import datetime,timedelta
+from django.conf import settings
+import os
 
 def registration(request):
     send_data = {}
@@ -42,7 +46,28 @@ def verifyPin(request):
             return render(request, "verify_pin.html", send_data)
 
 def forgotPassword(request):
-    return render(request, "forgot_password.html")
+    send_data = {}
+    if request.method == 'POST':
+        try:
+            temporaryPassword = request.POST['temporary']
+            password = request.POST['password']
+            tempPasswordObject = TemporaryPassword.objects.filter(password=temporaryPassword, is_active=True).first()
+            if tempPasswordObject is not None:
+                tempPasswordTime = str(tempPasswordObject.expiration).split('.')[0]
+                tempPasswordTime = datetime.strptime(tempPasswordTime, '%Y-%m-%d %H:%M:%S')
+                if tempPasswordTime < datetime.now():
+                    send_data['message'] = "Your password has expired. Please go to login and select forgot password to generate another."
+                else:
+                    u = User.objects.get(id=tempPasswordObject.user.id)
+                    u.set_password(password)
+                    u.save()
+                    TemporaryPassword.objects.filter(user=u.id).update(is_active=False)
+                    send_data['message'] = "Password updated. You can now login with the updated password."
+            else:
+                send_data['message'] = "The temporary password you entered does not match our records or the password you entered is no longer active. Please go to login and select forgot password to generate another or try again."
+        except Exception as e:
+            print('unable to update password', e)
+    return render(request, "forgot_password.html", send_data)
 
 def login(request):
     send_data = {}
@@ -55,7 +80,13 @@ def login(request):
                 username = request.POST['username']
                 forgottenUser = User.objects.get(username=username)
                 employee = Employees.objects.get(user=forgottenUser.id)
-                Email.sendEmail("Forgot Password Alert", f"Someone requested their password. If this is not you, please contact your admin. Go to this page forgot_password.com and use this passcode to reset your password {employee.pin}.", [employee.email], False)
+                randomPassword = RandomPasswordGenerator().getRandomPassword()
+                expiration = datetime.now() + timedelta(hours=1)
+                #make all other temporary passwords non active
+                TemporaryPassword.objects.filter(user=forgottenUser.id).update(is_active=False)
+                #create a new temporary password
+                TemporaryPassword.objects.create(user=forgottenUser, expiration= expiration, password=randomPassword)
+                Email.sendEmail("Forgot Password Alert", f"<div>Someone requested their password. If this is not you, please contact your admin.</div><div> Go to this page <a href='{os.path.join(settings.BASE_DIR, 'forgot_password')}'>Forgot Password</a> and use this temporary passcode to reset your password {randomPassword} that will expire after {expiration}.", [employee.email], False)
                 send_data['message'] = "Email sent to user with their password"
             except Exception as e:
                 send_data['message'] = "Unable to send email, check username and try again or contact your admin"
