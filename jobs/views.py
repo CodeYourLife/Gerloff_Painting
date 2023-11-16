@@ -186,9 +186,9 @@ def update_job_info(request, jobnumber):
         elif selectedjob.client.id != request.POST['select_company']:
             selectedjob.client = Clients.objects.get(id=request.POST['select_company'])
             selectedjob.save()
-        selectedjob.client.company=request.POST['new_client']
-        selectedjob.client.bid_email=request.POST['new_client_bid_email']
-        selectedjob.client.phone=request.POST['new_client_phone']
+        selectedjob.client.company = request.POST['new_client']
+        selectedjob.client.bid_email = request.POST['new_client_bid_email']
+        selectedjob.client.phone = request.POST['new_client_phone']
         selectedjob.client.save()
         if request.POST['select_pm'] == 'add_new':
             client_pm = ClientEmployees.objects.create(id=selectedjob.client, name=request.POST['new_pm'],
@@ -198,9 +198,9 @@ def update_job_info(request, jobnumber):
         else:
             if selectedjob.client_Pm.person_pk != request.POST['select_pm']:
                 selectedjob.client_Pm = ClientEmployees.objects.get(person_pk=request.POST['select_pm'])
-        selectedjob.client_Pm.name=request.POST['new_pm']
-        selectedjob.client_Pm.phone=request.POST['new_pm_phone']
-        selectedjob.client_Pm.email=request.POST['new_pm_email']
+        selectedjob.client_Pm.name = request.POST['new_pm']
+        selectedjob.client_Pm.phone = request.POST['new_pm_phone']
+        selectedjob.client_Pm.email = request.POST['new_pm_email']
         selectedjob.client_Pm.save()
         if request.POST['select_super'] == 'add_new':
             client_super = ClientEmployees.objects.create(id=selectedjob.client, name=request.POST['new_super'],
@@ -345,9 +345,9 @@ def upload_new_job(request):
 
             else:
                 client_pm = ClientEmployees.objects.get(person_pk=request.POST['select_pm'])
-                client_pm.name=request.POST['new_pm']
-                client_pm.phone=request.POST['new_pm_phone']
-                client_pm.email=request.POST['new_pm_email']
+                client_pm.name = request.POST['new_pm']
+                client_pm.phone = request.POST['new_pm_phone']
+                client_pm.email = request.POST['new_pm_email']
                 client_pm.save()
 
             gp_estimator = Employees.objects.get(id=request.POST['select_gpestimator'])
@@ -390,9 +390,9 @@ def upload_new_job(request):
                 if 'duplicate' in request.POST:
                     job.client_Super = client_pm
                 elif request.POST['select_super'] == 'add_new':
-                        job.client_Super = ClientEmployees.objects.create(id=client, name=request.POST['new_super'],
-                                                                          phone=request.POST['new_super_phone'],
-                                                                          email=request.POST['new_super_email'])
+                    job.client_Super = ClientEmployees.objects.create(id=client, name=request.POST['new_super'],
+                                                                      phone=request.POST['new_super_phone'],
+                                                                      email=request.POST['new_super_email'])
                 elif request.POST['select_super'] == 'duplicate':
                     job.client_Super = client_pm
                 else:
@@ -471,7 +471,7 @@ def job_page(request, jobnumber):
         # RequestConfig(request).configure(jobstable)
         # RequestConfig(request, paginate=False).configure(jobstable)
         send_data['has_filter'] = any(field in request.GET for field in set(search_jobs.get_fields()))
-        send_data['supers'] = Employees.objects.exclude(Q(job_title__description="Painter") | Q(active=False))
+        send_data['supers'] = Employees.objects.filter(job_title__description="Superintendent", active=True)
         send_data['tickets'] = ChangeOrders.objects.filter(job_number__is_closed=False, is_t_and_m=True,
                                                            is_ticket_signed=False)
         send_data['open_cos'] = ChangeOrders.objects.filter(job_number__is_closed=False, is_closed=False,
@@ -645,7 +645,7 @@ def job_page(request, jobnumber):
         else:
             notes = JobNotes.objects.filter(job_number=selectedjob)
         send_data['notes'] = notes
-        send_data['supers'] = Employees.objects.exclude(Q(job_title__description="Painter") | Q(active=False))
+        send_data['supers'] = Employees.objects.filter(job_title__description="Superintendent", active=True)
         return render(request, 'job_page.html', send_data)
 
 
@@ -653,7 +653,7 @@ def job_page(request, jobnumber):
 def book_new_job(request):
     allclients = Clients.objects.order_by('company')
     estimators = Employees.objects.exclude(job_title__description='Painter')
-    superintendents = Employees.objects.exclude(job_title__description='Painter')
+    superintendents = Employees.objects.filter(job_title__description='Superintendent')
     pms = ClientEmployees.objects.values('name', 'id', 'person_pk')
     prices_json = json.dumps(list(pms), cls=DjangoJSONEncoder)
 
