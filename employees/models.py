@@ -3,6 +3,15 @@ from django.contrib.auth.models import User
 from employees.models import *
 import employees.models
 
+
+class TemporaryPassword(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    expiration = models.DateTimeField()
+    password = models.CharField(max_length=2000, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+
 class Employers(models.Model):
     id = models.BigAutoField(primary_key=True)
     company_name = models.CharField(max_length=100)
