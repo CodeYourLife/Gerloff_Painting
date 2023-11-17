@@ -45,13 +45,10 @@ def gerloff_super_change(job, superintendent, author):
 
 
 def open_dropbox(jobnumber, user):
-    if Employees.objects.get(user=user).dropbox_username == "joe":
-        folder = "Joseph Gerloff"
     job = Jobs.objects.get(job_number=jobnumber)
     query = str(job.job_number) + " " + str(job.job_name)
     # dbx = dropbox.Dropbox(
     #     '0ZO2RCS5HXUAAAAAAAAAAYnYkAqko1APtMIdkSLShC9Hn650xeuxoYe3wtgQvh7I')
-
     dbx = dropbox.Dropbox(
         app_key= 'kl6kuitmi3x0ol8',
           app_secret = 'vax8zqlgvdwoc47',
