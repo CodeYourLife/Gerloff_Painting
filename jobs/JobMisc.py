@@ -88,6 +88,7 @@ def open_dropbox(jobnumber, user):
                     print(entry.name + " -Not a folder")
                 if x == True:
                     break
+            return False
             break
         # print(dbx.files_search_v2(query="D630A CRMC Vertical Expansion"))
 
