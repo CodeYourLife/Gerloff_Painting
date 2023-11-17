@@ -63,6 +63,8 @@ class Employees(models.Model):
     pin = models.IntegerField(null=True, blank=True)
 
 
+
+
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
