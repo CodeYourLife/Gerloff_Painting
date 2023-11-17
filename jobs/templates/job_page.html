@@ -364,15 +364,34 @@ function open_dropbox2(jobnumber){
         data: {'dropbox': 'True','job_number':jobnumber},
         success: function (data) {
 
-      var link = document.getElementById('link');
+
+        document.getElementById("dropbox_link_hide").style.display = "block";
+document.getElementById("dropbox_button_hide").style.display = "none";
+var link = document.getElementById('link');
+if (data == 'False'){link.innerHTML="REMOVED FROM DROPBOX"}
+      else{
+
               link.setAttribute('href', data);
         link.click();
 <!--document.getElementById("dropbox_button").action = data;-->
 <!--document.getElementById('dropbox_button').submit();-->
 
+}
+
         }
         })
 }
+window.onload = function() {
+var table = $('#jobs_table').DataTable({paging: false})
+var table = $('#notes_table').DataTable({paging: false})
+document.getElementById("show_new_pm").style.display = "none";
+document.getElementById("show_new_super").style.display = "none";
+if ('{{jobs}}' != 'ALL'){
+document.getElementById("dropbox_link_hide").style.display = "none";
+document.getElementById("dropbox_button_hide").style.display = "block";
+}
+};
+
     </script>
 
 
@@ -898,15 +917,18 @@ function open_dropbox2(jobnumber){
 
         </div>
         <div class="col-sm-3">
+            <div id="dropbox_button_hide">
          <form id="dropbox_button" action="{% url 'job_page' job.job_number %}" target="_blank" >
-
             <button type="button" class="btn btn-warning btn-sm"  onclick = "open_dropbox2('{{job.job_number}}')" >Plans & Work Order</button>
 
          </form>
+            </div>
+            <div id="dropbox_link_hide"><a id="link" href="#" target="_blank"><b>CLICK HERE FOR PLANS!</b></a></div>
         </div>
     </div>
 </div>
 <a id="link" href="https://playcanvas.com" target="_blank">increment</a>
+
 
 <button type="button" class="collapsible">Job Notes</button>
 <div class="content">
