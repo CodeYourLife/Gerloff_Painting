@@ -78,12 +78,12 @@ def open_dropbox(jobnumber, user):
                                 shared_link_metadata = dbx.sharing_list_shared_links(entry2.path_lower, cursor=None,
                                                                                      direct_only=None)
                             for link in shared_link_metadata.links:
-                                print(link.url)
+                                # print(link.url)
                                 return link.url
                             x = True
                             break
-                        else:
-                            print(entry2.name)
+                        # else:
+                        #     print(entry2.name)
                 except:
                     print(entry.name + " -Not a folder")
                 if x == True:
