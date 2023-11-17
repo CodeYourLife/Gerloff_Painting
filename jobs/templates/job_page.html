@@ -57,7 +57,6 @@
           color : black;
           background-color: white !important;
         }
-
         .active * {
             background-color: white !important;
         }
@@ -350,7 +349,14 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
     if (is_active == "True"){pmform2.is_active.checked = true}
     else{pmform2.is_active.checked = false}
 }
-
+function open_dropbox(jobnumber){
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'dropbox': 'True','job_number':jobnumber},
+        success: function (data) {window.open(data)}
+        })
+}
     </script>
 
 
@@ -849,16 +855,16 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
         </div>
     </div>
     <div class="row">
-        <div class="col-sm-2">
+        <div class="col-sm-3">
             <form action="{% url 'change_order_new' job.job_number %}"><input type="submit" class="btn btn-primary btn-sm" value="New Change Order"/>
             </form>
         </div>
-                <div class="col-sm-2">
+                <div class="col-sm-3">
             <form action="{% url 'request_pickup' jobnumber=job.job_number item='ALL' pickup='ALL' status='ALL' %}"><input type="submit" class="btn btn-primary btn-sm" value="Request Equipment Pickup"/>
 
             </form>
         </div>
-        <div class="col-sm-2">
+        <div class="col-sm-3">
 
     {% if job.is_waiting_for_punchlist == True %}
         {% if job.is_labor_done == True %}
@@ -874,6 +880,9 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
         {% endif %}
     {% endif %}
 
+        </div>
+        <div class="col-sm-3">
+        <button class="btn btn-danger btn-sm" onclick = "open_dropbox('{{job.job_number}}')" >Plans & Work Order</button>
         </div>
     </div>
 </div>

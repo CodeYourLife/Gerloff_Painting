@@ -11,13 +11,20 @@ from subcontractors.models import *
 from django.db.models import Q
 from equipment.filters import JobsFilter2
 from django.http import HttpResponse
-from jobs.JobMisc import start_date_change, gerloff_super_change
+from jobs.JobMisc import start_date_change, gerloff_super_change, open_dropbox, dropbox3, dropbox2
 import json
 from django.shortcuts import render, redirect
 
 
 def super_ajax(request):
     if request.is_ajax():
+        if 'dropbox' in request.GET:
+            # dropbox2()
+            #dropbox2 was old code to get an authorization code
+            # print(dropbox3())
+            #dropbox3 was to get refresh code from authorization code. i put this refresh code into the open_dropbox() function
+            # return HttpResponse()
+            return HttpResponse(open_dropbox(request.GET['job_number'], request.user))
         if 'client_employee_id' in request.GET:
             person = ClientEmployees.objects.get(person_pk=request.GET['client_employee_id'])
             data_details = {'phone': person.phone, 'email': person.email}
