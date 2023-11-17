@@ -357,6 +357,17 @@ function open_dropbox(jobnumber){
         success: function (data) {window.open(data)}
         })
 }
+function open_dropbox2(jobnumber){
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'dropbox': 'True','job_number':jobnumber},
+        success: function (data) {
+document.getElementById("dropbox_button").action = data;
+document.getElementById('dropbox_button').submit();
+        }
+        })
+}
     </script>
 
 
@@ -882,7 +893,9 @@ function open_dropbox(jobnumber){
 
         </div>
         <div class="col-sm-3">
-        <button class="btn btn-danger btn-sm" onclick = "open_dropbox('{{job.job_number}}')" >Plans & Work Order</button>
+         <form id="dropbox_button" action="{% url 'job_page' job.job_number %}" target="_blank" >
+            <button type="button" class="btn btn-danger btn-sm"  onclick = "open_dropbox2('{{job.job_number}}')" >Plans & Work Order</button>
+         </form>
         </div>
     </div>
 </div>
