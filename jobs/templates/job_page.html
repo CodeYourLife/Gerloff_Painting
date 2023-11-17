@@ -363,8 +363,11 @@ function open_dropbox2(jobnumber){
         url: '/superintendent/super_ajax',
         data: {'dropbox': 'True','job_number':jobnumber},
         success: function (data) {
-document.getElementById("dropbox_button").action = data;
-document.getElementById('dropbox_button').submit();
+      var link = document.getElementById('link');
+              link.setAttribute('href', data);
+        link.click();
+<!--document.getElementById("dropbox_button").action = data;-->
+<!--document.getElementById('dropbox_button').submit();-->
         }
         })
 }
@@ -894,11 +897,12 @@ document.getElementById('dropbox_button').submit();
         </div>
         <div class="col-sm-3">
          <form id="dropbox_button" action="{% url 'job_page' job.job_number %}" target="_blank" >
-            <button type="button" class="btn btn-danger btn-sm"  onclick = "open_dropbox2('{{job.job_number}}')" >Plans & Work Order</button>
+            <button type="button" class="btn btn-warning btn-sm"  onclick = "open_dropbox2('{{job.job_number}}')" >Plans & Work Order</button>
          </form>
         </div>
     </div>
 </div>
+<a id="link" href="https://playcanvas.com" target="_blank">increment</a>
 
 <button type="button" class="collapsible">Job Notes</button>
 <div class="content">
