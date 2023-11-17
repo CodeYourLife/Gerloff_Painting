@@ -79,7 +79,7 @@ def index(request):
 def warehouse_home(request):
     send_data={}
     if PickupRequest.objects.filter(confirmed=True,is_closed=False).exists():
-        send_data['pending_pickups'] = PickupRequest.objects.filter(confirmed=True,is_closed=False)
+        send_data['pending_pickups'] = PickupRequest.objects.filter(confirmed=True,is_closed=False).order_by('date')
     return render(request, 'warehouse_home.html',send_data)
 
 
