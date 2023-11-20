@@ -374,6 +374,7 @@ def subcontracts_new(request):
                                 item.save()
             return redirect('subcontract', id=subcontract1.id)
     send_data['selectedjob'] = 'ALL'
+
     if request.method == 'GET':
         if 'search_job' in request.GET:
             send_data['jobs'] = Jobs.objects.filter(job_name__icontains=request.GET['search_job'])
@@ -381,6 +382,7 @@ def subcontracts_new(request):
             send_data['jobs'] = Jobs.objects.filter(status='Open')
     else:
         send_data['jobs'] = Jobs.objects.filter(status='Open')
+
     return render(request, "subcontracts_new.html", send_data)
 
 
