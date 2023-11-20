@@ -268,9 +268,16 @@ function new_per_unit(){
 {% if selectedjob == 'ALL' %}
 <h1>Select Job For New Subcontract</h1>
 <br>
+    <form id="search_job_form" action="{% url 'subcontracts_new' %}" method="get" >
+    <input type="text" name="search_job" id="search_job" placeholder="Search Jobs">
+    <input type="submit" name="form1" value="Search Now" />
+    </form>
+
 <form id="select_job_form" action="{% url 'subcontracts_new' %}" method="post"  onSubmit = "return check_data()">
 {% csrf_token %}
 <br>
+
+
             <label for="select_job">Select the Job: </label>
             <select id="select_job" name="select_job" >
                 <option value="please_select">Please Select</option>
