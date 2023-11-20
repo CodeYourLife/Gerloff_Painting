@@ -239,7 +239,18 @@ function new_per_unit(){
         add_new_here.appendChild(document.createElement('hr'))
 
 }
-
+ function check_data() {
+ if (select_job_form.select_job.value == "please_select"){
+    alert("Please select a job")
+    return false;
+    }
+ }
+  function check_data2() {
+ if (new_subcontract_form.select_subcontractor.value == "please_select"){
+    alert("Please select a Subcontractor")
+    return false;
+    }
+ }
 	</script>
 </head>
 <body>
@@ -257,11 +268,12 @@ function new_per_unit(){
 {% if selectedjob == 'ALL' %}
 <h1>Select Job For New Subcontract</h1>
 <br>
-<form action="{% url 'subcontracts_new' %}" method="post"  >
+<form id="select_job_form" action="{% url 'subcontracts_new' %}" method="post"  onSubmit = "return check_data()">
 {% csrf_token %}
 <br>
             <label for="select_job">Select the Job: </label>
             <select id="select_job" name="select_job" >
+                <option value="please_select">Please Select</option>
                 {% if jobs %}
                 {% for job in jobs %}
                 <option value={{job.job_number}}>{{job.job_number}} {{job.job_name}}</option>
@@ -273,10 +285,11 @@ function new_per_unit(){
 <br>
 {% else %}
     <h1>New Subcontract for Job: {{selectedjob}}</h1>
-<form action="{% url 'subcontracts_new' %}" method="post"  >
+<form id="new_subcontract_form" action="{% url 'subcontracts_new' %}" method="post" onSubmit = "return check_data2()" >
     {% csrf_token %}
                 <label for="select_subcontractor">Select the Subcontractor: </label>
             <select id="select_subcontractor" name="select_subcontractor" >
+                <option value="please_select">Please Select</option>
                 {% if subcontractors %}
                 {% for subcontractor in subcontractors %}
                 <option value={{subcontractor.id}}>{{subcontractor.company}}</option>

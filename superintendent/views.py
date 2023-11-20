@@ -18,11 +18,33 @@ from django.shortcuts import render, redirect
 
 def super_ajax(request):
     if request.is_ajax():
+        if 'active_contracts' in request.GET:
+            send_data = {}
+            subcontractor = Subcontractors.objects.get(id=request.GET['subcontractor_id'])
+            contracts = Subcontracts.objects.filter(subcontractor=subcontractor, is_closed=False)
+            active_contracts = []
+            send_data['company'] = subcontractor.company
+            for x in contracts:
+                active_contracts.append(
+                    {'job_number': x.job_number.job_number, 'job_name': x.job_number.job_name, 'po_number': x.po_number,
+                     'date': str(x.date), 'id': x.id, 'percent_complete': str(format(x.percent_complete(), ".0%"))})
+            send_data['active_contracts'] = active_contracts
+            return HttpResponse(json.dumps(send_data))
+        if 'subcontractor_id' in request.GET:
+            subcontractor = Subcontractors.objects.get(id=request.GET['subcontractor_id'])
+            send_data = {}
+            send_data['company'] = subcontractor.company
+            if subcontractor.contact: send_data['contact'] = subcontractor.contact
+            if subcontractor.phone: send_data['phone'] = subcontractor.phone
+            if subcontractor.email: send_data['email'] = subcontractor.email
+            if subcontractor.insurance_expire_date: send_data['insurance'] = str(subcontractor.insurance_expire_date)
+            if subcontractor.notes: send_data['notes'] = subcontractor.notes
+            return HttpResponse(json.dumps(send_data))
         if 'dropbox' in request.GET:
             # dropbox2()
-            #dropbox2 was old code to get an authorization code
+            # dropbox2 was old code to get an authorization code
             # print(dropbox3())
-            #dropbox3 was to get refresh code from authorization code. i put this refresh code into the open_dropbox() function
+            # dropbox3 was to get refresh code from authorization code. i put this refresh code into the open_dropbox() function
             # return HttpResponse()
             return HttpResponse(open_dropbox(request.GET['job_number'], request.user))
         if 'client_employee_id' in request.GET:
@@ -114,10 +136,31 @@ def super_home(request, super):
         send_data['tickets'] = ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=False, is_closed=False)
         send_data['tickets_count'] = ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=False,
                                                                  is_closed=False).count()
-        send_data['subcontractor_count'] = Subcontracts.objects.exclude(job_number=None)
+        send_data['subcontracts_count'] = Subcontracts.objects.filter(is_closed=False,
+                                                                      job_number__is_closed=False).count()
+        subcontracts = []
+        for x in Subcontracts.objects.filter(job_number__is_closed=False, is_closed=False):
+            total_contract = "{:,}".format(int(x.total_contract_amount()))
+            percent_complete = format(x.percent_complete(), ".0%")
+            subcontracts.append({'id': x.id, 'job_name': x.job_number.job_name, 'po_number': x.po_number,
+                                 'subcontractor': x.subcontractor.company,
+                                 'total_contract': total_contract, 'percent_complete': percent_complete})
+        send_data['subcontracts'] = subcontracts
         search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False, is_labor_done=False))
     else:
         selected_super = Employees.objects.get(id=selected_superid)
+        send_data['subcontracts_count'] = Subcontracts.objects.filter(is_closed=False,
+                                                                      job_number__is_closed=False,
+                                                                      job_number__superintendent=selected_super).count()
+        subcontracts = []
+        for x in Subcontracts.objects.filter(job_number__superintendent=selected_super, job_number__is_closed=False,
+                                             is_closed=False):
+            total_contract = "{:,}".format(int(x.total_contract_amount()))
+            percent_complete = format(x.percent_complete(), ".0%")
+            subcontracts.append({'id': x.id, 'job_name': x.job_number.job_name, 'po_number': x.po_number,
+                                 'subcontractor': x.subcontractor.company,
+                                 'total_contract': total_contract, 'percent_complete': percent_complete})
+        send_data['subcontracts'] = subcontracts
         send_data['equipment'] = Inventory.objects.filter(job_number__superintendent=selected_super).order_by(
             'job_number', 'inventory_type')
         send_data['equipment_count'] = Inventory.objects.filter(job_number__superintendent=selected_super).order_by(

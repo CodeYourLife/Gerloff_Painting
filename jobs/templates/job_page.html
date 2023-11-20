@@ -129,6 +129,7 @@ window.location.href = url
 window.onload = function() {
 var table = $('#jobs_table').DataTable({paging: false})
 var table = $('#notes_table').DataTable({paging: false})
+var table = $('#subcontractors_table').DataTable({paging: false})
 document.getElementById("show_new_pm").style.display = "none";
 document.getElementById("show_new_super").style.display = "none";
 };
@@ -1313,23 +1314,28 @@ document.getElementById("dropbox_button_hide").style.display = "block";
 <button type="button" class="collapsible">Subcontractors</button>
 <div class="content">
     <div class="table-responsive">
-        <table id="tickets_table9" class="display table">
+        <table id="subcontractors_table" class="display table table-sm">
             <thead class="colored-header">
 
             <tr>
-                <th>PO #</th>
-                <th>Company</th>
-                <th>Description</th>
+                <th scope="col" >PO #</th>
+                <th scope="col" >Company</th>
+                <th scope="col" >Total Amt.</th>
+                <th scope="col" >% Complete</th>
 
             </tr>
             </thead>
             <tbody>
             {% for subcontract in subcontracts %}
             <tr>
-                <td>{{subcontract.po_number}}</td>
-                <td>{{subcontract.subcontractor.company}}</td>
-                <td>{{subcontract.description}}</td>
-
+                {% if subcontract.po_number %}
+                <td><a href="{% url 'subcontract' subcontract.id %}" >{{subcontract.po_number}}</a></td>
+                {% else %}
+                <td><a href="{% url 'subcontract' subcontract.id %}" >TBD</a></td>
+                {% endif %}
+                <td>{{subcontract.subcontractor}}</td>
+                <td>${{subcontract.total_contract}}</td>
+                <td>{{subcontract.percent_complete}}</td>
             </tr>
             {% endfor %}
             </tbody>
