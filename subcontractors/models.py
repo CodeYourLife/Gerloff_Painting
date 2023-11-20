@@ -12,6 +12,7 @@ class Subcontractors(models.Model):
     insurance_expire_date = models.DateField(blank=True, null=True)
     is_signed_labor_agreement = models.BooleanField(default=False)
     notes = models.CharField(null=True, max_length=2000, blank=True)
+    is_inactive = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.company}"
@@ -28,10 +29,10 @@ class Subcontracts(models.Model):
     job_number = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT)
     subcontractor = models.ForeignKey(
         Subcontractors, on_delete=models.PROTECT, related_name="subcontract")
-    po_number = models.CharField(null=True, max_length=250)
+    po_number = models.CharField(null=True, max_length=250, blank=True)
     total_price = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True)  # DONT USE
-    notes = models.CharField(null=True, max_length=2000)
+    notes = models.CharField(null=True, max_length=2000,blank=True)
     date = models.DateField(null=True, blank=True)
     is_closed = models.BooleanField(default=False)
     is_retainage = models.BooleanField(default=True)
@@ -53,6 +54,14 @@ class Subcontracts(models.Model):
             total = total + x.retainage
         return total
 
+    def total_contract_amount(self):
+        total = 0
+        for x in SubcontractItems.objects.filter(subcontract=self):
+            total += x.total_cost()
+        return total
+
+    def percent_complete(self):
+        return self.total_billed()/self.total_contract_amount()
 
 class SubcontractItems(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -92,7 +101,7 @@ class SubcontractItems(models.Model):
             totalcost = self.SOV_total_ordered * self.SOV_rate
         return totalcost
 
-    def quantity_billed(self):
+    def quantity_billed(self): #this will either be yards billed, or % of total
         totalcost = float(0.00)
         for x in SubcontractorInvoiceItem.objects.filter(sov_item=self, invoice__is_sent=True):
             totalcost = float(totalcost) + float(x.quantity)
@@ -103,8 +112,7 @@ class SubcontractItems(models.Model):
     def total_billed(self):
         totalcost = 0
         for x in SubcontractorInvoiceItem.objects.filter(sov_item=self, invoice__is_sent=True):
-            if x.invoice.is_sent == True:
-                totalcost = totalcost + x.quantity
+            totalcost = totalcost + x.quantity
         if self.SOV_is_lump_sum == False:
             totalcost = totalcost * self.SOV_rate
         return totalcost

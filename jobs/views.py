@@ -497,7 +497,12 @@ def job_page(request, jobnumber):
         send_data['packages'] = Packages.objects.filter(delivery__order__job_number__is_closed=False)
         send_data['deliveries'] = OutgoingItem.objects.filter(outgoing_event__job_number__is_closed=False)
         send_data['submittals'] = Submittals.objects.filter(job_number__is_closed=False)
-        send_data['subcontracts'] = Subcontracts.objects.filter(job_number__is_closed=False)
+        subcontracts=[]
+        for x in Subcontracts.objects.filter(job_number__is_closed=False,is_closed=False):
+            total_contract="{:,}".format(int(x.total_contract_amount()))
+            percent_complete=format(x.percent_complete(), ".0%")
+            subcontracts.append({'id':x.id,'po_number':x.po_number,'subcontractor':x.subcontractor.company,'total_contract':total_contract,'percent_complete':percent_complete})
+        send_data['subcontracts'] = subcontracts
         send_data['jobs'] = 'ALL'
         return render(request, "job_page.html", send_data)
     else:
@@ -608,7 +613,12 @@ def job_page(request, jobnumber):
         send_data['packages'] = Packages.objects.filter(delivery__order__job_number=selectedjob)
         send_data['deliveries'] = OutgoingItem.objects.filter(outgoing_event__job_number=selectedjob)
         send_data['submittals'] = Submittals.objects.filter(job_number=selectedjob)
-        send_data['subcontracts'] = Subcontracts.objects.filter(job_number=selectedjob)
+        subcontracts=[]
+        for x in Subcontracts.objects.filter(job_number=selectedjob,is_closed=False):
+            total_contract="{:,}".format(int(x.total_contract_amount()))
+            percent_complete=format(x.percent_complete(), ".0%")
+            subcontracts.append({'id':x.id,'po_number':x.po_number,'subcontractor':x.subcontractor.company,'total_contract':total_contract,'percent_complete':percent_complete})
+        send_data['subcontracts'] = subcontracts
         all_notes = JobNotesFilter(request.GET, queryset=JobNotes.objects.filter(job_number=selectedjob))
         send_data['all_notes'] = all_notes
         send_data['filtered_notes'] = all_notes.qs

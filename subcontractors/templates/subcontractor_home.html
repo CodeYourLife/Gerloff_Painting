@@ -5,31 +5,165 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>DataTables example - HTML (DOM) sourced data</title>
-	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <title>DataTables example - HTML (DOM) sourced data</title>
+        <style type="text/css" class="init">
 
-	</style>
-	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+.colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
+
+.dataTables_wrapper {
+    font-family: tahoma;
+    font-size: 13px;
+}
+
+        nav .active, .collapsible:hover {
+          background-color: Salmon;
+        }
+        .nav-pills a {
+            color: black;
+        }
+        .nav-pills li {
+            padding: 2px;
+        }
+        .nav-pills .active {
+            background-color: #6c757d !important;
+            padding: 5px;
+        }
+        label {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+        input {
+            margin-left: 10px;
+            margin-right: 10px;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+        tr th {
+            width: fit-content !important;
+        }
+        .tab-content * {
+          color : black;
+          background-color: white !important;
+        }
+        .active * {
+            background-color: white !important;
+        }
+                .list-items {
+        border-bottom: 1px solid black; display: flex; justify-content: space-between;
+        }
+        .text-wrap{
+    white-space:normal;
+}
+.width-200{
+    width:200px;
+}
+.dataTables_filter {
+   float: left !important;
+}
+.tb { border-collapse: collapse; width:300px; }
+
+.tb th, .tb td { padding: 5px; border: solid 1px #777; }
+.tb th { background-color: lightblue; }
+
+.table td {
+        }
+
+    </style>
+
+    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+
+    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
 	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
 	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
 	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
 	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
+    <script type="text/javascript" class="init">
+
 
 $(document).ready(function () {
-    var table = $('#sub_table').DataTable({});
+    var table = $('#sub_table').DataTable({paging: false});
 })
 
+function populate_contact_info(subcontractor_id){
+contact_info_form.notes.value=""
+contact_info_form.insurance.value=""
+contact_info_form.email.value=""
+contact_info_form.phone.value=""
+contact_info_form.contact.value=""
+        $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'subcontractor_id':subcontractor_id},
+        success: function (data) {
+           parsedData = JSON.parse(data);
+            contact_info_form.subcontractor_id.value = subcontractor_id
+           text = "<table border='1' class='table display'>";
+           if (parsedData.contact){
+                text += "<tr><td>Contact: " + parsedData.contact + "</td></tr>";
+                contact_info_form.contact.value = parsedData.contact}
+                else {text += "<tr><td>Contact: None</td></tr>";}
+           if (parsedData.phone){
+                text += "<tr><td><a href='tel:+ " + parsedData.phone + "'>Phone: " + parsedData.phone + "</a></td></tr>";
+                contact_info_form.phone.value = parsedData.phone}
+                else {text += "<tr><td>Phone: None</td></tr>";}
+           if (parsedData.email){
+                text += "<tr><td><a href='mailto: " + parsedData.email + "'>Email: " + parsedData.email + "</a></td></tr>";
+                contact_info_form.email.value = parsedData.email}
+                else {text += "<tr><td>Email: None</td></tr>";}
+           if (parsedData.insurance){
+                text += "<tr><td>Insurance Expires: " + parsedData.insurance + "</td></tr>";
+                contact_info_form.insurance.value = parsedData.insurance}
+                else {text += "<tr><td>Insurance: None</td></tr>";}
+           if (parsedData.notes){
+                text += "<tr><td>Notes: " + parsedData.notes + "</td></tr>";
+                contact_info_form.notes.value = parsedData.notes}
+           document.getElementById("show_contact_info_title").innerHTML = parsedData.company
+            document.getElementById("contact_info_title").innerHTML = parsedData.company
+            text += "</table>";
+            document.getElementById("contact_info_here").innerHTML = text;
+        }
+        })
+        }
+function populate_active_contracts_modal(subcontractor_id){
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'active_contracts':'active_contracts','subcontractor_id':subcontractor_id},
+        success: function (data) {
+           parsedData = JSON.parse(data);
+            let text = "<table border='1' class='table display' >"
+            text += "<thead><tr><th>Job</th><th>PO#</th><th>%</th></tr></thead>"
 
+            parsedData.active_contracts.forEach((element) => {
+                if (element.po_number != ""){
+                text += "<tr><td><a href=\"{% url 'job_page' 123 %}\">" + element.job_name + "</a></td><td><a href=\"{% url 'subcontract' 456 %}\">" + element.po_number + "</a></td><td>" + element.percent_complete + "</td>></tr>";
+                }
+                else {text += "<tr><td><a href=\"{% url 'job_page' 123 %}\">" + element.job_name + "</a></td><td><a href=\"{% url 'subcontract' 456 %}\">TBD</a></td><td>" + element.percent_complete + "</td>></tr>";}
+                text=text.replace(123,element.job_number)
+                text=text.replace(456,element.id)
+            })
+            text += "</table>"
+            document.getElementById("active_contracts_title").innerHTML = parsedData.company
+            document.getElementById("active_contracts_info").innerHTML = text;
+        }
+    })
+
+}
 	</script>
 </head>
 <body>
@@ -45,17 +179,110 @@ $(document).ready(function () {
   </div>
 </nav>
 
+<!-- Modal -->
+<div class="modal fade" id="active_contracts-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="active_contracts_title"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="active_contracts_info">
+                            </div>
+                        </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="show_contact_info-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="show_contact_info_title"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="contact_info_here">
+                            </div>
+                        </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" data-toggle="modal" data-target="#contact_info-modal" data-dismiss="modal"> Change Information </button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="contact_info-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="contact_info_title"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                                <form class="form-control form-control-sm" id="contact_info_form" action="{% url 'subcontractor_home' %}" method="post" >
+                                {% csrf_token %}
+                                <table>
+                                    <tr><td>
+                                        <input type="hidden" name="subcontractor_id" id="subcontractor_id" />
+                                        <input type="text" name ="contact" id="contact" placeholder = "Contact"/>
+                                    </td></tr>
+                                    <tr><td>
+                                        <input type="text" name ="phone" id="phone" placeholder = "phone"/>
+                                    </td></tr>
+                                    <tr><td>
+                                        <input type="email" name ="email" id="email" placeholder = "email"/>
+                                    </td></tr>
+                                    <tr><td>
+                                        <input type="date" name ="insurance" id="insurance" />
+                                    <label for="insurance">Insurance Expiration</label>
+                                    </td></tr>
+                                    <tr><td>
+                                    <textarea id="notes" name="notes" class="form-control" style="min-width: 100%">Notes</textarea>
+                                    </td></tr>
+                                    <tr><td>
+                                    <input type="checkbox" id="is_inactive" name="is_inactive"  />
+                                    <label for="is_inactive">Inactive</label>
+                                    </td></tr>
+                                </td></tr></table>
+
+                            </div>
+            <div class="modal-footer">
+                <input type="submit" class="btn btn-primary" value="Save Changes" />
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 
-<div class="demo-html" style="width:90%">
-		<table id="sub_table" class="display" style="width:90%">
+
+<div class="table-responsive">
+		<table id="sub_table" class="display table table-sm">
 			<thead>
 
 				<tr>
 					<th>Company</th>
-					<th>Contact</th>
-					<th>Phone</th>
-					<th>Email</th>
 					<th>Active Contracts</th>
 				</tr>
 			</thead>
@@ -63,17 +290,14 @@ $(document).ready(function () {
 
 			{% for x in subcontractors %}
 				<tr>
-					<td><a href = "{% url 'subcontractor' x.id %}">{{x.company}}</a></td>
-					<td>{{x.contact}}</td>
-					<td>{{x.phone}}</td>
-					<td>{{x.email}}</td>
-					<td><a href = "{% url 'subcontracts_home' %}">{{x.active_contracts}}</a></td>
+					<td style="white-space:nowrap" data-toggle="modal" data-target="#show_contact_info-modal" onclick="populate_contact_info('{{x.id}}')"><a href="#">{{x.company}}</a></td>
+					<td style="white-space:nowrap" data-toggle="modal" data-target="#active_contracts-modal" onclick="populate_active_contracts_modal('{{x.id}}')"><a href="#">{{x.active_contracts}} Active Contracts</a></td>
 				</tr>
 			{% endfor %}
 			</tbody>
 		</table>
 
-
+</div>
 </body>
 </html>
 
