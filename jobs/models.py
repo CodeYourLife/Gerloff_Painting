@@ -151,9 +151,6 @@ class Jobs(models.Model):
     def __str__(self):
         return f"{self.job_name}"
 
-    def __str__(self):
-        return self.start_date.strftime("%b %d,%Y")
-
     def subcontract_count(self):
         return Subcontracts.objects.filter(job_number=self).count()
 
