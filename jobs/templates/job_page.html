@@ -217,6 +217,10 @@ else {
     change_client_super_form.super_phone.value = "{{job.client_Super.phone}}"
 }
 }
+$('#test_header').on('click', 'th', function () {
+  var index = table.column(this).index();
+  alert('index : '+index);
+});
 
 function change_client_pm(){
 
@@ -257,24 +261,51 @@ function showEmployeeData(status, client, client_email, client_phone,pm,superint
 }
 
 function anothertest(){
-        $.ajax({
-            method: 'GET',
-            url: '/superintendent/super_ajax',
-            data: {'job_number':pmform2.job_number.value, 'start_date': pmform2.start_date.value,'is_active':pmform2.is_active.checked,'notes':pmform2.date_note.value,'row':pmform2.row_number.value},
-            success: function (data) {
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'job_number':pmform2.job_number.value, 'start_date': pmform2.start_date.value,'is_active':pmform2.is_active.checked,'notes':pmform2.date_note.value,'row':pmform2.row_number.value},
+        success: function (data) {
             parsedData = JSON.parse(data);
-            if (pmform2.row_number.value != "NO"){
-                var table = $('#jobs_table').DataTable()
-                table.cell(pmform2.row_number.value,2).data(parsedData.new_date)
-            }
-            else{
+            if (pmform2.row_number.value == "NO"){
                 begin = document.getElementById("TEST_YO").innerHTML.search("</b>") + 7
                 end = document.getElementById("TEST_YO").innerHTML.search("</a>")
                 left = document.getElementById("TEST_YO").innerHTML.substring(0,begin)
                 document.getElementById("TEST_YO").innerHTML = left + parsedData.new_date + "</a>"
-           }
-           }
-            })
+                return;
+            }
+            table = document.getElementById("jobs_table");
+            rows= table.rows;
+            sorted = "true"
+            for (i = 2; i < (rows.length - 1); i++) {
+                greater = moment(table.rows[i].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+                lesser = moment(table.rows[i-1].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+                if (greater < lesser){
+                    alert(greater)
+                    alert(lesser)
+                    sorted = "false";
+                    break;
+                }
+            }
+            var clicked_row = Number(pmform2.row_number.value)+1
+            table.rows[clicked_row].cells[2].innerHTML = "<a href='#' >" + parsedData.new_date + "</a>"
+            if (sorted == "false"){return}
+            newdate =moment(table.rows[clicked_row].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+            for (i = 1; i < (rows.length - 1); i++) {
+                if (i != pmform2.row_number.value){
+                    existingdate = moment(table.rows[i].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+                    if (newdate > existingdate){break;}
+                }
+            }
+            for (j = i; j < (rows.length - 1); j++) {
+                if (j != pmform2.row_number.value){
+                    existingdate = moment(table.rows[j].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+                    if (newdate < existingdate){break;}
+                }
+            }
+            rows[clicked_row].parentNode.insertBefore(rows[clicked_row],rows[j]);
+        }
+    })
 }
 function submit_new_super(){
         $.ajax({
@@ -382,7 +413,9 @@ if (data == 'False'){link.innerHTML="REMOVED FROM DROPBOX"}
 
 window.onload = function() {
 $.fn.dataTable.moment( 'MMM-DD-YYYY' );
-var table = $('#jobs_table').DataTable({paging: false})
+
+var table = $('#jobs_table').DataTable({paging: false, aaSorting:[]})
+
 var table = $('#notes_table').DataTable({paging: false})
 var table = $('#subcontractors_table').DataTable({paging: false})
 document.getElementById("show_new_pm").style.display = "none";
@@ -496,7 +529,7 @@ document.getElementById("dropbox_button_hide").style.display = "block";
                                     Explain This Change:<br>
                                     <textarea id="date_note" name="date_note" class="form-control" style="min-width: 100%"></textarea>
                                     <br>
-                                        <button type="button" class="btn btn-primary" onclick = "anothertest()" data-dismiss="modal" > Save Changes </button>
+
                                 </td></tr></table>
                                 </form>
                             </div>
@@ -511,6 +544,7 @@ document.getElementById("dropbox_button_hide").style.display = "block";
                 </div>
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick = "anothertest()" data-dismiss="modal" > Save Changes </button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
             </div>
         </div>
@@ -563,7 +597,7 @@ document.getElementById("dropbox_button_hide").style.display = "block";
         <tr>
             <th scope="col">Job #</th>
             <th scope="col">Job Name</th>
-            <th scope="col">Start Date</th>
+            <th id="test_header" scope="col">Start Date</th>
             <th scope="col">Client</th>
             <th scope="col">Super</th>
             <th scope="col">Contract Amount</th>
