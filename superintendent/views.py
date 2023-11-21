@@ -89,7 +89,7 @@ def super_ajax(request):
             job.save()
             new_date = Jobs.objects.get(job_number=request.GET['job_number']).start_date
 
-            new_date = Jobs.objects.get(job_number=request.GET['job_number']).start_date.strftime("%b %d,%Y")
+            new_date = Jobs.objects.get(job_number=request.GET['job_number']).start_date.strftime("%b-%d-%Y")
             # new_date = str(Jobs.objects.get(job_number=request.GET['job_number']).start_date)
             data_details = {'new_date': new_date, 'is_active': request.GET['is_active']}
             return HttpResponse(json.dumps(data_details))
