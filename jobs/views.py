@@ -497,11 +497,12 @@ def job_page(request, jobnumber):
         send_data['packages'] = Packages.objects.filter(delivery__order__job_number__is_closed=False)
         send_data['deliveries'] = OutgoingItem.objects.filter(outgoing_event__job_number__is_closed=False)
         send_data['submittals'] = Submittals.objects.filter(job_number__is_closed=False)
-        subcontracts=[]
-        for x in Subcontracts.objects.filter(job_number__is_closed=False,is_closed=False):
-            total_contract="{:,}".format(int(x.total_contract_amount()))
-            percent_complete=format(x.percent_complete(), ".0%")
-            subcontracts.append({'id':x.id,'po_number':x.po_number,'subcontractor':x.subcontractor.company,'total_contract':total_contract,'percent_complete':percent_complete})
+        subcontracts = []
+        for x in Subcontracts.objects.filter(job_number__is_closed=False, is_closed=False):
+            total_contract = "{:,}".format(int(x.total_contract_amount()))
+            percent_complete = format(x.percent_complete(), ".0%")
+            subcontracts.append({'id': x.id, 'po_number': x.po_number, 'subcontractor': x.subcontractor.company,
+                                 'total_contract': total_contract, 'percent_complete': percent_complete})
         send_data['subcontracts'] = subcontracts
         send_data['jobs'] = 'ALL'
         return render(request, "job_page.html", send_data)
@@ -538,14 +539,16 @@ def job_page(request, jobnumber):
                     Email.sendEmail("Labor Done - " + selectedjob.job_name,
                                     "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is 100% Done. " +
                                     request.POST['closed_note'],
-                                    ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
+                                    ['joe@gerloffpainting.com', 'admin2@gerloffpainting.com',
+                                     'bridgette@gerloffpainting.com',
                                      'victor@gerloffpainting.com'], False)
                     selectedjob.labor_done_Date = date.today()
                     selectedjob.is_waiting_for_punchlist = True
                     selectedjob.is_labor_done = True
                     selectedjob.save()
                     if Inventory.objects.filter(job_number=selectedjob):
-                        if PickupRequest.objects.filter(job_number=selectedjob, is_closed=False, all_items=True).exists():
+                        if PickupRequest.objects.filter(job_number=selectedjob, is_closed=False,
+                                                        all_items=True).exists():
                             go_to_pickup = False
                         else:
                             go_to_pickup = True
@@ -613,11 +616,12 @@ def job_page(request, jobnumber):
         send_data['packages'] = Packages.objects.filter(delivery__order__job_number=selectedjob)
         send_data['deliveries'] = OutgoingItem.objects.filter(outgoing_event__job_number=selectedjob)
         send_data['submittals'] = Submittals.objects.filter(job_number=selectedjob)
-        subcontracts=[]
-        for x in Subcontracts.objects.filter(job_number=selectedjob,is_closed=False):
-            total_contract="{:,}".format(int(x.total_contract_amount()))
-            percent_complete=format(x.percent_complete(), ".0%")
-            subcontracts.append({'id':x.id,'po_number':x.po_number,'subcontractor':x.subcontractor.company,'total_contract':total_contract,'percent_complete':percent_complete})
+        subcontracts = []
+        for x in Subcontracts.objects.filter(job_number=selectedjob, is_closed=False):
+            total_contract = "{:,}".format(int(x.total_contract_amount()))
+            percent_complete = format(x.percent_complete(), ".0%")
+            subcontracts.append({'id': x.id, 'po_number': x.po_number, 'subcontractor': x.subcontractor.company,
+                                 'total_contract': total_contract, 'percent_complete': percent_complete})
         send_data['subcontracts'] = subcontracts
         all_notes = JobNotesFilter(request.GET, queryset=JobNotes.objects.filter(job_number=selectedjob))
         send_data['all_notes'] = all_notes
