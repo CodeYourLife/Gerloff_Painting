@@ -16,12 +16,12 @@ class Email:
         # msg['To'] = 'joe@gerloffpainting.com; taroli757@gmail.com'
         msg['Subject'] = title
         msg.attach(MIMEText(body, 'plain'))
-        text = msg.as_string()
         if filename != False:
             with open(filename, 'rb') as file:
                 attach = MIMEApplication(file.read(), _subtype='pdf')
                 attach.add_header('Content-Disposition', 'attachment', filename=filename)
                 msg.attach(attach)
+        text = msg.as_string()
         s = smtplib.SMTP('remote.gerloffpainting.com')
         s.sendmail(sender, to, text)
         s.quit()
