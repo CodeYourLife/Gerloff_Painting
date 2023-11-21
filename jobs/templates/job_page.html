@@ -413,7 +413,9 @@ if (data == 'False'){link.innerHTML="REMOVED FROM DROPBOX"}
 
 window.onload = function() {
 $.fn.dataTable.moment( 'MMM-DD-YYYY' );
+
 var table = $('#jobs_table').DataTable({paging: false, aaSorting:[]})
+
 var table = $('#notes_table').DataTable({paging: false})
 var table = $('#subcontractors_table').DataTable({paging: false})
 document.getElementById("show_new_pm").style.display = "none";
