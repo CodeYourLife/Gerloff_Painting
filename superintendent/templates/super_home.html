@@ -96,6 +96,8 @@ white-space:normal;
     <script type="text/javascript" language="javascript"
             src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
+    <script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
     <script type="text/javascript" class="init">
 function go_to_job(jobnumber){
 url = "{% url 'job_page' 'ALL' %}"
@@ -113,8 +115,11 @@ url = url.replace(3, rental_id);
 window.location.href = url
 }
 
+
+
         window.onload = function() {
-        var table = $('#inventory_table').DataTable({paging: false})
+        $.fn.dataTable.moment( 'MMM-DD-YYYY' );
+        var table = $('#inventory_table').DataTable({paging: false, aaSorting:[]})
         var table = $('#equipment_table').DataTable({paging: false})
         var table = $('#rentals_table').DataTable({paging: false})
         var table = $('#subcontractors_table').DataTable({paging: false})
@@ -459,10 +464,10 @@ window.location.href = url
 
                                 <td data-toggle="modal" style="background-color:hsl(340, 100%, 92%);white-space:nowrap"
 
-                                    data-target="#employee-modal"><a href="#">{{job.start_date}}</a></td>
+                                    data-target="#employee-modal"><a href="#">{{job.start_date|date:'M-d-Y'}}</a></td>
                                 {% else %}
                                 <td data-toggle="modal" data-target="#employee-modal" style="white-space:nowrap"><a
-                                        href="#">{{job.start_date}}</a></td>
+                                        href="#">{{job.start_date|date:'M-d-Y'}}</a></td>
                                 {% endif %}
                                 {% if selected_super == None%}
                                 <td data-toggle="modal" data-target="#super-modal"

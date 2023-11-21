@@ -187,7 +187,7 @@ def super_home(request, super):
     if any(field in request.GET for field in set(search_jobs.get_fields())) == True:
         send_data['has_filter'] = True
     send_data['search_jobs'] = search_jobs
-    send_data['jobs'] = search_jobs.qs
+    send_data['jobs'] = search_jobs.qs.order_by('start_date')
     send_data['jobs_count'] = search_jobs.qs.count()
     send_data['supers'] = Employees.objects.filter(job_title__description="Superintendent", active=True)
     send_data['todays_date'] = date.today() - timedelta(days=45)
