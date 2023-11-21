@@ -50,8 +50,9 @@ def print_TMProposal(request, id):
         dest=result_file
     )
     result_file.close()
-    Email.sendEmail("COP Proposal", "hi", ["joe@gerloffpainting.com"],
-                    f"{path}\COP_{changeorder.cop_number}_{date.today()}.pdf")
+    Email.sendEmail("COP Proposal", "Please find the TM Proposal attached", ["joe@gerloffpainting.com"],
+                    f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
+
 
     return render(request, "print_TMProposal.html",
                   {'inventory_exists': inventory_exists, 'bond_exists': bond_exists, 'laboritems': laboritems,
