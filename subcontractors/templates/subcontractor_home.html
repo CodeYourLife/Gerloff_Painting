@@ -473,6 +473,7 @@ function populate_pending_approvals_modal(invoice_id){
 
 			{% for x in approved %}
 				<tr>
+
                     <td>{{x.subcontract.subcontractor}}</td>
                     <td><a href="{% url 'subcontract_invoices' x.subcontract.id x.id %}">{{x.subcontract.job_number.job_name}} #{{x.number}}</a></td>
                     <td>${{x.final_amount}}</td>
