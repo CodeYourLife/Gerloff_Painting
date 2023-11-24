@@ -138,6 +138,7 @@ def subcontractor_invoice_new(request, subcontract_id):
         next_number = 1
     if request.method == 'POST':
         if 'subcontract_note' in request.POST:
+            invoice_total = 0
             invoice = SubcontractorInvoice.objects.create(date=date.today(), pay_app_number=next_number,
                                                           subcontract=subcontract, pay_date=friday)
             for x in SubcontractItems.objects.filter(subcontract=subcontract):
@@ -240,6 +241,8 @@ def portal_invoice_new(request, subcontract_id):
             InvoiceApprovals.objects.create(employee=Employees.objects.get(id=18), invoice=invoice)
             if subcontract.job_number.superintendent != Employees.objects.get(id=22):
                 InvoiceApprovals.objects.create(employee=subcontract.job_number.superintendent, invoice=invoice)
+            email_body = "New Invoice Entered For " + str(subcontract.subcontractor.company) + "\n Job: " + str(subcontract.job_number.job_name)
+            Email.sendEmail("New invoice", email_body, ['admin2@gerloffpainting.com','joe@gerloffpainting.com'], False)
             return redirect('portal', sub_id=subcontract.subcontractor.id, contract_id=subcontract_id)
     return render(request, "portal_invoice_new.html",
                   {'friday': friday, 'next_number': next_number, 'items': items, 'subcontract': subcontract})
@@ -323,7 +326,7 @@ def subcontract_invoices(request, subcontract_id, item_id):
                                                 invoice=selected_invoice)
                 email_body = selected_invoice.subcontract.subcontractor.company + " invoice for " + selected_invoice.subcontract.job_number.job_name + " has been rejected by " + current_employee.first_name + ". " + \
                              request.POST['reject_notes']
-                Email.sendEmail("Invoice Rejected", email_body, ['joe@gerloffpainting.com'], False)
+                Email.sendEmail("Invoice Rejected", email_body, ['admin2@gerloffpainting.com','joe@gerloffpainting.com'], False)
             return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id=item_id)
         if 'form5' in request.POST:  # approved
             selected_invoice = SubcontractorInvoice.objects.get(id=item_id)
@@ -354,7 +357,10 @@ def subcontract_invoices(request, subcontract_id, item_id):
                     x.save()
                 elif x.is_approved == False:
                     approved = False
-            if approved == True: invoice.is_sent = True
+            if approved == True:
+                invoice.is_sent = True
+                email_body = selected_invoice.subcontract.subcontractor.company + " invoice for " + selected_invoice.subcontract.job_number.job_name + " has been approved."
+                Email.sendEmail("Invoice Approved", email_body, ['admin2@gerloffpainting.com','joe@gerloffpainting.com'], False)
             invoice.save()
             current_employee = Employees.objects.get(user=request.user)
             SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
@@ -401,7 +407,10 @@ def subcontract_invoices(request, subcontract_id, item_id):
                     x.save()
                 elif x.is_approved == False:
                     approved = False
-            if approved == True: invoice.is_sent = True
+            if approved == True:
+                email_body = selected_invoice.subcontract.subcontractor.company + " invoice for " + selected_invoice.subcontract.job_number.job_name + " has been approved."
+                Email.sendEmail("Invoice Approved", email_body, ['admin2@gerloffpainting.com','joe@gerloffpainting.com'], False)
+                invoice.is_sent = True
             invoice.save()
             SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
                                             user=current_employee,
