@@ -63,10 +63,10 @@ def connect(request):
     send_data = {}
     if request.method == 'POST':
         send_data = {}
-        if 'login_username' in request.POST:
-            if Subcontractors.objects.filter(username=request.POST['login_username']).exists():
-                selected_sub = Subcontractors.objects.get(username=request.POST['login_username'])
-                if request.POST['login_password'] == selected_sub.password:
+        if 'login_now' in request.POST:
+            if Subcontractors.objects.filter(username=request.POST['username']).exists():
+                selected_sub = Subcontractors.objects.get(username=request.POST['username'])
+                if request.POST['password'] == selected_sub.password:
                     return redirect('portal', sub_id=selected_sub.id, contract_id='ALL')
             else:
                 send_data['message'] = "Username or password not valid"
