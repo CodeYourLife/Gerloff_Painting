@@ -344,7 +344,7 @@ def subcontract_invoices(request, subcontract_id, item_id):
             current_employee = Employees.objects.get(user=request.user)
             if 'is_other_approver_id' in request.POST:
                 other_approval = InvoiceApprovals.objects.get(id=request.POST['is_other_approver_id'])
-                current_employee = Employees.objects.get(id=other_approval.id)
+                current_employee = Employees.objects.get(id=other_approval.employee.id)
                 note = "Invoice " + str(invoice.pay_app_number) + " Approved! On behalf of " + str(current_employee)
             else:
                 note = "Invoice " + str(invoice.pay_app_number) + " Approved!"
