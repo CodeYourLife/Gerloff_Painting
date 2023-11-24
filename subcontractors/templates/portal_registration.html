@@ -93,12 +93,16 @@ function verify_password(){
 				{% csrf_token %}
 						<label for="username">Username:</label>
 						<br>
+
 				<input type="hidden" name="login_now" value="True">
 				<input type="username" name="username" id="username" placeholder="Username">
+
 						<br>
 						<label for="password">Password:</label>
 						<br>
+
 					<input type="password" name="password" id="password" placeholder="Password">
+
 						<div class="text-danger">{{message}}</div>
 						<br>
 						<input type="submit" class="btn btn-primary btn-sm" value="Sign In" >
