@@ -274,7 +274,7 @@ return false;
  <form id="changes_form" action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post"  >
 {% csrf_token %}
 	 	 {% if other_approve %}
-	  <input type="hidden" id="other_approver_id" name="is_other_approver_id" value="{{other_approve}}" />
+	  <input type="hidden" id="other_approver_id" name="is_other_approver_id" value="{{other_approve.id}}" />
 	 {% endif %}
 <input type="hidden" id="change_notes" name="change_notes" >
 <div class="table-responsive">
