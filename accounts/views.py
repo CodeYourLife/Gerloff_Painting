@@ -9,6 +9,7 @@ from datetime import datetime,timedelta
 from django.conf import settings
 import os
 
+
 def registration(request):
     send_data = {}
     if request.method == 'POST':

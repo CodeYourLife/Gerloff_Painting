@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_item_subs %}active{% endblock nav_item_subs %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <title>DataTables example - HTML (DOM) sourced data</title>
+        <style type="text/css" class="init">
+
+.colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
+
+.dataTables_wrapper {
+    font-family: tahoma;
+    font-size: 13px;
+}
+
+        nav .active, .collapsible:hover {
+          background-color: Salmon;
+        }
+        .nav-pills a {
+            color: black;
+        }
+        .nav-pills li {
+            padding: 2px;
+        }
+        .nav-pills .active {
+            background-color: #6c757d !important;
+            padding: 5px;
+        }
+        label {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+        input {
+            margin-left: 10px;
+            margin-right: 10px;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+        tr th {
+            width: fit-content !important;
+        }
+        .tab-content * {
+          color : black;
+          background-color: white !important;
+        }
+        .active * {
+            background-color: white !important;
+        }
+                .list-items {
+        border-bottom: 1px solid black; display: flex; justify-content: space-between;
+        }
+        .text-wrap{
+    white-space:normal;
+}
+.width-200{
+    width:200px;
+}
+.dataTables_filter {
+   float: left !important;
+}
+.tb { border-collapse: collapse; width:300px; }
+
+.tb th, .tb td { padding: 5px; border: solid 1px #777; }
+.tb th { background-color: lightblue; }
+
+.table td {
+        }
+
+    </style>
+
+    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+
+    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
+    <script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
+    <script type="text/javascript" class="init">
+        $(document).ready(function () {
+            var table = $('#sub_table').DataTable({paging: false, searching: false});
+            var table = $('#sub2_table').DataTable({paging: false, searching: false});
+            var table = $('#invoice_table').DataTable({paging: false, searching: false});
+        })
+function populate_invoices_modal(invoice_id){
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'invoice_id':invoice_id},
+        success: function (data) {
+           parsedData = JSON.parse(data);
+            let text = "<table border='1' class='table display'>"
+            text += "<thead><tr><th>Item</th><th>Billed</th></tr></thead>"
+            parsedData.sovs.forEach((element) => {
+                if (element.unit == "Lump Sum"){
+                text += "<tr><td>" + element.item + "</td><td>$" + element.quantity +"</td></tr>";
+                }
+                else{
+                text += "<tr><td>" + element.item + "</td><td>" + element.quantity + " " + element.unit + "</td></tr>";
+                }
+            })
+            text += "</table>"
+            document.getElementById("invoice_info").innerHTML = text;
+        }
+    })
+}
+function check_pending(){
+if ('{{pending_invoices_exist}}'){
+alert("You cannot enter new invoice because you have one pending")
+return false;
+}
+}
+
+    </script>
+</head>
+<body>
+
+	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+		<a class="navbar-brand sub-navbar-brand" href="#">{{selected_sub}}</a>
+		<div id="navbarNavDropdown2">
+		  <ul class="sub-nav-list navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'portal' selected_sub.id 'ALL' %}">My Contracts</a></li>
+    </ul>
+  </div>
+
+</nav>
+<div class="modal fade" id="invoices-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="title3"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="invoice_info"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if selected_contract %}
+
+<form id= "hidden_form" action = "{% url 'portal' selected_sub.id 'ALL' %}" method = "post">
+    {% csrf_token %}
+    <input type="submit" class="btn btn-primary btn-sm" value="Show All My Contracts">
+
+</form>
+		<div style="text-align:center"><h4>Contract for {{selected_contract.job_number}}</h4></div>
+    <br>
+<div class="demo-html" style="width:90%">
+		<table id="sub2_table" class="display" style="width:90%">
+			<thead>
+				<tr>
+					<th>Description</th>
+					<th>Price</th>
+					<th>Billed</th>
+					<th>Notes</th>
+
+				</tr>
+			</thead>
+			<tbody>
+			{% for x in items %}
+				<tr>
+					<td>{{x.SOV_description}}</td>
+					{% if x.SOV_is_lump_sum == True %}
+					<td>Lump Sum: ${{x.SOV_rate}}</td>
+					{% else %}
+					<td>${{x.SOV_rate}} per {{x.SOV_unit}}. ({{x.SOV_total_ordered}} {{x.SOV_unit}} Total)</td>
+					{% endif %}
+					<td>{{x.percentage}}%</td>
+					<td>{{x.notes}}</td>
+
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+	</div>
+{% else %}
+<div class="table-responsive">
+    <table id="sub_table" class="display">
+        <thead>
+        <tr>
+            <th>Job</th>
+            <th>Total</th>
+			<th>Billed</th>
+            <th>%</th>
+            <th>Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for x in subcontracts %}
+        <tr>
+            <td><a href = "{% url 'portal' selected_sub.id x.id %}">{{x.job_name}}</a></td>
+            <td>{{x.total_contract_amount}}</td>
+			<td>{{x.total_billed}}</td>
+			<td>{{x.percent_complete}}</td>
+            {% if x.invoice_pending == True %}
+            <td>Pending</td>
+			{% elif x.invoice_ready == True %}
+			<td>Approved</td>
+            {% else %}
+            <td></td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% if selected_contract %}
+	<br>
+	<hr>
+<h3>INVOICING SUMMARY</h3>
+
+<form action="{% url 'portal_invoice_new' selected_contract.id %}" method="post"  onsubmit="return check_pending()">
+{% csrf_token %}
+<input type="submit" name="Form3" class="btn btn-success btn-sm" value="NEW INVOICE" />
+</form>
+
+<br>
+
+<div class="demo-html" style="width:90%">
+		<table id="invoice_table" class="display" style="width:90%">
+			<thead>
+			<tr>
+				<th>Pay Date</th>
+				<th>Invoice #</th>
+				<th>Amount</th>
+				<th>Retainage</th>
+				<th>Status</th>
+			</tr>
+			</thead>
+			<tbody>
+			{% if invoices %}
+			{% for x in invoices %}
+			<tr>
+			<td>{{x.pay_date}}</td>
+			<td data-toggle="modal" data-target="#invoices-modal" onclick="populate_invoices_modal('{{x.id}}')" ><a href = "#" >{{x.pay_app_number}}</a></td>
+			<td>${{x.final_amount}}</td>
+			<td>${{x.retainage}}</td>
+			{% if x.is_sent == True %}
+				<td>Approved</td>
+			{% else %}
+				<td>Pending</td>
+				{% endif %}
+			</tr>
+			{% endfor %}
+			{% endif %}
+			</tbody>
+		</table>
+</div>
+{% endif %}
+</body>
+</html>
+
+{% endblock %}

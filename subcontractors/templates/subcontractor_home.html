@@ -96,7 +96,11 @@
 
 
 $(document).ready(function () {
-    var table = $('#sub_table').DataTable({paging: false});
+    var table = $('#sub_table').DataTable({paging: false,searching:false,info:false});
+    var table = $('#all_invoices_table').DataTable({paging: false,searching:false,info:false});
+    var table = $('#my_invoices_table').DataTable({paging: false,searching:false,info:false});
+    var table = $('#approved_invoices_table').DataTable({paging: false,searching:false,info:false});
+
 })
 
 function populate_contact_info(subcontractor_id){
@@ -151,14 +155,59 @@ function populate_active_contracts_modal(subcontractor_id){
 
             parsedData.active_contracts.forEach((element) => {
                 if (element.po_number != ""){
-                text += "<tr><td><a href=\"{% url 'job_page' 123 %}\">" + element.job_name + "</a></td><td><a href=\"{% url 'subcontract' 456 %}\">" + element.po_number + "</a></td><td>" + element.percent_complete + "</td>></tr>";
+                text += "<tr><td><a href=\"{% url 'job_page' 123 %}\">" + element.job_name + "</a></td><td><a href=\"{% url 'subcontract' 456 %}\">" + element.po_number + "</a></td><td>" + element.percent_complete + "</td></tr>";
                 }
-                else {text += "<tr><td><a href=\"{% url 'job_page' 123 %}\">" + element.job_name + "</a></td><td><a href=\"{% url 'subcontract' 456 %}\">TBD</a></td><td>" + element.percent_complete + "</td>></tr>";}
+                else {text += "<tr><td><a href=\"{% url 'job_page' 123 %}\">" + element.job_name + "</a></td><td><a href=\"{% url 'subcontract' 456 %}\">TBD</a></td><td>" + element.percent_complete + "</td></tr>";}
                 text=text.replace(123,element.job_number)
                 text=text.replace(456,element.id)
             })
             text += "</table>"
             document.getElementById("active_contracts_title").innerHTML = parsedData.company
+            document.getElementById("active_contracts_info").innerHTML = text;
+        }
+    })
+
+}
+function populate_pending_invoices_modal(subcontractor_id){
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'pending_invoices':'pending_invoices','subcontractor_id':subcontractor_id},
+        success: function (data) {
+           parsedData = JSON.parse(data);
+            let text = "<table border='1' class='table display' >"
+            text += "<thead><tr><th>Job</th><th>Invoice #</th><th>Pay Date</th></tr></thead>"
+
+            parsedData.pending_invoices.forEach((element) => {
+                text += "<tr><td><a href=\"{% url 'job_page' 123 %}\">" + element.job_name + "</a></td><td><a href=\"{% url 'subcontract_invoices' 456 789 %}\">" + element.pay_app_number + "</a></td><td>" + element.date + "</td></tr>";
+                text=text.replace(123,element.job_number)
+                text=text.replace(456,element.subcontract_id)
+                text=text.replace(789,element.id)
+            })
+            text += "</table>"
+            document.getElementById("active_contracts_title").innerHTML = parsedData.company + " Pending Invoices"
+            document.getElementById("active_contracts_info").innerHTML = text;
+        }
+    })
+
+}
+function populate_pending_approvals_modal(invoice_id){
+
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'pending_approvals':'pending_approvals','selected_invoice_id':invoice_id},
+        success: function (data) {
+
+           parsedData = JSON.parse(data);
+            let text = "<table border='1' class='table display' >"
+            text += "<thead><tr><th>Reviewer</th><th>Approved?</th><th>Made Changes?</th></tr></thead>"
+            parsedData.approval_status.forEach((element) => {
+
+                text += "<tr><td>" + element.employee + "</td><td>" + element.approved + "</td><td>" + element.changes + "</td></tr>";
+            })
+            text += "</table>"
+            document.getElementById("active_contracts_title").innerHTML = "Invoice Approvals"
             document.getElementById("active_contracts_info").innerHTML = text;
         }
     })
@@ -171,7 +220,7 @@ function populate_active_contracts_modal(subcontractor_id){
 		<a class="navbar-brand sub-navbar-brand" href="#">Subcontractors</a>
 		<div id="navbarNavDropdown2">
 		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link active" href="{% url 'subcontractor_home' %}">Subcontractor List</a></li>
+        <li><a class="nav-item nav-link active" href="{% url 'subcontractor_home' %}">Subcontractor Home</a></li>
 		 <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
         <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
          <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
@@ -275,15 +324,27 @@ function populate_active_contracts_modal(subcontractor_id){
     </div>
 </div>
 
-
-
-<div class="table-responsive">
+<div id="accordion">
+<!--    #subcontractor list-->
+    <div class="card">
+        <div class="card-header" id="headingZero" style="background-color:hsl(31, 0%, 86%);">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseZero" aria-expanded="false"
+                        aria-controls="collapseZero">
+                    {{subcontractor_count}} Active Subs.  {{contracts_count}} Open Contracts
+                </button>
+            </h5>
+        </div>
+        <div id="collapseZero" class="collapse hide" aria-labelledby="headingZero" data-parent="#accordion">
+            <div class="card-body">
+            <div class="table-responsive">
 		<table id="sub_table" class="display table table-sm">
 			<thead>
 
 				<tr>
 					<th>Company</th>
 					<th>Active Contracts</th>
+                    <th>Pending Invoices</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -292,12 +353,144 @@ function populate_active_contracts_modal(subcontractor_id){
 				<tr>
 					<td style="white-space:nowrap" data-toggle="modal" data-target="#show_contact_info-modal" onclick="populate_contact_info('{{x.id}}')"><a href="#">{{x.company}}</a></td>
 					<td style="white-space:nowrap" data-toggle="modal" data-target="#active_contracts-modal" onclick="populate_active_contracts_modal('{{x.id}}')"><a href="#">{{x.active_contracts}} Active Contracts</a></td>
-				</tr>
+                    <td style="white-space:nowrap" data-toggle="modal" data-target="#active_contracts-modal" onclick="populate_pending_invoices_modal('{{x.id}}')"><a href="#">{{x.pending_invoices}} Pending Invoices</a></td>
+                </tr>
 			{% endfor %}
 			</tbody>
 		</table>
-
 </div>
+            </div>
+        </div>
+    </div>
+<!--#invoices needing approval-->
+    <div class="card">
+        <div class="card-header" id="headingOne" style="background-color:hsl(31, 0%, 86%);">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false"
+                        aria-controls="collapseOne">
+                    {{approvals_count}} Invoices Needing Approval
+                </button>
+            </h5>
+        </div>
+        <div id="collapseOne" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">
+            <div class="card-body">
+                    <div class="table-responsive">
+		<table id="all_invoices_table" class="display table table-sm">
+			<thead>
+
+				<tr>
+					<th>Company</th>
+					<th>Invoice</th>
+                    <th>Amount</th>
+                    <th>Pay Date</th>
+                    <th>Approvals Needed</th>
+				</tr>
+			</thead>
+			<tbody>
+
+			{% for x in all_invoices %}
+				<tr>
+                    <td>{{x.company}}</td>
+                    <td><a href="{% url 'subcontract_invoices' x.contract_id x.id %}">{{x.job_name}} #{{x.number}}</a></td>
+                    <td>${{x.amount}}</td>
+                    <td>{{x.pay_date}}</td>
+                    <td style="white-space:nowrap" data-toggle="modal" data-target="#active_contracts-modal" onclick="populate_pending_approvals_modal('{{x.id}}')"><a href="#">{{x.approvals_needed}}</a></td>
+                </tr>
+			{% endfor %}
+			</tbody>
+		</table>
+</div>
+                </div>
+
+            </div>
+        </div>
+<!--    #my invoices-->
+    <div class="card">
+        <div class="card-header" id="headingOne" style="background-color:hsl(31, 0%, 86%);">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapse2" aria-expanded="false"
+                        aria-controls="collapse2">
+                   You have {{my_approvals_count}} invoices to approve
+                </button>
+            </h5>
+        </div>
+        <div id="collapse2" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">
+            <div class="card-body">
+                 <div class="table-responsive">
+		<table id="my_invoices_table" class="display table table-sm">
+			<thead>
+
+				<tr>
+					<th>Company</th>
+					<th>Invoice</th>
+                    <th>Amount</th>
+                    <th>Pay Date</th>
+                    <th>Approvals Needed</th>
+				</tr>
+			</thead>
+			<tbody>
+
+			{% for x in my_invoices %}
+				<tr>
+                    <td>{{x.company}}</td>
+                    <td><a href="{% url 'subcontract_invoices' x.contract_id x.id %}">{{x.job_name}} #{{x.number}}</a></td>
+                    <td>${{x.amount}}</td>
+                    <td>{{x.pay_date}}</td>
+                    <td style="white-space:nowrap" data-toggle="modal" data-target="#active_contracts-modal" onclick="populate_pending_approvals_modal('{{x.id}}')"><a href="#">{{x.approvals_needed}}</a></td>
+                </tr>
+			{% endfor %}
+			</tbody>
+		</table>
+</div>
+                </div>
+
+            </div>
+        </div>
+<!--     #to be paid-->
+    <div class="card">
+        <div class="card-header" id="headingOne" style="background-color:hsl(31, 0%, 86%);">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapse3" aria-expanded="false"
+                        aria-controls="collapse3">
+                   {{approved_count}} invoices awaiting payment
+                </button>
+            </h5>
+        </div>
+        <div id="collapse3" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">
+            <div class="card-body">
+                 <div class="table-responsive">
+		<table id="approved_invoices_table" class="display table table-sm">
+			<thead>
+				<tr>
+					<th>Company</th>
+					<th>Invoice</th>
+                    <th>Amount</th>
+                    <th>Retainage</th>
+                    <th>Pay Date</th>
+				</tr>
+			</thead>
+			<tbody>
+
+			{% for x in approved %}
+				<tr>
+                    <td>{{x.subcontract.company}}</td>
+                    <td><a href="{% url 'subcontract_invoices' x.subcontract.id x.id %}">{{x.subcontract.job_number.job_name}} #{{x.number}}</a></td>
+                    <td>${{x.final_amount}}</td>
+                    <td>${{x.retainage}}</td>
+                    <td>{{x.pay_date}}</td>
+                </tr>
+			{% endfor %}
+			</tbody>
+		</table>
+</div>
+                </div>
+
+            </div>
+        </div>
+</div>
+
+
+
 </body>
 </html>
 

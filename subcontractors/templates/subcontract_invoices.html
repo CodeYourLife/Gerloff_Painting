@@ -94,12 +94,48 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
     <script type="text/javascript" class="init">
 $(document).ready(function () {
-    var table = $('#sub_table').DataTable({paging:false});
+    var table = $('#sub_table').DataTable({paging:false,searching:false,info:false});
 })
 $(document).ready(function () {
-    var table = $('#detail_table').DataTable({paging:false});
+    var table = $('#detail_table').DataTable({paging:false,searching:false,info:false});
 })
 
+function notes_prompt(){
+	var name=prompt("Add Note");
+	if (name!=null){
+		notes_form.invoice_notes.value = name;
+		notes_form.submit()
+		}
+	else{
+		return;
+		}
+}
+function add_reject_note(){
+	var name=prompt("Add Note");
+	if (name!=null){
+	reject_form.reject_notes.value = name;
+		reject_form.submit()
+		}
+	else{
+		return;
+		}
+}
+function made_changes_note(){
+	var name=prompt("Add Note");
+	if (name!=null){
+	changes_form.change_notes.value = name;
+		changes_form.submit()
+		}
+	else{
+		return;
+		}
+}
+function check_other_approver(){
+if (other_approval_form.other_approver.value=="please_select"){
+alert("Please select another approver")
+return false;
+}
+}
 	</script>
 </head>
 <body>
@@ -107,7 +143,7 @@ $(document).ready(function () {
 		<a class="navbar-brand sub-navbar-brand" href="#">Subcontractors</a>
 		<div id="navbarNavDropdown2">
 		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'subcontractor_home' %}">Subcontractor List</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'subcontractor_home' %}">Subcontractor Home</a></li>
 		 <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
         <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
          <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
@@ -115,6 +151,22 @@ $(document).ready(function () {
     </ul>
   </div>
 </nav>
+	{% if other_approve %}
+	<h4>Approving for {{other_approve.employee}}</h4>
+
+{% elif other_approvers %}
+	<form id="other_approval_form" name="other_approval_form" action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post" onSubmit ="return check_other_approver()" >
+		{% csrf_token %}
+		<select id="other_approver" name="other_approver" >
+		<option value="please_select">Please Select</option>
+		{% for x in other_approvers %}
+		<option value={{x.id}}>{{x.employee}}</option>
+		{% endfor %}
+		</select>
+		<input type="submit" class="btn btn-danger btn-sm" value="Approve for this person" />
+	</form>
+	<br>
+{% endif %}
 {% if selected_invoice %}
 	<h3>INVOICE BREAKDOWN</h3>
 	<b>Invoice #</b>{{selected_invoice.pay_app_number}}
@@ -132,18 +184,19 @@ $(document).ready(function () {
 
 	{% if notes %}
 	{% for note in notes %}
-	{{note.date}} - {{note.user}} - {{note.note}}
+	<b>{{note.date}}</b> - {{note.user}} - {{note.note}}
 	<br>
 	{% endfor %}
 	{% endif %}
-		<form action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post"  >
+		<form id="notes_form" action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post"  >
 		{% csrf_token %}
-		<br>
-		<label for="invoice_notes">Enter new note: </label><br>
-		<textarea id="invoice_notes" name="invoice_notes" rows="1" cols="100" /></textarea>
-	<br>
 
-		<input type="submit" name="form99" class="btn btn-warning btn-sm" value="Add Note" />
+<!--		<label for="invoice_notes">Enter new note: </label><br>-->
+		<input type="hidden" id="invoice_notes" name="invoice_notes" />
+<!--			<textarea id="invoice_notes" name="invoice_notes" rows="1" cols="100" /></textarea>-->
+
+<button type="button" onclick="notes_prompt()" class="btn btn-warning btn-sm" >Add Note</button>
+<!--		<input type="submit" name="form99" class="btn btn-warning btn-sm" value="Add Note" />-->
 	</form>
 
 
@@ -198,22 +251,32 @@ $(document).ready(function () {
 </div>
 
 {% if selected_invoice %}
-{% if selected_invoice.is_sent == False %}
- <form action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post"  onSubmit = "return check_booking_data()">
+{% if me_approve or other_approve %}
+	<div id="container">
+ <form id="reject_form" action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post" onSubmit ="return check_booking_data()">
 {% csrf_token %}
-<input type="submit" name="form5" class="btn btn-primary btn-sm" value="APPROVE INVOICE # {{selected_invoice.pay_app_number}} NOW" />
+	 {% if other_approve %}
+	  <input type="hidden" id="other_approver_id" name="is_other_approver_id" value="{{other_approve.id}}" />
+	 {% endif %}
+<input type="submit" name="approved" class="btn btn-success btn-sm" value="APPROVE INVOICE # {{selected_invoice.pay_app_number}} NOW" />
+	 <button type="button" name="reject" class="btn btn-danger btn-sm" onclick="add_reject_note()" >REJECT </button>
+	 <input type="hidden" id="reject_notes" name="reject_notes" />
  </form>
+	</div>
 <br>
 <hr>
 <h3>OR</h3>
 <br>
 <hr>
-<h3>Update Invoice Details</h3>
+<h3>Make Changes</h3>
 
 
- <form action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post"  >
+ <form id="changes_form" action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post"  >
 {% csrf_token %}
-
+	 	 {% if other_approve %}
+	  <input type="hidden" id="other_approver_id" name="is_other_approver_id" value="{{other_approve}}" />
+	 {% endif %}
+<input type="hidden" id="change_notes" name="change_notes" >
 <div class="table-responsive">
 		<table id="detail_table" class="display" style="width:90%">
 			<thead>
@@ -244,14 +307,14 @@ $(document).ready(function () {
 								{% for x in invoice_items %}
 									{% if x.sov_item.id == item.id %}
 										<td><div id="current_total{{item.id}}" >{{item.special}}%</div></td>
-										<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" value={{x.quantity}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
+										<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" value={{x.quantity|floatformat}} size="5" step="1" onchange="update_percentage(event)" /></td>
 										<td><div id="percentage{{item.id}}" ></div>{{item.percentage}}%</td>
 										<td><input type="text"  name="note{{item.id}}" size="40" value="{{x.notes}}"/></td>
 									{% endif %}
 								{% endfor %}
 							{% else %}
 								<td><div id="current_total{{item.id}}" >{{item.special}}</div></td>
-								<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
+								<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost|floatformat}} size="5" step="1" onchange="update_percentage(event)" /></td>
 								<td><div id="percentage{{item.id}}" ></div>{{item.percentage}}%</td>
 								<td><input type="text"  name="note{{item.id}}" size="40" /></td>
 							{% endif %}
@@ -263,14 +326,14 @@ $(document).ready(function () {
 							{% if item.invoiced == True %}
 								{% for x in invoice_items %}
 									{% if x.sov_item.id == item.id %}
-										<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" value={{x.quantity}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
+										<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" value={{x.quantity|floatformat}} size="5" step="1" onchange="update_percentage(event)" /></td>
 										<td><div id="current_total{{item.id}}" >${{item.special}}</div></td>
 										<td><div id="percentage{{item.id}}" ></div>{{item.percentage}}%</td>
 										<td><input type="text"  name="note{{item.id}}" size="40" value="{{x.notes}}"/></td>
 									{% endif %}
 								{% endfor %}
 							{% else %}
-								<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
+								<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty|floatformat}} size="5" step="1" onchange="update_percentage(event)" /></td>
 								<td><div id="current_total{{item.id}}" >${{item.special}}</div></td>
 								<td><div id="percentage{{item.id}}" ></div>{{item.percentage}}%</td>
 								<td><input type="text"  name="note{{item.id}}" size="40" /></td>
@@ -283,11 +346,16 @@ $(document).ready(function () {
 			</tbody>
 		</table>
 </div>
-<input type="submit" name="form6" class="btn btn-primary btn-sm" value="SEND UPDATED INVOICE FOR APPROVAL" />
+	 <button type="button" name="form6" class="btn btn-primary btn-sm" onclick="made_changes_note()" >APPROVED WITH THE ABOVE CHANGES</button>
     </form>
 
 {% else %}
+
+<br><hr>
 <div class="demo-html" style="width:90%">
+		<div class="container">
+		<h4 class="text-center">Invoice Details</h4>
+</div>
 		<table id="detail_table" class="display" style="width:90%">
 			<thead>
 				<tr>

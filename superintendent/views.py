@@ -18,6 +18,56 @@ from django.shortcuts import render, redirect
 
 def super_ajax(request):
     if request.is_ajax():
+        if 'invoice_id' in request.GET:
+            send_data = {}
+            selected_invoice = SubcontractorInvoice.objects.get(id=request.GET['invoice_id'])
+            sovs = []
+            for x in SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice):
+                sovs.append({'item': x.sov_item.SOV_description, 'quantity': f"{int(x.quantity):,d}",
+                             'unit': str(x.sov_item.SOV_unit)})
+            orig_sovs = []
+            for x in SubcontractorOriginalInvoiceItem.objects.filter(invoice=selected_invoice):
+                orig_sovs.append(
+                    {'item': x.sov_item.SOV_description, 'quantity': str(x.quantity), 'unit': str(x.sov_item.SOV_unit)})
+            send_data['sovs'] = sovs
+            send_data['orig_sovs'] = orig_sovs
+            return HttpResponse(json.dumps(send_data))
+        if 'pending_invoices' in request.GET:
+            send_data = {}
+            subcontractor = Subcontractors.objects.get(id=request.GET['subcontractor_id'])
+            invoices = SubcontractorInvoice.objects.filter(subcontract__subcontractor=subcontractor, is_sent=False)
+            pending_invoices = []
+            send_data['company'] = subcontractor.company
+            for x in invoices:
+                pending_invoices.append(
+                    {'job_number': x.subcontract.job_number.job_number, 'job_name': x.subcontract.job_number.job_name,
+                     'pay_app_number': x.pay_app_number,
+                     'date': str(x.pay_date), 'id': x.id, 'subcontract_id': x.subcontract.id})
+            send_data['pending_invoices'] = pending_invoices
+            return HttpResponse(json.dumps(send_data))
+        if 'pending_approvals' in request.GET:
+            send_data = {}
+            selected_invoice = SubcontractorInvoice.objects.get(id=request.GET['selected_invoice_id'])
+            approvals_needed = InvoiceApprovals.objects.filter(invoice=selected_invoice)
+            approval_status = []
+            for x in approvals_needed:
+                if x.is_approved:
+                    approved="YES"
+                    if x.made_changes:
+                        changes = "YES"
+                    else:
+                        changes = "NO"
+                else:
+                    if x.is_reviewed:
+                        approved="REJECTED"
+                        changes=""
+                    else:
+                        approved="NO"
+                        changes=""
+                approval_status.append(
+                    {'employee': x.employee.first_name, 'approved': approved, 'changes': changes})
+            send_data['approval_status'] = approval_status
+            return HttpResponse(json.dumps(send_data))
         if 'active_contracts' in request.GET:
             send_data = {}
             subcontractor = Subcontractors.objects.get(id=request.GET['subcontractor_id'])
