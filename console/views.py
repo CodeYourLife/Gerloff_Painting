@@ -55,7 +55,8 @@ def index(request):
     send_data['needs_super'] = Jobs.objects.filter(superintendent__isnull = True).count()
     send_data['active_subcontracts']=Subcontracts.objects.filter(job_number__is_closed=False,is_closed=False).count()
     send_data['pending_invoices']=SubcontractorInvoice.objects.filter(is_sent=False).count()
-    if Jobs.objects.filter(is_closed=False,superintendent=Employees.objects.get(user=request.user)).exists():
+    send_data['approved_invoices'] = SubcontractorInvoice.objects.filter(is_sent=True, processed=False).count()
+    if Jobs.objects.filter(is_closed=False,superintendent=Employees.objects.get(user=request.user)).exists() and request.user != Employees.objects.get(id=22).user:
         active_super = Employees.objects.get(user=request.user)
         send_data['super_equipment']=Inventory.objects.filter(job_number__superintendent = active_super).count()#
         send_data['super_rentals'] = Rentals.objects.filter(job_number__superintendent = active_super).count()#
@@ -91,7 +92,8 @@ def warehouse_home(request):
 @login_required(login_url='/accounts/login')
 def admin_home(request):
     send_data = {}
-    send_data['employees'] = Employees.objects.filter(user__isnull=True)
+    send_data['employees'] = Employees.objects.filter(user__isnull=True, active=True)
+    send_data['subs']=Subcontractors.objects.filter(is_inactive=False)
     return render(request, 'admin_home.html', send_data)
 
 
@@ -111,11 +113,27 @@ def grant_web_access(request):
                     randomPin = random.randint(1000, 9999)
         selected_employee.pin = randomPin
         selected_employee.save()
-        send_data['employees'] = Employees.objects.filter(user__isnull=True)
-        return render(request, 'admin_home.html', send_data)
-
+        return redirect('admin_home')
     return render(request, 'grant_web_access.html', send_data)
 
+@login_required(login_url='/accounts/login')
+def grant_subcontractor_web_access(request):
+    send_data = {}
+    send_data['subcontractors'] = Subcontractors.objects.filter(is_inactive=False)
+    if request.method == 'POST':
+        selected_sub = Subcontractors.objects.get(id=request.POST['select_employee'])
+        tester = False
+        while tester == False:
+            randomPin = random.randint(1000, 9999)
+            tester = True
+            for x in Subcontractors.objects.filter(pin__isnull=False):
+                if x.pin == randomPin:
+                    tester = False
+                    randomPin = random.randint(1000, 9999)
+        selected_sub.pin = randomPin
+        selected_sub.save()
+        return redirect('admin_home')
+    return render(request, 'grant_subcontractor_web_access.html', send_data)
 
 # Create your views here.
 def register_user(request):

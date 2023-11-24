@@ -22,7 +22,8 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 $(document).ready(function () {
-    var table = $('#employees_table').DataTable({});
+    var table = $('#employees_table').DataTable({paging:false});
+    var table = $('#subs_table').DataTable({paging:false});
 })
 
 	</script>
@@ -37,26 +38,81 @@ $(document).ready(function () {
     </ul>
   </div>
 </nav>
-	<h3>Employees Awaiting Registration</h3>
-<div class="demo-html" style="width:90%">
-		<table id="employees_table" class="display" style="width:90%">
-			<thead>
-				<tr>
-					<th>Name </th>
-					<th>Pin </th>
-				</tr>
-			</thead>
-			<tbody>
-			{% for x in employees %}
-			<tr><td>{{x.first_name}} {{x.middle_name}} {{x.last_name}}</td><td>{{x.pin}}</td>
-			</tr>
-{% endfor %}
-			</tbody>
-		</table>
+
+
+<div id="accordion">
+    <div class="card">
+        <div class="card-header" id="headingZero" style="background-color:hsla(128,100%, 80%);">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseZero" aria-expanded="false"
+                        aria-controls="collapseZero">
+                   Employees Awaiting Registration
+                </button>
+            </h5>
+        </div>
+        <div id="collapseZero" class="collapse hide" aria-labelledby="headingZero" data-parent="#accordion">
+            <div class="card-body">
+			<div class="demo-html" style="width:90%">
+					<table id="employees_table" class="display" style="width:90%">
+						<thead>
+							<tr>
+								<th>Name </th>
+								<th>Pin </th>
+							</tr>
+						</thead>
+						<tbody>
+						{% for x in employees %}
+						<tr><td>{{x.first_name}} {{x.middle_name}} {{x.last_name}}</td><td>{{x.pin}}</td>
+						</tr>
+						{% endfor %}
+						</tbody>
+					</table>
+			</div>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header" id="headingOne" style="background-color:hsla(128,100%, 80%);">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false"
+                        aria-controls="collapseOne">
+                    Subcontractor PINs
+                </button>
+            </h5>
+        </div>
+        <div id="collapseOne" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">
+            <div class="card-body">
+					<table id="subs_table" class="display" style="width:90%">
+						<thead>
+							<tr>
+								<th>Name </th>
+								<th>Pin </th>
+								<th>Username </th>
+							</tr>
+						</thead>
+						<tbody>
+						{% for x in subs %}
+						<tr><td>{{x.company}}</td><td>{{x.pin}}</td><td>{{x.username}}</td>
+						</tr>
+						{% endfor %}
+						</tbody>
+					</table>
+                </div>
+
+            </div>
+        </div>
 </div>
-	<br>
-
-
+    <div class="card">
+        <div class="card-header" id="headingOne" style="background-color:hsla(128,100%, 80%);">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapse2" aria-expanded="false"
+                        aria-controls="collapse2">
+                    Admin Tools
+                </button>
+            </h5>
+        </div>
+        <div id="collapse2" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">
+            <div class="card-body">
 <a href = "{% url 'grant_web_access' %}">
 							<div style="height:100%;width:100%">
 								Give Employee Web Access	</div>
@@ -67,22 +123,37 @@ $(document).ready(function () {
 								Upload New Job	</div>
 						</a>
 <br>
-<a href = "{% url 'reset_databases' %}">
+<a href = "{% url 'grant_subcontractor_web_access' %}">
 							<div style="height:100%;width:100%">
-								Reset Databases-Don't Click	</div>
+								Give Subcontractor Web Access	</div>
 						</a>
 <br>
-<a href = "{% url 'create_folders' %}">
-							<div style="height:100%;width:100%">
-								Create Folders	</div>
-						</a>
-<br>
+<!--<a href = "{% url 'reset_databases' %}">-->
+<!--							<div style="height:100%;width:100%">-->
+<!--								Reset Databases-Don't Click	</div>-->
+<!--						</a>-->
+<!--<br>-->
+<!--<a href = "{% url 'create_folders' %}">-->
+<!--							<div style="height:100%;width:100%">-->
+<!--								Create Folders	</div>-->
+<!--						</a>-->
+<!--<br>-->
 
-<a href = "{% url 'customize' %}">
-							<div style="height:100%;width:100%">
-								Custom (dont click)	</div>
-						</a>
-<br>
+<!--<a href = "{% url 'customize' %}">-->
+<!--							<div style="height:100%;width:100%">-->
+<!--								Custom (dont click)	</div>-->
+<!--						</a>-->
+<!--<br>-->
+                </div>
+
+            </div>
+        </div>
+</div>
+
+
+
+
+
 
 {% else %}
 <div style="padding-top: 25px">Unauthorized</div>

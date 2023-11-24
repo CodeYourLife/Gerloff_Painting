@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block nav_item_subs %}active{% endblock nav_item_subs %}
+{% block nav_item_roles %}active{% endblock nav_item_roles %}
 {% block content %}
 <!DOCTYPE html>
 <html>
@@ -12,9 +12,6 @@
 	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
 	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
 	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
-
-	</style>
 	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
 	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
 	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
@@ -30,44 +27,37 @@
 </head>
 <body>
 	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Subcontractors</a>
+		<a class="navbar-brand sub-navbar-brand" href="#">Active Jobs</a>
 		<div id="navbarNavDropdown2">
 		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'subcontractor_home' %}">Subcontractor Home</a></li>
-		 <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
-        <li><a class="nav-item nav-link active" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
-         <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
+        <li><a class="nav-item nav-link active" href="#">Home</a></li>
     </ul>
   </div>
 </nav>
+<div style="padding-top: 50px; padding-bottom: 50px" class="row align-items-center justify-content-center align-middle">
+    <div class="col-6" >
+		{% if user.is_superuser %}
+			<form action = "{% url 'grant_subcontractor_web_access' %}" method = "post" class="form-group">
+				{% csrf_token %}
 
-<br>
-<form action="{% url 'subcontractor_new' %}" method="post"  >
-{% csrf_token %}
+				 <label for="select_employee">Select Subcontractor</label>
+				<select id="select_employee" name="select_employee" class="form-control">
+					<option value="not_selected">Select Subcontractor</option>
+					{% if subcontractors %}
+						{% for x in subcontractors %}
+							<option value={{x.id}}>{{x.company}}</option>
+						{% endfor %}
+					{% endif %}
+				</select>
 
-<label for="subcontractor">Company Name: </label><input type= "text" name="subcontractor" id="subcontractor" placeholder="ACME Painting" size="50" required />
-<br><br>
-<label for="contact">Contact Person: </label><input type= "text" name="contact" id="contact" placeholder="John Doe" size="50" />
-<br><br>
-<label for="phone">Phone Number: </label><input type= "text" name="phone" id="phone" placeholder="" size="30" required />
-<br><br>
-<label for="email">Email: </label><input type= "email" name="email" id="email" placeholder="" size="50" required />
-<br><br>
-                    <label for="insurance_expire_date">Insurance Expire Date: </label>
-                    <input type="date" id="insurance_expire_date" name="insurance_expire_date">
-<br><br>
-<input type="checkbox" name ="is_signed_labor_agreement" id="is_signed_labor_agreement" /> <label for="is_signed_labor_agreement"> Do we have a signed labor agreement? </label>
-<br><br>
-	        <label for="notes">Type Any Notes About This Company: </label> <br>
-        <textarea id="notes" name="notes" rows="4" cols="100" ></textarea>
-<br><br>
-<input type="submit" name="Form1" value="Enter New Company" />
-    </form>
-
-
-
-
-
+				<input type="submit" style="margin-top: 10px" class="btn btn-primary btn-sm" name="add_new" value="Submit Now" >
+			</form>
+		{% else %}
+			<div style="padding-top: 25px">Unauthorized</div>
+		{% endif %}
+    </div>
+</div>
 </body>
 </html>
+
 {% endblock %}

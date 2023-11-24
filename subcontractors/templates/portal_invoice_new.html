@@ -77,6 +77,18 @@
 .table td {
         }
 
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
     </style>
 
     <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
@@ -94,16 +106,17 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
     <script type="text/javascript" class="init">
 $(document).ready(function () {
-    var table = $('#job_table').DataTable({paging:false});
+    var table = $('#job_table').DataTable({paging:false,searching:false,info: false});
 })
+var invoice_total = 0;
 
 function update_percentage(event){
-
+type = document.getElementById("type"+event.currentTarget.id).value
 percentage_cell = document.getElementById("percentage"+event.currentTarget.id)
 current_total=parseFloat(event.currentTarget.value)
 quantity_ordered_cell = document.getElementById("quantity_ordered"+event.currentTarget.id)
 
-if (quantity_ordered_cell.innerHTML == "1 Lump Sum"){
+if (type == "Lump Sum"){
 	previous = parseFloat(document.getElementById("previous"+event.currentTarget.id).value)
 	totalcost = parseFloat(document.getElementById("total_cost"+event.currentTarget.id).value)
 }
@@ -114,31 +127,58 @@ else{
 total_to_date = current_total + previous
 percentage_calc = parseFloat(total_to_date/totalcost *100).toFixed(1)
 percentage_cell.innerHTML = String(percentage_calc)+ "%"
+calculate_total()
+}
+
+function calculate_total(){
+	const forms = document.querySelectorAll('form');
+	const form = forms[0];
+	let contract_total = 0
+	Array.from(form.elements).forEach((input) => {
+	  	if (input.id == "item_number"){
+			item_number = String(input.value)
+			type = document.getElementById("type"+ item_number).value
+			if (document.getElementById(item_number).value != ""){
+				if (type == "Lump Sum"){
+					contract_total = contract_total + parseInt(document.getElementById(item_number).value)
+				}
+				else{
+					rate = parseInt(document.getElementById("SOV_rate" + item_number).value)
+					quantity = parseInt(document.getElementById(item_number).value)
+					contract_total = contract_total + rate*quantity
+				}
+
+
+			}
+		}
+	});
+	document.getElementById("contract_total").innerHTML="<b>Total Invoice:</b> $" + contract_total
 }
 
 	</script>
 </head>
 <body>
 	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Subcontractors</a>
+		<a class="navbar-brand sub-navbar-brand" href="#">{{subcontract.subcontractor}}</a>
 		<div id="navbarNavDropdown2">
 		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'subcontractor_home' %}">Subcontractor Home</a></li>
-		 <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
-         <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
-		<li><a class="nav-item nav-link active" href="#">NEW INVOICE -{{subcontract.job_number}} {{subcontract.subcontractor}} {{subcontract.po_number}}</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'portal' subcontract.subcontractor.id 'ALL' %}">My Contracts</a></li>
+			  <li><a class="nav-item nav-link active" href="#">New Invoice</a></li>
     </ul>
   </div>
+
 </nav>
-<h2>NEW INVOICE FOR JOB: {{subcontract.job_number}} - {{subcontract.subcontractor}} PO# {{subcontract.po_number}}</h2>
+<h5>New Invoice For {{subcontract.job_number}}</h5>
+<h5>PO# {{subcontract.po_number}}</h5>
+<h5>Pay App Number: {{next_number}}</h5>
+<h5><b>Pay Date: {{friday}}</b></h5>
 <br>
 
 
- <form action="{% url 'subcontractor_invoice_new' subcontract.id %}" method="post"  >
+ <form action="{% url 'portal_invoice_new' subcontract.id %}" id="invoice_form" method="post"  >
 {% csrf_token %}
 
-	 <h3>Pay App Number: {{next_number}}</h3>
+
 	 <br>
         <label for="subcontract_note">Provide any notes about this invoice: </label> <br>
         <textarea id="subcontract_note" name="subcontract_note" rows="2" cols="100" ></textarea>
@@ -149,13 +189,10 @@ percentage_cell.innerHTML = String(percentage_calc)+ "%"
 			<thead>
 				<tr>
 					<th>Description</th>
-					<th>Ordered Qnty</th>
-					<th>Ordered $</th>
-					<th>Billed Qnty</th>
-					<th>Billed $</th>
-					<th>Current Qnty</th>
-					<th>Current $</th>
-					<th>Total Percentage</th>
+					<th>Total</th>
+					<th>Billed</th>
+					<th>Current Bill</th>
+					<th>%</th>
 					<th>Note</th>
 				</tr>
 			</thead>
@@ -164,20 +201,24 @@ percentage_cell.innerHTML = String(percentage_calc)+ "%"
 				{% for item in items %}
 				<tr>
 					<td>{{item.SOV_description}}</td>
+					<input type="hidden" id="item_number" value="{{item.id}}" />
 					{% if item.SOV_is_lump_sum == True %}
-					<td><div id="quantity_ordered{{item.id}}" >1 Lump Sum</div></td>
-					<td><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>
-					<td><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.total_cost}}" />{{item.quantity_billed}}</td>
-					<td><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
-					<td></td>
-					<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
+					<input type="hidden" id="type{{item.id}}" value="Lump Sum" />
+<!--					<td><div id="quantity_ordered{{item.id}}" >1 Lump Sum</div></td>-->
+					<td style="white-space: nowrap;"><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost|floatformat}}</td>
+<!--					<td><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.total_cost}}" />{{item.quantity_billed}}</td>-->
+					<td style="white-space: nowrap;"><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed|floatformat}}</td>
+<!--					<td></td>-->
+					<td style="white-space: nowrap;"><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost|floatformat}} size="5" step="1" onchange="update_percentage(event)" />$</td>
 					{% else %}
-					<td><input type="hidden" id="quantity_ordered{{item.id}}" value="{{item.SOV_total_ordered}}" />{{item.SOV_total_ordered}} {{item.SOV_unit}}</td>
-					<td><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>
-					<td><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.quantity_billed}}" />{{item.quantity_billed}} {{item.SOV_unit}}</td>
-					<td><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
-					<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
-					<td><input type="hidden" id="current_total{{item.id}}" value="" /></td>
+					<input type="hidden" id="type{{item.id}}" value="Per Unit" />
+					<td style="white-space: nowrap;"><input type="hidden" id="quantity_ordered{{item.id}}" value="{{item.SOV_total_ordered}}" />{{item.SOV_total_ordered|floatformat}} {{item.SOV_unit}}</td>
+<input type="hidden" id="SOV_rate{{item.id}}" value="{{item.SOV_rate}}" />
+					<!--					<td><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>-->
+					<td style="white-space: nowrap;"><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.quantity_billed}}" />{{item.quantity_billed|floatformat}} {{item.SOV_unit}}</td>
+<!--					<td><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>-->
+					<td style="white-space: nowrap;"><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty|floatformat}} size="5" step="1" onchange="update_percentage(event)" />{{item.SOV_unit}}</td>
+<!--					<td><input type="hidden" id="current_total{{item.id}}" value="" /></td>-->
 					{% endif %}
 					<td><div id="percentage{{item.id}}" ></div></td>
 					<td><input type="text"  name="note{{item.id}}" size="40" /></td>
@@ -186,6 +227,8 @@ percentage_cell.innerHTML = String(percentage_calc)+ "%"
 				{% endif %}
 			</tbody>
 		</table>
+	<br>
+	<div id="contract_total"></div>
 </div>
 
 <input type="submit" name="Form3" class="btn btn-primary btn-sm" value="Send Invoice for Approval" />

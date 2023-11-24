@@ -94,7 +94,8 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
     <script type="text/javascript" class="init">
 $(document).ready(function () {
-    var table = $('#sub_table').DataTable({paging: false});
+    var table = $('#sub_table').DataTable({paging: false, searching: false});
+    var table = $('#invoice_table').DataTable({paging: false, searching: false});
     document.getElementById("hide_retainage").style.display="none"
     if ('{{subcontract.is_retainage}}' == "True"){
     document.getElementById("hide_retainage").style.display="block"
@@ -363,7 +364,7 @@ function add_note(){
         <a class="navbar-brand sub-navbar-brand" href="#">Subcontractors</a>
         <div id="navbarNavDropdown2">
           <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'subcontractor_home' %}">Subcontractor List</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'subcontractor_home' %}">Subcontractor Home</a></li>
 		 <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
         <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
          <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
@@ -459,7 +460,7 @@ function add_note(){
                                 {% csrf_token %}
                                 <table>
                                     <tr><td>
-                                        <a href="{% url 'job_page' subcontract.job_number.job_number %}"></a><b>Job:</b> {{subcontract.job_number}}
+                                        <a href="{% url 'job_page' subcontract.job_number.job_number %}"><b>Job:</b> {{subcontract.job_number}}</a>
                                     </td></tr>
                                     <tr>
 										<td data-toggle="modal" data-target="#show_contact_info-modal" data-dismiss="modal" onclick="populate_contact_info('{{subcontract.subcontractor.id}}')"><a href="#"><b>Vendor:</b>{{subcontract.subcontractor}}</a>
@@ -649,10 +650,48 @@ function add_note(){
 </form>
 <br>
 <hr>
-<form action="{% url 'subcontract_invoices' subcontract.id "ALL" %}" method="post"  >
+
+
+<h3>INVOICING SUMMARY</h3>
+
+<form action="{% url 'subcontractor_invoice_new' subcontract.id %}" method="post"  >
 {% csrf_token %}
-<input type="submit" class="btn btn-danger" name="Form3" value="View Invoices" />
+<input type="submit" name="Form3" class="btn btn-success btn-sm" value="NEW INVOICE" />
 </form>
+
+<br>
+
+<div class="demo-html" style="width:90%">
+		<table id="invoice_table" class="display" style="width:90%">
+			<thead>
+			<tr>
+				<th>Date</th>
+				<th>Invoice #</th>
+				<th>Amount</th>
+				<th>Retainage</th>
+				<th>Status</th>
+			</tr>
+			</thead>
+			<tbody>
+			{% if invoices %}
+			{% for x in invoices %}
+			<tr>
+			<td>{{x.date}}</td>
+			<td><a href = "{% url 'subcontract_invoices' subcontract.id x.id %}">{{x.pay_app_number}}</a></td>
+			<td>{{x.final_amount}}</td>
+			<td>{{x.retainage}}</td>
+			{% if x.is_sent == True %}
+				<td>Approved</td>
+			{% else %}
+				<td>Pending</td>
+				{% endif %}
+			</tr>
+			{% endfor %}
+			{% endif %}
+			</tbody>
+		</table>
+</div>
+
 </body>
 </html>
 
