@@ -426,6 +426,7 @@ def equipment_new(request):
 
 @login_required(login_url='/accounts/login')
 def get_directory_contents(request, id, value, app):
+    print(value)
     return MediaUtilities().getDirectoryContents(id, value, app)
 
 
@@ -439,6 +440,8 @@ def equipment_page(request, id):
     foldercontents = os.listdir(path)
     jobs = Jobs.objects.filter(is_closed=False).order_by('job_name')
     if request.method == 'POST':
+        if 'selected_file' in request.POST:
+            return MediaUtilities().getDirectoryContents(id, request.POST['selected_file'], 'equipment')
         if 'search_job' in request.POST:
             jobs = Jobs.objects.filter(is_closed=False, job_name__icontains=request.POST['search_job']).order_by(
                 'job_name')
@@ -547,7 +550,9 @@ def equipment_page(request, id):
             new_note.save()
         if 'upload_file' in request.FILES:
             fileitem = request.FILES['upload_file']
-            fn = os.path.basename(fileitem.name)
+            custom_name = request.POST['file_name']
+            extension = fileitem.name.split(".")[1]
+            fn = os.path.basename(custom_name + "." + extension)
             fn2 = os.path.join(settings.MEDIA_ROOT, "equipment", str(inventory.id), fn)
             open(fn2, 'wb').write(fileitem.file.read())
             foldercontents = os.listdir(path)
