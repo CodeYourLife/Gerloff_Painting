@@ -25,7 +25,7 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 var number_items = 0
-
+var total_items = 0
 function update_retainage(event){
     checkbox = document.getElementById("is_retainage")
     amt = document.getElementById("retainage_amt")
@@ -77,12 +77,14 @@ function selected_wallcovering(event){
 }
 
 function delete_selected(event){
+    total_items -= 1
     document.getElementById(event.currentTarget.value).remove()
 }
 
 
 function new_lump_sum(){
     number_items = number_items+1
+    total_items += 1
     hidden_items = document.getElementById("hidden_number_items")
     add_new_here = document.getElementById("new_item_here")
     hidden_items.value = number_items
@@ -154,6 +156,7 @@ function new_lump_sum(){
 
 function new_per_unit(){
     number_items = number_items+1
+    total_items += 1
     hidden_items = document.getElementById("hidden_number_items")
     add_new_here = document.getElementById("new_item_here")
     hidden_items.value = number_items
@@ -250,7 +253,12 @@ function new_per_unit(){
     alert("Please select a Subcontractor")
     return false;
     }
+    if (total_items == 0){
+    alert("You cannot enter a contract with zero items!")
+    return false;
+    }
  }
+
 	</script>
 </head>
 <body>
@@ -292,6 +300,7 @@ function new_per_unit(){
 </form>
 <br>
 {% else %}
+
     <h1>New Subcontract for Job: {{selectedjob}}</h1>
 <form id="new_subcontract_form" action="{% url 'subcontracts_new' %}" method="post" onSubmit = "return check_data2()" >
     {% csrf_token %}
