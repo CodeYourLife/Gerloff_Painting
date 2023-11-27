@@ -158,7 +158,7 @@ class Jobs(models.Model):
         return Wallcovering.objects.filter(job_number=self).count()
 
     def equipment_count(self):
-        return Inventory.objects.filter(job_number=self).count()
+        return Inventory.objects.filter(job_number=self,is_closed=False).count()
 
     def rentals_count(self):
         return Rentals.objects.filter(is_closed=False, job_number=self).count()

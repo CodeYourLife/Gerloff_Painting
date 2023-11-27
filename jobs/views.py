@@ -143,7 +143,7 @@ def update_job_info(request, jobnumber):
                 selectedjob.spray_scale = request.POST['spray_scale']
         if 'is_closed' in request.POST:
             if selectedjob.is_closed == False:
-                if Inventory.objects.filter(job_number=selectedjob).exists():
+                if Inventory.objects.filter(job_number=selectedjob,is_closed=False).exists():
 
                     message = "Job: " + selectedjob.job_name + " is closed. The following equipment is assigned to the job and must be returned immediately!\n "
                     recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com",
@@ -152,7 +152,7 @@ def update_job_info(request, jobnumber):
                         message = message + "\n No email address for " + str(selectedjob.superintendent)
                     else:
                         recipients.append(selectedjob.superintendent.email)
-                    for x in Inventory.objects.filter(job_number=selectedjob):
+                    for x in Inventory.objects.filter(job_number=selectedjob,is_closed=False):
                         message = message + "\n -" + x.item + " GP Number #" + x.number
                     Email.sendEmail("Closed Job - " + selectedjob.job_name, message,
                                     recipients, False)
@@ -482,7 +482,7 @@ def job_page(request, jobnumber):
             is_t_and_m=False) | ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=True)
         send_data['approved_cos'] = ChangeOrders.objects.filter(job_number__is_closed=False, is_closed=False,
                                                                 is_approved=True)
-        send_data['equipment'] = Inventory.objects.filter(job_number__is_closed=False).order_by('inventory_type')
+        send_data['equipment'] = Inventory.objects.filter(job_number__is_closed=False,is_closed=False).order_by('inventory_type')
         send_data['rentals'] = Rentals.objects.filter(job_number__is_closed=False, off_rent_number__isnull=True)
         wallcovering2 = Wallcovering.objects.filter(job_number__is_closed=False)
         wc_not_ordereds = []
@@ -528,7 +528,7 @@ def job_page(request, jobnumber):
                     selectedjob.is_waiting_for_punchlist = True
                     selectedjob.is_labor_done = False
                     selectedjob.save()
-                    if Inventory.objects.filter(job_number=selectedjob):
+                    if Inventory.objects.filter(job_number=selectedjob,is_closed=False):
                         if PickupRequest.objects.filter(job_number=selectedjob, is_closed=False,
                                                         all_items=True).exists():
                             go_to_pickup = False
@@ -546,7 +546,7 @@ def job_page(request, jobnumber):
                     selectedjob.is_waiting_for_punchlist = True
                     selectedjob.is_labor_done = True
                     selectedjob.save()
-                    if Inventory.objects.filter(job_number=selectedjob):
+                    if Inventory.objects.filter(job_number=selectedjob,is_closed=False):
                         if PickupRequest.objects.filter(job_number=selectedjob, is_closed=False,
                                                         all_items=True).exists():
                             go_to_pickup = False
@@ -607,7 +607,7 @@ def job_page(request, jobnumber):
                                                             is_ticket_signed=True)
         send_data['approved_cos'] = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
                                                                 is_approved=True)
-        send_data['equipments'] = Inventory.objects.filter(job_number=selectedjob).order_by('inventory_type')
+        send_data['equipments'] = Inventory.objects.filter(job_number=selectedjob,is_closed=False).order_by('inventory_type')
         send_data['rentals'] = Rentals.objects.filter(job_number=selectedjob, off_rent_number__isnull=True)
         send_data['wallcovering2'] = Wallcovering.objects.filter(job_number=selectedjob)
         send_data['wc_not_ordereds'] = Wallcovering.objects.filter(job_number=selectedjob,

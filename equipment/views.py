@@ -126,7 +126,7 @@ def complete_pickup(request, pickup):
                                 recipients, False)
                 return redirect('warehouse_home')
     if selected_request.all_items == True:
-        selected_items = Inventory.objects.filter(pickuprequested__isnull=True, job_number=selected_request.job_number)
+        selected_items = Inventory.objects.filter(pickuprequested__isnull=True, job_number=selected_request.job_number,is_closed=False)
     else:
         selected_items = PickupRequestItems.objects.filter(request=selected_request, returned=False)
     send_data['selected_request'] = selected_request
@@ -174,7 +174,7 @@ def request_pickup(request, jobnumber, item, pickup, status):
         else:
             selected_item = Inventory.objects.get(id=item)
         send_data['selected_item'] = selected_item
-    send_data['all_items'] = Inventory.objects.filter(job_number=jobnumber)
+    send_data['all_items'] = Inventory.objects.filter(job_number=jobnumber,is_closed=False)
     if pickup != 'ALL':
         selected_request = PickupRequest.objects.get(id=pickup)
         send_data['selected_request'] = selected_request
@@ -244,9 +244,9 @@ def request_pickup(request, jobnumber, item, pickup, status):
             return redirect('warehouse_home')
 
     if pickup != 'ALL': send_data['selected_items'] = PickupRequestItems.objects.filter(request=selected_request)
-    send_data['equipment'] = Inventory.objects.filter(job_number=selected_job)
+    send_data['equipment'] = Inventory.objects.filter(job_number=selected_job,is_closed=False)
     send_data['selected_job'] = selected_job
-    send_data['available_items'] = Inventory.objects.filter(job_number=selected_job, pickuprequested__isnull=True)
+    send_data['available_items'] = Inventory.objects.filter(job_number=selected_job, pickuprequested__isnull=True,is_closed=False)
     return render(request, 'request_pickup.html', send_data)
 
 
@@ -327,7 +327,7 @@ def equipment_batch_outgoing(request, status):  # status is Outgoing, Incoming
             jobs = Jobs.objects.filter(is_closed=False, job_name__icontains=request.POST['filter_job_name'])
         else:
             if status == "Outgoing":
-                for x in Inventory.objects.filter(batch='Outgoing'):
+                for x in Inventory.objects.filter(batch='Outgoing',is_closed=False):
                     x.job_number = Jobs.objects.get(job_number=request.POST['select_job'])
                     x.status = "Checked Out"
                     x.batch = None
@@ -338,11 +338,11 @@ def equipment_batch_outgoing(request, status):  # status is Outgoing, Incoming
                                                              category="Job", job_number=request.POST['select_job'],
                                                              job_name=x.job_number.job_name)
                     new_note.save()
-                for x in Inventory.objects.filter(batch='Incoming'):
+                for x in Inventory.objects.filter(batch='Incoming',is_closed=False):
                     x.batch = None
                     x.save()
             else:
-                for x in Inventory.objects.filter(batch='Incoming'):
+                for x in Inventory.objects.filter(batch='Incoming',is_closed=False):
                     x.job_number = None
                     x.status = "Available"
                     x.batch = None
@@ -352,21 +352,21 @@ def equipment_batch_outgoing(request, status):  # status is Outgoing, Incoming
                                                              note="Returned -" + request.POST['inventory_notes'],
                                                              category="Returned")
                     new_note.save()
-                for x in Inventory.objects.filter(batch='Outgoing'):
+                for x in Inventory.objects.filter(batch='Outgoing',is_closed=False):
                     x.batch = None
                     x.save()
             return redirect('warehouse_home')
     status = status
-    available_filter = EquipmentFilter(request.GET, queryset=Inventory.objects.filter(status='Available', batch=None))
+    available_filter = EquipmentFilter(request.GET, queryset=Inventory.objects.filter(status='Available', batch=None,is_closed=False))
     if status == 'Outgoing':
         available_filter = EquipmentFilter(request.GET,
-                                           queryset=Inventory.objects.filter(status='Available', batch=None))
-        pending_table = EquipmentTableOutgoing(Inventory.objects.filter(batch='Outgoing'))
+                                           queryset=Inventory.objects.filter(status='Available', batch=None,is_closed=False))
+        pending_table = EquipmentTableOutgoing(Inventory.objects.filter(batch='Outgoing',is_closed=False))
         available_table = EquipmentTableOutgoing(available_filter.qs)
     else:
         available_filter = EquipmentFilter2(request.GET,
-                                            queryset=Inventory.objects.filter(status='Checked Out', batch=None))
-        pending_table = EquipmentTableOutgoing(Inventory.objects.filter(batch='Incoming'))
+                                            queryset=Inventory.objects.filter(status='Checked Out', batch=None,is_closed=False))
+        pending_table = EquipmentTableOutgoing(Inventory.objects.filter(batch='Incoming',is_closed=False))
         available_table = EquipmentTableIncoming(available_filter.qs)
     has_filter = any(field in request.GET for field in set(available_filter.get_fields()))
     send_data = {}
@@ -571,7 +571,7 @@ def equipment_home(request):
         if 'ladders_filter' in request.GET: send_data['ladders_filter'] = True
         if 'equipment_filter' in request.GET: send_data['equipment_filter'] = True
         if 'other_filter' in request.GET: send_data['other_filter'] = True
-    search_equipment = EquipmentFilter3(request.GET, queryset=Inventory.objects.all())
+    search_equipment = EquipmentFilter3(request.GET, queryset=Inventory.objects.filter(is_closed=False))
     send_data['search_equipment'] = search_equipment
     send_data['inventories'] = search_equipment.qs
     # for inventory in inventories:
