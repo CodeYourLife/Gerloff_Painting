@@ -40,21 +40,22 @@ def print_TMProposal(request, id):
 
     path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
     result_file = open(f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf", "w+b")
-    html = render_to_string("print_TMProposal.html",
-                            {'inventory_exists': inventory_exists, 'bond_exists': bond_exists, 'laboritems': laboritems,
-                             'materialitems': materialitems, 'inventory': inventory, 'bond': bond,
-                             'equipmentitems': equipmentitems, 'extraitems': extraitems, 'newproposal': newproposal,
-                             'changeorder': changeorder, 'ewt': ewt})
-    pisa.CreatePDF(
-        html,
-        dest=result_file
-    )
-    result_file.close()
-    Email.sendEmail("COP Proposal", "Please find the TM Proposal attached", ["joe@gerloffpainting.com"],
-                    f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
+    if request.method == 'POST':
+        html = render_to_string("print_TMProposal.html",
+                                {'inventory_exists': inventory_exists, 'bond_exists': bond_exists, 'laboritems': laboritems,
+                                 'materialitems': materialitems, 'inventory': inventory, 'bond': bond,
+                                 'equipmentitems': equipmentitems, 'extraitems': extraitems, 'newproposal': newproposal,
+                                 'changeorder': changeorder, 'ewt': ewt})
+        pisa.CreatePDF(
+            html,
+            dest=result_file
+        )
+        result_file.close()
+        Email.sendEmail("COP Proposal", "Please find the TM Proposal attached", ["joe@gerloffpainting.com"],
+                        f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
 
 
-    return render(request, "print_TMProposal.html",
+    return render(request, "preview_TMProposal.html",
                   {'inventory_exists': inventory_exists, 'bond_exists': bond_exists, 'laboritems': laboritems,
                    'materialitems': materialitems, 'inventory': inventory, 'bond': bond,
                    'equipmentitems': equipmentitems, 'extraitems': extraitems, 'newproposal': newproposal,
@@ -122,7 +123,7 @@ def price_ewt(request, id):
                                   rate=request.POST['bond_rate'], total=request.POST['bond_cost'],
                                   category="Bond", category2="Bond",
                                   proposal=newproposal)
-        return redirect('print_TMProposal', id=newproposal.id)
+        return redirect('preview_TMProposal', id=newproposal.id)
     equipment = []
     laboritems = []
     materials = []
