@@ -45,10 +45,10 @@ def index(request):
     for x in Jobs.objects.filter(is_closed=False, is_active=False):
         if x.next_two_weeks() == True:
             next_two_weeks += 1
-    send_data['missing'] = Inventory.objects.filter(status = "Missing").count()
-    send_data['checked_out'] = Inventory.objects.filter(job_number__is_closed=False).count()
-    send_data['closed_job'] = Inventory.objects.filter(job_number__is_closed=True).count()
-    send_data['service'] = Inventory.objects.filter(service_vendor__isnull=False).count()
+    send_data['missing'] = Inventory.objects.filter(status = "Missing",is_closed=False).count()
+    send_data['checked_out'] = Inventory.objects.filter(job_number__is_closed=False,is_closed=False).count()
+    send_data['closed_job'] = Inventory.objects.filter(job_number__is_closed=True,is_closed=False).count()
+    send_data['service'] = Inventory.objects.filter(service_vendor__isnull=False,is_closed=False).count()
     send_data['pickup_requests'] = PickupRequest.objects.filter(is_closed=False).count()
     send_data['rentals'] = Rentals.objects.filter(off_rent_number = None).count()
     send_data['next_two_weeks'] = next_two_weeks
@@ -58,7 +58,7 @@ def index(request):
     send_data['approved_invoices'] = SubcontractorInvoice.objects.filter(is_sent=True, processed=False).count()
     if Jobs.objects.filter(is_closed=False,superintendent=Employees.objects.get(user=request.user)).exists() and request.user != Employees.objects.get(id=22).user:
         active_super = Employees.objects.get(user=request.user)
-        send_data['super_equipment']=Inventory.objects.filter(job_number__superintendent = active_super).count()#
+        send_data['super_equipment']=Inventory.objects.filter(job_number__superintendent = active_super,is_closed=False).count()#
         send_data['super_rentals'] = Rentals.objects.filter(job_number__superintendent = active_super).count()#
         send_data['active_subcontracts'] = Subcontracts.objects.filter(job_number__superintendent = active_super,job_number__is_closed=False,
                                                                        is_closed=False).count()
@@ -69,7 +69,7 @@ def index(request):
             if x.next_two_weeks() == True:
                 next_two_weeks += 1
     else:
-        send_data['super_equipment'] = Inventory.objects.filter(job_number__is_closed=False).count()
+        send_data['super_equipment'] = Inventory.objects.filter(job_number__is_closed=False,is_closed=False).count()
         send_data['super_rentals'] = Rentals.objects.filter(off_rent_number = None).count()
         send_data['tickets'] = 0  #
         next_two_weeks = 0

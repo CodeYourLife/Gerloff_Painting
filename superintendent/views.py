@@ -179,8 +179,8 @@ def super_home(request, super):
 
     if selected_superid == 'ALL' or selected_superid == 'UNASSIGNED':
         send_data['filter_status'] = selected_superid
-        send_data['equipment'] = Inventory.objects.exclude(job_number=None).order_by('job_number')
-        send_data['equipment_count'] = Inventory.objects.exclude(job_number=None).count()
+        send_data['equipment'] = Inventory.objects.filter(is_closed=False).exclude(job_number=None).order_by('job_number')
+        send_data['equipment_count'] = Inventory.objects.filter(is_closed=False).exclude(job_number=None).count()
         send_data['rentals'] = Rentals.objects.filter(off_rent_number__isnull=True)
         send_data['rentals_count'] = Rentals.objects.filter(off_rent_number__isnull=True).count()
         send_data['tickets'] = ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=False, is_closed=False)
@@ -211,9 +211,9 @@ def super_home(request, super):
                                  'subcontractor': x.subcontractor.company,
                                  'total_contract': total_contract, 'percent_complete': percent_complete})
         send_data['subcontracts'] = subcontracts
-        send_data['equipment'] = Inventory.objects.filter(job_number__superintendent=selected_super).order_by(
+        send_data['equipment'] = Inventory.objects.filter(job_number__superintendent=selected_super,is_closed=False).order_by(
             'job_number', 'inventory_type')
-        send_data['equipment_count'] = Inventory.objects.filter(job_number__superintendent=selected_super).order_by(
+        send_data['equipment_count'] = Inventory.objects.filter(job_number__superintendent=selected_super,is_closed=False).order_by(
             'job_number', 'inventory_type').count()
         send_data['selected_super'] = selected_super
         send_data['rentals'] = Rentals.objects.filter(job_number__superintendent=selected_super,
@@ -250,7 +250,7 @@ def filter_super(request):  # I DONT THINK THIS IS USED ANYWHERE
         jobs = Jobs.objects.filter(superintendent=request.POST['selected_super'])[0:2000]
         supers = Employees.objects.all()[0:2000]
         selected_super = Employees.objects.get(id=request.POST['selected_super'])
-        equipment = Inventory.objects.filter(job_number__superintendent=selected_super)
+        equipment = Inventory.objects.filter(job_number__superintendent=selected_super,is_closed=False)
         rentals = Rentals.objects.filter(job_number__superintendent=selected_super, off_rent_number__isnull=True)
         # equipment = []
         # for x in equipmentlist:

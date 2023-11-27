@@ -359,7 +359,7 @@ def employees_home(request):
     if request.is_ajax():
         employeeId = request.GET['id']
         certifications = Certifications.objects.filter(employee=employeeId)
-        equipment = Inventory.objects.filter(assigned_to=employeeId, date_returned__isnull=True)
+        equipment = Inventory.objects.filter(assigned_to=employeeId, date_returned__isnull=True,is_closed=False)
         writeUps = WriteUp.objects.filter(employee=employeeId)
         certs = []
         for cert in certifications:
@@ -398,7 +398,7 @@ def my_page(request):
     send_data = {}
     employee = Employees.objects.get(user=request.user)
     send_data['employee'] = employee
-    send_data['inventory'] = Inventory.objects.filter(assigned_to=employee)
+    send_data['inventory'] = Inventory.objects.filter(assigned_to=employee,is_closed=False)
     send_data['assessments_performed'] = EmployeeReview.objects.filter(assessment__reviewer=employee)
     send_data['assessments_received'] = EmployeeReview.objects.filter(employee=employee)
     send_data['writeups_written'] = WriteUp.objects.filter(supervisor=employee)
