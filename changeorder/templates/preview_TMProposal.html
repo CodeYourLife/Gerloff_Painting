@@ -274,6 +274,14 @@
 </head>
 <body>
 <div style="padding: 40px; width: 100%">
+    <div style="display: flex; width: 100%">
+        <div style="flex-grow: 1;"></div>
+        <div style="text-align: right">
+            <form style="width: 100%; display:flex;" action="{% url 'extra_work_ticket' changeorder.id %}">
+                <input type="submit" class="btn btn-sm btn-primary" value="SEND EMAIL WITH PROPOSAL"/>
+            </form>
+        </div>
+    </div>
     <div style="width: 100%; text-align:center;">
         <div class="col"><H2>Gerloff Painting T&M Price Breakdown</H2></div>
     </div>
@@ -294,8 +302,8 @@
     <div style="width: 100%; display:flex; justify-content: space-between;">
         <div class="col">Description: {{newproposal.notes}}</div>
     </div>
-    <hr>
     {% if laboritems %}
+    <hr>
     <table style="width: 100%">
         <tr>
             <td>Labor Breakdown</td>
@@ -312,7 +320,6 @@
         </tr>
         {% endfor %}
     </table>
-
     {% endif %}
     {% if materialitems %}
     <hr>
@@ -340,7 +347,6 @@
         </tr>
         {% endif %}
     </table>
-
     {% endif %}
     {% if equipmentitems %}
     <hr>
@@ -387,6 +393,7 @@
         </tr>
         {% endif %}
     </table>
+    {% endif %}
     <hr style="height:2px;border:none;color:#333;background-color:#333;">
     <div style="display:flex;">
         <h4>TOTAL:&nbsp;&nbsp;</h4>
