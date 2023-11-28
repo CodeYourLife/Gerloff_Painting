@@ -94,27 +94,29 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
     <script type="text/javascript" class="init">
 $(document).ready(function () {
-    var table = $('#job_table').DataTable({paging:false});
+    var table = $('#payments_table').DataTable({});
 })
+function populate_super_modal(payment_id){
 
-function update_percentage(event){
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'payment_id':payment_id},
+        success: function (data) {
+           parsedData = JSON.parse(data);
+            let text = "<table border='1' class='table display'>"
+            text += "<thead><tr><th>Job</th><th>Pay App #</th><th>Amt</th></tr></thead>"
+            parsedData.invoices.forEach((element) => {
+                text += "<tr><td>" + element.job + "</td><td><a href=\"{% url 'subcontract_invoices' 123 456 %}\">" + element.number + "</a></td><td>$" + element.amount + "</td></tr>";
+                text=text.replace(123,element.contract_id)
+                text=text.replace(456,element.id)
+            })
+            text += "</table>"
+            document.getElementById("notes_tab").innerHTML = text;
+        }
+    })
+}
 
-percentage_cell = document.getElementById("percentage"+event.currentTarget.id)
-current_total=parseFloat(event.currentTarget.value)
-quantity_ordered_cell = document.getElementById("quantity_ordered"+event.currentTarget.id)
-
-if (quantity_ordered_cell.innerHTML == "1 Lump Sum"){
-	previous = parseFloat(document.getElementById("previous"+event.currentTarget.id).value)
-	totalcost = parseFloat(document.getElementById("total_cost"+event.currentTarget.id).value)
-}
-else{
-	totalcost = parseFloat(document.getElementById("quantity_ordered"+event.currentTarget.id).value)
-	previous = parseFloat(document.getElementById("quantity_billed"+event.currentTarget.id).value)
-}
-total_to_date = current_total + previous
-percentage_calc = parseFloat(total_to_date/totalcost *100).toFixed(1)
-percentage_cell.innerHTML = String(percentage_calc)+ "%"
-}
 
 	</script>
 </head>
@@ -127,71 +129,64 @@ percentage_cell.innerHTML = String(percentage_calc)+ "%"
 		 <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
         <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
          <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
-			  <li><a class="nav-item nav-link" href="{% url 'subcontractor_payments' %}">Payments</a></li>
-		<li><a class="nav-item nav-link active" href="#">NEW INVOICE -{{subcontract.job_number}} {{subcontract.subcontractor}} {{subcontract.po_number}}</a></li>
+		<li><a class="nav-item nav-link active" href="#">Payments</a></li>
     </ul>
   </div>
 </nav>
-<h2>NEW INVOICE FOR JOB: {{subcontract.job_number}} - {{subcontract.subcontractor}} PO# {{subcontract.po_number}}</h2>
-<br>
+<div class="modal fade" id="super-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="title3"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="notes_tab"></div>
+
+            </div>
 
 
- <form action="{% url 'subcontractor_invoice_new' subcontract.id %}" method="post"  >
-{% csrf_token %}
-
-	 <h3>Pay App Number: {{next_number}}</h3>
-	 <br>
-        <label for="subcontract_note">Provide any notes about this invoice: </label> <br>
-        <textarea id="subcontract_note" name="subcontract_note" rows="2" cols="100" ></textarea>
-<br>
-
-<div class="demo-html" style="width:90%">
-		<table id="job_table" class="display" style="width:90%">
-			<thead>
-				<tr>
-					<th>Description</th>
-					<th>Ordered Qnty</th>
-					<th>Ordered $</th>
-					<th>Billed Qnty</th>
-					<th>Billed $</th>
-					<th>Current Qnty</th>
-					<th>Current $</th>
-					<th>Total Percentage</th>
-					<th>Note</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% if items %}
-				{% for item in items %}
-				<tr>
-					<td>{{item.SOV_description}}</td>
-					{% if item.SOV_is_lump_sum == True %}
-					<td><div id="quantity_ordered{{item.id}}" >1 Lump Sum</div></td>
-					<td><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>
-					<td><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.total_cost}}" />{{item.quantity_billed}}</td>
-					<td><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
-					<td></td>
-					<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
-					{% else %}
-					<td><input type="hidden" id="quantity_ordered{{item.id}}" value="{{item.SOV_total_ordered}}" />{{item.SOV_total_ordered}} {{item.SOV_unit}}</td>
-					<td><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>
-					<td><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.quantity_billed}}" />{{item.quantity_billed}} {{item.SOV_unit}}</td>
-					<td><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
-					<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
-					<td><input type="hidden" id="current_total{{item.id}}" value="" /></td>
-					{% endif %}
-					<td><div id="percentage{{item.id}}" ></div></td>
-					<td><input type="text"  name="note{{item.id}}" size="40" /></td>
-				</tr>
-				{% endfor %}
-				{% endif %}
-			</tbody>
-		</table>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
 </div>
 
-<input type="submit" name="Form3" class="btn btn-primary btn-sm" value="Send Invoice for Approval" />
-    </form>
-
+ <form id="new_payment_now" action="{% url 'subcontractor_payments' %}" method="post"  >
+{% csrf_token %}
+     <input type="hidden" name="new_payment" value="True">
+     <input type="submit" class="btn btn-danger btn-sm" value="Process New Payment" />
+ </form>
+<br><hr>
+<h4>Payments</h4>
+<div class="table-responsive">
+    <table id="payments_table" class="display table table-sm">
+        <thead>
+        <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Subcontractor</th>
+            <th scope="col">Amount</th>
+            <th scope="col">Check Number</th>
+            <th scope="col">Notes</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for x in payments %}
+        <tr data-toggle="modal" data-target="#super-modal" onclick="populate_super_modal('{{x.id}}')">
+        <td><a href="#">{{x.date}}</a></td>
+        <td><a href="#">{{x.subcontractor}}</a></td>
+        <td><a href="#">${{x.final_amount}}</a></td>
+        <td><a href="#">{{x.check_number}}</a></td>
+            <td><a href="#">{{x.notes}}</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
 
 </body>
 </html>

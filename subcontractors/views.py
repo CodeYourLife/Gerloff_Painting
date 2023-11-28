@@ -751,3 +751,58 @@ def subcontracts_home(request):
                              'po_number': x.po_number, 'id': x.id,
                              'percent_complete': format(x.percent_complete(), ".0%")})
     return render(request, "subcontracts_home.html", {'subcontracts': subcontracts})
+
+
+def subcontractor_payments(request):
+    send_data={}
+    send_data['payments']=SubcontractorPayments.objects.all().order_by('date')
+    if request.method == 'POST':
+        if 'new_payment' in request.POST:
+            return redirect('new_subcontractor_payment')
+    return render(request,"subcontractor_payments.html",send_data)
+
+def new_subcontractor_payment(request):
+    send_data={}
+    if request.method == 'POST':
+        send_data['selected_sub'] = request.POST['select_subcontractor']
+        selected_sub = Subcontractors.objects.get(id=request.POST['select_subcontractor'])
+        if 'check_number' in request.POST:
+            if InvoiceBatch.objects.filter(invoice__subcontract__subcontractor=selected_sub, invoice__is_sent=True,invoice__processed=False).exists():
+                payment=SubcontractorPayments.objects.create(subcontractor=selected_sub, date=request.POST['pay_date'],check_number=request.POST['check_number'],final_amount=request.POST['final_amount'],notes=request.POST['note'])
+                for x in InvoiceBatch.objects.filter(invoice__subcontract__subcontractor=selected_sub, invoice__is_sent=True,invoice__processed=False):
+                    selected_invoice=x.invoice
+                    selected_invoice.processed=True
+                    selected_invoice.payment=payment
+                    selected_invoice.save()
+                    SubcontractNotes.objects.create(subcontract=selected_invoice.subcontract, date=date.today(),
+                                                    user=Employees.objects.get(user=request.user),
+                                                    note="Invoice Paid on " + str(request.POST['pay_date']) + ". " + request.POST['note'],
+                                                    invoice=selected_invoice)
+                InvoiceBatch.objects.all().delete()
+
+            return redirect('subcontractor_payments')
+        if 'selected_invoice' in request.POST:
+            InvoiceBatch.objects.create(invoice=SubcontractorInvoice.objects.get(id=request.POST['selected_invoice']))
+        if 'remove_invoice' in request.POST:
+            InvoiceBatch.objects.get(id=request.POST['remove_invoice']).delete()
+        invoices=[]
+        for x in SubcontractorInvoice.objects.filter(subcontract__subcontractor=selected_sub, is_sent=True,processed=False,batch__isnull=True):
+            invoices.append({'total':x.final_amount,'retainage':x.retainage,'id':x.id,'pay_app_number':x.pay_app_number,'job_name':x.subcontract.job_number.job_name,'amount':x.final_amount-x.retainage,'pay_date':x.pay_date})
+        send_data['invoices']=invoices
+        selected_invoices=[]
+        final_amount = 0
+        for x in InvoiceBatch.objects.filter(invoice__subcontract__subcontractor=selected_sub, invoice__is_sent=True,invoice__processed=False):
+            selected_invoices.append({'total':x.invoice.final_amount,'retainage':x.invoice.retainage,'id':x.id,'pay_app_number':x.invoice.pay_app_number,'job_name':x.invoice.subcontract.job_number.job_name,'amount':x.invoice.final_amount-x.invoice.retainage,'pay_date':x.invoice.pay_date})
+            final_amount += x.invoice.final_amount-x.invoice.retainage
+        send_data['final_amount'] = final_amount
+        send_data['selected_invoices']=selected_invoices
+        return render(request, "new_subcontractor_payment.html", send_data)
+    else:
+        InvoiceBatch.objects.all().delete()
+    subcontractors = []
+    for x in Subcontractors.objects.all():
+        if x.needs_payment() == True:
+            print(x.company)
+            subcontractors.append({'id':x.id,'company':x.company})
+    send_data['subcontractors'] = subcontractors
+    return render(request, "new_subcontractor_payment.html", send_data)

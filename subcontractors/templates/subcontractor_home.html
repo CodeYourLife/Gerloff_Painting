@@ -224,6 +224,7 @@ function populate_pending_approvals_modal(invoice_id){
 		 <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
         <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
          <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
+              <li><a class="nav-item nav-link" href="{% url 'subcontractor_payments' %}">Payments</a></li>
     </ul>
   </div>
 </nav>
@@ -475,7 +476,7 @@ function populate_pending_approvals_modal(invoice_id){
 				<tr>
 
                     <td>{{x.subcontract.subcontractor}}</td>
-                    <td><a href="{% url 'subcontract_invoices' x.subcontract.id x.id %}">{{x.subcontract.job_number.job_name}} #{{x.number}}</a></td>
+                    <td><a href="{% url 'subcontract_invoices' x.subcontract.id x.id %}">{{x.subcontract.job_number.job_name}} #{{x.pay_app_number}}</a></td>
                     <td>${{x.final_amount}}</td>
                     <td>${{x.retainage}}</td>
                     <td>{{x.pay_date}}</td>

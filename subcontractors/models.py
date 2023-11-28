@@ -4,6 +4,7 @@ from wallcovering.models import Wallcovering
 import employees.models
 from datetime import date
 
+
 class Subcontractors(models.Model):
     id = models.BigAutoField(primary_key=True)
     company = models.CharField(null=True, max_length=250)
@@ -32,6 +33,12 @@ class Subcontractors(models.Model):
         for x in SubcontractorInvoice.objects.filter(subcontract__subcontractor=self, is_sent=False):
             totalquantity = totalquantity + 1
         return totalquantity
+
+    def needs_payment(self):
+        if SubcontractorInvoice.objects.filter(subcontract__subcontractor=self, is_sent=True, processed=False).exists():
+            return True
+        else:
+            return False
 
 
 class Subcontracts(models.Model):
@@ -88,6 +95,13 @@ class Subcontracts(models.Model):
         else:
             return False
 
+    def needs_paid(self):
+        if SubcontractorInvoice.objects.filter(subcontract=self, is_sent=True, processed=False).exists():
+            return True
+        else:
+            return False
+
+
 class SubcontractItems(models.Model):
     id = models.BigAutoField(primary_key=True)
     subcontract = models.ForeignKey(Subcontracts, on_delete=models.PROTECT)
@@ -142,6 +156,18 @@ class SubcontractItems(models.Model):
             totalcost = totalcost * self.SOV_rate
         return totalcost
 
+class SubcontractorPayments(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    date = models.DateField()
+    check_number = models.CharField(
+        null=True, max_length=2000, blank=True)
+    notes = models.CharField(
+        null=True, max_length=2000, blank=True)
+    final_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True)
+    subcontractor = models.ForeignKey(
+        Subcontractors, on_delete=models.PROTECT, related_name="payment")
+
 
 class SubcontractorInvoice(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -152,21 +178,24 @@ class SubcontractorInvoice(models.Model):
     retainage = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     final_amount = models.DecimalField(
         max_digits=10, decimal_places=2, null=True)
-    is_sent = models.BooleanField(default=False) #this actually means approved by victor
-    processed = models.BooleanField(default=False) #check has been cut
+    is_sent = models.BooleanField(default=False)  # this actually means approved by victor
+    processed = models.BooleanField(default=False)  # check has been cut
     pay_date = models.DateField(null=True, blank=True)
     notes = models.CharField(
         null=True, max_length=2000, blank=True)  # DONT USE
+    payment = models.ForeignKey(
+        SubcontractorPayments, on_delete=models.PROTECT, related_name="invoice2",null=True, blank=True)
 
     def __str__(self):
         return f"{self.subcontract} {self.pay_app_number}"
 
     def approvals_needed(self):
         total = 0
-        if InvoiceApprovals.objects.filter(invoice=self,is_approved=False).exists():
-            return InvoiceApprovals.objects.filter(invoice=self,is_approved=False).count()
+        if InvoiceApprovals.objects.filter(invoice=self, is_approved=False).exists():
+            return InvoiceApprovals.objects.filter(invoice=self, is_approved=False).count()
         else:
             return 0
+
 
 class SubcontractorInvoiceItem(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -219,3 +248,10 @@ class InvoiceApprovals(models.Model):
     is_approved = models.BooleanField(default=False)
     made_changes = models.BooleanField(default=False)
     notes = models.CharField(null=True, max_length=2000, blank=True)
+
+
+class InvoiceBatch(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    invoice = models.ForeignKey(SubcontractorInvoice, null=True,
+                                on_delete=models.PROTECT, related_name="batch")
+
