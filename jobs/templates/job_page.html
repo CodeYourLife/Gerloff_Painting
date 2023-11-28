@@ -80,6 +80,11 @@
 .table td {
         }
 
+            .modal-content {
+                width: fit-content;
+            }
+
+
     </style>
 
     <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
@@ -449,6 +454,53 @@ document.getElementById("dropbox_button_hide").style.display = "block";
 </nav>
 
 <!-- Modal -->
+<div class="modal fade" id="add-employees-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="title2">Add Employees To Job</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <link href="https://www.jqueryscript.net/css/jquerysctipttop.css" rel="stylesheet" type="text/css">
+                <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+                <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+                <script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+                <script src="https://www.jqueryscript.net/demo/Two-side-Multi-Select-Plugin-with-jQuery-multiselect-js/js/multiselect.js"></script>
+                <div style="padding: 10px;">
+                  <div style="display: flex">
+                    <div style="margin: 10px">
+                      <select name="from" id="undo_redo" class="form-control" style="width: fit-content" multiple="multiple">
+                        <option value="1">Test 1</option>
+                        <option value="2">Test 2</option>
+                      </select>
+                    </div>
+                    <div style="margin: 10px">
+                      <button type="button" id="undo_redo_undo" class="btn btn-primary btn-block">undo</button>
+                      <button type="button" id="undo_redo_rightAll" class="btn btn-default btn-block"><i class="glyphicon glyphicon-forward"></i></button>
+                      <button type="button" id="undo_redo_rightSelected" class="btn btn-default btn-block"><i class="glyphicon glyphicon-chevron-right"></i></button>
+                      <button type="button" id="undo_redo_leftSelected" class="btn btn-default btn-block"><i class="glyphicon glyphicon-chevron-left"></i></button>
+                      <button type="button" id="undo_redo_leftAll" class="btn btn-default btn-block"><i class="glyphicon glyphicon-backward"></i></button>
+                      <button type="button" id="undo_redo_redo" class="btn btn-warning btn-block">redo</button>
+                    </div>
+                    <div style="margin: 10px">
+                      <select name="to" id="undo_redo_to" class="form-control" style="width: fit-content; min-width: 200px;" multiple="multiple"></select>
+                    </div>
+                  </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick = "" data-dismiss="modal" > Save Changes </button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
 <div class="modal fade" id="super-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -493,6 +545,8 @@ document.getElementById("dropbox_button_hide").style.display = "block";
         </div>
     </div>
 </div>
+
+
 <!-- Modal -->
 <div class="modal fade" id="startdate-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
@@ -547,6 +601,8 @@ document.getElementById("dropbox_button_hide").style.display = "block";
         </div>
     </div>
 </div>
+
+
 {% if jobs == 'ALL' %}
 <form class="form-control form-control-sm" id="filter_form" method="get">
     <div class="container">
@@ -957,7 +1013,7 @@ document.getElementById("dropbox_button_hide").style.display = "block";
             </div>
             <div style="margin-top: 5px; margin-bottom: 5px;">
                 <form id="" action="" target="_blank" >
-                    <input type="button" class="btn btn-primary btn-sm"  onclick = "" value="Add Painter" />
+                    <input type="button" class="btn btn-primary btn-sm"  data-toggle="modal" data-target="#add-employees-modal" value="Add Painter" />
                  </form>
             </div>
             <div id="dropbox_link_hide"><a id="link" href="#" target="_blank"><b>CLICK HERE FOR PLANS!</b></a></div>
