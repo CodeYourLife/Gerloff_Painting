@@ -13,8 +13,15 @@
     </style>
     <script src="{% static 'equipment.js' %}"></script>
     <script type="text/javascript" class="init">
-        function get_file_name(){
 
+function prompt_note(){
+            var name=prompt("Note:");
+            if (name!=null){
+            add_note_form.equipment_note.value=name
+            add_note_form.submit()
+            }
+}
+        function get_file_name(){
             var name=prompt("What do you want to name this file?");
             if (name!=null){
                 add_file_form.file_name.value = name;
@@ -25,6 +32,12 @@
         select_file_form.selected_file.value=file_name
         select_file_form.submit()
         }
+function myFunction(type){
+    var name=prompt("Add Note");
+    if (name!=null){
+        type.value=name
+    }
+}
     </script>
 </head>
 {% if inventories %}
@@ -131,7 +144,21 @@
 
         {% endif %}
     </div>
+</div>
     <br>
+<div id="accordion">
+    <div class="card">
+        <div class="card-header" id="headingZero" style="background-color:hsl(74, 0%, 85%);">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseZero" aria-expanded="false"
+                        aria-controls="collapseZero">
+                    Assign to Job, Service, or Employee
+                </button>
+            </h5>
+        </div>
+        <div id="collapseZero" class="collapse hide" aria-labelledby="headingZero" data-parent="#accordion">
+            <div class="card-body">
+    <div class="container">
     <div class = "row"><div class="col-sm-12" style="padding-bottom: 12px; padding-top: 12px;"><h4>Assign to Job, Service, or Employee</h4></div></div>
     <div class="row">
 
@@ -204,20 +231,93 @@
             </form>
         </div>
     </div>
-
-    <hr>
-    <div class="row">
-        <div class="col-12">
-
-            <form name=add_note action="{% url 'equipment_page' inventories.id %}" method="post">
-                {% csrf_token %}
-                <label for="equipment_note"> Make a note: </label> <br>
-                <textarea id="equipment_note" name="equipment_note" rows="4" style="width: 100%"></textarea>
-                <br>
-                <input type="submit" class="btn btn-primary" value="Add Note"/>
-            </form>
+</div>
+            </div>
         </div>
     </div>
+
+    <div class="card">
+        <div class="card-header" id="headingOne" style="background-color:hsl(74, 0%, 85%);">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false"
+                        aria-controls="collapseOne">
+                    Notes
+                </button>
+            </h5>
+        </div>
+        <div id="collapseOne" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">
+            <div class="card-body">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12">
+
+                            <form name=add_note_form action="{% url 'equipment_page' inventories.id %}" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" id="equipment_note" name="equipment_note">
+                                <button type="button" class="btn btn-primary" onclick = "prompt_note()">Add Note</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="container">
+    <div class="row">
+        <div class="col-12">
+            <b>Filter Notes</b>
+        </div>
+    </div>
+    <form style="width: 100%; padding-bottom: 5px;" name=filter_notes action="{% url 'equipment_page' inventories.id %}"
+          method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-12">
+                <select id="select_category" style="padding-top: 3px; padding-bottom: 6px;"
+                        class="form-select form-select-sm" name="select_category">
+                    <option value="Returned">Returned to Shop</option>
+                    <option value="Missing">Missing</option>
+                    <option value="Job">Assigned to Job</option>
+                    <option value="Service">Getting Serviced</option>
+                    <option value="Misc">Misc Notes</option>
+                </select>
+                <input type="submit" class="btn btn-secondary btn-sm" value="Apply Filter" name="apply_filter"/>
+                <input type="submit" class="btn btn-secondary btn-sm" name="clear_filter" value="Clear Filter"/>
+            </div>
+        </div>
+    </form>
+
+<div class="table-responsive">
+    <table id="notes_table" class="display table table-sm">
+        <thead class="colored-header">
+        <tr>
+            <th scope="col">Note</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for x in table %}
+        <tr>
+            <td>{{x.date}}- {{x.user}}- {{x.note}}{% if x.job_name %} <b>[{{x.job_name}}]</b>{% endif %}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+                    </div>
+            </div>
+
+            </div>
+        </div>
+        <div class="card">
+        <div class="card-header" id="heading2" style="background-color:hsl(74, 0%, 85%);" >
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapse2" aria-expanded="false"
+                        aria-controls="collapseOne">
+                    {{folder_count}} Attachments
+                </button>
+            </h5>
+        </div>
+        <div id="collapse2" class="collapse hide" aria-labelledby="heading2" data-parent="#accordion">
+            <div class="card-body">
+<div class="container">
+
     <hr>
     <div class="row">
         <div class="col-12">
@@ -258,33 +358,18 @@
             </ul>
         </div>
     </div>
+</div>
+                </div>
 
-    <hr>
-    <div class="row">
-        <div class="col-12">
-            <h3>NOTES ABOUT THIS ITEM:</h3>
-        </div>
-    </div>
-    <form style="width: 100%; padding-bottom: 5px;" name=filter_notes action="{% url 'equipment_page' inventories.id %}"
-          method="post">
-        {% csrf_token %}
-        <div class="row">
-            <div class="col-12">
-                <select id="select_category" style="padding-top: 3px; padding-bottom: 6px;"
-                        class="form-select form-select-sm" name="select_category">
-                    <option value="Returned">Returned to Shop</option>
-                    <option value="Missing">Missing</option>
-                    <option value="Job">Assigned to Job</option>
-                    <option value="Service">Getting Serviced</option>
-                    <option value="Misc">Misc Notes</option>
-                </select>
-                <input type="submit" class="btn btn-primary btn-sm" value="Apply Filter" name="apply_filter"/>
-                <input type="submit" class="btn btn-secondary btn-sm" name="clear_filter" value="Clear Filter"/>
             </div>
         </div>
-    </form>
 </div>
-{% render_table table %}
+
+
+
+
+
+
 </body>
 {% endif %}
 </html>

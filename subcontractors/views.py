@@ -685,13 +685,22 @@ def subcontracts_new(request):
                 send_data['wallcovering_json'] = 'None'
             return render(request, "subcontracts_new.html", send_data)
         else:
+            if request.POST['po_number'] == "":
+                nextPO = PurchaseOrderNumber.objects.get(id=1)
+                po_number = "TR" + str(nextPO.next_po_number)
+                nextPO.next_po_number += 1
+                nextPO.save()
+            else:
+                po_number = request.POST['po_number']
             subcontract1 = Subcontracts.objects.create(
                 job_number=Jobs.objects.get(job_number=request.POST['selected_job']),
                 subcontractor=Subcontractors.objects.get(id=request.POST['select_subcontractor']),
-                po_number=request.POST['po_number'], date=date.today(), retainage_percentage=0, is_retainage=False)
+                po_number=po_number, date=date.today(), retainage_percentage=0, is_retainage=False)
             SubcontractNotes.objects.create(subcontract=subcontract1, date=date.today(),
                                             user=Employees.objects.get(user=request.user),
                                             note="New Contract- " + request.POST['subcontract_notes'])
+            message = "New Subcontract for " + subcontract1.subcontractor.company + "\n Job: " + subcontract1.job_number.job_name + "\n PO #: " + subcontract1.po_number
+            Email.sendEmail("New Subcontract", message, ['joe@gerloffpainting.com','admin2@gerloffpainting.com'], False)
             if 'is_retainage' in request.POST:
                 subcontract1.is_retainage = True
                 subcontract1.retainage_percentage = request.POST['retainage_amt']
