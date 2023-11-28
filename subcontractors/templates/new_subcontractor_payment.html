@@ -94,27 +94,12 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
     <script type="text/javascript" class="init">
 $(document).ready(function () {
-    var table = $('#job_table').DataTable({paging:false});
+    var table = $('#invoices_table').DataTable({paging:false,searching:false,info:false});
+})
+$(document).ready(function () {
+    var table = $('#approved_table').DataTable({paging:false,searching:false,info:false});
 })
 
-function update_percentage(event){
-
-percentage_cell = document.getElementById("percentage"+event.currentTarget.id)
-current_total=parseFloat(event.currentTarget.value)
-quantity_ordered_cell = document.getElementById("quantity_ordered"+event.currentTarget.id)
-
-if (quantity_ordered_cell.innerHTML == "1 Lump Sum"){
-	previous = parseFloat(document.getElementById("previous"+event.currentTarget.id).value)
-	totalcost = parseFloat(document.getElementById("total_cost"+event.currentTarget.id).value)
-}
-else{
-	totalcost = parseFloat(document.getElementById("quantity_ordered"+event.currentTarget.id).value)
-	previous = parseFloat(document.getElementById("quantity_billed"+event.currentTarget.id).value)
-}
-total_to_date = current_total + previous
-percentage_calc = parseFloat(total_to_date/totalcost *100).toFixed(1)
-percentage_cell.innerHTML = String(percentage_calc)+ "%"
-}
 
 	</script>
 </head>
@@ -127,72 +112,107 @@ percentage_cell.innerHTML = String(percentage_calc)+ "%"
 		 <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
         <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
          <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
-			  <li><a class="nav-item nav-link" href="{% url 'subcontractor_payments' %}">Payments</a></li>
-		<li><a class="nav-item nav-link active" href="#">NEW INVOICE -{{subcontract.job_number}} {{subcontract.subcontractor}} {{subcontract.po_number}}</a></li>
+		<li><a class="nav-item nav-link active" href="#">Payments</a></li>
     </ul>
   </div>
 </nav>
-<h2>NEW INVOICE FOR JOB: {{subcontract.job_number}} - {{subcontract.subcontractor}} PO# {{subcontract.po_number}}</h2>
-<br>
-
-
- <form action="{% url 'subcontractor_invoice_new' subcontract.id %}" method="post"  >
+{% if selected_sub == None %}
+ <form id="select_sub" action="{% url 'new_subcontractor_payment' %}" method="post"  >
 {% csrf_token %}
-
-	 <h3>Pay App Number: {{next_number}}</h3>
-	 <br>
-        <label for="subcontract_note">Provide any notes about this invoice: </label> <br>
-        <textarea id="subcontract_note" name="subcontract_note" rows="2" cols="100" ></textarea>
-<br>
-
-<div class="demo-html" style="width:90%">
-		<table id="job_table" class="display" style="width:90%">
-			<thead>
-				<tr>
-					<th>Description</th>
-					<th>Ordered Qnty</th>
-					<th>Ordered $</th>
-					<th>Billed Qnty</th>
-					<th>Billed $</th>
-					<th>Current Qnty</th>
-					<th>Current $</th>
-					<th>Total Percentage</th>
-					<th>Note</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% if items %}
-				{% for item in items %}
-				<tr>
-					<td>{{item.SOV_description}}</td>
-					{% if item.SOV_is_lump_sum == True %}
-					<td><div id="quantity_ordered{{item.id}}" >1 Lump Sum</div></td>
-					<td><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>
-					<td><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.total_cost}}" />{{item.quantity_billed}}</td>
-					<td><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
-					<td></td>
-					<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
-					{% else %}
-					<td><input type="hidden" id="quantity_ordered{{item.id}}" value="{{item.SOV_total_ordered}}" />{{item.SOV_total_ordered}} {{item.SOV_unit}}</td>
-					<td><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>
-					<td><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.quantity_billed}}" />{{item.quantity_billed}} {{item.SOV_unit}}</td>
-					<td><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
-					<td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
-					<td><input type="hidden" id="current_total{{item.id}}" value="" /></td>
-					{% endif %}
-					<td><div id="percentage{{item.id}}" ></div></td>
-					<td><input type="text"  name="note{{item.id}}" size="40" /></td>
-				</tr>
-				{% endfor %}
-				{% endif %}
-			</tbody>
-		</table>
+     <select id="select_subcontractor" name="select_subcontractor" >
+         <option value="please_select">Please Select</option>
+         {% for x in subcontractors %}
+         <option value = {{x.id}}>{{x.company}}</option>
+         {% endfor %}
+     </select>
+     <input type="submit" class="btn btn-danger btn-sm" value="Pay This Subcontractor" />
+ </form>
+{% else %}
+    <h4>Select Invoices to Pay</h4>
+<div class="table-responsive">
+    <table id="invoices_table" class="display table table-sm">
+        <thead>
+        <tr>
+            <th scope="col">Pay Date</th>
+            <th scope="col">Invoice</th>
+            <th scope="col">Total</th>
+            <th scope="col">Retainage</th>
+            <th scope="col">Pay Now</th>
+            <th scope="col">Add Now</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for x in invoices %}
+        <tr>
+        <td>{{x.pay_date}}</td>
+        <td>{{x.job_name}} - {{x.pay_app_number}}</td>
+        <td>${{x.total}}</td>
+        <td>${{x.retainage}}</td>
+        <td>${{x.amount}}</td>
+            <form action="{% url 'new_subcontractor_payment' %}" method="post"  >
+                {% csrf_token %}
+                <input type="hidden" name="select_subcontractor" value={{selected_sub}}>
+                <input type="hidden" name="selected_invoice" value={{x.id}} >
+        <td><input type="submit" class="btn btn-primary btn-sm" value="Add Now" ></td>
+            </form>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 </div>
+    <br>
+<h4>Selected Invoices</h4>
+<div class="table-responsive">
+    <table id="approved_table" class="display table table-sm">
+        <thead>
+        <tr>
+            <th scope="col">Pay Date</th>
+            <th scope="col">Invoice</th>
+            <th scope="col">Total</th>
+            <th scope="col">Retainage</th>
+            <th scope="col">Pay Now</th>
+            <th scope="col">Remove</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for x in selected_invoices %}
+        <tr>
+        <td>{{x.pay_date}}</td>
+        <td>{{x.job_name}} - {{x.pay_app_number}}</td>
+        <td>${{x.total}}</td>
+        <td>${{x.retainage}}</td>
+        <td>${{x.amount}}</td>
+            <form action="{% url 'new_subcontractor_payment' %}" method="post"  >
+                {% csrf_token %}
+                <input type="hidden" name="select_subcontractor" value={{selected_sub}}>
+                <input type="hidden" name="remove_invoice" value={{x.id}} >
+        <td><input type="submit" class="btn btn-danger btn-sm" value="Remove" ></td>
+            </form>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+    <hr><br>
+               <form action="{% url 'new_subcontractor_payment' %}" id="send_now" method="post" onSubmit="return check_first()" >
+                {% csrf_token %}
+                   <input type="hidden" name="select_subcontractor" value={{selected_sub}}>
+                   <label for="final_amount" >Final Amount</label>
+                   <input type="number" value={{final_amount}} id="final_amount" name="final_amount" required >
+                   <br>
+                   <label for="pay_date">Pay Date</label>
+                   <input type="date" id="pay_date" name="pay_date" required>
+                   <br>
+                   <label for="check_number">Check #</label>
+                   <input type="text" name="check_number" id="check_number" >
+                   <br>
+                   <br>
+                    <textarea name="note" rows="2" cols="100" placeholder="Notes" ></textarea>
+               <br>
+                   <input type="submit" class="btn btn-primary btn-sm" value="Confirm Payment" >
+               </form>
 
-<input type="submit" name="Form3" class="btn btn-primary btn-sm" value="Send Invoice for Approval" />
-    </form>
-
-
+{% endif %}
 </body>
 </html>
 

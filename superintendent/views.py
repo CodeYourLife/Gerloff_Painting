@@ -18,6 +18,14 @@ from django.shortcuts import render, redirect
 
 def super_ajax(request):
     if request.is_ajax():
+        if 'payment_id' in request.GET:
+            send_data = {}
+            payment = SubcontractorPayments.objects.get(id=request.GET['payment_id'])
+            invoices = []
+            for x in SubcontractorInvoice.objects.filter(payment=payment):
+                invoices.append({'contract_id':x.subcontract.id,'id':x.id,'job':x.subcontract.job_number.job_name,'number':x.pay_app_number,'amount':str(x.final_amount-x.retainage)})
+            send_data['invoices']=invoices
+            return HttpResponse(json.dumps(send_data))
         if 'invoice_id' in request.GET:
             send_data = {}
             selected_invoice = SubcontractorInvoice.objects.get(id=request.GET['invoice_id'])

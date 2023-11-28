@@ -6,6 +6,8 @@ from . import views
 urlpatterns = [
 path("subcontractor_home", views.subcontractor_home, name='subcontractor_home'),
 path("connect", views.connect, name='connect'),
+path("subcontractor_payments", views.subcontractor_payments, name='subcontractor_payments'),
+path("new_subcontractor_payment", views.new_subcontractor_payment, name='new_subcontractor_payment'),
 path("", views.connect, name='connect'),
 path("portal/<sub_id> <contract_id>", views.portal, name='portal'),
 path("subcontract/<id>", views.subcontract, name='subcontract'),
