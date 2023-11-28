@@ -418,9 +418,7 @@ if (data == 'False'){link.innerHTML="REMOVED FROM DROPBOX"}
 
 window.onload = function() {
 $.fn.dataTable.moment( 'MMM-DD-YYYY' );
-
 var table = $('#jobs_table').DataTable({paging: false, aaSorting:[]})
-
 var table = $('#notes_table').DataTable({paging: false})
 var table = $('#subcontractors_table').DataTable({paging: false})
 document.getElementById("show_new_pm").style.display = "none";
@@ -732,6 +730,41 @@ document.getElementById("dropbox_button_hide").style.display = "block";
 </div>
 
 <!-- Modal -->
+<div class="modal fade" id="off_rent-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="client_pm_title"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+<form id="off_rent_form" action="{% url 'job_page' job.job_number %}" method="post" onSubmit="return before_off_rent()">
+                    {% csrf_token %}
+                                <label for="select_rental">Select Rental</label>
+                                 <select id="select_rental" name="select_rental" >
+                                <option value="please_select">Please Select</option>
+
+                                {% for x in rentals %}
+                                <option value={{x.id}}>{{x.item}}- On Rent - {{x.on_rent_date}}</option>
+                                {% endfor %}
+                                </select>
+    <br>
+    <label for="off_rent_note" >Notes:</label>
+    <textarea id="off_rent_note" name="off_rent_note" class="form-control" style="min-width: 100%"></textarea>
+            </div>
+            <div class="modal-footer">
+                <input type="submit" class="btn btn-danger" value="Call Off Rent" />
+                </form>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
 <div class="modal fade" id="client_pm-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -1018,6 +1051,9 @@ document.getElementById("dropbox_button_hide").style.display = "block";
             </div>
             <div id="dropbox_link_hide"><a id="link" href="#" target="_blank"><b>CLICK HERE FOR PLANS!</b></a></div>
         </div>
+        <div style="margin: 5px;" class="col-sm-3">
+            <button class="btn btn-primary btn-sm"  data-toggle="modal" data-target="#off_rent-modal" >Call Equipment Off-Rent</button>
+        </div>
     </div>
 </div>
 
@@ -1300,7 +1336,8 @@ document.getElementById("dropbox_button_hide").style.display = "block";
                         <tr>
                             <td><a href="{% url 'rental_page' rental.id 'YES' %}">
                                 <div style="height:100%;width:100%">
-                                    {{rental.item}}
+
+                                    {{rental.item}}{% if rental.requested_off_rent %} [Requested Off-Rent] {% endif %}
                                 </div>
                             </a></td>
                             <td>{{rental.on_rent_date}}</td>

@@ -81,7 +81,13 @@ document.getElementById("more_rep_info").innerHTML = "Rep Info:"
                 }})
 }
 }
-
+function off_rent_note_now(){
+            var name=prompt("Please provide any notes");
+            if (name!=null){
+                call_off_rent.off_rent_note.value = name;
+                }
+              call_off_rent.submit()
+}
 	</script>
 </head>
 <body>
@@ -95,8 +101,14 @@ document.getElementById("more_rep_info").innerHTML = "Rep Info:"
     </ul>
   </div>
 </nav>
+  <div class ="container">
+ <form  id="call_off_rent" action="{% url 'rental_page' rental.id 'NO' %}" method="post" >
+{% csrf_token %}
 
-
+     <input type="hidden" id="off_rent_note" name="off_rent_note" >
+                <button type="button" class="btn btn-danger" onclick="off_rent_note_now()" value="Call Off Rent" />Request Off Rent</button>
+     </form>
+  </div>
  <form name = rental_change id=rental_change action="{% url 'rental_page' rental.id 'NO' %}" method="post"  onSubmit = "return check_booking_data()">
 {% csrf_token %}
 <div class ="container">

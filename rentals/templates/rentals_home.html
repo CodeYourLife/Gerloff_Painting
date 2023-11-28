@@ -146,7 +146,7 @@ window.location.href = url
             <tr>
             {% endif %}
                 <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{x.job_number.job_number}}')"><a href="#">{{x.job_number}}</a></td>
-                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_rental('{{x.id}}')"><a href="#">{{x.item}} {% if x.off_rent_date and x.off_rent_number == None %} [Need Off-Rent #]{% endif %}  </a></td>
+                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_rental('{{x.id}}')"><a href="#">{{x.item}} {% if x.off_rent_date and x.off_rent_number == None %} [Need Off-Rent #]{% elif x.requested_off_rent and x.off_rent_date == None %} [Requested Off-Rent] {% endif %}  </a></td>
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.company}}</td>
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.on_rent_date}}</td>
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.off_rent_date}}</td>

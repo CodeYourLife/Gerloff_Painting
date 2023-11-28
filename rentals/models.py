@@ -18,6 +18,7 @@ class Rentals(models.Model):
 	month_price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
 	is_closed = models.BooleanField(default=False) #once accounting has invoiced
 	rep = models.ForeignKey(VendorContact, on_delete=models.PROTECT, null=True, blank=True)
+	requested_off_rent = models.BooleanField(default=False)
 	def __str__(self):
 		return f"{self.job_number} {self.item}"
 
