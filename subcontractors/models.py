@@ -255,3 +255,7 @@ class InvoiceBatch(models.Model):
     invoice = models.ForeignKey(SubcontractorInvoice, null=True,
                                 on_delete=models.PROTECT, related_name="batch")
 
+
+class PurchaseOrderNumber(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    next_po_number = models.IntegerField(default=0)

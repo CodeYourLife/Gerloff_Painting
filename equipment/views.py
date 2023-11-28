@@ -433,11 +433,15 @@ def get_directory_contents(request, id, value, app):
 @login_required(login_url='/accounts/login')
 def equipment_page(request, id):
     inventory = Inventory.objects.get(id=id)
-    table = EquipmentNotesTable(InventoryNotes.objects.filter(inventory_item=inventory))
+    table = InventoryNotes.objects.filter(inventory_item=inventory).order_by('date')
     employees = Employees.objects.filter(active=True)
     vendors = Vendors.objects.filter(category__category="Equipment Repair")
     path = os.path.join(settings.MEDIA_ROOT, "equipment", str(inventory.id))
     foldercontents = os.listdir(path)
+    folder_count=0
+    for x in os.listdir(path):
+        if os.path.isfile(os.path.join(path, x)):
+            folder_count += 1
     jobs = Jobs.objects.filter(is_closed=False).order_by('job_name')
     if request.method == 'POST':
         if 'selected_file' in request.POST:
@@ -446,10 +450,9 @@ def equipment_page(request, id):
             jobs = Jobs.objects.filter(is_closed=False, job_name__icontains=request.POST['search_job']).order_by(
                 'job_name')
         if 'apply_filter' in request.POST:
-            table = EquipmentNotesTable(
-                InventoryNotes.objects.filter(inventory_item=inventory, category=request.POST['select_category']))
+            table = InventoryNotes.objects.filter(inventory_item=inventory, category=request.POST['select_category']).order_by('date')
         if 'clear_filter' in request.POST:
-            table = EquipmentNotesTable(InventoryNotes.objects.filter(inventory_item=inventory))
+            table = InventoryNotes.objects.filter(inventory_item=inventory).order_by('date')
         if 'returned' in request.POST:
             if inventory.assigned_to != None:
                 inventory.status = "Checked Out"
@@ -556,9 +559,13 @@ def equipment_page(request, id):
             fn2 = os.path.join(settings.MEDIA_ROOT, "equipment", str(inventory.id), fn)
             open(fn2, 'wb').write(fileitem.file.read())
             foldercontents = os.listdir(path)
+            folder_count = 0
+            for x in os.listdir(path):
+                if os.path.isfile(os.path.join(path, x)):
+                    folder_count += 1
     return render(request, "equipment_page.html",
                   {'employees': employees, 'jobs': jobs, 'inventories': inventory, "table": table, "vendors": vendors,
-                   "foldercontents": foldercontents})
+                   "foldercontents": foldercontents,'folder_count':folder_count})
 
 
 @login_required(login_url='/accounts/login')
