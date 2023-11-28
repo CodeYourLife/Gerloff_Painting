@@ -506,11 +506,8 @@ document.getElementById("dropbox_button_hide").style.display = "block";
             </div>
             <div class="modal-body">
                 <ul class="nav nav-pills">
-                    <li>
-                        <a href="#7a" class="active" data-toggle="tab">Change Date</a>
-                    </li>
-                    <li><a href="#8a" data-toggle="tab">Notes</a>
-                    </li>
+                    <li class="nav-item"><a href="#7a" class="nav-link active" data-toggle="tab">Change Date</a></li>
+                    <li class="nav-item"><a href="#8a" class="nav-link" data-toggle="tab">Notes</a></li>
                 </ul>
                 <div class="tab-content clearfix">
                     <div class="tab-pane active" id="7a">
@@ -889,7 +886,7 @@ document.getElementById("dropbox_button_hide").style.display = "block";
 </div>
 
 
-<div class="container">
+<div style="margin-left: 12px; margin-right: 12px;">
     <div class="row">
         <div class="col-sm-4 list-items"><b>Job Name:</b> {{job.job_name}}</div>
         <div class="col-sm-4 list-items"><b>Job Number:</b> {{job.job_number}}</div>
@@ -897,66 +894,71 @@ document.getElementById("dropbox_button_hide").style.display = "block";
     </div>
     <div class="row">
 
-        <div class="col-sm-4 list-items" data-toggle="modal" data-target="#client-modal"><a href ="#" onclick="showEmployeeData( 'CLIENT','{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');"><b>Client:</b> {{job.client}}</a></div>
-        <div class="col-sm-4 list-items" data-toggle="modal" data-target="#client_pm-modal"><a href ="#" onclick="showEmployeeData('PM',  '{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');"><b>GC PM:</b> {{job.client_Pm}}</a></div>
-        <div class="col-sm-4 list-items" data-toggle="modal" data-target="#client_super-modal"><a href ="#" onclick="showEmployeeData( 'SUPERINTENDENT','{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');"><b>GC Super:</b> {{job.client_Super}} </a></div>
+        <div class="col-sm-4 list-items" data-toggle="modal" data-target="#client-modal"><b>Client:</b> <a href ="#" onclick="showEmployeeData( 'CLIENT','{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');">{{job.client}}</a></div>
+        <div class="col-sm-4 list-items" data-toggle="modal" data-target="#client_pm-modal"><b>GC PM:</b> <a href ="#" onclick="showEmployeeData('PM',  '{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');">{{job.client_Pm}}</a></div>
+        <div class="col-sm-4 list-items" data-toggle="modal" data-target="#client_super-modal"><b>GC Super:</b> <a href ="#" onclick="showEmployeeData( 'SUPERINTENDENT','{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');">{{job.client_Super}}</a></div>
     </div>
 
     <div class="row">
-        <div class="col-sm-4 list-items" id="TEST_YO" data-toggle="modal" data-target="#startdate-modal"><a href ="#" onclick="populate_start_date_modal('{{job.job_number}}','{{job.job_name}}','{{job.start_date}}','{{job.is_active}}',this,2)"><b>Start Date:</b> - {{job.start_date}}</a></div>
-        <div class="col-sm-4 list-items" id="TEST_BRO" data-toggle="modal" data-target="#super-modal" ><a href = "#" onclick="populate_super_modal('{{job.job_name}}','{{job.superintendent.id}}','{{job.job_number}}','{{job.superintendent.first_name}}',this,2)"><b>Gerloff Super:</b> -{{job.superintendent}}</a></div>
+        <div class="col-sm-4 list-items" id="TEST_YO" data-toggle="modal" data-target="#startdate-modal"><b>Start Date:</b><a href ="#" onclick="populate_start_date_modal('{{job.job_number}}','{{job.job_name}}','{{job.start_date}}','{{job.is_active}}',this,2)">{{job.start_date}}</a></div>
+        <div class="col-sm-4 list-items" id="TEST_BRO" data-toggle="modal" data-target="#super-modal" ><b>Gerloff Super:</b><a href = "#" onclick="populate_super_modal('{{job.job_name}}','{{job.superintendent.id}}','{{job.job_number}}','{{job.superintendent.first_name}}',this,2)">{{job.superintendent}}</a></div>
         <div class="col-sm-4 list-items"><b>Gerloff Estimator:</b> {{job.estimator}}</div>
     </div>
     <div class="row">
-        <div class="col-sm-4 list-items"><b>Contract Amount:</b> {% if job.is_t_m_job == True %} T&M {% else %}
+        <div class="col-sm-4 list-items">
+            <b>Contract Amount:</b> {% if job.is_t_m_job == True %} T&M {% else %}
             {{job.contract_amount}}{% endif %}
+        </div>
+        <div class="col-sm-8 list-items">
         </div>
     </div>
 
-    <div class="row">
-        <div class="col">
+    <div style=" padding-top: 12px;" class="row">
+        <div  class="col-12" style="display: flex">
+            <div style="flex-grow: 1"></div>
             <form action="{% url 'update_job_info' job.job_number %}"><input type="submit" class="btn btn-info btn-sm"
                                                                              value="Update Job Information"/></form>
         </div>
     </div>
-    <div class="row">
-        <div class="col">
-            <hr>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm-3">
+    <hr>
+
+
+    <div class="row h-100 d-flex align-items-center">
+        <div style="margin: 5px;" class="col-sm-3">
             <form action="{% url 'change_order_new' job.job_number %}"><input type="submit" class="btn btn-primary btn-sm" value="New Change Order"/>
             </form>
         </div>
-                <div class="col-sm-3">
+        <div style="margin: 5px;" class="col-sm-3">
             <form action="{% url 'request_pickup' jobnumber=job.job_number item='ALL' pickup='ALL' status='ALL' %}"><input type="submit" class="btn btn-primary btn-sm" value="Request Equipment Pickup"/>
-
             </form>
         </div>
-        <div class="col-sm-3">
-
+        <div style="margin: 5px;" class="col-sm-3">
     {% if job.is_waiting_for_punchlist == True %}
         {% if job.is_labor_done == True %}
-                <button class="btn btn-dark btn-sm" data-toggle="modal" data-target="#labor_close-modal">Labor was done  {{job.labor_done_Date}}</button>
+                <input class="btn btn-dark btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="RLabor was done  {{job.labor_done_Date}}" />
             {% else %}
-                            <button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#labor_close-modal">Waiting for Punchlist</button>
+                            <input class="btn btn-danger btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Waiting for Punchlist" />
          {% endif %}
     {% else %}
         {% if job.is_labor_done == True %}
-                            <button class="btn btn-dark btn-sm" data-toggle="modal" data-target="#labor_close-modal">Labor was done  {{job.labor_done_Date}}</button>
+                            <input class="btn btn-dark btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Labor was done  {{job.labor_done_Date}}" />
         {% else %}
-                            <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#labor_close-modal">Click Here to Mark Labor Complete</button>
+                            <input style="width: 245px" class="btn btn-success btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Click Here to Mark Labor Complete" />
         {% endif %}
     {% endif %}
 
         </div>
-        <div class="col-sm-3">
+        <div style="margin: 5px;" class="col-sm-3">
             <div id="dropbox_button_hide">
-         <form id="dropbox_button" action="{% url 'job_page' job.job_number %}" target="_blank" >
-            <button type="button" class="btn btn-warning btn-sm"  onclick = "open_dropbox2('{{job.job_number}}')" >Plans & Work Order</button>
+             <form id="dropbox_button" action="{% url 'job_page' job.job_number %}" target="_blank" >
+                <input type="button" class="btn btn-warning btn-sm"  onclick = "open_dropbox2('{{job.job_number}}')" value="Plans & Work Order" />
 
-         </form>
+             </form>
+            </div>
+            <div style="margin-top: 5px; margin-bottom: 5px;">
+                <form id="" action="" target="_blank" >
+                    <input type="button" class="btn btn-primary btn-sm"  onclick = "" value="Add Painter" />
+                 </form>
             </div>
             <div id="dropbox_link_hide"><a id="link" href="#" target="_blank"><b>CLICK HERE FOR PLANS!</b></a></div>
         </div>
@@ -964,418 +966,527 @@ document.getElementById("dropbox_button_hide").style.display = "block";
 </div>
 
 
+    <div class="card">
+        <div class="card-header" id="headingOne">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false"
+                        aria-controls="collapseOne">
+                    Job Notes
+                </button>
+            </h5>
+        </div>
+        <div id="collapseOne" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col">
 
-<button type="button" class="collapsible">Job Notes</button>
-<div class="content">
-    <div class="row">
-        <div class="col">
+                        <form id=new_note_form action="{% url 'job_page' job.job_number %}" method="post">
+                            {% csrf_token %}
+                          <br>
+                <input type="hidden" name="add_note" id="add_note" value="" />
+                            <button type="button" class="btn btn-primary" onclick = "add_new_note()" >ADD NEW NOTE</button>
+                        </form>
 
-            <form id=new_note_form action="{% url 'job_page' job.job_number %}" method="post">
-                {% csrf_token %}
+                    </div>
+                </div>
+                <div class="content">
+                    <form style="padding-top: 24px" method="get">
+                        <div class="row">
+                            <div class="col-sm-2">
+                                {% if admin %}
+                                Admin<input type="checkbox" name="admin" checked/>
+                                {% else %}
+                                Admin<input type="checkbox" name="admin"/>
+                                {% endif %}
+                            </div>
+                            <div class="col-sm-2">
+                                {% if start %}
+                                Start<input type="checkbox" name="start" checked/>
+                                {% else %}
+                                Start<input type="checkbox" name="start"/>
+                                {% endif %}
+                            </div>
+                            <div class="col-sm-2">
+                                {% if field %}
+                                Field<input type="checkbox" name="field" checked/>
+                                {% else %}
+                                Field<input type="checkbox" name="field"/>
+                                {% endif %}
+                            </div>
+                            <div class="col-sm-2">
+                                {% if change_order %}
+                                Change Order<input type="checkbox" name="change_order" checked/>
+                                {% else %}
+                                Change Order<input type="checkbox" name="change_order"/>
+                                {% endif %}
+                            </div>
+                            <div class="col-sm-2">
+                                {% if submittal %}
+                                Submittal<input type="checkbox" name="submittal" checked/>
+                                {% else %}
+                                Submittal<input type="checkbox" name="submittal"/>
+                                {% endif %}
+                            </div>
+                            <div class="col-sm-2">
+                                <input type="submit" value="Filter"/>
+                            </div>
+                        </div>
+                    </form>
 
-              <br>
 
-<input type="hidden" name="add_note" id="add_note" value="" />
-                <button type="button" class="btn btn-primary" onclick = "add_new_note()" >ADD NEW NOTE</button>
-            </form>
-
+                    <div class="table-responsive">
+                        <table id="notes_table" class="display table table-sm">
+                            <thead class="colored-header">
+                            <tr>
+                                <th scope="col">By</th>
+                                <th scope="col">Date</th>
+                                <th scope="col">Note</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% if notes %}
+                            {% for x in notes %}
+                            <tr>
+                                <td>{{x.user}}</td>
+                                <td>{{x.date}}</td>
+                                <td><div class='text-wrap width-400'>{{x.note}}</div></td>
+                            </tr>
+                            {% endfor %}
+                            {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
         </div>
     </div>
-    <form style="padding-top: 24px" method="get">
-        <div class="row">
-            <div class="col-sm-2">
-                {% if admin %}
-                Admin<input type="checkbox" name="admin" checked/>
-                {% else %}
-                Admin<input type="checkbox" name="admin"/>
-                {% endif %}
-            </div>
-            <div class="col-sm-2">
-                {% if start %}
-                Start<input type="checkbox" name="start" checked/>
-                {% else %}
-                Start<input type="checkbox" name="start"/>
-                {% endif %}
-            </div>
-            <div class="col-sm-2">
-                {% if field %}
-                Field<input type="checkbox" name="field" checked/>
-                {% else %}
-                Field<input type="checkbox" name="field"/>
-                {% endif %}
-            </div>
-            <div class="col-sm-2">
-                {% if change_order %}
-                Change Order<input type="checkbox" name="change_order" checked/>
-                {% else %}
-                Change Order<input type="checkbox" name="change_order"/>
-                {% endif %}
-            </div>
-            <div class="col-sm-2">
-                {% if submittal %}
-                Submittal<input type="checkbox" name="submittal" checked/>
-                {% else %}
-                Submittal<input type="checkbox" name="submittal"/>
-                {% endif %}
-            </div>
-            <div class="col-sm-2">
-                <input type="submit" value="Filter"/>
-            </div>
-        </div>
-    </form>
 
-
-    <div class="table-responsive">
-        <table id="notes_table" class="display table table-sm">
-            <thead class="colored-header">
-            <tr>
-                <th scope="col">By</th>
-                <th scope="col">Date</th>
-                <th scope="col">Note</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% if notes %}
-            {% for x in notes %}
-            <tr>
-                <td>{{x.user}}</td>
-                <td>{{x.date}}</td>
-                <td><div class='text-wrap width-400'>{{x.note}}</div></td>
-            </tr>
-            {% endfor %}
-            {% endif %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-{% endif %}
 
 
 {% if tickets %}
-<button type="button" class="collapsible">Outstanding Extra Work Tickets</button>
-<div class="content">
+    <div class="card">
+        <div class="card-header" id="headingTwo">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false"
+                        aria-controls="collapseTwo">
+                    Outstanding Extra Work Tickets
+                </button>
+            </h5>
+        </div>
+        <div id="collapseTwo" class="collapse hide" aria-labelledby="headingTwo" data-parent="#accordion">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="tickets_table" class="display table">
+                        <thead class="colored-header">
 
-        <div class="table-responsive">
-        <table id="tickets_table" class="display table">
-            <thead class="colored-header">
-
-            <tr>
-                <th>CO#</th>
-                <th>Description</th>
-                <th>Notes</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for ticket in tickets %}
-            <tr>
-                <td><a href="{% url 'extra_work_ticket' ticket.id %}">{{ticket.cop_number}}</a></td>
-                <td>{{ticket.description}}</td>
-                <td>{{ticket.notes}}</td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                        <tr>
+                            <th>CO#</th>
+                            <th>Description</th>
+                            <th>Notes</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for ticket in tickets %}
+                        <tr>
+                            <td><a href="{% url 'extra_work_ticket' ticket.id %}">{{ticket.cop_number}}</a></td>
+                            <td>{{ticket.description}}</td>
+                            <td>{{ticket.notes}}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 {% endif %}
+
 {% if open_cos %}
-<hr>
-<button type="button" class="collapsible">Pending Change Orders Not Approved Yet</button>
-<div class="content">
+    <div class="card">
+        <div class="card-header" id="headingThree">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false"
+                        aria-controls="collapseThree">
+                    Pending Change Orders Not Approved Yet
+                </button>
+            </h5>
+        </div>
+        <div id="collapseThree" class="collapse hide" aria-labelledby="headingThree" data-parent="#accordion">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="tickets_table1" class="display table">
+                        <thead class="colored-header">
 
-            <div class="table-responsive">
-        <table id="tickets_table1" class="display table">
-            <thead class="colored-header">
-
-            <tr>
-                <th>CO#</th>
-                <th>Description</th>
-                <th>Notes</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for open_co in open_cos %}
-            <tr>
-                <td><a href="{% url 'extra_work_ticket' open_co.id %}">{{open_co.cop_number}}</a></td>
-                <td>{{open_co.description}}</td>
-                <td>{{open_co.notes}}</td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                        <tr>
+                            <th>CO#</th>
+                            <th>Description</th>
+                            <th>Notes</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for open_co in open_cos %}
+                        <tr>
+                            <td><a href="{% url 'extra_work_ticket' open_co.id %}">{{open_co.cop_number}}</a></td>
+                            <td>{{open_co.description}}</td>
+                            <td>{{open_co.notes}}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 {% endif %}
-
 
 {% if approved_cos %}
-<hr>
-<button type="button" class="collapsible">Approved Change Orders</button>
-<div class="content">
-
+    <div class="card">
+        <div class="card-header" id="headingFour">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false"
+                        aria-controls="collapseFour">
+                    Approved Change Orders
+                </button>
+            </h5>
+        </div>
+        <div id="collapseFour" class="collapse hide" aria-labelledby="headingFour" data-parent="#accordion">
+            <div class="card-body">
                 <div class="table-responsive">
-        <table id="tickets_table2" class="display table">
-            <thead class="colored-header">
+                    <table id="tickets_table2" class="display table">
+                        <thead class="colored-header">
 
-            <tr>
-                <th>CO#</th>
-                <th>Description</th>
-                <th>Notes</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for approved_co in approved_cos %}
-            <tr>
-                <td>{{approved_co.cop_number}}</td>
-                <td>{{approved_co.description}}</td>
-                <td>{{approved_co.notes}}</td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                        <tr>
+                            <th>CO#</th>
+                            <th>Description</th>
+                            <th>Notes</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for approved_co in approved_cos %}
+                        <tr>
+                            <td>{{approved_co.cop_number}}</td>
+                            <td>{{approved_co.description}}</td>
+                            <td>{{approved_co.notes}}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 {% endif %}
 
 {% if equipments %}
-<hr>
-<button type="button" class="collapsible">Equipment</button>
-<div class="content">
-                    <div class="table-responsive">
-        <table id="tickets_table3" class="display table">
-            <thead class="colored-header">
+    <div class="card">
+        <div class="card-header" id="headingFive">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFive" aria-expanded="false"
+                        aria-controls="collapseFive">
+                    Equipment
+                </button>
+            </h5>
+        </div>
+        <div id="collapseFive" class="collapse hide" aria-labelledby="headingFive" data-parent="#accordion">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="tickets_table3" class="display table">
+                        <thead class="colored-header">
 
 
-            <tr>
-                <th>Type</th>
-                <th>Item</th>
-                <th>Notes</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for equipment in equipments %}
-            <tr>
-                <td>{{equipment.inventory_type}}</td>
-                <td><a href="{% url 'equipment_page' equipment.id %}">{{equipment.item}}</a></td>
-                <td>{{equipment.notes}}</td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                        <tr>
+                            <th>Type</th>
+                            <th>Item</th>
+                            <th>Notes</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for equipment in equipments %}
+                        <tr>
+                            <td>{{equipment.inventory_type}}</td>
+                            <td><a href="{% url 'equipment_page' equipment.id %}">{{equipment.item}}</a></td>
+                            <td>{{equipment.notes}}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 {% endif %}
 
 {% if rentals %}
-<hr>
-<button type="button" class="collapsible">Rentals</button>
-<div class="content">
-                        <div class="table-responsive">
-        <table id="tickets_table4" class="display table">
-            <thead class="colored-header">
+    <div class="card">
+        <div class="card-header" id="headingSix">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSix" aria-expanded="false"
+                        aria-controls="collapseSix">
+                    Rentals
+                </button>
+            </h5>
+        </div>
+        <div id="collapseSix" class="collapse hide" aria-labelledby="headingSix" data-parent="#accordion">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="tickets_table4" class="display table">
+                        <thead class="colored-header">
 
-            <tr>
-                <th>Item</th>
-                <th>On Rent Date</th>
-                <th>Notes</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for rental in rentals %}
-            <tr>
-                <td><a href="{% url 'rental_page' rental.id 'YES' %}">
-                    <div style="height:100%;width:100%">
-                        {{rental.item}}
-                    </div>
-                </a></td>
-                <td>{{rental.on_rent_date}}</td>
-                <td>{{rental.notes}}</td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                        <tr>
+                            <th>Item</th>
+                            <th>On Rent Date</th>
+                            <th>Notes</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for rental in rentals %}
+                        <tr>
+                            <td><a href="{% url 'rental_page' rental.id 'YES' %}">
+                                <div style="height:100%;width:100%">
+                                    {{rental.item}}
+                                </div>
+                            </a></td>
+                            <td>{{rental.on_rent_date}}</td>
+                            <td>{{rental.notes}}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 {% endif %}
 
 {% if wc_not_ordereds %}
-<hr>
-<button type="button" class="collapsible">Wallcovering Not Ordered</button>
-<div class="content">
-                            <div class="table-responsive">
-        <table id="tickets_table5" class="display table">
-            <thead class="colored-header">
+    <div class="card">
+        <div class="card-header" id="headingSeven">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSeven" aria-expanded="false"
+                        aria-controls="collapseSeven">
+                    Wallcovering Not Ordered
+                </button>
+            </h5>
+        </div>
+        <div id="collapseSeven" class="collapse hide" aria-labelledby="headingSeven" data-parent="#accordion">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="tickets_table5" class="display table">
+                        <thead class="colored-header">
 
-            <tr>
-                <th>Code</th>
-                <th>Vendor</th>
-                <th>Pattern</th>
-                <th>Notes</th>
-            </tr>
-            </thead>
-            <tbody>c
-            {% for wc_not_ordered in wc_not_ordereds %}
-            <tr>
-                <td>{{wc_not_ordered.code}}</td>
-                <td>{{wc_not_ordered.vendor.company_name}}</td>
-                <td>{{wc_not_ordered.pattern}}</td>
-                <td>{{wc_not_ordered.notes}}</td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                        <tr>
+                            <th>Code</th>
+                            <th>Vendor</th>
+                            <th>Pattern</th>
+                            <th>Notes</th>
+                        </tr>
+                        </thead>
+                        <tbody>c
+                        {% for wc_not_ordered in wc_not_ordereds %}
+                        <tr>
+                            <td>{{wc_not_ordered.code}}</td>
+                            <td>{{wc_not_ordered.vendor.company_name}}</td>
+                            <td>{{wc_not_ordered.pattern}}</td>
+                            <td>{{wc_not_ordered.notes}}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 {% endif %}
 
 {% if wc_ordereds %}
-<hr>
-<button type="button" class="collapsible">Wallcovering Ordered But Not Received</button>
-<div class="content">
-                                <div class="table-responsive">
-        <table id="tickets_table6" class="display table">
-            <thead class="colored-header">
+    <div class="card">
+        <div class="card-header" id="headingEight">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseEight" aria-expanded="false"
+                        aria-controls="collapseEight">
+                    Wallcovering Ordered But Not Received
+                </button>
+            </h5>
+        </div>
+        <div id="collapseEight" class="collapse hide" aria-labelledby="headingEight" data-parent="#accordion">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="tickets_table6" class="display table">
+                        <thead class="colored-header">
 
-            <tr>
-                <th>Description</th>
-                <th>Date Ordered</th>
-                <th>Notes</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for wc_ordered in wc_ordereds %}
-            <tr>
-                <td>{{wc_ordered.item_description}}</td>
-                <td>{{wc_ordered.order.date_ordered}}</td>
-                <td>{{wc_ordered.order.notes}}</td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                        <tr>
+                            <th>Description</th>
+                            <th>Date Ordered</th>
+                            <th>Notes</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for wc_ordered in wc_ordereds %}
+                        <tr>
+                            <td>{{wc_ordered.item_description}}</td>
+                            <td>{{wc_ordered.order.date_ordered}}</td>
+                            <td>{{wc_ordered.order.notes}}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 {% endif %}
 
 {% if packages %}
-<hr>
-<button type="button" class="collapsible">Received Wallcovering</button>
-<div class="content">
-                                    <div class="table-responsive">
-        <table id="tickets_table7" class="display table">
-            <thead class="colored-header">
+    <div class="card">
+        <div class="card-header" id="headingNine">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseNine" aria-expanded="false"
+                        aria-controls="collapseNine">
+                    Received Wallcovering
+                </button>
+            </h5>
+        </div>
+        <div id="collapseNine" class="collapse hide" aria-labelledby="headingNine" data-parent="#accordion">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="tickets_table7" class="display table">
+                        <thead class="colored-header">
 
-            <tr>
-                <th>Description</th>
-                <th>Quantity</th>
-                <th>Notes</th>
-                <th>Sent to Job</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for package in packages %}
-            <tr>
-                <td>{{package.description}}
-                    {% if package.order_item1.wallcovering.code != None %}
-                    {{package.order_item1.wallcovering.code}} {{package.qnty_item1}} {{package.unit_item1}}
-                    {% endif %}
-                    {{package.order_item2.wallcovering.code}} {{package.qnty_item2}} {{package.unit_item2}}
-                    {% if package.order_item3.wallcovering.code != None %}
-                    {{package.order_item3.wallcovering.code}} {{package.qnty_item3}} {{package.unit_item3}}
-                    {% endif %}
-                    {% if package.order_item4.wallcovering.code != None %}
-                    {{package.order_item4.wallcovering.code}} {{package.qnty_item4}} {{package.unit_item4}}
-                    {% endif %}
-                    {% if package.order_item5.wallcovering.code != None %}
-                    {{package.order_item5.wallcovering.code}} {{package.qnty_item5}} {{package.unit_item5}}
-                    {% endif %}
-                </td>
-                <td>{{package.quantity_received}} {{package.unit}}</td>
-                <td>{{package.notes}}</td>
-                <td>
-                    {% if deliveries %}
-                    {% for delivery in deliveries %}
+                        <tr>
+                            <th>Description</th>
+                            <th>Quantity</th>
+                            <th>Notes</th>
+                            <th>Sent to Job</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for package in packages %}
+                        <tr>
+                            <td>{{package.description}}
+                                {% if package.order_item1.wallcovering.code != None %}
+                                {{package.order_item1.wallcovering.code}} {{package.qnty_item1}} {{package.unit_item1}}
+                                {% endif %}
+                                {{package.order_item2.wallcovering.code}} {{package.qnty_item2}} {{package.unit_item2}}
+                                {% if package.order_item3.wallcovering.code != None %}
+                                {{package.order_item3.wallcovering.code}} {{package.qnty_item3}} {{package.unit_item3}}
+                                {% endif %}
+                                {% if package.order_item4.wallcovering.code != None %}
+                                {{package.order_item4.wallcovering.code}} {{package.qnty_item4}} {{package.unit_item4}}
+                                {% endif %}
+                                {% if package.order_item5.wallcovering.code != None %}
+                                {{package.order_item5.wallcovering.code}} {{package.qnty_item5}} {{package.unit_item5}}
+                                {% endif %}
+                            </td>
+                            <td>{{package.quantity_received}} {{package.unit}}</td>
+                            <td>{{package.notes}}</td>
+                            <td>
+                                {% if deliveries %}
+                                {% for delivery in deliveries %}
 
-                    {% if delivery.package == package %}
-                    {{delivery.description}} {{delivery.quantity_sent}} {{delivery.outgoing_event.date}}
-                    {% endif %}
+                                {% if delivery.package == package %}
+                                {{delivery.description}} {{delivery.quantity_sent}} {{delivery.outgoing_event.date}}
+                                {% endif %}
 
-                    {% endfor %}
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                                {% endfor %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 {% endif %}
 
-{% if submittals %}
-<hr>
-<button type="button" class="collapsible">Submittals</button>
-<div class="content">
-    <div class="table-responsive">
-        <table id="tickets_table8" class="display table">
-            <thead class="colored-header">
 
-            <tr>
-                <th>#</th>
-                <th>Description</th>
-                <th>Date Sent</th>
-                <th>Date Returned</th>
-                <th>Notes</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for submittal in submittals %}
-            <tr>
-                <td>{{submittal.submittal_number}}</td>
-                <td>{{submittal.description}}</td>
-                <td>{{submittal.date_sent}}</td>
-                <td>{{submittal.date_returned}}</td>
-                <td>{{submittal.notes}}</td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+{% if submittals %}
+    <div class="card">
+        <div class="card-header" id="headingTen>
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTen" aria-expanded="false"
+                        aria-controls="collapseTen">
+                    Submittals
+                </button>
+            </h5>
+        </div>
+        <div id="collapseTen" class="collapse hide" aria-labelledby="headingTen" data-parent="#accordion">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="tickets_table8" class="display table">
+                        <thead class="colored-header">
+
+                        <tr>
+                            <th>#</th>
+                            <th>Description</th>
+                            <th>Date Sent</th>
+                            <th>Date Returned</th>
+                            <th>Notes</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for submittal in submittals %}
+                        <tr>
+                            <td>{{submittal.submittal_number}}</td>
+                            <td>{{submittal.description}}</td>
+                            <td>{{submittal.date_sent}}</td>
+                            <td>{{submittal.date_returned}}</td>
+                            <td>{{submittal.notes}}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 {% endif %}
 
 {% if subcontracts %}
-<hr>
-<button type="button" class="collapsible">Subcontractors</button>
-<div class="content">
-    <div class="table-responsive">
-        <table id="subcontractors_table" class="display table table-sm">
-            <thead class="colored-header">
+    <div class="card">
+        <div class="card-header" id="headingNine">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseNine" aria-expanded="false"
+                        aria-controls="collapseENine">
+                    Subcontractors
+                </button>
+            </h5>
+        </div>
+        <div id="collapseNine" class="collapse hide" aria-labelledby="headingNine" data-parent="#accordion">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="subcontractors_table" class="display table table-sm">
+                        <thead class="colored-header">
 
-            <tr>
-                <th scope="col" >PO #</th>
-                <th scope="col" >Company</th>
-                <th scope="col" >Total Amt.</th>
-                <th scope="col" >% Complete</th>
+                        <tr>
+                            <th scope="col" >PO #</th>
+                            <th scope="col" >Company</th>
+                            <th scope="col" >Total Amt.</th>
+                            <th scope="col" >% Complete</th>
 
-            </tr>
-            </thead>
-            <tbody>
-            {% for subcontract in subcontracts %}
-            <tr>
-                {% if subcontract.po_number %}
-                <td><a href="{% url 'subcontract' subcontract.id %}" >{{subcontract.po_number}}</a></td>
-                {% else %}
-                <td><a href="{% url 'subcontract' subcontract.id %}" >TBD</a></td>
-                {% endif %}
-                <td>{{subcontract.subcontractor}}</td>
-                <td>${{subcontract.total_contract}}</td>
-                <td>{{subcontract.percent_complete}}</td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for subcontract in subcontracts %}
+                        <tr>
+                            {% if subcontract.po_number %}
+                            <td><a href="{% url 'subcontract' subcontract.id %}" >{{subcontract.po_number}}</a></td>
+                            {% else %}
+                            <td><a href="{% url 'subcontract' subcontract.id %}" >TBD</a></td>
+                            {% endif %}
+                            <td>{{subcontract.subcontractor}}</td>
+                            <td>${{subcontract.total_contract}}</td>
+                            <td>{{subcontract.percent_complete}}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 {% endif %}
 
 

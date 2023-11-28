@@ -68,6 +68,10 @@ class Employees(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
+class EmployeeJob(models.Model):
+    employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
+    job = models.ForeignKey(
+        'jobs.Jobs', on_delete=models.PROTECT, null=True, blank=True)
 
 class Metrics(models.Model):
     id = models.BigAutoField(primary_key=True)
