@@ -14,7 +14,7 @@ import os.path
 from django.conf import settings
 from employees.models import *
 from django.http import HttpResponse
-
+from console.misc import Email
 
 # Create your views here.
 
@@ -114,6 +114,15 @@ def rental_page(request, id, reverse):
     foldercontents = os.listdir(path)
 
     if request.method == 'POST':
+        if 'off_rent_note' in request.POST:
+            rental.requested_off_rent = True
+            rental.save()
+            RentalNotes.objects.create(rental=rental, date=date.today(),
+                                       user=Employees.objects.get(user=request.user),
+                                       note="Please call off-rent. " + request.POST['off_rent_note'])
+            message = "Please call off this rental. " + rental.item + ". From Job -" + rental.job_number.job_name + "\n " + \
+                      request.POST['off_rent_note']
+            Email.sendEmail("Call Off Rent", message, ["warehouse@gerloffpainting.com"], False)
         if 'form_1' in request.POST:
             note = ""
             rental.company.company_phone = request.POST['company_phone']

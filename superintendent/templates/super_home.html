@@ -592,7 +592,7 @@ function submit_new_super(){
                         {% for item in rentals %}
                         <tr>
                             <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{item.job_number.job_number}}')"><a href="#">{{item.job_number}}</a></td>
-                            <td style="white-space: nowrap;" width = "20px" onclick="go_to_rental('{{item.id}}')"><a href="#">{{item.item}}</a></td>
+                            <td style="white-space: nowrap;" width = "20px" onclick="go_to_rental('{{item.id}}')"><a href="#">{{item.item}}{% if item.requested_off_rent %} [Requested Off-Rent] {% endif %}</a></td>
                             <td style="white-space: nowrap;" width = "20px" >{{item.on_rent_date}}</td>
                             <td style="white-space: nowrap;" width = "20px" >{{item.off_rent_date}}</td>
                             <td style="white-space: nowrap;" width = "20px" >{{item.notes}}</td>

@@ -510,6 +510,15 @@ def job_page(request, jobnumber):
         go_to_pickup = False
         selectedjob = Jobs.objects.get(job_number=jobnumber)
         if request.method == 'POST':
+            if 'select_rental' in request.POST:
+                selected_rental=Rentals.objects.get(id=request.POST['select_rental'])
+                selected_rental.requested_off_rent = True
+                selected_rental.save()
+                RentalNotes.objects.create(rental=selected_rental, date=date.today(),
+                                           user=Employees.objects.get(user=request.user),
+                                           note="Please call off-rent. " + request.POST['off_rent_note'])
+                message = "Please call off this rental. " + selected_rental.item + ". From Job -" + selected_rental.job_number.job_name + "\n " + request.POST['off_rent_note']
+                Email.sendEmail("Call Off Rent", message, ["warehouse@gerloffpainting.com"],False)
             if 'select_status' in request.POST:
                 if request.POST['select_status'] == 'nothing_done':
                     message = "Labor is not done."

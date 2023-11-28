@@ -51,6 +51,7 @@ def index(request):
     send_data['service'] = Inventory.objects.filter(service_vendor__isnull=False,is_closed=False).count()
     send_data['pickup_requests'] = PickupRequest.objects.filter(is_closed=False).count()
     send_data['rentals'] = Rentals.objects.filter(off_rent_number = None).count()
+    send_data['rentals_requested_off'] = Rentals.objects.filter(requested_off_rent = True, off_rent_number = None).count()
     send_data['next_two_weeks'] = next_two_weeks
     send_data['needs_super'] = Jobs.objects.filter(superintendent__isnull = True).count()
     send_data['active_subcontracts']=Subcontracts.objects.filter(job_number__is_closed=False,is_closed=False).count()
