@@ -97,9 +97,9 @@
 
 $(document).ready(function () {
     var table = $('#sub_table').DataTable({paging: false,searching:false,info:false});
-    var table = $('#all_invoices_table').DataTable({paging: false,searching:false,info:false});
-    var table = $('#my_invoices_table').DataTable({paging: false,searching:false,info:false});
-    var table = $('#approved_invoices_table').DataTable({paging: false,searching:false,info:false});
+    var table = $('#all_invoices_table').DataTable({paging: false,searching:false,info:false,columnDefs:[{targets: 2, render: $.fn.dataTable.render.number(',','.',0,'$')}]});
+    var table = $('#my_invoices_table').DataTable({paging: false,searching:false,info:false,columnDefs:[{targets: 2, render: $.fn.dataTable.render.number(',','.',0,'$')}]});
+    var table = $('#approved_invoices_table').DataTable({paging: false,searching:false,info:false,columnDefs:[{targets: [2,3], render: $.fn.dataTable.render.number(',','.',0,'$')}]});
 
 })
 
@@ -393,7 +393,7 @@ function populate_pending_approvals_modal(invoice_id){
 				<tr>
                     <td>{{x.company}}</td>
                     <td><a href="{% url 'subcontract_invoices' x.contract_id x.id %}">{{x.job_name}} #{{x.number}}</a></td>
-                    <td>${{x.amount}}</td>
+                    <td>{{x.amount}}</td>
                     <td>{{x.pay_date}}</td>
                     <td style="white-space:nowrap" data-toggle="modal" data-target="#active_contracts-modal" onclick="populate_pending_approvals_modal('{{x.id}}')"><a href="#">{{x.approvals_needed}}</a></td>
                 </tr>
@@ -435,7 +435,7 @@ function populate_pending_approvals_modal(invoice_id){
 				<tr>
                     <td>{{x.company}}</td>
                     <td><a href="{% url 'subcontract_invoices' x.contract_id x.id %}">{{x.job_name}} #{{x.number}}</a></td>
-                    <td>${{x.amount}}</td>
+                    <td>{{x.amount}}</td>
                     <td>{{x.pay_date}}</td>
                     <td style="white-space:nowrap" data-toggle="modal" data-target="#active_contracts-modal" onclick="populate_pending_approvals_modal('{{x.id}}')"><a href="#">{{x.approvals_needed}}</a></td>
                 </tr>
@@ -477,8 +477,8 @@ function populate_pending_approvals_modal(invoice_id){
 
                     <td>{{x.subcontract.subcontractor}}</td>
                     <td><a href="{% url 'subcontract_invoices' x.subcontract.id x.id %}">{{x.subcontract.job_number.job_name}} #{{x.pay_app_number}}</a></td>
-                    <td>${{x.final_amount}}</td>
-                    <td>${{x.retainage}}</td>
+                    <td>{{x.final_amount}}</td>
+                    <td>{{x.retainage}}</td>
                     <td>{{x.pay_date}}</td>
                 </tr>
 			{% endfor %}
