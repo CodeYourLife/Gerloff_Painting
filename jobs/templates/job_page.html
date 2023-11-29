@@ -350,7 +350,7 @@ function open_dropbox2(jobnumber){
 
 window.onload = function() {
     $.fn.dataTable.moment( 'MMM-DD-YYYY' );
-    var table = $('#notes_table').DataTable({paging: false,info:false})
+    var table = $('#notes_table').DataTable({paging: false,info:false, ordering:false})
     var table = $('#subcontractors_table').DataTable({paging: false})
     document.getElementById("show_new_pm").style.display = "none";
     document.getElementById("show_new_super").style.display = "none";

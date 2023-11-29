@@ -685,7 +685,7 @@ def job_page(request, jobnumber):
             notes = JobNotes.objects.filter(job_number=selectedjob)
     else:
         notes = JobNotes.objects.filter(job_number=selectedjob)
-    send_data['notes'] = notes
+    send_data['notes'] = notes.order_by('date')
     send_data['supers'] = Employees.objects.filter(job_title__description="Superintendent", active=True)
     if go_to_pickup:
         return redirect('request_pickup', jobnumber=selectedjob.job_number, item='ALL', pickup='ALL', status='ALL')
