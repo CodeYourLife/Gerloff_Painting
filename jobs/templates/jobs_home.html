@@ -1,0 +1,424 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_item_jobs %}active{% endblock nav_item_jobs %}
+{% block content %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <title>DataTables example - HTML (DOM) sourced data</title>
+        <style type="text/css" class="init">
+
+.colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
+
+.dataTables_wrapper {
+    font-family: tahoma;
+    font-size: 13px;
+}
+
+        nav .active, .collapsible:hover {
+          background-color: Salmon;
+        }
+        .nav-pills a {
+            color: black;
+        }
+        .nav-pills li {
+            padding: 2px;
+        }
+        .nav-pills .active {
+            background-color: #6c757d !important;
+            padding: 5px;
+        }
+        label {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+        input {
+            margin-left: 10px;
+            margin-right: 10px;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+        tr th {
+            width: fit-content !important;
+        }
+        .tab-content * {
+          color : black;
+          background-color: white !important;
+        }
+        .active * {
+            background-color: white !important;
+        }
+                .list-items {
+        border-bottom: 1px solid black; display: flex; justify-content: space-between;
+        }
+        .text-wrap{
+    white-space:normal;
+}
+.width-200{
+    width:200px;
+}
+.dataTables_filter {
+   float: left !important;
+}
+.tb { border-collapse: collapse; width:300px; }
+
+.tb th, .tb td { padding: 5px; border: solid 1px #777; }
+.tb th { background-color: lightblue; }
+
+.table td {
+        }
+
+            .modal-content {
+                width: fit-content;
+            }
+
+
+    </style>
+
+    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
+    <script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
+    <script type="text/javascript" class="init">
+function new_filter_now(){
+    document.getElementById('filter_form').submit();
+}
+
+function go_to_job(jobnumber){
+    url = "{% url 'job_page' 'ALL' %}"
+    url = url.replace('ALL', jobnumber);
+    window.location.href = url
+}
+
+function change_start(){
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'job_number':pmform2.job_number.value, 'start_date': pmform2.start_date.value,'is_active':pmform2.is_active.checked,'notes':pmform2.date_note.value,'row':pmform2.row_number.value},
+        success: function (data) {
+            parsedData = JSON.parse(data);
+            table = document.getElementById("jobs_table");
+            rows= table.rows;
+            sorted = "true"
+            for (i = 2; i < (rows.length - 1); i++) {
+                greater = moment(table.rows[i].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+                lesser = moment(table.rows[i-1].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+                if (greater < lesser){
+                    alert(greater)
+                    alert(lesser)
+                    sorted = "false";
+                    break;
+                }
+            }
+            var clicked_row = Number(pmform2.row_number.value)+1
+            table.rows[clicked_row].cells[2].innerHTML = "<a href='#' >" + parsedData.new_date + "</a>"
+            if (sorted == "false"){return}
+            newdate =moment(table.rows[clicked_row].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+            for (i = 1; i < (rows.length - 1); i++) {
+                if (i != pmform2.row_number.value){
+                    existingdate = moment(table.rows[i].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+                    if (newdate > existingdate){break;}
+                }
+            }
+            for (j = i; j < (rows.length - 1); j++) {
+                if (j != pmform2.row_number.value){
+                    existingdate = moment(table.rows[j].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+                    if (newdate < existingdate){break;}
+                }
+            }
+            rows[clicked_row].parentNode.insertBefore(rows[clicked_row],rows[j]);
+        }
+    })
+}
+
+function submit_new_super(){
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'job_number':pmform3.job_number.value, 'select_super':pmform3.select_super.value},
+        success: function (data) {
+            parsedData = JSON.parse(data);
+            var table = $('#jobs_table').DataTable()
+            table.cell(pmform3.row_number.value,4).data(parsedData.super_first_name)
+       }
+    })
+}
+
+function populate_super_modal(jobname,superid,jobnumber,firstname,x,origin){
+    pmform3.select_super.value=superid
+    var table = $('#jobs_table').DataTable()
+    pmform3.row_number.value=table.row(x).index()
+    document.getElementById("title3").innerHTML = jobname
+    pmform3.job_number.value=jobnumber
+    pmform3.first_name.value=firstname
+}
+
+function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origin){
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'job_number':jobnumber,'build_notes': "True"},
+        success: function (data) {
+           parsedData = JSON.parse(data);
+            let text = "<table border='1' class='table display'>"
+            text += "<thead><tr><th>Date</th><th>User</th><th>Note</th></tr></thead>"
+            parsedData.notes.forEach((element) => {
+                text += "<tr><td>" + element.date + "</td><td>" + element.user + "</td><td>" + element.note + "</td></tr>";
+            })
+            text += "</table>"
+            document.getElementById("notes_tab").innerHTML = text;
+        }
+    })
+    var d = new Date(startdate),
+    month = '' + (d.getMonth() + 1),
+    day = '' + d.getDate(),
+    year = d.getFullYear();
+    if (month.length < 2){month = '0' + month;}
+    if (day.length < 2){day = '0' + day;}
+    adjusted_date=[year, month, day].join('-')
+    document.getElementById("title2").innerHTML = jobname
+    pmform2.date_note.value=""
+    pmform2.start_date.value=adjusted_date
+    var table = $('#jobs_table').DataTable()
+    pmform2.row_number.value=table.row(x).index()
+    pmform2.job_number.value=jobnumber
+    if (is_active == "True"){pmform2.is_active.checked = true}
+    else{pmform2.is_active.checked = false}
+}
+
+
+window.onload = function() {
+    $.fn.dataTable.moment( 'MMM-DD-YYYY' );
+    var table = $('#jobs_table').DataTable({paging: false, aaSorting:[],columnDefs:[{targets: 5, render: $.fn.dataTable.render.number(',','.',0,'$')}]})
+};
+
+</script>
+</head>
+<body>
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="#">Active Jobs</a>
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav ">
+            <li><a class="nav-item nav-link active" href="#">Home</a></li>
+             <li><a class="nav-item nav-link" href="{% url 'super_home' 'AUTO' %}">Superintendent View</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'book_new_job' %}">Book New Job</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Modal -->
+<div class="modal fade" id="startdate-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="title2"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-pills">
+                    <li class="nav-item"><a href="#7a" class="nav-link active" data-toggle="tab">Change Date</a></li>
+                    <li class="nav-item"><a href="#8a" class="nav-link" data-toggle="tab">Notes</a></li>
+                </ul>
+                <div class="tab-content clearfix">
+                    <div class="tab-pane active" id="7a">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="date_tab">
+                                <form id="pmform2" action="{% url 'super_home' 'ALL' %}" method="post" >
+                                {% csrf_token %}
+                                <table>
+                                    <tr><td>
+                                    Start date:<input type="date" id="start_date" name="start_date" value="1999-01-01">
+                                    <br>
+                                    <input type="checkbox" name ="is_active" id="is_active" checked /> <label for="is_active">Remove this job from Upcoming Jobs List </label>
+                                    <input type="hidden" name ="row_number" id="row_number" />
+                                        <input type="hidden" name ="job_number" id="job_number" />
+                                        <br>
+                                    Explain This Change:<br>
+                                    <textarea id="date_note" name="date_note" class="form-control" style="min-width: 100%"></textarea>
+                                    <br>
+
+                                </td></tr></table>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="8a">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="notes_tab">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick = "change_start()" data-dismiss="modal" > Save Changes </button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="super-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="title3"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="tab-content clearfix">
+                    <div class="tab-pane active" id="1a">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="date_tab2">
+                                <form id="pmform3" action="{% url 'super_home' 'ALL' %}" method="post" >
+                                {% csrf_token %}
+                                <table>
+                                    <tr><td>
+                                        <label for="select_super">Select New Super:</label>
+                                        <select id="select_super" name="select_super" >
+                                                {% for super in supers %}
+                                                <option value="{{super.id}}">{{super.first_name}} {{super.last_name}}</option>
+                                                {% endfor %}
+                                            </select>
+                                    <br>
+                                    <input type="hidden" name ="row_number" id="row_number" />
+                                        <input type="hidden" name ="job_number" id="job_number" />
+                                        <input type="hidden" id="first_name" />
+                                        <button type="button" class="btn btn-primary" onclick = "submit_new_super()" data-dismiss="modal" > Save Changes </button>
+                                </td></tr></table>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--filter form-->
+<form class="form-control form-control-sm" id="filter_form" method="get">
+    <div class="container">
+        <div class="form-group">
+            <label for="search2" >Super:</label>
+            <select id="search2" class="form-control" name="search2" onchange="new_filter_now()">
+            {% if search2_exists %}
+            {% if search2_exists == 'ALL' %}
+                <option value="ALL">"All"</option>
+                <option value="UNASSIGNED">"UNASSIGNED"</option>
+            {% elif search2_exists == 'UNASSIGNED' %}
+                <option value="UNASSIGNED">"UNASSIGNED"</option>
+                <option value="ALL">"All"</option>
+            {% else %}
+                <option value={{search2_exists}}>{{selected_supername}}</option>
+                <option value="ALL">"All"</option>
+                <option value="UNASSIGNED">"UNASSIGNED"</option>
+            {% endif %}
+            {% else %}
+            <option value="ALL">"All"</option>
+            <option value="UNASSIGNED">"UNASSIGNED"</option>
+            {% endif %}
+            {% if supers %}
+            {% for super in supers %}
+            <option value="{{super.id}}">{{super.first_name}} {{super.last_name}}</option>
+            {% endfor %}
+            {% endif %}
+            </select>
+        </div>
+
+        <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="search3" name="search3"  {% if search3_exists %} checked {% endif %}  onchange="new_filter_now()" />
+        <label for="search3" class="form-check-label">Include Closed Jobs</label>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="search7" name="search7" {% if search7_exists %} checked {% endif %} onchange="new_filter_now()">
+            <label class="form-check-label" for="search7">Show Only Jobs That Are Done</label>
+        </div>
+        </div>
+    </form>
+
+<!--jobs table-->
+<div class="table-responsive">
+    <table id="jobs_table" class="display table table-sm">
+        <thead>
+        <tr>
+            <th scope="col">Job #</th>
+            <th scope="col">Job Name</th>
+            <th id="test_header" scope="col">Start Date</th>
+            <th scope="col">Client</th>
+            <th scope="col">Super</th>
+            <th scope="col">Contract Amount</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for x in jobstable %}
+        {% if x.is_labor_done == True %}
+            <tr style="background-color:hsla(0,0%, 32%);" onclick="populate_job_data('{{x.job_number}}','{{x.job_name}}','{{x.start_date}}','{{x.is_active}}',this)">
+ {% elif x.is_waiting_for_punchlist == True %}
+                <tr style="background-color:hsla(0,0%, 65%);" onclick="populate_job_data('{{x.job_number}}','{{x.job_name}}','{{x.start_date}}','{{x.is_active}}',this)">
+                {% else %}
+            <tr onclick="populate_job_data('{{x.job_number}}','{{x.job_name}}','{{x.start_date}}','{{x.is_active}}',this)">
+            {% endif %}
+                <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_number}}</a></td>
+                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_job('{{x.job_number}}')"><a href="#">{% if x.is_labor_done == True %}<b>[DONE]</b>{% elif x.is_waiting_for_punchlist == True %}<b>[PUNCH]</b>{% endif %} {{x.job_name}}</a></td>
+                <td style="white-space:nowrap" data-toggle="modal" data-target="#startdate-modal" onclick="populate_start_date_modal('{{x.job_number}}','{{x.job_name}}','{{x.start_date}}','{{x.is_active}}',this,1)"><a href="#">{{x.start_date|date:'M-d-Y'}}</a></td>
+                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px" >{{x.client}}</td>
+                <td data-toggle="modal" data-target="#super-modal" onclick="populate_super_modal('{{x.job_name}}','{{x.superintendent.id}}','{{x.job_number}}','{{x.superintendent.first_name}}',this,1)"><a href="#">{{x.superintendent.first_name}}</a></td>
+                <td>{% if x.contract_amount %}{{x.contract_amount}}{% else %}T and M{% endif %}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    var coll = document.getElementsByClassName("collapsible");
+    var i;
+    for (i = 0; i < coll.length; i++) {
+      coll[i].addEventListener("click", function() {
+        this.classList.toggle("active");
+        var content = this.nextElementSibling;
+        if (content.style.display === "block") {
+          content.style.display = "none";
+        } else {
+          content.style.display = "block";
+        }
+      });
+    }
+</script>
+
+</body>
+</html>
+
+{% endblock %}

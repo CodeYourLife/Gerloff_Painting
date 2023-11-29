@@ -113,7 +113,9 @@ def super_ajax(request):
             job = Jobs.objects.get(job_number=request.GET['job_number'])
             super = Employees.objects.get(id=request.GET['select_super'])
             gerloff_super_change(job, super, Employees.objects.get(user=request.user))
-            return HttpResponse()
+            send_data = {}
+            send_data['super_first_name']=super.first_name
+            return HttpResponse(json.dumps(send_data))
         if 'build_notes' in request.GET:
             job = Jobs.objects.get(job_number=request.GET['job_number'])
             job_notes = JobNotes.objects.filter(Q(type="auto_start_date_note") | Q(type="employee_note"),
@@ -127,6 +129,7 @@ def super_ajax(request):
         elif 'filter_type' in request.GET:
             return redirect('super_home', super=request.GET['selected_super'])
         else:
+
             job = Jobs.objects.get(job_number=request.GET['job_number'])
             if job.is_active == True:
                 if request.GET['is_active'] == "true":

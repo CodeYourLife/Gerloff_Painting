@@ -46,7 +46,7 @@
         <li><a class="nav-item nav-link {% block nav_item_index %}{% endblock nav_item_index %}" href="{% url 'index' %}">Home</a></li>
         <li><a class="nav-item nav-link {% block nav_item_equipment %}{% endblock nav_item_equipment %}" href="{% url 'equipment_home' %}">Equipment</a></li>
         <li><a class="nav-item nav-link {% block nav_item_rentals %}{% endblock nav_item_rentals %}" href="{% url 'rentals_home' %}">Rentals</a></li>
-        <li><a class="nav-item nav-link {% block nav_item_jobs %}{% endblock nav_item_jobs %}" href="{% url 'job_page' 'ALL' %}">Jobs</a></li>
+        <li><a class="nav-item nav-link {% block nav_item_jobs %}{% endblock nav_item_jobs %}" href="{% url 'jobs_home' %}">Jobs</a></li>
         <li><a class="nav-item nav-link {% block nav_item_subs %}{% endblock nav_item_subs %}" href="{% url 'subcontractor_home' %}">Subcontractors</a></li>
         {% if user.is_superuser %}
         <li><a class="nav-item nav-link {% block nav_item_employees %}{% endblock nav_item_employees %}" href="{% url 'employees_home' %}">Employees</a></li>
