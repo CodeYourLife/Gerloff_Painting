@@ -78,8 +78,10 @@ class Subcontracts(models.Model):
         return total
 
     def percent_complete(self):
-        return self.total_billed() / self.total_contract_amount()
-
+        if self.total_contract_amount() != 0:
+            return self.total_billed() / self.total_contract_amount()
+        else:
+            return 0
     def invoice_pending(self):
         if SubcontractorInvoice.objects.filter(subcontract=self, is_sent=False).exists():
             return True
