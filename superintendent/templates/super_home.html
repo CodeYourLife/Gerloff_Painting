@@ -418,7 +418,12 @@ function submit_new_super(){
                 <div class="form-check">
             <input type="checkbox" class="form-check-input" id="search7" name="search7" {% if search7_exists %} checked
                    {% endif %} onchange="new_filter_now()">
-            <label class="form-check-label" for="search7">Labor Complete</label>
+            <label class="form-check-label" for="search7">Punchlist Only</label>
+        </div>
+                        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="search8" name="search8" {% if search8_exists %} checked
+                   {% endif %} onchange="new_filter_now()">
+            <label class="form-check-label" for="search7">Active Only</label>
         </div>
     </div>
 </form>

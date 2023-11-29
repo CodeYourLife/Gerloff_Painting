@@ -40,61 +40,72 @@ def seperate_test(request):
 
 @login_required(login_url='/accounts/login')
 def index(request):
-    send_data={}
+    send_data = {}
     next_two_weeks = 0
     for x in Jobs.objects.filter(is_closed=False, is_active=False):
         if x.next_two_weeks() == True:
             next_two_weeks += 1
-    send_data['missing'] = Inventory.objects.filter(status = "Missing",is_closed=False).count()
-    send_data['checked_out'] = Inventory.objects.filter(job_number__is_closed=False,is_closed=False).count()
-    send_data['closed_job'] = Inventory.objects.filter(job_number__is_closed=True,is_closed=False).count()
-    send_data['service'] = Inventory.objects.filter(service_vendor__isnull=False,is_closed=False).count()
+    send_data['missing'] = Inventory.objects.filter(status="Missing", is_closed=False).count()
+    send_data['checked_out'] = Inventory.objects.filter(job_number__is_closed=False, is_closed=False).count()
+    send_data['closed_job'] = Inventory.objects.filter(job_number__is_closed=True, is_closed=False).count()
+    send_data['service'] = Inventory.objects.filter(service_vendor__isnull=False, is_closed=False).count()
     send_data['pickup_requests'] = PickupRequest.objects.filter(is_closed=False).count()
-    send_data['rentals'] = Rentals.objects.filter(off_rent_number = None).count()
-    send_data['rentals_requested_off'] = Rentals.objects.filter(requested_off_rent = True, off_rent_number = None).count()
+    send_data['rentals'] = Rentals.objects.filter(off_rent_number=None).count()
+    send_data['rentals_requested_off'] = Rentals.objects.filter(requested_off_rent=True, off_rent_number=None).count()
     send_data['next_two_weeks'] = next_two_weeks
-    send_data['needs_super'] = Jobs.objects.filter(superintendent__isnull = True).count()
-    send_data['active_subcontracts']=Subcontracts.objects.filter(job_number__is_closed=False,is_closed=False).count()
-    send_data['pending_invoices']=SubcontractorInvoice.objects.filter(is_sent=False).count()
+    send_data['needs_super'] = Jobs.objects.filter(superintendent__isnull=True).count()
+    send_data['active_subcontracts'] = Subcontracts.objects.filter(job_number__is_closed=False, is_closed=False).count()
+    send_data['pending_invoices'] = SubcontractorInvoice.objects.filter(is_sent=False).count()
     send_data['approved_invoices'] = SubcontractorInvoice.objects.filter(is_sent=True, processed=False).count()
-    if Jobs.objects.filter(is_closed=False,superintendent=Employees.objects.get(user=request.user)).exists() and request.user != Employees.objects.get(id=22).user:
+    send_data['need_to_be_closed'] = Jobs.objects.filter(is_labor_done=True).count()
+    if Jobs.objects.filter(is_closed=False, superintendent=Employees.objects.get(
+            user=request.user)).exists() and request.user != Employees.objects.get(id=22).user:
         active_super = Employees.objects.get(user=request.user)
-        send_data['super_equipment']=Inventory.objects.filter(job_number__superintendent = active_super,is_closed=False).count()#
-        send_data['super_rentals'] = Rentals.objects.filter(job_number__superintendent = active_super).count()#
-        send_data['active_subcontracts'] = Subcontracts.objects.filter(job_number__superintendent = active_super,job_number__is_closed=False,
+        send_data['super_equipment'] = Inventory.objects.filter(job_number__superintendent=active_super,
+                                                                is_closed=False).count()  #
+        send_data['super_rentals'] = Rentals.objects.filter(job_number__superintendent=active_super).count()  #
+        send_data['active_subcontracts'] = Subcontracts.objects.filter(job_number__superintendent=active_super,
+                                                                       job_number__is_closed=False,
                                                                        is_closed=False).count()
-        send_data['pending_invoices'] = SubcontractorInvoice.objects.filter(subcontract__job_number__superintendent=active_super,is_sent=False).count()
-        send_data['tickets'] = 0#
+        send_data['pending_invoices'] = SubcontractorInvoice.objects.filter(
+            subcontract__job_number__superintendent=active_super, is_sent=False).count()
+        send_data['tickets'] = 0  #
+        send_data['active_jobs'] = Jobs.objects.filter(superintendent=active_super, is_active=True).count()
+        send_data['punchlist_jobs'] = Jobs.objects.filter(superintendent=active_super,
+                                                          is_waiting_for_punchlist=True).count()
+
         next_two_weeks = 0
-        for x in Jobs.objects.filter(is_closed=False, is_active=False,superintendent=active_super):
+        for x in Jobs.objects.filter(is_closed=False, is_active=False, superintendent=active_super):
             if x.next_two_weeks() == True:
                 next_two_weeks += 1
     else:
-        send_data['super_equipment'] = Inventory.objects.filter(job_number__is_closed=False,is_closed=False).count()
-        send_data['super_rentals'] = Rentals.objects.filter(off_rent_number = None).count()
+        send_data['super_equipment'] = Inventory.objects.filter(job_number__is_closed=False, is_closed=False).count()
+        send_data['super_rentals'] = Rentals.objects.filter(off_rent_number=None).count()
         send_data['tickets'] = 0  #
+        send_data['active_jobs'] = Jobs.objects.filter(is_active=True).count()
+        send_data['punchlist_jobs'] = Jobs.objects.filter(is_waiting_for_punchlist=True).count()
         next_two_weeks = 0
         for x in Jobs.objects.filter(is_closed=False, is_active=False):
             if x.next_two_weeks() == True:
                 next_two_weeks += 1
-    send_data['super_jobs'] = next_two_weeks#
+    send_data['super_jobs'] = next_two_weeks  #
     send_data['current_user'] = request.user.first_name
-    return render(request, 'index.html',send_data)
+    return render(request, 'index.html', send_data)
 
 
 @login_required(login_url='/accounts/login')
 def warehouse_home(request):
-    send_data={}
-    if PickupRequest.objects.filter(confirmed=True,is_closed=False).exists():
-        send_data['pending_pickups'] = PickupRequest.objects.filter(confirmed=True,is_closed=False).order_by('date')
-    return render(request, 'warehouse_home.html',send_data)
+    send_data = {}
+    if PickupRequest.objects.filter(confirmed=True, is_closed=False).exists():
+        send_data['pending_pickups'] = PickupRequest.objects.filter(confirmed=True, is_closed=False).order_by('date')
+    return render(request, 'warehouse_home.html', send_data)
 
 
 @login_required(login_url='/accounts/login')
 def admin_home(request):
     send_data = {}
     send_data['employees'] = Employees.objects.filter(user__isnull=True, active=True)
-    send_data['subs']=Subcontractors.objects.filter(is_inactive=False)
+    send_data['subs'] = Subcontractors.objects.filter(is_inactive=False)
     return render(request, 'admin_home.html', send_data)
 
 
@@ -117,6 +128,7 @@ def grant_web_access(request):
         return redirect('admin_home')
     return render(request, 'grant_web_access.html', send_data)
 
+
 @login_required(login_url='/accounts/login')
 def grant_subcontractor_web_access(request):
     send_data = {}
@@ -135,6 +147,7 @@ def grant_subcontractor_web_access(request):
         selected_sub.save()
         return redirect('admin_home')
     return render(request, 'grant_subcontractor_web_access.html', send_data)
+
 
 # Create your views here.
 def register_user(request):
@@ -694,8 +707,8 @@ def reset_databases(request):
         SubmittalNotes.objects.all().delete()
         SubmittalItems.objects.all().delete()
         Submittals.objects.all().delete()
-        ClientEmployees.objects.all().delete() #dangerous
-        Clients.objects.all().delete() #dangerous
+        ClientEmployees.objects.all().delete()  # dangerous
+        Clients.objects.all().delete()  # dangerous
         JobNotes.objects.all().delete()
         Jobs.objects.all().delete()
     return redirect("/")
@@ -707,8 +720,8 @@ def create_folders(request):
     print("HI")
     return render(request, 'index.html')
 
-def customize(request):
 
+def customize(request):
     for x in ChangeOrderNotes.objects.all():
         if x.user == "Bridgette Clause":
             x.user = 12
@@ -749,11 +762,11 @@ def customize(request):
             print(x.user)
         x.save()
 
-
     return redirect('/')
 
+
 def import_csv(request):
-    with open("c:/sql_backup/workorderimport.csv",encoding='utf-8-sig') as f:
+    with open("c:/sql_backup/workorderimport.csv", encoding='utf-8-sig') as f:
         current_table = employees.models.CertificationActionRequired
         current_table.objects.all().delete()
         reader = csv.reader(f)

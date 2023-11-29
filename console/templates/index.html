@@ -159,12 +159,14 @@
         </div>
         <div class="card" style="width: 18rem; margin-top: 22px;">
             <h5 class="card-header">Superintendent Page</h5>
-            <div class="card-body" style="height: 135px;">
+            <div class="card-body" style="height: 185px;">
                 <div class="card-text">
                     <div style="display: flex"><b>{{super_equipment}}</b> -Assigned Equipment</div>
                     <div style="display: flex"><b>{{super_rentals}}</b> -Rentals</div>
                     <div style="display: flex"><b>{{tickets}}</b> -Open Tickets</div>
                     <div style="display: flex"><b>{{super_jobs}}</b> -Jobs Starting Next 2 Weeks</div>
+                    <div style="display: flex"><b>{{active_jobs}}</b> -Active Jobs</div>
+                    <div style="display: flex"><b>{{punchlist_jobs}}</b> -Waiting for Punchlist</div>
                 </div>
             </div>
             <div class="card-footer">
@@ -200,6 +202,19 @@
             <div class="card-footer">
                 <div style="text-align: center;">
                     <a href="{% url 'subcontractor_home' %}" class="btn btn-info btn-sm">Go to Subcontractors</a>
+                </div>
+            </div>
+        </div>
+                <div class="card" style="width: 18rem; margin-top: 22px;">
+            <h5 class="card-header">Admin</h5>
+            <div class="card-body" style="height: 135px;">
+                <div class="card-text">
+                    <div style="display: flex"><b>{{need_to_be_closed}}</b> -Jobs Need to be Closed</div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div style="text-align: center;">
+
                 </div>
             </div>
         </div>
