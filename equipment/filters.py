@@ -16,7 +16,8 @@ class JobsFilter2(django_filters.FilterSet):
     # search6 = django_filters.filters.BooleanFilter(label='Unassigned',widget=forms.CheckboxInput,method='search_filter6')
     search7 = django_filters.filters.BooleanFilter(label='Labor Done', widget=forms.CheckboxInput,
                                                    method='search_filter7')
-
+    search8 = django_filters.filters.BooleanFilter(label='Active Only', widget=forms.CheckboxInput,
+                                                   method='search_filter8')
     def search_filter(self, queryset, name, value):
         return queryset.filter(job_name__icontains=value)
 
@@ -46,7 +47,13 @@ class JobsFilter2(django_filters.FilterSet):
 
     def search_filter7(self, queryset, name, value):
         if value == True:
-            return queryset.filter(Q(is_labor_done=True) | Q(is_waiting_for_punchlist=True))
+            return queryset.filter(is_waiting_for_punchlist=True)
+        else:
+            return queryset.all()
+
+    def search_filter8(self, queryset, name, value):
+        if value == True:
+            return queryset.filter(is_active=True)
         else:
             return queryset.all()
 

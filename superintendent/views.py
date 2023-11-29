@@ -187,7 +187,7 @@ def super_home(request, super):
         if 'search5' in request.GET: send_data['search5_exists'] = request.GET['search5']  # upcoming only
         if 'search6' in request.GET: send_data['search6_exists'] = request.GET['search6']
         if 'search7' in request.GET: send_data['search7_exists'] = request.GET['search7']  # unassigned
-
+        if 'search8' in request.GET: send_data['search8_exists'] = request.GET['search8']  # unassigned
     if selected_superid == 'ALL' or selected_superid == 'UNASSIGNED':
         send_data['filter_status'] = selected_superid
         send_data['equipment'] = Inventory.objects.filter(is_closed=False).exclude(job_number=None).order_by('job_number')
