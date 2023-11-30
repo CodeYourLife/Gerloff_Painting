@@ -605,8 +605,11 @@ def job_page(request, jobnumber):
     send_data['client_employees'] = ClientEmployees.objects.filter(id=selectedjob.client)
     # send_data['jobstable'] = JobsTable(selectedjob)
     send_data['job'] = selectedjob
-    contract_amount = int(selectedjob.contract_amount)
-    contract_amount = ('{:,}'.format(contract_amount))
+    if selectedjob.contract_amount:
+        contract_amount = int(selectedjob.contract_amount)
+        contract_amount = ('{:,}'.format(contract_amount))
+    else:
+        contract_amount = "T&M"
     send_data['contract_amount']=contract_amount
     send_data['tickets'] = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
                                                        is_ticket_signed=False)
