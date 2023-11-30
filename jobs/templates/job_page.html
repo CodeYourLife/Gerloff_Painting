@@ -85,15 +85,9 @@ float: left !important;
             width: fit-content;
         }
 
-
-   
-        
-            
-
-            
-        
-
-
+#add-remove-button-container .btn {
+    padding: 5px 5px;
+}
 </style>
 
 <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
@@ -101,7 +95,10 @@ float: left !important;
 <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-
+<link href="https://www.jqueryscript.net/css/jquerysctipttop.css" rel="stylesheet" type="text/css">
+<script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+<script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script src="https://www.jqueryscript.net/demo/Two-side-Multi-Select-Plugin-with-jQuery-multiselect-js/js/multiselect.js"></script>
 <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
 <script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
 <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
@@ -111,6 +108,9 @@ float: left !important;
 <script type="text/javascript" language="javascript" src="../resources/demo.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
 <script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
 <script type="text/javascript" class="init">
+$(document).ready(function() {
+  $('#undo_redo').multiselect();
+});
 
 function add_new_note(){
     var name=prompt("Job Note:");
@@ -780,54 +780,59 @@ filter_form.submit()
         </div>
     </div>
 </div>
+    <div class="modal fade" id="add-employees-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="title2">Add Employees To Job</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
 
+                    <div>
+                      <div style="display: flex">
+                        <div>
+                            <label for="undo_redo">Add</label>
+                          <select name="from" id="undo_redo" class="form-control" style="min-width: 120px; width: fit-content; max-width: 80vw; overflow: auto; height: 40vh;" multiple="multiple">
+                              {% if employees %}
+                                {% for employee in employees %}
+                                <option value="1">{{employee.first_name}} {{employee.last_name}}</option>
+                                {% endfor %}
+                              {% endif %}
+                          </select>
+                        </div>
+                        <div id="add-remove-button-container" style="margin-left: 10px; margin-right: 10px; margin-top: 40px;">
+                          <button type="button" id="undo_redo_undo" class="btn btn-primary btn-block">undo</button>
+                          <button type="button" id="undo_redo_rightAll" class="btn btn-default btn-block"><i class="glyphicon glyphicon-forward"></i></button>
+                          <button type="button" id="undo_redo_rightSelected" class="btn btn-default btn-block"><i class="glyphicon glyphicon-chevron-right"></i></button>
+                          <button type="button" id="undo_redo_leftSelected" class="btn btn-default btn-block"><i class="glyphicon glyphicon-chevron-left"></i></button>
+                          <button type="button" id="undo_redo_leftAll" class="btn btn-default btn-block"><i class="glyphicon glyphicon-backward"></i></button>
+                          <button type="button" id="undo_redo_redo" class="btn btn-warning btn-block">redo</button>
+                        </div>
+                        <div>
+                            <label for="undo_redo_to">Added To Job</label>
+                          <select name="to" id="undo_redo_to" class="form-control" style="min-width: 120px; width: fit-content; max-width: 80vw; overflow: auto; height: 40vh;" multiple="multiple">
+                              {% if selected_employees %}
+                                {% for selected_employee in selected_employees %}
+                                <option value="1">{{added_employees.first_name}} {{added_employees.last_name}}</option>
+                                {% endfor %}
+                              {% endif %}
 
-<!--ANTHONY MODAL PLEASE FIX-->
-<!--<div class="modal fade" id="add-employees-modal" tabindex="-1" role="dialog" aria-labelledby="title"-->
-<!--     aria-hidden="true">-->
-<!--    <div class="modal-dialog" role="document">-->
-<!--        <div class="modal-content">-->
-<!--            <div class="modal-header">-->
-<!--                <h5 class="modal-title" id="title2">Add Employees To Job</h5>-->
-<!--                <button type="button" class="close" data-dismiss="modal" aria-label="Close">-->
-<!--                    <span aria-hidden="true">&times;</span>-->
-<!--                </button>-->
-<!--            </div>-->
-<!--            <div class="modal-body">-->
-<!--                <link href="https://www.jqueryscript.net/css/jquerysctipttop.css" rel="stylesheet" type="text/css">-->
-<!--                <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">-->
-<!--                <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>-->
-<!--                <script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>-->
-<!--                <script src="https://www.jqueryscript.net/demo/Two-side-Multi-Select-Plugin-with-jQuery-multiselect-js/js/multiselect.js"></script>-->
-<!--                <div style="padding: 10px;">-->
-<!--                  <div style="display: flex">-->
-<!--                    <div style="margin: 10px">-->
-<!--                      <select name="from" id="undo_redo" class="form-control" style="width: fit-content" multiple="multiple">-->
-<!--                        <option value="1">Test 1</option>-->
-<!--                        <option value="2">Test 2</option>-->
-<!--                      </select>-->
-<!--                    </div>-->
-<!--                    <div style="margin: 10px">-->
-<!--                      <button type="button" id="undo_redo_undo" class="btn btn-primary btn-block">undo</button>-->
-<!--                      <button type="button" id="undo_redo_rightAll" class="btn btn-default btn-block"><i class="glyphicon glyphicon-forward"></i></button>-->
-<!--                      <button type="button" id="undo_redo_rightSelected" class="btn btn-default btn-block"><i class="glyphicon glyphicon-chevron-right"></i></button>-->
-<!--                      <button type="button" id="undo_redo_leftSelected" class="btn btn-default btn-block"><i class="glyphicon glyphicon-chevron-left"></i></button>-->
-<!--                      <button type="button" id="undo_redo_leftAll" class="btn btn-default btn-block"><i class="glyphicon glyphicon-backward"></i></button>-->
-<!--                      <button type="button" id="undo_redo_redo" class="btn btn-warning btn-block">redo</button>-->
-<!--                    </div>-->
-<!--                    <div style="margin: 10px">-->
-<!--                      <select name="to" id="undo_redo_to" class="form-control" style="width: fit-content; min-width: 200px;" multiple="multiple"></select>-->
-<!--                    </div>-->
-<!--                  </div>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--            <div class="modal-footer">-->
-<!--                <button type="button" class="btn btn-primary" onclick = "" data-dismiss="modal" > Save Changes </button>-->
-<!--                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>-->
-<!--            </div>-->
-<!--        </div>-->
-<!--    </div>-->
-<!--</div>-->
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick = "" data-dismiss="modal" > Save Changes </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
 

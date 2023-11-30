@@ -690,6 +690,30 @@ def job_page(request, jobnumber):
     if go_to_pickup:
         return redirect('request_pickup', jobnumber=selectedjob.job_number, item='ALL', pickup='ALL', status='ALL')
     else:
+        try:
+            employeeJobArray = EmployeeJob.objects.filter(job=selectedjob.job_number)
+
+            employees = Employees.objects.all()
+            employeesOnJob = []
+            if employeeJobArray is not None:
+                for employeeOnJob in employeeJobArray:
+                    employeesOnJob.append(employeeOnJob.employee)
+            send_data['added_employees'] = employeesOnJob
+            if employeeJobArray is not None:
+                employeesToAdd = []
+                for employee in employees:
+                    found = False
+                    for employeeOnJob in employeesOnJob:
+                        if employee.id == employeeOnJob.employee.id:
+                            found = True
+                    if found == False:
+                        employeesToAdd.append(employee)
+                send_data['employees'] = employeesToAdd
+            else:
+                send_data['employees'] = employees
+        except Exception as e:
+            print(e)
+
         return render(request, 'job_page.html', send_data)
 
 
