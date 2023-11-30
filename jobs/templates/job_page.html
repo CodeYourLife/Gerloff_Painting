@@ -890,13 +890,13 @@ filter_form.submit()
         <div style="margin: 5px;" class="col-sm-3">
     {% if job.is_waiting_for_punchlist == True %}
         {% if job.is_labor_done == True %}
-                <input class="btn btn-dark btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Labor was done  {{job.labor_done_Date}}" />
+                <input class="btn btn-dark btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Labor done {{labor_done_date}}" />
             {% else %}
                             <input class="btn btn-danger btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Waiting for Punchlist" />
          {% endif %}
     {% else %}
         {% if job.is_labor_done == True %}
-                            <input class="btn btn-dark btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Labor was done  {{job.labor_done_Date}}" />
+                            <input class="btn btn-dark btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Labor done {{labor_done_date}}" />
         {% else %}
                             <input style="width: 245px" class="btn btn-success btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Click Here to Mark Labor Complete" />
         {% endif %}
