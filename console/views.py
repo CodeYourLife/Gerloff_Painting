@@ -42,7 +42,7 @@ def seperate_test(request):
 def index(request):
     send_data = {}
     next_two_weeks = 0
-    for x in Jobs.objects.filter(is_closed=False, is_active=False):
+    for x in Jobs.objects.filter(is_closed=False, is_active=False, is_labor_done=False):
         if x.next_two_weeks() == True:
             next_two_weeks += 1
     send_data['missing'] = Inventory.objects.filter(status="Missing", is_closed=False).count()
@@ -75,7 +75,7 @@ def index(request):
                                                           is_waiting_for_punchlist=True).count()
 
         next_two_weeks = 0
-        for x in Jobs.objects.filter(is_closed=False, is_active=False, superintendent=active_super):
+        for x in Jobs.objects.filter(is_closed=False, is_active=False, superintendent=active_super, is_labor_done=False):
             if x.next_two_weeks() == True:
                 next_two_weeks += 1
     else:
@@ -85,7 +85,7 @@ def index(request):
         send_data['active_jobs'] = Jobs.objects.filter(is_active=True).count()
         send_data['punchlist_jobs'] = Jobs.objects.filter(is_waiting_for_punchlist=True).count()
         next_two_weeks = 0
-        for x in Jobs.objects.filter(is_closed=False, is_active=False):
+        for x in Jobs.objects.filter(is_closed=False, is_active=False, is_labor_done=False):
             if x.next_two_weeks() == True:
                 next_two_weeks += 1
     send_data['super_jobs'] = next_two_weeks  #
