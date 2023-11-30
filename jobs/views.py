@@ -605,6 +605,10 @@ def job_page(request, jobnumber):
     send_data['client_employees'] = ClientEmployees.objects.filter(id=selectedjob.client)
     # send_data['jobstable'] = JobsTable(selectedjob)
     send_data['job'] = selectedjob
+    short_year = selectedjob.labor_done_Date.strftime("%y")
+    short_mth = selectedjob.labor_done_Date.strftime("%m")
+    short_day = selectedjob.labor_done_Date.strftime("%d")
+    send_data['labor_done_date'] = short_mth + "-" + short_day + "-" + short_year
     if selectedjob.contract_amount:
         contract_amount = int(selectedjob.contract_amount)
         contract_amount = ('{:,}'.format(contract_amount))
