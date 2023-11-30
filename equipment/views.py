@@ -554,8 +554,12 @@ def equipment_page(request, id):
         if 'upload_file' in request.FILES:
             fileitem = request.FILES['upload_file']
             custom_name = request.POST['file_name']
+            short_year = date.today().strftime("%y")
+            short_mth = date.today().strftime("%m")
+            short_day = date.today().strftime("%d")
+            short_date = short_year + "-" + short_mth + "-" + short_day
             extension = fileitem.name.split(".")[1]
-            fn = os.path.basename(custom_name + "." + extension)
+            fn = os.path.basename(short_date + " " + custom_name + "." + extension)
             fn2 = os.path.join(settings.MEDIA_ROOT, "equipment", str(inventory.id), fn)
             open(fn2, 'wb').write(fileitem.file.read())
             foldercontents = os.listdir(path)
