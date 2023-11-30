@@ -331,17 +331,20 @@ function open_dropbox(jobnumber){
 }
 
 function open_dropbox2(jobnumber){
+    document.getElementById("dropbox_link_hide").style.display = "block";
+    document.getElementById("dropbox_button_hide").style.display = "none";
+    var link = document.getElementById('link');
+    link.innerHTML = "Please Wait...."
     $.ajax({
         method: 'GET',
         url: '/superintendent/super_ajax',
         data: {'dropbox': 'True','job_number':jobnumber},
         success: function (data) {
-            document.getElementById("dropbox_link_hide").style.display = "block";
-            document.getElementById("dropbox_button_hide").style.display = "none";
-            var link = document.getElementById('link');
+
             if (data == 'False'){link.innerHTML="REMOVED FROM DROPBOX"}
             else{
                 link.setAttribute('href', data);
+                link.innerHTML = "CLICK HERE FOR PLANS!"
                 link.click();
             }
         }
@@ -907,13 +910,14 @@ filter_form.submit()
 
              </form>
             </div>
-            <div style="margin-top: 5px; margin-bottom: 5px;">
-                <form id="" action="" target="_blank" >
-                    <input type="button" class="btn btn-primary btn-sm"  data-toggle="modal" data-target="#add-employees-modal" value="Add Painter" />
-                 </form>
-            </div>
-            <div id="dropbox_link_hide"><a id="link" href="#" target="_blank"></a></div>
+            <div id="dropbox_link_hide"><a id="link" href="#" target="_blank" style="color:red" >CLICK HERE FOR PLANS</a></div>
         </div>
+        <div style="margin: 5px;" class="col-sm-3">
+            <form id="" action="" target="_blank" >
+                <input type="button" class="btn btn-primary btn-sm"  data-toggle="modal" data-target="#add-employees-modal" value="Add Painter" />
+             </form>
+        </div>
+
         <div style="margin: 5px;" class="col-sm-3">
             <button class="btn btn-primary btn-sm"  data-toggle="modal" data-target="#off_rent-modal" >Call Equipment Off-Rent</button>
         </div>
