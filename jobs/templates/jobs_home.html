@@ -124,8 +124,6 @@ function change_start(){
                 greater = moment(table.rows[i].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
                 lesser = moment(table.rows[i-1].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
                 if (greater < lesser){
-                    alert(greater)
-                    alert(lesser)
                     sorted = "false";
                     break;
                 }
