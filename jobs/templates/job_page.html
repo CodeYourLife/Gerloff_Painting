@@ -359,11 +359,17 @@ window.onload = function() {
     document.getElementById("show_new_super").style.display = "none";
     document.getElementById("dropbox_link_hide").style.display = "none";
     document.getElementById("dropbox_button_hide").style.display = "block";
+    document.getElementById("notes_filter_and_button").style.display = "none";
 
 };
 
 function run_filter_form(){
 filter_form.submit()
+}
+
+function hide_filter(){
+document.getElementById("notes_filter_and_button").style.display = "block";
+document.getElementById("notes_filter_button").style.display = "none";
 }
 
 </script>
@@ -936,6 +942,16 @@ filter_form.submit()
     </div>
     <div id="collapseOne" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">
         <div class="card-body">
+        <div id = "notes_filter_button">
+            <div class="container">
+                <div class="row">
+                    <div class="col">
+                        <button type="button" class="btn btn-warning btn-sm" onclick = "hide_filter()" >CLICK HERE TO ADD OR FILTER NOTES</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+            <div id = "notes_filter_and_button">
             <div class="container">
             <div class="row">
                 <div class="col">
@@ -943,7 +959,8 @@ filter_form.submit()
                     <form id=new_note_form action="{% url 'job_page' job.job_number %}" method="post">
                         {% csrf_token %}
                       <br>
-            <input type="hidden" name="add_note" id="add_note" value="" />
+
+                        <input type="hidden" name="add_note" id="add_note" value="" />
                         <button type="button" class="btn btn-primary" onclick = "add_new_note()" >CLICK HERE TO ADD A NOTE</button>
                     </form>
 
@@ -991,8 +1008,8 @@ filter_form.submit()
 
                     </div>
                 </form>
-
-
+                </div>
+            </div>
                     <div class="table-responsive">
                         <table id="notes_table" class="display table table-sm">
                             <thead class="colored-header">
