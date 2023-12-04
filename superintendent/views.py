@@ -120,12 +120,16 @@ def super_ajax(request):
             job = Jobs.objects.get(job_number=request.GET['job_number'])
             job_notes = JobNotes.objects.filter(Q(type="auto_start_date_note") | Q(type="employee_note"),
                                                 job_number=job)
+            send_data={}
+            send_data['job_name']=job.job_name
+            send_data['start_date'] = job.start_date.strftime("%Y-%m-%d")
             notes = []
             for x in job_notes:
                 notes.append({'note': x.note, 'user': str(x.user),
                               'date': str(x.date)})
+            send_data['notes']=notes
             data_details = {'notes': notes}
-            return HttpResponse(json.dumps(data_details))
+            return HttpResponse(json.dumps(send_data))
         elif 'filter_type' in request.GET:
             return redirect('super_home', super=request.GET['selected_super'])
         else:
