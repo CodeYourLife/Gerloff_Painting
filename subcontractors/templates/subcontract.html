@@ -94,7 +94,10 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
     <script type="text/javascript" class="init">
 $(document).ready(function () {
+    if ('{{edit_row}}'){var table = $('#sub_table').DataTable({paging: false, searching: false});}
+    else{
     var table = $('#sub_table').DataTable({paging: false, searching: false,columnDefs:[{targets: 3, render: $.fn.dataTable.render.number(',','.',0,'$')}]});
+    }
     var table = $('#invoice_table').DataTable({paging: false, searching: false,columnDefs:[{targets: [2,3], render: $.fn.dataTable.render.number(',','.',0,'$')}]});
     document.getElementById("hide_retainage").style.display="none"
     if ('{{subcontract.is_retainage}}' == "True"){
@@ -609,7 +612,7 @@ function add_note(){
 					{% if invoiced_already %}
 					<td>{{x.SOV_rate}}</td>
 					{% else %}
-					<td><input type= "number" name="SOV_rate" id="SOV_rate" value={{x.SOV_rate}} size="10" required /></td>
+					<td><input name="SOV_rate" id="SOV_rate" type= "number" value={{x.SOV_rate}} size="10" required /></td>
 					{% endif %}
 					<td>{{x.percentage}}%</td>
 					<td><textarea name="notes" id="notes" cols="50" rows="2" >{{x.notes}}</textarea></td>
