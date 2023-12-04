@@ -128,7 +128,7 @@ function change_start(){
                     break;
                 }
             }
-            var clicked_row = Number(pmform2.row_number.value)+1
+            var clicked_row = Number(pmform2.row_number.value)
             table.rows[clicked_row].cells[2].innerHTML = "<a href='#' >" + parsedData.new_date + "</a>"
             if (sorted == "false"){return}
             newdate =moment(table.rows[clicked_row].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
@@ -171,13 +171,13 @@ function populate_super_modal(jobname,superid,jobnumber,firstname,x,origin){
     pmform3.first_name.value=firstname
 }
 
-function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origin){
+function populate_start_date_modal(jobnumber,startdate,is_active,x,origin){
     $.ajax({
         method: 'GET',
         url: '/superintendent/super_ajax',
         data: {'job_number':jobnumber,'build_notes': "True"},
         success: function (data) {
-           parsedData = JSON.parse(data);
+            parsedData = JSON.parse(data);
             let text = "<table border='1' class='table display'>"
             text += "<thead><tr><th>Date</th><th>User</th><th>Note</th></tr></thead>"
             parsedData.notes.forEach((element) => {
@@ -185,23 +185,25 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
             })
             text += "</table>"
             document.getElementById("notes_tab").innerHTML = text;
+<!--            var d = new Date(parsedData.start_date),-->
+<!--            month = '' + (d.getMonth() + 1),-->
+<!--            day = '' + (d.getDate() + 1),-->
+<!--            year = d.getFullYear();-->
+<!--            if (month.length < 2){month = '0' + month;}-->
+<!--            if (day.length < 2){day = '0' + day;}-->
+<!--            adjusted_date=[year, month, day].join('-')-->
+            adjusted_date = parsedData.start_date
+            document.getElementById("title2").innerHTML = parsedData.job_name
+            pmform2.date_note.value=""
+            pmform2.start_date.value=adjusted_date
+            var table = $('#jobs_table').DataTable()
+            pmform2.row_number.value=x.rowIndex
+            pmform2.job_number.value=jobnumber
+            if (is_active == "True"){pmform2.is_active.checked = true}
+            else{pmform2.is_active.checked = false}
         }
     })
-    var d = new Date(startdate),
-    month = '' + (d.getMonth() + 1),
-    day = '' + d.getDate(),
-    year = d.getFullYear();
-    if (month.length < 2){month = '0' + month;}
-    if (day.length < 2){day = '0' + day;}
-    adjusted_date=[year, month, day].join('-')
-    document.getElementById("title2").innerHTML = jobname
-    pmform2.date_note.value=""
-    pmform2.start_date.value=adjusted_date
-    var table = $('#jobs_table').DataTable()
-    pmform2.row_number.value=table.row(x).index()
-    pmform2.job_number.value=jobnumber
-    if (is_active == "True"){pmform2.is_active.checked = true}
-    else{pmform2.is_active.checked = false}
+
 }
 
 
@@ -214,7 +216,7 @@ window.onload = function() {
 </head>
 <body>
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="#">Active Jobs</a>
+    <a class="navbar-brand sub-navbar-brand" href="#">Jobs</a>
     <div id="navbarNavDropdown2">
         <ul class="sub-nav-list navbar-nav ">
             <li><a class="nav-item nav-link active" href="#">Home</a></li>
@@ -382,15 +384,15 @@ window.onload = function() {
         <tbody>
         {% for x in jobstable %}
         {% if x.is_labor_done == True %}
-            <tr style="background-color:hsla(0,0%, 32%);" onclick="populate_job_data('{{x.job_number}}','{{x.job_name}}','{{x.start_date}}','{{x.is_active}}',this)">
+            <tr style="background-color:hsla(0,0%, 32%);" onclick="populate_start_date_modal('{{x.job_number}}','{{x.start_date}}','{{x.is_active}}',this,1)">
  {% elif x.is_waiting_for_punchlist == True %}
-                <tr style="background-color:hsla(0,0%, 65%);" onclick="populate_job_data('{{x.job_number}}','{{x.job_name}}','{{x.start_date}}','{{x.is_active}}',this)">
+                <tr style="background-color:hsla(0,0%, 65%);" onclick="populate_start_date_modal('{{x.job_number}}','{{x.start_date}}','{{x.is_active}}',this,1)">
                 {% else %}
-            <tr onclick="populate_job_data('{{x.job_number}}','{{x.job_name}}','{{x.start_date}}','{{x.is_active}}',this)">
+            <tr onclick="populate_start_date_modal('{{x.job_number}}','{{x.start_date}}','{{x.is_active}}',this,1)">
             {% endif %}
                 <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_number}}</a></td>
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_job('{{x.job_number}}')"><a href="#">{% if x.is_labor_done == True %}<b>[DONE]</b>{% elif x.is_waiting_for_punchlist == True %}<b>[PUNCH]</b>{% endif %} {{x.job_name}}</a></td>
-                <td style="white-space:nowrap" data-toggle="modal" data-target="#startdate-modal" onclick="populate_start_date_modal('{{x.job_number}}','{{x.job_name}}','{{x.start_date}}','{{x.is_active}}',this,1)"><a href="#">{{x.start_date|date:'M-d-Y'}}</a></td>
+                <td style="white-space:nowrap" data-toggle="modal" data-target="#startdate-modal" ><a href="#">{{x.start_date|date:'M-d-Y'}}</a></td>
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px" >{{x.client}}</td>
                 <td data-toggle="modal" data-target="#super-modal" onclick="populate_super_modal('{{x.job_name}}','{{x.superintendent.id}}','{{x.job_number}}','{{x.superintendent.first_name}}',this,1)"><a href="#">{{x.superintendent.first_name}}</a></td>
                 <td>{% if x.contract_amount %}{{x.contract_amount}}{% else %}T and M{% endif %}</td>

@@ -289,7 +289,7 @@ function populate_super_modal(jobname,superid,jobnumber,firstname,x,origin){
     pmform3.first_name.value=firstname
 }
 
-function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origin){
+function populate_start_date_modal(jobnumber,startdate,is_active,x,origin){
     $.ajax({
         method: 'GET',
         url: '/superintendent/super_ajax',
@@ -303,22 +303,23 @@ function populate_start_date_modal(jobnumber,jobname,startdate,is_active,x,origi
             })
             text += "</table>"
             document.getElementById("notes_tab").innerHTML = text;
+            var d = new Date(startdate),
+            month = '' + (d.getMonth() + 1),
+            day = '' + d.getDate(),
+            year = d.getFullYear();
+            if (month.length < 2){month = '0' + month;}
+            if (day.length < 2){day = '0' + day;}
+            adjusted_date=[year, month, day].join('-')
+            document.getElementById("title2").innerHTML = parsedData.job_name
+            change_start_form.date_note.value=""
+            change_start_form.start_date.value=adjusted_date
+            change_start_form.row_number.value = "NO"
+            change_start_form.job_number.value=jobnumber
+            if (is_active == "True"){change_start_form.is_active.checked = true}
+            else{change_start_form.is_active.checked = false}
         }
     })
-    var d = new Date(startdate),
-    month = '' + (d.getMonth() + 1),
-    day = '' + d.getDate(),
-    year = d.getFullYear();
-    if (month.length < 2){month = '0' + month;}
-    if (day.length < 2){day = '0' + day;}
-    adjusted_date=[year, month, day].join('-')
-    document.getElementById("title2").innerHTML = jobname
-    change_start_form.date_note.value=""
-    change_start_form.start_date.value=adjusted_date
-    change_start_form.row_number.value = "NO"
-    change_start_form.job_number.value=jobnumber
-    if (is_active == "True"){change_start_form.is_active.checked = true}
-    else{change_start_form.is_active.checked = false}
+
 }
 
 function open_dropbox(jobnumber){
@@ -377,7 +378,7 @@ document.getElementById("notes_filter_button").style.display = "none";
 </head>
 <body>
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="#">Active Jobs</a>
+    <a class="navbar-brand sub-navbar-brand" href="#">Job Page</a>
     <div id="navbarNavDropdown2">
         <ul class="sub-nav-list navbar-nav ">
             <li><a class="nav-item nav-link active" href="#">{{job.job_name}}</a></li>
@@ -861,7 +862,7 @@ document.getElementById("notes_filter_button").style.display = "none";
     </div>
 
     <div class="row">
-        <div class="col-sm-4 list-items" id="TEST_YO" data-toggle="modal" data-target="#startdate-modal"><b>Start Date:</b><a href ="#" onclick="populate_start_date_modal('{{job.job_number}}','{{job.job_name}}','{{job.start_date}}','{{job.is_active}}',this,2)">{{job.start_date}}</a></div>
+        <div class="col-sm-4 list-items" id="TEST_YO" data-toggle="modal" data-target="#startdate-modal"><b>Start Date:</b><a href ="#" onclick="populate_start_date_modal('{{job.job_number}}','{{job.start_date}}','{{job.is_active}}',this,2)">{{job.start_date}}</a></div>
         <div class="col-sm-4 list-items" id="TEST_BRO" data-toggle="modal" data-target="#super-modal" ><b>Gerloff Super:</b><a href = "#" onclick="populate_super_modal('{{job.job_name}}','{{job.superintendent.id}}','{{job.job_number}}','{{job.superintendent.first_name}}',this,2)">{{job.superintendent}}</a></div>
         <div class="col-sm-4 list-items"><b>Gerloff Estimator:</b> {{job.estimator}}</div>
     </div>
