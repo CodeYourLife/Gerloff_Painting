@@ -150,9 +150,9 @@ def subcontractor_invoice_new(request, subcontract_id):
                                                                     quantity=request.POST['quantity' + str(x.id)],
                                                                     notes=request.POST['note' + str(x.id)])
                     if x.SOV_is_lump_sum:
-                        invoice_total += int(request.POST['quantity' + str(x.id)])
+                        invoice_total += float(request.POST['quantity' + str(x.id)])
                     else:
-                        invoice_total += int(request.POST['quantity' + str(x.id)]) * x.SOV_rate
+                        invoice_total += float(request.POST['quantity' + str(x.id)]) * x.SOV_rate
                 elif request.POST['note' + str(x.id)] != '':
                     SubcontractorInvoiceItem.objects.create(invoice=invoice, sov_item=x, quantity=0,
                                                             notes=request.POST['note' + str(x.id)])
@@ -219,9 +219,9 @@ def portal_invoice_new(request, subcontract_id):
                                                                     quantity=request.POST['quantity' + str(x.id)],
                                                                     notes=request.POST['note' + str(x.id)])
                     if x.SOV_is_lump_sum:
-                        invoice_total += int(request.POST['quantity' + str(x.id)])
+                        invoice_total += float(request.POST['quantity' + str(x.id)])
                     else:
-                        invoice_total += int(request.POST['quantity' + str(x.id)]) * x.SOV_rate
+                        invoice_total += float(request.POST['quantity' + str(x.id)]) * x.SOV_rate
                 elif request.POST['note' + str(x.id)] != '':
                     SubcontractorInvoiceItem.objects.create(invoice=invoice, sov_item=x, quantity=0,
                                                             notes=request.POST['note' + str(x.id)])
@@ -554,8 +554,6 @@ def subcontract(request, id):
     send_data['notes'] = SubcontractNotes.objects.filter(subcontract=subcontract)
     if Wallcovering.objects.filter(job_number=subcontract.job_number):
         wallcovering = Wallcovering.objects.filter(job_number=subcontract.job_number)
-        print("Wallcovering")
-        print(wallcovering)
         wallcovering_json1 = []
         for x in wallcovering:
             wallcovering_json1.append(
@@ -653,7 +651,6 @@ def subcontractor(request, id):
 @login_required(login_url='/accounts/login')
 def subcontractor_new(request):
     if request.method == 'POST':
-        print(request.POST['insurance_expire_date'])
         signed = False
         if 'is_signed_labor_agreement' in request.POST:
             signed = True
@@ -748,7 +745,6 @@ def subcontracts_new(request):
 @login_required(login_url='/accounts/login')
 def subcontracts_home(request):
     if request.method == 'POST':
-        print(request.POST)
         if request.POST['subcontract_id'] != "":
             return redirect('subcontract', id=request.POST['subcontract_id'])
         if request.POST['job_number'] != "":
