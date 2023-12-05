@@ -894,7 +894,7 @@ document.getElementById("notes_filter_button").style.display = "none";
         {% if job.is_labor_done == True %}
                             <input class="btn btn-dark btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Labor done {{labor_done_date}}" />
         {% else %}
-                            <input style="width: 245px" class="btn btn-success btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Click Here to Mark Labor Complete" />
+                            <input style="width: fit-content" class="btn btn-success btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Mark Labor Complete" />
         {% endif %}
     {% endif %}
 
@@ -903,21 +903,23 @@ document.getElementById("notes_filter_button").style.display = "none";
             <div id="dropbox_button_hide">
              <form id="dropbox_button" action="{% url 'job_page' job.job_number %}" target="_blank" >
                 <input type="button" class="btn btn-warning btn-sm"  onclick = "open_dropbox2('{{job.job_number}}')" value="Plans & Work Order" />
-
              </form>
             </div>
             <div id="dropbox_link_hide"><a id="link" href="#" target="_blank" style="color:red" >CLICK HERE FOR PLANS</a></div>
         </div>
-        <div style="margin: 5px;" class="col-sm-3">
-            <form id="" action="" target="_blank" >
-                <input type="button" class="btn btn-primary btn-sm"  data-toggle="modal" data-target="#add-employees-modal" value="Add Painter(s)" />
-             </form>
         </div>
-
-        <div style="margin: 5px;" class="col-sm-3">
-            <button class="btn btn-primary btn-sm"  data-toggle="modal" data-target="#off_rent-modal" >Call Equipment Off-Rent</button>
+        <div class="row h-100 d-flex align-items-center">
+            <div style="margin: 5px;" class="col-sm-3">
+                <form id="" action="" target="_blank" >
+                    <input type="button" class="btn btn-primary btn-sm"  data-toggle="modal" data-target="#add-employees-modal" value="Add Painter(s)" />
+                 </form>
+            </div>
+            <div style="margin: 5px;" class="col-sm-3">
+                <button style="margin-left: 10px; margin-right: 10px;" class="btn btn-primary btn-sm"  data-toggle="modal" data-target="#off_rent-modal" >Call Equipment Off-Rent</button>
+            </div>
+            <div style="margin: 5px;" class="col-sm-6">
+            </div>
         </div>
-    </div>
 </div>
 
 <!--notes-->

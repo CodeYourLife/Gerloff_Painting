@@ -26,6 +26,8 @@ from submittals.models import *
 from superintendent.models import *
 from wallcovering.models import *
 import random
+from django.http import HttpResponse
+import json
 
 
 @login_required(login_url='/accounts/login')
@@ -107,6 +109,14 @@ def admin_home(request):
     send_data['employees'] = Employees.objects.filter(user__isnull=True, active=True)
     send_data['subs'] = Subcontractors.objects.filter(is_inactive=False)
     return render(request, 'admin_home.html', send_data)
+
+def base(request):
+    current_user = request.user
+    filteredEmployee = Employees.objects.filter(user=current_user.id).first()
+    employee = {}
+    if filteredEmployee is not None and filteredEmployee.job_title is not None:
+        employee = {'role': filteredEmployee.job_title.description}
+    return HttpResponse(json.dumps(employee))
 
 
 @login_required(login_url='/accounts/login')
