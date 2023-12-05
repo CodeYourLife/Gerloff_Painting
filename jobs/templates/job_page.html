@@ -10,8 +10,11 @@
 <head>
 <meta http-equiv="Content-type" content="text/html; charset=utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>DataTables example - HTML (DOM) sourced data</title>
+<title>Trinity GP</title>
 <style type="text/css" class="init">
+#notes_table thead {
+    display: none;
+}
 
 .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
 
@@ -354,13 +357,15 @@ function open_dropbox2(jobnumber){
 
 window.onload = function() {
     $.fn.dataTable.moment( 'MMM-DD-YYYY' );
-    var table = $('#notes_table').DataTable({paging: false,info:false, ordering:false})
+    var table = $('#notes_table').DataTable({paging: false,info:false, ordering:false, searching:false})
     var table = $('#subcontractors_table').DataTable({paging: false})
     document.getElementById("show_new_pm").style.display = "none";
     document.getElementById("show_new_super").style.display = "none";
     document.getElementById("dropbox_link_hide").style.display = "none";
     document.getElementById("dropbox_button_hide").style.display = "block";
     document.getElementById("notes_filter_and_button").style.display = "none";
+
+    if ('{{notes_open_button}}'){document.getElementById("collapseOne").style.display = "block";}
 
 };
 
@@ -378,15 +383,19 @@ document.getElementById("notes_filter_button").style.display = "none";
 </head>
 <body>
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="#">Job Page</a>
+
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'jobs_home' %}">Jobs</a>
+
     <div id="navbarNavDropdown2">
         <ul class="sub-nav-list navbar-nav ">
-            <li><a class="nav-item nav-link active" href="#">{{job.job_name}}</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'jobs_home' %}">Jobs List</a></li>
              <li><a class="nav-item nav-link" href="{% url 'super_home' 'AUTO' %}">Superintendent View</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'book_new_job' %}">Book New Job</a></li>
+<!--            <li><a class="nav-item nav-link" href="{% url 'book_new_job' %}">Book New Job</a></li>-->
+            <li><a class="nav-item nav-link active" href="#">{{job.job_name}}</a></li>
         </ul>
     </div>
 </nav>
+
 
 <!-- Modal -->
 <div class="modal fade" id="startdate-modal" tabindex="-1" role="dialog" aria-labelledby="title"
@@ -835,9 +844,15 @@ document.getElementById("notes_filter_button").style.display = "none";
 
 
 
-
+<div style="background-color:hsl(202, 64%, 95%);">
 <!--Header info-->
 <div style="margin-left: 12px; margin-right: 12px;">
+    <div style=" padding-top: 12px;" class="d-flex flex-row">
+        <div  class="col-sm-12" >
+            <form action="{% url 'update_job_info' job.job_number %}"><input type="submit" class="btn btn-info btn-sm"
+                                                                             value="Update Job Information"/></form>
+        </div>
+    </div>
     <div class="row">
         <div class="col-sm-4 list-items"><b>Job Name:</b> {{job.job_name}}</div>
         <div class="col-sm-4 list-items"><b>Job Number:</b> {{job.job_number}}</div>
@@ -864,42 +879,41 @@ document.getElementById("notes_filter_button").style.display = "none";
         </div>
     </div>
 
-    <div style=" padding-top: 12px;" class="row">
-        <div  class="col-12" style="display: flex">
-            <div style="flex-grow: 1"></div>
-            <form action="{% url 'update_job_info' job.job_number %}"><input type="submit" class="btn btn-info btn-sm"
-                                                                             value="Update Job Information"/></form>
-        </div>
-    </div>
-    <hr>
 
+</div>
+</div>
 
     <div class="row h-100 d-flex align-items-center">
-        <div style="margin: 5px;" class="col-sm-3">
-            <form action="{% url 'change_order_new' job.job_number %}"><input type="submit" class="btn btn-primary btn-sm" value="New Change Order"/>
-            </form>
+                <div style="margin: 5px;" class="col-sm-4">
+            <input class="btn btn-primary btn-sm"  data-toggle="modal" data-target="#off_rent-modal" value="Call Equipment Off-Rent"/>
         </div>
-        <div style="margin: 5px;" class="col-sm-3">
+<!--        <div style="margin: 5px;" class="col-sm-3">-->
+<!--            <form action="{% url 'change_order_new' job.job_number %}"><input type="submit" class="btn btn-primary btn-sm" value="New Change Order"/>-->
+<!--            </form>-->
+<!--        </div>-->
+        <div style="margin: 5px;" class="col-sm-4">
             <form action="{% url 'request_pickup' jobnumber=job.job_number item='ALL' pickup='ALL' status='ALL' %}"><input type="submit" class="btn btn-primary btn-sm" value="Request Equipment Pickup"/>
             </form>
         </div>
-        <div style="margin: 5px;" class="col-sm-3">
+        <div style="margin: 5px;" class="col-sm-4">
     {% if job.is_waiting_for_punchlist == True %}
         {% if job.is_labor_done == True %}
-                <input class="btn btn-dark btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Labor done {{labor_done_date}}" />
+                <input class="btn btn-dark btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Done {{labor_done_date}}" />
             {% else %}
                             <input class="btn btn-danger btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Waiting for Punchlist" />
          {% endif %}
     {% else %}
         {% if job.is_labor_done == True %}
-                            <input class="btn btn-dark btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Labor done {{labor_done_date}}" />
+                            <input class="btn btn-dark btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Done {{labor_done_date}}" />
         {% else %}
-                            <input style="width: fit-content" class="btn btn-success btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Mark Labor Complete" />
+
+                            <input class="btn btn-success btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Mark Labor Complete" />
+
         {% endif %}
     {% endif %}
 
         </div>
-        <div style="margin: 5px;" class="col-sm-3">
+        <div style="margin: 5px;" class="col-sm-4">
             <div id="dropbox_button_hide">
              <form id="dropbox_button" action="{% url 'job_page' job.job_number %}" target="_blank" >
                 <input type="button" class="btn btn-warning btn-sm"  onclick = "open_dropbox2('{{job.job_number}}')" value="Plans & Work Order" />
@@ -907,23 +921,20 @@ document.getElementById("notes_filter_button").style.display = "none";
             </div>
             <div id="dropbox_link_hide"><a id="link" href="#" target="_blank" style="color:red" >CLICK HERE FOR PLANS</a></div>
         </div>
-        </div>
-        <div class="row h-100 d-flex align-items-center">
-            <div style="margin: 5px;" class="col-sm-3">
-                <form id="" action="" target="_blank" >
-                    <input type="button" class="btn btn-primary btn-sm"  data-toggle="modal" data-target="#add-employees-modal" value="Add Painter(s)" />
-                 </form>
-            </div>
-            <div style="margin: 5px;" class="col-sm-3">
-                <button style="margin-left: 10px; margin-right: 10px;" class="btn btn-primary btn-sm"  data-toggle="modal" data-target="#off_rent-modal" >Call Equipment Off-Rent</button>
-            </div>
-            <div style="margin: 5px;" class="col-sm-6">
-            </div>
-        </div>
-</div>
+
+<!--        <div style="margin: 5px;" class="col-sm-3">-->
+<!--            <form id="" action="" target="_blank" >-->
+<!--                <input type="button" class="btn btn-primary btn-sm"  data-toggle="modal" data-target="#add-employees-modal" value="Add Painter" />-->
+<!--             </form>-->
+<!--        </div>-->
+
+
+    </div>
+
+
 
 <!--notes-->
-<div class="card">
+<div class="card" style="background-color:hsl(54, 100%, 95%);">
     <div class="card-header" id="headingOne">
         <h5 class="mb-0">
             <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false"
@@ -934,31 +945,17 @@ document.getElementById("notes_filter_button").style.display = "none";
     </div>
     <div id="collapseOne" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">
         <div class="card-body">
-        <div id = "notes_filter_button">
-            <div class="container">
-                <div class="row">
-                    <div class="col">
-                        <button type="button" class="btn btn-warning btn-sm" onclick = "hide_filter()" >CLICK HERE TO ADD OR FILTER NOTES</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-            <div id = "notes_filter_and_button">
-            <div class="container">
-            <div class="row">
-                <div class="col">
 
+                <div  class="col-sm-4" >
                     <form id=new_note_form action="{% url 'job_page' job.job_number %}" method="post">
                         {% csrf_token %}
-                      <br>
-
                         <input type="hidden" name="add_note" id="add_note" value="" />
-                        <button type="button" class="btn btn-primary" onclick = "add_new_note()" >CLICK HERE TO ADD A NOTE</button>
-                    </form>
+                        <button type="button" class="btn btn-primary btn-sm" onclick = "add_new_note()" >ADD A NOTE</button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick = "hide_filter()" >SHOW FILTERS</button>
 
+                    </form>
                 </div>
-            </div>
-            </div>
+            <div id = "notes_filter_and_button">
             <div class="container">
                 <form style="padding-top: 24px" id="filter_form" action="{% url 'job_page' job.job_number %}" method="get">
                     <div class="row">

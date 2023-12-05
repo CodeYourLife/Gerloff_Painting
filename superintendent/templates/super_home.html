@@ -7,7 +7,7 @@
 <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>DataTables example - HTML (DOM) sourced data</title>
+    <title>Trinity GP</title>
     <style type="text/css" class="init">
 
     .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
@@ -243,15 +243,19 @@ function submit_new_super(){
 
 </head>
 <body>
-    <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-        <a style="padding-left: 14px;" class="navbar-brand sub-navbar-brand" href="#">Super View</a>
-        <div id="navbarNavDropdown2">
-          <ul class="sub-nav-list navbar-nav ">
-              <li><a class="nav-item nav-link" href="{% url 'jobs_home' %}">Home</a></li>
-              <li><a class="nav-item nav-link active" href="{% url 'super_home' 'AUTO' %}">Superintendent View</a></li>
-          </ul>
-        </div>
-      </nav>
+
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'jobs_home' %}">Jobs</a>
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav ">
+            <li><a class="nav-item nav-link" href="{% url 'jobs_home' %}">Jobs List</a></li>
+             <li><a class="nav-item nav-link active" href="{% url 'super_home' 'AUTO' %}">Superintendent View</a></li>
+<!--            <li><a class="nav-item nav-link" href="{% url 'book_new_job' %}">Book New Job</a></li>-->
+        </ul>
+    </div>
+</nav>
+
+
 <!-- Modal -->
 <div class="modal fade" id="super-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
@@ -482,7 +486,7 @@ function submit_new_super(){
                                 {% if job.is_off_hours == True and job.is_labor_done == False and job.is_waiting_for_punchlist == False %}
 
                                 <td style="background-color:hsl(63, 85%, 79%)">{% else %}
-                                <td>{% endif %}{{job.job_number}}</td>
+                                <td>{% endif %}{{job.job_number}}{% if job.is_active %}[A]{% endif %}</td>
 
                                 {% if job.is_on_base == True and job.is_labor_done == False and job.is_waiting_for_punchlist == False %}
                                 <td style="background-color:hsl(90,100%,75%)">{% else %}

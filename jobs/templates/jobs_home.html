@@ -8,7 +8,7 @@
 <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>DataTables example - HTML (DOM) sourced data</title>
+    <title>Trinity GP</title>
         <style type="text/css" class="init">
 
 .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
@@ -216,10 +216,12 @@ window.onload = function() {
 </head>
 <body>
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="#">Jobs</a>
+
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'jobs_home' %}">Jobs</a>
+
     <div id="navbarNavDropdown2">
         <ul class="sub-nav-list navbar-nav ">
-            <li><a class="nav-item nav-link active" href="#">Home</a></li>
+            <li><a class="nav-item nav-link active" href="{% url 'jobs_home' %}">Jobs List</a></li>
              <li><a class="nav-item nav-link" href="{% url 'super_home' 'AUTO' %}">Superintendent View</a></li>
             <li><a class="nav-item nav-link" href="{% url 'book_new_job' %}">Book New Job</a></li>
         </ul>
@@ -390,7 +392,7 @@ window.onload = function() {
                 {% else %}
             <tr onclick="populate_start_date_modal('{{x.job_number}}','{{x.start_date}}','{{x.is_active}}',this,1)">
             {% endif %}
-                <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_number}}</a></td>
+                <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_number}}{% if x.is_active %}[A]{% endif %}</a></td>
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_job('{{x.job_number}}')"><a href="#">{% if x.is_labor_done == True %}<b>[DONE]</b>{% elif x.is_waiting_for_punchlist == True %}<b>[PUNCH]</b>{% endif %} {{x.job_name}}</a></td>
                 <td style="white-space:nowrap" data-toggle="modal" data-target="#startdate-modal" ><a href="#">{{x.start_date|date:'M-d-Y'}}</a></td>
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px" >{{x.client}}</td>

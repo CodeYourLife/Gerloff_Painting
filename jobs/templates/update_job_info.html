@@ -8,7 +8,7 @@
 <head>
 	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>DataTables example - HTML (DOM) sourced data</title>
+	<title>Trinity GP</title>
 	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
 	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
 	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
@@ -371,15 +371,17 @@ function changed_super(){
 <body>
 <form name = booking_input action="{% url 'update_job_info' selectedjob.job_number %}" method="post" class="form-group" onSubmit = "return check_booking_data()">
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-        <a style="padding-left: 14px;" class="navbar-brand sub-navbar-brand" href="#">Active Jobs</a>
-        <div id="navbarNavDropdown2">
-          <ul class="sub-nav-list navbar-nav ">
-              <li><a class="nav-item nav-link" href="{% url 'jobs_home' %}">Home</a></li>
-              <li><a class="nav-item nav-link" href="{% url 'super_home' 'AUTO' %}">Superintendent View</a></li>
-              <li><a class="nav-item nav-link active" href="#">Update Job Info</a></li>
-          </ul>
-        </div>
-      </nav>
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'jobs_home' %}">Jobs</a>
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav ">
+            <li><a class="nav-item nav-link" href="{% url 'jobs_home' %}">Jobs List</a></li>
+             <li><a class="nav-item nav-link" href="{% url 'super_home' 'AUTO' %}">Superintendent View</a></li>
+<!--            <li><a class="nav-item nav-link" href="{% url 'book_new_job' %}">Book New Job</a></li>-->
+            <li><a class="nav-item nav-link active" href="#">Update Job Info</a></li>
+        </ul>
+    </div>
+</nav>
+
 <div style="padding-top: 50px" class="row align-items-center justify-content-center align-middle">
     {% csrf_token %}
     <div class = "container">
