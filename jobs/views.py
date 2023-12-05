@@ -26,7 +26,6 @@ from django.db.models import Q
 import openpyxl
 from django_tables2 import RequestConfig
 
-
 @login_required(login_url='/accounts/login')
 def change_start_date(request, jobnumber, previous, super, filter):
     # jobnumber is the job number you are changing
@@ -507,6 +506,13 @@ def job_page(request, jobnumber):
     selectedjob = Jobs.objects.get(job_number=jobnumber)
     send_data = {}
     if request.method == 'POST':
+        if 'undo_redo' in request.POST:
+            selectedEmployeeIds = request.POST.getlist('undo_redo')
+            EmployeeJob.objects.filter(job=jobnumber).delete()
+            for id in selectedEmployeeIds:
+                employee = Employees.objects.get(id=id)
+                newSelectedEmployee = EmployeeJob.objects.create(employee=employee, job=selectedjob)
+                newSelectedEmployee.save()
         if 'start_date' in request.POST:
             return redirect('job_page',jobnumber=jobnumber)
         if 'select_rental' in request.POST:
@@ -705,32 +711,19 @@ def job_page(request, jobnumber):
     if go_to_pickup:
         return redirect('request_pickup', jobnumber=selectedjob.job_number, item='ALL', pickup='ALL', status='ALL')
     else:
-        try:
-            employeeJobArray = EmployeeJob.objects.filter(job=selectedjob.job_number)
-
-            employees = Employees.objects.all()
-            employeesOnJob = []
-            if employeeJobArray is not None:
-                for employeeOnJob in employeeJobArray:
-                    employeesOnJob.append(employeeOnJob.employee)
-            send_data['added_employees'] = employeesOnJob
-            if employeeJobArray is not None:
-                employeesToAdd = []
-                for employee in employees:
-                    found = False
-                    for employeeOnJob in employeesOnJob:
-                        if employee.id == employeeOnJob.employee.id:
-                            found = True
-                    if found == False:
-                        employeesToAdd.append(employee)
-                send_data['employees'] = employeesToAdd
-            else:
-                send_data['employees'] = employees
-        except Exception as e:
-            print(e)
-
+        employees = Employees.objects.filter(job_title=1)
+        filteredEmployees = []
+        selectedEmployees = EmployeeJob.objects.filter(job=selectedjob.job_number)
+        for employee in employees:
+            found = False
+            for selectedEmployee in selectedEmployees:
+                if selectedEmployee.employee.id == employee.id:
+                    found = True
+            if found == False:
+                filteredEmployees.append(employee)
+        send_data['employees'] = filteredEmployees
+        send_data['selectedEmployees'] = selectedEmployees
         return render(request, 'job_page.html', send_data)
-
 
 @login_required(login_url='/accounts/login')
 def book_new_job(request):

@@ -364,7 +364,9 @@ window.onload = function() {
     document.getElementById("dropbox_link_hide").style.display = "none";
     document.getElementById("dropbox_button_hide").style.display = "block";
     document.getElementById("notes_filter_and_button").style.display = "none";
+
     if ('{{notes_open_button}}'){document.getElementById("collapseOne").style.display = "block";}
+
 };
 
 function run_filter_form(){
@@ -376,14 +378,14 @@ document.getElementById("notes_filter_and_button").style.display = "block";
 document.getElementById("notes_filter_button").style.display = "none";
 }
 
-
-
 </script>
 
 </head>
 <body>
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+
     <a class="navbar-brand sub-navbar-brand" href="{% url 'jobs_home' %}">Jobs</a>
+
     <div id="navbarNavDropdown2">
         <ul class="sub-nav-list navbar-nav ">
             <li><a class="nav-item nav-link" href="{% url 'jobs_home' %}">Jobs List</a></li>
@@ -799,56 +801,45 @@ document.getElementById("notes_filter_button").style.display = "none";
 </div>
     <div class="modal fade" id="add-employees-modal" tabindex="-1" role="dialog" aria-labelledby="title"
          aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="title2">Add Employees To Job</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-
-                    <div>
-                      <div style="display: flex">
+        <form id="add-employee" action="{% url 'job_page' job.job_number %}" method="post">
+            {% csrf_token %}
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="title2">Add Employees To Job</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
                         <div>
-                            <label for="undo_redo">Add</label>
-                          <select name="from" id="undo_redo" class="form-control" style="min-width: 120px; width: fit-content; max-width: 80vw; overflow: auto; height: 40vh;" multiple="multiple">
-                              {% if employees %}
-                                {% for employee in employees %}
-                                <option value="1">{{employee.first_name}} {{employee.last_name}}</option>
-                                {% endfor %}
-                              {% endif %}
-                          </select>
-                        </div>
-                        <div id="add-remove-button-container" style="margin-left: 10px; margin-right: 10px; margin-top: 40px;">
-                          <button type="button" id="undo_redo_undo" class="btn btn-primary btn-block">undo</button>
-                          <button type="button" id="undo_redo_rightAll" class="btn btn-default btn-block"><i class="glyphicon glyphicon-forward"></i></button>
-                          <button type="button" id="undo_redo_rightSelected" class="btn btn-default btn-block"><i class="glyphicon glyphicon-chevron-right"></i></button>
-                          <button type="button" id="undo_redo_leftSelected" class="btn btn-default btn-block"><i class="glyphicon glyphicon-chevron-left"></i></button>
-                          <button type="button" id="undo_redo_leftAll" class="btn btn-default btn-block"><i class="glyphicon glyphicon-backward"></i></button>
-                          <button type="button" id="undo_redo_redo" class="btn btn-warning btn-block">redo</button>
-                        </div>
-                        <div>
-                            <label for="undo_redo_to">Added To Job</label>
-                          <select name="to" id="undo_redo_to" class="form-control" style="min-width: 120px; width: fit-content; max-width: 80vw; overflow: auto; height: 40vh;" multiple="multiple">
-                              {% if selected_employees %}
-                                {% for selected_employee in selected_employees %}
-                                <option value="1">{{added_employees.first_name}} {{added_employees.last_name}}</option>
-                                {% endfor %}
-                              {% endif %}
+                          <div style="display: flex">
+                            <div>
+                                <label for="undo_redo">Add Employees</label>
+                                  <select id="undo_redo" name="undo_redo" class="form-control" style="min-width: 120px; width: fit-content; max-width: 80vw; overflow: auto;" multiple="multiple">
+                                      {% if employees %}
+                                        {% for employee in employees %}
+                                                <option value={{employee.id}} >{{employee.first_name}} {{employee.last_name}}</option>
+                                        {% endfor %}
+                                      {% endif %}
+                                      {% if selectedEmployees %}
+                                        {% for selectedEmployee in selectedEmployees %}
+                                                <option value={{selectedEmployee.employee.id}} selected>{{selectedEmployee.employee.first_name}} {{selectedEmployee.employee.last_name}}</option>
+                                        {% endfor %}
+                                      {% endif %}
 
-                          </select>
+                                  </select>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                    </div>
+                    <div class="modal-footer">
+                        <input type="submit" class="btn btn-primary"  value="Save Changes">  </input>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" onclick = "" data-dismiss="modal" > Save Changes </button>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                </div>
             </div>
-        </div>
+        </form>
     </div>
 
 
@@ -915,7 +906,9 @@ document.getElementById("notes_filter_button").style.display = "none";
         {% if job.is_labor_done == True %}
                             <input class="btn btn-dark btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Done {{labor_done_date}}" />
         {% else %}
+
                             <input class="btn btn-success btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Mark Labor Complete" />
+
         {% endif %}
     {% endif %}
 
@@ -924,11 +917,11 @@ document.getElementById("notes_filter_button").style.display = "none";
             <div id="dropbox_button_hide">
              <form id="dropbox_button" action="{% url 'job_page' job.job_number %}" target="_blank" >
                 <input type="button" class="btn btn-warning btn-sm"  onclick = "open_dropbox2('{{job.job_number}}')" value="Plans & Work Order" />
-
              </form>
             </div>
             <div id="dropbox_link_hide"><a id="link" href="#" target="_blank" style="color:red" >CLICK HERE FOR PLANS</a></div>
         </div>
+
 <!--        <div style="margin: 5px;" class="col-sm-3">-->
 <!--            <form id="" action="" target="_blank" >-->
 <!--                <input type="button" class="btn btn-primary btn-sm"  data-toggle="modal" data-target="#add-employees-modal" value="Add Painter" />-->
@@ -937,6 +930,7 @@ document.getElementById("notes_filter_button").style.display = "none";
 
 
     </div>
+
 
 
 <!--notes-->
@@ -951,12 +945,14 @@ document.getElementById("notes_filter_button").style.display = "none";
     </div>
     <div id="collapseOne" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">
         <div class="card-body">
+
                 <div  class="col-sm-4" >
                     <form id=new_note_form action="{% url 'job_page' job.job_number %}" method="post">
                         {% csrf_token %}
                         <input type="hidden" name="add_note" id="add_note" value="" />
                         <button type="button" class="btn btn-primary btn-sm" onclick = "add_new_note()" >ADD A NOTE</button>
                         <button type="button" class="btn btn-secondary btn-sm" onclick = "hide_filter()" >SHOW FILTERS</button>
+
                     </form>
                 </div>
             <div id = "notes_filter_and_button">
