@@ -136,6 +136,26 @@ alert("Please select another approver")
 return false;
 }
 }
+
+function update_percentage(event){
+
+percentage_cell = document.getElementById("percentage"+event.currentTarget.id)
+current_total=parseFloat(event.currentTarget.value)
+quantity_ordered_cell = document.getElementById("quantity_ordered"+event.currentTarget.id)
+
+if (quantity_ordered_cell.innerHTML == "1 Lump Sum"){
+	previous = parseFloat(document.getElementById("previous"+event.currentTarget.id).value)
+	totalcost = parseFloat(document.getElementById("total_cost"+event.currentTarget.id).value)
+}
+else{
+	totalcost = parseFloat(document.getElementById("quantity_ordered"+event.currentTarget.id).value)
+	previous = parseFloat(document.getElementById("quantity_billed"+event.currentTarget.id).value)
+}
+total_to_date = current_total + previous
+percentage_calc = parseFloat(total_to_date/totalcost *100).toFixed(1)
+percentage_cell.innerHTML = String(percentage_calc)+ "%"
+}
+
 	</script>
 </head>
 <body>
@@ -154,7 +174,8 @@ return false;
 </nav>
 	{% if other_approve %}
 	<h4>Approving for {{other_approve.employee}}</h4>
-
+{% elif edit_now %}
+	<h4>Editing Invoice</h4>
 {% elif other_approvers %}
 	<form id="other_approval_form" name="other_approval_form" action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post" onSubmit ="return check_other_approver()" >
 		{% csrf_token %}
@@ -166,7 +187,12 @@ return false;
 		</select>
 		<input type="submit" class="btn btn-danger btn-sm" value="Approve for this person" />
 	</form>
-	<br>
+{% endif %}
+{% if no_approvals_yet and edit_now == None %}
+	<form action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post" >
+		{% csrf_token %}
+		<input type="submit" class="btn btn-danger btn-sm" name="edit_invoice" value="Edit Invoice" />
+	</form>
 {% endif %}
 {% if selected_invoice %}
 	<h3>INVOICE BREAKDOWN</h3>
@@ -269,6 +295,8 @@ return false;
 <h3>OR</h3>
 <br>
 <hr>
+{% endif %}
+{% if me_approve or other_approve or edit_now %}
 <h3>Make Changes</h3>
 
 
@@ -276,6 +304,9 @@ return false;
 {% csrf_token %}
 	 	 {% if other_approve %}
 	  <input type="hidden" id="other_approver_id" name="is_other_approver_id" value="{{other_approve.id}}" />
+	 {% endif %}
+	 	 	 {% if edit_now %}
+	  <input type="hidden" id="editing_now" name="editing_now" />
 	 {% endif %}
 <input type="hidden" id="change_notes" name="change_notes" >
 <div class="table-responsive">
@@ -347,7 +378,11 @@ return false;
 			</tbody>
 		</table>
 </div>
+	 {% if me_approve or other_approve %}
 	 <button type="button" name="form6" class="btn btn-primary btn-sm" onclick="made_changes_note()" >APPROVED WITH THE ABOVE CHANGES</button>
+	 {% else %}
+	 <button type="button" name="form6" class="btn btn-primary btn-sm" onclick="made_changes_note()" >MAKE CHANGES NOW</button>
+	 {% endif %}
     </form>
 
 {% else %}
