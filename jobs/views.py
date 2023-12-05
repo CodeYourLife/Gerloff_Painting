@@ -505,6 +505,7 @@ def jobs_home(request):
 def job_page(request, jobnumber):
     go_to_pickup = False
     selectedjob = Jobs.objects.get(job_number=jobnumber)
+    send_data = {}
     if request.method == 'POST':
         if 'start_date' in request.POST:
             return redirect('job_page',jobnumber=jobnumber)
@@ -568,6 +569,7 @@ def job_page(request, jobnumber):
             JobNotes.objects.create(job_number=selectedjob,
                                     note=request.POST['add_note'], type="employee_note",
                                     user=Employees.objects.get(user=request.user), date=date.today())
+            send_data['notes_open_button'] = True
         if 'submit_pm' in request.POST:
             if request.POST['select_pm'] == 'add_new':
                 selectedjob.client_Pm = ClientEmployees.objects.create(id=selectedjob.client,
@@ -601,7 +603,6 @@ def job_page(request, jobnumber):
             selectedjob.client.bid_email = request.POST['client_bid_email']
             selectedjob.client.phone = request.POST['client_phone']
             selectedjob.save()
-    send_data = {}
     send_data['client_employees'] = ClientEmployees.objects.filter(id=selectedjob.client)
     # send_data['jobstable'] = JobsTable(selectedjob)
     send_data['job'] = selectedjob
@@ -648,12 +649,15 @@ def job_page(request, jobnumber):
     if request.method == 'GET':
         made_already = False
         if 'admin' in request.GET:
+            send_data['notes_open_button'] = True
             notes = JobNotes.objects.filter(job_number=selectedjob,
                                             type="auto_booking_note") | JobNotes.objects.filter(
                 job_number=selectedjob, type="auto_misc_note")
             made_already = True
             send_data['admin'] = 'admin'
+            send_data['notes_open_button'] = True
         if 'start' in request.GET:
+            send_data['notes_open_button'] = True
             send_data['start'] = 'start'
             if made_already == False:
                 notes = JobNotes.objects.filter(job_number=selectedjob, type="auto_start_date_note")
@@ -662,6 +666,7 @@ def job_page(request, jobnumber):
                 notes = notes | JobNotes.objects.filter(job_number=selectedjob, type="auto_start_date_note")
                 made_already = True
         if 'field' in request.GET:
+            send_data['notes_open_button'] = True
             send_data['field'] = 'field'
             if made_already == False:
                 notes = JobNotes.objects.filter(job_number=selectedjob,
@@ -674,6 +679,7 @@ def job_page(request, jobnumber):
                     job_number=selectedjob, type="daily_report")
                 made_already = True
         if 'change_order' in request.GET:
+            send_data['notes_open_button'] = True
             send_data['change_order'] = 'change_order'
             if made_already == False:
                 notes = JobNotes.objects.filter(job_number=selectedjob, type="auto_co_note")
@@ -682,6 +688,7 @@ def job_page(request, jobnumber):
                 notes = notes | JobNotes.objects.filter(job_number=selectedjob, type="auto_co_note")
                 made_already = True
         if 'submittal' in request.GET:
+            send_data['notes_open_button'] = True
             send_data['submittal'] = 'submittal'
             if made_already == False:
                 notes = JobNotes.objects.filter(job_number=selectedjob, type="auto_submittal_note")
