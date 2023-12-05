@@ -254,6 +254,8 @@ def subcontract_invoices(request, subcontract_id, item_id):
     subcontract = Subcontracts.objects.get(id=subcontract_id)
     send_data['subcontract'] = subcontract
     if request.method == 'POST':
+        if 'edit_invoice' in request.POST:
+            send_data['edit_now'] = True
         if 'other_approver' in request.POST:
             send_data['other_approve'] = InvoiceApprovals.objects.get(id=request.POST['other_approver'])
         if 'invoice_notes' in request.POST:
@@ -397,25 +399,30 @@ def subcontract_invoices(request, subcontract_id, item_id):
             approvers = InvoiceApprovals.objects.filter(invoice=selected_invoice)
             approved = True
             current_employee = Employees.objects.get(user=request.user)
+            invoice.save()
             if 'is_other_approver_id' in request.POST:
                 other_approval = InvoiceApprovals.objects.get(id=request.POST['is_other_approver_id'])
                 current_employee = Employees.objects.get(id=other_approval.employee.id)
                 note = "Invoice " + str(invoice.pay_app_number) + " Approved - Made Changes! On behalf of " + str(current_employee) + ". " + request.POST['change_notes']
+            elif 'editing_now' in request.POST:
+                note = "Invoice " + str(invoice.pay_app_number) + " Edited. " + request.POST[
+                    'change_notes']
             else:
                 note = "Invoice " + str(invoice.pay_app_number) + " Approved - Made Changes! " + request.POST['change_notes']
-            for x in approvers:
-                if x.employee == current_employee:
-                    x.is_approved = True
-                    x.made_changes = True
-                    x.date = date.today()
-                    x.is_reviewed = True
-                    x.save()
-                elif x.is_approved == False:
-                    approved = False
-            if approved == True:
-                email_body = selected_invoice.subcontract.subcontractor.company + " invoice for " + selected_invoice.subcontract.job_number.job_name + " has been approved."
-                Email.sendEmail("Invoice Approved", email_body, ['admin2@gerloffpainting.com','joe@gerloffpainting.com'], False)
-                invoice.is_sent = True
+            if 'editing_now' not in request.POST:
+                for x in approvers:
+                    if x.employee == current_employee:
+                        x.is_approved = True
+                        x.made_changes = True
+                        x.date = date.today()
+                        x.is_reviewed = True
+                        x.save()
+                    elif x.is_approved == False:
+                        approved = False
+                if approved == True:
+                    email_body = selected_invoice.subcontract.subcontractor.company + " invoice for " + selected_invoice.subcontract.job_number.job_name + " has been approved."
+                    Email.sendEmail("Invoice Approved", email_body, ['admin2@gerloffpainting.com','joe@gerloffpainting.com'], False)
+                    invoice.is_sent = True
             invoice.save()
             current_employee = Employees.objects.get(user=request.user)
             SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
@@ -441,6 +448,9 @@ def subcontract_invoices(request, subcontract_id, item_id):
             send_data['me_approve'] = True
         elif InvoiceApprovals.objects.filter(invoice=selected_invoice, is_approved=False).exists():
             send_data['other_approvers'] = InvoiceApprovals.objects.filter(invoice=selected_invoice, is_approved=False)
+        approvalcheck =  InvoiceApprovals.objects.filter(invoice=selected_invoice, is_approved=True)
+        if not approvalcheck:
+            send_data['no_approvals_yet']=True
         for x in SubcontractItems.objects.filter(subcontract=subcontract):
             totalcost = float(x.total_cost())
             totalbilled = float(x.total_billed())
