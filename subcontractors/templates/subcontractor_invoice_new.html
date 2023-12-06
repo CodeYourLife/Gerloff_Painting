@@ -77,6 +77,17 @@
 .table td {
         }
 
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
     </style>
 
     <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
@@ -98,7 +109,7 @@ $(document).ready(function () {
 })
 
 function update_percentage(event){
-
+alert("HI")
 percentage_cell = document.getElementById("percentage"+event.currentTarget.id)
 current_total=parseFloat(event.currentTarget.value)
 quantity_ordered_cell = document.getElementById("quantity_ordered"+event.currentTarget.id)
@@ -116,17 +127,7 @@ percentage_calc = parseFloat(total_to_date/totalcost *100).toFixed(1)
 percentage_cell.innerHTML = String(percentage_calc)+ "%"
 }
 
-/* Chrome, Safari, Edge, Opera */
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
 
-/* Firefox */
-input[type=number] {
-  -moz-appearance: textfield;
-}
 
 	</script>
 </head>
