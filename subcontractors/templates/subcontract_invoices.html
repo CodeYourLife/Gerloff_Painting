@@ -133,6 +133,9 @@ function add_reject_note(){
 		}
 }
 function made_changes_note(){
+	if (check_form()){
+	return
+	}
 	var name=prompt("Add Note");
 	if (name!=null){
 	changes_form.change_notes.value = name;
@@ -166,6 +169,20 @@ else{
 total_to_date = current_total + previous
 percentage_calc = parseFloat(total_to_date/totalcost *100).toFixed(1)
 percentage_cell.innerHTML = String(percentage_calc)+ "%"
+}
+
+function check_form(){
+	form = changes_form
+	stop_now=0
+	Array.from(form.elements).forEach((input) => {
+		if (input.name.substring(0,8) == "quantity" && input.value == ""){
+			stop_now=1
+		}
+	});
+	if (stop_now == 1){
+		alert("Don't leave quantity blank. Put Zero.")
+		return true;
+	}
 }
 
 	</script>
@@ -312,7 +329,7 @@ percentage_cell.innerHTML = String(percentage_calc)+ "%"
 <h3>Make Changes</h3>
 
 
- <form id="changes_form" action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post"  >
+ <form id="changes_form" action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post" >
 {% csrf_token %}
 	 	 {% if other_approve %}
 	  <input type="hidden" id="other_approver_id" name="is_other_approver_id" value="{{other_approve.id}}" />
@@ -351,14 +368,14 @@ percentage_cell.innerHTML = String(percentage_calc)+ "%"
 								{% for x in invoice_items %}
 									{% if x.sov_item.id == item.id %}
 										<td><div id="current_total{{item.id}}" >{{item.special}}%</div></td>
-										<td><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" value={{x.quantity|floatformat}} size="5" step="1" onchange="update_percentage(event)" /></td>
+										<td><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" value={{x.quantity|floatformat}} size="5" step="1" onchange="update_percentage(event)" required  /></td>
 										<td><div id="percentage{{item.id}}" ></div>{{item.percentage}}%</td>
 										<td><input type="text"  name="note{{item.id}}" size="40" value="{{x.notes}}"/></td>
 									{% endif %}
 								{% endfor %}
 							{% else %}
 								<td><div id="current_total{{item.id}}" >{{item.special}}</div></td>
-								<td><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost|floatformat}} size="5" step="1" onchange="update_percentage(event)" /></td>
+								<td><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost|floatformat}} size="5" step="1" onchange="update_percentage(event)" required  /></td>
 								<td><div id="percentage{{item.id}}" ></div>{{item.percentage}}%</td>
 								<td><input type="text"  name="note{{item.id}}" size="40" /></td>
 							{% endif %}
@@ -370,14 +387,14 @@ percentage_cell.innerHTML = String(percentage_calc)+ "%"
 							{% if item.invoiced == True %}
 								{% for x in invoice_items %}
 									{% if x.sov_item.id == item.id %}
-										<td><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" value={{x.quantity|floatformat}} size="5" step="1" onchange="update_percentage(event)" /></td>
+										<td><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" value={{x.quantity|floatformat}} size="5" step="1" onchange="update_percentage(event)" required /></td>
 										<td><div id="current_total{{item.id}}" >${{item.special}}</div></td>
 										<td><div id="percentage{{item.id}}" ></div>{{item.percentage}}%</td>
 										<td><input type="text"  name="note{{item.id}}" size="40" value="{{x.notes}}"/></td>
 									{% endif %}
 								{% endfor %}
 							{% else %}
-								<td><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty|floatformat}} size="5" step="1" onchange="update_percentage(event)" /></td>
+								<td><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty|floatformat}} size="5" step="1" onchange="update_percentage(event)" required /></td>
 								<td><div id="current_total{{item.id}}" >${{item.special}}</div></td>
 								<td><div id="percentage{{item.id}}" ></div>{{item.percentage}}%</td>
 								<td><input type="text"  name="note{{item.id}}" size="40" /></td>

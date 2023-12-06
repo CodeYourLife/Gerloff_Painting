@@ -126,6 +126,23 @@ percentage_calc = parseFloat(total_to_date/totalcost *100).toFixed(1)
 percentage_cell.innerHTML = String(percentage_calc)+ "%"
 }
 
+function check_form(){
+	form = invoicing_form
+	stop_now=0
+	Array.from(form.elements).forEach((input) => {
+		if (input.name.substring(0,4) == "note" && input.value != ""){
+			x = input.name.length
+			item_number=input.name.substring(4,x)
+			if (document.getElementById(item_number).value == ""){
+				stop_now = 1
+			}
+		}
+	});
+	if (stop_now == 1){
+		alert("You can't type a note next to an item without entering a quantity")
+		return false;
+	}
+}
 
 
 	</script>
@@ -148,7 +165,7 @@ percentage_cell.innerHTML = String(percentage_calc)+ "%"
 <br>
 
 
- <form action="{% url 'subcontractor_invoice_new' subcontract.id %}" method="post"  >
+ <form action="{% url 'subcontractor_invoice_new' subcontract.id %}" id="invoicing_form" method="post" onSubmit="return check_form()" >
 {% csrf_token %}
 
 	 <h3>Pay App Number: {{next_number}}</h3>
