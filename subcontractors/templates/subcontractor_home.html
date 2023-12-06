@@ -152,14 +152,13 @@ function populate_active_contracts_modal(subcontractor_id){
            parsedData = JSON.parse(data);
             let text = "<table border='1' class='table display' >"
             text += "<thead><tr><th>Job</th><th>PO#</th><th>%</th></tr></thead>"
-
             parsedData.active_contracts.forEach((element) => {
                 if (element.po_number != ""){
-                text += "<tr><td><a href=\"{% url 'job_page' 123 %}\">" + element.job_name + "</a></td><td><a href=\"{% url 'subcontract' 456 %}\">" + element.po_number + "</a></td><td>" + element.percent_complete + "</td></tr>";
+                text += "<tr><td><a href=\"{% url 'job_page' 12334 %}\">" + element.job_name + "</a></td><td><a href=\"{% url 'subcontract' 45665 %}\">" + element.po_number + "</a></td><td>" + element.percent_complete + "</td></tr>";
                 }
-                else {text += "<tr><td><a href=\"{% url 'job_page' 123 %}\">" + element.job_name + "</a></td><td><a href=\"{% url 'subcontract' 456 %}\">TBD</a></td><td>" + element.percent_complete + "</td></tr>";}
-                text=text.replace(123,element.job_number)
-                text=text.replace(456,element.id)
+                else {text += "<tr><td><a href=\"{% url 'job_page' 12334 %}\">" + element.job_name + "</a></td><td><a href=\"{% url 'subcontract' 45665 %}\">TBD</a></td><td>" + element.percent_complete + "</td></tr>";}
+                text=text.replace(12334,element.job_number)
+                text=text.replace(45665,element.id)
             })
             text += "</table>"
             document.getElementById("active_contracts_title").innerHTML = parsedData.company
