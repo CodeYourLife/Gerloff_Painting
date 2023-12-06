@@ -149,10 +149,10 @@ def subcontractor_invoice_new(request, subcontract_id):
                     SubcontractorOriginalInvoiceItem.objects.create(invoice=invoice, sov_item=x,
                                                                     quantity=request.POST['quantity' + str(x.id)],
                                                                     notes=request.POST['note' + str(x.id)])
-                    if x.SOV_is_lump_sum:
-                        invoice_total += float(request.POST['quantity' + str(x.id)])
-                    else:
-                        invoice_total += float(request.POST['quantity' + str(x.id)]) * x.SOV_rate
+                    # if x.SOV_is_lump_sum:
+                    #     invoice_total += float(request.POST['quantity' + str(x.id)])
+                    # else:
+                    #     invoice_total += float(request.POST['quantity' + str(x.id)]) * x.SOV_rate
                 elif request.POST['note' + str(x.id)] != '':
                     SubcontractorInvoiceItem.objects.create(invoice=invoice, sov_item=x, quantity=0,
                                                             notes=request.POST['note' + str(x.id)])
@@ -163,8 +163,17 @@ def subcontractor_invoice_new(request, subcontract_id):
                                             user=Employees.objects.get(user=request.user),
                                             note="New Invoice- " + request.POST['subcontract_note'], invoice=invoice)
             # Email.sendEmail('test', 'test body', 'joe@gerloffpainting.com')
+
+            for x in SubcontractorInvoiceItem.objects.filter(invoice=invoice):
+                invoice_total += x.total_cost()
             invoice.final_amount = invoice_total
-            if invoice.subcontract.is_retainage: invoice.retainage = float(invoice_total) * float(.1)
+            if subcontract.is_retainage == True:
+                invoice.retainage = invoice_total * subcontract.retainage_percentage
+            else:
+                invoice.retainage = 0
+
+            # invoice.final_amount = invoice_total
+            # if invoice.subcontract.is_retainage: invoice.retainage = float(invoice_total) * float(.1)
             invoice.save()
             InvoiceApprovals.objects.create(employee=Employees.objects.get(id=22), invoice=invoice)
             InvoiceApprovals.objects.create(employee=Employees.objects.get(id=18), invoice=invoice)
