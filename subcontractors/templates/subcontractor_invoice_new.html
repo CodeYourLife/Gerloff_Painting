@@ -129,7 +129,14 @@ percentage_cell.innerHTML = String(percentage_calc)+ "%"
 function check_form(){
 	form = invoicing_form
 	stop_now=0
+
+	all_blank=0
 	Array.from(form.elements).forEach((input) => {
+		if (input.name.substring(0,8) == "quantity" && input.value != ""){
+			console.log("Here")
+			all_blank=1
+		}
+
 		if (input.name.substring(0,4) == "note" && input.value != ""){
 			x = input.name.length
 			item_number=input.name.substring(4,x)
@@ -142,8 +149,12 @@ function check_form(){
 		alert("You can't type a note next to an item without entering a quantity")
 		return false;
 	}
-}
 
+	if (all_blank == 0){
+		alert("You need to enter at least 1 quantity")
+		return false;
+	}
+}
 
 
 	</script>

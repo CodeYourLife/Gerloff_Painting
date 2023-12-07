@@ -155,6 +155,33 @@ function calculate_total(){
 	document.getElementById("contract_total").innerHTML="<b>Total Invoice:</b> $" + contract_total
 }
 
+function check_form(){
+	form = invoice_form
+	stop_now=0
+	all_blank=0
+	Array.from(form.elements).forEach((input) => {
+		if (input.name.substring(0,8) == "quantity" && input.value != ""){
+			console.log("Here")
+			all_blank=1
+		}
+		if (input.name.substring(0,4) == "note" && input.value != ""){
+			x = input.name.length
+			item_number=input.name.substring(4,x)
+			if (document.getElementById(item_number).value == ""){
+				stop_now = 1
+			}
+		}
+	});
+	if (stop_now == 1){
+		alert("You can't type a note next to an item without entering a quantity")
+		return false;
+	}
+	if (all_blank == 0){
+		alert("You need to enter at least 1 quantity")
+		return false;
+	}
+}
+
 	</script>
 </head>
 <body>
@@ -175,7 +202,7 @@ function calculate_total(){
 <br>
 
 
- <form action="{% url 'portal_invoice_new' subcontract.id %}" id="invoice_form" method="post"  >
+ <form action="{% url 'portal_invoice_new' subcontract.id %}" id="invoice_form" method="post" onSubmit="return check_form()" >
 {% csrf_token %}
 
 
