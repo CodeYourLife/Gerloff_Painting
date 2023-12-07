@@ -397,6 +397,7 @@ def training(request):
 def my_page(request):
     send_data = {}
     employee = Employees.objects.get(user=request.user)
+    send_data['employeeJobs'] = EmployeeJob.objects.filter(employee=employee.id)
     send_data['employee'] = employee
     send_data['inventory'] = Inventory.objects.filter(assigned_to=employee,is_closed=False)
     send_data['assessments_performed'] = EmployeeReview.objects.filter(assessment__reviewer=employee)
