@@ -166,16 +166,13 @@
     {% else %}
     {% if changeorder.is_ticket_signed == False %}
     {% if changeorder.is_printed == False %}
-    <form action="{% url 'print_ticket' changeorder.id " OLD
-    " %}" ><input type="submit" class="btn btn-secondary btn-sm" value="Print Ticket for Ink Signature"/></form>
+    <form action="{% url 'print_ticket' changeorder.id 'OLD' %}" ><input type="submit" class="btn btn-secondary btn-sm" value="Print Ticket for Ink Signature"/></form>
     {% else %}
-    <form action="{% url 'print_ticket' changeorder.id " OLD
-    " %}" ><input type="submit" class="btn btn-secondary btn-sm"
+    <form action="{% url 'print_ticket' changeorder.id 'OLD' %}" ><input type="submit" class="btn btn-secondary btn-sm"
                   value="Ticket Already Printed. Click to Print Again"/></form>
     {% endif %}
     <br>
-    <form action="{% url 'print_ticket' changeorder.id " NEW
-    " %}" ><input type="submit" value="Get Digital Signature"/></form>
+    <form action="{% url 'print_ticket' changeorder.id 'NEW' %}" ><input type="submit" value="Get Digital Signature"/></form>
     <br>
     <form action="{% url 'process_ewt' changeorder.id %}"><input type="submit" value="View / Change Ticket"/>
     </form>
