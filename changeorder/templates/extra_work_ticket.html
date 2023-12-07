@@ -218,10 +218,10 @@
     {% else %}
     <h1>Change Order Sent</h1>
     {% if changeorder.is_t_and_m == True %}
-    <form action="{% url 'print_TMProposal' tmproposal.id %}">
+    <form action="{% url 'preview_TMProposal' tmproposal.id %}">
         <input type="submit" class="btn btn-secondary btn-sm" style="margin-bottom: 5px" name="view_proposal" value="View Proposal"/></form>
     {% else %}
-    <form action="{% url 'print_TMProposal' changeorder.tmproposal.id %}">
+    <form action="{% url 'preview_TMProposal' changeorder.tmproposal.id %}">
         <input type="submit" class="btn btn-secondary btn-sm" name="view_proposal" value="View Proposal(need to code)"/>
     </form>
     {% endif %}
