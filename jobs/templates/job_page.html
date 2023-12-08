@@ -235,19 +235,19 @@ function showEmployeeData(status, client, client_email, client_phone,pm,superint
     document.getElementById("change_client_super_title").innerHTML = client;
     let text = "<table border='1' class='table display'>";
     text += "<tr><td>Company: " + client + "</td></tr>";
-    text += "<tr><td><a href='tel:+ " + client_phone + "'>Phone: " + client_phone + "</a></td></tr>";
+    text += "<tr><td><a href='tel:" + client_phone + "'>Phone: " + client_phone + "</a></td></tr>";
     text += "<tr><td><a href='mailto: " + client_email + "'>Email: " + client_email + "</a></td></tr>"
     text += "</table>"
     document.getElementById("client_info").innerHTML = text;
     text = "<table border='1' class='table display'>";
     text += "<tr><td>PM: " + pm + "</td></tr>";
-    text += "<tr><td><a href='tel:+ " + pm_phone + "'>Phone: " + pm_phone + "</a></td></tr>";
+    text += "<tr><td><a href='tel:" + pm_phone + "'>Phone: " + pm_phone + "</a></td></tr>";
     text += "<tr><td><a href='mailto: " + pm_email + "'>Email: " + pm_email + "</a></td></tr>";
     text += "</table>";
     document.getElementById("client_pm_info").innerHTML = text;
     text = "<table border='1' class='table display'>";
     text += "<tr><td>Superintendent: " + superintendent + "</td></tr>";
-    text += "<tr><td><a href='tel:+ " + super_phone + "'>Phone: " + super_phone + "</a></td></tr>";
+    text += "<tr><td><a href='tel:" + super_phone + "'>Phone: " + super_phone + "</a></td></tr>";
     text += "<tr><td><a href='mailto: " + super_email + "'>Email: " + super_email + "</a></td></tr>"
     text += "</table>"
     document.getElementById("client_super_info").innerHTML = text;
