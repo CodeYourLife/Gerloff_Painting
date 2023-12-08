@@ -125,7 +125,7 @@ contact_info_form.contact.value=""
                 contact_info_form.contact.value = parsedData.contact}
                 else {text += "<tr><td>Contact: None</td></tr>";}
            if (parsedData.phone){
-                text += "<tr><td><a href='tel:+ " + parsedData.phone + "'>Phone: " + parsedData.phone + "</a></td></tr>";
+                text += "<tr><td><a href='tel:" + parsedData.phone + "'>Phone: " + parsedData.phone + "</a></td></tr>";
                 contact_info_form.phone.value = parsedData.phone}
                 else {text += "<tr><td>Phone: None</td></tr>";}
            if (parsedData.email){
