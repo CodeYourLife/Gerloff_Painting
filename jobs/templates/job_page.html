@@ -276,10 +276,13 @@ function submit_new_super(){
         url: '/superintendent/super_ajax',
         data: {'job_number':pmform3.job_number.value, 'select_super':pmform3.select_super.value},
         success: function (data) {
-            begin = document.getElementById("TEST_BRO").innerHTML.search("</b>") + 6
+            alert(document.getElementById("TEST_BRO").innerHTML)
+            alert(pmform3.select_super.options[pmform3.select_super.selectedIndex].text)
+            begin = document.getElementById("TEST_BRO").innerHTML.search("</b>") + 4
             end = document.getElementById("TEST_BRO").innerHTML.search("</a>")
             left = document.getElementById("TEST_BRO").innerHTML.substring(0,begin)
-            document.getElementById("TEST_BRO").innerHTML = left + pmform3.select_super.options[pmform3.select_super.selectedIndex].text + "</a>"
+            alert(left)
+            document.getElementById("TEST_BRO").innerHTML = left + pmform3.select_super.options[pmform3.select_super.selectedIndex].text
        }
     })
 }
