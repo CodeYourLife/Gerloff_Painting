@@ -108,12 +108,18 @@ input[type=number] {
 $(document).ready(function () {
     var table = $('#job_table').DataTable({paging:false,searching:false,info: false});
 })
-var invoice_total = 0;
+
+
+var global_to_date = 0
+var global_total_contract = 0
 
 function update_percentage(event){
 type = document.getElementById("type"+event.currentTarget.id).value
 percentage_cell = document.getElementById("percentage"+event.currentTarget.id)
+if (event.currentTarget.value){
 current_total=parseFloat(event.currentTarget.value)
+}
+else {current_total = 0}
 quantity_ordered_cell = document.getElementById("quantity_ordered"+event.currentTarget.id)
 
 if (type == "Lump Sum"){
@@ -126,33 +132,48 @@ else{
 }
 total_to_date = current_total + previous
 percentage_calc = parseFloat(total_to_date/totalcost *100).toFixed(1)
-percentage_cell.innerHTML = String(percentage_calc)+ "%"
-calculate_total()
+if (previous + current_total > totalcost){
+alert("You can't bill for more than the contract")
+event.currentTarget.value = ""
+percentage_cell.innerHTML = ""
+}
+else{percentage_cell.innerHTML = String(percentage_calc)+ "%"}
+calculate_invoice_total()
 }
 
-function calculate_total(){
-	const forms = document.querySelectorAll('form');
-	const form = forms[0];
-	let contract_total = 0
+function calculate_invoice_total(){
+	form = invoice_form
+	let invoice_total = 0
+	let total_to_date = 0
+	let previously_billed = 0
+	let total_contract = 0
+	console.log("HERE")
 	Array.from(form.elements).forEach((input) => {
-	  	if (input.id == "item_number"){
-			item_number = String(input.value)
-			type = document.getElementById("type"+ item_number).value
-			if (document.getElementById(item_number).value != ""){
-				if (type == "Lump Sum"){
-					contract_total = contract_total + parseInt(document.getElementById(item_number).value)
+	  	if (input.name.substring(0,8) == "quantity"){
+			item_number = String(input.id)
+			if (input.value){
+				quantity = parseInt(input.value)
+				console.log("HERE2")
+				if (document.getElementById("type"+ item_number).value == "Lump Sum"){
+					console.log("HERE3")
+					invoice_total += quantity
 				}
-				else{
-					rate = parseInt(document.getElementById("SOV_rate" + item_number).value)
-					quantity = parseInt(document.getElementById(item_number).value)
-					contract_total = contract_total + rate*quantity
+				else {
+						rate = parseInt(document.getElementById("SOV_rate" + item_number).value)
+						invoice_total += rate*quantity
 				}
-
-
 			}
+			previously_billed += parseInt(document.getElementById("previous"+ item_number).value)
+			total_contract += parseInt(document.getElementById("total_cost"+ item_number).value)
 		}
 	});
-	document.getElementById("contract_total").innerHTML="<b>Total Invoice:</b> $" + contract_total
+	total_to_date += invoice_total + previously_billed
+	document.getElementById("invoice_total").innerHTML="<b>Total Invoice:</b> $" + invoice_total
+	document.getElementById("total_to_date").innerHTML="<b>Total To Date:</b> $" + total_to_date
+	document.getElementById("previously_billed").innerHTML="<b>Previously Billed:</b> $" + previously_billed
+	document.getElementById("total_contract").innerHTML="<b>Total Contract:</b> $" + total_contract
+	global_to_date = total_to_date
+	global_total_contract = total_contract
 }
 
 function check_form(){
@@ -237,17 +258,18 @@ function check_form(){
 					<td style="white-space: nowrap;"><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed|floatformat}}</td>
 <!--					<td></td>-->
 					<td style="white-space: nowrap;"><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost|floatformat}} size="5" step="1" onchange="update_percentage(event)" />$</td>
+					<td><div id="percentage{{item.id}}" >{% widthratio item.total_billed item.total_cost 100 %}%</div></td>
 					{% else %}
 					<input type="hidden" id="type{{item.id}}" value="Per Unit" />
 					<td style="white-space: nowrap;"><input type="hidden" id="quantity_ordered{{item.id}}" value="{{item.SOV_total_ordered}}" />{{item.SOV_total_ordered|floatformat}} {{item.SOV_unit}}</td>
-<input type="hidden" id="SOV_rate{{item.id}}" value="{{item.SOV_rate}}" />
+<input type="hidden" id="SOV_rate{{item.id}}" value="{{item.SOV_rate}}" /><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />
 					<!--					<td><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>-->
-					<td style="white-space: nowrap;"><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.quantity_billed}}" />{{item.quantity_billed|floatformat}} {{item.SOV_unit}}</td>
+					<td style="white-space: nowrap;"><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" /><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.quantity_billed}}" />{{item.quantity_billed|floatformat}} {{item.SOV_unit}}</td>
 <!--					<td><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>-->
 					<td style="white-space: nowrap;"><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty|floatformat}} size="5" step="1" onchange="update_percentage(event)" />{{item.SOV_unit}}</td>
 <!--					<td><input type="hidden" id="current_total{{item.id}}" value="" /></td>-->
+					<td><div id="percentage{{item.id}}" >{% widthratio item.quantity_billed item.SOV_total_ordered 100 %}%</div></td>
 					{% endif %}
-					<td><div id="percentage{{item.id}}" ></div></td>
 					<td><input type="text"  name="note{{item.id}}" size="40" /></td>
 				</tr>
 				{% endfor %}
@@ -257,7 +279,14 @@ function check_form(){
 	<br>
 	<div id="contract_total"></div>
 </div>
-
+ <div id="previously_billed"></div>
+ <br>
+<div id="invoice_total"></div>
+	 <br>
+<div id="total_to_date"></div>
+	 <br>
+ <div id="total_contract"></div>
+	 <br>
 <input type="submit" name="Form3" class="btn btn-primary btn-sm" value="Send Invoice for Approval" />
     </form>
 
