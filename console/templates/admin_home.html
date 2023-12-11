@@ -24,7 +24,12 @@
 $(document).ready(function () {
     var table = $('#employees_table').DataTable({paging:false});
     var table = $('#subs_table').DataTable({paging:false});
+    document.getElementById("check_booked_jobs").style.display = "none"
 })
+
+function show_check_booked_jobs(){
+document.getElementById("check_booked_jobs").style.display = "block"
+}
 
 	</script>
 </head>
@@ -101,7 +106,7 @@ $(document).ready(function () {
 
             </div>
         </div>
-</div>
+
     <div class="card">
         <div class="card-header" id="headingOne" style="background-color:hsla(128,100%, 80%);">
             <h5 class="mb-0">
@@ -128,6 +133,20 @@ $(document).ready(function () {
 								Give Subcontractor Web Access	</div>
 						</a>
 <br>
+
+<a href = "javascript:show_check_booked_jobs()">Compare Open Jobs to MC </a>
+<div id="check_booked_jobs">
+<p>Run a booked jobs report. Delete closed jobs.  Save it and upload it here. This will Open and Close jobs in Tinity, then product a report showing what it did</p>
+
+<form name = add_file action="{% url 'audit_MC_open_jobs' %}" method="post" enctype="multipart/form-data">
+	{% csrf_token %}
+	Open Jobs Spreadsheet: <input type= "file" name="upload_file" id="upload_file" />
+	<br>
+	<br>
+	<input type="submit" value="Upload Booked Jobs List" />
+</form>
+
+</div>
 <!--<a href = "{% url 'reset_databases' %}">-->
 <!--							<div style="height:100%;width:100%">-->
 <!--								Reset Databases-Don't Click	</div>-->

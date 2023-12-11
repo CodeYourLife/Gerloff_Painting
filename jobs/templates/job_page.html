@@ -887,17 +887,21 @@ document.getElementById("notes_filter_button").style.display = "none";
 </div>
 
     <div class="row h-100 d-flex align-items-center">
-                <div style="margin: 5px;" class="col-sm-4">
+        {% if has_rentals %}
+        <div style="margin: 5px;" class="col-sm-4">
             <input class="btn btn-primary btn-sm"  data-toggle="modal" data-target="#off_rent-modal" value="Call Equipment Off-Rent"/>
         </div>
+        {% endif %}
 <!--        <div style="margin: 5px;" class="col-sm-3">-->
 <!--            <form action="{% url 'change_order_new' job.job_number %}"><input type="submit" class="btn btn-primary btn-sm" value="New Change Order"/>-->
 <!--            </form>-->
 <!--        </div>-->
+        {% if has_equipment %}
         <div style="margin: 5px;" class="col-sm-4">
             <form action="{% url 'request_pickup' jobnumber=job.job_number item='ALL' pickup='ALL' status='ALL' %}"><input type="submit" class="btn btn-primary btn-sm" value="Request Equipment Pickup"/>
             </form>
         </div>
+        {% endif %}
         <div style="margin: 5px;" class="col-sm-4">
     {% if job.is_waiting_for_punchlist == True %}
         {% if job.is_labor_done == True %}
