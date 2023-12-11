@@ -284,7 +284,48 @@ def update_job_info(request, jobnumber):
                   {'data': prices_json, 'startdate': startdate, 'notes': notes, 'selectedjob': selectedjob,
                    'allclients': allclients, 'superintendents': superintendents, 'estimators': estimators,
                    'pms_filter': pms_filter})
+@login_required(login_url='/accounts/login')
+def audit_MC_open_jobs(request):
+    send_data = {}
+    if request.method == 'POST':
+        if 'upload_file' in request.FILES:
+            fileitem = request.FILES['upload_file']
+            fn2 = os.path.join(settings.MEDIA_ROOT, "job_upload", "Temp.xlsx")
+            open(fn2, 'wb').write(fileitem.file.read())
+            wb_obj = openpyxl.load_workbook(filename=request.FILES['upload_file'].file)
+            sheet_obj = wb_obj["Booked"]
+            client_name = sheet_obj.cell(row=16, column=2).value
+            needs_to_be_opened = []
+            needs_to_be_closed = []
+            not_found = []
+            open_jobs = []
+            a = 3
+            while sheet_obj.cell(row=a,column=1).value != None:
+                job_number= sheet_obj.cell(row=a, column=1).value
+                open_jobs.append(job_number)
+                if Jobs.objects.filter(job_number=job_number).exists():
+                    job = Jobs.objects.get(job_number=job_number)
+                    if job.is_closed == True:
+                        job.is_closed = False
+                        job.save()
+                        needs_to_be_opened.append({'job_number': job_number,'job_name': job.job_name})
+                else:
+                    not_found.append(job_number)
+                a=a+1
+                if a > 1000:
+                    break
+            for x in Jobs.objects.filter(is_closed = False):
+                if x.job_number not in open_jobs:
+                    needs_to_be_closed.append({'job_number': x.job_number,'job_name': x.job_name})
+                    x.is_closed = True
+                    x.save()
 
+    send_data['needs_to_be_opened'] =needs_to_be_opened
+    send_data['needs_to_be_closed'] =needs_to_be_closed
+    send_data['not_found'] =not_found
+    send_data['employees'] = Employees.objects.filter(user__isnull=True, active=True)
+    send_data['subs'] = Subcontractors.objects.filter(is_inactive=False)
+    return render(request, 'multi_use_page.html', send_data)
 
 @login_required(login_url='/accounts/login')
 def upload_new_job(request):
@@ -634,6 +675,10 @@ def job_page(request, jobnumber):
                                                             is_approved=True)
     send_data['equipments'] = Inventory.objects.filter(job_number=selectedjob,is_closed=False).order_by('inventory_type')
     send_data['rentals'] = Rentals.objects.filter(job_number=selectedjob, off_rent_number__isnull=True)
+    if Inventory.objects.filter(job_number=selectedjob,is_closed=False).order_by('inventory_type').exists():
+        send_data['has_equipment'] = True
+    if Rentals.objects.filter(job_number=selectedjob, off_rent_number__isnull=True).exists():
+        send_data['has_rentals'] = True
     send_data['wallcovering2'] = Wallcovering.objects.filter(job_number=selectedjob)
     send_data['wc_not_ordereds'] = Wallcovering.objects.filter(job_number=selectedjob,
                                                                orderitems1__isnull=True)
