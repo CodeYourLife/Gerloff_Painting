@@ -105,11 +105,11 @@ input[type=number] {
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
     <script type="text/javascript" class="init">
 $(document).ready(function () {
-    if ('{{edit_row}}'){var table = $('#sub_table').DataTable({paging: false, searching: false});}
+    if ('{{edit_row}}'){var table = $('#sub_table').DataTable({paging: false, searching: false, ordering: false});}
     else{
-    var table = $('#sub_table').DataTable({paging: false, searching: false,columnDefs:[{targets: 3, render: $.fn.dataTable.render.number(',','.',0,'$')}]});
+    var table = $('#sub_table').DataTable({paging: false, ordering: false, searching: false,columnDefs:[{targets: 3, render: $.fn.dataTable.render.number(',','.',0,'$')}]});
     }
-    var table = $('#invoice_table').DataTable({paging: false, searching: false,columnDefs:[{targets: [2,3], render: $.fn.dataTable.render.number(',','.',0,'$')}]});
+    var table = $('#invoice_table').DataTable({paging: false, ordering: false, searching: false,columnDefs:[{targets: [2,3], render: $.fn.dataTable.render.number(',','.',0,'$')}]});
     document.getElementById("hide_retainage").style.display="none"
     if ('{{subcontract.is_retainage}}' == "True"){
     document.getElementById("hide_retainage").style.display="block"

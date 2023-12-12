@@ -563,10 +563,10 @@ def subcontractor_home(request):
 def subcontract(request, id):
     send_data = {}
     subcontract = Subcontracts.objects.get(id=id)
-    send_data['invoices'] = SubcontractorInvoice.objects.filter(subcontract=subcontract)
+    send_data['invoices'] = SubcontractorInvoice.objects.filter(subcontract=subcontract).order_by('id')
     items = []
     number_items = 0
-    for x in SubcontractItems.objects.filter(subcontract=subcontract):
+    for x in SubcontractItems.objects.filter(subcontract=subcontract).order_by('id'):
         number_items = number_items + 1
         totalcost = float(x.total_cost())
         totalbilled = float(x.total_billed())
