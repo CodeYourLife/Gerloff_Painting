@@ -28,7 +28,7 @@ class Vendors(models.Model):
     company_email = models.EmailField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.company_name}"
+        return f"{self.company_name}-{self.category.category}"
 
 
 class VendorContact(models.Model):
