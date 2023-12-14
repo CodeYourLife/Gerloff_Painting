@@ -155,12 +155,17 @@ return false;
 }
 }
 
+
 function update_percentage(event){
 percentage_cell = document.getElementById("percentage"+event.currentTarget.id)
 if(event.currentTarget.value){
-current_total=parseFloat(event.currentTarget.value)
+		current_total=parseFloat(event.currentTarget.value)
+		event.currentTarget.value = Number(event.currentTarget.value)
 }
-else{current_total = 0}
+else{
+	current_total = 0
+	event.currentTarget.value = 0
+	}
 quantity_ordered_cell = document.getElementById("quantity_ordered"+event.currentTarget.id)
 if (quantity_ordered_cell.value == "1 Lump Sum"){
 	previous = parseFloat(document.getElementById("previous"+event.currentTarget.id).value)
@@ -183,8 +188,6 @@ calculate_invoice_total()
 
 function calculate_invoice_total(){
 	form = changes_form
-<!--	const forms = document.querySelectorAll('form');-->
-<!--	const form = forms[0];-->
 	let invoice_total = 0
 	let total_to_date = 0
 	let previously_billed = 0
@@ -217,6 +220,11 @@ function calculate_invoice_total(){
 	});
 	total_to_date += invoice_total + previously_billed
 	document.getElementById("invoice_total").innerHTML="<b>Total Invoice:</b> $" + invoice_total
+	retainage_percentage = "{{subcontract.retainage_percentage}}"
+	this_retainage = retainage_percentage * invoice_total
+	changes_form.this_retainage.value = this_retainage
+	total_retainage = Number("{{other_retainage}}") + Number(this_retainage)
+	document.getElementById("retainage_total").innerHTML="<b>Retainage - All Invoices Including This One:</b> $" + total_retainage
 	document.getElementById("total_to_date").innerHTML="<b>Total To Date:</b> $" + total_to_date
 	document.getElementById("previously_billed").innerHTML="<b>Previously Billed:</b> $" + previously_billed
 	document.getElementById("total_contract").innerHTML="<b>Total Contract:</b> $" + total_contract
@@ -224,7 +232,16 @@ function calculate_invoice_total(){
 	global_total_contract = total_contract
 }
 
-
+function change_retainage(){
+	current_retainage = 0
+	if (changes_form.this_retainage.value){
+		current_retainage = Number(changes_form.this_retainage.value)
+		changes_form.this_retainage.value = Number(changes_form.this_retainage.value)
+	}
+	else{changes_form.this_retainage.value =0}
+	total_retainage = Number("{{other_retainage}}") + Number(current_retainage)
+	document.getElementById("retainage_total").innerHTML="<b>Retainage - All Invoices Including This One:</b> $" + total_retainage
+}
 
 function check_form(){
 	if (global_to_date > global_total_contract){
@@ -296,6 +313,7 @@ function check_form(){
 		<input type="submit" class="btn btn-danger btn-sm" name="edit_invoice" value="Edit Invoice" />
 	</form>
 {% endif %}
+
 {% if selected_invoice %}
 	<h3>INVOICE BREAKDOWN</h3>
 	<b>Invoice #</b>{{selected_invoice.pay_app_number}}
@@ -365,8 +383,14 @@ function check_form(){
 			<tr>
 			<td>{{x.date}}</td>
 			<td><a href = "{% url 'subcontract_invoices' subcontract.id x.id %}">{{x.pay_app_number}}</a></td>
-			<td>{{x.final_amount}}</td>
-			<td>{{x.retainage}}</td>
+			{% if me_approve or other_approve or edit_now %}
+				<td><div id="invoice_total2">{{x.final_amount}}</div></td>
+				<td><div id="retainage_this2">{{x.retainage}}</div></td>
+			{% else %}
+				<td>{{x.final_amount}}</td>
+				<td>{{x.retainage}}</td>
+			{% endif %}
+
 			{% if x.is_sent == True %}
 				<td>Approved</td>
 			{% else %}
@@ -489,13 +513,20 @@ function check_form(){
 			</tbody>
 		</table>
 </div>
-	  <div id="previously_billed"></div>
+	 <br><hr>
+	 {% load humanize %}
+	  <div id="previously_billed"><b>Previously Billed:</b> ${{previously_billed|floatformat:2|intcomma }}</div>
  <br>
-<div id="invoice_total"></div>
+<div id="invoice_total"><b>Total Invoice:</b> ${{selected_invoice.final_amount|floatformat:2|intcomma }}</div>
 	 <br>
-<div id="total_to_date"></div>
+<div id="total_to_date"><b>Total To Date:</b> ${{total_billed|floatformat:2|intcomma }}</div>
 	 <br>
- <div id="total_contract"></div>
+ <div id="total_contract"><b>Total Contract:</b> ${{total_contract|floatformat:2|intcomma }}</div>
+	  <br>
+
+	 <div id="retainage_this"><b>Retainage - This Invoice:</b> <input type="number" name="this_retainage" id="this_retainage" value="{{selected_invoice.retainage}}" onChange = "change_retainage()"/></div>
+	 <br>
+	 <div id="retainage_total"><b>Retainage - All Invoices Including This One:</b> ${{total_retainage|floatformat:2|intcomma }}</div>
 	 <br>
 	 {% if me_approve or other_approve %}
 	 <button type="button" name="form6" class="btn btn-primary btn-sm" onclick="made_changes_note()" >APPROVED WITH THE ABOVE CHANGES</button>
@@ -538,6 +569,20 @@ function check_form(){
 		</table>
 </div>
 
+		 <br><hr>
+	  <div id="previously_billed"><b>Previously Billed:</b> ${{previously_billed|floatformat:2|intcomma }}</div>
+ <br>
+<div id="invoice_total"><b>Total Invoice:</b> ${{selected_invoice.final_amount|floatformat:2|intcomma }}</div>
+	 <br>
+<div id="total_to_date"><b>Total To Date:</b> ${{total_billed|floatformat:2|intcomma }}</div>
+	 <br>
+ <div id="total_contract"><b>Total Contract:</b> ${{total_contract|floatformat:2|intcomma }}</div>
+	  <br>
+
+	 <div id="retainage_this"><b>Retainage - This Invoice:</b> ${{selected_invoice.retainage|floatformat:2|intcomma }}</div>
+	 <br>
+	 <div id="retainage_total"><b>Retainage - All Invoices Including This One:</b> ${{total_retainage|floatformat:2|intcomma }}</div>
+	 <br>
 {% endif %}
 {% endif %}
 

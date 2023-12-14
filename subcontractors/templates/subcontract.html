@@ -241,7 +241,6 @@ function new_per_unit(){
     add_new_here.appendChild(hidden_input);
 
     if ("{{wallcovering_json}}"){
-        alert("HI")
         rolodex = JSON.parse("{{wallcovering_json|escapejs}}");
         var select = document.createElement("select");
         select.name = "wallcovering_number" + number_items;
@@ -371,6 +370,30 @@ function add_note(){
     	    notes_form.submit()
    		}
 }
+
+function sorry(){
+        alert("Can't release retainage if there is a pending invoice. You can go into the invoice and manually lower the retainage though")
+}
+
+function add_note2(){
+
+    	release_retainage_form.retainage_released.value = Number(release_retainage_form.retainage_released.value)
+    	if (release_retainage_form.retainage_released.value == 0){
+    	alert("Can't be Zero")
+    	return false;
+    	}
+    	else{
+            if (release_retainage_form.retainage_released.value > Number("{{total_retainage}}")){
+                alert("Cannot release more than what we held")
+                return false;
+            }
+    	}
+    	var name=prompt("New Note");
+    	if (name!=null){
+    	    release_retainage_form.new_note.value=name
+   		}
+}
+
 	</script>
 </head>
 <body>
@@ -505,9 +528,9 @@ function add_note(){
 										<tr><td>
                                         <div id="hide_retainage">
 											{% if subcontract.retainage_percentage %}
-										<input type="number" size='7' name ="retainage_percentage" id="retainage_percentage" value = "{{subcontract.retainage_percentage}}"/>
+										<input type="number" size='7' name ="retainage_percentage" id="retainage_percentage" step="0.01" max="1" value = "{{subcontract.retainage_percentage}}"/>
 											{% else %}
-											<input type="number" size='7' name ="retainage_percentage" id="retainage_percentage" value = 0 />
+											<input type="number" size='7' name ="retainage_percentage" id="retainage_percentage" step="0.01" max="1" value = 0 />
 											{% endif %}
 											<label for="retainage_percentage" >Retainage Amt.</label>
                                         </div>
@@ -531,7 +554,6 @@ function add_note(){
         </div>
     </div>
 </div>
-
 <!-- Modal -->
 <div class="modal fade" id="notes-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
@@ -569,6 +591,35 @@ function add_note(){
         </div>
     </div>
 </div>
+<!-- Modal -->
+<div class="modal fade" id="retainage-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="retainage_title">Retainage Release</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="release_retainage_form" action="{% url 'subcontract' subcontract.id %}" method="post" onSubmit = "return add_note2()" >
+                    {% csrf_token %}
+                    <br>
+                    <input type="hidden" name="new_note" id="new_note">
+                    <b>Total Retainage Held:</b> ${{total_retainage}}
+                    <br>
+                    <b>Amount to Release Now:</b><input type="number" name="retainage_released" id="retainage_released" value="{{total_retainage}}" />
+            </div>
+            <div class="modal-footer">
+                <input type="submit" class="btn btn-primary" value="Release Now" />
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Exit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <div class="container">
     <div class ="row">
@@ -668,12 +719,25 @@ function add_note(){
 
 
 <h3>INVOICING SUMMARY</h3>
+<!--    <div class="row h-100 d-flex align-items-center">-->
+<div class ="d-flex flex-row">
+     <div class="p-2">
+<!--        <div style="margin: 5px;" class="col-sm-4">-->
+            <form action="{% url 'subcontractor_invoice_new' subcontract.id %}" method="post"  >
+            {% csrf_token %}
+            <input type="submit" name="Form3" class="btn btn-success btn-sm" value="NEW INVOICE" />
+            </form>
+        </div>
 
-<form action="{% url 'subcontractor_invoice_new' subcontract.id %}" method="post"  >
-{% csrf_token %}
-<input type="submit" name="Form3" class="btn btn-success btn-sm" value="NEW INVOICE" />
-</form>
-
+          <div class="p-2">
+<!--        <div style="margin: 5px;" class="col-sm-4">-->
+              {% if is_invoice_pending %}
+            <button class="btn btn-secondary btn-sm" onclick="sorry()" >RELEASE RETAINAGE</button>
+              {% else %}
+              <button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#retainage-modal" >RELEASE RETAINAGE</button>
+              {% endif %}
+        </div>
+</div>
 <br>
 
 <div class="demo-html" style="width:90%">
@@ -707,6 +771,23 @@ function add_note(){
 		</table>
 </div>
 
+<br><hr>
+{% load humanize %}
+
+<div id="total_to_date"><b>Total Billed To Date:</b> ${{total_billed}}</div>
+	 <br>
+<div id="total_pending"><b>Total Currently Pending:</b> ${{total_pending|floatformat:2|intcomma }}</div>
+	 <br>
+    <div id="total_billed_and_pending"><b>Total Billed and Pending:</b> ${{total_billed_and_pending|floatformat:2|intcomma }}</div>
+	 <br>
+ <div id="total_contract"><b>Total Contract:</b> ${{total_contract}}</div>
+	  <br>
+ <div id="prior_retainage"><b>Prior Retainage:</b> ${{total_retainage|floatformat:2|intcomma }}</div>
+	  <br>
+     <div id="pending_retainage"><b>Retainage Pending:</b> ${{total_retainage_pending|floatformat:2|intcomma }}</div>
+	  <br>
+	 <div id="retainage_total"><b>Total Retainage:</b> ${{final_retainage|floatformat:2|intcomma }}</div>
+	 <br>
 </body>
 </html>
 

@@ -252,6 +252,7 @@ contact_info_form.contact.value=""
             <th>Subcontractor</th>
             <th>PO#</th>
             <th>%</th>
+            <th>Ret.</th>
         </tr>
         </thead>
         <tbody>
@@ -265,6 +266,7 @@ contact_info_form.contact.value=""
             <td onclick="go_to_subcontract('{{x.id}}')" ><a href="#">GoTo PO</a></td>
             {% endif %}
             <td>{{x.percent_complete}}</td>
+            <td>${{x.retainage}}</td>
         </tr>
         {% endfor %}
         </tbody>

@@ -59,6 +59,12 @@ class Subcontracts(models.Model):
     def __str__(self):
         return f"{self.subcontractor} {self.job_number}"
 
+    def total_pending_amount(self):
+        total = 0
+        for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=False):
+            total = total + x.final_amount
+        return total
+
     def total_billed(self):
         total = 0
         for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=True):
@@ -68,6 +74,12 @@ class Subcontracts(models.Model):
     def total_retainage(self):
         total = 0
         for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=True):
+            total = total + x.retainage
+        return total
+
+    def total_retainage_pending(self):
+        total = 0
+        for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=False):
             total = total + x.retainage
         return total
 
