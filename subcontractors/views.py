@@ -289,10 +289,6 @@ def subcontract_invoices(request, subcontract_id, item_id):
                 for x in SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice):
                     invoicetotal = invoicetotal + x.total_cost()
                 invoice.final_amount = invoicetotal
-                if subcontract.is_retainage == True:
-                    invoice.retainage = invoicetotal * subcontract.retainage_percentage
-                else:
-                    invoice.retainage = 0
                 approved = True
                 if 'is_other_approver_id' in request.POST:
                     other_approval = InvoiceApprovals.objects.get(id=request.POST['is_other_approver_id'])
@@ -353,10 +349,6 @@ def subcontract_invoices(request, subcontract_id, item_id):
             for x in SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice):
                 invoicetotal = invoicetotal + x.total_cost()
             invoice.final_amount = invoicetotal
-            if subcontract.is_retainage == True:
-                invoice.retainage = invoicetotal * subcontract.retainage_percentage
-            else:
-                invoice.retainage = 0
             approvers = InvoiceApprovals.objects.filter(invoice=selected_invoice)
             approved = True
             current_employee = Employees.objects.get(user=request.user)
@@ -391,10 +383,13 @@ def subcontract_invoices(request, subcontract_id, item_id):
             selected_invoice = SubcontractorInvoice.objects.get(id=item_id)
             invoice = SubcontractorInvoice.objects.get(id=item_id)
             invoicetotal = 0
+            note2=""
             for x in SubcontractItems.objects.filter(subcontract=subcontract):
                 if request.POST['quantity' + str(x.id)] != '':
                     if SubcontractorInvoiceItem.objects.filter(invoice=invoice, sov_item=x).exists():
                         item = SubcontractorInvoiceItem.objects.get(invoice=invoice, sov_item=x)
+                        if item.quantity != request.POST['quantity' + str(x.id)]:
+                            note2 += x.SOV_description + "- changed from " + str(item.quantity) + " to " + str(request.POST['quantity' + str(x.id)]) + ". "
                         item.quantity = request.POST['quantity' + str(x.id)]
                         item.notes = request.POST['note' + str(x.id)]
                         item.save()
@@ -402,19 +397,19 @@ def subcontract_invoices(request, subcontract_id, item_id):
                         SubcontractorInvoiceItem.objects.create(invoice=invoice, sov_item=x,
                                                                 quantity=request.POST['quantity' + str(x.id)],
                                                                 notes=request.POST['note' + str(x.id)])
+                        note2 += x.SOV_description + "- added to invoice. Quantity: " + str(request.POST['quantity' + str(x.id)]) + ". "
                 else:
                     if SubcontractorInvoiceItem.objects.filter(invoice=invoice, sov_item=x).exists():
                         item = SubcontractorInvoiceItem.objects.get(invoice=invoice, sov_item=x)
+                        if item.quantity != 0:
+                            note2 += x.SOV_description + "- changed from " + str(item.quantity) + " to 0. "
                         item.quantity = 0
                         item.notes = request.POST['note' + str(x.id)]
                         item.save()
             for x in SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice):
                 invoicetotal = invoicetotal + x.total_cost()
             invoice.final_amount = invoicetotal
-            if subcontract.is_retainage == True:
-                invoice.retainage = invoicetotal * subcontract.retainage_percentage
-            else:
-                invoice.retainage = 0
+            invoice.retainage = request.POST['this_retainage']
             approvers = InvoiceApprovals.objects.filter(invoice=selected_invoice)
             approved = True
             current_employee = Employees.objects.get(user=request.user)
@@ -423,12 +418,12 @@ def subcontract_invoices(request, subcontract_id, item_id):
                 other_approval = InvoiceApprovals.objects.get(id=request.POST['is_other_approver_id'])
                 current_employee = Employees.objects.get(id=other_approval.employee.id)
                 note = "Invoice " + str(invoice.pay_app_number) + " Approved - Made Changes! On behalf of " + str(
-                    current_employee) + ". " + request.POST['change_notes']
+                    current_employee) + ". " + note2 + ". " + request.POST['change_notes']
             elif 'editing_now' in request.POST:
-                note = "Invoice " + str(invoice.pay_app_number) + " Edited. " + request.POST[
+                note = "Invoice " + str(invoice.pay_app_number) + " Edited. " + note2 + ". " + request.POST[
                     'change_notes']
             else:
-                note = "Invoice " + str(invoice.pay_app_number) + " Approved - Made Changes! " + request.POST[
+                note = "Invoice " + str(invoice.pay_app_number) + " Approved - Made Changes! " + note2 + ". " + request.POST[
                     'change_notes']
             if 'editing_now' not in request.POST:
                 for x in approvers:
@@ -465,6 +460,16 @@ def subcontract_invoices(request, subcontract_id, item_id):
         send_data['invoice_items'] = invoice_items
         notes = SubcontractNotes.objects.filter(subcontract=subcontract, invoice=selected_invoice)
         send_data['notes'] = notes
+        other_retainage=0
+        previously_billed=0
+        for x in SubcontractorInvoice.objects.filter(subcontract=subcontract).exclude(id=item_id):
+            if x.retainage: other_retainage += x.retainage
+            if x.final_amount: previously_billed += x.final_amount
+        send_data['previously_billed'] = previously_billed
+        send_data['total_billed'] = previously_billed + selected_invoice.final_amount
+        send_data['other_retainage'] = other_retainage
+        send_data['total_retainage'] = other_retainage + selected_invoice.retainage
+        send_data['total_contract'] = subcontract.total_contract_amount()
         if InvoiceApprovals.objects.filter(employee=Employees.objects.get(user=request.user), invoice=selected_invoice,
                                            is_approved=False).exists():
             send_data['me_approve'] = True
@@ -584,6 +589,14 @@ def subcontract(request, id):
     send_data['items'] = items
     send_data['number_items'] = number_items
     send_data['notes'] = SubcontractNotes.objects.filter(subcontract=subcontract)
+    send_data['total_billed'] = subcontract.total_billed()
+    send_data['total_contract']=subcontract.total_contract_amount()
+    send_data['total_retainage'] =subcontract.total_retainage()
+    send_data['total_pending'] = subcontract.total_pending_amount()
+    send_data['total_billed_and_pending'] = float(subcontract.total_pending_amount())+float(subcontract.total_billed())
+    send_data['total_retainage_pending'] = subcontract.total_retainage_pending()
+    send_data['final_retainage'] = float(subcontract.total_retainage_pending())+float(subcontract.total_retainage())
+    if subcontract.invoice_pending(): send_data['is_invoice_pending']=True
     if Wallcovering.objects.filter(job_number=subcontract.job_number):
         wallcovering = Wallcovering.objects.filter(job_number=subcontract.job_number)
         wallcovering_json1 = []
@@ -593,6 +606,25 @@ def subcontract(request, id):
                  'estimated_unit': x.estimated_unit, 'quantity_ordered': int(x.quantity_ordered())})
         send_data['wallcovering_json'] = json.dumps(list(wallcovering_json1), cls=DjangoJSONEncoder)
     if request.method == 'POST':
+        if 'retainage_released' in request.POST:
+            today = datetime.date.today()
+            friday = today + datetime.timedelta((4 - today.weekday()) % 7)
+            if SubcontractorInvoice.objects.filter(subcontract=subcontract).exists():
+                next_number = SubcontractorInvoice.objects.filter(subcontract=subcontract).latest(
+                    'pay_app_number').pay_app_number + 1
+            else:
+                next_number = 1
+            if today.weekday() == 4 or today.weekday() == 3 or today.weekday() == 2: friday = friday + timedelta(7)
+            invoice = SubcontractorInvoice.objects.create(date=date.today(), pay_app_number=next_number,
+                                                          subcontract=subcontract, pay_date=friday,final_amount=0,retainage=0-float(request.POST['retainage_released']),notes=request.POST['new_note'])
+            SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
+                                            user=Employees.objects.get(user=request.user),
+                                            note="Retainage released- " + request.POST['new_note'], invoice=invoice)
+            InvoiceApprovals.objects.create(employee=Employees.objects.get(id=22), invoice=invoice)
+            InvoiceApprovals.objects.create(employee=Employees.objects.get(id=18), invoice=invoice)
+            if subcontract.job_number.superintendent != Employees.objects.get(id=22):
+                InvoiceApprovals.objects.create(employee=subcontract.job_number.superintendent, invoice=invoice)
+            return redirect('subcontract',id=id)
         if 'change_header' in request.POST:
             subcontract.po_number = request.POST['po_number']
             subcontract.date = request.POST['issued_date']
@@ -786,7 +818,7 @@ def subcontracts_home(request):
     for x in Subcontracts.objects.filter(is_closed=False):  # str(format(x.percent_complete(),".0%"))
         subcontracts.append({'job_name': x.job_number.job_name, 'job_number': x.job_number.job_number,
                              'subcontractor': x.subcontractor.company, 'subcontractor_id': x.subcontractor.id,
-                             'po_number': x.po_number, 'id': x.id,
+                             'po_number': x.po_number, 'id': x.id, 'retainage': x.total_retainage(),
                              'percent_complete': format(x.percent_complete(), ".0%")})
     return render(request, "subcontracts_home.html", {'subcontracts': subcontracts})
 
