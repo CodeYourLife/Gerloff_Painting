@@ -362,6 +362,7 @@ window.onload = function() {
     $.fn.dataTable.moment( 'MMM-DD-YYYY' );
     var table = $('#notes_table').DataTable({paging: false,info:false, ordering:false, searching:false})
     var table = $('#subcontractors_table').DataTable({paging: false})
+    var table = $('#approved_changes_table').DataTable({paging: false, ordering:false, searching:false})
     document.getElementById("show_new_pm").style.display = "none";
     document.getElementById("show_new_super").style.display = "none";
     document.getElementById("dropbox_link_hide").style.display = "none";
@@ -802,7 +803,9 @@ document.getElementById("notes_filter_button").style.display = "none";
         </div>
     </div>
 </div>
-    <div class="modal fade" id="add-employees-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+
+<!-- Modal -->
+<div class="modal fade" id="add-employees-modal" tabindex="-1" role="dialog" aria-labelledby="title"
          aria-hidden="true">
         <form id="add-employee" action="{% url 'job_page' job.job_number %}" method="post">
             {% csrf_token %}
@@ -845,7 +848,44 @@ document.getElementById("notes_filter_button").style.display = "none";
         </form>
     </div>
 
+<!-- Modal -->
+<div class="modal fade" id="contract_amount-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="contract_amount_title"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="contract_amount_info">
+                                <table>
+                                    <tr><td><b>Original Contract:</b></td><td>${{orig_contract_amount}}</td></tr>
+                                    <tr><td><b>{{pending_count}} Pending Change Orders:</b></td><td>${{pending_co_amount}}</td></tr>
+                                    <tr><td><b>{{count_approved_changes}} Approved Change Orders:</b></td><td>${{approved_co_amount}}</td></tr>
+                                    <tr><td><b>Current Contract:</b></td><td>${{contract_amount}}</td></tr>
+                                </table>
+                                                                <br><hr>
+                                <h5>Formal Change Orders:</h5>
+                                <table>
+                                    {% for x in formals %}
+                                    <tr><td><b> Formal # </b>{{x.gc_number}}</td><td>{{x.description}}</td><td>{{x.total}}/td></tr>
+                                {% endfor %}
+                                </table>
 
+                            </div>
+                        </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div style="background-color:hsl(202, 64%, 95%);">
 <!--Header info-->
@@ -874,9 +914,8 @@ document.getElementById("notes_filter_button").style.display = "none";
         <div class="col-sm-4 list-items"><b>Gerloff Estimator:</b> {{job.estimator}}</div>
     </div>
     <div class="row">
-        <div class="col-sm-4 list-items">
-            <b>Contract Amount:</b> {% if job.is_t_m_job == True %} T&M {% else %}
-            ${{contract_amount}}{% endif %}
+
+        <div class="col-sm-4 list-items" data-toggle="modal" data-target="#contract_amount-modal"><b>Contract Amount:</b><a href ='#'>${{contract_amount}}</a>
         </div>
         <div class="col-sm-8 list-items">
         </div>
@@ -1119,7 +1158,7 @@ document.getElementById("notes_filter_button").style.display = "none";
         <div id="collapseFour" class="collapse hide" aria-labelledby="headingFour" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
-                    <table id="tickets_table2" class="display table">
+                    <table id="approved_changes_table" class="display table">
                         <thead class="colored-header">
 
                         <tr>

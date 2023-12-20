@@ -66,7 +66,13 @@
                 notes_section.value = name;
             }
         }
-
+function prompt_note(){
+            var name=prompt("Note:");
+            if (name!=null){
+            note_input.new_note.value = name
+            note_input.submit()
+            }
+}
 
     </script>
 </head>
@@ -84,76 +90,113 @@
     </div>
 </nav>
 <div class="container" style="margin-bottom: 20px;">
-    <h2 style="text-align: center" class="h2">{{changeorder.job_number.job_number}} -
-        {{changeorder.job_number.job_name}} - Change Order
-        #{{changeorder.cop_number}} - {{changeorder.description}}</h2>
+    <h4 style="text-align: center" class="h4">{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} </h4>
+        <h4 style="text-align: center" class="h4">Change Order #{{changeorder.cop_number}}</h4>
+        <h4 style="text-align: center" class="h4">{{changeorder.description}}</h4>
     <div class="row h-100 w-100 d-flex justify-content-left">
         <div style="padding: 5px" class="form-group">
             <form action="{% url 'job_page' changeorder.job_number.job_number %}">
                 {% csrf_token %}
-                <input type="submit" style="width=250px" class="btn btn-primary btn-sm" name="goto_job"
+                <input type="submit" style="width=250px" class="btn btn-info btn-sm" name="goto_job"
                        value="Go To Job Page"/>
             </form>
         </div>
         <div style="padding: 5px" class="form-group">
             <form action="{% url 'extra_work_ticket' changeorder.id %}" method="post">
                 {% csrf_token %}
-                <input type="submit" style="width=250px" class="btn btn-primary btn-sm" name="open_folder"
+                <input type="submit" style="width=250px" class="btn btn-info btn-sm" name="open_folder"
                        value="Open Change Order Folder to View Files"/>
             </form>
         </div>
     </div>
+</div>
     <br>
-    <div class="container row">
-        <div class="col-12">
-            <font color="red">Upload Documents (Pictures, Invoice, Etc.) For This Change Order</font>
-            <form action="{% url 'extra_work_ticket' changeorder.id %}" method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="input-group">
-                  <input type="file" class="form-control" name="upload_file" id="upload_file" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
-                  <input class="btn btn-outline-secondary" type="submit" value="Upload File" id="inputGroupFileAddon04" />
-                </div>
-            </form>
+<div class="container">
+<div id="accordion">
+    <div class="card">
+        <div class="card-header" id="headingZero" style="background-color:hsla(128,100%, 80%);">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseZero" aria-expanded="false"
+                        aria-controls="collapseZero">
+                    Files and Attachments
+                </button>
+            </h5>
         </div>
-    </div>
-    <div class="row">
-        <div class="col-12">
-            <font color="red">Here are the documents that have been uploaded for this change order</font>
-            <ul>
-                {% for x in foldercontents %}
-                <li>
-
-                    <div class="col-12">
-                        <a style="color: blue; cursor: pointer;" name="get_directory_contents"
-                           href="{% url 'get_directory_contents' changeorder.id x 'changeorder' %}" target="_blank">{{x}}</a>
-                        <br>
+        <div id="collapseZero" class="collapse hide" aria-labelledby="headingZero" data-parent="#accordion">
+            <div class="card-body">
+                <div class="container row">
+                        <div class="col-12">
+                            <font color="red">Upload Documents (Pictures, Invoice, Etc.) For This Change Order</font>
+                            <form action="{% url 'extra_work_ticket' changeorder.id %}" method="post" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="input-group">
+                                  <input type="file" class="form-control" name="upload_file" id="upload_file" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
+                                  <input class="btn btn-outline-secondary" type="submit" value="Upload File" id="inputGroupFileAddon04" />
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-    <hr>
-    <div class="row">
-        <div class="col-12">
-            {% if notes %}
-            <h5>NOTES</h5>
+                    <div class="row">
+                        <div class="col-12">
+                            {% if no_folder_contents %}
+                            <font color="red">No documents exist yet for this change order</font>
+                            {% else %}
+                            <font color="red">Here are the documents that have been uploaded for this change order</font>
+                            <ul>
+                                {% for x in foldercontents %}
+                                <li>
 
-            {% for note in notes %}
-            <h7>[{{note.date}}- {{note.user}}] {{note.note}}</h7>
-            <br>
-            {% endfor %}
-            {% endif %}
-            <br>
-            <form name='note_input' action="{% url 'extra_work_ticket' changeorder.id %}" method="post">
-                {% csrf_token %}
-                <label for="new_note">Add a new note</label> <br>
-                <textarea id="new_note" name="new_note" rows="2" style="width: 100%"></textarea>
-                <input type="submit" class="btn btn-secondary btn-sm" name='submit_form2' value="Add Note"/>
-            </form>
+                                    <div class="col-12">
+                                        <a style="color: blue; cursor: pointer;" name="get_directory_contents"
+                                           href="{% url 'get_directory_contents' changeorder.id x 'changeorder' %}" target="_blank">{{x}}</a>
+                                        <br>
+                                    </div>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+            </div>
         </div>
     </div>
-    <hr>
+
+    <div class="card">
+        <div class="card-header" id="headingOne" style="background-color:hsla(128,100%, 80%);">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false"
+                        aria-controls="collapseOne">
+                    Notes
+                </button>
+            </h5>
+        </div>
+        <div id="collapseOne" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">
+            <div class="card-body">
+                <div class="row">
+                        <div class="col-12">
+                            {% if notes %}
+                            <h5>NOTES</h5>
+
+                            {% for note in notes %}
+                            <h7>[{{note.date}}- {{note.user}}] {{note.note}}</h7>
+                            <br>
+                            {% endfor %}
+                            {% endif %}
+                            <br>
+                            <form name='note_input' action="{% url 'extra_work_ticket' changeorder.id %}" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="new_note" id="new_note" value=""/>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="prompt_note()">Add a Note </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+</div>
+</div>
+<div class="container">
     {% if changeorder.is_closed == True %}
     <h1>VOIDED</h1>
     {% else %}
@@ -218,7 +261,7 @@
     <form action="{% url 'preview_TMProposal' tmproposal.id %}">
         <input type="submit" class="btn btn-secondary btn-sm" style="margin-bottom: 5px" name="view_proposal" value="View Proposal"/></form>
     {% else %}
-    <form action="{% url 'preview_TMProposal' changeorder.tmproposal.id %}">
+    <form action="{% url 'preview_TMProposal' changeorder.id %}">
         <input type="submit" class="btn btn-secondary btn-sm" name="view_proposal" value="View Proposal(need to code)"/>
     </form>
     {% endif %}
@@ -265,7 +308,7 @@
           onSubmit="void_notes1('void_notes')">
         {% csrf_token %}
         <input style="margin-bottom: 5px;" type="hidden" name="void_notes" id="void_notes"/>
-        <input style="margin-bottom: 5px;" type="submit" class="btn btn-secondary btn-sm" name='submit_form4' value="VOID"/>
+        <input style="margin-bottom: 5px;" type="submit" class="btn btn-secondary btn-sm" name='submit_form4' {% if changeorder.is_closed == True %}value="RE-OPEN"{% else %} value="VOID" {% endif %}/>
     </form>
     <button style="margin-bottom: 5px;" class="btn btn-primary btn-sm" onclick="Previous()">Back to Previous Page</button>
 </div>
