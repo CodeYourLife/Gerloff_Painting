@@ -185,13 +185,6 @@ function populate_start_date_modal(jobnumber,startdate,is_active,x,origin){
             })
             text += "</table>"
             document.getElementById("notes_tab").innerHTML = text;
-<!--            var d = new Date(parsedData.start_date),-->
-<!--            month = '' + (d.getMonth() + 1),-->
-<!--            day = '' + (d.getDate() + 1),-->
-<!--            year = d.getFullYear();-->
-<!--            if (month.length < 2){month = '0' + month;}-->
-<!--            if (day.length < 2){day = '0' + day;}-->
-<!--            adjusted_date=[year, month, day].join('-')-->
             adjusted_date = parsedData.start_date
             document.getElementById("title2").innerHTML = parsedData.job_name
             pmform2.date_note.value=""

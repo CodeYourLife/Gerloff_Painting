@@ -376,6 +376,7 @@ def change_order_send(request, id):
 
 @login_required(login_url='/accounts/login')
 def change_order_new(request, jobnumber):
+    send_data={}
     if request.method == 'POST':
         if 'select_job' in request.POST:
             selected_job = Jobs.objects.get(job_number=request.POST['select_job'])
@@ -410,57 +411,82 @@ def change_order_new(request, jobnumber):
                                                        note="COP Added. " + request.POST['notes'])
             return redirect('extra_work_ticket', id=changeorder.id)
     else:
-        jobs = Jobs.objects.filter(is_closed=False)
         if jobnumber == 'ALL':
-            return render(request, "change_order_new.html", {'jobs': jobs})
+            if request.method == 'GET':
+                if 'search_job' in request.GET:
+                    send_data['jobs'] = Jobs.objects.filter(job_name__icontains=request.GET['search_job'])
+                else:
+                    send_data['jobs'] = Jobs.objects.filter(is_closed=False)
+            else:
+                send_data['jobs'] = Jobs.objects.filter(is_closed=False)
         else:
-            selected_job = Jobs.objects.get(job_number=jobnumber)
-            return render(request, "change_order_new.html", {'jobs': jobs, 'selected_job': selected_job})
+            send_data['selected_job'] = Jobs.objects.get(job_number=jobnumber)
+        return render(request, "change_order_new.html", send_data)
 
 
 @login_required(login_url='/accounts/login')
 def change_order_home(request):
+    send_data = {}
+    print(request.GET)
     if request.method == 'GET':
-        search_filter = ""
-        is_ticket_signed = ""
-        try:
-            search_filter = request.GET['searchFilter']
-            is_ticket_signed = request.GET['isTicketSigned']
-        except:
-            print('not able to get values')
-        changeorders = ChangeOrders.objects.filter(is_closed=False)
-        if search_filter != "":
-            changeorders = ChangeOrders.objects.filter(is_closed=False).filter(
-                job_number__job_name__contains=search_filter)
-        if is_ticket_signed != "":
-            if is_ticket_signed == 'Yes':
-                changeorders = changeorders.filter(is_ticket_signed=True)
+        if 'search1' in request.GET: send_data['search1_exists'] = request.GET['search1']  # Needs Ticket
+        if 'search2' in request.GET: send_data['search2_exists'] = request.GET['search2']  # super
+        if 'search3' in request.GET: send_data['search3_exists'] = request.GET['search3']  # Awaiting Approval
+        if 'search4' in request.GET: send_data['search4_exists'] = request.GET['search4']  # Approved
+        if 'search5' in request.GET: send_data['search5_exists'] = request.GET['search5']  # Show T&M Only
+        if 'search6' in request.GET: send_data['search6_exists'] = request.GET['search6']  # Include Voided
+        if 'search7' in request.GET: send_data['search7_exists'] = request.GET['search7']  # Needs to be Sent
+    if 'search6' in request.GET:
+        search_cos = ChangeOrderFilter(request.GET, queryset=ChangeOrders.objects.filter())
+    else:
+        search_cos = ChangeOrderFilter(request.GET, queryset=ChangeOrders.objects.filter(is_closed=False))
+    changeorders =[]
+    for x in search_cos.qs.order_by('job_number', 'cop_number'):
+        status=""
+        if x.is_t_and_m == True:
+            if x.is_ticket_signed == True:
+                status="Ticket Signed"
             else:
-                changeorders = changeorders.filter(is_ticket_signed=False)
-        return render(request, "change_order_home.html",
-                      {'signedValue': is_ticket_signed, 'searchValue': f"{search_filter}",
-                       'changeorders': changeorders.order_by('job_number', 'cop_number')})
+                if x.need_ticket == False and x.is_printed == False:
+                    status="Ticket Not Completed"
+                else:
+                    status = "Ticket Not Signed"
+        price = None
+        if x.price: price = "{:,}".format(int(x.price))
+        changeorders.append({'job_name':x.job_number.job_name,'job_number':x.job_number.job_number,'cop_number':x.cop_number,'description':x.description,'status':status,'id':x.id,'date_sent':x.date_sent,'date_approved':x.date_approved,'is_approved':x.is_approved,'gc_number':x.gc_number,'price':price})
+    send_data['changeorders'] = changeorders
+    # send_data['changeorders'] = search_cos.qs.order_by('job_number', 'cop_number')
+    return render(request, "change_order_home.html",send_data)
 
 
 @login_required(login_url='/accounts/login')
 def extra_work_ticket(request, id):
+    send_data={}
     changeorder = ChangeOrders.objects.get(id=id)
+    send_data['changeorder'] = changeorder
     ticket_needed = changeorder.need_ticket()
+    send_data['ticket_needed']= ticket_needed
     notes = ChangeOrderNotes.objects.filter(cop_number=id)
+    send_data['notes']=notes
     tmproposal = []
     foldercontents = []
     try:
         path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
         foldercontents = os.listdir(path)
+        send_data['foldercontents']= foldercontents
     except Exception as e:
-        print('no folder contents', e)
+        send_data['no_folder_contents']=True
+
     if TMProposal.objects.filter(change_order=changeorder):
         tmproposal = TMProposal.objects.get(change_order=changeorder)
+    send_data['tmproposal'] = tmproposal
     if request.method == 'GET':
-        return render(request, "extra_work_ticket.html",
-                      {'tmproposal': tmproposal, 'ticket_needed': ticket_needed, 'changeorder': changeorder,
-                       'notes': notes, 'foldercontents': foldercontents})
+        return render(request, "extra_work_ticket.html",send_data)
     if request.method == 'POST':
+        if 'new_note' in request.POST:
+            ChangeOrderNotes.objects.create(note=request.POST['new_note'],
+                                            cop_number=changeorder, date=date.today(),
+                                            user=Employees.objects.get(user=request.user))
         if 'upload_file' in request.FILES:
             fileitem = request.FILES['upload_file']
             fn = os.path.basename(fileitem.name)
@@ -481,11 +507,16 @@ def extra_work_ticket(request, id):
                                             user=Employees.objects.get(user=request.user),
                                             note="Ticket Signed - " + request.POST['signed_notes'])
         if 'submit_form4' in request.POST:
-            changeorder.is_closed = True
+            if changeorder.is_closed == True:
+                changeorder.is_closed = False
+                note = "RE-OPENED - " + request.POST['void_notes']
+            else:
+                changeorder.is_closed = True
+                note = "VOIDED - " + request.POST['void_notes']
             changeorder.save()
             ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                             user=Employees.objects.get(user=request.user),
-                                            note="VOIDED - " + request.POST['void_notes'])
+                                            note=note)
             return redirect('extra_work_ticket', id=id)
         if 'submit_form1' in request.POST:
             changeorder.is_approved = True
@@ -520,19 +551,15 @@ def extra_work_ticket(request, id):
                     changeordernote = ChangeOrderNotes.objects.create(
                         note="No Longer T&M: " + request.POST['no_tm_notes'], cop_number=changeorder, date=date.today(),
                         user=Employees.objects.get(user=request.user))
-        if 'submit_form2' in request.POST:
-            if request.POST['new_note'] != "":
-                changeordernote = ChangeOrderNotes.objects.create(note=request.POST['new_note'],
-                                                                  cop_number=changeorder, date=date.today(),
-                                                                  user=Employees.objects.get(user=request.user))
         notes = ChangeOrderNotes.objects.filter(cop_number=id)
-        return render(request, "extra_work_ticket.html",
-                      {'tmproposal': tmproposal, 'ticket_needed': ticket_needed, 'changeorder': changeorder,
-                       'notes': notes, 'filesOrFolders': filesOrFolders})
+        send_data['notes']=ChangeOrderNotes.objects.filter(cop_number=id)
+        return render(request, "extra_work_ticket.html",send_data)
+
 
 def getChangeorderFolder(request):
     filesOrFolders = getFilesOrFolders("changeorder", str(request.GET['id']))
     return HttpResponse(json.dumps(filesOrFolders))
+
 
 @csrf_exempt
 def uploadFile(request):
