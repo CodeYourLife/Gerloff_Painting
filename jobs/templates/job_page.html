@@ -886,7 +886,10 @@ document.getElementById("notes_filter_button").style.display = "none";
         </div>
     </div>
 </div>
-
+{% if job.is_closed %}
+<div style="background-color:hsl(0, 0%, 75%);">
+<h4>JOB IS CLOSED</h4>
+{% endif %}
 <div style="background-color:hsl(202, 64%, 95%);">
 <!--Header info-->
 <div style="margin-left: 12px; margin-right: 12px;">

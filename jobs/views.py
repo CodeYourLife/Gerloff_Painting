@@ -569,7 +569,7 @@ def job_page(request, jobnumber):
                 message = "Labor is not done."
                 if selectedjob.is_labor_done == True:
                     Email.sendEmail("Labor not done - " + selectedjob.job_name,
-                                    "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is not done. " +
+                                    "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is not done. Please make sure to Un-Click the LABOR DONE box in management console. " +
                                     request.POST['closed_note'],
                                     ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
                                      'victor@gerloffpainting.com'], False)
@@ -591,7 +591,7 @@ def job_page(request, jobnumber):
             if request.POST['select_status'] == 'done_done':
                 message = "Labor is 100% done."
                 Email.sendEmail("Labor Done - " + selectedjob.job_name,
-                                "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is 100% Done. " +
+                                "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is 100% Done. Please make sure to Click the Labor Done button in Management Console. " +
                                 request.POST['closed_note'],
                                 ['joe@gerloffpainting.com', 'admin2@gerloffpainting.com',
                                  'bridgette@gerloffpainting.com',
@@ -662,7 +662,10 @@ def job_page(request, jobnumber):
     else:
         contract_amount = "T&M"
     send_data['contract_amount']=contract_amount
-    send_data['orig_contract_amount']= ('{:,}'.format(selectedjob.contract_amount))
+    if selectedjob.contract_amount:
+        send_data['orig_contract_amount']= ('{:,}'.format(selectedjob.contract_amount))
+    else:
+        send_data['orig_contract_amount'] = None
     send_data['pending_count']=selectedjob.count_pending_changes()
     send_data['count_approved_changes']=selectedjob.count_approved_changes()
     send_data['pending_co_amount']=('{:,}'.format(selectedjob.pending_co_amount()))
