@@ -28,7 +28,6 @@ class Email:
 
 
 def createfolder(subfolder):
-        print("RAN THIS HERE. Subfolder = " + subfolder)
         parent_dir = settings.MEDIA_ROOT
         path = os.path.join(parent_dir, subfolder)
         try:
@@ -36,10 +35,10 @@ def createfolder(subfolder):
         except OSError as error:
             print(error)
 
-def openfolder(subfolder, item):
+def getFilesOrFolders(subfolder, item):
     parent_dir = settings.MEDIA_ROOT
-    path = os.path.join(parent_dir, subfolder)
-    path = path + "/" + str(item)
-    path = os.path.realpath(path)
-    os.startfile(path)
+    path = os.path.join(parent_dir, subfolder, item)
+    filesOrFolders = os.listdir(path)
+    return filesOrFolders
+
 

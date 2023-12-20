@@ -1,10 +1,14 @@
 {% extends 'base.html' %}
-{% load static %}
 {% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
 {% block content %}
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
+    <script type="text/javascript">     window.CSRF_TOKEN = "{{ csrf_token }}"; </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="{% static 'upload_download_files.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'upload_download_files.css' %}">
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
     <title>Trinity GP</title>
@@ -12,7 +16,6 @@
     <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
     <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
     <style type="text/css" class="init">
         .list-items {
         border-bottom: 1px solid black; display: flex; justify-content: space-between;
@@ -89,6 +92,35 @@ function prompt_note(){
         </ul>
     </div>
 </nav>
+<!-- Modal -->
+<div class="modal fade" id="changeOrderFolderModal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="title3"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="folderList"></div>
+                <div id="drop-area">
+                  <form class="my-form">
+                    <p>Upload multiple files with the file dialog or by dragging and dropping images onto the dashed region</p>
+                    <input type="file" id="fileElem" multiple accept="image/*" onchange="handleFiles(this.files, '/changeorder/uploadFile', '{{ csrf_token }}')">
+                    <label class="button" for="fileElem">Select some files</label>
+                  </form>
+                  <progress id="progress-bar" max=100 value=0></progress>
+                  <div id="gallery" /></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="container" style="margin-bottom: 20px;">
     <h4 style="text-align: center" class="h4">{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} </h4>
         <h4 style="text-align: center" class="h4">Change Order #{{changeorder.cop_number}}</h4>
@@ -102,11 +134,10 @@ function prompt_note(){
             </form>
         </div>
         <div style="padding: 5px" class="form-group">
-            <form action="{% url 'extra_work_ticket' changeorder.id %}" method="post">
-                {% csrf_token %}
-                <input type="submit" style="width=250px" class="btn btn-info btn-sm" name="open_folder"
-                       value="Open Change Order Folder to View Files"/>
-            </form>
+
+            <input data-toggle="modal" onclick="getFolderContents({{changeorder.id}}, '/changeorder/getChangeorderFolder')" data-target="#changeOrderFolderModal" type="submit" style="width=250px" class="btn btn-primary btn-sm" name="open_folder"
+                   value="Open Change Order Folder to View Files"/>
+
         </div>
     </div>
 </div>

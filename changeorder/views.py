@@ -13,11 +13,13 @@ import os
 import os.path
 from django.template.loader import get_template, render_to_string
 from xhtml2pdf import pisa
-from console.misc import createfolder, openfolder
+from console.misc import createfolder, getFilesOrFolders
 from django.conf import settings
 from io import StringIO
 from console.misc import Email
 from media.utilities import MediaUtilities
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 
 def print_TMProposal(request, id):
     newproposal = TMProposal.objects.get(id=id)
@@ -238,8 +240,6 @@ def print_ticket(request, id, status):
         changeorder.is_printed = True
         changeorder.save()
     if request.method == 'POST':
-        print(request.POST['signatureValue'])
-        print(request.POST['signatureName'])
         signatureValue = request.POST['signatureValue']
         nameValue = request.POST['signatureName']
         comments = request.POST['gc_notes']
@@ -476,6 +476,7 @@ def extra_work_ticket(request, id):
         send_data['foldercontents']= foldercontents
     except Exception as e:
         send_data['no_folder_contents']=True
+
     if TMProposal.objects.filter(change_order=changeorder):
         tmproposal = TMProposal.objects.get(change_order=changeorder)
     send_data['tmproposal'] = tmproposal
@@ -498,11 +499,7 @@ def extra_work_ticket(request, id):
                 print('no folder contents')
         if 'view_proposal' in request.POST:
             print("NEED TO DO")
-        if 'open_folder' in request.POST:
-            openfolder("changeorder", str(changeorder.id))
-
         if 'signed' in request.POST:
-            print(request.POST)
             changeorder.is_ticket_signed = True
             changeorder.date_signed = date.today()
             changeorder.save()
@@ -558,6 +555,16 @@ def extra_work_ticket(request, id):
         send_data['notes']=ChangeOrderNotes.objects.filter(cop_number=id)
         return render(request, "extra_work_ticket.html",send_data)
 
+
+def getChangeorderFolder(request):
+    filesOrFolders = getFilesOrFolders("changeorder", str(request.GET['id']))
+    return HttpResponse(json.dumps(filesOrFolders))
+
+
+@csrf_exempt
+def uploadFile(request):
+    print(request)
+    return HttpResponse(json.dumps({'done': 'done'}))
 
 @login_required(login_url='/accounts/login')
 def process_ewt(request, id):
