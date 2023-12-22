@@ -566,6 +566,10 @@ def downloadFile(request):
     return MediaUtilities().getDirectoryContents(str(request.GET['id']), str(request.GET['name']), 'changeorder')
 
 @csrf_exempt
+def downloadFile(request):
+    return MediaUtilities().getDirectoryContents(str(request.GET['id']), str(request.GET['name']), 'changeorder')
+
+@csrf_exempt
 def uploadFile(request):
     name = ''
     try:
