@@ -562,9 +562,20 @@ def getChangeorderFolder(request):
 
 
 @csrf_exempt
+def downloadFile(request):
+    return MediaUtilities().getDirectoryContents(str(request.GET['id']), str(request.GET['name']), 'changeorder')
+
+@csrf_exempt
 def uploadFile(request):
-    print(request)
-    return HttpResponse(json.dumps({'done': 'done'}))
+    name = ''
+    try:
+        fn = os.path.basename(request.FILES['file'].name)
+        name = request.FILES['file'].name
+        fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder", str(request.POST['id']), fn)
+        open(fn2, 'wb').write(request.FILES['file'].read())
+    except Exception as e:
+        print('cannot write to folder', e)
+    return HttpResponse(json.dumps('{"name": ' + name + ' }'))
 
 @login_required(login_url='/accounts/login')
 def process_ewt(request, id):

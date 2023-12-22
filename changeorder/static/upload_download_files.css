@@ -11,6 +11,8 @@ a {
   color: #333;
   text-align: justify;
 }
+
+
 #drop-area {
   border: 2px dashed #ccc;
   border-radius: 20px;
@@ -21,6 +23,7 @@ a {
 #drop-area.highlight {
   border-color: purple;
 }
+
 p {
   margin-top: 0;
 }
