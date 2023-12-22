@@ -43,7 +43,6 @@ function handleFiles(files, url, id, uploadUrl) {
       names.push(file.name)
       await uploadFile(file, url, id)
   })
-  alert(names)
   getFolderContents(id, uploadUrl, names)
 }
 
