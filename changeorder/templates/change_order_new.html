@@ -57,6 +57,11 @@
 
 {% else %}
 <h4>Add New Change Order</h4>
+	<form id="search_job_form" action="{% url 'change_order_new' 'ALL' %}" method="get" >
+    <input type="text" name="search_job" id="search_job" placeholder="Search Jobs">
+    <input type="submit" name="form1" value="Search Now" />
+    </form>
+
 <form name = booking_input action="{% url 'change_order_new' 'ALL' %}" method="post"  onSubmit = "return check_booking_data()">
 {% csrf_token %}
 	            <label for="select_job">please select job</label>

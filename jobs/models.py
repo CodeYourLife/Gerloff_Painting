@@ -171,6 +171,68 @@ class Jobs(models.Model):
         return JobNotes.objects.filter(
             Q(type="employee_note") | Q(type="daily_report") | Q(type="auto_start_date_note"), job_number=self).count()
 
+    def approved_co_amount(self):
+        total_amount =0
+        for x in ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=True):
+            if x.price: total_amount += x.price
+        return total_amount
+
+    def count_approved_changes(self):
+        total_amount =0
+        if ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=True).exists():
+            total_amount = ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=True).count()
+        return total_amount
+
+    def pending_co_amount(self):
+        total_amount = 0
+        for x in ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=False):
+            if x.price: total_amount += x.price
+        return total_amount
+
+    def count_pending_changes(self):
+        total_amount = 0
+        if ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=False).exists():
+            total_amount = ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=True).count()
+        return total_amount
+
+    def current_contract_amount(self):
+        total_amount=0
+        if self.is_t_m_job==False:
+            total_amount=self.contract_amount
+        else: total_amount=0
+        for x in ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=True):
+            if x.price: total_amount += x.price
+        return total_amount
+
+    def formals(self):
+        formals_list=[]
+        current_gc_number = 999
+        current_total = 0
+        for x in ChangeOrders.objects.filter(job_number=self).exclude(gc_number = None).order_by('gc_number'):
+            if current_gc_number == 999:
+                print("PUMPKIN2")
+                count = ChangeOrders.objects.filter(job_number=self, gc_number = x.gc_number).count()
+                if count == 1:
+                    description = "COP " + str(x.cop_number) + " -" + x.description
+                else:
+                    description = "COPs: " + str(x.cop_number)
+                current_gc_number = x.gc_number
+                current_total = x.price
+            elif x.gc_number != current_gc_number:
+                formals_list.append({'gc_number':current_gc_number,'description':description, 'total':"$" + str(('{:,}'.format(current_total)))})
+                count = ChangeOrders.objects.filter(job_number=self, gc_number=x.gc_number).count()
+                if count == 1:
+                    description = "COP " + str(x.cop_number) + " -" + x.description
+                else:
+                    description = "COPs: " + str(x.cop_number)
+                current_gc_number = x.gc_number
+                current_total = x.price
+            else:
+                current_total+= x.price
+                description += ", " + str(x.cop_number)
+        if current_gc_number != 999:
+            formals_list.append({'gc_number': current_gc_number,'description':description, 'total':"$" + str(('{:,}'.format(current_total)))})
+        return formals_list
     def check_start_date(self):
         difference = date.today() - self.start_date_checked
         if int(difference.days) > 30:
