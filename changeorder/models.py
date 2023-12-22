@@ -64,22 +64,22 @@ class ChangeOrders(models.Model):
         if self.is_t_and_m == True:
             if self.is_ticket_signed == False:
                 if EWT.objects.filter(change_order=self).exists():
-                    return "No"
+                    return False
                 else:
-                    return "Yes"
+                    return True
             else:
-                return "No"
+                return False
         else:
-            return "N/A"
+            return False
 
-    def need_ticket_signed(self):
+    def needs_ticket_signed(self):
         if self.is_t_and_m == True:
             if self.is_ticket_signed == False:
-                return "Yes"
+                return True
             else:
-                return "No"
+                return False
         else:
-            return "N/A"
+            return False
 
 
 class ChangeOrderNotes(models.Model):
