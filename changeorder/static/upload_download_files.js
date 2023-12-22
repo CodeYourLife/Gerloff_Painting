@@ -1,24 +1,5 @@
 // ************************ Drag and drop uploader ***************** //
- window.CSRF_TOKEN = "{{ csrf_token }}";
 let dropArea = document.getElementById("drop-area")
-
-// Prevent default drag behaviors
-;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-  dropArea.addEventListener(eventName, preventDefaults, false)
-  document.body.addEventListener(eventName, preventDefaults, false)
-})
-
-// Highlight drop area when item is dragged over it
-;['dragenter', 'dragover'].forEach(eventName => {
-  dropArea.addEventListener(eventName, highlight, false)
-})
-
-;['dragleave', 'drop'].forEach(eventName => {
-  dropArea.addEventListener(eventName, unhighlight, false)
-})
-
-// Handle dropped files
-dropArea.addEventListener('drop', handleDrop, false)
 
 function preventDefaults (e) {
   e.preventDefault()
@@ -26,30 +7,26 @@ function preventDefaults (e) {
 }
 
 function highlight(e) {
+    if (dropArea == null){
+        dropArea = document.getElementById("drop-area")
+    }
+  preventDefaults(e)
   dropArea.classList.add('highlight')
 }
 
 function unhighlight(e) {
-  dropArea.classList.remove('active')
+    if (dropArea == null){
+        dropArea = document.getElementById("drop-area")
+    }
+    preventDefaults(e)
+  dropArea.classList.remove('highlight')
 }
 
-function handleDrop(e) {
+function handleDrop(e, url, id, uploadUrl) {
+  unhighlight(e)
   var dt = e.dataTransfer
   var files = dt.files
-
-  handleFiles(files)
-}
-
-let uploadProgress = []
-let progressBar = document.getElementById('progress-bar')
-
-function initializeProgress(numFiles) {
-  progressBar.value = 0
-  uploadProgress = []
-
-  for(let i = numFiles; i > 0; i--) {
-    uploadProgress.push(0)
-  }
+  handleFiles(files, url, id, uploadUrl)
 }
 
 function updateProgress(fileNumber, percent) {
@@ -58,52 +35,47 @@ function updateProgress(fileNumber, percent) {
   progressBar.value = total
 }
 
-function handleFiles(files, url, csrf) {
+function handleFiles(files, url, id, uploadUrl) {
   files = [...files]
-  //initializeProgress(files.length)
-  files.forEach((file) => uploadFile(file, url, csrf))
-  files.forEach(previewFile)
+  names = []
+  files.forEach(async file =>
+  {
+      names.push(file.name)
+      await uploadFile(file, url, id)
+  })
+  alert(names)
+  getFolderContents(id, uploadUrl, names)
 }
 
-function previewFile(file, url) {
-  let reader = new FileReader()
-  reader.readAsDataURL(file)
-  reader.onloadend = function() {
-    let img = document.createElement('img')
-    img.src = reader.result
-    document.getElementById('gallery').appendChild(img)
-  }
-}$(document).ajaxSend(function(event, xhr, settings){
-    if (!csrfSafeMethod(settings.type)) {
-       xhr.setRequestHeader("X-CSRFToken", csrftoken);
-    }
-});
-function uploadFile(file, url, csrf) {
+function uploadFile(file, url, id) {
   var xhr = new XMLHttpRequest()
   var formData = new FormData()
-    // add assoc key values, this will be posts values
-    formData.append("upload_file", true);
-      xhr.open('POST', url, true)
-      xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest')
-
-      // Update progress (can be used to show progress indicator)
-      xhr.upload.addEventListener("progress", function(e) {
-        //updateProgress(i, (e.loaded * 100.0 / e.total) || 100)
-      })
-
-      xhr.addEventListener('readystatechange', function(e) {
-        if (xhr.readyState == 4 && xhr.status == 200) {
-          //updateProgress(i, 100) // <- Add this
-        }
-        else if (xhr.readyState == 4 && xhr.status != 200) {
-          // Error. Inform the user
-        }
-      })
-      formData.append('file', file)
-      xhr.send(formData)
+  xhr.open('POST', url, true)
+  xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest')
+  formData.append("id", id)
+  formData.append("file", file)
+  xhr.send(formData)
+  return
 }
 
-function downloadFile(id, url){
+function downloadFile(id, item){
+    $.ajax({
+        method: 'GET',
+        url: '/changeorder/downloadFile',
+        data: {'id':id, 'name': item.id},
+        success: function (data) {
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = data;
+            a.download = item.id;
+            document.body.appendChild(a);
+            a.click();
+        }
+    })
+}
+
+function getFolderContents(id, url, names=[]){
+    document.getElementById("folderList").style.display = 'none';
     $.ajax({
         method: 'GET',
         url: url,
@@ -112,26 +84,12 @@ function downloadFile(id, url){
             text = "<ul>"
             parsedData = JSON.parse(data);
             parsedData.forEach((element) => {
-                text += "<li class='folderItem'><div>" + element + "</div></li>";
+                text += "<li style='color: blue; cursor: pointer;' id='" + element + "' onclick='downloadFile(" + id + ", this)' class='folderItem'><div>" + element + "</div></li>";
             })
             text += "</ul>"
             document.getElementById("folderList").innerHTML = text;
                }
+
     })
-}
-function getFolderContents(id, url){
-    $.ajax({
-        method: 'GET',
-        url: url,
-        data: {'id':id},
-        success: function (data) {
-            text = "<ul>"
-            parsedData = JSON.parse(data);
-            parsedData.forEach((element) => {
-                text += "<li class='folderItem'><div>" + element + "</div></li>";
-            })
-            text += "</ul>"
-            document.getElementById("folderList").innerHTML = text;
-               }
-    })
+    document.getElementById("folderList").style.display = 'block';
 }

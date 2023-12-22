@@ -16,5 +16,6 @@ urlpatterns = [
     path('preview_TMProposal/<id>', views.print_TMProposal, name='preview_TMProposal'),
     path('getChangeorderFolder', views.getChangeorderFolder, name='getChangeorderFolder'),
     path('uploadFile', csrf_exempt(views.uploadFile), name='uploadFile'),
+    path('downloadFile', csrf_exempt(views.downloadFile), name='downloadFile'),
 
 ]
