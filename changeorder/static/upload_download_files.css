@@ -4,6 +4,7 @@ body {
 a {
   color: #369;
 }
+
 .note {
   width: 500px;
   margin: 50px auto;
@@ -12,6 +13,48 @@ a {
   text-align: justify;
 }
 
+#upload-complete-toggle {
+  display: block;
+  opacity: 1;
+  transition: opacity 1s;
+}
+
+#upload-complete-toggle {
+  visibility: hidden;
+}
+
+#upload-complete-toggle.show {
+  visibility: visible;
+  animation: fadeIn 0.5s, fadeOut 0.5s 1.0s forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+.fadeOut {
+  animation-name: fadeOut;
+}
+
+.fadeIn {
+  animation-name: fadeIn;
+}
 
 #drop-area {
   border: 2px dashed #ccc;

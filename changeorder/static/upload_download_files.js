@@ -44,6 +44,12 @@ function handleFiles(files, url, id, uploadUrl) {
       await uploadFile(file, url, id)
   })
   getFolderContents(id, uploadUrl, names)
+    var hiddenElement = document.getElementById('hidden-element');
+    var uploadCompleted = document.createElement('div');
+    uploadCompleted.innerHTML ='File Uploaded!';
+    uploadCompleted.id = "upload-complete-toggle";
+    uploadCompleted.className = "show";
+    hiddenElement.appendChild(uploadCompleted);
 }
 
 function uploadFile(file, url, id) {
@@ -84,6 +90,9 @@ function getFolderContents(id, url, names=[]){
             parsedData = JSON.parse(data);
             parsedData.forEach((element) => {
                 text += "<li style='color: blue; cursor: pointer;' id='" + element + "' onclick='downloadFile(" + id + ", this)' class='folderItem'><div>" + element + "</div></li>";
+            })
+            names.forEach((name) => {
+                text += "<li style='color: blue; cursor: pointer;' id='" + name + "' onclick='downloadFile(" + id + ", this)' class='folderItem'><div>" + name + "</div></li>";
             })
             text += "</ul>"
             document.getElementById("folderList").innerHTML = text;
