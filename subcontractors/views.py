@@ -173,8 +173,9 @@ def subcontractor_invoice_new(request, subcontract_id):
             invoice.save()
             InvoiceApprovals.objects.create(employee=Employees.objects.get(id=22), invoice=invoice)
             InvoiceApprovals.objects.create(employee=Employees.objects.get(id=18), invoice=invoice)
-            if subcontract.job_number.superintendent != Employees.objects.get(id=22):
-                InvoiceApprovals.objects.create(employee=subcontract.job_number.superintendent, invoice=invoice)
+            if subcontract.job_number.superintendent:
+                if subcontract.job_number.superintendent != Employees.objects.get(id=22):
+                    InvoiceApprovals.objects.create(employee=subcontract.job_number.superintendent, invoice=invoice)
             return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id='ALL')
     return render(request, "subcontractor_invoice_new.html",
                   {'next_number': next_number, 'items': items, 'subcontract': subcontract})
@@ -251,8 +252,9 @@ def portal_invoice_new(request, subcontract_id):
             # 22 is victor.18 is gene.
             InvoiceApprovals.objects.create(employee=Employees.objects.get(id=22), invoice=invoice)
             InvoiceApprovals.objects.create(employee=Employees.objects.get(id=18), invoice=invoice)
-            if subcontract.job_number.superintendent != Employees.objects.get(id=22):
-                InvoiceApprovals.objects.create(employee=subcontract.job_number.superintendent, invoice=invoice)
+            if subcontract.job_number.superintendent:
+                if subcontract.job_number.superintendent != Employees.objects.get(id=22):
+                    InvoiceApprovals.objects.create(employee=subcontract.job_number.superintendent, invoice=invoice)
             email_body = "New Invoice Entered For " + str(subcontract.subcontractor.company) + "\n Job: " + str(
                 subcontract.job_number.job_name)
             Email.sendEmail("New invoice", email_body,
@@ -795,14 +797,13 @@ def subcontracts_new(request):
                                 item.save()
             return redirect('subcontract', id=subcontract1.id)
     send_data['selectedjob'] = 'ALL'
-
     if request.method == 'GET':
         if 'search_job' in request.GET:
             send_data['jobs'] = Jobs.objects.filter(job_name__icontains=request.GET['search_job'])
         else:
-            send_data['jobs'] = Jobs.objects.filter(status='Open')
+            send_data['jobs'] = Jobs.objects.filter(is_closed=False)
     else:
-        send_data['jobs'] = Jobs.objects.filter(status='Open')
+        send_data['jobs'] = Jobs.objects.filter(is_closed=False)
 
     return render(request, "subcontracts_new.html", send_data)
 

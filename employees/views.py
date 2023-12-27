@@ -15,7 +15,7 @@ from django.conf import settings
 def new_production_report(request, jobnumber):
     send_data = {}
     if jobnumber == 'ALL':
-        send_data['jobs'] = Jobs.objects.filter(status='Open')
+        send_data['jobs'] = Jobs.objects.filter(is_closed=False)
     else:
         send_data['jobs'] = Jobs.objects.get(job_number=jobnumber)
         send_data['selected_job'] = Jobs.objects.get(job_number=jobnumber)
@@ -196,7 +196,7 @@ def new_class(request):
     send_data = {}
     send_data['employees'] = Employees.objects.filter(active=True)
     send_data['topics'] = TrainingTopic.objects.all()
-    send_data['jobs'] = Jobs.objects.filter(status='Open')
+    send_data['jobs'] = Jobs.objects.filter(is_closed=False)
     send_data['topics_json'] = json.dumps(list(TrainingTopic.objects.values()), cls=DjangoJSONEncoder)
     send_data['employees_json'] = json.dumps(list(Employees.objects.filter(active=True).values()),
                                              cls=DjangoJSONEncoder)
@@ -481,7 +481,7 @@ def certifications(request, id):
 def new_certification(request):
     send_data = {}
     send_data['employees'] = Employees.objects.filter(active=True)
-    send_data['jobs'] = Jobs.objects.filter(status='Open')
+    send_data['jobs'] = Jobs.objects.filter(is_closed=False)
     send_data['categories'] = CertificationCategories.objects.all()
     send_data['actions'] = CertificationActionRequired.objects.all()
     if request.method == 'POST':
@@ -542,7 +542,7 @@ def write_ups(request, id):
     send_data = {}
     send_data['employees'] = Employees.objects.filter(active=True)
     send_data['me'] = Employees.objects.get(user=request.user)
-    send_data['jobs'] = Jobs.objects.filter(status='Open')
+    send_data['jobs'] = Jobs.objects.filter(is_closed=False)
     send_data['write_ups'] = WriteUp.objects.filter(employee__active=True)
     if id != 'ALL':
         send_data['selected_item'] = WriteUp.objects.get(id=id)
@@ -554,7 +554,7 @@ def write_ups_new(request):
     send_data = {}
     send_data['employees'] = Employees.objects.filter(active=True)
     send_data['me'] = Employees.objects.get(user=request.user)
-    send_data['jobs'] = Jobs.objects.filter(status='Open')
+    send_data['jobs'] = Jobs.objects.filter(is_closed=False)
     send_data['write_ups'] = WriteUp.objects.filter(employee__active=True)
     send_data['defaults'] = WriteUpDefaults.objects.all()
     if request.method == 'POST':

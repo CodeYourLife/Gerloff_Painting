@@ -37,7 +37,6 @@ def change_start_date(request, jobnumber, previous, super, filter):
     format_date = jobs.start_date.strftime("%Y-%m-%d")
     previous_page = previous
     if request.method == 'POST':
-        print(request.POST)
         if 'is_active' in request.POST:
             if jobs.is_active == False:
                 status = 1
@@ -284,6 +283,7 @@ def update_job_info(request, jobnumber):
                   {'data': prices_json, 'startdate': startdate, 'notes': notes, 'selectedjob': selectedjob,
                    'allclients': allclients, 'superintendents': superintendents, 'estimators': estimators,
                    'pms_filter': pms_filter})
+
 @login_required(login_url='/accounts/login')
 def audit_MC_open_jobs(request):
     send_data = {}
@@ -484,7 +484,6 @@ def upload_new_job(request):
             return render(request, "upload_new_job.html")
     return render(request, "upload_new_job.html")
 
-
 @login_required(login_url='/accounts/login')
 def jobs_home(request):
     send_data = {}
@@ -570,7 +569,7 @@ def job_page(request, jobnumber):
                 message = "Labor is not done."
                 if selectedjob.is_labor_done == True:
                     Email.sendEmail("Labor not done - " + selectedjob.job_name,
-                                    "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is not done. " +
+                                    "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is not done. Please make sure to Un-Click the LABOR DONE box in management console. " +
                                     request.POST['closed_note'],
                                     ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
                                      'victor@gerloffpainting.com'], False)
@@ -592,7 +591,7 @@ def job_page(request, jobnumber):
             if request.POST['select_status'] == 'done_done':
                 message = "Labor is 100% done."
                 Email.sendEmail("Labor Done - " + selectedjob.job_name,
-                                "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is 100% Done. " +
+                                "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is 100% Done. Please make sure to Click the Labor Done button in Management Console. " +
                                 request.POST['closed_note'],
                                 ['joe@gerloffpainting.com', 'admin2@gerloffpainting.com',
                                  'bridgette@gerloffpainting.com',
@@ -651,19 +650,26 @@ def job_page(request, jobnumber):
             selectedjob.client.phone = request.POST['client_phone']
             selectedjob.save()
     send_data['client_employees'] = ClientEmployees.objects.filter(id=selectedjob.client)
-    # send_data['jobstable'] = JobsTable(selectedjob)
     send_data['job'] = selectedjob
     if selectedjob.labor_done_Date:
         short_year = selectedjob.labor_done_Date.strftime("%y")
         short_mth = selectedjob.labor_done_Date.strftime("%m")
         short_day = selectedjob.labor_done_Date.strftime("%d")
         send_data['labor_done_date'] = short_mth + "-" + short_day + "-" + short_year
-    if selectedjob.contract_amount:
-        contract_amount = int(selectedjob.contract_amount)
+    if selectedjob.current_contract_amount() != 0:
+        contract_amount=int(selectedjob.current_contract_amount())
         contract_amount = ('{:,}'.format(contract_amount))
     else:
         contract_amount = "T&M"
     send_data['contract_amount']=contract_amount
+    if selectedjob.contract_amount:
+        send_data['orig_contract_amount']= ('{:,}'.format(selectedjob.contract_amount))
+    else:
+        send_data['orig_contract_amount'] = None
+    send_data['pending_count']=selectedjob.count_pending_changes()
+    send_data['count_approved_changes']=selectedjob.count_approved_changes()
+    send_data['pending_co_amount']=('{:,}'.format(selectedjob.pending_co_amount()))
+    send_data['approved_co_amount'] = ('{:,}'.format(selectedjob.approved_co_amount()))
     send_data['tickets'] = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
                                                        is_ticket_signed=False)
     send_data['open_cos'] = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
@@ -675,6 +681,8 @@ def job_page(request, jobnumber):
                                                             is_approved=True)
     send_data['equipments'] = Inventory.objects.filter(job_number=selectedjob,is_closed=False).order_by('inventory_type')
     send_data['rentals'] = Rentals.objects.filter(job_number=selectedjob, off_rent_number__isnull=True)
+    send_data['formals'] = selectedjob.formals()
+    print(selectedjob.formals())
     if Inventory.objects.filter(job_number=selectedjob,is_closed=False).order_by('inventory_type').exists():
         send_data['has_equipment'] = True
     if Rentals.objects.filter(job_number=selectedjob, off_rent_number__isnull=True).exists():
