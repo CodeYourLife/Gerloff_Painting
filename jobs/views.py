@@ -695,7 +695,7 @@ def job_page(request, jobnumber):
     send_data['deliveries'] = OutgoingItem.objects.filter(outgoing_event__job_number=selectedjob)
     send_data['submittals'] = Submittals.objects.filter(job_number=selectedjob)
     subcontracts = []
-    for x in Subcontracts.objects.filter(job_number=selectedjob, is_closed=False):
+    for x in Subcontracts.objects.filter(job_number=selectedjob):
         total_contract = "{:,}".format(int(x.total_contract_amount()))
         percent_complete = format(x.percent_complete(), ".0%")
         subcontracts.append({'id': x.id, 'po_number': x.po_number, 'subcontractor': x.subcontractor.company,

@@ -5,17 +5,90 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" href="{% static 'upload_download_files.css' %}">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <script src="{% static 'upload_download_files.js' %}"></script>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
-    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-    <style type="text/css" class="init">
+<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Trinity GP</title>
+<style type="text/css" class="init">
+#notes_table thead {
+    display: none;
+}
+
+.colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
+
+.dataTables_wrapper {
+font-family: tahoma;
+font-size: 13px;
+}
+
+    nav .active, .collapsible:hover {
+      background-color: Salmon;
+    }
+    .nav-pills a {
+        color: black;
+    }
+    .nav-pills li {
+        padding: 2px;
+    }
+    .nav-pills .active {
+        background-color: #6c757d !important;
+        padding: 5px;
+    }
+    label {
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+    input {
+        margin-left: 10px;
+        margin-right: 10px;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #495057;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    }
+    tr th {
+        width: fit-content !important;
+    }
+    .tab-content * {
+      color : black;
+      background-color: white !important;
+    }
+    .active * {
+        background-color: white !important;
+    }
+            .list-items {
+    border-bottom: 1px solid black; display: flex; justify-content: space-between;
+    }
+    .text-wrap{
+white-space:normal;
+}
+.width-200{
+width:200px;
+}
+.dataTables_filter {
+float: left !important;
+}
+.tb { border-collapse: collapse; width:300px; }
+
+.tb th, .tb td { padding: 5px; border: solid 1px #777; }
+.tb th { background-color: lightblue; }
+
+.table td {
+
+    }
+
+        .modal-content {
+            width: fit-content;
+        }
+
+#add-remove-button-container .btn {
+    padding: 5px 5px;
+}
+
         .list-items {
         border-bottom: 1px solid black; display: flex; justify-content: space-between;
         }
@@ -25,20 +98,26 @@
             border: 1px solid #3f50b5;
             border-radius: 2px;
         }
-    </style>
+</style>
 
-    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
-            data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-    <script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html"
-            async></script>
-    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html"
-            async></script>
-    <script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-    <script type="text/javascript" language="javascript"
-            src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-    <script type="text/javascript" class="init">
+<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+<link href="https://www.jqueryscript.net/css/jquerysctipttop.css" rel="stylesheet" type="text/css">
+<script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+<script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script src="https://www.jqueryscript.net/demo/Two-side-Multi-Select-Plugin-with-jQuery-multiselect-js/js/multiselect.js"></script>
+<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" language="javascript" src="../resources/demo.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
+<script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
+<script type="text/javascript" class="init">
         let dropArea = document.getElementById("drop-area")
         function Previous() {
         window.history.back()
@@ -81,6 +160,19 @@ function prompt_note(){
             note_input.new_note.value = name
             note_input.submit()
             }
+}
+
+function check_paper_ticket(){
+if (document.getElementById("upload_file2").value == ""){
+alert("You must upload a copy of the signed ticket")
+return false
+}
+}
+
+window.onload = function() {
+    var table = $('#approved_table').DataTable({paging: false,info:false, ordering:false, searching:false})
+    var table2 = $('#pending_table').DataTable({paging: false,info:false, ordering:false, searching:false})
+    var table3 = $('#formals_table').DataTable({paging: false,info:false, ordering:false, searching:false})
 }
     </script>
 </head>
@@ -125,10 +217,146 @@ function prompt_note(){
         </div>
     </div>
 </div>
+<!-- Modal with 2 panes -->
+<div class="modal fade" id="changes-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="title2"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-pills">
+                    <li>
+                    <a href="#7a" class="active" data-toggle="tab">Approved</a>
+                    </li>
+                    <li><a href="#8a" data-toggle="tab">Pending</a>
+                    </li>
+                    <li><a href="#9a" data-toggle="tab">Formals</a>
+                    </li>
+                </ul>
+                <div class="tab-content clearfix">
+                    <div class="tab-pane active" id="7a">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="approved_tab">
+                                <table id="approved_table">
+                                    <thead>
+                                    <tr>
+                                        <th>COP #</th>
+                                        <th>Description</th>
+                                        <th>Price</th>
+                                        <th>GC #</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for x in approved %}
+                                    <tr>
+                                        <td>{{x.cop_number}}</td>
+                                        <td>{{x.description}}</td>
+                                        <td>${{x.price}}</td>
+                                        <td>{{x.gc_number}}</td>
+                                    </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="8a">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="pending_tab">
+                                <table id="pending_table">
+                                    <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Description</th>
+                                        <th>Price</th>
+                                        <th>GC #</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for x in pending %}
+                                    <tr>
+                                        <td>{{x.cop_number}}</td>
+                                        <td>{{x.description}}</td>
+                                        <td>${{x.price}}</td>
+                                        <td>{{x.gc_number}}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="9a">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <div id="formals_tab">
+                                <table id="formals_table">
+                                    <thead>
+                                    <tr>
+                                        <th>GC #</th>
+                                        <th>Description</th>
+                                        <th>Total</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for x in formals %}
+                                    <tr>
+                                        <td>{{x.gc_number}}</td>
+                                        <td>{{x.description}}</td>
+                                        <td>{{x.total}}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick = "anothertest()" data-dismiss="modal" > Save Changes </button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal -upload ticket -->
+<div class="modal fade" id="signed_ticket-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="title3">Upload Signed Ticket</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                            <form action="{% url 'extra_work_ticket' changeorder.id %}" method="post" enctype="multipart/form-data" onSubmit="return check_paper_ticket()" >
+                                {% csrf_token %}
+                                <div class="input-group">
+                                  <input type="file" class="form-control" name="upload_file2" id="upload_file2" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
+                                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <input type="submit" class="btn btn-primary btn-sm" value="Save Now" id="inputGroupFileAddon04" />
+<!--                <button type="button" class="btn btn-primary" data-dismiss="modal">Save Now</button>-->
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- HEADER -->
 <div class="container" style="margin-bottom: 20px;">
     <h4 style="text-align: center" class="h4">{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} </h4>
-        <h4 style="text-align: center" class="h4">Change Order #{{changeorder.cop_number}}</h4>
-        <h4 style="text-align: center" class="h4">{{changeorder.description}}</h4>
+    <h4 style="text-align: center" class="h4">Change Order #{{changeorder.cop_number}}</h4>
+    <h4 style="text-align: center" class="h4">{{changeorder.description}}</h4>
     <div class="row h-100 w-100 d-flex justify-content-left">
         <div style="padding: 5px" class="form-group">
             <form action="{% url 'job_page' changeorder.job_number.job_number %}">
@@ -138,14 +366,16 @@ function prompt_note(){
             </form>
         </div>
         <div style="padding: 5px" class="form-group">
-
-            <input data-toggle="modal" onclick="getFolderContents({{changeorder.id}}, '/changeorder/getChangeorderFolder')" data-target="#changeOrderFolderModal" type="submit" style="width=250px" class="btn btn-primary btn-sm" name="open_folder"
-                   value="Open Change Order Folder to View Files"/>
-
+            <input data-toggle="modal" onclick="getFolderContents({{changeorder.id}}, '/changeorder/getChangeorderFolder')" data-target="#changeOrderFolderModal" type="submit" style="width=250px" class="btn btn-info btn-sm" name="open_folder"
+                   value="View and Upload Files"/>
+        </div>
+        <div style="padding: 5px" class="form-group">
+            <input data-toggle="modal" data-target="#changes-modal" type="submit" style="width=250px" class="btn btn-info btn-sm"
+                   value="View All Change Orders for this Job"/>
         </div>
     </div>
 </div>
-    <br>
+<!-- ACCORDION - files and notes -->
 <div class="container">
 <div id="accordion">
     <div class="card">
@@ -231,121 +461,218 @@ function prompt_note(){
         </div>
 </div>
 </div>
+<!-- GUTS -->
 <div class="container">
-    {% if changeorder.is_closed == True %}
+<div id="if1"><!-- 1 check if co is closed or not -->
+{% if changeorder.is_closed == True %}<!-- 1 co is closed -->
     <h1>VOIDED</h1>
-    {% else %}
-    {% if changeorder.is_t_and_m == True %}
-    {% if changeorder.need_ticket == "Yes" %}
-    <h1>Ticket Required</h1>
-    <form action="{% url 'process_ewt' changeorder.id %}">
-        <input type="submit" class="btn btn-secondary btn-sm" value="Fill Out Ticket Now"/>
-    </form>
-    {% else %}
-    {% if changeorder.is_ticket_signed == False %}
-    {% if changeorder.is_printed == False %}
-    <form action="{% url 'print_ticket' changeorder.id 'OLD' %}" ><input type="submit" class="btn btn-secondary btn-sm" value="Print Ticket for Ink Signature"/></form>
-    {% else %}
-    <form action="{% url 'print_ticket' changeorder.id 'OLD' %}" ><input type="submit" class="btn btn-secondary btn-sm"
-                  value="Ticket Already Printed. Click to Print Again"/></form>
-    {% endif %}
-    <br>
-    <form action="{% url 'print_ticket' changeorder.id 'NEW' %}" ><input type="submit" value="Get Digital Signature"/></form>
-    <br>
-    <form action="{% url 'process_ewt' changeorder.id %}"><input type="submit" value="View / Change Ticket"/>
-    </form>
-    <br>
-    {% endif %}
-    {% if changeorder.need_ticket_signed == "Yes" %}
-    <h1>Ticket Created, Not Signed</h1>
-    <form action="{% url 'extra_work_ticket' changeorder.id %}" method="post"
-          onSubmit="void_notes1('signed_notes')">
-        {% csrf_token %}
-        <input type="hidden" name="signed_notes" id="signed_notes"/><input class="btn btn-secondary btn-sm"
-                                                                           type="submit" name='signed'
-                                                                           value="Ticket Signed"/></form>
-    <br>
-    <form action="{% url 'price_ewt' changeorder.id %}"><input class="btn btn-secondary btn-sm" type="submit"
-                                                               value="Send Price Now, Without Signed Ticket"/>
-    </form>
-    {% endif %}
-    {% endif %}
-    {% endif %}
-    {% if changeorder.date_sent == None %}
-    {% if changeorder.is_t_and_m == True %}
-    {% if changeorder.need_ticket == "No" and changeorder.need_ticket_signed == "No" %}
-    <h1>Change Order Not Sent Yet</h1><br>
-    <form action="{% url 'price_ewt' changeorder.id %}"><input class="btn btn-secondary btn-sm" type="submit"
-                                                               value="Send TM Price Now"/></form>
-    {% endif %}
-    {% else %}
-    <h1>Change Order Not Sent Yet</h1><br>
-    <form action="{% url 'change_order_send' changeorder.id %}">
-        <input class="btn btn-secondary btn-sm" type="submit" style="margin-bottom: 5px" value="Send Now"/></form>
-    {% endif %}
-    {% else %}
-    {% if changeorder.is_approved == True %}
-    <h1>Change Order Approved</h1>
-    <h3> Date Sent: {{changeorder.date_sent}}</h3>
-    <h3> Date Approved: {{changeorder.date_approved}}</h3>
-    <h3>Price: ${{changeorder.price}}</h3>
-    <h3>GC #: {{changeorder.gc_number}}</h3>
-    {% else %}
-    <h1>Change Order Sent</h1>
-    {% if changeorder.is_t_and_m == True %}
-    <form action="{% url 'preview_TMProposal' tmproposal.id %}">
-        <input type="submit" class="btn btn-secondary btn-sm" style="margin-bottom: 5px" name="view_proposal" value="View Proposal"/></form>
-    {% else %}
-    <form action="{% url 'preview_TMProposal' changeorder.id %}">
-        <input type="submit" class="btn btn-secondary btn-sm" name="view_proposal" value="View Proposal(need to code)"/>
-    </form>
-    {% endif %}
-    <h3> Date Sent: {{changeorder.date_sent}}</h3>
-    <h3>Price: ${{changeorder.price}}</h3>
-    <h5>Scope: {{changeorder.full_description}}</h5>
-    <form name='approval_input' action="{% url 'extra_work_ticket' changeorder.id %}" method="post"
-          onSubmit="return check_booking_data1()">
-        {% csrf_token %}
-        <input type="checkbox" name="is_approved_to_bill" id="is_approved_to_bill"/> <label
-            for="is_approved_to_bill">"Is
-        this Approved for Billing?" </label><br>
-        <label for="approved_price">Approved Price: $</label><input type="text" name="approved_price"
-                                                                    id="approved_price"
-                                                                    value={{changeorder.price}} size="30"
-                                                                    required/><br>
-        <label for="gc_number">GC Formal Number: </label><input type="text" name="gc_number" id="gc_number"
-                                                                size="10"/><br>
-        <label for="approval_note">Please provide any notes about this approval: </label> <br>
-        <textarea id="approval_note" name="approval_note" rows="2" cols="100"></textarea><br>
-        <input type="submit" class="btn btn-secondary btn-sm" name='submit_form1' value="Approve Now!"/></form>
-    <br>
-    <form action="{% url 'change_order_send' changeorder.id %}"><input class="btn btn-secondary btn-sm" type="submit"
-                                                                       name='edit_co'
-                                                                       value="Edit Change Order"/></form>
-    <hr>
-    {% endif %}
-    {% endif %}
-    {% endif %}
-    <form name='change_tm' action="{% url 'extra_work_ticket' changeorder.id %}" method="post"
-          onSubmit="return check_booking_data()">
-        {% csrf_token %}
-        <input type="hidden" id="no_tm" name="no_tm" value="Yes"/>
-        <input type="hidden" id="no_tm_notes" name="no_tm_notes" value="None"/>
-        {% if changeorder.is_t_and_m == True %}
-        <input type="submit" class="btn btn-secondary btn-sm" name='submit_form3'
-               value="Price Required, No Longer T&M"/>
+{% else %} <!-- 2 change order not closed -->
+    <div id="if21"><!-- 21 if T&M, displays the ticket collection functions -->
+    {% if changeorder.is_t_and_m == True %}<!-- 21 t&m -->
+        <div id="if211">
+        {% if changeorder.need_ticket %}<!--211 needs ticket-->
+            <h1>Ticket Required</h1>
+            <div class="row h-100 w-100 d-flex justify-content-left">
+            <div style="padding: 5px" class="form-group">
+            <form action="{% url 'process_ewt' changeorder.id %}">
+                <input type="submit" class="btn btn-primary btn-sm" value="Fill Out Ticket Now"/>
+            </form>
+            </div>
+            <div style="padding: 5px" class="form-group">
+            <form action="{% url 'extra_work_ticket' changeorder.id %}" method="post"> {% csrf_token %}<input type="submit" class="btn btn-primary btn-sm" name="oldform" value="Blank Ticket Completed By Hand"/></form>
+            </div>
+            </div>
+        {% else %}<!--212 doesn't need ticket-->
 
-        {% else %}
-        <input style="margin-bottom: 5px;" type="submit" class="btn btn-secondary btn-sm" name='submit_form3' value="Change to T&M"/>
-        {% endif %}
-    </form>
-    <form name='void_input' action="{% url 'extra_work_ticket' changeorder.id %}" method="post"
-          onSubmit="void_notes1('void_notes')">
-        {% csrf_token %}
-        <input style="margin-bottom: 5px;" type="hidden" name="void_notes" id="void_notes"/>
-        <input style="margin-bottom: 5px;" type="submit" class="btn btn-secondary btn-sm" name='submit_form4' {% if changeorder.is_closed == True %}value="RE-OPEN"{% else %} value="VOID" {% endif %}/>
-    </form>
-    <button style="margin-bottom: 5px;" class="btn btn-primary btn-sm" onclick="Previous()">Back to Previous Page</button>
+            <div id="if2121">
+
+            {% if changeorder.is_ticket_signed == False %}<!--2121 needs ticket signed-->
+                <h1>Ticket Needs to be Signed</h1>
+                <br>
+                <div class="row h-100 w-100 d-flex justify-content-left">
+                {% if changeorder.digital_ticket_completed %}
+                    {% if changeorder.is_printed == False %}<!--21211 not printed-->
+                        <div style="padding: 5px" class="form-group">
+                        <form action="{% url 'print_ticket' changeorder.id 'OLD' %}" ><input type="submit" class="btn btn-primary btn-sm" value="Print Ticket for Ink Signature"/></form>
+                        </div>
+                    {% else %}<!--21212 it is printed-->
+                        <div style="padding: 5px" class="form-group">
+                        <form action="{% url 'print_ticket' changeorder.id 'OLD' %}" ><input type="submit" class="btn btn-primary btn-sm"
+                                          value="Ticket Already Printed. Click to Print Again"/></form>
+                        </div>
+                    {% endif %}<!--21211-->
+                    <div style="padding: 5px" class="form-group">
+                    <form action="{% url 'print_ticket' changeorder.id 'NEW' %}" ><input type="submit" class="btn btn-primary btn-sm" value="Get Digital Signature"/></form>
+                    </div>
+                              <div style="padding: 5px" class="form-group">
+                    <form action="{% url 'process_ewt' changeorder.id %}"><input type="submit" class="btn btn-primary btn-sm" value="View/Change Digital Ticket"/>
+                    </form>
+                              </div>
+                {% else %}
+                    <div style="padding: 5px" class="form-group">
+                    <form action="{% url 'process_ewt' changeorder.id %}"><input type="submit" class="btn btn-primary btn-sm" value="Add Digital Ticket"/>
+                    </form>
+                    </div>
+                    <div style="padding: 5px" class="form-group">
+                    <form action="{% url 'extra_work_ticket' changeorder.id %}" method="post"> {% csrf_token %}
+                        {% csrf_token %}
+                        <input type="hidden" name="paper_ticket_signed">
+                        <button type="button" data-toggle="modal" data-target="#signed_ticket-modal" class="btn btn-primary btn-sm" >Paper Ticket Signed</button>
+<!--                        <input type="submit" class="btn btn-primary btn-sm" name="paper_signed" value="Paper Ticket Signed"/>-->
+                    </form>
+                    </div>
+                {% endif %}
+            {% endif %}<!--2121 options if ticket is not signed-->
+            </div>
+            </div><!--2121 options if ticket is not signed-->
+            <div id="if2122"><!--2122 needs ticket signed-->
+            {% if changeorder.need_ticket_signed %}<!--2122 needs ticket signed-->
+                <h1>Ticket Created, Not Signed</h1>
+                <form action="{% url 'extra_work_ticket' changeorder.id %}" method="post"
+                      onSubmit="void_notes1('signed_notes')">
+                    {% csrf_token %}
+                    <input type="hidden" name="signed_notes" id="signed_notes"/><input class="btn btn-secondary btn-sm"
+                                                                                       type="submit" name='signed'
+                                                                                       value="Ticket Signed"/></form>
+                <br>
+                <form action="{% url 'price_ewt' changeorder.id %}"><input class="btn btn-secondary btn-sm" type="submit"
+                                                                           value="Send Price Now, Without Signed Ticket"/>
+                </form>
+            {% endif %}<!--2122 needs ticket signed-->
+            </div><!--2122 needs ticket signed-->
+        {% endif %}<!--211 options if it needs ticket-->
+        </div><!--211 options if it needs ticket-->
+    {% endif %}<!-- 21 options if t&m -->
+    </div><!-- 21 if T&M, displays the ticket collection functions -->
+    <div id="if22"><!--22 checks if sent or not  -->
+    {% if changeorder.date_sent == None %}<!-- 22 give options for sending proposal -->
+        <div id="if221"><!-- 221 checks whether to send a TM price or regular price -->
+        {% if changeorder.is_t_and_m == True %}<!-- 221 it is T&M -->
+            {% if changeorder.need_ticket == False and changeorder.needs_ticket_signed == False %}<!-- 2211 has ticket signed -->
+                <h1>Change Order Not Sent Yet</h1><br>
+                {% if changeorder.digital_ticket_completed %}
+                    <form action="{% url 'price_ewt' changeorder.id %}"><input class="btn btn-primary btn-sm" type="submit"
+                                                               value="Send TM Price Now"/></form>
+                {% else %}
+                    <form action="{% url 'price_old_ewt' changeorder.id %}"><input class="btn btn-primary btn-sm" type="submit"
+                                                               value="Send TM Price Now"/></form>
+                {% endif %}
+            {% endif %}<!-- 2211 has ticket signed -->
+        {% else %}<!-- 222 not t&m -->
+            <h1>Change Order Not Sent Yet</h1><br>
+            <form action="{% url 'change_order_send' changeorder.id %}">
+            <input class="btn btn-secondary btn-sm" type="submit" style="margin-bottom: 5px" value="Send Now"/></form>
+        {% endif %}<!-- 221 options if not sent yet -->
+        </div><!-- 221 checks whether to send a TM price or regular price -->
+    {% else %} <!-- 23 been sent -->
+        <div id="if231"><!-- 231 checks if approved -->
+        {% if changeorder.is_approved == True %}<!-- 231 been approved -->
+            <h1>Change Order Approved</h1>
+            <h3> Date Sent: {{changeorder.date_sent}}</h3>
+            <h3> Date Approved: {{changeorder.date_approved}}</h3>
+            <h3>Price: ${{changeorder.price}}</h3>
+            <h3>GC #: {{changeorder.gc_number}}</h3>
+        {% else %}<!-- 232 not approved -->
+            <div class="container" style="margin-bottom: 20px;">
+            <h1>Change Order Sent</h1>
+            <b> Date Sent: </b>{{changeorder.date_sent}}
+            <br>
+            <b>Price: </b>${{changeorder.price}}
+            <br>
+            <b>Scope: </b><p>{{changeorder.full_description}}</p>
+            </div>
+            <div id="if2321"><!-- 2321 t&m -->
+            {% if changeorder.is_t_and_m == True %}<!-- 2321 t&m -->
+                <div class="container" style="margin-bottom: 20px;">
+                <div class="row h-100 w-100 d-flex justify-content-left">
+                <div style="padding: 5px" class="form-group">
+                <form action="{% url 'preview_TMProposal' tmproposal.id %}">
+                    <input type="submit" class="btn btn-secondary btn-sm" style="margin-bottom: 5px" name="view_proposal" value="View Proposal"/></form>
+                </div>
+                </div>
+                </div>
+            {% else %}<!-- 2322 not t&m -->
+                <div class="container" style="margin-bottom: 20px;">
+                <div class="row h-100 w-100 d-flex justify-content-left">
+                <div style="padding: 5px" class="form-group">
+                <form action="{% url 'preview_TMProposal' changeorder.id %}">
+                <input type="submit" class="btn btn-secondary btn-sm" name="view_proposal" value="View Proposal(need to code)"/>
+                </form>
+                </div>
+                <div style="padding: 5px" class="form-group">
+                <form action="{% url 'change_order_send' changeorder.id %}"><input class="btn btn-secondary btn-sm" type="submit"
+                                                                               name='edit_co'
+                                                                               value="Edit Proposal"/></form>
+                </div>
+                </div>
+                </div>
+            {% endif %}<!-- 2321 checking if t&m to know which proposal to show -->
+            </div><!-- 2321 checking if t&m to know which proposal to show -->
+            <div id="accordion">
+            <div class="card">
+                <div class="card-header" id="headingZero" style="background-color:hsla(0, 100%, 91%);">
+                    <h5 class="mb-0">
+                        <button class="btn btn-link" data-toggle="collapse" data-target="#collapseNine" aria-expanded="false"
+                                aria-controls="collapseNine">
+                            Click Here to View Approval Options
+                        </button>
+                    </h5>
+                </div>
+                <div id="collapseNine" class="collapse hide" aria-labelledby="headingZero" data-parent="#accordion">
+                <div class="card-body">
+                <div class="container" style="margin-bottom: 20px;">
+                <hr>
+                <form name='approval_input' action="{% url 'extra_work_ticket' changeorder.id %}" method="post"
+                onSubmit="return check_booking_data1()">
+                {% csrf_token %}
+                <input type="checkbox" name="is_approved_to_bill" id="is_approved_to_bill"/> <label
+                for="is_approved_to_bill">"Is this Approved for Billing?" </label><br>
+                <label for="approved_price">Approved Price: $</label><input type="text" name="approved_price"
+                                                                        id="approved_price"
+                                                                        value={{changeorder.price}} size="30"
+                                                                        required/><br>
+                <label for="gc_number">GC Formal Number: </label><input type="text" name="gc_number" id="gc_number"
+                                                                    size="10"/><br>
+                <label for="approval_note">Please provide any notes about this approval: </label> <br>
+                <textarea id="approval_note" name="approval_note" rows="2" cols="100"></textarea><br>
+                <input type="submit" class="btn btn-danger btn-sm" name='submit_form1' value="Approve Now!"/></form>
+                <br>
+                <hr>
+            </div>
+                </div>
+            </div>
+            </div>
+            </div>
+        {% endif %}<!--231 options for been sent-->
+        </div><!--231 checks whether approved or not-->
+    {% endif %}<!--22 options-->
+    </div><!--22 first checks whether it has been sent or not-->
+{% endif %}<!-- 1 closed or not -->
+</div><!-- 1 closed or not -->
+<br><hr>
+</div>
+<!--Footer-->
+<div class="container">
+<form name='change_tm' action="{% url 'extra_work_ticket' changeorder.id %}" method="post"
+      onSubmit="return check_booking_data()">
+    {% csrf_token %}
+    <input type="hidden" id="no_tm" name="no_tm" value="Yes"/>
+    <input type="hidden" id="no_tm_notes" name="no_tm_notes" value="None"/>
+    {% if changeorder.is_t_and_m == True %}
+    <input type="submit" class="btn btn-secondary btn-sm" name='submit_form3'
+           value="Price Required, No Longer T&M"/>
+
+    {% else %}
+    <input style="margin-bottom: 5px;" type="submit" class="btn btn-secondary btn-sm" name='submit_form3' value="Change to T&M"/>
+    {% endif %}
+</form>
+<form name='void_input' action="{% url 'extra_work_ticket' changeorder.id %}" method="post"
+      onSubmit="void_notes1('void_notes')">
+    {% csrf_token %}
+    <input style="margin-bottom: 5px;" type="hidden" name="void_notes" id="void_notes"/>
+    <input style="margin-bottom: 5px;" type="submit" class="btn btn-secondary btn-sm" name='submit_form4' {% if changeorder.is_closed == True %}value="RE-OPEN"{% else %} value="VOID" {% endif %}/>
+</form>
+<button style="margin-bottom: 5px;" class="btn btn-warning btn-sm" onclick="Previous()">Back to Previous Page</button>
 </div>
 </body>
 </html>

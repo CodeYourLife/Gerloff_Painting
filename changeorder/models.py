@@ -56,17 +56,21 @@ class ChangeOrders(models.Model):
     is_approved_to_bill = models.BooleanField(default=False)
     sent_to = models.CharField(null=True, max_length=2000, blank=True)
     is_printed = models.BooleanField(default=False)
+    is_old_form_printed = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.job_number} {self.description}"
 
     def need_ticket(self):
         if self.is_t_and_m == True:
-            if self.is_ticket_signed == False:
-                if EWT.objects.filter(change_order=self).exists():
-                    return False
+            if self.is_old_form_printed == False:
+                if self.is_ticket_signed == False:
+                    if EWT.objects.filter(change_order=self).exists():
+                        return False
+                    else:
+                        return True
                 else:
-                    return True
+                    return False
             else:
                 return False
         else:
@@ -81,6 +85,11 @@ class ChangeOrders(models.Model):
         else:
             return False
 
+    def digital_ticket_completed(self):
+        if EWT.objects.filter(change_order=self).exists():
+            return True
+        else:
+            return False
 
 class ChangeOrderNotes(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -150,7 +159,7 @@ class TMProposal(models.Model):
     total = models.DecimalField(
         max_digits=8, decimal_places=2, blank=True, null=True)
     notes = models.CharField(null=True, max_length=2000)
-    ticket = models.ForeignKey(EWT, on_delete=models.PROTECT)
+    ticket = models.ForeignKey(EWT, on_delete=models.PROTECT, null=True, blank=True)
 
 class TMList(models.Model):  # one entry for each line item of t&m bill
     id = models.BigAutoField(primary_key=True)

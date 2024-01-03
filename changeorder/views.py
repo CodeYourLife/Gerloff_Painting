@@ -221,6 +221,162 @@ def price_ewt(request, id):
                    'laboritems': laboritems, 'ewt': ewt,
                    'changeorder': changeorder})
 
+def price_old_ewt(request, id):
+    changeorder = ChangeOrders.objects.get(id=id)
+    # ewt = EWT.objects.get(change_order=changeorder)
+    if request.method == 'POST':
+        changeorder.price = request.POST['final_cost']
+        changeorder.date_sent = date.today()
+        changeorder.full_description = request.POST['notes']
+        changeorder.save()
+        ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                        user=Employees.objects.get(user=request.user),
+                                        note="COP Sent. Price: $" + request.POST['final_cost'])
+        newproposal = TMProposal.objects.create(change_order=changeorder, total=request.POST['final_cost'],
+                                                notes=request.POST['notes'])
+        print(request.POST)
+        for x in range(1, int(request.POST['hidden_labor']) + 1):
+            TMList.objects.create(change_order=changeorder, description=request.POST['labor_item' + str(x)],
+                                  quantity=request.POST['labor_hours' + str(x)], units="Hours",
+                                  rate=request.POST['labor_rate' + str(x)], total=request.POST['labor_cost' + str(x)],
+                                  category="Labor", category2=request.POST['labor_item' + str(x)], proposal=newproposal)
+        for x in range(1, int(request.POST['hidden_material']) + 1):
+            TMList.objects.create(change_order=changeorder, description=request.POST['material_description' + str(x)],
+                                  quantity=request.POST['material_quantity' + str(x)],
+                                  units=request.POST['material_units' + str(x)],
+                                  rate=request.POST['material_rate' + str(x)],
+                                  total=request.POST['material_cost' + str(x)],
+                                  category="Material", category2=request.POST['material_category' + str(x)],
+                                  proposal=newproposal)
+        for x in range(1, int(request.POST['hidden_equipment']) + 1):
+            TMList.objects.create(change_order=changeorder, description=request.POST['equipment_description' + str(x)],
+                                  quantity=request.POST['equipment_quantity' + str(x)],
+                                  units=request.POST['equipment_units' + str(x)],
+                                  rate=request.POST['equipment_rate' + str(x)],
+                                  total=request.POST['equipment_cost' + str(x)],
+                                  category="Equipment", category2=request.POST['equipment_category' + str(x)],
+                                  proposal=newproposal)
+        for x in range(1, int(request.POST['hidden_extras']) + 1):
+            extras = TMList.objects.create(change_order=changeorder,
+                                           description=request.POST['extras_category' + str(x)],
+                                           quantity=request.POST['extras_quantity' + str(x)],
+                                           units=request.POST['extras_units' + str(x)],
+                                           rate=request.POST['extras_rate' + str(x)],
+                                           total=request.POST['extras_cost' + str(x)],
+                                           category="Extras", category2=request.POST['extras_category' + str(x)],
+                                           proposal=newproposal)
+            if 'extras_description' + str(x) in request.POST:
+                extras.description = request.POST['extras_description' + str(x)]
+                extras.save()
+        if 'inventory_cost' in request.POST:
+            TMList.objects.create(change_order=changeorder, description="Inventory",
+                                  quantity="1",
+                                  units="Lump Sum",
+                                  rate="1", total=request.POST['inventory_cost'],
+                                  category="Inventory", category2="Inventory",
+                                  proposal=newproposal)
+        if 'bond_cost' in request.POST:
+            TMList.objects.create(change_order=changeorder, description="Bond",
+                                  quantity="1",
+                                  units="Lump Sum",
+                                  rate=request.POST['bond_rate'], total=request.POST['bond_cost'],
+                                  category="Bond", category2="Bond",
+                                  proposal=newproposal)
+        return redirect('preview_TMProposal', id=newproposal.id)
+    equipment = []
+    laboritems = []
+    materials = []
+    extras = []
+    totalhours = 0
+    totalmaterialcost = 0
+    totalcost = 0
+    counter = 0
+    is_bonded = False
+    days=0
+    # for x in TMPricesMaster.objects.filter(category="Labor", ewtmaster__isnull=False).distinct():
+    #     hours = 0
+    #     for y in EWTicket.objects.filter(EWT=ewt, master=x).exclude(employee=None).order_by('master'):
+    #         hours = hours + y.monday + y.tuesday + y.wednesday + y.thursday + y.friday + y.saturday + y.sunday
+    #     totalhours = totalhours + hours
+    #     cost = hours * x.rate
+    #     totalcost = totalcost + cost
+    #     counter = counter + 1
+    #     rate = float(x.rate)
+    #     laboritems.append({'rate': rate, 'counter': counter, 'item': x, 'hours': hours, 'cost': int(cost)})
+    # days = totalhours / 8
+    # counter = 0
+    # for y in EWTicket.objects.filter(EWT=ewt, master__category="Material").order_by('master'):
+    #     cost = y.quantity * y.master.rate
+    #     totalcost = totalcost + cost
+    #     totalmaterialcost = totalmaterialcost + cost
+    #     counter = counter + 1
+    #     rate = float(y.master.rate)
+    #     materials.append(
+    #         {'rate': rate, 'counter': counter, 'category': y.master.item, 'description': y.description,
+    #          'quantity': y.quantity, 'units': y.units,
+    #          'cost': int(cost)})
+    # inventory = int(float(totalmaterialcost) * .15)
+    # totalcost = totalcost + inventory
+    # counter = 0
+    # for y in EWTicket.objects.filter(EWT=ewt, master__category="Equipment").order_by('master'):
+    #     cost = y.quantity * y.master.rate
+    #     totalcost = totalcost + cost
+    #     counter = counter + 1
+    #     rate = float(y.master.rate)
+    #     equipment.append(
+    #         {'rate': rate, 'counter': counter, 'category': y.master.item, 'description': y.description,
+    #          'quantity': y.quantity, 'units': y.units,
+    #          'cost': int(cost)})
+    # counter = 0
+    for x in JobCharges.objects.filter(job=changeorder.job_number):
+        if x.master.unit == "Day":
+            cost = days * x.master.rate
+            totalcost = totalcost + cost
+            counter = counter + 1
+            rate = float(x.master.rate)
+            extras.append(
+                {'rate': rate, 'counter': counter, 'category': x.master.item, 'quantity': days, 'unit': "Days",
+                 'cost': int(cost)})
+        elif x.master.unit == "Hours":
+            cost = totalhours * x.master.rate
+            totalcost = totalcost + cost
+            counter = counter + 1
+            rate = float(x.master.rate)
+            extras.append(
+                {'rate': rate, 'counter': counter, 'category': x.master.item, 'quantity': totalhours, 'unit': "Hours",
+                 'cost': int(cost)})
+        else:
+            counter = counter + 1
+            rate = float(x.master.rate)
+            extras.append(
+                {'rate': rate, 'counter': counter, 'category': x.master.item, 'quantity': 0, 'unit': x.master.unit,
+                 'cost': 0})
+
+    bond_rate = 0
+    bond_cost = 0
+    if changeorder.job_number.is_bonded == True:
+        bond_rate = TMPricesMaster.objects.get(category='Bond').rate
+        bond_cost = bond_rate * totalcost
+        totalcost = totalcost + bond_cost
+        is_bonded = True
+
+    employees2 = TMPricesMaster.objects.filter(category="Labor").values()
+    materials2 = TMPricesMaster.objects.filter(category="Material").values()
+    equipment2 = TMPricesMaster.objects.filter(category="Equipment").values()
+    extras2 = TMPricesMaster.objects.filter(category="Misc").values()
+    employees_json = json.dumps(list(employees2), cls=DjangoJSONEncoder)
+    material_json = json.dumps(list(materials2), cls=DjangoJSONEncoder)
+    equipment_json = json.dumps(list(equipment2), cls=DjangoJSONEncoder)
+    extras_json = json.dumps(list(extras2), cls=DjangoJSONEncoder)
+    inventory=0
+    return render(request, "price_old_ewt.html",
+                  {'is_bonded': is_bonded, 'bond_cost': int(bond_cost), 'bond_rate': bond_rate,
+                   'extras_json': extras_json, 'employees_json': employees_json, 'material_json': material_json,
+                   'equipment_json': equipment_json, 'laborcount': int(len(laboritems)),
+                   'materialcount': int(len(materials)), 'equipmentcount': int(len(equipment)),
+                   'extrascount': int(len(extras)), 'extras': extras, 'totalcost': int(totalcost),
+                   'inventory': int(inventory), 'equipment': equipment, 'materials': materials,
+                   'laboritems': laboritems,'changeorder': changeorder})
 
 def print_ticket(request, id, status):
     # status = 'OLD' paper.  status = 'NEW' digital signature
@@ -233,6 +389,7 @@ def print_ticket(request, id, status):
     laboritems = EWTicket.objects.filter(EWT=ewt).exclude(employee=None)
     materials = EWTicket.objects.filter(EWT=ewt, master__category="Material")
     equipment = EWTicket.objects.filter(EWT=ewt, master__category="Equipment")
+
     if status == 'OLD':
         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                         user=Employees.objects.get(user=request.user),
@@ -447,7 +604,10 @@ def change_order_home(request):
             if x.is_ticket_signed == True:
                 status="Ticket Signed"
             else:
-                if x.need_ticket == False and x.is_printed == False:
+                print(x.description)
+                print(x.need_ticket())
+                print(x.is_printed)
+                if x.need_ticket() == True and x.is_printed == False:
                     status="Ticket Not Completed"
                 else:
                     status = "Ticket Not Signed"
@@ -468,6 +628,10 @@ def extra_work_ticket(request, id):
     send_data['ticket_needed']= ticket_needed
     notes = ChangeOrderNotes.objects.filter(cop_number=id)
     send_data['notes']=notes
+    job = changeorder.job_number
+    send_data['formals'] = job.formals()
+    send_data['approved']= ChangeOrders.objects.filter(job_number=job, is_approved=True,is_closed=False)
+    send_data['pending'] = ChangeOrders.objects.filter(job_number=job, is_approved=False, is_closed=False)
     tmproposal = []
     foldercontents = []
     try:
@@ -483,10 +647,36 @@ def extra_work_ticket(request, id):
     if request.method == 'GET':
         return render(request, "extra_work_ticket.html",send_data)
     if request.method == 'POST':
+        print(request.POST)
+        if 'oldform' in request.POST:
+            ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                            user=Employees.objects.get(user=request.user),
+                                            note="Blank Ticket Printed")
+            changeorder.is_old_form_printed = True
+            changeorder.save()
         if 'new_note' in request.POST:
             ChangeOrderNotes.objects.create(note=request.POST['new_note'],
                                             cop_number=changeorder, date=date.today(),
                                             user=Employees.objects.get(user=request.user))
+        if 'upload_file2' in request.FILES:
+            fileitem = request.FILES['upload_file2']
+            short_year = date.today().strftime("%y")
+            short_mth = date.today().strftime("%m")
+            short_day = date.today().strftime("%d")
+            short_date = short_year + "-" + short_mth + "-" + short_day
+            extension = fileitem.name.split(".")[1]
+            fn = os.path.basename(short_date + " Signed EWT." + extension)
+            fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id), fn)
+            open(fn2, 'wb').write(fileitem.file.read())
+            try:
+                path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
+                foldercontents = os.listdir(path)
+                send_data['foldercontents'] = foldercontents
+            except Exception as e:
+                print('no folder contents')
+            changeorder.is_ticket_signed = True
+            changeorder.date_signed = date.today()
+            changeorder.save()
         if 'upload_file' in request.FILES:
             fileitem = request.FILES['upload_file']
             fn = os.path.basename(fileitem.name)
@@ -495,6 +685,7 @@ def extra_work_ticket(request, id):
             try:
                 path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
                 foldercontents = os.listdir(path)
+                send_data['foldercontents'] = foldercontents
             except Exception as e:
                 print('no folder contents')
         if 'view_proposal' in request.POST:

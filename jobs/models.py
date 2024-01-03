@@ -210,7 +210,6 @@ class Jobs(models.Model):
         current_total = 0
         for x in ChangeOrders.objects.filter(job_number=self).exclude(gc_number = None).order_by('gc_number'):
             if current_gc_number == 999:
-                print("PUMPKIN2")
                 count = ChangeOrders.objects.filter(job_number=self, gc_number = x.gc_number).count()
                 if count == 1:
                     description = "COP " + str(x.cop_number) + " -" + x.description
