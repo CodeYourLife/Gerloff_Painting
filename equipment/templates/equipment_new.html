@@ -39,6 +39,12 @@ $(document).ready(function () {
 
 
         function check_booking_data() {
+        if (document.getElementById("inventory_type0").value = "please_select"){
+        alert("Please select equipment type")
+        document.getElementById("inventory_type0").scrollIntoView();
+        return false;
+        }
+
         var y = document.getElementById("select_vendor");
         var x = document.getElementById("new_vendor");
             if (y.value =="add_new"){
@@ -114,7 +120,7 @@ function update_vendor() {
                     if (b==0){
                     	b=1
 						var option = document.createElement("option");
-						option.value ="select_id"
+						option.value ="please_select"
 						option.text="Select Item"
 						select.appendChild(option);
 					}
@@ -161,7 +167,7 @@ function update_vendor() {
 {% csrf_token %}
 			<label for="inventory_type0">Select Equipment Type</label>
             <select id="inventory_type0" name="inventory_type0" onChange="add_dropdown(0)">
-				<option value="select_inventory_type">Select Category</option>
+				<option value="please_select">Select Category</option>
                 {% for type in inventorytype %}
                 <option value={{type.id}}>{{type.type}}</option>
                 {% endfor %}
@@ -218,7 +224,7 @@ function update_vendor() {
 <br><br>
 
 
-<input type="submit" value="Add New Equipment" />
+<input type="submit" class="btn btn-primary btn-sm" value="Add New Equipment" />
     </form>
 </div>
 

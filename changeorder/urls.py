@@ -13,9 +13,11 @@ urlpatterns = [
     path('view_ewt/<id>', views.view_ewt, name='view_ewt'),
     path('print_ticket/<id> <status>', views.print_ticket, name='print_ticket'),
     path('price_ewt/<id>', views.price_ewt, name='price_ewt'),
+    path('price_old_ewt/<id>', views.price_old_ewt, name='price_old_ewt'),
     path('preview_TMProposal/<id>', views.print_TMProposal, name='preview_TMProposal'),
     path('getChangeorderFolder', views.getChangeorderFolder, name='getChangeorderFolder'),
     path('uploadFile', csrf_exempt(views.uploadFile), name='uploadFile'),
     path('downloadFile', csrf_exempt(views.downloadFile), name='downloadFile'),
+
 
 ]
