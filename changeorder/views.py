@@ -20,6 +20,7 @@ from console.misc import Email
 from media.utilities import MediaUtilities
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from media.utilities import MediaUtilities
 
 def print_TMProposal(request, id):
     newproposal = TMProposal.objects.get(id=id)
@@ -648,6 +649,9 @@ def extra_work_ticket(request, id):
         return render(request, "extra_work_ticket.html",send_data)
     if request.method == 'POST':
         print(request.POST)
+        if 'selected_file' in request.POST:
+            print(request.POST['selected_file'])
+            return MediaUtilities().getDirectoryContents(id, request.POST['selected_file'], 'changeorder')
         if 'oldform' in request.POST:
             ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                             user=Employees.objects.get(user=request.user),

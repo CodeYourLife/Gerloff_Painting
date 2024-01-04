@@ -174,6 +174,10 @@ window.onload = function() {
     var table2 = $('#pending_table').DataTable({paging: false,info:false, ordering:false, searching:false})
     var table3 = $('#formals_table').DataTable({paging: false,info:false, ordering:false, searching:false})
 }
+        function populate_file_form(file_name){
+        select_file_form.selected_file.value=file_name
+        select_file_form.submit()
+        }
     </script>
 </head>
 <body>
@@ -408,12 +412,16 @@ window.onload = function() {
                             {% else %}
                             <font color="red">Here are the documents that have been uploaded for this change order</font>
                             <ul>
+                                    <form action="{% url 'extra_work_ticket' changeorder.id %}" id="select_file_form" method="post" >
+                                    {% csrf_token %}
+                                        <input type="hidden" id="selected_file" name="selected_file" >
+                                    </form>
                                 {% for x in foldercontents %}
                                 <li>
-
                                     <div class="col-12">
-                                        <a style="color: blue; cursor: pointer;" name="get_directory_contents"
-                                           href="{% url 'get_directory_contents' changeorder.id x 'changeorder' %}" target="_blank">{{x}}</a>
+                                        <a style="color: blue; cursor: pointer;" name="get_directory_contents" onclick = "populate_file_form('{{x}}')" >{{x}}</a>
+<!--                                        <a style="color: blue; cursor: pointer;" name="get_directory_contents"-->
+<!--                                           href="{% url 'get_directory_contents' changeorder.id x 'changeorder' %}" target="_blank">{{x}}</a>-->
                                         <br>
                                     </div>
                                 </li>
