@@ -445,6 +445,7 @@ def equipment_page(request, id):
     jobs = Jobs.objects.filter(is_closed=False).order_by('job_name')
     if request.method == 'POST':
         if 'selected_file' in request.POST:
+            print(request.POST['selected_file'])
             return MediaUtilities().getDirectoryContents(id, request.POST['selected_file'], 'equipment')
         if 'search_job' in request.POST:
             jobs = Jobs.objects.filter(is_closed=False, job_name__icontains=request.POST['search_job']).order_by(
