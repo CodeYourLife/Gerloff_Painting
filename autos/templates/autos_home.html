@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+{% extends 'base.html' %}
+{% block nav_item_autos %}active{% endblock nav_item_autos %}
+{% block content %}
+{% load static %}
+<html>
+<head>
+    <link rel="stylesheet" href="{% static 'autos.css' %}">
+    <script src="{% static 'autos.js' %}"></script>
+</head>
+<body>
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="#">Autos</a>
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav ">
+            <li><a class="nav-item nav-link active" href="{% url 'equipment_home' %}">Home</a></li>
+        </ul>
+    </div>
+</nav>
+<!-- Modal -->
+<div class="modal fade" id="update-auto-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form method="post">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="title3"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <label for="driver">Current Driver</label>
+                    <select id="driver" required class="form-control" name="driver">
+                        <option value="select_inventory_type">Select Driver</option>
+                        {% if employees %}
+                        {% for employee in employees %}
+                        <option value={{employee.id}} class="dropdown-item" href="#">{{employee.first_name}}&nbsp;{{employee.last_name}}
+                        </option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                    <div class="form-group">
+                        <label for="vin">Vin Number</label>
+                        <input type="text" class="form-control" id="vin" name="vin" required placeholder="Vin Number">
+                    </div>
+                    <div class="form-group">
+                        <label for="datePurchased">Date Purchased</label>
+                        <input type="date" class="form-control" id="datePurchased" name="datePurchased" required
+                               placeholder="Date Purchased">
+                    </div>
+                    <div class="form-group">
+                        <label for="mileage">Mileage</label>
+                        <input type="text" class="form-control" id="mileage" name="mileage"  required placeholder="Current Mileage">
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Notes</label>
+                        <input type="text" class="form-control" id="notes" name="notes" placeholder="Vehicle Notes">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="new-auto-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form method="post">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="title3"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <label for="driver">Current Driver</label>
+                    <select id="driver" required class="form-control" name="driver">
+                        <option value="select_inventory_type">Select Driver</option>
+                        {% if employees %}
+                        {% for employee in employees %}
+                        <option value={{employee.id}} class="dropdown-item" href="#">{{employee.first_name}}&nbsp;{{employee.last_name}}
+                        </option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                    <div class="form-group">
+                        <label for="vin">Vin Number</label>
+                        <input type="text" class="form-control" id="vin" name="vin" required placeholder="Vin Number">
+                    </div>
+                    <div class="form-group">
+                        <label for="datePurchased">Date Purchased</label>
+                        <input type="date" class="form-control" id="datePurchased" name="datePurchased" required
+                               placeholder="Date Purchased">
+                    </div>
+                    <div class="form-group">
+                        <label for="mileage">Mileage</label>
+                        <input type="text" class="form-control" id="mileage" name="mileage"  required placeholder="Current Mileage">
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Notes</label>
+                        <input type="text" class="form-control" id="notes" name="notes" placeholder="Vehicle Notes">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <input type="submit" class="btn btn-primary"/>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<input style="margin: 10px" type="submit" data-toggle="modal" data-target="#new-auto-modal"
+       class="btn btn-primary btn-sm"
+       value="Add Vehicle" name="apply_filter"/>
+<div class="table-responsive">
+    <table id="inventory_table" class="display table table-sm">
+        <thead>
+        <tr>
+            <th scope="col">Current Driver</th>
+            <th scope="col">Vin Number</th>
+            <th scope="col">Date Purchased</th>
+            <th scope="col">Mileage</th>
+            <th scope="col">Notes</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% if vehicles %}
+        {% for vehicle in vehicles %}
+        <tr onclick="getVehicleData({{vehicle}})" data-toggle="modal" data-target="#update-auto-modal">
+            <td>
+                {{vehicle.current_driver}}
+            </td>
+            <td>
+                {{vehicle.vin_number}}
+            </td>
+            <td>
+                {{vehicle.date_purchased}}
+            </td>
+            <td>
+                {{vehicle.mileage}}
+            </td>
+            <td>
+                {{vehicle.notes}}
+            </td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+        </tbody>
+    </table>
+</div>
+</body>
+{% endblock %}
