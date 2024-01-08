@@ -17,6 +17,66 @@
         </ul>
     </div>
 </nav>
+
+<!-- Modal -->
+<div class="modal fade" id="add-note" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form method="post" id="note">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="title3">Add Note</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="notes">Notes</label>
+                        <input type="text" class="form-control" id="notes" name="notes" placeholder="Vehicle Notes">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <input type="submit" class="btn btn-primary"/>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="add-maintenance" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form method="post" id="note">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="title3">Add Maintenance Event</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="form-group">
+                    <label for="vin">Vin Number</label>
+                    <input type="text" class="form-control" id="vin" name="vin" required placeholder="Vin Number">
+                </div>
+                <div class="form-group">
+                    <label for="datePurchased">Date Purchased</label>
+                    <input type="date" class="form-control" id="datePurchased" name="datePurchased" required
+                           placeholder="Date Purchased">
+                </div>
+                <div class="modal-footer">
+                    <input type="submit" class="btn btn-primary"/>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Modal -->
 <div class="modal fade" id="update-auto-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
@@ -25,7 +85,7 @@
             {% csrf_token %}
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="title3"></h5>
+                    <h5 class="modal-title" id="title3">Update Vehicle</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -76,7 +136,7 @@
             {% csrf_token %}
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="title3"></h5>
+                    <h5 class="modal-title" id="title3">Add Vehicle</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -131,26 +191,34 @@
             <th scope="col">Date Purchased</th>
             <th scope="col">Mileage</th>
             <th scope="col">Notes</th>
+            <th scope="col"></th>
+            <th scope="col"></th>
         </tr>
         </thead>
         <tbody>
         {% if vehicles %}
         {% for vehicle in vehicles %}
-        <tr onclick="getVehicleData('{{vehicle.current_driver.id}}','{{vehicle.vin_number}}','{{vehicle.date_purchased}}','{{vehicle.mileage}}','{{vehicle.notes}}')" data-toggle="modal" data-target="#update-auto-modal">
-            <td>
+        <tr>
+            <td onclick="getVehicleData('{{vehicle.current_driver.id}}','{{vehicle.vin_number}}','{{vehicle.date_purchased}}','{{vehicle.mileage}}','{{vehicle.notes}}')" data-toggle="modal" data-target="#update-auto-modal">
                 {{vehicle.current_driver}}
             </td>
-            <td>
+            <td onclick="getVehicleData('{{vehicle.current_driver.id}}','{{vehicle.vin_number}}','{{vehicle.date_purchased}}','{{vehicle.mileage}}','{{vehicle.notes}}')" data-toggle="modal" data-target="#update-auto-modal">
                 {{vehicle.vin_number}}
             </td>
-            <td>
+            <td onclick="getVehicleData('{{vehicle.current_driver.id}}','{{vehicle.vin_number}}','{{vehicle.date_purchased}}','{{vehicle.mileage}}','{{vehicle.notes}}')" data-toggle="modal" data-target="#update-auto-modal">
                 {{vehicle.date_purchased}}
             </td>
-            <td>
+            <td onclick="getVehicleData('{{vehicle.current_driver.id}}','{{vehicle.vin_number}}','{{vehicle.date_purchased}}','{{vehicle.mileage}}','{{vehicle.notes}}')" data-toggle="modal" data-target="#update-auto-modal">
                 {{vehicle.mileage}}
             </td>
-            <td>
+            <td onclick="getVehicleData('{{vehicle.current_driver.id}}','{{vehicle.vin_number}}','{{vehicle.date_purchased}}','{{vehicle.mileage}}','{{vehicle.notes}}')" data-toggle="modal" data-target="#update-auto-modal">
                 {{vehicle.notes}}
+            </td>
+            <td>
+                <button data-toggle="modal" data-target="#add-note" type="button" class="btn btn-secondary" data-dismiss="modal">Add Note</button>
+            </td>
+            <td>
+                <button data-toggle="modal" data-target="#add-maintenance" type="button" class="btn btn-secondary" data-dismiss="modal">Add Maintenance Event</button>
             </td>
         </tr>
         {% endfor %}
