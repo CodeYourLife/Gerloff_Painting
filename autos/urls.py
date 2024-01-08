@@ -1,11 +1,11 @@
 from django.urls import path
 from django.conf.urls.static import static
 from django.conf import settings
-from . import views
+# from . import views
 
 
 urlpatterns = [
-    path("autos_home", views.autos_home, name='autos_home'),
+    # path("autos_home", views.autos_home, name='autos_home'),
 ]
 
 # only in development

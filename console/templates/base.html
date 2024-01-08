@@ -71,7 +71,7 @@
             <li><a class="nav-item nav-link {% block nav_item_subs %}{% endblock nav_item_subs %}"
                    href="{% url 'subcontractor_home' %}">Subcontractors</a></li>
             <li><a class="nav-item nav-link {% block nav_item_autos %}{% endblock nav_item_autos %}"
-                   href="{% url 'autos_home' %}">Autos</a></li>
+                   href="#">Autos</a></li>
             {% if user.is_superuser %}
             <li><a class="nav-item nav-link {% block nav_item_employees %}{% endblock nav_item_employees %}"
                    href="{% url 'employees_home' %}">Employees</a></li>
