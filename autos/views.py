@@ -12,7 +12,6 @@ def autos_home(request):
                  'employees': Employees.objects.all()}
     if request.method == 'POST':
         employee = Employees.objects.get(id=int(request.POST['driver']))
-        print(request.POST['vin'])
         try:
             vehicle = Vehicle.objects.get(vin_number=request.POST['vin'])
             vehicle.current_driver = employee
