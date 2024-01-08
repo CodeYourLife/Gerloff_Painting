@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 {% extends 'base.html' %}
+{% load static %}
 {% block nav_item_autos %}active{% endblock nav_item_autos %}
 {% block content %}
-{% load static %}
+
 <html>
 <head>
-    <link rel="stylesheet" href="{% static 'autos.css' %}">
     <script src="{% static 'autos.js' %}"></script>
 </head>
 <body>
@@ -21,7 +21,7 @@
 <div class="modal fade" id="update-auto-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
     <div class="modal-dialog" role="document">
-        <form method="post">
+        <form method="post" id="update">
             {% csrf_token %}
             <div class="modal-content">
                 <div class="modal-header">
@@ -60,6 +60,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <input type="submit" value='Update' class="btn btn-primary"/>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 </div>
             </div>
@@ -135,7 +136,7 @@
         <tbody>
         {% if vehicles %}
         {% for vehicle in vehicles %}
-        <tr onclick="getVehicleData({{vehicle}})" data-toggle="modal" data-target="#update-auto-modal">
+        <tr onclick="getVehicleData('{{vehicle.current_driver.id}}','{{vehicle.vin_number}}','{{vehicle.date_purchased}}','{{vehicle.mileage}}','{{vehicle.notes}}')" data-toggle="modal" data-target="#update-auto-modal">
             <td>
                 {{vehicle.current_driver}}
             </td>
