@@ -1,3 +1,17 @@
-function getVehicleData(vehicle){
-    alert('Coming Soon')
+
+function getVehicleData(driver, vin, date, mileage, notes){
+    let formattedDate = new Date(date);
+    stringDate = dateToYMD(formattedDate)
+    document.getElementById('driver').value = driver.toString();
+    document.getElementById('vin').value = vin;
+    document.getElementById('datePurchased').value = stringDate;
+    document.getElementById('mileage').value = mileage;
+    document.getElementById('notes').value = notes;
+}
+
+function dateToYMD(date) {
+    var d = date.getDate();
+    var m = date.getMonth() + 1; //Month from 0 to 11
+    var y = date.getFullYear();
+    return '' + y + '-' + (m<=9 ? '0' + m : m) + '-' + (d <= 9 ? '0' + d : d);
 }
