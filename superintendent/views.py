@@ -97,6 +97,13 @@ def super_ajax(request):
             if subcontractor.email: send_data['email'] = subcontractor.email
             if subcontractor.insurance_expire_date: send_data['insurance'] = str(subcontractor.insurance_expire_date)
             if subcontractor.notes: send_data['notes'] = subcontractor.notes
+            if subcontractor.business_license_expiration_date: send_data['business_license_expiration_date'] = str(subcontractor.business_license_expiration_date)
+            if subcontractor.w9_form_date: send_data['w9_form_date'] = str(subcontractor.w9_form_date)
+            if subcontractor.notes: send_data['has_workers_comp'] = subcontractor.has_workers_comp
+            if subcontractor.notes: send_data['has_auto_insurance'] = subcontractor.has_auto_insurance
+            if subcontractor.notes: send_data['has_business_license'] = subcontractor.has_business_license
+            if subcontractor.notes: send_data['has_w9_form'] = subcontractor.has_w9_form
+            if subcontractor.is_signed_labor_agreement: send_data['is_signed_labor_agreement'] = True
             return HttpResponse(json.dumps(send_data))
         if 'dropbox' in request.GET:
             # dropbox2()

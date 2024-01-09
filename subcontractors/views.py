@@ -518,16 +518,34 @@ def subcontract_invoices(request, subcontract_id, item_id):
 def subcontractor_home(request):
     if request.method == 'POST':
         subcontractor = Subcontractors.objects.get(id=request.POST['subcontractor_id'])
-        subcontractor.contact = request.POST['contact']
-        subcontractor.phone = request.POST['phone']
-        subcontractor.email = request.POST['email']
-        subcontractor.notes = request.POST['notes']
+        if 'contact' in request.POST:
+            subcontractor.contact = request.POST['contact']
+            subcontractor.phone = request.POST['phone']
+            subcontractor.email = request.POST['email']
+            subcontractor.notes = request.POST['notes']
         if 'is_inactive' in request.POST:
             subcontractor.is_inactive = True
         subcontractor.save()
-        if request.POST['insurance'] != "":
-            subcontractor.insurance_expire_date = request.POST['insurance']
-            subcontractor.save()
+        if 'insurance' in request.POST:
+            if request.POST['insurance'] != "":
+                subcontractor.insurance_expire_date = request.POST['insurance']
+            if request.POST['w9_form_date'] != "":
+                subcontractor.w9_form_date = request.POST['w9_form_date']
+            if request.POST['business_license_expiration_date'] != "":
+                print(request.POST['business_license_expiration_date'])
+                subcontractor.business_license_expiration_date = request.POST['business_license_expiration_date']
+                print(subcontractor.business_license_expiration_date)
+            if 'has_workers_comp' in request.POST: subcontractor.has_workers_comp = True
+            else: subcontractor.has_workers_comp = False
+            if 'has_auto_insurance' in request.POST: subcontractor.has_auto_insurance = True
+            else: subcontractor.has_auto_insurance = False
+            if 'has_w9_form' in request.POST: subcontractor.has_w9_form = True
+            else: subcontractor.has_w9_form = False
+            if 'has_business_license' in request.POST: subcontractor.has_business_license = True
+            else: subcontractor.has_business_license = False
+            if 'is_signed_labor_agreement' in request.POST: subcontractor.is_signed_labor_agreement = True
+            else: subcontractor.is_signed_labor_agreement = False
+        subcontractor.save()
         if 'go_back_to_subcontracts' in request.POST:
             return redirect('subcontracts_home')
         if 'go_back_to_subcontract' in request.POST:
