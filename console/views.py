@@ -52,8 +52,8 @@ def index(request):
     send_data['closed_job'] = Inventory.objects.filter(job_number__is_closed=True, is_closed=False).count()
     send_data['service'] = Inventory.objects.filter(service_vendor__isnull=False, is_closed=False).count()
     send_data['pickup_requests'] = PickupRequest.objects.filter(is_closed=False).count()
-    send_data['rentals'] = Rentals.objects.filter(off_rent_number=None).count()
-    send_data['rentals_requested_off'] = Rentals.objects.filter(requested_off_rent=True, off_rent_number=None).count()
+    send_data['rentals'] = Rentals.objects.filter(off_rent_number=None, is_closed=False).count()
+    send_data['rentals_requested_off'] = Rentals.objects.filter(requested_off_rent=True, off_rent_number=None, is_closed=False).count()
     send_data['next_two_weeks'] = next_two_weeks
     send_data['needs_super'] = Jobs.objects.filter(superintendent__isnull=True).count()
     send_data['active_subcontracts'] = Subcontracts.objects.filter(job_number__is_closed=False, is_closed=False).count()
@@ -65,7 +65,7 @@ def index(request):
         active_super = Employees.objects.get(user=request.user)
         send_data['super_equipment'] = Inventory.objects.filter(job_number__superintendent=active_super,
                                                                 is_closed=False).count()  #
-        send_data['super_rentals'] = Rentals.objects.filter(job_number__superintendent=active_super).count()  #
+        send_data['super_rentals'] = Rentals.objects.filter(job_number__superintendent=active_super, is_closed=False,requested_off_rent=False).count()  #
         send_data['active_subcontracts'] = Subcontracts.objects.filter(job_number__superintendent=active_super,
                                                                        job_number__is_closed=False,
                                                                        is_closed=False).count()
@@ -82,7 +82,7 @@ def index(request):
                 next_two_weeks += 1
     else:
         send_data['super_equipment'] = Inventory.objects.filter(job_number__is_closed=False, is_closed=False).count()
-        send_data['super_rentals'] = Rentals.objects.filter(off_rent_number=None).count()
+        send_data['super_rentals'] = Rentals.objects.filter(off_rent_number=None, is_closed=False).count()
         send_data['tickets'] = 0  #
         send_data['active_jobs'] = Jobs.objects.filter(is_active=True).count()
         send_data['punchlist_jobs'] = Jobs.objects.filter(is_waiting_for_punchlist=True).count()

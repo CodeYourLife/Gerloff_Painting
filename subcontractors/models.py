@@ -18,6 +18,12 @@ class Subcontractors(models.Model):
     username = models.CharField(null=True, max_length=100, blank=True)
     password = models.CharField(null=True, max_length=100, blank=True)
     pin = models.IntegerField(null=True, blank=True)
+    has_workers_comp = models.BooleanField(default=False)
+    has_auto_insurance = models.BooleanField(default=False)
+    has_business_license = models.BooleanField(default=False)
+    business_license_expiration_date = models.DateField(blank=True, null=True)
+    has_w9_form = models.BooleanField(default=False)
+    w9_form_date = models.DateField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.company}"

@@ -104,45 +104,105 @@ $(document).ready(function () {
 })
 
 function populate_contact_info(subcontractor_id){
-contact_info_form.notes.value=""
-contact_info_form.insurance.value=""
-contact_info_form.email.value=""
-contact_info_form.phone.value=""
-contact_info_form.contact.value=""
-        $.ajax({
+    contact_info_form.notes.value=""
+    contact_info_form2.insurance.value=""
+    contact_info_form.email.value=""
+    contact_info_form.phone.value=""
+    contact_info_form.contact.value=""
+    $.ajax({
         method: 'GET',
         url: '/superintendent/super_ajax',
         data: {'subcontractor_id':subcontractor_id},
         success: function (data) {
-           parsedData = JSON.parse(data);
+            parsedData = JSON.parse(data);
             contact_info_form.subcontractor_id.value = subcontractor_id
-           text = "<table border='1' class='table display'>";
-           if (parsedData.contact){
+            contact_info_form2.subcontractor_id.value = subcontractor_id
+            text = "<table border='1' class='table display'>";
+            if (parsedData.contact){
                 text += "<tr><td>Contact: " + parsedData.contact + "</td></tr>";
                 contact_info_form.contact.value = parsedData.contact}
-                else {text += "<tr><td>Contact: None</td></tr>";}
-           if (parsedData.phone){
+            else {text += "<tr><td>Contact: None</td></tr>";}
+            if (parsedData.phone){
                 text += "<tr><td><a href='tel:" + parsedData.phone + "'>Phone: " + parsedData.phone + "</a></td></tr>";
                 contact_info_form.phone.value = parsedData.phone}
-                else {text += "<tr><td>Phone: None</td></tr>";}
-           if (parsedData.email){
+            else {text += "<tr><td>Phone: None</td></tr>";}
+            if (parsedData.email){
                 text += "<tr><td><a href='mailto: " + parsedData.email + "'>Email: " + parsedData.email + "</a></td></tr>";
                 contact_info_form.email.value = parsedData.email}
-                else {text += "<tr><td>Email: None</td></tr>";}
-           if (parsedData.insurance){
+            else {text += "<tr><td>Email: None</td></tr>";}
+            if (parsedData.insurance){
                 text += "<tr><td>Insurance Expires: " + parsedData.insurance + "</td></tr>";
-                contact_info_form.insurance.value = parsedData.insurance}
-                else {text += "<tr><td>Insurance: None</td></tr>";}
-           if (parsedData.notes){
+                contact_info_form2.insurance.value = parsedData.insurance
+            if (parsedData.has_workers_comp){
+                text2 = "Workers Comp?: Yes     "
+                contact_info_form2.has_workers_comp.checked = true;
+            }
+            else{
+                text2 = "Workers Comp?: No     "
+                contact_info_form2.has_workers_comp.checked = false;
+            }
+            if (parsedData.has_auto_insurance){
+                text2 += "Auto Coverage?: Yes"
+                contact_info_form2.has_auto_insurance.checked = true;
+            }
+            else{
+                text2 += "Auto Coverage?: No"
+                contact_info_form2.has_auto_insurance.checked = false;
+            }
+            text += "<tr><td>" + text2 + "</td></tr>";
+            }
+            else {text += "<tr><td>Insurance: None</td></tr>";}
+            if (parsedData.has_business_license){
+                contact_info_form2.has_business_license.checked = true;
+                if (parsedData.business_license_expiration_date){
+                    text += "<tr><td>Business License?: Yes   Expires: " + parsedData.business_license_expiration_date + "</td></tr>";
+                    contact_info_form2.business_license_expiration_date.value = parsedData.business_license_expiration_date;
+                }
+                else {
+                    text += "<tr><td>Business License?: Yes   Expires: ? </td></tr>";
+                }
+            }
+            else{
+                text += "<tr><td>Business License?: No</td></tr>";
+                contact_info_form2.has_business_license.checked = false;
+            }
+            if (parsedData.has_w9_form){
+                contact_info_form2.has_w9_form.checked = true;
+                if (parsedData.w9_form_date){
+                    text += "<tr><td>W9 Form?: Yes   Dated: " + parsedData.w9_form_date + "</td></tr>";
+                    contact_info_form2.w9_form_date.value = parsedData.w9_form_date;
+                }
+                else {
+                    text += "<tr><td>W9 Form?: Yes   Dated: ?</td></tr>";
+                }
+            }
+            else{
+                text += "<tr><td>W9 Form?: No</td></tr>";
+                contact_info_form2.has_w9_form.checked = false;
+            }
+            if (parsedData.notes){
                 text += "<tr><td>Notes: " + parsedData.notes + "</td></tr>";
-                contact_info_form.notes.value = parsedData.notes}
-           document.getElementById("show_contact_info_title").innerHTML = parsedData.company
+                contact_info_form.notes.value = parsedData.notes
+            }
+            else{contact_info_form.notes.placeholder = "Enter Any Notes About Subcontractor"}
+
+            if (parsedData.is_signed_labor_agreement){
+                text += "<tr><td>Independent Contractor Agreement?: Yes</td></tr>";
+                contact_info_form2.is_signed_labor_agreement.checked = true;
+            }
+            else{
+                text += "<tr><td>Independent Contractor Agreement?: No</td></tr>";
+                contact_info_form2.is_signed_labor_agreement.checked = false;
+            }
+
+            document.getElementById("show_contact_info_title").innerHTML = parsedData.company
             document.getElementById("contact_info_title").innerHTML = parsedData.company
             text += "</table>";
             document.getElementById("contact_info_here").innerHTML = text;
         }
-        })
-        }
+    })
+}
+
 function populate_active_contracts_modal(subcontractor_id){
     $.ajax({
         method: 'GET',
@@ -276,7 +336,8 @@ function populate_pending_approvals_modal(invoice_id){
         </div>
     </div>
 </div>
-<!-- Modal -->
+
+<!-- Modal with 2 panes -->
 <div class="modal fade" id="contact_info-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -288,7 +349,16 @@ function populate_pending_approvals_modal(invoice_id){
                 </button>
             </div>
             <div class="modal-body">
-                                <form class="form-control form-control-sm" id="contact_info_form" action="{% url 'subcontractor_home' %}" method="post" >
+                <ul class="nav nav-pills">
+                    <li>
+                        <a href="#7a" class="active" data-toggle="tab">Contact Info</a>
+                    </li>
+                    <li><a href="#8a" data-toggle="tab">Paperwork</a>
+                    </li>
+                </ul>
+                <div class="tab-content clearfix">
+                    <div class="tab-pane active" id="7a">
+<form class="form-control form-control-sm" id="contact_info_form" action="{% url 'subcontractor_home' %}" method="post" >
                                 {% csrf_token %}
                                 <table>
                                     <tr><td>
@@ -301,10 +371,10 @@ function populate_pending_approvals_modal(invoice_id){
                                     <tr><td>
                                         <input type="email" name ="email" id="email" placeholder = "email"/>
                                     </td></tr>
-                                    <tr><td>
-                                        <input type="date" name ="insurance" id="insurance" />
-                                    <label for="insurance">Insurance Expiration</label>
-                                    </td></tr>
+
+                                </table>
+
+                                    <table>
                                     <tr><td>
                                     <textarea id="notes" name="notes" class="form-control" style="min-width: 100%">Notes</textarea>
                                     </td></tr>
@@ -313,16 +383,85 @@ function populate_pending_approvals_modal(invoice_id){
                                     <label for="is_inactive">Inactive</label>
                                     </td></tr>
                                 </td></tr></table>
+                                <input type="submit" class="btn btn-primary" value="Save Changes" />
+                                </form>
+                    </div>
+                    <div class="tab-pane" id="8a">
+<form class="form-control form-control-sm" id="contact_info_form2" action="{% url 'subcontractor_home' %}" method="post" >
+    {% csrf_token %}
+    <input type="hidden" name="subcontractor_id" id="subcontractor_id" />
+                                        <table>
+                                    <tr><td>
+                                        <input type="date" name ="insurance" id="insurance" />
+                                    <label for="insurance">Insurance Expiration</label>
+                                    </td></tr>
+                                    <tr><td>
+                                        <input type="checkbox" name="has_workers_comp" id="has_workers_comp" />
+                                        <label for="has_workers_comp" >Workers Comp?</label>
+                                        <input type="checkbox" name="has_auto_insurance" id="has_auto_insurance" />
+                                        <label for="has_auto_insurance" >Auto?</label>
+                                    </td></tr>
 
-                            </div>
+                                    </table>
+                                    <hr>
+                                    <table>
+                                    <tr><td>
+                                        <input type="checkbox" name="has_w9_form" id="has_w9_form" />
+                                        <label for="has_w9_form" >W9 On File?</label>
+                                        <input type="date" name ="w9_form_date" id="w9_form_date" />
+                                        <label for="w9_form_date">Date</label>
+                                    </td></tr></table>
+                                    <hr>
+                                    <table>
+                                    <tr><td>
+                                        <input type="checkbox" name="has_business_license" id="has_business_license" />
+                                        <label for="has_business_license" >Business License?</label>
+                                        <input type="date" name ="business_license_expiration_date" id="business_license_expiration_date" />
+                                    <label for="business_license_expiration_date">Expires</label>
+                                    </td></tr></table>
+                                    <hr>
+    <table>
+                                    <tr><td>
+                                    <input type="checkbox" name="is_signed_labor_agreement" id="is_signed_labor_agreement" />
+                                        <label for="is_signed_labor_agreement" >Independent Contractor Agreement?</label>
+                                </tr></td>
+    </table>
+    <input type="submit" class="btn btn-primary" value="Save Changes" />
+                                </form>
+                    </div>
+                </div>
+            </div>
             <div class="modal-footer">
-                <input type="submit" class="btn btn-primary" value="Save Changes" />
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                </form>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
+
+
+<!--&lt;!&ndash; Modal &ndash;&gt;-->
+<!--<div class="modal fade" id="contact_info-modal" tabindex="-1" role="dialog" aria-labelledby="title"-->
+<!--     aria-hidden="true">-->
+<!--    <div class="modal-dialog" role="document">-->
+<!--        <div class="modal-content">-->
+<!--            <div class="modal-header">-->
+<!--                <h5 class="modal-title" id="contact_info_title"></h5>-->
+<!--                <button type="button" class="close" data-dismiss="modal" aria-label="Close">-->
+<!--                    <span aria-hidden="true">&times;</span>-->
+<!--                </button>-->
+<!--            </div>-->
+<!--            <div class="modal-body">-->
+<!--                                -->
+
+<!--                            </div>-->
+<!--            <div class="modal-footer">-->
+<!--                -->
+<!--                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>-->
+<!--                </form>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
 
 <div id="accordion">
 <!--    #subcontractor list-->
