@@ -103,6 +103,7 @@ def super_ajax(request):
             if subcontractor.has_auto_insurance: send_data['has_auto_insurance'] = subcontractor.has_auto_insurance
             if subcontractor.has_business_license: send_data['has_business_license'] = subcontractor.has_business_license
             if subcontractor.has_w9_form: send_data['has_w9_form'] = subcontractor.has_w9_form
+
             if subcontractor.is_signed_labor_agreement: send_data['is_signed_labor_agreement'] = True
             return HttpResponse(json.dumps(send_data))
         if 'dropbox' in request.GET:
