@@ -532,9 +532,8 @@ def subcontractor_home(request):
             if request.POST['w9_form_date'] != "":
                 subcontractor.w9_form_date = request.POST['w9_form_date']
             if request.POST['business_license_expiration_date'] != "":
-                print(request.POST['business_license_expiration_date'])
                 subcontractor.business_license_expiration_date = request.POST['business_license_expiration_date']
-                print(subcontractor.business_license_expiration_date)
+
             if 'has_workers_comp' in request.POST: subcontractor.has_workers_comp = True
             else: subcontractor.has_workers_comp = False
             if 'has_auto_insurance' in request.POST: subcontractor.has_auto_insurance = True

@@ -107,11 +107,11 @@ hidden_form.submit()
 }
 
 function populate_contact_info(subcontractor_id){
-        contact_info_form.notes.value=""
-contact_info_form.insurance.value=""
-contact_info_form.email.value=""
-contact_info_form.phone.value=""
-contact_info_form.contact.value=""
+    contact_info_form.notes.value=""
+    contact_info_form.insurance.value=""
+    contact_info_form.email.value=""
+    contact_info_form.phone.value=""
+    contact_info_form.contact.value=""
         $.ajax({
         method: 'GET',
         url: '/superintendent/super_ajax',
@@ -135,7 +135,7 @@ contact_info_form.contact.value=""
            if (parsedData.insurance){
                 text += "<tr><td>Insurance Expires: " + parsedData.insurance + "</td></tr>";
                 contact_info_form.insurance.value = parsedData.insurance}
-                else {text += "<tr><td>Insurance: None</td></tr>";}
+            else {text += "<tr><td>Insurance: None</td></tr>";}
            if (parsedData.notes){
                 text += "<tr><td>Notes: " + parsedData.notes + "</td></tr>";
                 contact_info_form.notes.value = parsedData.notes}
