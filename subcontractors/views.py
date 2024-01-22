@@ -48,7 +48,7 @@ def portal(request, sub_id, contract_id):
             remainingqnty = totalordered - quantitybilled
             percentage = (totalbilled / totalcost) * 100
             totalordered = f"{int(x.SOV_total_ordered):,d}"
-            items.append({'percentage': str(round(percentage, 2)),
+            items.append({'is_approved': x.is_approved, 'percentage': str(round(percentage, 2)),
                           'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
                           'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
                           'SOV_unit': x.SOV_unit, 'SOV_total_ordered': totalordered, 'SOV_rate': x.SOV_rate,
@@ -120,13 +120,13 @@ def subcontractor_invoice_new(request, subcontract_id):
         remainingcost = totalcost - totalbilled
         remainingqnty = totalordered - quantitybilled
         if x.SOV_is_lump_sum == True:
-            items.append({'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
+            items.append({'is_approved': x.is_approved,'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
                           'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
                           'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
                           'notes': x.notes, 'quantity_billed': float(x.quantity_billed()),
                           'total_billed': int(x.total_billed()), 'total_cost': int(x.total_cost())})
         else:
-            items.append({'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
+            items.append({'is_approved': x.is_approved,'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
                           'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
                           'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
                           'notes': x.notes, 'quantity_billed': int(x.quantity_billed()),
@@ -141,7 +141,7 @@ def subcontractor_invoice_new(request, subcontract_id):
             invoice_total = 0
             invoice = SubcontractorInvoice.objects.create(date=date.today(), pay_app_number=next_number,
                                                           subcontract=subcontract, pay_date=friday)
-            for x in SubcontractItems.objects.filter(subcontract=subcontract):
+            for x in SubcontractItems.objects.filter(subcontract=subcontract,is_approved=True):
                 if request.POST['quantity' + str(x.id)] != '':
                     SubcontractorInvoiceItem.objects.create(invoice=invoice, sov_item=x,
                                                             quantity=request.POST['quantity' + str(x.id)],
@@ -195,13 +195,13 @@ def portal_invoice_new(request, subcontract_id):
         remainingcost = totalcost - totalbilled
         remainingqnty = totalordered - quantitybilled
         if x.SOV_is_lump_sum == True:
-            items.append({'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
+            items.append({'is_approved': x.is_approved, 'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
                           'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
                           'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
                           'notes': x.notes, 'quantity_billed': float(x.quantity_billed()),
                           'total_billed': int(x.total_billed()), 'total_cost': int(x.total_cost())})
         else:
-            items.append({'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
+            items.append({'is_approved': x.is_approved, 'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
                           'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
                           'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
                           'notes': x.notes, 'quantity_billed': int(x.quantity_billed()),
@@ -216,7 +216,7 @@ def portal_invoice_new(request, subcontract_id):
             invoice_total = 0
             invoice = SubcontractorInvoice.objects.create(date=date.today(), pay_app_number=next_number,
                                                           subcontract=subcontract, pay_date=friday)
-            for x in SubcontractItems.objects.filter(subcontract=subcontract):
+            for x in SubcontractItems.objects.filter(subcontract=subcontract,is_approved=True):
                 if request.POST['quantity' + str(x.id)] != '':
                     SubcontractorInvoiceItem.objects.create(invoice=invoice, sov_item=x,
                                                             quantity=request.POST['quantity' + str(x.id)],
@@ -599,7 +599,7 @@ def subcontract(request, id):
         remainingcost = totalcost - totalbilled
         remainingqnty = totalordered - quantitybilled
         percentage = (totalbilled / totalcost) * 100
-        items.append({'percentage': str(round(percentage, 2)),
+        items.append({'is_approved':x.is_approved,'date': x.date.strftime("%m/%d/%y"), 'percentage': str(round(percentage, 2)),
                       'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
                       'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
                       'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
@@ -669,6 +669,8 @@ def subcontract(request, id):
             item.SOV_description = request.POST['SOV_description']
             if 'SOV_total_ordered' in request.POST: item.SOV_total_ordered = request.POST['SOV_total_ordered']
             if 'SOV_rate' in request.POST: item.SOV_rate = request.POST['SOV_rate']
+            if 'is_approved' in request.POST: item.is_approved = True
+            else: item.is_approved = False
             item.notes = request.POST['notes']
             item.save()
             return redirect("subcontract", subcontract.id)
