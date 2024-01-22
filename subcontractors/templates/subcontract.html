@@ -650,11 +650,13 @@ function add_note2(){
 		<table id="sub_table" class="display" style="width:90%">
 			<thead>
 				<tr>
-					<th>Description</th>
+					<th>Date</th>
+                    <th>Description</th>
 					<th>Quantity</th>
 					<th>Unit</th>
 					<th>Price</th>
 					<th>Billed</th>
+                    <th>Approved</th>
 					<th>Notes</th>
 					<th>Edit</th>
 				</tr>
@@ -663,7 +665,8 @@ function add_note2(){
 			{% for x in items %}
 			{% if edit_row and x.id|slugify == edit_row|slugify %}
 			<tr>
-					<td><input type="hidden" id="item_edited" name="item_edited" value={{x.id}} /><input type= "text" name="SOV_description" id="SOV_description" value="{{x.SOV_description}}" size="30" required /></td>
+				<td>{{x.date}}</td>
+                <td><input type="hidden" id="item_edited" name="item_edited" value={{x.id}} /><input type= "text" name="SOV_description" id="SOV_description" value="{{x.SOV_description}}" size="30" required /></td>
 					{% if x.SOV_is_lump_sum == True %}
 					<td>1</td>
 					<td>Lump Sum</td>
@@ -677,6 +680,11 @@ function add_note2(){
 					<td><input name="SOV_rate" id="SOV_rate" type= "number" value={{x.SOV_rate}} size="10" required /></td>
 					{% endif %}
 					<td>{{x.percentage}}%</td>
+                    {% if x.is_approved %}
+                    <td><input name="is_approved" id="is_approved" type= "checkbox" checked /></td>
+                    {% else %}
+                    <td><input name="is_approved" id="is_approved" type= "checkbox" /></td>
+                    {% endif %}
 					<td><textarea name="notes" id="notes" cols="50" rows="2" >{{x.notes}}</textarea></td>
 					{% if invoiced_already %}
 					<td> <button name="save_now" class="btn btn-success" >Save</button></td>
@@ -686,6 +694,7 @@ function add_note2(){
 				</tr>
 			{% else %}
 				<tr>
+                    <td>{{x.date}}</td>
 					<td>{{x.SOV_description}}</td>
 					{% if x.SOV_is_lump_sum == True %}
 					<td>1</td>
@@ -696,6 +705,11 @@ function add_note2(){
 					{% endif %}
 					<td>{{x.SOV_rate}}</td>
 					<td>{{x.percentage}}%</td>
+                    {% if x.is_approved %}
+                    <td>Yes</td>
+                    {% else %}
+                    <td>No</td>
+                    {% endif %}
 					<td>{{x.notes}}</td>
 					{% if edit_row %}
 					<td></td>

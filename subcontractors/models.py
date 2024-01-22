@@ -91,7 +91,7 @@ class Subcontracts(models.Model):
 
     def total_contract_amount(self):
         total = 0
-        for x in SubcontractItems.objects.filter(subcontract=self):
+        for x in SubcontractItems.objects.filter(subcontract=self, is_approved=True):
             total += x.total_cost()
         return total
 
@@ -148,6 +148,7 @@ class SubcontractItems(models.Model):
         max_digits=10, decimal_places=2, blank=True, null=True)
     notes = models.CharField(null=True, max_length=2050, blank=True)
     date = models.DateField()
+    is_approved = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.subcontract} {self.SOV_description}"
