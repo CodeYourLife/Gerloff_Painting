@@ -147,7 +147,6 @@ function calculate_invoice_total(){
 	let total_to_date = 0
 	let previously_billed = 0
 	let total_contract = 0
-	console.log("HERE")
 	Array.from(form.elements).forEach((input) => {
 	  	if (input.name.substring(0,8) == "quantity"){
 			item_number = String(input.id)

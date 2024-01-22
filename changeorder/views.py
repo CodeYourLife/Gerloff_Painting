@@ -155,7 +155,7 @@ def price_ewt(request, id):
         counter = counter + 1
         rate = float(y.master.rate)
         materials.append(
-            {'rate': rate, 'counter': counter, 'category': y.master.item, 'description': y.description,
+            {'rate': rate, 'counter': counter, 'category': y.master.item, 'category_id': y.master.id,'description': y.description,
              'quantity': y.quantity, 'units': y.units,
              'cost': int(cost)})
     inventory = int(float(totalmaterialcost) * .15)
@@ -167,7 +167,7 @@ def price_ewt(request, id):
         counter = counter + 1
         rate = float(y.master.rate)
         equipment.append(
-            {'rate': rate, 'counter': counter, 'category': y.master.item, 'description': y.description,
+            {'rate': rate, 'counter': counter, 'category': y.master.item, 'category_id': y.master.id, 'description': y.description,
              'quantity': y.quantity, 'units': y.units,
              'cost': int(cost)})
     counter = 0
@@ -220,7 +220,7 @@ def price_ewt(request, id):
                    'extrascount': int(len(extras)), 'extras': extras, 'totalcost': int(totalcost),
                    'inventory': int(inventory), 'equipment': equipment, 'materials': materials,
                    'laboritems': laboritems, 'ewt': ewt,
-                   'changeorder': changeorder})
+                   'changeorder': changeorder,'employees2':employees2,'materials2':materials2,'equipment2':equipment2,'extras2':extras2})
 
 def price_old_ewt(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
