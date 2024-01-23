@@ -1,7 +1,6 @@
 from django.db import models
 from employees.models import *
 import datetime
-import datetime
 
 
 # Create your models here.
