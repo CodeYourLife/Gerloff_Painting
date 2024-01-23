@@ -251,10 +251,12 @@ function check_form(){
 					<input type="hidden" id="item_number" value="{{item.id}}" />
 					{% if item.SOV_is_lump_sum == True %}
 					<input type="hidden" id="type{{item.id}}" value="Lump Sum" />
+
 					<td style="white-space: nowrap;"><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>
 					<td style="white-space: nowrap;"><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
 					{% if item.is_approved %}
 					<td style="white-space: nowrap;"><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost}} size="5" step="1" onchange="update_percentage(event)" />$</td>
+
 					<td><div id="percentage{{item.id}}" >{% widthratio item.total_billed item.total_cost 100 %}%</div></td>
 					{% else %}
 					<td>Not Approved</td><td></td>
