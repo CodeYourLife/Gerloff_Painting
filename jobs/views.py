@@ -680,7 +680,7 @@ def job_page(request, jobnumber):
     send_data['approved_cos'] = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
                                                             is_approved=True)
     send_data['equipments'] = Inventory.objects.filter(job_number=selectedjob,is_closed=False).order_by('inventory_type')
-    send_data['rentals'] = Rentals.objects.filter(job_number=selectedjob, off_rent_number__isnull=True)
+    send_data['rentals'] = Rentals.objects.filter(job_number=selectedjob, off_rent_number__isnull=True, is_closed=False)
     send_data['formals'] = selectedjob.formals()
     print(selectedjob.formals())
     if Inventory.objects.filter(job_number=selectedjob,is_closed=False).order_by('inventory_type').exists():
