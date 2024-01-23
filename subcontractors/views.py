@@ -53,7 +53,7 @@ def portal(request, sub_id, contract_id):
                           'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
                           'SOV_unit': x.SOV_unit, 'SOV_total_ordered': totalordered, 'SOV_rate': x.SOV_rate,
                           'notes': x.notes, 'quantity_billed': float(x.quantity_billed()),
-                          'total_billed': int(x.total_billed()), 'total_cost': int(x.total_cost())})
+                          'total_billed': round(x.total_billed(),2), 'total_cost': round(x.total_cost(),2)})
         send_data['items'] = items
 
     return render(request, "portal.html", send_data)
@@ -124,13 +124,13 @@ def subcontractor_invoice_new(request, subcontract_id):
                           'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
                           'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
                           'notes': x.notes, 'quantity_billed': float(x.quantity_billed()),
-                          'total_billed': int(x.total_billed()), 'total_cost': int(x.total_cost())})
+                          'total_billed': round(x.total_billed(),2), 'total_cost': round(x.total_cost(),2)})
         else:
             items.append({'is_approved': x.is_approved,'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
                           'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
                           'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
                           'notes': x.notes, 'quantity_billed': int(x.quantity_billed()),
-                          'total_billed': int(x.total_billed()), 'total_cost': int(x.total_cost())})
+                          'total_billed': round(x.total_billed(),2), 'total_cost': round(x.total_cost(),2)})
     if SubcontractorInvoice.objects.filter(subcontract=subcontract).exists():
         next_number = SubcontractorInvoice.objects.filter(subcontract=subcontract).latest(
             'pay_app_number').pay_app_number + 1
@@ -199,13 +199,13 @@ def portal_invoice_new(request, subcontract_id):
                           'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
                           'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
                           'notes': x.notes, 'quantity_billed': float(x.quantity_billed()),
-                          'total_billed': int(x.total_billed()), 'total_cost': int(x.total_cost())})
+                          'total_billed': round(x.total_billed(),2), 'total_cost': round(x.total_cost(),2)})
         else:
             items.append({'is_approved': x.is_approved, 'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
                           'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
                           'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
                           'notes': x.notes, 'quantity_billed': int(x.quantity_billed()),
-                          'total_billed': int(x.total_billed()), 'total_cost': int(x.total_cost())})
+                          'total_billed': round(x.total_billed(),2), 'total_cost': round(x.total_cost(),2)})
     if SubcontractorInvoice.objects.filter(subcontract=subcontract).exists():
         next_number = SubcontractorInvoice.objects.filter(subcontract=subcontract).latest(
             'pay_app_number').pay_app_number + 1
@@ -508,7 +508,7 @@ def subcontract_invoices(request, subcontract_id, item_id):
                  'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
                  'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
                  'notes': x.notes, 'quantity_billed': float(x.quantity_billed()),
-                 'total_billed': int(x.total_billed()), 'total_cost': int(x.total_cost())})
+                 'total_billed': round(x.total_billed(), 2), 'total_cost': round(x.total_cost(), 2)})
             send_data['items'] = items
         return render(request, "subcontract_invoices.html", send_data)
     return render(request, "subcontract_invoices.html", send_data)
@@ -604,7 +604,7 @@ def subcontract(request, id):
                       'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
                       'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
                       'notes': x.notes, 'quantity_billed': float(x.quantity_billed()),
-                      'total_billed': int(x.total_billed()), 'total_cost': int(x.total_cost())})
+                      'total_billed': round(x.total_billed(),2), 'total_cost': round(x.total_cost(),2)})
     send_data['items'] = items
     send_data['number_items'] = number_items
     send_data['notes'] = SubcontractNotes.objects.filter(subcontract=subcontract)
@@ -721,8 +721,8 @@ def subcontract(request, id):
     subcontract = Subcontracts.objects.get(id=id)
     send_data['subcontract'] = subcontract
     send_data['percent_complete'] = format(subcontract.percent_complete(), ".0%")
-    send_data['total_contract'] = "{:,}".format(int(subcontract.total_contract_amount()))
-    send_data['total_billed'] = "{:,}".format(int(subcontract.total_billed()))
+    send_data['total_contract'] = "{:,}".format(round(subcontract.total_contract_amount(),2))
+    send_data['total_billed'] = "{:,}".format(round(subcontract.total_billed(),2))
     send_data['subcontract_date'] = str(subcontract.date)
     return render(request, "subcontract.html", send_data)
 

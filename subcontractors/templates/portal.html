@@ -96,9 +96,9 @@
     <script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
     <script type="text/javascript" class="init">
         $(document).ready(function () {
-            var table = $('#sub_table').DataTable({paging: false, searching: false});
-            var table = $('#sub2_table').DataTable({paging: false, searching: false});
-            var table = $('#invoice_table').DataTable({paging: false, searching: false});
+            var table = $('#sub_table').DataTable({paging: false, searching: false, ordering:false});
+            var table = $('#sub2_table').DataTable({paging: false, searching: false, ordering:false});
+            var table = $('#invoice_table').DataTable({paging: false, searching: false, ordering:false});
         })
 function populate_invoices_modal(invoice_id){
     $.ajax({

@@ -151,19 +151,19 @@ function calculate_invoice_total(){
 	  	if (input.name.substring(0,8) == "quantity"){
 			item_number = String(input.id)
 			if (input.value){
-				quantity = parseInt(input.value)
+				quantity = Number(input.value)
 				console.log("HERE2")
 				if (document.getElementById("type"+ item_number).value == "Lump Sum"){
 					console.log("HERE3")
 					invoice_total += quantity
 				}
 				else {
-						rate = parseInt(document.getElementById("SOV_rate" + item_number).value)
+						rate = Number(document.getElementById("SOV_rate" + item_number).value)
 						invoice_total += rate*quantity
 				}
 			}
-			previously_billed += parseInt(document.getElementById("previous"+ item_number).value)
-			total_contract += parseInt(document.getElementById("total_cost"+ item_number).value)
+			previously_billed += Number(document.getElementById("previous"+ item_number).value)
+			total_contract += Number(document.getElementById("total_cost"+ item_number).value)
 		}
 	});
 	total_to_date += invoice_total + previously_billed
@@ -251,10 +251,12 @@ function check_form(){
 					<input type="hidden" id="item_number" value="{{item.id}}" />
 					{% if item.SOV_is_lump_sum == True %}
 					<input type="hidden" id="type{{item.id}}" value="Lump Sum" />
-					<td style="white-space: nowrap;"><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost|floatformat}}</td>
-					<td style="white-space: nowrap;"><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed|floatformat}}</td>
+
+					<td style="white-space: nowrap;"><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>
+					<td style="white-space: nowrap;"><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
 					{% if item.is_approved %}
-					<td style="white-space: nowrap;"><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost|floatformat}} size="5" step="1" onchange="update_percentage(event)" />$</td>
+					<td style="white-space: nowrap;"><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost}} size="5" step="1" onchange="update_percentage(event)" />$</td>
+
 					<td><div id="percentage{{item.id}}" >{% widthratio item.total_billed item.total_cost 100 %}%</div></td>
 					{% else %}
 					<td>Not Approved</td><td></td>
