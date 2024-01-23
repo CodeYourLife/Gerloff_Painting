@@ -10,11 +10,13 @@ class Vehicle(models.Model):
     date_purchased = models.DateField(default=datetime.date.today)
     mileage = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     mileage_date = models.DateField(default=datetime.date.today)
+
     notes = models.CharField(max_length=2000, null=True, blank=True)
     in_service = models.BooleanField(default=False)
     current_service_location = models.CharField(max_length=2000, null=True, blank=True)
     is_sold = models.BooleanField(default=False)
     date_sold = models.DateField(null=True,blank=True)
+
 
     def oil_change_needed_miles(self):
         if RequiredMaintenance.objects.filter(vehicle=self, maintenance_type="Oil Change").exists():
