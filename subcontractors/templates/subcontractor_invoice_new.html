@@ -259,6 +259,7 @@ function check_form(){
 				<tr>
 					<!--1 --> <td>{{item.SOV_description}}</td>
 					{% if item.SOV_is_lump_sum == True %}
+
 					<!--2 --><td style="white-space: nowrap;">1 Lump Sum</td>
 					<!--3 --><td style="background-color:hsl(121, 67%, 87%);white-space: nowrap;" ><input type="hidden" id="quantity_ordered{{item.id}}" value="1 Lump Sum" /><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>
 					{% if item.is_approved %}
@@ -288,6 +289,7 @@ function check_form(){
 					{% else %}
 					<td></td>
 					<!--9 -->{% endif %}
+
 				</tr>
 				{% endfor %}
 				{% endif %}
