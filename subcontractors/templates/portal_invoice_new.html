@@ -274,8 +274,10 @@ function check_form(){
 					<td><div id="percentage{{item.id}}" >{% widthratio item.quantity_billed item.SOV_total_ordered 100 %}%</div></td>
 					{% else %}
 					<td>Not Approved</td><td></td>
+
 					{% endif %}
 					{% endif %}
+
 					{% if item.is_approved %}
 					<td><input type="text"  name="note{{item.id}}" size="40" /></td>
 					{% else %}
