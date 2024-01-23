@@ -1,20 +1,21 @@
 from django.db import models
 from employees.models import *
 import datetime
+import datetime
 
 
 # Create your models here.
 class Vehicle(models.Model):
     current_driver = models.ForeignKey(Employees, on_delete=models.PROTECT, null=True, blank=True)
     vin_number = models.CharField(max_length=2000, null=True, blank=True)
-    date_purchased = models.DateField()
+    date_purchased = models.DateField(default=datetime.date.today)
     mileage = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
-    mileage_date = models.DateField()
+    mileage_date = models.DateField(default=datetime.date.today)
     notes = models.CharField(max_length=2000, null=True, blank=True)
     in_service = models.BooleanField(default=False)
     current_service_location = models.CharField(max_length=2000, null=True, blank=True)
     is_sold = models.BooleanField(default=False)
-    date_sold = models.DateField()
+    date_sold = models.DateField(null=True,blank=True)
 
     def oil_change_needed_miles(self):
         if RequiredMaintenance.objects.filter(vehicle=self, maintenance_type="Oil Change").exists():
