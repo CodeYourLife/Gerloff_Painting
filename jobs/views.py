@@ -151,7 +151,10 @@ def update_job_info(request, jobnumber):
                     else:
                         recipients.append(selectedjob.superintendent.email)
                     for x in Inventory.objects.filter(job_number=selectedjob,is_closed=False):
-                        message = message + "\n -" + x.item + " GP Number #" + x.number
+                        if x.number:
+                            message = message + "\n -" + x.item + " GP Number #" + x.number
+                        else:
+                            message = message + "\n -" + x.item + " -No GP Number! "
                     Email.sendEmail("Closed Job - " + selectedjob.job_name, message,
                                     recipients, False)
             selectedjob.is_closed = True
