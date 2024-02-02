@@ -6,7 +6,20 @@ function getVehicleData(driver, vin, date, mileage, notes){
     document.getElementById('vin').value = vin;
     document.getElementById('datePurchased').value = stringDate;
     document.getElementById('mileage').value = mileage;
-    document.getElementById('notes').value = notes;
+}
+
+function showNotes(id, notes){
+    let notesLog = ""
+    notes.forEach((note) => {
+        if (note.id == id) {
+            notesLog += "Employee: " + note.name + "\n"
+            notesLog += "Date: " + note.date + "\n"
+            notesLog += "Note: " + note.note + "\n"
+            notesLog += "----------------------------------" + "\n"
+        }
+    })
+    document.getElementById("vehicleId").value = id
+    document.getElementById('notesLog').innerHTML = notesLog;
 }
 
 function dateToYMD(date) {
