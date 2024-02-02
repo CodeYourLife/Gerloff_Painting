@@ -7,10 +7,9 @@ import datetime
 class Vehicle(models.Model):
     current_driver = models.ForeignKey(Employees, on_delete=models.PROTECT, null=True, blank=True)
     vin_number = models.CharField(max_length=2000, null=True, blank=True)
-    date_purchased = models.DateField(default=datetime.date.today)
+    date_purchased = models.DateField(default=datetime.date.today, null=True)
     mileage = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
-    mileage_date = models.DateField(default=datetime.date.today)
-
+    mileage_date = models.DateField(default=datetime.date.today, null=True)
     notes = models.CharField(max_length=2000, null=True, blank=True)
     in_service = models.BooleanField(default=False)
     current_service_location = models.CharField(max_length=2000, null=True, blank=True)
@@ -56,13 +55,13 @@ class VehicleMaintenance(models.Model):
     required_maintenance_item = models.ForeignKey(RequiredMaintenance, on_delete=models.PROTECT, blank=True, null=True)
     description = models.CharField(max_length=2000, null=True, blank=True)
     date_completed = models.DateField()
-    mileage = models.IntegerField()
+    mileage = models.IntegerField(null=True)
     notes = models.CharField(max_length=2000, null=True, blank=True)
     vendor = models.CharField(max_length=2000, null=True, blank=True)
 
 
 class VehicleNotes(models.Model):
     vehicle = models.ForeignKey(Vehicle, on_delete=models.PROTECT)
-    date = models.DateField()
-    user = models.ForeignKey('employees.Employees', on_delete=models.PROTECT)
-    note = models.CharField(max_length=2000)
+    date = models.DateField(default=datetime.date.today, null=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    note = models.CharField(max_length=2000, null=True)

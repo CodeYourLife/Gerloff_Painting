@@ -22,7 +22,7 @@
 <div class="modal fade" id="add-note" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
     <div class="modal-dialog" role="document">
-        <form method="post" id="note">
+        <form method="post" name="note" id="note">
             {% csrf_token %}
             <div class="modal-content">
                 <div class="modal-header">
@@ -32,9 +32,12 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="notes">Notes</label>
-                        <input type="text" class="form-control" id="notes" name="notes" placeholder="Vehicle Notes">
+                    <div style="white-space:pre-wrap; height: 100px; width: 100%; max-height: 250px; overflow: scroll;" id="notesLog">
+                    </div>
+                    <div id="noteEntry" class="form-group">
+                        <input type="hidden" id="vehicleId" name="vehicleId"/>
+                        <label for="notes">New Note</label>
+                        <textarea rows="4" style="width: 100%" class="form-control" id="notes" name="notes" placeholder="Vehicle Notes"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -192,7 +195,6 @@
             <th scope="col">Mileage</th>
             <th scope="col">Notes</th>
             <th scope="col"></th>
-            <th scope="col"></th>
         </tr>
         </thead>
         <tbody>
@@ -211,11 +213,8 @@
             <td onclick="getVehicleData('{{vehicle.current_driver.id}}','{{vehicle.vin_number}}','{{vehicle.date_purchased}}','{{vehicle.mileage}}','{{vehicle.notes}}')" data-toggle="modal" data-target="#update-auto-modal">
                 {{vehicle.mileage}}
             </td>
-            <td onclick="getVehicleData('{{vehicle.current_driver.id}}','{{vehicle.vin_number}}','{{vehicle.date_purchased}}','{{vehicle.mileage}}','{{vehicle.notes}}')" data-toggle="modal" data-target="#update-auto-modal">
-                {{vehicle.notes}}
-            </td>
             <td>
-                <button data-toggle="modal" data-target="#add-note" type="button" class="btn btn-secondary" data-dismiss="modal">Add Note</button>
+                <button onclick="showNotes('{{vehicle.id}}',{{vehicleNotes|safe}})" data-toggle="modal" data-target="#add-note" class="btn btn-secondary" data-dismiss="modal">View/Update</button>
             </td>
             <td>
                 <button data-toggle="modal" data-target="#add-maintenance" type="button" class="btn btn-secondary" data-dismiss="modal">Add Maintenance Event</button>
