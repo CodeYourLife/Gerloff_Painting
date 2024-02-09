@@ -298,6 +298,7 @@ else if (booking_input.select_company.value == "add_new") {
             var yyyy = today.getFullYear();
             today = startdate;
             booking_input.start_date.value = today
+            if ('{{subcontract_open_error}}'){alert("Cannot close this job because there are open subcontracts")}
             document.getElementById("pm_info").style.display = "block"
             document.getElementById("client_info").style.display = "block"
             if (booking_input.select_super.value == "not_sure") {document.getElementById("super_info").style.display = "none"}
@@ -389,6 +390,11 @@ function changed_super(){
             <div class="col-sm-12">
                 <h3>{{selectedjob.job_number}}</h3>
             </div>
+        </div>
+        <div class = "row">
+             <div class="col-sm-12">
+                 <a href="{% url 'job_page' selectedjob.job_number %}">Click Here to Go Back To Job</a>
+             </div>
         </div>
         <div class ="row">
             <div class="col-sm-12">
