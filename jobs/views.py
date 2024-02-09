@@ -94,18 +94,27 @@ def change_gpsuper(request, jobnumber, previous):
 
 @login_required(login_url='/accounts/login')
 def update_job_info(request, jobnumber):
+    send_data={}
     selectedjob = Jobs.objects.get(job_number=jobnumber)
+    send_data['selectedjob'] = selectedjob
     allclients = Clients.objects.order_by('company')
+    send_data['allclients'] = allclients
     pms = ClientEmployees.objects.values('name', 'id', 'person_pk')
     estimators = Employees.objects.exclude(job_title__description='Painter')
+    send_data['estimators']=estimators
     superintendents = Employees.objects.exclude(job_title__description='Painter')
+    send_data['superintendents']=superintendents
     notes = JobNotes.objects.filter(job_number=jobnumber)
     # send_employees = Employees.objects.filter(job_title="Superintendent")[0:2000]
+    send_data['notes']= notes
     prices_json = json.dumps(list(pms), cls=DjangoJSONEncoder)
+    send_data['data'] = prices_json
     selectedclient = Clients.objects.get(id=selectedjob.client.id)
     pms_filter = ClientEmployees.objects.filter(id=selectedclient.id)
+    send_data['pms_filter']= pms_filter
     startdate = selectedjob.start_date.strftime("%Y") + "-" + selectedjob.start_date.strftime(
         "%m") + "-" + selectedjob.start_date.strftime("%d")
+    send_data['startdate']=startdate
     if request.method == 'POST':
         if selectedjob.job_name != request.POST['job_name']:
             selectedjob.job_name = request.POST['job_name']
@@ -157,7 +166,21 @@ def update_job_info(request, jobnumber):
                             message = message + "\n -" + x.item + " -No GP Number! "
                     Email.sendEmail("Closed Job - " + selectedjob.job_name, message,
                                     recipients, False)
-            selectedjob.is_closed = True
+                if Subcontracts.objects.filter(is_closed=False,job_number=selectedjob).exists():
+                    message = "Job: " + selectedjob.job_name + " cannot be closed. The following subcontracts are still open!\n "
+                    recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com",
+                                  "joe@gerloffpainting.com"]
+                    for x in Subcontracts.objects.filter(is_closed=False,job_number=selectedjob):
+                        if x.po_number:
+                            message += "\n -" + x.subcontractor.company + " - PO# " + x.po_number + "! "
+                        else:
+                            message += "\n -" + x.subcontractor.company + " - PO# N/A!"
+                    Email.sendEmail("Closed Job Error- " + selectedjob.job_name, message,
+                                    recipients, False)
+                    send_data['subcontract_open_error'] = True
+                    send_data['open_subcontracts']= message
+                else:
+                    selectedjob.is_closed = True
         else:
             selectedjob.is_closed = False
         if 'is_t_m_job' in request.POST:
@@ -282,10 +305,8 @@ def update_job_info(request, jobnumber):
             if selectedjob.wallcovering_budget != request.POST['wallcovering_budget']:
                 selectedjob.wallcovering_budget = request.POST['wallcovering_budget']
         selectedjob.save()
-    return render(request, 'update_job_info.html',
-                  {'data': prices_json, 'startdate': startdate, 'notes': notes, 'selectedjob': selectedjob,
-                   'allclients': allclients, 'superintendents': superintendents, 'estimators': estimators,
-                   'pms_filter': pms_filter})
+    return render(request, 'update_job_info.html', send_data)
+
 
 @login_required(login_url='/accounts/login')
 def audit_MC_open_jobs(request):
