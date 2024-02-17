@@ -1096,7 +1096,12 @@ document.getElementById("notes_filter_button").style.display = "none";
                         </thead>
                         <tbody>
                         {% for ticket in tickets %}
-                        <tr>
+                                {% if ticket.is_t_and_m %}
+        <tr style="background-color:hsla(69, 100%, 92%);">
+            {% else %}
+            <tr>
+            {% endif %}
+
                             <td><a href="{% url 'extra_work_ticket' ticket.id %}">{{ticket.cop_number}}</a></td>
                             <td>{{ticket.description}}</td>
                             <td>{{ticket.notes}}</td>
@@ -1134,7 +1139,12 @@ document.getElementById("notes_filter_button").style.display = "none";
                         </thead>
                         <tbody>
                         {% for open_co in open_cos %}
-                        <tr>
+
+                                {% if open_co.is_t_and_m %}
+        <tr style="background-color:hsla(69, 100%, 92%);">
+            {% else %}
+            <tr>
+            {% endif %}
                             <td><a href="{% url 'extra_work_ticket' open_co.id %}">{{open_co.cop_number}}</a></td>
                             <td>{{open_co.description}}</td>
                             <td>{{open_co.notes}}</td>
@@ -1172,7 +1182,11 @@ document.getElementById("notes_filter_button").style.display = "none";
                         </thead>
                         <tbody>
                         {% for approved_co in approved_cos %}
-                        <tr>
+                                {% if approved_co.is_t_and_m %}
+        <tr style="background-color:hsla(69, 100%, 92%);">
+            {% else %}
+            <tr>
+            {% endif %}
                             <td>{{approved_co.cop_number}}</td>
                             <td>{{approved_co.description}}</td>
                             <td>{{approved_co.notes}}</td>

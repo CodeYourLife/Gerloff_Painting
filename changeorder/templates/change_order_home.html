@@ -187,7 +187,6 @@ window.onload = function() {
             <th scope="col">COP Number</th>
             <th scope="col">Description</th>
             <th scope="col">TM Status</th>
-
             <th scope="col">Date Sent</th>
             <th scope="col">Date Approved</th>
             <th scope="col">Is Approved</th>
@@ -198,7 +197,12 @@ window.onload = function() {
         <tbody>
         {% if changeorders %}
         {% for changeorder in changeorders %}
-        <tr>
+        {% if changeorder.is_t_and_m %}
+        <tr style="background-color:hsla(69, 100%, 92%);">
+            {% else %}
+            <tr>
+            {% endif %}
+
             <td><a href='{% url "job_page" changeorder.job_number %}'>{{changeorder.job_name}}</a></td>
             <td><a href='{% url "extra_work_ticket" changeorder.id %}'>{{changeorder.cop_number}}</a></td>
             <td>{{changeorder.description}}</td>

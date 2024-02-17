@@ -614,7 +614,7 @@ def change_order_home(request):
                     status = "Ticket Not Signed"
         price = None
         if x.price: price = "{:,}".format(int(x.price))
-        changeorders.append({'job_name':x.job_number.job_name,'job_number':x.job_number.job_number,'cop_number':x.cop_number,'description':x.description,'status':status,'id':x.id,'date_sent':x.date_sent,'date_approved':x.date_approved,'is_approved':x.is_approved,'gc_number':x.gc_number,'price':price})
+        changeorders.append({'is_t_and_m':x.is_t_and_m,'job_name':x.job_number.job_name,'job_number':x.job_number.job_number,'cop_number':x.cop_number,'description':x.description,'status':status,'id':x.id,'date_sent':x.date_sent,'date_approved':x.date_approved,'is_approved':x.is_approved,'gc_number':x.gc_number,'price':price})
     send_data['changeorders'] = changeorders
     # send_data['changeorders'] = search_cos.qs.order_by('job_number', 'cop_number')
     return render(request, "change_order_home.html",send_data)
