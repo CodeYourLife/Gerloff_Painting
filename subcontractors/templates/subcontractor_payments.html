@@ -175,12 +175,12 @@ function populate_super_modal(payment_id){
         </tr>
         </thead>
         <tbody>
-        {% for x in payments %}
+{% for x in payments %}
         <tr data-toggle="modal" data-target="#super-modal" onclick="populate_super_modal('{{x.id}}')">
-        <td><a href="#">{{x.date}}</a></td>
-        <td><a href="#">{{x.subcontractor}}</a></td>
-        <td><a href="#">${{x.final_amount}}</a></td>
-        <td><a href="#">{{x.check_number}}</a></td>
+        <td  style="white-space: nowrap;" width = "30px"><a href="#">{{x.date}}</a></td>
+        <td  style="white-space: nowrap;" width = "50px"><a href="#">{{x.subcontractor}}</a></td>
+        <td style="white-space: nowrap;" width = "30px"><a href="#">${{x.final_amount}}</a></td>
+        <td style="white-space: nowrap;" width = "30px"><a href="#">{{x.check_number}}</a></td>
             <td><a href="#">{{x.notes}}</a></td>
         </tr>
         {% endfor %}
