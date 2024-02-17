@@ -94,7 +94,7 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
     <script type="text/javascript" class="init">
 $(document).ready(function () {
-    var table = $('#payments_table').DataTable({});
+    var table = $('#payments_table').DataTable({ordering:false, pageLength: 50});
 })
 function populate_super_modal(payment_id){
 

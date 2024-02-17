@@ -845,7 +845,7 @@ def subcontracts_home(request):
 
 def subcontractor_payments(request):
     send_data = {}
-    send_data['payments'] = SubcontractorPayments.objects.all().order_by('date')
+    send_data['payments'] = SubcontractorPayments.objects.all().order_by('-date')
     if request.method == 'POST':
         if 'new_payment' in request.POST:
             return redirect('new_subcontractor_payment')
