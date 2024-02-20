@@ -306,10 +306,10 @@
     <hr>
     <table style="width: 100%">
         <tr>
-            <td>Labor Breakdown</td>
-            <td>Quantity</td>
-            <td>Units</td>
-            <td>Cost</td>
+            <td><b>Labor Breakdown</b></td>
+            <td><b>Quantity</b></td>
+            <td><b>Units</b></td>
+            <td><b>Cost</b></td>
         </tr>
         {% for x in laboritems %}
         <tr>
@@ -384,20 +384,17 @@
             <td>${{x.total}}</td>
         </tr>
         {% endfor %}
-        {% if bond_exists == True %}
-        <tr>
-            <td>Bond</td>
-            <td>1</td>
-            <td>LS</td>
-            <td>${{bond.total}}</td>
-        </tr>
-        {% endif %}
     </table>
     {% endif %}
     <hr style="height:2px;border:none;color:#333;background-color:#333;">
-    <div style="display:flex;">
-        <h4>TOTAL:&nbsp;&nbsp;</h4>
-        <h4>${{newproposal.total}}</h4>
+    <div>
+                {% if bond_exists == True %}
+
+           <h5><b>BOND: </b>${{bond.total}}</h5>
+
+        {% endif %}
+        <h4><b>TOTAL:&nbsp;&nbsp;</b>${{newproposal.total}}</h4>
+
     </div>
 </div>
 <script src=”https://code.jquery.com/jquery-3.2.1.slim.min.js”

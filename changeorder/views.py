@@ -40,7 +40,6 @@ def print_TMProposal(request, id):
         bond = TMList.objects.get(change_order=changeorder, category="Bond")
         bond_exists = True
     ewt = newproposal.ticket
-
     path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
     result_file = open(f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf", "w+b")
     if request.method == 'POST':
@@ -76,6 +75,10 @@ def price_ewt(request, id):
         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                         user=Employees.objects.get(user=request.user),
                                         note="COP Sent. Price: $" + request.POST['final_cost'])
+        if TMList.objects.filter(change_order=changeorder).exists:
+            TMList.objects.filter(change_order=changeorder).delete()
+        if TMProposal.objects.filter(change_order=changeorder).exists:
+            TMProposal.objects.filter(change_order=changeorder).delete()
         newproposal = TMProposal.objects.create(change_order=changeorder, total=request.POST['final_cost'],
                                                 notes=request.POST['notes'], ticket=ewt)
         print(request.POST)
@@ -641,6 +644,10 @@ def extra_work_ticket(request, id):
         send_data['foldercontents']= foldercontents
     except Exception as e:
         send_data['no_folder_contents']=True
+    # if TMList.objects.filter(change_order=changeorder).exists():
+    #     TMList.objects.filter(change_order=changeorder).delete()
+    # if TMProposal.objects.filter(change_order=changeorder).exists():
+    #     TMProposal.objects.filter(change_order=changeorder).delete()
 
     if TMProposal.objects.filter(change_order=changeorder):
         tmproposal = TMProposal.objects.get(change_order=changeorder)
