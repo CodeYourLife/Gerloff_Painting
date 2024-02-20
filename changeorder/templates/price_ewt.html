@@ -123,6 +123,7 @@ window.onload = function() {
 	var table = $('#material_breakdown').DataTable({paging: false,info:false,ordering:false,searching:false })
 	var table = $('#equipment_breakdown').DataTable({paging: false,info:false,ordering:false,searching:false })
 	var table = $('#extras_breakdown').DataTable({paging: false,info:false,ordering:false,searching:false })
+	calculatetotal()
 };
 
 function add_labor_row() {
@@ -137,12 +138,14 @@ function add_labor_row() {
 	var cell3 = row.insertCell(2);
 	var cell4 = row.insertCell(3);
 	var cell5 = row.insertCell(4);
+	var cell6 = row.insertCell(5);
 	cell1.innerHTML = "<div id='new_labor" + laborcount + "'></div>";
 	add_labor_dropdown()
 	cell2.innerHTML = "<input type= 'text' name='labor_item" + laborcount + "' id='labor_item" + laborcount + "'placeholder='Labor Item'  size = '30' required />"
-	cell3.innerHTML ="<input type= 'number' name='labor_hours" + laborcount + "' id='labor_hours" + laborcount + "'  onchange ='changehours(event)' size='7' required />"
-	cell4.innerHTML = "<input type= 'number' name='labor_rate" + laborcount + "' id='labor_rate" + laborcount + "'  onchange ='changehours(event)' size='7' required />"
+	cell3.innerHTML ="<input type= 'number' name='labor_hours" + laborcount + "' id='labor_hours" + laborcount + "'  onchange ='calculatetotal(event)' size='7' required />"
+	cell4.innerHTML = "<input type= 'number' name='labor_rate" + laborcount + "' id='labor_rate" + laborcount + "'  onchange ='calculatetotal(event)' size='7' required />"
 	cell5.innerHTML ="<input type= 'hidden' name='labor_cost" + laborcount + "' id='labor_cost" + laborcount + "' /><div id='labor_cost_desc" + laborcount + "'>$</div>"
+	cell6.innerHTML ="<button type='button' onclick='delete_row(this)'>Delete </button>"
 }
 
 function add_labor_dropdown(){
@@ -226,8 +229,9 @@ function calculatetotal(){
 				line_total_input.value = line_total
 				labor_total += line_total
 				change_order_total += line_total
+				document.getElementById("labor_cost_desc" + item_number).innerHTML = "$" + String(parseInt(line_total))
 			}
-	})
+
 
 		if (input.name.substring(0,20) == "material_description"){
 			item_number = input.name.substring(20,input.name.length+1)
@@ -239,6 +243,7 @@ function calculatetotal(){
 			line_total_input.value = line_total
 			material_total += line_total
 			change_order_total += line_total
+			document.getElementById("material_cost_desc" + item_number).innerHTML = "$" + String(parseInt(line_total))
 		}
 
 
@@ -252,6 +257,7 @@ function calculatetotal(){
 			line_total_input.value = line_total
 			equipment_total += line_total
 			change_order_total += line_total
+			document.getElementById("equipment_cost_desc" + item_number).innerHTML = "$" + String(parseInt(line_total))
 		}
 		if (input.name.substring(0,18) == "extras_description"){
 			item_number = input.name.substring(18,input.name.length+1)
@@ -263,16 +269,25 @@ function calculatetotal(){
 			line_total_input.value = line_total
 			other_total += line_total
 			change_order_total += line_total
+			document.getElementById("extras_cost_desc" + item_number).innerHTML = "$" + String(parseInt(line_total))
 		}
+		})
 				inventory_total = material_total * 0.15
+				change_order_total += inventory_total
 				inventory_display.innerHTML = "$" + String(parseInt(inventory_total))
 				inventory_input.value = inventory_total
 				material_total += inventory_total
+				bondrate={{bond_rate}}
+				if (bondrate != 0){
+					document.getElementById("bond_cost").value = change_order_total * parseFloat({{bond_rate}})
+					document.getElementById("bond_total_summary").innerHTML ="<b>Bond Cost:</b> $" + String(parseInt(document.getElementById("bond_cost").value))
+					change_order_total = change_order_total + parseFloat(document.getElementById("bond_cost").value)
+				}
 				material_total_summary.innerHTML = "<b>Material Cost: $</b>" + parseInt(material_total)
 				labor_total_summary.innerHTML = "<b>Labor Cost: $</b>" + parseInt(labor_total)
 				final_cost_summary.innerHTML = "<b>Final Cost: $</b>" + parseInt(change_order_total)
-				equipment_total_summary.innerHTML = "<b>Material Cost: $</b>" + parseInt(material_total)
-				other_total_summary.innerHTML = "<b>Material Cost: $</b>" + parseInt(material_total)
+				equipment_total_summary.innerHTML = "<b>Equipment Cost: $</b>" + parseInt(equipment_total)
+				other_total_summary.innerHTML = "<b>Other Cost: $</b>" + parseInt(other_total)
 }
 
 
@@ -318,14 +333,15 @@ function add_material_row(type) {
 	var cell4 = row.insertCell(3);
 	var cell5 = row.insertCell(4);
 	var cell6 = row.insertCell(5);
-
+	var cell7 = row.insertCell(6);
 	cell1.innerHTML = "<div id='new_" + type + String(materialcount) + "'></div>";
 	add_material_dropdown(type)
 	cell2.innerHTML ="<input type= 'text' name='" + type + "_description"+ materialcount + "' id='" + type + "_description"+ materialcount + "' required />"
-	cell3.innerHTML ="<input type= 'number' name='" + type + "_quantity"+ materialcount + "' id='" + type + "_quantity"+ materialcount + "'  onchange = 'changequantity(event)' size='10' required />"
+	cell3.innerHTML ="<input type= 'number' name='" + type + "_quantity"+ materialcount + "' id='" + type + "_quantity"+ materialcount + "'  onchange = 'calculatetotal(event)' size='10' required />"
 	cell4.innerHTML ="<input type= 'text' name='" + type + "_units"+ materialcount + "' id='" + type + "_units"+ materialcount + "'  size='5' required />"
-	cell5.innerHTML = "<input type= 'number' name='" + type + "_rate" + materialcount + "' id='" + type + "_rate" + materialcount + "'  onchange ='changehours(event)' size='7' required />"
+	cell5.innerHTML = "<input type= 'number' name='" + type + "_rate" + materialcount + "' id='" + type + "_rate" + materialcount + "'  onchange ='calculatetotal(event)' size='7' required />"
 	cell6.innerHTML ="<input type= 'hidden' name='" + type + "_cost" + materialcount + "' id='" + type + "_cost" + materialcount + "' /><div id='" + type + "_cost_desc" + materialcount + "'>$</div>"
+	cell7.innerHTML ="<button type='button' onclick='delete_row(this)'>Delete </button>"
 	calculatetotal()
 }
 
@@ -444,6 +460,12 @@ function changequantity(){
 	calculate_final_cost()
 }
 
+function delete_row(btn){
+var row = btn.parentNode.parentNode;
+row.parentNode.removeChild(row);
+calculatetotal()
+}
+
 function calculate_final_cost(){
 	var finalcost = 0
 	var materialcost = 0
@@ -464,7 +486,7 @@ function calculate_final_cost(){
 	}
 	finalcost = finalcost + parseFloat(document.getElementById("inventory_cost").value)
 	document.getElementById("bond_cost").value = finalcost * parseFloat({{bond_rate}})
-	document.getElementById("bond_total_summary").innerHTML ="Bond Cost: $" + String(parseInt(document.getElementById("bond_cost").value))
+	document.getElementById("bond_total_summary").innerHTML ="<b>Bond Cost:</b> $" + String(parseInt(document.getElementById("bond_cost").value))
 	finalcost = finalcost + parseFloat(document.getElementById("bond_cost").value)
 	document.getElementById("final_cost").value = parseInt(finalcost)
 	document.getElementById("final_cost_display").innerHTML = "<b>Final Cost: $" + parseInt(finalcost) + "</b>"
@@ -501,15 +523,18 @@ function calculate_final_cost(){
 		<div class ="col"><p>Work Description: {{ewt.notes}}</p></div>
 	</div>
   </div>
-  <br><hr>
+<hr>
 
 <form id="pricing_form" action="{% url 'price_ewt' changeorder.id %}" method="post"  onSubmit = "return check_booking_data()">
 	{% csrf_token %}
+<div class ="container">
 	<label for="notes">Description: </label> <br>
 	<textarea id="notes" name="notes" rows="2" cols="100" >{{notes}}</textarea>
+</div>
+	<div class ="container" style="background-color:hsla(5, 100%, 92%);">
 	<h4>Labor Breakdown</h4>
 	<table id="labor_breakdown" class="display compact nowrap" style="width:100%" >
-	<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Hours</b></th><th><b>Rate</b></th><th><b>Cost</b></th></tr></thead>
+	<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Hours</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
 	<tbody>
 		{% if laboritems %}
 	  	{% for x in laboritems %}
@@ -522,16 +547,19 @@ function calculate_final_cost(){
 		<option value="custom">Custom</option>
 		</select>
 		</td><td><input type= "text" name="labor_item{{x.counter}}" id="labor_item{{x.counter}}" value="{{x.item}}"  size = "30" required /></td>
-		<td><input type= "number" name="labor_hours{{x.counter}}" id="labor_hours{{x.counter}}" value="{{x.hours}}" size="7" onchange = "changehours(event)" required /></td><td><input type= "number" name="labor_rate{{x.counter}}" size="7" id="labor_rate{{x.counter}}" value="{{x.rate}}"  /></td><td><input type= "hidden" name="labor_cost{{x.counter}}" id="labor_cost{{x.counter}}" value="{{x.cost}}" /><div id="labor_cost_desc{{x.counter}}">${{x.cost}}</div></td></tr>
-	   	{% endfor %}
+		<td><input type= "number" name="labor_hours{{x.counter}}" id="labor_hours{{x.counter}}" value="{{x.hours}}" size="7" onchange = "calculatetotal(event)" required /></td><td><input type= "number" name="labor_rate{{x.counter}}" size="7" id="labor_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="labor_cost{{x.counter}}" id="labor_cost{{x.counter}}" value="{{x.cost}}" /><div id="labor_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+			<td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
+		{% endfor %}
 		{% endif %}
-	  	<tr><td><input type = "hidden" name="hidden_labor" id = "hidden_labor" value = "{{laborcount}}" /><button type="button" onclick="add_labor_row()">Add Painter Row </button></td><td></td><td></td><td></td><td></td></tr>
+	  	<tr><td><input type = "hidden" name="hidden_labor" id = "hidden_labor" value = "{{laborcount}}" /><button type="button" onclick="add_labor_row()">Add Painter Row </button></td><td></td><td></td><td></td><td></td><td></td></tr>
 	</tbody>
 	</table>
+	  </div>
   	<br>
+	<div class ="container" style="background-color:hsla(75, 100%, 92%);">
 	<h4>Material Breakdown</h4>
 	<table id="material_breakdown" class="display compact nowrap" style="width:100%" >
-		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th></tr></thead>
+		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
 		<tbody>
 		{% if materials %}
 		{% for x in materials %}
@@ -543,17 +571,20 @@ function calculate_final_cost(){
 			{% endfor %}
 				<option value="custom">Custom</option>
 			</select></td>
-			<td><input type= "text" name="material_description{{x.counter}}" id="material_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="material_quantity{{x.counter}}" id="material_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "changequantity(event)" size="10" required /></td><td><input type= "text" name="material_units{{x.counter}}" id="material_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="material_rate{{x.counter}}" size="7" id="material_rate{{x.counter}}" value="{{x.rate}}"  /></td><td><input type= "hidden" name="material_cost{{x.counter}}" id="material_cost{{x.counter}}" value="{{x.cost}}" /><div id="material_cost_desc{{x.counter}}">${{x.cost}}</div></td></tr>
-	   {% endfor %}
-		<tr><td>Inventory</td><td></td><td>Lump Sum</td><td></td><td></td><td><input type= "hidden" name="inventory_cost" id="inventory_cost" value="{{inventory}}" size="7" required /><div id="inventory_cost_display">${{inventory}}</div></td></tr>
+			<td><input type= "text" name="material_description{{x.counter}}" id="material_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="material_quantity{{x.counter}}" id="material_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="material_units{{x.counter}}" id="material_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="material_rate{{x.counter}}" size="7" id="material_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="material_cost{{x.counter}}" id="material_cost{{x.counter}}" value="{{x.cost}}" /><div id="material_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
+		{% endfor %}
+		<tr><td>Inventory</td><td></td><td>Lump Sum</td><td></td><td></td><td></td><td><input type= "hidden" name="inventory_cost" id="inventory_cost" value="{{inventory}}" size="7" required /><div id="inventory_cost_display">${{inventory}}</div></td></tr>
 	  {% endif %}
 
-		<tr><input type = "hidden" name="hidden_material" id = "hidden_material" value = "{{materialcount}}" /><td><button type="button" onclick="add_material_row('material')">Add Material Row </button></td><td></td><td></td><td></td><td></td><td></td></tr>
+		<tr><input type = "hidden" name="hidden_material" id = "hidden_material" value = "{{materialcount}}" /><td><button type="button" onclick="add_material_row('material')">Add Material Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
 	</tbody></table>
+	</div>
     <br>
+	<div class ="container" style="background-color:hsla(135, 100%, 92%);">
 	<h4>Equipment Breakdown</h4>
 	<table id="equipment_breakdown" class="display compact nowrap" style="width:100%" >
-		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th></tr></thead>
+		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
 		<tbody>
 		{% if equipment %}
 		{% for x in equipment %}
@@ -565,16 +596,19 @@ function calculate_final_cost(){
 			{% endfor %}
 				<option value="custom">Custom</option>
 			</select></td>
-			<td><input type = "hidden" name="hidden_equipment" id = "hidden_equipment" value = "{{equipmentcount}}" /><input type= "text" name="equipment_description{{x.counter}}" id="equipment_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="equipment_quantity{{x.counter}}" id="equipment_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "changequantity(event)" size="10" required /></td><td><input type= "text" name="equipment_units{{x.counter}}" id="equipment_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="equipment_rate{{x.counter}}" size="7" id="equipment_rate{{x.counter}}" value="{{x.rate}}"  /></td><td><input type= "hidden" name="equipment_cost{{x.counter}}" id="equipment_cost{{x.counter}}" value="{{x.cost}}" /><div id="equipment_cost_desc{{x.counter}}">${{x.cost}}</div></td></tr>
-	   {% endfor %}
+			<td><input type = "hidden" name="hidden_equipment" id = "hidden_equipment" value = "{{equipmentcount}}" /><input type= "text" name="equipment_description{{x.counter}}" id="equipment_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="equipment_quantity{{x.counter}}" id="equipment_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="equipment_units{{x.counter}}" id="equipment_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="equipment_rate{{x.counter}}" size="7" id="equipment_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="equipment_cost{{x.counter}}" id="equipment_cost{{x.counter}}" value="{{x.cost}}" /><div id="equipment_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
+		{% endfor %}
 	  {% endif %}
 
-		<tr><td><button type="button" onclick="add_material_row('equipment')">Add equipment Row </button></td><td></td><td></td><td></td><td></td><td></td></tr>
+		<tr><td><button type="button" onclick="add_material_row('equipment')">Add equipment Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
 	</tbody></table>
+	</div>
     <br>
+	<div class ="container" style="background-color:hsla(205, 100%, 92%);">
 		<h4>Other Adders</h4>
 	<table id="extras_breakdown" class="display compact nowrap" style="width:100%" >
-		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th></tr></thead>
+		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
 		<tbody>
 		{% if extras %}
 		{% for x in extras %}
@@ -587,24 +621,32 @@ function calculate_final_cost(){
 			{% endfor %}
 				<option value="custom">Custom</option>
 			</select></td>
-			<td><input type= "text" name="extras_description{{x.counter}}" id="extras_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="extras_quantity{{x.counter}}" id="extras_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "changequantity(event)" size="10" required /></td><td><input type= "text" name="extras_units{{x.counter}}" id="extras_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="extras_rate{{x.counter}}" size="7" id="extras_rate{{x.counter}}" value="{{x.rate}}"  /></td><td><input type= "hidden" name="extras_cost{{x.counter}}" id="extras_cost{{x.counter}}" value="{{x.cost}}" /><div id="extras_cost_desc{{x.counter}}">${{x.cost}}</div></td></tr>
-	   {% endfor %}
+			<td><input type= "text" name="extras_description{{x.counter}}" id="extras_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="extras_quantity{{x.counter}}" id="extras_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="extras_units{{x.counter}}" id="extras_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="extras_rate{{x.counter}}" size="7" id="extras_rate{{x.counter}}" value="{{x.rate}}"  /></td><td><input type= "hidden" name="extras_cost{{x.counter}}" id="extras_cost{{x.counter}}" value="{{x.cost}}" /><div id="extras_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
+		{% endfor %}
 	  {% endif %}
 
-		<tr><td><input type = "hidden" name="hidden_extras" id = "hidden_extras" value = "{{extrascount}}" /><button type="button" onclick="add_material_row('extras')">Add Extra Item </button></td><td></td><td></td><td></td><td></td><td></td></tr>
+		<tr><td><input type = "hidden" name="hidden_extras" id = "hidden_extras" value = "{{extrascount}}" /><button type="button" onclick="add_material_row('extras')">Add Extra Item </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
 	</tbody></table>
+	</div>
     <br>
 
-<br><hr>
-	<div id="labor_total_summary">Labor Cost:</div>
+<hr>
+	<div class ="container" style="background-color:hsla(275, 100%, 92%);">
+		<h4>TOTAL PRICE</h4>
+		<div id="labor_total_summary">Labor Cost:</div>
 	<div id="material_total_summary">Material Cost:</div>
 	<div id="equipment_total_summary">Equipment Cost:</div>
 	<div id="other_total_summary">Other Cost:</div>
 {% if is_bonded == True %}
-	   <input type= "hidden" name="bond_cost" id="bond_cost" value="{{bond_cost}}" /> <input type= "hidden" name="bond_rate" id="bond_rate" value="{{bond_rate}}" /><div id="bond_total_summary" >Bond Cost: ${{bond_cost}}</div>
+	   <input type= "hidden" name="bond_cost" id="bond_cost" value="{{bond_cost}}" /> <input type= "hidden" name="bond_rate" id="bond_rate" value="{{bond_rate}}" /><div id="bond_total_summary" ><b>Bond Cost:</b> ${{bond_cost}}</div>
 {% endif %}
 	 <input type = "hidden" name="final_cost" id = "final_cost" value = "{{totalcost}}" /><div id = "final_cost_display" ><b>Final Cost: ${{totalcost}}</b></div>
-<input type="submit" name="Form3" value="Send Price Now" />
+	</div>
+	<hr>
+	<div class ="container" >
+		<input type="submit" class="btn btn-primary btn-lg" name="Form3" value="Send Price Now" />
+	</div>
     </form>
 
 

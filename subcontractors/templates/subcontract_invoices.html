@@ -269,8 +269,11 @@ function check_form(){
 		return true;
 	}
 	if (all_blank == 0){
+		if (document.getElementById("this_retainage").value < 0){}
+		else{
 		alert("You need to enter at least 1 quantity")
 		return true;
+		}
 	}
 }
 

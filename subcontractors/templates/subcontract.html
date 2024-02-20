@@ -610,7 +610,7 @@ function add_note2(){
                     <input type="hidden" name="new_note" id="new_note">
                     <b>Total Retainage Held:</b> ${{total_retainage}}
                     <br>
-                    <b>Amount to Release Now:</b><input type="number" name="retainage_released" id="retainage_released" value="{{total_retainage}}" />
+                    <b>Amount to Release Now:</b><input type="number" step="0.01" name="retainage_released" id="retainage_released" value="{{total_retainage}}" />
             </div>
             <div class="modal-footer">
                 <input type="submit" class="btn btn-primary" value="Release Now" />

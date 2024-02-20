@@ -167,12 +167,12 @@ class TMList(models.Model):  # one entry for each line item of t&m bill
     # painter name, promar 200, etc. Called Item on the price breakdown
     description = models.CharField(null=False, max_length=500)
     quantity = models.DecimalField(
-        max_digits=8, decimal_places=2, blank=True, null=True)
+        max_digits=10, decimal_places=2, blank=True, null=True)
     units = models.CharField(null=False, max_length=10)
     rate = models.DecimalField(
-        max_digits=8, decimal_places=2, blank=True, null=True)
+        max_digits=10, decimal_places=2, blank=True, null=True)
     total = models.DecimalField(
-        max_digits=6, decimal_places=2, blank=True, null=True)
+        max_digits=10, decimal_places=2, blank=True, null=True)
     category = models.CharField(null=False, max_length=50, validators=[
                                 validate_tm_category])  # labor, material, equipment, bond, inventory
     category2 = models.CharField(
