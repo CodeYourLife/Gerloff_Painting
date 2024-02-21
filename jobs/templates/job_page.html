@@ -257,7 +257,7 @@ function change_start(){
     $.ajax({
         method: 'GET',
         url: '/superintendent/super_ajax',
-        data: {'job_number':change_start_form.job_number.value, 'start_date': change_start_form.start_date.value,'is_active':change_start_form.is_active.checked,'notes':change_start_form.date_note.value,'row':change_start_form.row_number.value},
+        data: {'notify':change_start_form.notify_super.checked, 'job_number':change_start_form.job_number.value, 'start_date': change_start_form.start_date.value,'is_active':change_start_form.is_active.checked,'notes':change_start_form.date_note.value,'row':change_start_form.row_number.value},
         success: function (data) {
             parsedData = JSON.parse(data);
             begin = document.getElementById("TEST_YO").innerHTML.search('">')+2
@@ -433,6 +433,9 @@ document.getElementById("notes_filter_button").style.display = "none";
                                         <br>
                                     Explain This Change:<br>
                                     <textarea id="date_note" name="date_note" class="form-control" style="min-width: 100%"></textarea>
+                                                                            <br>
+
+                                    <input type="checkbox" name ="notify_super" id="notify_super" checked /> <label for="notify_super">Notify Superintendent?</label>
                                         <br>
                                 </td></tr></table>
                                     </form>

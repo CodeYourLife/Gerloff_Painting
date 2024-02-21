@@ -157,7 +157,7 @@ function change_start_date(){
     $.ajax({
         method: 'GET',
         url: '/superintendent/super_ajax',
-        data: {'job_number':pmform.job_number.value, 'start_date': pmform.start_date.value,'is_active':pmform.is_active.checked,'notes':pmform.date_note.value,'row':pmform.row_number.value},
+        data: {'notify':pmform.notify_super.checked, 'job_number':pmform.job_number.value, 'start_date': pmform.start_date.value,'is_active':pmform.is_active.checked,'notes':pmform.date_note.value,'row':pmform.row_number.value},
         success: function (data) {
             parsedData = JSON.parse(data);
             table = document.getElementById("jobs_table");
@@ -350,6 +350,9 @@ function submit_new_super(){
                                                 Explain This Change:<br>
                                                 <textarea id="date_note" name="date_note" class="form-control"
                                                           style="min-width: 100%"></textarea>
+                                                                                    <br>
+
+                                    <input type="checkbox" name ="notify_super" id="notify_super" checked /> <label for="notify_super">Notify Superintendent?</label>
                                                 <br>
 
                                             </td>
