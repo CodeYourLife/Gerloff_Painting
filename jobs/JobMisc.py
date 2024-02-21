@@ -11,7 +11,7 @@ import base64
 import requests
 import json
 
-def start_date_change(job, newdate, status, note, author, did_date_change):
+def start_date_change(job, newdate, status, note, author, did_date_change, notify):
     # status is 1- active, 2- not active, 3 - no change
     statusnote = ""
     job.start_date_checked = date.today()
@@ -27,9 +27,32 @@ def start_date_change(job, newdate, status, note, author, did_date_change):
         JobNotes.objects.create(job_number=job,
                                 note="Start Date Changed to " + newdate + ". " + note + ". " + statusnote,
                                 type="auto_start_date_note", user=author, date=date.today())
+        if notify == True:
+            recipients = ["joe@gerloffpainting.com"]
+            if job.superintendent:
+                if job.superintendent.email:
+                    recipients.append(job.superintendent.email)
+                else:
+                    recipients.append("victor@gerloffpainting.com")
+            else:
+                recipients.append("victor@gerloffpainting.com")
+            email_body = "Start Date For " + job.job_number + " - " + job.job_name + " changed to " + newdate + ". " + note + ". " + statusnote + ". By " + str(author)
+
+            Email.sendEmail("Job Info Changed", email_body, recipients, False)
     else:
         JobNotes.objects.create(job_number=job, note=statusnote + ". " + note,
                                 type="auto_start_date_note", user=author, date=date.today())
+        if notify == True:
+            recipients = ["joe@gerloffpainting.com"]
+            if job.superintendent:
+                if job.superintendent.email:
+                    recipients.append(job.superintendent.email)
+                else:
+                    recipients.append("victor@gerloffpainting.com")
+            else:
+                recipients.append("victor@gerloffpainting.com")
+            email_body = "Status changed for " + job.job_number + " - " + job.job_name + ". " + statusnote + ". " + note + ". By " + author
+            Email.sendEmail("Job Info Changed", email_body, recipients, False)
     job.save()
 
 

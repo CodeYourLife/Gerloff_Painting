@@ -114,7 +114,7 @@ function change_start(){
     $.ajax({
         method: 'GET',
         url: '/superintendent/super_ajax',
-        data: {'job_number':pmform2.job_number.value, 'start_date': pmform2.start_date.value,'is_active':pmform2.is_active.checked,'notes':pmform2.date_note.value,'row':pmform2.row_number.value},
+        data: {'notify':pmform2.notify_super.checked,'job_number':pmform2.job_number.value, 'start_date': pmform2.start_date.value,'is_active':pmform2.is_active.checked,'notes':pmform2.date_note.value,'row':pmform2.row_number.value},
         success: function (data) {
             parsedData = JSON.parse(data);
             table = document.getElementById("jobs_table");
@@ -255,6 +255,8 @@ window.onload = function() {
                                     <textarea id="date_note" name="date_note" class="form-control" style="min-width: 100%"></textarea>
                                     <br>
 
+                                    <input type="checkbox" name ="notify_super" id="notify_super" checked /> <label for="notify_super">Notify Superintendent?</label>
+                                        <br>
                                 </td></tr></table>
                                 </form>
                             </div>

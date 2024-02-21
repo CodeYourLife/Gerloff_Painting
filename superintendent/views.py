@@ -157,8 +157,12 @@ def super_ajax(request):
                 datechange = True
             else:
                 datechange = False
+            if request.GET['notify'] == "true":
+                notify = True
+            else:
+                notify = False
             start_date_change(job, request.GET['start_date'], status, request.GET['notes'],
-                              Employees.objects.get(user=request.user), datechange)
+                              Employees.objects.get(user=request.user), datechange, notify)
             job.save()
             new_date = Jobs.objects.get(job_number=request.GET['job_number']).start_date
 
