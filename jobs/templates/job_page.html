@@ -223,7 +223,6 @@ function new_super1(){
 
 $('#test_header').on('click', 'th', function () {
   var index = table.column(this).index();
-  alert('index : '+index);
 });
 
 function showEmployeeData(status, client, client_email, client_phone,pm,superintendent,super_phone,super_email, pm_phone,pm_email) {
@@ -276,12 +275,9 @@ function submit_new_super(){
         url: '/superintendent/super_ajax',
         data: {'job_number':pmform3.job_number.value, 'select_super':pmform3.select_super.value},
         success: function (data) {
-            alert(document.getElementById("TEST_BRO").innerHTML)
-            alert(pmform3.select_super.options[pmform3.select_super.selectedIndex].text)
             begin = document.getElementById("TEST_BRO").innerHTML.search("</b>") + 4
             end = document.getElementById("TEST_BRO").innerHTML.search("</a>")
             left = document.getElementById("TEST_BRO").innerHTML.substring(0,begin)
-            alert(left)
             document.getElementById("TEST_BRO").innerHTML = left + pmform3.select_super.options[pmform3.select_super.selectedIndex].text
        }
     })
