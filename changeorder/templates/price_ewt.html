@@ -596,12 +596,15 @@ function calculate_final_cost(){
 			{% endfor %}
 				<option value="custom">Custom</option>
 			</select></td>
-			<td><input type = "hidden" name="hidden_equipment" id = "hidden_equipment" value = "{{equipmentcount}}" /><input type= "text" name="equipment_description{{x.counter}}" id="equipment_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="equipment_quantity{{x.counter}}" id="equipment_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="equipment_units{{x.counter}}" id="equipment_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="equipment_rate{{x.counter}}" size="7" id="equipment_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="equipment_cost{{x.counter}}" id="equipment_cost{{x.counter}}" value="{{x.cost}}" /><div id="equipment_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+
+			<td><input type= "text" name="equipment_description{{x.counter}}" id="equipment_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="equipment_quantity{{x.counter}}" id="equipment_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="equipment_units{{x.counter}}" id="equipment_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="equipment_rate{{x.counter}}" size="7" id="equipment_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="equipment_cost{{x.counter}}" id="equipment_cost{{x.counter}}" value="{{x.cost}}" /><div id="equipment_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+
 	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
 		{% endfor %}
 	  {% endif %}
 
-		<tr><td><button type="button" onclick="add_material_row('equipment')">Add equipment Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+		<tr><input type = "hidden" name="hidden_equipment" id = "hidden_equipment" value = "{{equipmentcount}}" /><td><button type="button" onclick="add_material_row('equipment')">Add equipment Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+
 	</tbody></table>
 	</div>
     <br>
