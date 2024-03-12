@@ -1106,7 +1106,9 @@ document.getElementById("notes_filter_button").style.display = "none";
                         </tr>
                         </thead>
                         <tbody>
+
                         {% for ticket in tickets_not_done %}
+
                                 {% if ticket.is_t_and_m %}
         <tr style="background-color:hsla(69, 100%, 92%);">
             {% else %}
@@ -1149,6 +1151,7 @@ document.getElementById("notes_filter_button").style.display = "none";
                         </tr>
                         </thead>
                         <tbody>
+
                         {% for open_co in tickets_not_signed %}
 
                                 {% if open_co.is_t_and_m %}
@@ -1235,6 +1238,7 @@ document.getElementById("notes_filter_button").style.display = "none";
                         </tr>
                         </thead>
                         <tbody>
+
                         {% for open_co in open_cos %}
 
                                 {% if open_co.is_t_and_m %}
@@ -1284,7 +1288,9 @@ document.getElementById("notes_filter_button").style.display = "none";
             {% else %}
             <tr>
             {% endif %}
+
                             <td><a href="{% url 'extra_work_ticket' approved_co.id %}">{{approved_co.cop_number}}</a></td>
+
                             <td>{{approved_co.description}}</td>
                             <td>{{approved_co.notes}}</td>
                         </tr>

@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-3t5e#t@#xt)=#557w!n_y@vrm-c8x7_71z=8tw-0+(_^&6&$_w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.168.120', '98.174.216.233']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.168.120', '98.174.216.233', '184.183.68.156']
 
 # Application definition
 
@@ -147,7 +147,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # For Emails
 DEFAULT_FROM_EMAIL = 'joe@gerloffpainting.com'
-EMAIL_HOST = 'remote.gerloffpainting.com'
+EMAIL_HOST = '192.168.168.19'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'joe@gerloffpainting.com'
 EMAIL_USE_TLS = False
