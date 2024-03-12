@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <script src="{% static 'signature.js' %}">
+    </script>
+    <style>
+        table, td, th {
+          border: 1px solid #ddd;
+          text-align: left;
+        }
+
+        table {
+          border-collapse: collapse;
+          width: 100%;
+        }
+
+        th, td {
+          padding: 5px;
+        }
+    </style>
+</head>
+<body style="margin: 22px; font-family: Helvetica">
+<H2>Gerloff Painting Change Order Proposal</H2>
+<div style="width: 100%; display:flex; justify-content: space-between;">
+    <div style="word-wrap: break-word;"><b>Job:</b>&nbsp;{{changeorder.job_number}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Change Order #</b>&nbsp;{{changeorder.cop_number}} - {{changeorder.description}}</div>
+</div>
+<div style="width: 100%;"><b>Date:</b>&nbsp;{{date}}</div>
+<div style="width: 100%;"><p><b>Work Description:</b>&nbsp;{{full_description}}</p></div>
+<div style="width: 100%;"><b>Total:</b>&nbsp;${{price}}</div>
+
+<br>
+<br>
+<br>
+<br>
+<br>
+
+<div>_______________________________________________________________</div>
+<div style="width: 400px">APPROVED BY - {{changeorder.job_number.client}}</div>
+
+</body>
+</html>
+

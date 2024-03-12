@@ -18,6 +18,7 @@ urlpatterns = [
     path('getChangeorderFolder', views.getChangeorderFolder, name='getChangeorderFolder'),
     path('uploadFile', csrf_exempt(views.uploadFile), name='uploadFile'),
     path('downloadFile', csrf_exempt(views.downloadFile), name='downloadFile'),
-
+    path('email_signed_ticket/<changeorder>', views.email_signed_ticket, name='email_signed_ticket'),
+    path('batch_approve_co/<id>', views.batch_approve_co, name='batch_approve_co'),
 
 ]

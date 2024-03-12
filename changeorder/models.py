@@ -57,6 +57,7 @@ class ChangeOrders(models.Model):
     sent_to = models.CharField(null=True, max_length=2000, blank=True)
     is_printed = models.BooleanField(default=False)
     is_old_form_printed = models.BooleanField(default=False)
+    digital_ticket_signed_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.job_number} {self.description}"
@@ -104,6 +105,8 @@ class ClientJobRoles(models.Model):
         'jobs.ClientEmployees', on_delete=models.PROTECT, related_name='roles')
     job = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT)
     # Submittals, #Change Orders, anything else
+    #currently, "Change Orders" is used to determine who receives change order proposals for a job
+    #i am adding "Extra Work Tickets" to determine who receives extra work tickets, in advance of price
     role = models.CharField(max_length=100)
     notes = models.CharField(max_length=2000, blank=True)
 
@@ -149,6 +152,7 @@ class EWTicket(models.Model):
     description = models.CharField(null=True, max_length=2000)
     quantity = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     units = models.CharField(null=True, max_length=50)
+    custom_employee = models.DecimalField(max_digits=3, decimal_places=0, null=True)
 
     def __str__(self):
         return f"{self.EWT} {self.master}"

@@ -26,6 +26,7 @@ from django.db.models import Q
 import openpyxl
 from django_tables2 import RequestConfig
 
+
 @login_required(login_url='/accounts/login')
 def change_start_date(request, jobnumber, previous, super, filter):
     # jobnumber is the job number you are changing
@@ -94,27 +95,27 @@ def change_gpsuper(request, jobnumber, previous):
 
 @login_required(login_url='/accounts/login')
 def update_job_info(request, jobnumber):
-    send_data={}
+    send_data = {}
     selectedjob = Jobs.objects.get(job_number=jobnumber)
     send_data['selectedjob'] = selectedjob
     allclients = Clients.objects.order_by('company')
     send_data['allclients'] = allclients
     pms = ClientEmployees.objects.values('name', 'id', 'person_pk')
     estimators = Employees.objects.exclude(job_title__description='Painter')
-    send_data['estimators']=estimators
+    send_data['estimators'] = estimators
     superintendents = Employees.objects.exclude(job_title__description='Painter')
-    send_data['superintendents']=superintendents
+    send_data['superintendents'] = superintendents
     notes = JobNotes.objects.filter(job_number=jobnumber)
     # send_employees = Employees.objects.filter(job_title="Superintendent")[0:2000]
-    send_data['notes']= notes
+    send_data['notes'] = notes
     prices_json = json.dumps(list(pms), cls=DjangoJSONEncoder)
     send_data['data'] = prices_json
     selectedclient = Clients.objects.get(id=selectedjob.client.id)
     pms_filter = ClientEmployees.objects.filter(id=selectedclient.id)
-    send_data['pms_filter']= pms_filter
+    send_data['pms_filter'] = pms_filter
     startdate = selectedjob.start_date.strftime("%Y") + "-" + selectedjob.start_date.strftime(
         "%m") + "-" + selectedjob.start_date.strftime("%d")
-    send_data['startdate']=startdate
+    send_data['startdate'] = startdate
     if request.method == 'POST':
         if selectedjob.job_name != request.POST['job_name']:
             selectedjob.job_name = request.POST['job_name']
@@ -150,7 +151,7 @@ def update_job_info(request, jobnumber):
                 selectedjob.spray_scale = request.POST['spray_scale']
         if 'is_closed' in request.POST:
             if selectedjob.is_closed == False:
-                if Inventory.objects.filter(job_number=selectedjob,is_closed=False).exists():
+                if Inventory.objects.filter(job_number=selectedjob, is_closed=False).exists():
 
                     message = "Job: " + selectedjob.job_name + " is closed. The following equipment is assigned to the job and must be returned immediately!\n "
                     recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com",
@@ -159,18 +160,18 @@ def update_job_info(request, jobnumber):
                         message = message + "\n No email address for " + str(selectedjob.superintendent)
                     else:
                         recipients.append(selectedjob.superintendent.email)
-                    for x in Inventory.objects.filter(job_number=selectedjob,is_closed=False):
+                    for x in Inventory.objects.filter(job_number=selectedjob, is_closed=False):
                         if x.number:
                             message = message + "\n -" + x.item + " GP Number #" + x.number
                         else:
                             message = message + "\n -" + x.item + " -No GP Number! "
                     Email.sendEmail("Closed Job - " + selectedjob.job_name, message,
                                     recipients, False)
-                if Subcontracts.objects.filter(is_closed=False,job_number=selectedjob).exists():
+                if Subcontracts.objects.filter(is_closed=False, job_number=selectedjob).exists():
                     message = "Job: " + selectedjob.job_name + " cannot be closed. The following subcontracts are still open!\n "
                     recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com",
                                   "joe@gerloffpainting.com"]
-                    for x in Subcontracts.objects.filter(is_closed=False,job_number=selectedjob):
+                    for x in Subcontracts.objects.filter(is_closed=False, job_number=selectedjob):
                         if x.po_number:
                             message += "\n -" + x.subcontractor.company + " - PO# " + x.po_number + "! "
                         else:
@@ -178,7 +179,7 @@ def update_job_info(request, jobnumber):
                     Email.sendEmail("Closed Job Error- " + selectedjob.job_name, message,
                                     recipients, False)
                     send_data['subcontract_open_error'] = True
-                    send_data['open_subcontracts']= message
+                    send_data['open_subcontracts'] = message
                 else:
                     selectedjob.is_closed = True
         else:
@@ -324,32 +325,33 @@ def audit_MC_open_jobs(request):
             not_found = []
             open_jobs = []
             a = 3
-            while sheet_obj.cell(row=a,column=1).value != None:
-                job_number= sheet_obj.cell(row=a, column=1).value
+            while sheet_obj.cell(row=a, column=1).value != None:
+                job_number = sheet_obj.cell(row=a, column=1).value
                 open_jobs.append(job_number)
                 if Jobs.objects.filter(job_number=job_number).exists():
                     job = Jobs.objects.get(job_number=job_number)
                     if job.is_closed == True:
                         job.is_closed = False
                         job.save()
-                        needs_to_be_opened.append({'job_number': job_number,'job_name': job.job_name})
+                        needs_to_be_opened.append({'job_number': job_number, 'job_name': job.job_name})
                 else:
                     not_found.append(job_number)
-                a=a+1
+                a = a + 1
                 if a > 1000:
                     break
-            for x in Jobs.objects.filter(is_closed = False):
+            for x in Jobs.objects.filter(is_closed=False):
                 if x.job_number not in open_jobs:
-                    needs_to_be_closed.append({'job_number': x.job_number,'job_name': x.job_name})
+                    needs_to_be_closed.append({'job_number': x.job_number, 'job_name': x.job_name})
                     x.is_closed = True
                     x.save()
 
-    send_data['needs_to_be_opened'] =needs_to_be_opened
-    send_data['needs_to_be_closed'] =needs_to_be_closed
-    send_data['not_found'] =not_found
+    send_data['needs_to_be_opened'] = needs_to_be_opened
+    send_data['needs_to_be_closed'] = needs_to_be_closed
+    send_data['not_found'] = not_found
     send_data['employees'] = Employees.objects.filter(user__isnull=True, active=True)
     send_data['subs'] = Subcontractors.objects.filter(is_inactive=False)
     return render(request, 'multi_use_page.html', send_data)
+
 
 @login_required(login_url='/accounts/login')
 def upload_new_job(request):
@@ -508,6 +510,7 @@ def upload_new_job(request):
             return render(request, "upload_new_job.html")
     return render(request, "upload_new_job.html")
 
+
 @login_required(login_url='/accounts/login')
 def jobs_home(request):
     send_data = {}
@@ -564,6 +567,7 @@ def jobs_home(request):
     send_data['jobs'] = 'ALL'
     return render(request, "jobs_home.html", send_data)
 
+
 @login_required(login_url='/accounts/login')
 def job_page(request, jobnumber):
     go_to_pickup = False
@@ -578,16 +582,17 @@ def job_page(request, jobnumber):
                 newSelectedEmployee = EmployeeJob.objects.create(employee=employee, job=selectedjob)
                 newSelectedEmployee.save()
         if 'start_date' in request.POST:
-            return redirect('job_page',jobnumber=jobnumber)
+            return redirect('job_page', jobnumber=jobnumber)
         if 'select_rental' in request.POST:
-            selected_rental=Rentals.objects.get(id=request.POST['select_rental'])
+            selected_rental = Rentals.objects.get(id=request.POST['select_rental'])
             selected_rental.requested_off_rent = True
             selected_rental.save()
             RentalNotes.objects.create(rental=selected_rental, date=date.today(),
                                        user=Employees.objects.get(user=request.user),
                                        note="Please call off-rent. " + request.POST['off_rent_note'])
-            message = "Please call off this rental. " + selected_rental.item + ". From Job -" + selected_rental.job_number.job_name + "\n " + request.POST['off_rent_note']
-            Email.sendEmail("Call Off Rent", message, ["warehouse@gerloffpainting.com"],False)
+            message = "Please call off this rental. " + selected_rental.item + ". From Job -" + selected_rental.job_number.job_name + "\n " + \
+                      request.POST['off_rent_note']
+            Email.sendEmail("Call Off Rent", message, ["warehouse@gerloffpainting.com"], False)
         if 'select_status' in request.POST:
             if request.POST['select_status'] == 'nothing_done':
                 message = "Labor is not done."
@@ -606,7 +611,7 @@ def job_page(request, jobnumber):
                 selectedjob.is_waiting_for_punchlist = True
                 selectedjob.is_labor_done = False
                 selectedjob.save()
-                if Inventory.objects.filter(job_number=selectedjob,is_closed=False):
+                if Inventory.objects.filter(job_number=selectedjob, is_closed=False):
                     if PickupRequest.objects.filter(job_number=selectedjob, is_closed=False,
                                                     all_items=True).exists():
                         go_to_pickup = False
@@ -624,7 +629,7 @@ def job_page(request, jobnumber):
                 selectedjob.is_waiting_for_punchlist = True
                 selectedjob.is_labor_done = True
                 selectedjob.save()
-                if Inventory.objects.filter(job_number=selectedjob,is_closed=False):
+                if Inventory.objects.filter(job_number=selectedjob, is_closed=False):
                     if PickupRequest.objects.filter(job_number=selectedjob, is_closed=False,
                                                     all_items=True).exists():
                         go_to_pickup = False
@@ -681,33 +686,51 @@ def job_page(request, jobnumber):
         short_day = selectedjob.labor_done_Date.strftime("%d")
         send_data['labor_done_date'] = short_mth + "-" + short_day + "-" + short_year
     if selectedjob.current_contract_amount() != 0:
-        contract_amount=int(selectedjob.current_contract_amount())
+        contract_amount = int(selectedjob.current_contract_amount())
         contract_amount = ('{:,}'.format(contract_amount))
     else:
         contract_amount = "T&M"
-    send_data['contract_amount']=contract_amount
+    send_data['contract_amount'] = contract_amount
     if selectedjob.contract_amount:
-        send_data['orig_contract_amount']= ('{:,}'.format(selectedjob.contract_amount))
+        send_data['orig_contract_amount'] = ('{:,}'.format(selectedjob.contract_amount))
     else:
         send_data['orig_contract_amount'] = None
-    send_data['pending_count']=selectedjob.count_pending_changes()
-    send_data['count_approved_changes']=selectedjob.count_approved_changes()
-    send_data['pending_co_amount']=('{:,}'.format(selectedjob.pending_co_amount()))
+    send_data['pending_count'] = selectedjob.count_pending_changes()
+    send_data['count_approved_changes'] = selectedjob.count_approved_changes()
+    send_data['pending_co_amount'] = ('{:,}'.format(selectedjob.pending_co_amount()))
     send_data['approved_co_amount'] = ('{:,}'.format(selectedjob.approved_co_amount()))
-    send_data['tickets'] = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
-                                                       is_ticket_signed=False)
-    send_data['open_cos'] = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
-                                                        is_approved=False) & ChangeOrders.objects.filter(
-        job_number=selectedjob,
-        is_t_and_m=False) | ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
-                                                        is_ticket_signed=True)
-    send_data['approved_cos'] = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
-                                                            is_approved=True)
-    send_data['equipments'] = Inventory.objects.filter(job_number=selectedjob,is_closed=False).order_by('inventory_type')
+    tickets_not_done=ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
+                                                                is_ticket_signed=False,
+                                                                is_old_form_printed=False, ewt__isnull=True).order_by('cop_number')
+    send_data['tickets_not_done'] = tickets_not_done
+    send_data['tickets_not_done_count'] = tickets_not_done.count()
+    # tickets_not_signed = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
+    #                                                               is_ticket_signed=False,
+    #                                                               is_old_form_printed=True)
+    tickets_not_signed = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
+                                                     is_ticket_signed=False,
+                                                     is_old_form_printed=True) | ChangeOrders.objects.filter(
+        job_number=selectedjob, is_t_and_m=True, is_ticket_signed=False, ewt__isnull=False).order_by('cop_number')
+    send_data['tickets_not_signed'] = tickets_not_signed
+    send_data['tickets_not_signed_count'] = tickets_not_signed.count()
+    tickets_not_sent=ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
+                                                                is_ticket_signed=True, date_sent__isnull=True).order_by('cop_number')
+    send_data['tickets_not_sent'] = tickets_not_sent
+    send_data['tickets_not_sent_count'] = tickets_not_sent.count()
+    open_cos=ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
+                                                        is_approved_to_bill=False,date_sent__isnull=False).order_by('cop_number')
+    send_data['open_cos'] = open_cos
+    send_data['open_cos_count'] = open_cos.count()
+    approved_cos=ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
+                                                            is_approved_to_bill=True).order_by('cop_number')
+    send_data['approved_cos'] = approved_cos
+    send_data['approved_cos_count'] = approved_cos.count()
+    send_data['equipments'] = Inventory.objects.filter(job_number=selectedjob, is_closed=False).order_by(
+        'inventory_type')
     send_data['rentals'] = Rentals.objects.filter(job_number=selectedjob, off_rent_number__isnull=True, is_closed=False)
     send_data['formals'] = selectedjob.formals()
     print(selectedjob.formals())
-    if Inventory.objects.filter(job_number=selectedjob,is_closed=False).order_by('inventory_type').exists():
+    if Inventory.objects.filter(job_number=selectedjob, is_closed=False).order_by('inventory_type').exists():
         send_data['has_equipment'] = True
     if Rentals.objects.filter(job_number=selectedjob, off_rent_number__isnull=True).exists():
         send_data['has_rentals'] = True
@@ -801,6 +824,7 @@ def job_page(request, jobnumber):
         send_data['employees'] = filteredEmployees
         send_data['selectedEmployees'] = selectedEmployees
         return render(request, 'job_page.html', send_data)
+
 
 @login_required(login_url='/accounts/login')
 def book_new_job(request):

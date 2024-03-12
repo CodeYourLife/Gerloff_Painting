@@ -40,6 +40,44 @@ def seperate_test(request):
     open(fn2, 'wb').write(fileitem.file.read())
     return redirect('index')
 
+@login_required(login_url='/accounts/login')
+def client_info(request, id):
+    send_data = {}
+    send_data['clients']=Clients.objects.all()
+    if id != 'ALL':
+        selected_client = Clients.objects.get(id=id)
+        send_data['selected_client'] = selected_client
+        send_data['client_employees'] = ClientEmployees.objects.filter(id=selected_client)
+    if request.method == "POST":
+        if 'search_client' in request.POST:
+            send_data['clients'] = Clients.objects.filter(company__icontains=request.POST['search_client'], is_active=True)
+            send_data['search_client_word'] = request.POST['search_client']
+        if request.POST['select_client'] != 'please_select':
+            selected_client = Clients.objects.get(id=request.POST['select_client'])
+            send_data['selected_client'] = selected_client
+            if 'make_client_inactive' in request.POST:
+                selected_client.is_active=False
+                selected_client.save()
+            if 'make_client_active' in request.POST:
+                selected_client.is_active=True
+                selected_client.save()
+            for x in request.POST:
+                if x[0:4]=='name':
+                    current_person_pk = x[4:len(x)]
+                    current_person = ClientEmployees.objects.get(person_pk=current_person_pk)
+                    current_person.name = request.POST[x]
+                    current_person.email = request.POST['email' + current_person_pk]
+                    current_person.phone = request.POST['phone' + current_person_pk]
+                    if 'closed' + current_person_pk in request.POST:
+                        current_person.is_active=False
+                    else:
+                        current_person.is_active = True
+                    current_person.save()
+            if 'add_new_person' in request.POST:
+                ClientEmployees.objects.create(id=selected_client, name=request.POST['add_name'], phone=request.POST['add_phone'], email = request.POST['add_email'])
+            send_data['client_employees'] = ClientEmployees.objects.filter(id=selected_client)
+    return render(request, 'client_info.html', send_data)
+
 
 @login_required(login_url='/accounts/login')
 def index(request):

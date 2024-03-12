@@ -273,35 +273,44 @@
     </script>
 </head>
 <body>
-<div style="padding: 40px; width: 100%">
-    <div style="width: 100%; text-align:center;">
-        <div class="col"><H2>Gerloff Painting T&M Price Breakdown</H2></div>
-    </div>
-    <div style="width: 100%; display:flex; justify-content: space-between;">
-        <div class="col">Job: {{changeorder.job_number}}</div>
-        <div class="col">Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</div>
-    </div>
-    <div style="width: 100%; display:flex; justify-content: space-between;">
-        <div class="col">Week Ending Date: {{ewt.week_ending}}</div>
-        <div class="col">Ticket Completed By: {{ewt.completed_by}}</div>
-    </div>
-    <div style="width: 100%; display:flex; justify-content: space-between;">
-        <div class="col"><p>Work Description: {{ewt.notes}}</p></div>
-    </div>
+<div style="text-align:center;">
+    <H2>Gerloff Painting T&M Price Breakdown</H2>
+    <b>Job:</b> {{changeorder.job_number}}       <b> Change Order # </b>{{changeorder.cop_number}} - {{changeorder.description}}
+    <br>
+    <b>Week Ending Date:</b>{{ewt.week_ending}}      <b>Ticket Completed By:</b> {{ewt.completed_by}}
+    <br>
+    <p><b>Work Description From Ticket:</b> {{ewt.notes}}</p>
+    <br>
+    <b>Additional Info:</b> {{newproposal.notes}}
 </div>
+
+<!--<div class="container" style="text-align:center;">-->
+<!--    <div class="row"><div class="col">-->
+<!--        <H2>Gerloff Painting T&M Price Breakdown</H2></div></div>-->
+<!--                 <div class="row">-->
+<!--            <div class="col-sm"><b>Job:</b> {{changeorder.job_number}}</div>-->
+<!--            <div class="col-sm"><b>Change Order # </b>{{changeorder.cop_number}} - {{changeorder.description}}</div>-->
+<!--         </div>-->
+<!--</div>-->
+<!--<div style="padding: 40px; width: 100%">-->
+<!--    <H2>Gerloff Painting T&M Price Breakdown</H2>-->
+<!--    <br>-->
+
+<!--    <div style="width: 100%; text-align:center;">-->
+<!--        <div class="row"><div class="col"><H2>Gerloff Painting T&M Price Breakdown</H2></div></div>-->
+<!--    </div>-->
+<!--</div>-->
 <hr>
 <div style="padding-left: 10px; padding-right: 10px; padding-bottom: 10px">
-    <div style="width: 100%; display:flex; justify-content: space-between;">
-        <div class="col">Description: {{newproposal.notes}}</div>
-    </div>
-    <hr>
+
     {% if laboritems %}
+    <hr>
     <table style="width: 100%">
         <tr>
-            <td>Labor Breakdown</td>
-            <td>Quantity</td>
-            <td>Units</td>
-            <td>Cost</td>
+            <td><b>Labor Breakdown</b></td>
+            <td><b>Quantity</b></td>
+            <td><b>Units</b></td>
+            <td><b>Cost</b></td>
         </tr>
         {% for x in laboritems %}
         <tr>
@@ -312,7 +321,6 @@
         </tr>
         {% endfor %}
     </table>
-
     {% endif %}
     {% if materialitems %}
     <hr>
@@ -340,7 +348,6 @@
         </tr>
         {% endif %}
     </table>
-
     {% endif %}
     {% if equipmentitems %}
     <hr>
@@ -378,19 +385,17 @@
             <td>${{x.total}}</td>
         </tr>
         {% endfor %}
-        {% if bond_exists == True %}
-        <tr>
-            <td>Bond</td>
-            <td>1</td>
-            <td>LS</td>
-            <td>${{bond.total}}</td>
-        </tr>
-        {% endif %}
     </table>
+    {% endif %}
     <hr style="height:2px;border:none;color:#333;background-color:#333;">
-    <div style="display:flex;">
-        <h4>TOTAL:&nbsp;&nbsp;</h4>
-        <h4>${{newproposal.total}}</h4>
+    <div>
+                {% if bond_exists == True %}
+
+           <h5><b>BOND: </b>${{bond.total}}</h5>
+
+        {% endif %}
+        <h4><b>TOTAL:&nbsp;&nbsp;</b>${{newproposal.total}}</h4>
+
     </div>
 </div>
 <script src=”https://code.jquery.com/jquery-3.2.1.slim.min.js”

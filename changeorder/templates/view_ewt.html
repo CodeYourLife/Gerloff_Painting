@@ -72,7 +72,7 @@ function add_equipment_row() {
 	cell1.innerHTML = "<div id='new_equipment" + equipment_row_counter + "'></div>";
 	add_equipment_dropdown();
 	cell2.innerHTML = "<td><input type='text' name='equipment_description" + equipment_row_counter +"' placeholder='description' size='30' id='equipment_description" + equipment_row_counter +"'/></td>"
-	cell3.innerHTML ="<td><input type='number' id='equipment_quantity" + equipment_row_counter +"' name = 'equipment_quantity" + equipment_row_counter +"' size='3'></td>"
+	cell3.innerHTML ="<td><input type='number' id='equipment_quantity" + equipment_row_counter +"' name = 'equipment_quantity" + equipment_row_counter +"' size='5'></td>"
 	cell4.innerHTML ="<td><input type='text' name='equipment_units" + equipment_row_counter +"' placeholder='units' size='10' id='equipment_units" + equipment_row_counter +"'/></td>"
 
 }
@@ -92,7 +92,7 @@ function add_material_row() {
 	cell1.innerHTML = "<div id='new_material" + material_row_counter + "'></div>";
 	add_material_dropdown();
 	cell2.innerHTML = "<td><input type='text' name='description" + material_row_counter +"' placeholder='description' size='30' id='description" + material_row_counter +"'/></td>"
-	cell3.innerHTML ="<td><input type='number' id='quantity" + material_row_counter +"' name = 'quantity" + material_row_counter +"' size='3'></td>"
+	cell3.innerHTML ="<td><input type='number' id='quantity" + material_row_counter +"' name = 'quantity" + material_row_counter +"' size='5'></td>"
 	cell4.innerHTML ="<td><input type='text' name='units" + material_row_counter +"' placeholder='units' size='10' id='units" + material_row_counter +"'/></td>"
 
 }
@@ -159,7 +159,7 @@ function add_ot(){
 function add_day(daycolumn){
 		var select = document.createElement("INPUT");
 		select.setAttribute("type", "number");
-		select.setAttribute("size", 3);
+		select.setAttribute("size", 4);
 		select.name = daycolumn + row_counter;
 		select.id = daycolumn + row_counter;
 		select.value = 0

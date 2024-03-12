@@ -273,13 +273,55 @@
     </script>
 </head>
 <body>
+
+<h2>{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} - Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</h2>
+<h4>Send Change Order to the Following People: </h4>
+<table id="labor_breakdown" class="display" style="width:90%" ><thead><tr><th></th></tr></thead><tbody>
+<form action="{% url 'preview_TMProposal' newproposal.id %}" method="post"   >
+	{% csrf_token %}
+	{% for x in client_list %}
+	{% if x.current == True %}
+		<tr><td>
+	 <select id="recipient" name="recipient{{x.person_pk}}" >
+		 <option value={{x.person_pk}}>{{x.name}}</option></select>
+			{% if x.default == True %}
+			<input type="submit" value="Remove from Default CO Recipients" name="remove{{x.person_pk}}" />
+						{% else %}
+			<input type="submit" value="Add to Default CO Recipients" name="adddefault{{x.person_pk}}" />
+			{% endif %}
+			<input type="submit" value="Remove from this change order" name="tempremove{{x.person_pk}}"/>
+			<input type="email" class= "emails" value="{{x.email}}" name="email{{x.person_pk}}" size="30" onchange = "add_button({{x.person_pk}})"/>
+			<input type="submit" class="emailbutton" value="Update Now!" id="button{{x.person_pk}}" name="updateemail{{x.person_pk}}"/>
+			</td></tr>
+	{% endif %}
+	{% endfor %}
+	<tr height="25px"></tr>
+	{% if extra_contacts == True %}
+		<tr><td>Click Below To Add Additional Recipients </td></tr><tr><td>
+		<select id="recipient" name="addrecipient" >
+			{% for x in client_list %}
+			{% if x.current == False %}
+			<option value={{x.person_pk}}>{{x.name}}</option>
+		{% endif %}
+			{% endfor %}
+		</select>
+	<input type="submit" value="Add as a Default Recipient" name="defaultadd"/>
+		<input type="submit" value="Add to this change order" name="tempadd"/>
+
+</td></tr>
+	{% endif %}
+</tbody></table>
+
+
+
+
+
 <div style="padding: 40px; width: 100%">
     <div style="display: flex; width: 100%">
         <div style="flex-grow: 1;"></div>
-        <div style="text-align: right">
-            <form style="width: 100%; display:flex;" action="{% url 'extra_work_ticket' changeorder.id %}">
-                <input type="submit" class="btn btn-sm btn-primary" value="SEND EMAIL WITH PROPOSAL"/>
-            </form>
+        <div style="text-align: left">
+                {% csrf_token %}
+                <input type="submit" name="final" class="btn btn-sm btn-primary" value="SEND EMAIL WITH PROPOSAL"/>
         </div>
     </div>
     <div style="width: 100%; text-align:center;">
