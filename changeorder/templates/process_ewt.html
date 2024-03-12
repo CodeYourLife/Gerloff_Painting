@@ -75,12 +75,13 @@ function add_equipment_row() {
 	var cell2 = row.insertCell(1);
 	var cell3 = row.insertCell(2);
 	var cell4 = row.insertCell(3);
+	var cell5 = row.insertCell(4);
 	cell1.innerHTML = "<div id='new_equipment" + equipment_row_counter + "'></div>";
 	add_equipment_dropdown();
 	cell2.innerHTML = "<td><input type='text' name='equipment_description" + equipment_row_counter +"' placeholder='description' size='30' id='equipment_description" + equipment_row_counter +"' required/></td>"
-	cell3.innerHTML ="<td><input type='number' id='equipment_quantity" + equipment_row_counter +"' name = 'equipment_quantity" + equipment_row_counter +"' size='3' required/></td>"
+	cell3.innerHTML ="<td><input type='number' id='equipment_quantity" + equipment_row_counter +"' name = 'equipment_quantity" + equipment_row_counter +"' size='5' required/></td>"
 	cell4.innerHTML ="<td><input type='text' name='equipment_units" + equipment_row_counter +"' placeholder='units' size='10' id='equipment_units" + equipment_row_counter +"' required/></td>"
-
+	cell5.innerHTML = "<button type='button' onclick='delete_row(this)'>Delete </button>"
 }
 
 
@@ -95,12 +96,13 @@ function add_material_row() {
 	var cell2 = row.insertCell(1);
 	var cell3 = row.insertCell(2);
 	var cell4 = row.insertCell(3);
+	var cell5 = row.insertCell(4);
 	cell1.innerHTML = "<div id='new_material" + material_row_counter + "'></div>";
 	add_material_dropdown();
 	cell2.innerHTML = "<td><input type='text' name='description" + material_row_counter +"' placeholder='description' size='30' id='description" + material_row_counter +"' required/></td>"
-	cell3.innerHTML ="<td><input type='number' id='quantity" + material_row_counter +"' name = 'quantity" + material_row_counter +"' size='3' required/></td>"
+	cell3.innerHTML ="<td><input type='number' id='quantity" + material_row_counter +"' name = 'quantity" + material_row_counter +"' size='5' required/></td>"
 	cell4.innerHTML ="<td><input type='text' name='units" + material_row_counter +"' placeholder='units' size='10' id='units" + material_row_counter +"' required/></td>"
-
+	cell5.innerHTML = "<button type='button' onclick='delete_row(this)'>Delete </button>"
 }
 
 	  function add_painter_row() {
@@ -138,11 +140,8 @@ function add_material_row() {
 			add_day("sunday");
 			cell9.innerHTML = "<div id='overtime" + row_counter + "'>OT?</div>";
 			add_ot();
-		 	const button = document.createElement('button')
-			button.innerText = 'Delete'
-			button.id = 'mainButton'
-			button.addEventListener('change',function() {delete_row(this);},false)
-			cell10.appendChild(button)
+			cell10.innerHTML = "<button type='button' onclick='delete_row(this)'>Delete </button>"
+
 }
 
 function add_ot(){
@@ -165,7 +164,7 @@ function add_ot(){
 function add_day(daycolumn){
 		var select = document.createElement("INPUT");
 		select.setAttribute("type", "number");
-		select.setAttribute("size", 3);
+		select.setAttribute("size", 4);
 		select.name = daycolumn + row_counter;
 		select.id = daycolumn + row_counter;
 		select.value = 0
@@ -227,6 +226,43 @@ function add_material_dropdown(){
 		option.value = "please_select";
 		option.text= "please select";
 		select.appendChild(option);
+		var this_painter_number = 0
+		var max_number = 0
+		const custom_painters = []
+		Array.from(ticket_input.elements).forEach((input) => {
+			if (input.name.substring(0,16) == "painter_dropdown" && input.value.substring(0,7) == "painter"){
+				this_painter_number = Number(input.value.substring(7,input.value.length))
+				if (this_painter_number > max_number){max_number = this_painter_number}
+				if (custom_painters.includes(this_painter_number)){}
+				else{
+				custom_painters.push(this_painter_number)
+				}
+			}
+			if (input.name.substring(0,16) == "existing_painter" && input.value.substring(0,7) == "painter"){
+				this_painter_number = Number(input.value.substring(7,input.value.length))
+				if (this_painter_number > max_number){max_number = this_painter_number}
+				if (custom_painters.includes(this_painter_number)){}
+				else{
+				custom_painters.push(this_painter_number)
+				}
+			}
+		})
+		var counter = 0
+		let i=0
+		do {
+			i=i+1
+			if (custom_painters.includes(i)){
+
+			}
+			else{
+				counter = 1
+			}
+			var option = document.createElement("option");
+			option.value = "painter" + i;
+			option.text= "Painter " + i;
+			select.appendChild(option);
+		}
+		while (i < max_number + 1)
 		for (const x of rolodex)
 		{
 		var option = document.createElement("option");
@@ -294,22 +330,30 @@ if (elementTypeSelector[i].value =='please_select'){
 
 				<td>
 					<select id="existing_painter" name="existing_painter" >
+						{% if x.employee %}
 {% for y in employees %} {% if y.id == x.employee_id %}
                 	<option value={{y.id}}>{{y.first_name}} {{y.last_name}}</option>
 {% endif %}{% endfor %}
+						{% else %}
+						<option value='painter{{x.custom_employee}}'>Painter {{x.custom_employee}}</option>
+						{% endif %}
             		</select>
 				</td>
-				<td><input type="number" id="monday" name="monday" size=3 value ={{x.monday}}></td>
-				<td><input type="number" id="tuesday" name="tuesday" value ={{x.tuesday}} size=3></td>
-				<td><input type="number" id="wednesday" name="wednesday" value ={{x.wednesday}} size=3></td>
-				<td><input type="number" id="thursday" name="thursday" value ={{x.thursday}} size=3></td>
-				<td><input type="number" id="friday" name="friday" value ={{x.friday}} size=3></td>
-				<td><input type="number" id="saturday" name="saturday" value ={{x.saturday}} size=3></td>
-				<td><input type="number" id="sunday" name="sunday" value ={{x.sunday}} size=3></td>
+				<td><input type="number" id="monday" name="monday" size=4 value ={{x.monday}} ></td>
+				<td><input type="number" id="tuesday" name="tuesday" value ={{x.tuesday}} size=4 ></td>
+				<td><input type="number" id="wednesday" name="wednesday" value ={{x.wednesday}} size=4 ></td>
+				<td><input type="number" id="thursday" name="thursday" value ={{x.thursday}} size=4 ></td>
+				<td><input type="number" id="friday" name="friday" value ={{x.friday}} size=4 ></td>
+				<td><input type="number" id="saturday" name="saturday" value ={{x.saturday}} size=4 ></td>
+				<td><input type="number" id="sunday" name="sunday" value ={{x.sunday}} size=4 ></td>
 				{% if x.master_id == 8 %}
-				<td>OT?<input type='hidden' value='notchecked' name="is_overtime" id="is_overtime" ><input type="checkbox" name="is_overtime" id="is_overtime" value="checked" checked />
+				<td>OT?
+					<input type='hidden' value='notchecked' name="is_overtime" id="is_overtime" >
+					<input type="checkbox" name="is_overtime" id="is_overtime" value="checked" checked />
         		{% else %}
-					<td>OT?<input type='hidden' value='notchecked' name="is_overtime" id="is_overtime" ><input type="checkbox" name="is_overtime" id="is_overtime" value="checked"  />
+					<td>OT?
+					<input type='hidden' value='notchecked' name="is_overtime" id="is_overtime" >
+					<input type="checkbox" name="is_overtime" id="is_overtime" value="checked"  />
 				{% endif %}
 			</td>
 				<td><button type="button" onclick="delete_row(this)">Delete </button></td>
@@ -320,7 +364,7 @@ if (elementTypeSelector[i].value =='please_select'){
 
 		</tbody>
 	</table>
-	<button type="button" onclick="add_painter_row()">Add Painter Row </button>
+	<button type="button" class="btn btn-info btn-sm" onclick="add_painter_row()">Add Painter Row </button>
 <br><br><hr>
 	<h3>MATERIAL BREAKDOWN</h3>
 	<table id="material_breakdown" class="display" style="width:90%" >
@@ -351,7 +395,7 @@ if (elementTypeSelector[i].value =='please_select'){
             		</select>
 				</td>
 				<td><input type="text" name="description" placeholder="description" size="30" id="description" value = "{{x.description}}" /></td>
-				<td><input type="number" id="quantity" name = "quantity" size="3" value = {{x.quantity}} /></td>
+				<td><input type="number" id="quantity" name = "quantity" size="5" value = {{x.quantity}} /></td>
 				<td><input type="text" name="units" placeholder="units" size="10" id="units" value = "{{x.units}}"  /></td>
 <td><button type="button" onclick="delete_row(this)">Delete </button></td>
 			</tr>
@@ -360,7 +404,7 @@ if (elementTypeSelector[i].value =='please_select'){
 		 {% endif %}
 		</tbody>
 	</table>
-	<button type="button" onclick="add_material_row()">Add Material Row </button>
+	<button type="button" class="btn btn-info btn-sm" onclick="add_material_row()">Add Material Row </button>
 <br><hr>
 	<h3>EQUIPMENT BREAKDOWN</h3>
 	<table id="equipment_breakdown" class="display" style="width:90%" >
@@ -391,7 +435,7 @@ if (elementTypeSelector[i].value =='please_select'){
             		</select>
 				</td>
 				<td><input type="text" name="equip_description" size="30" id="equip_description" value = "{{x.description}}" /></td>
-				<td><input type="number" id="equip_quantity" name = "equip_quantity" size="3" value = {{x.quantity}} /></td>
+				<td><input type="number" id="equip_quantity" name = "equip_quantity" size="5" value = {{x.quantity}} /></td>
 				<td><input type="text" name="equip_units" placeholder="units" size="10" id="equip_units" value = "{{x.units}}"  /></td>
 <td><button type="button" onclick="delete_row(this)">Delete </button></td>
 			</tr>
@@ -400,13 +444,13 @@ if (elementTypeSelector[i].value =='please_select'){
 		 {% endif %}
 		</tbody>
 	</table>
-<button type="button" onclick="add_equipment_row()">Add Equipment </button>
+<button type="button" class="btn btn-info btn-sm" onclick="add_equipment_row()">Add Equipment </button>
 
 <br><br>
 	<input type="hidden" name="number_painters" value="0" size="30" id="number_painters"/>
 	<input type="hidden" name="number_materials" value="0" size="30" id="number_materials"/>
 	<input type="hidden" name="number_equipment" value="0" size="30" id="number_equipment"/>
-    <input type="submit" value="Submit Ticket" />
+    <input type="submit" class="btn btn-primary btn-sm" value="Submit Ticket" />
 </form>
 
 

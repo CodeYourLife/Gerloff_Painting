@@ -510,6 +510,13 @@ window.onload = function() {
                         <form action="{% url 'print_ticket' changeorder.id 'OLD' %}" ><input type="submit" class="btn btn-primary btn-sm"
                                           value="Ticket Already Printed. Click to Print Again"/></form>
                         </div>
+                        <div style="padding: 5px" class="form-group">
+                            <form action="{% url 'extra_work_ticket' changeorder.id %}" method="post"> {% csrf_token %}
+                            {% csrf_token %}
+                            <input type="hidden" name="paper_ticket_signed">
+                            <button type="button" data-toggle="modal" data-target="#signed_ticket-modal" class="btn btn-primary btn-sm" >Paper Ticket Signed</button>
+                            </form>
+                    </div>
                     {% endif %}<!--21211-->
                     <div style="padding: 5px" class="form-group">
                     <form action="{% url 'print_ticket' changeorder.id 'NEW' %}" ><input type="submit" class="btn btn-primary btn-sm" value="Get Digital Signature"/></form>
@@ -571,7 +578,7 @@ window.onload = function() {
         {% else %}<!-- 222 not t&m -->
             <h1>Change Order Not Sent Yet</h1><br>
             <form action="{% url 'change_order_send' changeorder.id %}">
-            <input class="btn btn-secondary btn-sm" type="submit" style="margin-bottom: 5px" value="Send Now"/></form>
+            <input class="btn btn-primary btn-sm" type="submit" style="margin-bottom: 5px" value="Send Now"/></form>
         {% endif %}<!-- 221 options if not sent yet -->
         </div><!-- 221 checks whether to send a TM price or regular price -->
     {% else %} <!-- 23 been sent -->
@@ -604,11 +611,11 @@ window.onload = function() {
             {% else %}<!-- 2322 not t&m -->
                 <div class="container" style="margin-bottom: 20px;">
                 <div class="row h-100 w-100 d-flex justify-content-left">
-                <div style="padding: 5px" class="form-group">
-                <form action="{% url 'preview_TMProposal' changeorder.id %}">
-                <input type="submit" class="btn btn-secondary btn-sm" name="view_proposal" value="View Proposal(need to code)"/>
-                </form>
-                </div>
+<!--                <div style="padding: 5px" class="form-group">-->
+<!--                <form action="{% url 'preview_TMProposal' changeorder.id %}">-->
+<!--                <input type="submit" class="btn btn-secondary btn-sm" name="view_proposal" value="View Proposal(need to code)"/>-->
+<!--                </form>-->
+<!--                </div>-->
                 <div style="padding: 5px" class="form-group">
                 <form action="{% url 'change_order_send' changeorder.id %}"><input class="btn btn-secondary btn-sm" type="submit"
                                                                                name='edit_co'
@@ -645,8 +652,10 @@ window.onload = function() {
                                                                     size="10"/><br>
                 <label for="approval_note">Please provide any notes about this approval: </label> <br>
                 <textarea id="approval_note" name="approval_note" rows="2" cols="100"></textarea><br>
+
                 <input type="submit" class="btn btn-danger btn-sm" name='submit_form1' value="Approve Now!"/></form>
-                <br>
+                <form action="{% url 'batch_approve_co' changeorder.id %}" ><input type="submit" class="btn btn-danger btn-sm"  value="Batch"/></form>
+                    <br>
                 <hr>
             </div>
                 </div>

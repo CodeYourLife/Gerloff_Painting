@@ -44,9 +44,9 @@ hidden.style.visibility= "visible"
   </div>
 </nav>
 <h2>{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} - Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</h2>
-<h4>Send Change Order to the Following People: </h4>
+<h4>Send Signed Ticket to the Following People: </h4>
 <table id="labor_breakdown" class="display" style="width:90%" ><thead><tr><th></th></tr></thead><tbody>
-<form action="{% url 'change_order_send' changeorder.id %}" method="post"   >
+<form action="{% url 'email_signed_ticket' changeorder.id %}" method="post"   >
 	{% csrf_token %}
 	{% for x in client_list %}
 	{% if x.current == True %}
@@ -54,11 +54,11 @@ hidden.style.visibility= "visible"
 	 <select id="recipient" name="recipient{{x.person_pk}}" >
 		 <option value={{x.person_pk}}>{{x.name}}</option></select>
 			{% if x.default == True %}
-			<input type="submit" value="Remove from Default CO Recipients" name="remove{{x.person_pk}}" />
+			<input type="submit" value="Remove from Default EWT Recipients" name="remove{{x.person_pk}}" />
 						{% else %}
-			<input type="submit" value="Add to Default CO Recipients" name="adddefault{{x.person_pk}}" />
+			<input type="submit" value="Add to Default EWT Recipients" name="adddefault{{x.person_pk}}" />
 			{% endif %}
-			<input type="submit" value="Remove from this change order" name="tempremove{{x.person_pk}}"/>
+			<input type="submit" value="Remove from this Ticket" name="tempremove{{x.person_pk}}"/>
 			<input type="email" class= "emails" value="{{x.email}}" name="email{{x.person_pk}}" size="30" onchange = "add_button({{x.person_pk}})"/>
 			<input type="submit" class="emailbutton" value="Update Now!" id="button{{x.person_pk}}" name="updateemail{{x.person_pk}}"/>
 			</td></tr>
@@ -74,8 +74,8 @@ hidden.style.visibility= "visible"
 		{% endif %}
 			{% endfor %}
 		</select>
-	<input type="submit" value="Add as a Default Recipient" name="defaultadd"/>
-		<input type="submit" value="Add to this change order" name="tempadd"/>
+	<input type="submit" value="Add as a Default Ticket Recipient" name="defaultadd"/>
+		<input type="submit" value="Add to this Ticket" name="tempadd"/>
 
 </td></tr>
 	{% endif %}
@@ -83,27 +83,11 @@ hidden.style.visibility= "visible"
 
  <br>
 
-	 <label for="full_description">Type the full description: </label> <br>
-	  {% if changeorder.date_sent != None %}
-        <textarea id="full_description" name="full_description" rows="6" cols="100" >{{changeorder.full_description}}</textarea>
-	<br>
-	 <label for="price">Enter the Total Price: $</label>
-	 <input type= "number" name="price" id="price" value={{changeorder.price}} step="0.01" size="30" />
-	 <br>
-	 {% else %}
-	         <textarea id="full_description" name="full_description" rows="6" cols="100" >{{changeorder.full_description}}</textarea>
-	<br>
-	 <label for="price">Enter the Total Price: $</label>
-	 <input type= "number" name="price" id="price" placeholder="100.50" step="0.01" size="30" />
-	 <br>
-	 {% endif %}
 
 <br>
-<input type="submit" class="btn btn-primary btn-lg" value="Send Now" name="final" />
+<input type="submit" class="btn btn-primary btn-lg" value="Email To GC Above" name="final1" />
+	<input type="submit" class="btn btn-primary btn-lg" value="Email Only to Bridgette" name="final2" />
 </form>
-
-
-
 
 </body>
 </html>

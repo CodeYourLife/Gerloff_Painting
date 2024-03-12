@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_item_roles %}active{% endblock nav_item_roles %}
+{% block content %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <title>Trinity GP</title>
+        <style type="text/css" class="init">
+
+.colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
+
+.dataTables_wrapper {
+    font-family: tahoma;
+    font-size: 13px;
+}
+
+        nav .active, .collapsible:hover {
+          background-color: Salmon;
+        }
+        .nav-pills a {
+            color: black;
+        }
+        .nav-pills li {
+            padding: 2px;
+        }
+        .nav-pills .active {
+            background-color: #6c757d !important;
+            padding: 5px;
+        }
+        label {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+        input {
+            margin-left: 10px;
+            margin-right: 10px;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+        tr th {
+            width: fit-content !important;
+        }
+        .tab-content * {
+          color : black;
+          background-color: white !important;
+        }
+        .active * {
+            background-color: white !important;
+        }
+                .list-items {
+        border-bottom: 1px solid black; display: flex; justify-content: space-between;
+        }
+        .text-wrap{
+    white-space:normal;
+}
+.width-200{
+    width:200px;
+}
+.dataTables_filter {
+   float: left !important;
+}
+.tb { border-collapse: collapse; width:300px; }
+
+.tb th, .tb td { padding: 5px; border: solid 1px #777; }
+.tb th { background-color: lightblue; }
+
+.table td {
+        }
+
+            .modal-content {
+                width: fit-content;
+            }
+
+
+    </style>
+
+    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
+    <script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
+    <script type="text/javascript" class="init">
+function new_filter_now(){
+    document.getElementById('filter_form').submit();
+}
+
+function search_now(){
+    client_info_form.submit();
+}
+
+window.onload = function() {
+    var table = $('#jobs_table').DataTable({paging: false, info:false, ordering:false, searching:false})
+};
+
+</script>
+</head>
+<body>
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+		<a class="navbar-brand sub-navbar-brand" href="{% url 'admin_home' %}">Admin Page</a>
+		<div id="navbarNavDropdown2">
+		  <ul class="sub-nav-list navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'admin_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link active" href="#">Client Info</a></li>
+    </ul>
+  </div>
+</nav>
+
+<form name="client_info_form" id="client_info_form" action="{% url 'client_info' 'ALL' %}" method="post">
+
+    {% csrf_token %}
+    <br>
+    {% if search_client_word %}
+    <input type="text" name="search_client" id="search_client" size="40" value="{{search_client_word}}" onchange="search_now()" />
+    {% else %}
+    <input type="text" name="search_client" id="search_client" size="40" placeholder = "Type Client Name to Search" onchange="search_now()" />
+    {% endif %}
+    <br>
+                        <select id="select_client" name="select_client" onchange="search_now()">
+                        {% if selected_client %}
+                            <option value="{{selected_client.id}}">{{selected_client.company}}</option>
+                        {% else %}
+                            <option value="please_select">Select Client</option>
+						{% endif %}
+                            {% for x in clients %}
+                        <option value={{x.id}}>{{x.company}}</option>
+						{% endfor %}
+                    </select>
+
+<br>
+{% if selected_client %}
+<br>
+{% if selected_client.is_active %}<input type="submit" class="btn btn-danger btn-sm" name="make_client_inactive" value="De-Activate Client" />
+{% else %}<h2>THIS CLIENT IS NO LONGER ACTIVE!</h2><br><input type="submit" class="btn btn-primary btn-sm" name="make_client_active" value="Make this Client Active Again" />
+{% endif %}
+<br>
+<hr>
+
+<div class="table-responsive">
+<table id="jobs_table" class="display table table-sm">
+        <thead>
+        <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Email</th>
+            <th scope="col">Phone Number</th>
+            <th scope="col">No Longer There</th>
+        </tr>
+        </thead>
+    <tbody>
+        <tr style="background-color:hsla(52, 100%, 88%);">
+            <td> <input type="text" name="add_name" placeholder = "Name of New Person" size="50" /></td>
+
+            <td><input type="email" name="add_email" placeholder = "Email" size="50"  /></td>
+
+            <td><input type="phone" name="add_phone" placeholder = "Phone" /></td>
+
+            <td><input type="submit" class="btn btn-primary btn-sm" name="add_new_person" value="Add" /></td>
+
+        </tr>
+    {% for x in client_employees %}
+        <tr>
+        <td> <input type="text" name="name{{x.person_pk}}" value="{{x.name}}" size="50" onchange="search_now()" /></td>
+        <td>
+            {% if x.email %}
+            <input type="email" name="email{{x.person_pk}}" value="{{x.email}}" size="50" onchange="search_now()" />
+        {% else %}
+            <input type="email" name="email{{x.person_pk}}" placeholder="Email" size="50" onchange="search_now()" />
+            {% endif %}
+            </td>
+            <td>
+            {% if x.phone %}
+            <input type="phone" name="phone{{x.person_pk}}" value="{{x.phone}}" onchange="search_now()" />
+        {% else %}
+                <input type="phone" name="phone{{x.person_pk}}" placeholder="Phone" onchange="search_now()" />
+            {% endif %}
+            </td>
+            <td>
+        {% if x.is_active %}
+            <input type="checkbox" name="closed{{x.person_pk}}" onchange="search_now()" />
+        {% else %}
+            <input type="checkbox" name="closed{{x.person_pk}}" checked onchange="search_now()" />
+        {% endif %}
+        </td>
+        </tr>
+    {% endfor %}
+
+    </tbody>
+</table>
+{% endif %}
+</form>
+<!--filter form-->
+<!--<form class="form-control form-control-sm" id="filter_form" method="get">-->
+<!--    <div class="container">-->
+<!--        <div class="form-group">-->
+<!--            <label for="search2" >Super:</label>-->
+<!--            <select id="search2" class="form-control" name="search2" onchange="new_filter_now()">-->
+<!--            {% if search2_exists %}-->
+<!--            {% if search2_exists == 'ALL' %}-->
+<!--                <option value="ALL">"All"</option>-->
+<!--                <option value="UNASSIGNED">"UNASSIGNED"</option>-->
+<!--            {% elif search2_exists == 'UNASSIGNED' %}-->
+<!--                <option value="UNASSIGNED">"UNASSIGNED"</option>-->
+<!--                <option value="ALL">"All"</option>-->
+<!--            {% else %}-->
+<!--                <option value={{search2_exists}}>{{selected_supername}}</option>-->
+<!--                <option value="ALL">"All"</option>-->
+<!--                <option value="UNASSIGNED">"UNASSIGNED"</option>-->
+<!--            {% endif %}-->
+<!--            {% else %}-->
+<!--            <option value="ALL">"All"</option>-->
+<!--            <option value="UNASSIGNED">"UNASSIGNED"</option>-->
+<!--            {% endif %}-->
+<!--            {% if supers %}-->
+<!--            {% for super in supers %}-->
+<!--            <option value="{{super.id}}">{{super.first_name}} {{super.last_name}}</option>-->
+<!--            {% endfor %}-->
+<!--            {% endif %}-->
+<!--            </select>-->
+<!--        </div>-->
+
+<!--        <div class="form-check">-->
+<!--        <input type="checkbox" class="form-check-input" id="search3" name="search3"  {% if search3_exists %} checked {% endif %}  onchange="new_filter_now()" />-->
+<!--        <label for="search3" class="form-check-label">Include Closed Jobs</label>-->
+<!--        </div>-->
+<!--        <div class="form-check">-->
+<!--            <input type="checkbox" class="form-check-input" id="search7" name="search7" {% if search7_exists %} checked {% endif %} onchange="new_filter_now()">-->
+<!--            <label class="form-check-label" for="search7">Show Only Jobs That Are Done</label>-->
+<!--        </div>-->
+<!--        </div>-->
+<!--    </form>-->
+
+<!--&lt;!&ndash;jobs table&ndash;&gt;-->
+<!--<div class="table-responsive">-->
+<!--    <table id="jobs_table" class="display table table-sm">-->
+<!--        <thead>-->
+<!--        <tr>-->
+<!--            <th scope="col">Job #</th>-->
+<!--            <th scope="col">Job Name</th>-->
+<!--            <th id="test_header" scope="col">Start Date</th>-->
+<!--            <th scope="col">Client</th>-->
+<!--            <th scope="col">Super</th>-->
+<!--            <th scope="col">Contract Amount</th>-->
+<!--        </tr>-->
+<!--        </thead>-->
+<!--        <tbody>-->
+<!--        {% for x in jobstable %}-->
+<!--        {% if x.is_labor_done == True %}-->
+<!--            <tr style="background-color:hsla(0,0%, 32%);" onclick="populate_start_date_modal('{{x.job_number}}','{{x.start_date}}','{{x.is_active}}',this,1)">-->
+<!-- {% elif x.is_waiting_for_punchlist == True %}-->
+<!--                <tr style="background-color:hsla(0,0%, 65%);" onclick="populate_start_date_modal('{{x.job_number}}','{{x.start_date}}','{{x.is_active}}',this,1)">-->
+<!--                {% else %}-->
+<!--            <tr onclick="populate_start_date_modal('{{x.job_number}}','{{x.start_date}}','{{x.is_active}}',this,1)">-->
+<!--            {% endif %}-->
+<!--                <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_number}}{% if x.is_active %}[A]{% endif %}</a></td>-->
+<!--                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_job('{{x.job_number}}')"><a href="#">{% if x.is_labor_done == True %}<b>[DONE]</b>{% elif x.is_waiting_for_punchlist == True %}<b>[PUNCH]</b>{% endif %} {{x.job_name}}</a></td>-->
+<!--                <td style="white-space:nowrap" data-toggle="modal" data-target="#startdate-modal" ><a href="#">{{x.start_date|date:'M-d-Y'}}</a></td>-->
+<!--                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px" >{{x.client}}</td>-->
+<!--                <td data-toggle="modal" data-target="#super-modal" onclick="populate_super_modal('{{x.job_name}}','{{x.superintendent.id}}','{{x.job_number}}','{{x.superintendent.first_name}}',this,1)"><a href="#">{{x.superintendent.first_name}}</a></td>-->
+<!--                <td>{% if x.contract_amount %}{{x.contract_amount}}{% else %}T and M{% endif %}</td>-->
+<!--            </tr>-->
+<!--        {% endfor %}-->
+<!--        </tbody>-->
+<!--    </table>-->
+<!--</div>-->
+
+<script>
+    var coll = document.getElementsByClassName("collapsible");
+    var i;
+    for (i = 0; i < coll.length; i++) {
+      coll[i].addEventListener("click", function() {
+        this.classList.toggle("active");
+        var content = this.nextElementSibling;
+        if (content.style.display === "block") {
+          content.style.display = "none";
+        } else {
+          content.style.display = "block";
+        }
+      });
+    }
+</script>
+
+</body>
+</html>
+
+{% endblock %}

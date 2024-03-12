@@ -133,7 +133,11 @@ document.getElementById("check_booked_jobs").style.display = "block"
 								Give Subcontractor Web Access	</div>
 						</a>
 <br>
-
+<a href = "{% url 'client_info' 'ALL' %}">
+							<div style="height:100%;width:100%">
+								Change Client Info	</div>
+						</a>
+<br>
 <a href = "javascript:show_check_booked_jobs()">Compare Open Jobs to MC </a>
 <div id="check_booked_jobs">
 <p>Run a booked jobs report. Delete closed jobs.  Save it and upload it here. This will Open and Close jobs in Tinity, then product a report showing what it did</p>

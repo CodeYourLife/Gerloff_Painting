@@ -29,7 +29,7 @@ class Clients(models.Model):
     city = models.CharField(null=True, max_length=100, blank=True)
     state = models.CharField(null=True, max_length=100, blank=True)
     phone = models.CharField(null=True, max_length=50, blank=True)
-
+    is_active = models.BooleanField(default=True)
     def __str__(self):
         return f"{self.company}"
 
@@ -41,7 +41,7 @@ class ClientEmployees(models.Model):
     phone = models.CharField(blank=True, null=True, max_length=50)
     email = models.EmailField(blank=True, null=True)
     title = models.CharField(blank=True, null=True, max_length=250)
-
+    is_active = models.BooleanField(default=True)
     def __str__(self):
         return f"{self.name}"
 

@@ -8,18 +8,20 @@ import os.path
 from django.conf import settings
 class Email:
     def sendEmail(title, body, to, filename):
+        print(to)
         msg = MIMEMultipart()
         # sender = to
         sender = 'joe@gerloffpainting.com'
         msg['From'] = 'operations@gerloffpainting.com'
         msg['To'] = ", ".join(to)
-        # msg['To'] = 'joe@gerloffpainting.com; taroli757@gmail.com'
         msg['Subject'] = title
         msg.attach(MIMEText(body, 'plain'))
         if filename != False:
+            att_name = os.path.basename(filename)
             with open(filename, 'rb') as file:
                 attach = MIMEApplication(file.read(), _subtype='pdf')
-                attach.add_header('Content-Disposition', 'attachment', filename=filename)
+                attach.add_header('Content-Disposition', 'attachment', filename=att_name)
+                # attach.add_header('Content-Disposition', 'attachment', filename=filename)
                 msg.attach(attach)
         text = msg.as_string()
         s = smtplib.SMTP('remote.gerloffpainting.com')

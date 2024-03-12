@@ -44,11 +44,21 @@
         {% if laboritems %}
         {% for x in laboritems %}
         <tr>
+            <td>
             {% if x.ot == True %}
-            <td>{{x.employee}} OVERTIME</td>
+                {% if x.employee %}
+                <b>OT-</b>{{x.employee}}
+                {% else %}
+                 <b>OT-</b>Painter{{x.custom_employee}}
+                {% endif %}
             {% else %}
-            <td>{{x.employee}}</td>
+                {% if x.employee %}
+                {{x.employee}}
+                {% else %}
+                Painter{{x.custom_employee}}
+                {% endif %}
             {% endif %}
+            </td>
             <td>{{x.monday}}</td>
             <td>{{x.tuesday}}</td>
             <td>{{x.wednesday}}</td>
@@ -143,9 +153,10 @@
     </div>
 </form>
 {% else %}
+<br>
 <div style="height: 150px"></div>
 <div>_______________________________________________________________</div>
-<div style="width: 400px">{{changeorder.job_number.client}}</div>
+<div style="width: 400px">APPROVED BY - {{changeorder.job_number.client}}</div>
 {% endif %}
 </body>
 </html>

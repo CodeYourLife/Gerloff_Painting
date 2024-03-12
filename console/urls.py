@@ -15,4 +15,5 @@ urlpatterns = [
     path('reset_databases', views.reset_databases, name='reset_databases'),
     path('create_folders', views.create_folders, name='create_folders'),
     path('customize', views.customize, name='customize'),
+    path('client_info/<id>', views.client_info, name='client_info'),
 ]

@@ -358,7 +358,17 @@ window.onload = function() {
     $.fn.dataTable.moment( 'MMM-DD-YYYY' );
     var table = $('#notes_table').DataTable({paging: false,info:false, ordering:false, searching:false})
     var table = $('#subcontractors_table').DataTable({paging: false,info:false, ordering:false, searching:false})
-    var table = $('#approved_changes_table').DataTable({paging: false, ordering:false, searching:false})
+    var table = $('#approved_changes_table').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table1').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table2').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table3').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table4').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table5').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table6').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table7').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table8').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table9').DataTable({paging: false, ordering:false, searching:false,info:false})
     document.getElementById("show_new_pm").style.display = "none";
     document.getElementById("show_new_super").style.display = "none";
     document.getElementById("dropbox_link_hide").style.display = "none";
@@ -656,6 +666,7 @@ document.getElementById("notes_filter_button").style.display = "none";
                 <button onclick = "change_client()" class="btn btn-primary" data-toggle="modal" data-target="#change_client-modal" data-dismiss="modal"> Change Client Information </button>
             </div>
             <div class="modal-footer">
+                 <form action="{% url 'client_info' job.client.id %}" ><input type="submit" class="btn btn-info" value="Go to Client Page" ></form>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             </div>
         </div>
@@ -797,6 +808,7 @@ document.getElementById("notes_filter_button").style.display = "none";
                         </div>
                     </div>
             <div class="modal-footer">
+                <form action="{% url 'client_info' job.client.id %}" ><input type="submit" class="btn btn-info" value="Go to Client Page" ></form>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close without Saving</button>
             </div>
         </div>
@@ -933,10 +945,10 @@ document.getElementById("notes_filter_button").style.display = "none";
             <input class="btn btn-primary btn-sm"  data-toggle="modal" data-target="#off_rent-modal" value="Call Equipment Off-Rent"/>
         </div>
         {% endif %}
-<!--        <div style="margin: 5px;" class="col-sm-3">-->
-<!--            <form action="{% url 'change_order_new' job.job_number %}"><input type="submit" class="btn btn-primary btn-sm" value="New Change Order"/>-->
-<!--            </form>-->
-<!--        </div>-->
+        <div style="margin: 5px;" class="col-sm-3">
+            <form action="{% url 'change_order_new' job.job_number %}"><input type="submit" class="btn btn-primary btn-sm" value="New Change Order"/>
+            </form>
+        </div>
         {% if has_equipment %}
         <div style="margin: 5px;" class="col-sm-4">
             <form action="{% url 'request_pickup' jobnumber=job.job_number item='ALL' pickup='ALL' status='ALL' %}"><input type="submit" class="btn btn-primary btn-sm" value="Request Equipment Pickup"/>
@@ -1071,13 +1083,13 @@ document.getElementById("notes_filter_button").style.display = "none";
         </div>
 </div>
 
-{% if tickets %}
+{% if tickets_not_done %}
     <div class="card">
         <div class="card-header" id="headingTwo">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false"
                         aria-controls="collapseTwo">
-                    Outstanding Extra Work Tickets
+                   {{tickets_not_done_count}}- Tickets Not Completed Yet (Work not done)
                 </button>
             </h5>
         </div>
@@ -1094,7 +1106,9 @@ document.getElementById("notes_filter_button").style.display = "none";
                         </tr>
                         </thead>
                         <tbody>
-                        {% for ticket in tickets %}
+
+                        {% for ticket in tickets_not_done %}
+
                                 {% if ticket.is_t_and_m %}
         <tr style="background-color:hsla(69, 100%, 92%);">
             {% else %}
@@ -1114,13 +1128,13 @@ document.getElementById("notes_filter_button").style.display = "none";
     </div>
 {% endif %}
 
-{% if open_cos %}
+{% if tickets_not_signed %}
     <div class="card">
         <div class="card-header" id="headingThree">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false"
                         aria-controls="collapseThree">
-                    Pending Change Orders Not Approved Yet
+                    {{tickets_not_signed_count}}- Tickets Completed But Not Signed
                 </button>
             </h5>
         </div>
@@ -1137,6 +1151,94 @@ document.getElementById("notes_filter_button").style.display = "none";
                         </tr>
                         </thead>
                         <tbody>
+
+                        {% for open_co in tickets_not_signed %}
+
+                                {% if open_co.is_t_and_m %}
+        <tr style="background-color:hsla(69, 100%, 92%);">
+            {% else %}
+            <tr>
+            {% endif %}
+                            <td><a href="{% url 'extra_work_ticket' open_co.id %}">{{open_co.cop_number}}</a></td>
+                            <td>{{open_co.description}}</td>
+                            <td>{{open_co.notes}}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% if tickets_not_sent %}
+    <div class="card">
+        <div class="card-header" id="headingThree">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false"
+                        aria-controls="collapseThree">
+                   {{tickets_not_sent_count}} - Tickets Signed, But Not Sent Yet
+                </button>
+            </h5>
+        </div>
+        <div id="collapseFour" class="collapse hide" aria-labelledby="headingThree" data-parent="#accordion">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="tickets_table2" class="display table">
+                        <thead class="colored-header">
+
+                        <tr>
+                            <th>CO#</th>
+                            <th>Description</th>
+                            <th>Notes</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for open_co in tickets_not_sent %}
+
+                                {% if open_co.is_t_and_m %}
+        <tr style="background-color:hsla(69, 100%, 92%);">
+            {% else %}
+            <tr>
+            {% endif %}
+                            <td><a href="{% url 'extra_work_ticket' open_co.id %}">{{open_co.cop_number}}</a></td>
+                            <td>{{open_co.description}}</td>
+                            <td>{{open_co.notes}}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% if open_cos %}
+    <div class="card">
+        <div class="card-header" id="headingThree">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFive" aria-expanded="false"
+                        aria-controls="collapseThree">
+                    {{open_cos_count}}- Change Orders Sent, Not Approved
+                </button>
+            </h5>
+        </div>
+        <div id="collapseFive" class="collapse hide" aria-labelledby="headingThree" data-parent="#accordion">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="tickets_table9" class="display table">
+                        <thead class="colored-header">
+
+                        <tr>
+                            <th>CO#</th>
+                            <th>Description</th>
+                            <th>Notes</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
                         {% for open_co in open_cos %}
 
                                 {% if open_co.is_t_and_m %}
@@ -1161,13 +1263,13 @@ document.getElementById("notes_filter_button").style.display = "none";
     <div class="card">
         <div class="card-header" id="headingFour">
             <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false"
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSix" aria-expanded="false"
                         aria-controls="collapseFour">
-                    Approved Change Orders
+                  {{approved_cos_count}}-  Approved Change Orders
                 </button>
             </h5>
         </div>
-        <div id="collapseFour" class="collapse hide" aria-labelledby="headingFour" data-parent="#accordion">
+        <div id="collapseSix" class="collapse hide" aria-labelledby="headingFour" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="approved_changes_table" class="display table">
@@ -1186,7 +1288,9 @@ document.getElementById("notes_filter_button").style.display = "none";
             {% else %}
             <tr>
             {% endif %}
-                            <td>{{approved_co.cop_number}}</td>
+
+                            <td><a href="{% url 'extra_work_ticket' approved_co.id %}">{{approved_co.cop_number}}</a></td>
+
                             <td>{{approved_co.description}}</td>
                             <td>{{approved_co.notes}}</td>
                         </tr>
@@ -1203,13 +1307,13 @@ document.getElementById("notes_filter_button").style.display = "none";
     <div class="card">
         <div class="card-header" id="headingFive">
             <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFive" aria-expanded="false"
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSeven" aria-expanded="false"
                         aria-controls="collapseFive">
                     Equipment
                 </button>
             </h5>
         </div>
-        <div id="collapseFive" class="collapse hide" aria-labelledby="headingFive" data-parent="#accordion">
+        <div id="collapseSeven" class="collapse hide" aria-labelledby="headingFive" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="tickets_table3" class="display table">
@@ -1242,13 +1346,13 @@ document.getElementById("notes_filter_button").style.display = "none";
     <div class="card">
         <div class="card-header" id="headingSix">
             <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSix" aria-expanded="false"
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseEight" aria-expanded="false"
                         aria-controls="collapseSix">
                     Rentals
                 </button>
             </h5>
         </div>
-        <div id="collapseSix" class="collapse hide" aria-labelledby="headingSix" data-parent="#accordion">
+        <div id="collapseEight" class="collapse hide" aria-labelledby="headingSix" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="tickets_table4" class="display table">
@@ -1285,13 +1389,13 @@ document.getElementById("notes_filter_button").style.display = "none";
     <div class="card">
         <div class="card-header" id="headingSeven">
             <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSeven" aria-expanded="false"
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseNine" aria-expanded="false"
                         aria-controls="collapseSeven">
                     Wallcovering Not Ordered
                 </button>
             </h5>
         </div>
-        <div id="collapseSeven" class="collapse hide" aria-labelledby="headingSeven" data-parent="#accordion">
+        <div id="collapseNine" class="collapse hide" aria-labelledby="headingSeven" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="tickets_table5" class="display table">
@@ -1325,13 +1429,13 @@ document.getElementById("notes_filter_button").style.display = "none";
     <div class="card">
         <div class="card-header" id="headingEight">
             <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseEight" aria-expanded="false"
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTen" aria-expanded="false"
                         aria-controls="collapseEight">
                     Wallcovering Ordered But Not Received
                 </button>
             </h5>
         </div>
-        <div id="collapseEight" class="collapse hide" aria-labelledby="headingEight" data-parent="#accordion">
+        <div id="collapseTen" class="collapse hide" aria-labelledby="headingEight" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="tickets_table6" class="display table">
@@ -1363,13 +1467,13 @@ document.getElementById("notes_filter_button").style.display = "none";
     <div class="card">
         <div class="card-header" id="headingNine">
             <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseNine" aria-expanded="false"
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseEleven" aria-expanded="false"
                         aria-controls="collapseNine">
                     Received Wallcovering
                 </button>
             </h5>
         </div>
-        <div id="collapseNine" class="collapse hide" aria-labelledby="headingNine" data-parent="#accordion">
+        <div id="collapseEleven" class="collapse hide" aria-labelledby="headingNine" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="tickets_table7" class="display table">
@@ -1427,13 +1531,13 @@ document.getElementById("notes_filter_button").style.display = "none";
     <div class="card">
         <div class="card-header" id="headingTen" >
             <h5 class="mb-0" >
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTen" aria-expanded="false"
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwelve" aria-expanded="false"
                         aria-controls="collapseTen">
                     Submittals
                 </button>
             </h5>
         </div>
-        <div id="collapseTen" class="collapse hide" aria-labelledby="headingTen" data-parent="#accordion">
+        <div id="collapseTwelve" class="collapse hide" aria-labelledby="headingTen" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="tickets_table8" class="display table">
@@ -1469,13 +1573,13 @@ document.getElementById("notes_filter_button").style.display = "none";
     <div class="card">
         <div class="card-header" id="headingNine">
             <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseNine" aria-expanded="false"
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseThirteen" aria-expanded="false"
                         aria-controls="collapseENine">
                     Subcontractors
                 </button>
             </h5>
         </div>
-        <div id="collapseNine" class="collapse hide" aria-labelledby="headingNine" data-parent="#accordion">
+        <div id="collapseThirteen" class="collapse hide" aria-labelledby="headingNine" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="subcontractors_table" class="display table table-sm">

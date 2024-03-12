@@ -637,9 +637,11 @@ function calculate_final_cost(){
 <hr>
 	<div class ="container" style="background-color:hsla(275, 100%, 92%);">
 		<h4>TOTAL PRICE</h4>
-		<div id="labor_total_summary">Labor Cost:</div>
-	<div id="material_total_summary">Material Cost:</div>
-	<div id="equipment_total_summary">Equipment Cost:</div>
+
+		<div id="labor_total_summary">Labor Cost: ${{totallaborcost}}</div>
+	<div id="material_total_summary">Material Cost: ${{totalmaterialcost}}</div>
+	<div id="equipment_total_summary">Equipment Cost: ${{totalequipmentcost}}</div>
+
 	<div id="other_total_summary">Other Cost:</div>
 {% if is_bonded == True %}
 	   <input type= "hidden" name="bond_cost" id="bond_cost" value="{{bond_cost}}" /> <input type= "hidden" name="bond_rate" id="bond_rate" value="{{bond_rate}}" /><div id="bond_total_summary" ><b>Bond Cost:</b> ${{bond_cost}}</div>
