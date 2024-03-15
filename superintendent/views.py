@@ -120,8 +120,9 @@ def super_ajax(request):
         if 'select_super' in request.GET:
             job = Jobs.objects.get(job_number=request.GET['job_number'])
             super = Employees.objects.get(id=request.GET['select_super'])
-            gerloff_super_change(job, super, Employees.objects.get(user=request.user))
+            email_sent = gerloff_super_change(job, super, Employees.objects.get(user=request.user))
             send_data = {}
+            send_data['email_sent']=email_sent
             send_data['super_first_name']=super.first_name
             return HttpResponse(json.dumps(send_data))
         if 'build_notes' in request.GET:
@@ -161,14 +162,14 @@ def super_ajax(request):
                 notify = True
             else:
                 notify = False
-            start_date_change(job, request.GET['start_date'], status, request.GET['notes'],
+            email_sent = start_date_change(job, request.GET['start_date'], status, request.GET['notes'],
                               Employees.objects.get(user=request.user), datechange, notify)
             job.save()
             new_date = Jobs.objects.get(job_number=request.GET['job_number']).start_date
 
             new_date = Jobs.objects.get(job_number=request.GET['job_number']).start_date.strftime("%b-%d-%Y")
             # new_date = str(Jobs.objects.get(job_number=request.GET['job_number']).start_date)
-            data_details = {'new_date': new_date, 'is_active': request.GET['is_active']}
+            data_details = {'new_date': new_date, 'is_active': request.GET['is_active'],'email_sent':email_sent}
             return HttpResponse(json.dumps(data_details))
 
 

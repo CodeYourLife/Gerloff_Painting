@@ -255,11 +255,19 @@ def update_job_info(request, jobnumber):
         else:
             if selectedjob.superintendent is not None:
                 if str(selectedjob.superintendent.id) != str(request.POST['select_gpsuper']):
-                    gerloff_super_change(selectedjob, Employees.objects.get(id=request.POST['select_gpsuper']),
+                    email_sent = gerloff_super_change(selectedjob, Employees.objects.get(id=request.POST['select_gpsuper']),
                                          Employees.objects.get(user=request.user))
+                    if email_sent:
+                        send_data['email_sent'] = email_sent
+                    else:
+                        send_data['email_not_sent'] = email_sent
             else:
-                gerloff_super_change(selectedjob, Employees.objects.get(id=request.POST['select_gpsuper']),
+                email_sent = gerloff_super_change(selectedjob, Employees.objects.get(id=request.POST['select_gpsuper']),
                                      Employees.objects.get(user=request.user))
+                if email_sent:
+                    send_data['email_sent'] = email_sent
+                else:
+                    send_data['email_not_sent'] = email_sent
         if selectedjob.estimator.id != request.POST['select_gpestimator']:
             selectedjob.estimator = Employees.objects.get(id=request.POST['select_gpestimator'])
         if 'has_paint' in request.POST:
@@ -276,8 +284,10 @@ def update_job_info(request, jobnumber):
             selectedjob.special_paint_needed = False
 
         if startdate != request.POST['start_date']:
-            start_date_change(selectedjob, request.POST['start_date'], 3, request.POST['date_note'],
-                              Employees.objects.get(user=request.user), True)
+            email_sent = start_date_change(selectedjob, request.POST['start_date'], 3, request.POST['date_note'],
+                              Employees.objects.get(user=request.user), True, True)
+            if email_sent: send_data['email_sent']=email_sent
+            else: send_data['email_not_sent']=email_sent
         if selectedjob.notes != request.POST['email_job_note']:
             selectedjob.notes = request.POST['email_job_note']
         if request.POST['po_number'] == "":
