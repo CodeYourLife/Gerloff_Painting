@@ -116,7 +116,7 @@ def print_TMProposal(request, id):
                                                      employee=person).exists():
                     ClientJobRoles.objects.create(role="Change Orders", job=changeorder.job_number, employee=person)
                     TempRecipients.objects.create(person=person, changeorder=changeorder)
-            if x[0:5] == 'final':
+            if x[0:5] == 'final' or x[0:8] == 'no_email':
                 recipients = ["bridgette@gerloffpainting.com"]
                 current_user = Employees.objects.get(user=request.user)
                 recipients.append(current_user.email)
@@ -135,9 +135,11 @@ def print_TMProposal(request, id):
                     dest=result_file
                 )
                 result_file.close()
-                Email.sendEmail("COP Proposal", "Please find the TM Proposal attached", recipients,
-                                f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
+                if x[0:5] == 'final':
+                    Email.sendEmail("COP Proposal", "Please find the TM Proposal attached", recipients,
+                                    f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
                 return redirect('extra_work_ticket', id=changeorder.id)
+
 
     extra_contacts = False
     project_pm = ClientEmployees.objects.get(person_pk=changeorder.job_number.client_Pm.person_pk)
@@ -356,6 +358,8 @@ def price_old_ewt(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
     # ewt = EWT.objects.get(change_order=changeorder)
     if request.method == 'POST':
+        if 'cancel' in request.POST:
+            return redirect('extra_work_ticket', id=changeorder.id)
         material_exists = 0
         changeorder.price = request.POST['final_cost']
         changeorder.date_sent = date.today()
@@ -1154,7 +1158,7 @@ def process_ewt(request, id):
                                                   7:len(request.POST['painter_dropdown' + str(x)])]
                     else:
                         if Employees.objects.filter(id=request.POST['painter_dropdown' + str(x)]).exists():
-                            new_ewt.employee = Employees.objects.get(id=request.POST['painter_dropdown' + str(x)])
+                            new_ewt.employee = Employees.objects.get(id=request.POST['pa inter_dropdown' + str(x)])
                     new_ewt.save()
         if request.POST['number_materials'] != 0:
             for x in range(1, int(request.POST['number_materials']) + 1):

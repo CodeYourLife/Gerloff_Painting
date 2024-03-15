@@ -678,6 +678,10 @@ function check_booking_data(){
 	<hr>
 	<div class ="container" >
 		<input type="submit" class="btn btn-primary btn-lg" name="Form3" value="Send Price Now" />
+		</form>
+	<form id="pricing_form" action="{% url 'price_old_ewt' changeorder.id %}" method="post"  >
+		{% csrf_token %}
+		<input type="submit" class="btn btn-secondary btn-lg" name="cancel" value="Cancel" />
 	</div>
     </form>
 

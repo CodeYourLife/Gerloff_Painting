@@ -13,6 +13,7 @@ import json
 
 def start_date_change(job, newdate, status, note, author, did_date_change, notify):
     # status is 1- active, 2- not active, 3 - no change
+    success=False
     statusnote = ""
     job.start_date_checked = date.today()
     if status == 1:
@@ -37,8 +38,11 @@ def start_date_change(job, newdate, status, note, author, did_date_change, notif
             else:
                 recipients.append("victor@gerloffpainting.com")
             email_body = "Start Date For " + job.job_number + " - " + job.job_name + " changed to " + newdate + ". " + note + ". " + statusnote + ". By " + str(author)
-
-            Email.sendEmail("Job Info Changed", email_body, recipients, False)
+            try:
+                Email.sendEmail("Job Info Changed", email_body, recipients, False)
+                success=True
+            except:
+                success=False
     else:
         JobNotes.objects.create(job_number=job, note=statusnote + ". " + note,
                                 type="auto_start_date_note", user=author, date=date.today())
@@ -52,8 +56,13 @@ def start_date_change(job, newdate, status, note, author, did_date_change, notif
             else:
                 recipients.append("victor@gerloffpainting.com")
             email_body = "Status changed for " + job.job_number + " - " + job.job_name + ". " + statusnote + ". " + note + ". By " + author
-            Email.sendEmail("Job Info Changed", email_body, recipients, False)
+            try:
+                Email.sendEmail("Job Info Changed", email_body, recipients, False)
+                success=True
+            except:
+                success=False
     job.save()
+    return success
 
 
 def gerloff_super_change(job, superintendent, author):
@@ -63,8 +72,14 @@ def gerloff_super_change(job, superintendent, author):
     job.superintendent = superintendent
     email_body = str(superintendent) + "\n You have been assigned to \n" + str(job.job_number) + "\n" + str(
         job) + "\n" + str(job.client.company)
-    Email.sendEmail("New Job - " + job.job_name, email_body, ['joe@gerloffpainting.com'], False)
+    success=False
+    try:
+        Email.sendEmail("New Job - " + job.job_name, email_body, ['joe@gerloffpainting.com'], False)
+        success=True
+    except:
+        success=False
     job.save()
+    return success
 
 
 def open_dropbox(jobnumber, user):

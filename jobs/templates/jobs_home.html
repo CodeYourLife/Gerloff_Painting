@@ -117,6 +117,8 @@ function change_start(){
         data: {'notify':pmform2.notify_super.checked,'job_number':pmform2.job_number.value, 'start_date': pmform2.start_date.value,'is_active':pmform2.is_active.checked,'notes':pmform2.date_note.value,'row':pmform2.row_number.value},
         success: function (data) {
             parsedData = JSON.parse(data);
+            if (parsedData.email_sent){alert("Email Sent")}
+            else {alert("Email Not Sent")}
             table = document.getElementById("jobs_table");
             rows= table.rows;
             sorted = "true"
@@ -156,6 +158,8 @@ function submit_new_super(){
         data: {'job_number':pmform3.job_number.value, 'select_super':pmform3.select_super.value},
         success: function (data) {
             parsedData = JSON.parse(data);
+            if (parsedData.email_sent){alert("Email Sent")}
+            else {alert("Email Not Sent")}
             var table = $('#jobs_table').DataTable()
             table.cell(pmform3.row_number.value,4).data(parsedData.super_first_name)
        }

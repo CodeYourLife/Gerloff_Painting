@@ -259,6 +259,8 @@ function change_start(){
         data: {'notify':change_start_form.notify_super.checked, 'job_number':change_start_form.job_number.value, 'start_date': change_start_form.start_date.value,'is_active':change_start_form.is_active.checked,'notes':change_start_form.date_note.value,'row':change_start_form.row_number.value},
         success: function (data) {
             parsedData = JSON.parse(data);
+            if (parsedData.email_sent){alert("Email Sent")}
+            else {alert("Email Not Sent")}
             begin = document.getElementById("TEST_YO").innerHTML.search('">')+2
             end = document.getElementById("TEST_YO").innerHTML.search("</a>")
             left = document.getElementById("TEST_YO").innerHTML.substring(0,begin)
@@ -275,6 +277,9 @@ function submit_new_super(){
         url: '/superintendent/super_ajax',
         data: {'job_number':pmform3.job_number.value, 'select_super':pmform3.select_super.value},
         success: function (data) {
+            parsedData = JSON.parse(data);
+            if (parsedData.email_sent){alert("Email Sent")}
+            else {alert("Email Not Sent")}
             begin = document.getElementById("TEST_BRO").innerHTML.search("</b>") + 4
             end = document.getElementById("TEST_BRO").innerHTML.search("</a>")
             left = document.getElementById("TEST_BRO").innerHTML.substring(0,begin)
