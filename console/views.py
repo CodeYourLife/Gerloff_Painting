@@ -47,8 +47,20 @@ def client_info(request, id):
     if id != 'ALL':
         selected_client = Clients.objects.get(id=id)
         send_data['selected_client'] = selected_client
-        send_data['client_employees'] = ClientEmployees.objects.filter(id=selected_client)
+        send_data['client_employees'] = ClientEmployees.objects.filter(id=selected_client).order_by('name')
     if request.method == "POST":
+        if 'combine_companies_now' in request.POST:
+            company1 = Clients.objects.get(id=request.POST['select_client1'])
+            company2 = Clients.objects.get(id=request.POST['select_client2'])
+            for x in ClientEmployees.objects.filter(id=company1):
+                x.id=company2
+                x.save()
+            for x in Jobs.objects.filter(client=company1):
+                x.client=company2
+                x.save()
+            company1.delete()
+            return redirect('client_info',id=company2.id)
+
         if 'search_client' in request.POST:
             send_data['clients'] = Clients.objects.filter(company__icontains=request.POST['search_client'], is_active=True)
             send_data['search_client_word'] = request.POST['search_client']
@@ -61,21 +73,50 @@ def client_info(request, id):
             if 'make_client_active' in request.POST:
                 selected_client.is_active=True
                 selected_client.save()
-            for x in request.POST:
-                if x[0:4]=='name':
-                    current_person_pk = x[4:len(x)]
-                    current_person = ClientEmployees.objects.get(person_pk=current_person_pk)
-                    current_person.name = request.POST[x]
-                    current_person.email = request.POST['email' + current_person_pk]
-                    current_person.phone = request.POST['phone' + current_person_pk]
-                    if 'closed' + current_person_pk in request.POST:
-                        current_person.is_active=False
-                    else:
-                        current_person.is_active = True
-                    current_person.save()
+            if 'combine_people_now' in request.POST:
+                person1 = ClientEmployees.objects.get(person_pk=request.POST['select_person1'])
+                person2 = ClientEmployees.objects.get(person_pk=request.POST['select_person2'])
+                for x in Jobs.objects.filter(client_Pm=person1):
+                    x.client_Pm = person2
+                    x.save()
+                for x in Jobs.objects.filter(client_Submittal_Contact=person1):
+                    x.client_Submittal_Contact = person2
+                    x.save()
+                for x in Jobs.objects.filter(client_Super=person1):
+                    x.client_Super = person2
+                    x.save()
+                for x in ClientJobRoles.objects.filter(employee=person1):
+                    x.employee = person2
+                    x.save()
+                for x in TempRecipients.objects.filter(person=person1):
+                    x.person = person2
+                    x.save()
+                person1.delete()
+            else:
+                for x in request.POST:
+                    if x[0:4]=='name':
+                        current_person_pk = x[4:len(x)]
+                        current_person = ClientEmployees.objects.get(person_pk=current_person_pk)
+                        current_person.name = request.POST[x]
+                        current_person.email = request.POST['email' + current_person_pk]
+                        current_person.phone = request.POST['phone' + current_person_pk]
+                        if 'closed' + current_person_pk in request.POST:
+                            current_person.is_active=False
+                        else:
+                            current_person.is_active = True
+                        current_person.save()
+                    if x[0:7] == 'company':
+                        selected_client.company = request.POST['company_name']
+                        selected_client.bid_email= request.POST['company_email']
+                        selected_client.phone= request.POST['company_phone']
+                        selected_client.address= request.POST['company_address']
+                        selected_client.city= request.POST['company_city']
+                        selected_client.state= request.POST['company_state']
+                        selected_client.save()
+
             if 'add_new_person' in request.POST:
                 ClientEmployees.objects.create(id=selected_client, name=request.POST['add_name'], phone=request.POST['add_phone'], email = request.POST['add_email'])
-            send_data['client_employees'] = ClientEmployees.objects.filter(id=selected_client)
+            send_data['client_employees'] = ClientEmployees.objects.filter(id=selected_client).order_by('name')
     return render(request, 'client_info.html', send_data)
 
 

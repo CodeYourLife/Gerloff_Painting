@@ -268,8 +268,10 @@
             document.getElementById("final_cost_display").innerHTML = "<b>Final Cost: $" + parseInt(finalcost) + "</b>"
 
         }
-
-
+        window.onload = function() {
+        alert("hi")
+            if ("{{email_send_error}}"=="yes"){alert("Error Sending Email")}
+        }
     </script>
 </head>
 <body>
