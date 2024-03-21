@@ -70,6 +70,7 @@ def batch_approve_co(request, id):
 
 
 def print_TMProposal(request, id):
+    email_send_error = "no"
     newproposal = TMProposal.objects.get(id=id)
     changeorder = newproposal.change_order
     laboritems = TMList.objects.filter(change_order=changeorder, category="Labor")
@@ -135,10 +136,18 @@ def print_TMProposal(request, id):
                     dest=result_file
                 )
                 result_file.close()
+                print("HERE")
                 if x[0:5] == 'final':
-                    Email.sendEmail("COP Proposal", "Please find the TM Proposal attached", recipients,
-                                    f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
-                return redirect('extra_work_ticket', id=changeorder.id)
+                    try:
+                        print("HERE2")
+                        Email.sendEmail("COP Proposal", "Please find the TM Proposal attached", recipients,
+                                        f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
+                        return redirect('extra_work_ticket', id=changeorder.id)
+                    except:
+                        print("HERE8")
+                        email_send_error = "yes"
+                else:
+                    return redirect('extra_work_ticket', id=changeorder.id)
 
 
     extra_contacts = False
@@ -174,7 +183,7 @@ def print_TMProposal(request, id):
                     {'person_pk': x.person_pk, 'name': x.name, 'default': False, 'current': False, 'email': x.email})
 
     return render(request, "preview_TMProposal.html",
-                  {'client_list': client_list,
+                  {'email_send_error': email_send_error, 'client_list': client_list,
                    'extra_contacts': extra_contacts, 'inventory_exists': inventory_exists, 'bond_exists': bond_exists,
                    'laboritems': laboritems,
                    'materialitems': materialitems, 'inventory': inventory, 'bond': bond,

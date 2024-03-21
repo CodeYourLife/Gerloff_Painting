@@ -8,7 +8,6 @@ import os.path
 from django.conf import settings
 class Email:
     def sendEmail(title, body, to, filename):
-        print(to)
         msg = MIMEMultipart()
         # sender = to
         sender = 'joe@gerloffpainting.com'
@@ -24,10 +23,11 @@ class Email:
                 # attach.add_header('Content-Disposition', 'attachment', filename=filename)
                 msg.attach(attach)
         text = msg.as_string()
-        s = smtplib.SMTP('remote.gerloffpainting.com')
+        print("HERE3")
+        s = smtplib.SMTP('remote2.gerloffpainting.com')
         s.sendmail(sender, to, text)
         s.quit()
-
+        print("HERE4")
 
 def createfolder(subfolder):
         parent_dir = settings.MEDIA_ROOT
