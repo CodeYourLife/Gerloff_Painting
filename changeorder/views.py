@@ -136,6 +136,7 @@ def print_TMProposal(request, id):
                     dest=result_file
                 )
                 result_file.close()
+
                 print("HERE")
                 if x[0:5] == 'final':
                     try:
@@ -148,6 +149,8 @@ def print_TMProposal(request, id):
                         email_send_error = "yes"
                 else:
                     return redirect('extra_work_ticket', id=changeorder.id)
+
+
 
 
     extra_contacts = False
