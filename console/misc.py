@@ -24,7 +24,7 @@ class Email:
                 msg.attach(attach)
         text = msg.as_string()
         print("HERE3")
-        s = smtplib.SMTP('remote2.gerloffpainting.com')
+        s = smtplib.SMTP('remote.gerloffpainting.com')
         s.sendmail(sender, to, text)
         s.quit()
         print("HERE4")
