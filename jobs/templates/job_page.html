@@ -374,6 +374,7 @@ window.onload = function() {
     var table = $('#tickets_table7').DataTable({paging: false, ordering:false, searching:false,info:false})
     var table = $('#tickets_table8').DataTable({paging: false, ordering:false, searching:false,info:false})
     var table = $('#tickets_table9').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table10').DataTable({paging: false, ordering:false, searching:false,info:false})
     document.getElementById("show_new_pm").style.display = "none";
     document.getElementById("show_new_super").style.display = "none";
     document.getElementById("dropbox_link_hide").style.display = "none";
@@ -1245,6 +1246,51 @@ document.getElementById("notes_filter_button").style.display = "none";
                         <tbody>
 
                         {% for open_co in open_cos %}
+
+                                {% if open_co.is_t_and_m %}
+        <tr style="background-color:hsla(69, 100%, 92%);">
+            {% else %}
+            <tr>
+            {% endif %}
+                            <td><a href="{% url 'extra_work_ticket' open_co.id %}">{{open_co.cop_number}}</a></td>
+                            <td>{{open_co.description}}</td>
+                            <td>{{open_co.notes}}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+
+{% if informal_cos %}
+    <div class="card">
+        <div class="card-header" id="heading99">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapse99" aria-expanded="false"
+                        aria-controls="collapseThree">
+                    {{informal_cos_count}}- Change Orders Informally Approved
+                </button>
+            </h5>
+        </div>
+        <div id="collapse99" class="collapse hide" aria-labelledby="headingThree" data-parent="#accordion">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="tickets_table10" class="display table">
+                        <thead class="colored-header">
+
+                        <tr>
+                            <th>CO#</th>
+                            <th>Description</th>
+                            <th>Notes</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        {% for open_co in informal_cos %}
 
                                 {% if open_co.is_t_and_m %}
         <tr style="background-color:hsla(69, 100%, 92%);">
