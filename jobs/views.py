@@ -255,15 +255,16 @@ def update_job_info(request, jobnumber):
         else:
             if selectedjob.superintendent is not None:
                 if str(selectedjob.superintendent.id) != str(request.POST['select_gpsuper']):
-                    email_sent = gerloff_super_change(selectedjob, Employees.objects.get(id=request.POST['select_gpsuper']),
-                                         Employees.objects.get(user=request.user))
+                    email_sent = gerloff_super_change(selectedjob,
+                                                      Employees.objects.get(id=request.POST['select_gpsuper']),
+                                                      Employees.objects.get(user=request.user))
                     if email_sent:
                         send_data['email_sent'] = email_sent
                     else:
                         send_data['email_not_sent'] = email_sent
             else:
                 email_sent = gerloff_super_change(selectedjob, Employees.objects.get(id=request.POST['select_gpsuper']),
-                                     Employees.objects.get(user=request.user))
+                                                  Employees.objects.get(user=request.user))
                 if email_sent:
                     send_data['email_sent'] = email_sent
                 else:
@@ -285,9 +286,11 @@ def update_job_info(request, jobnumber):
 
         if startdate != request.POST['start_date']:
             email_sent = start_date_change(selectedjob, request.POST['start_date'], 3, request.POST['date_note'],
-                              Employees.objects.get(user=request.user), True, True)
-            if email_sent: send_data['email_sent']=email_sent
-            else: send_data['email_not_sent']=email_sent
+                                           Employees.objects.get(user=request.user), True, True)
+            if email_sent:
+                send_data['email_sent'] = email_sent
+            else:
+                send_data['email_not_sent'] = email_sent
         if selectedjob.notes != request.POST['email_job_note']:
             selectedjob.notes = request.POST['email_job_note']
         if request.POST['po_number'] == "":
@@ -709,9 +712,9 @@ def job_page(request, jobnumber):
     send_data['count_approved_changes'] = selectedjob.count_approved_changes()
     send_data['pending_co_amount'] = ('{:,}'.format(selectedjob.pending_co_amount()))
     send_data['approved_co_amount'] = ('{:,}'.format(selectedjob.approved_co_amount()))
-    tickets_not_done=ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
-                                                                is_ticket_signed=False,
-                                                                is_old_form_printed=False, ewt__isnull=True).order_by('cop_number')
+    tickets_not_done = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
+                                                   is_ticket_signed=False,
+                                                   is_old_form_printed=False, ewt__isnull=True).order_by('cop_number')
     send_data['tickets_not_done'] = tickets_not_done
     send_data['tickets_not_done_count'] = tickets_not_done.count()
     # tickets_not_signed = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
@@ -723,16 +726,20 @@ def job_page(request, jobnumber):
         job_number=selectedjob, is_t_and_m=True, is_ticket_signed=False, ewt__isnull=False).order_by('cop_number')
     send_data['tickets_not_signed'] = tickets_not_signed
     send_data['tickets_not_signed_count'] = tickets_not_signed.count()
-    tickets_not_sent=ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
-                                                                is_ticket_signed=True, date_sent__isnull=True).order_by('cop_number')
+    tickets_not_sent = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
+                                                   is_ticket_signed=True, date_sent__isnull=True).order_by('cop_number')
     send_data['tickets_not_sent'] = tickets_not_sent
     send_data['tickets_not_sent_count'] = tickets_not_sent.count()
-    open_cos=ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
-                                                        is_approved_to_bill=False,date_sent__isnull=False).order_by('cop_number')
+    open_cos = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
+                                           is_approved=False, date_sent__isnull=False).order_by('cop_number')
     send_data['open_cos'] = open_cos
     send_data['open_cos_count'] = open_cos.count()
-    approved_cos=ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
-                                                            is_approved_to_bill=True).order_by('cop_number')
+    informal_cos = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
+                                               is_approved_to_bill=False, is_approved=True).order_by('cop_number')
+    send_data['informal_cos'] = informal_cos
+    send_data['informal_cos_count'] = informal_cos.count()
+    approved_cos = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
+                                               is_approved_to_bill=True).order_by('cop_number')
     send_data['approved_cos'] = approved_cos
     send_data['approved_cos_count'] = approved_cos.count()
     send_data['equipments'] = Inventory.objects.filter(job_number=selectedjob, is_closed=False).order_by(

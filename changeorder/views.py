@@ -35,7 +35,7 @@ def batch_approve_co(request, id):
     send_data['previous_change_orders'] = selectedjob.approved_co_amount()
     send_data['current_contract_amount'] = selectedjob.current_contract_amount()
     send_data['total_contract_amount'] = changeorder.price + selectedjob.current_contract_amount()
-    changeordersjson = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False, is_approved=False).values()
+    changeordersjson = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False, is_approved_to_bill=False).values()
     send_data['changeordersjson'] = json.dumps(list(changeordersjson), cls=DjangoJSONEncoder)
     if request.method == 'POST':
         gc_number_exists = False
@@ -45,7 +45,7 @@ def batch_approve_co(request, id):
             approved_for_billing = True
             gc_number = request.POST['gc_number']
         else:
-            if request.POST['approved_for_billing']:
+            if 'approved_for_billing' in request.POST:
                 approved_for_billing = True
         for x in request.POST:
             if x[0:10] == 'select_cop':
@@ -56,15 +56,23 @@ def batch_approve_co(request, id):
                 if gc_number_exists:
                     selected_cop.gc_number = gc_number
                     selected_cop.is_approved_to_bill = True
-                    note = "Approved! GC Number: " + str(gc_number) + ". Approved price: " + str(request.POST['price' + item_number])
+                    note = "Approved! GC Number: " + str(gc_number) + ". Approved price: " + str(
+                        request.POST['price' + item_number])
                 elif approved_for_billing:
                     selected_cop.is_approved_to_bill = True
                     note = "Approved for billing, but no GC Number! " + request.POST[
                         'notes'] + ". Approved price: " + str(request.POST['price' + item_number])
                 else:
-                    note = "Informal approval only! Do not add to SOVs. " + request.POST['notes'] + ". Approved price: " + str(request.POST['price' + item_number])
+                    note = "Informal approval only! Do not add to SOVs. " + request.POST[
+                        'notes'] + ". Approved price: " + str(request.POST['price' + item_number])
                 selected_cop.save()
-                ChangeOrderNotes.objects.create(cop_number=selected_cop, date = date.today(), user=Employees.objects.get(user=request.user),note = note)
+                ChangeOrderNotes.objects.create(cop_number=selected_cop, date=date.today(),
+                                                user=Employees.objects.get(user=request.user), note=note)
+                if 'upload_file' in request.FILES:
+                    fileitem = request.FILES['upload_file']
+                    fn = os.path.basename(fileitem.name)
+                    fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder", str(selected_cop.id), fn)
+                    open(fn2, 'wb').write(fileitem.file.read())
         return redirect('extra_work_ticket', id=selected_cop.id)
     return render(request, 'batch_approve_co.html', send_data)
 
@@ -149,9 +157,6 @@ def print_TMProposal(request, id):
                         email_send_error = "yes"
                 else:
                     return redirect('extra_work_ticket', id=changeorder.id)
-
-
-
 
     extra_contacts = False
     project_pm = ClientEmployees.objects.get(person_pk=changeorder.job_number.client_Pm.person_pk)
@@ -698,24 +703,7 @@ def change_order_send(request, id):
                                                      employee=person).exists():
                     ClientJobRoles.objects.create(role="Change Orders", job=changeorder.job_number, employee=person)
                     TempRecipients.objects.create(person=person, changeorder=changeorder)
-            if x[0:5] == 'final':
-                recipients = ["bridgette@gerloffpainting.com"]
-                current_user = Employees.objects.get(user=request.user)
-                recipients.append(current_user.email)
-                for x in request.POST:
-                    if x[0:5] == 'email':
-                        if recipients == "":
-                            recipients = request.POST[x]
-                        else:
-                            recipients.append(request.POST[x])
-                changeorder.sent_to = recipients
-                changeorder.full_description = request.POST['full_description']
-                changeorder.price = request.POST['price']
-                changeorder.date_sent = date.today()
-                changeorder.save()
-                ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
-                                                user=Employees.objects.get(user=request.user),
-                                                note="COP Sent. Price: $" + request.POST['price'])
+            if x[0:5] == 'final' or x[0:6] == 'myself':
                 path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
                 result_file = open(f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf", "w+b")
                 html = render_to_string("print_proposal.html",
@@ -727,10 +715,31 @@ def change_order_send(request, id):
                     dest=result_file
                 )
                 result_file.close()
-                Email.sendEmail("COP Proposal", "Please find the Change Order Proposal attached", recipients,
-                                f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
-
-                # Email.sendEmail("Change Order","Test",recipients, False)
+                changeorder.full_description = request.POST['full_description']
+                changeorder.price = request.POST['price']
+                changeorder.date_sent = date.today()
+                changeorder.save()
+                current_user = Employees.objects.get(user=request.user)
+                if x[0:5] == 'final':
+                    recipients = ["bridgette@gerloffpainting.com"]
+                    recipients.append(current_user.email)
+                    for x in request.POST:
+                        if x[0:5] == 'email':
+                            if recipients == "":
+                                recipients = request.POST[x]
+                            else:
+                                recipients.append(request.POST[x])
+                    changeorder.sent_to = recipients
+                    changeorder.save()
+                    ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                                    user=current_user,
+                                                    note="COP Sent. Price: $" + request.POST['price'])
+                    Email.sendEmail("COP Proposal", "Please find the Change Order Proposal attached", recipients,
+                                    f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
+                else:
+                    ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                                    user=current_user,
+                                                    note="COP Created. User will email themself.  Price: $" + request.POST['price'])
                 return redirect('extra_work_ticket', id=id)
     extra_contacts = False
     project_pm = ClientEmployees.objects.get(person_pk=changeorder.job_number.client_Pm.person_pk)

@@ -584,7 +584,12 @@ window.onload = function() {
     {% else %} <!-- 23 been sent -->
         <div id="if231"><!-- 231 checks if approved -->
         {% if changeorder.is_approved == True %}<!-- 231 been approved -->
+            {% if changeorder.is_approved_to_bill %}
             <h1>Change Order Approved</h1>
+            {% else %}
+            <h1>Change Order Informally Approved</h1>
+             <form action="{% url 'batch_approve_co' changeorder.id %}" ><input type="submit" class="btn btn-danger"  value="FORMALLY APPROVE NOW!"/></form>
+            {% endif %}
             <h3> Date Sent: {{changeorder.date_sent}}</h3>
             <h3> Date Approved: {{changeorder.date_approved}}</h3>
             <h3>Price: ${{changeorder.price}}</h3>
@@ -625,43 +630,43 @@ window.onload = function() {
                 </div>
             {% endif %}<!-- 2321 checking if t&m to know which proposal to show -->
             </div><!-- 2321 checking if t&m to know which proposal to show -->
-            <div id="accordion">
-            <div class="card">
-                <div class="card-header" id="headingZero" style="background-color:hsla(0, 100%, 91%);">
-                    <h5 class="mb-0">
-                        <button class="btn btn-link" data-toggle="collapse" data-target="#collapseNine" aria-expanded="false"
-                                aria-controls="collapseNine">
-                            Click Here to View Approval Options
-                        </button>
-                    </h5>
-                </div>
-                <div id="collapseNine" class="collapse hide" aria-labelledby="headingZero" data-parent="#accordion">
-                <div class="card-body">
-                <div class="container" style="margin-bottom: 20px;">
-                <hr>
-                <form name='approval_input' action="{% url 'extra_work_ticket' changeorder.id %}" method="post"
-                onSubmit="return check_booking_data1()">
-                {% csrf_token %}
-                <input type="checkbox" name="is_approved_to_bill" id="is_approved_to_bill"/> <label
-                for="is_approved_to_bill">"Is this Approved for Billing?" </label><br>
-                <label for="approved_price">Approved Price: $</label><input type="text" name="approved_price"
-                                                                        id="approved_price"
-                                                                        value={{changeorder.price}} size="30"
-                                                                        required/><br>
-                <label for="gc_number">GC Formal Number: </label><input type="text" name="gc_number" id="gc_number"
-                                                                    size="10"/><br>
-                <label for="approval_note">Please provide any notes about this approval: </label> <br>
-                <textarea id="approval_note" name="approval_note" rows="2" cols="100"></textarea><br>
+<!--            <div id="accordion">-->
+<!--            <div class="card">-->
+<!--                <div class="card-header" id="headingZero" style="background-color:hsla(0, 100%, 91%);">-->
+<!--                    <h5 class="mb-0">-->
+<!--                        <button class="btn btn-link" data-toggle="collapse" data-target="#collapseNine" aria-expanded="false"-->
+<!--                                aria-controls="collapseNine">-->
+<!--                            Click Here to View Approval Options-->
+<!--                        </button>-->
+<!--                    </h5>-->
+<!--                </div>-->
+<!--                <div id="collapseNine" class="collapse hide" aria-labelledby="headingZero" data-parent="#accordion">-->
+<!--                <div class="card-body">-->
+<!--                <div class="container" style="margin-bottom: 20px;">-->
+<!--                <hr>-->
+<!--                <form name='approval_input' action="{% url 'extra_work_ticket' changeorder.id %}" method="post"-->
+<!--                onSubmit="return check_booking_data1()">-->
+<!--                {% csrf_token %}-->
+<!--                <input type="checkbox" name="is_approved_to_bill" id="is_approved_to_bill"/> <label-->
+<!--                for="is_approved_to_bill">"Is this Approved for Billing?" </label><br>-->
+<!--                <label for="approved_price">Approved Price: $</label><input type="text" name="approved_price"-->
+<!--                                                                        id="approved_price"-->
+<!--                                                                        value={{changeorder.price}} size="30"-->
+<!--                                                                        required/><br>-->
+<!--                <label for="gc_number">GC Formal Number: </label><input type="text" name="gc_number" id="gc_number"-->
+<!--                                                                    size="10"/><br>-->
+<!--                <label for="approval_note">Please provide any notes about this approval: </label> <br>-->
+<!--                <textarea id="approval_note" name="approval_note" rows="2" cols="100"></textarea><br>-->
 
-                <input type="submit" class="btn btn-danger btn-sm" name='submit_form1' value="Approve Now!"/></form>
-                <form action="{% url 'batch_approve_co' changeorder.id %}" ><input type="submit" class="btn btn-danger btn-sm"  value="Batch"/></form>
+<!--                <input type="submit" class="btn btn-danger btn-sm" name='submit_form1' value="Approve Now!"/></form>-->
+                <form action="{% url 'batch_approve_co' changeorder.id %}" ><input type="submit" class="btn btn-danger"  value="APPROVE NOW!"/></form>
                     <br>
-                <hr>
-            </div>
-                </div>
-            </div>
-            </div>
-            </div>
+<!--                <hr>-->
+<!--            </div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--            </div>-->
+<!--            </div>-->
         {% endif %}<!--231 options for been sent-->
         </div><!--231 checks whether approved or not-->
     {% endif %}<!--22 options-->

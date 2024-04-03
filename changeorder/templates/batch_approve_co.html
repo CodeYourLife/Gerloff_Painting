@@ -273,7 +273,7 @@ function calculatetotal(){
 </div>
 <hr>
 
-<form id="batch_form" action="{% url 'batch_approve_co' changeorder.id %}" method="post"  onSubmit = "return check_booking_data()">
+<form id="batch_form" action="{% url 'batch_approve_co' changeorder.id %}" method="post"  enctype="multipart/form-data" onSubmit = "return check_booking_data()">
 	{% csrf_token %}
 <div class ="container">
 	GC Number<input type="text" name="gc_number" id="gc_number" placeholder="GC Number"  onchange = "entered_GC_number()">
@@ -285,7 +285,12 @@ function calculatetotal(){
 	Add to billing SOVs?<input type="checkbox" name="approved_for_billing" id="approved_for_billing" >
 	<br>
 </div>
-<br><br>
+	<br>
+<div class ="container">
+	Formal Change Order: <input type= "file" name="upload_file" id="upload_file" />
+	<br>
+</div>
+<br>
 <div class ="container" style="background-color:hsla(5, 100%, 92%);">
 	<h4>Select Change Orders</h4>
 	<table id="cop_table" class="display compact nowrap" style="width:100%" >
