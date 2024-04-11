@@ -22,7 +22,10 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from media.utilities import MediaUtilities
 
+def email_for_signature(request, id):
+    print("here")
 
+@login_required(login_url='/accounts/login')
 def batch_approve_co(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
     selectedjob = changeorder.job_number
@@ -76,7 +79,7 @@ def batch_approve_co(request, id):
         return redirect('extra_work_ticket', id=selected_cop.id)
     return render(request, 'batch_approve_co.html', send_data)
 
-
+@login_required(login_url='/accounts/login')
 def print_TMProposal(request, id):
     email_send_error = "no"
     newproposal = TMProposal.objects.get(id=id)
@@ -198,7 +201,7 @@ def print_TMProposal(request, id):
                    'equipmentitems': equipmentitems, 'extraitems': extraitems, 'newproposal': newproposal,
                    'changeorder': changeorder, 'ewt': ewt})
 
-
+@login_required(login_url='/accounts/login')
 def price_ewt(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
     ewt = EWT.objects.get(change_order=changeorder)
@@ -370,7 +373,7 @@ def price_ewt(request, id):
                    'equipment2': equipment2, 'extras2': extras2, 'totalmaterialcost': int(totalmaterialcost),
                    'totallaborcost': int(totallaborcost), 'totalequipmentcost': int(totalequipmentcost)})
 
-
+@login_required(login_url='/accounts/login')
 def price_old_ewt(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
     # ewt = EWT.objects.get(change_order=changeorder)
@@ -505,7 +508,7 @@ def price_old_ewt(request, id):
                    'laboritems': laboritems, 'changeorder': changeorder, 'totalmaterialcost': int(totalmaterialcost),
                    'totallaborcost': int(totallaborcost), 'totalequipmentcost': int(totalequipmentcost)})
 
-
+@login_required(login_url='/accounts/login')
 def print_ticket(request, id, status):
     # status = 'OLD' paper.  status = 'NEW' digital signature
     changeorder = ChangeOrders.objects.get(id=id)
@@ -887,6 +890,7 @@ def extra_work_ticket(request, id):
     send_data = {}
     changeorder = ChangeOrders.objects.get(id=id)
     send_data['changeorder'] = changeorder
+    send_data['client_list']= ClientEmployees.objects.filter(id=changeorder.job_number.client)
     ticket_needed = changeorder.need_ticket()
     send_data['ticket_needed'] = ticket_needed
     notes = ChangeOrderNotes.objects.filter(cop_number=id)

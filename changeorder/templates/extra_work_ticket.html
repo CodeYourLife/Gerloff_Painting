@@ -180,6 +180,9 @@ window.onload = function() {
         select_file_form.submit()
         }
 
+function populate_ticket_recipient(){
+
+}
     </script>
 </head>
 <body>
@@ -195,6 +198,47 @@ window.onload = function() {
         </ul>
     </div>
 </nav>
+<!-- Modal -->
+<div class="modal fade" id="email_approval_modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="title3"></h5>
+                <button onclick="location.reload();" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="select_recipient_form" action="{% url 'email_for_signature' changeorder.id %}" method="post"   >
+                    {% csrf_token %}
+                    <b>Who do you want to email the ticket to?</b>
+                    <br>
+                     <select id="recipient" name="recipient" onchange="populate_ticket_recipient()">
+                         <option value="please_select">Please Select</option>
+                         <option value="add_new">Add New</option>
+                     {% for x in client_list %}
+                    {% if x.is_active %}
+                         <option value={{x.person_pk}}>{{x.name}}</option>
+                    {% endif %}
+                    {% endfor %}
+                     </select>
+                    <br>
+                            <input type="text" name="recipient_name" id="recipient_name" placeholder="Recipient Name"/>
+                    <input type="email" name="recipient_email" id="recipient_email" placeholder="Recipient Email"/>
+                    <input type="phone" name="recipient_phone" id="recipient_phone" placeholder="Recipient Phone"/>
+
+
+            </div>
+            <div class="modal-footer">
+                <div id="hidden-element"></div>
+                <input type="submit" value="Email Now" class="btn btn-primary" name="email_now"/>
+                </form>
+                <button type="button" class="btn btn-secondary" onclick="location.reload();" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- Modal -->
 <div class="modal fade" id="changeOrderFolderModal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
@@ -519,11 +563,16 @@ window.onload = function() {
                     </div>
                     {% endif %}<!--21211-->
                     <div style="padding: 5px" class="form-group">
-                    <form action="{% url 'print_ticket' changeorder.id 'NEW' %}" ><input type="submit" class="btn btn-primary btn-sm" value="Get Digital Signature"/></form>
+                    <form action="{% url 'print_ticket' changeorder.id 'NEW' %}" ><input type="submit" class="btn btn-primary btn-sm" value="Get Digital Signature Now"/></form>
                     </div>
                               <div style="padding: 5px" class="form-group">
                     <form action="{% url 'process_ewt' changeorder.id %}"><input type="submit" class="btn btn-primary btn-sm" value="View/Change Digital Ticket"/>
                     </form>
+                              </div>
+                                                  <div style="padding: 5px" class="form-group">
+                    <button type="button" data-toggle="modal" data-target="#email_approval_modal" class="btn btn-primary btn-sm" >Email Ticket For Signature</button>
+<!--                    <form action="{% url 'email_for_signature' changeorder.id %}"><input type="submit" class="btn btn-primary btn-sm" value="Email Ticket For Signature"/>-->
+<!--                    </form>-->
                               </div>
                 {% else %}
                     <div style="padding: 5px" class="form-group">

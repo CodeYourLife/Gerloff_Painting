@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <title>PROPOSAL</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous"
+          xmlns:margin-left="http://www.w3.org/1999/xhtml">
+    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+    <style type="text/css" class="init">
+        table, td, th {
+          border: 1px solid #ddd;
+          text-align: left;
+        }
+
+        table {
+          border-collapse: collapse;
+          width: 100%;
+        }
+
+        th, td {
+          padding: 5px;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.2/css/jquery.dataTables.min.css">
+    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
+            data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+    <script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html"
+            async></script>
+    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html"
+            async></script>
+    <script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script type="text/javascript" language="javascript"
+            src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+    <script type="text/javascript" class="init">
+        var laborcount = {{laborcount}}
+        var glob_materialcount= {{materialcount}}
+        var glob_equipmentcount= {{equipmentcount}}
+        var glob_extrascount = {{extrascount}}
+
+        function add_labor_row() {
+            laborcount = laborcount + 1
+            hidden = document.getElementById("hidden_labor");
+            hidden.value=laborcount
+            var table = document.getElementById("labor_breakdown");
+            var rows = table.getElementsByTagName("tr").length
+            var row = table.insertRow(rows-1);
+            var cell1 = row.insertCell(0);
+            var cell2 = row.insertCell(1);
+            var cell3 = row.insertCell(2);
+            var cell4 = row.insertCell(3);
+            cell1.innerHTML = "<div id='new_labor" + laborcount + "'></div>";
+            add_labor_dropdown()
+            cell2.innerHTML ="<input type= 'number' name='labor_hours" + laborcount + "' id='labor_hours" + laborcount + "'  onchange ='changehours(event)' size='10' required />"
+            cell3.innerHTML ="$<input type= 'number' name='labor_cost" + laborcount + "' id='labor_cost" + laborcount + "'  size='10' required />"
+        }
+
+        function add_labor_dropdown(){
+                var select = document.createElement("select");
+                var rate = 0.00
+                select.name = "select_labor" + laborcount;
+                select.id = "select_labor" + laborcount;
+                select.addEventListener('change',function() {changelabor(event);},false);
+                let rolodex = JSON.parse("{{employees_json|escapejs}}");
+                        var option = document.createElement("option");
+                option.value = "please_select";
+                option.text= "please select";
+                select.appendChild(option);
+                        for (const x of rolodex)
+                {
+                var option = document.createElement("option");
+                option.value = x.id;
+                option.text= x.item;
+                select.appendChild(option);
+                }
+                var label = document.createElement("label");
+                document.getElementById("new_labor" + laborcount).appendChild(label).appendChild(select);
+                var hidden_input = document.createElement("input");
+                hidden_input.setAttribute("type", "hidden");
+                hidden_input.setAttribute("name", "labor_rate" + laborcount);
+                hidden_input.setAttribute("id", "labor_rate" + laborcount);
+                hidden_input.setAttribute("value", 0);
+                document.getElementById("new_labor" + laborcount).appendChild(hidden_input);
+        }
+        function changelabor(){
+            clicked_row = event.currentTarget.id.substring(12,event.currentTarget.id.length)
+            description = document.getElementById("labor_rate" + clicked_row)
+            rolodex = JSON.parse("{{employees_json|escapejs}}");
+            for(let i =0; i < rolodex.length; i++){
+                if (rolodex[i].id == event.currentTarget.value){
+                    description.value = rolodex[i].rate
+                }
+            }
+        }
+        function changehours(){
+            clicked_row = event.currentTarget.id.substring(11,event.currentTarget.id.length)
+            rate = document.getElementById("labor_rate" + clicked_row)
+            hours = document.getElementById("labor_hours" + clicked_row)
+            total = document.getElementById("labor_cost" + clicked_row)
+            total.value = hours.value * rate.value
+            calculate_final_cost()
+        }
+
+
+        function add_material_row(type) {
+            if (type == "material"){
+                glob_materialcount=glob_materialcount+1
+                materialcount = glob_materialcount
+                hidden = document.getElementById("hidden_material");
+                var table = document.getElementById("material_breakdown");
+            }
+            if (type == "equipment"){
+                glob_equipmentcount=glob_equipmentcount+1
+                materialcount = glob_equipmentcount
+                hidden = document.getElementById("hidden_equipment");
+                var table = document.getElementById("equipment_breakdown");
+            }
+            if (type == "extras"){
+                glob_extrascount = glob_extrascount+1
+                materialcount = glob_extrascount
+                hidden = document.getElementById("hidden_extras");
+                var table = document.getElementById("extras_breakdown");
+            }
+            hidden.value = materialcount
+            var rows = table.getElementsByTagName("tr").length
+                if (type == "material"){
+                var row = table.insertRow(rows-2);
+            }
+            else {var row = table.insertRow(rows-1)}
+
+            var cell1 = row.insertCell(0);
+            var cell2 = row.insertCell(1);
+            var cell3 = row.insertCell(2);
+            var cell4 = row.insertCell(3);
+            var cell5 = row.insertCell(4);
+            cell1.innerHTML = "<div id='new_" + type + String(materialcount) + "'></div>";
+            add_material_dropdown(type)
+            cell2.innerHTML ="<input type= 'text' name='" + type + "_description"+ materialcount + "' id='" + type + "_description"+ materialcount + "'  size='30' required />"
+            cell3.innerHTML ="<input type= 'number' name='" + type + "_quantity"+ materialcount + "' id='" + type + "_quantity"+ materialcount + "'  onchange = 'changequantity(event)' size='10' required />"
+            cell4.innerHTML ="<input type= 'text' name='" + type + "_units"+ materialcount + "' id='" + type + "_units"+ materialcount + "'  size='7' required />"
+            cell5.innerHTML ="$<input type= 'number' name='" + type + "_cost"+ materialcount + "' id='" + type + "_cost"+ materialcount + "'  size='7' required />"
+        }
+
+
+        function add_material_dropdown(type){
+                var select = document.createElement("select");
+                var rate = 0.00
+                select.name = type + "_category" + String(materialcount);
+                select.id = type + "_category" + String(materialcount);
+                if (type == "material"){
+                    select.addEventListener('change',function() {changematerial(event);},false);
+                    rolodex = JSON.parse("{{material_json|escapejs}}");
+                }
+                if (type == "equipment"){
+                    select.addEventListener('change',function() {changeequipment(event);},false);
+                    rolodex = JSON.parse("{{equipment_json|escapejs}}");
+                }
+                if (type == "extras"){
+                    select.addEventListener('change',function() {changeextras(event);},false);
+                    rolodex = JSON.parse("{{extras_json|escapejs}}");
+                }
+                var option = document.createElement("option");
+                option.value = "please_select";
+                option.text= "please select";
+                select.appendChild(option);
+                for (const x of rolodex)
+                {
+                var option = document.createElement("option");
+                option.value = x.id;
+                option.text= x.item;
+                select.appendChild(option);
+                }
+                var label = document.createElement("label");
+                document.getElementById("new_"  + type + String(materialcount)).appendChild(label).appendChild(select);
+                var hidden_input = document.createElement("input");
+                hidden_input.setAttribute("type", "hidden");
+                hidden_input.setAttribute("name", type + "_rate" + materialcount);
+                hidden_input.setAttribute("id", type + "_rate" + materialcount);
+                hidden_input.setAttribute("value", 0);
+                document.getElementById("new_"  + type + String(materialcount)).appendChild(hidden_input);
+        }
+
+        function changematerial(){
+            clicked_row = event.currentTarget.id.substring(17,event.currentTarget.id.length)
+            description = document.getElementById("material_description" + clicked_row)
+            rate = document.getElementById("material_rate" + clicked_row)
+            unit = document.getElementById("material_units" + clicked_row)
+            rolodex = JSON.parse("{{material_json|escapejs}}");
+            for(let i =0; i < rolodex.length; i++){
+                if (rolodex[i].id == event.currentTarget.value){
+                    description.value = rolodex[i].item
+                    rate.value = rolodex[i].rate
+                    unit.value = rolodex[i].unit
+                }
+            }
+        }
+
+        function changeequipment(){
+            clicked_row = event.currentTarget.id.substring(18,event.currentTarget.id.length)
+            description = document.getElementById("equipment_description" + clicked_row)
+            rate = document.getElementById("equipment_rate" + clicked_row)
+            unit = document.getElementById("equipment_units" + clicked_row)
+            rolodex = JSON.parse("{{equipment_json|escapejs}}");
+            for(let i =0; i < rolodex.length; i++){
+                if (rolodex[i].id == event.currentTarget.value){
+                    description.value = rolodex[i].item
+                    rate.value = rolodex[i].rate
+                    unit.value = rolodex[i].unit
+                }
+            }
+        }
+
+        function changeextras(){
+            clicked_row = event.currentTarget.id.substring(15,event.currentTarget.id.length)
+            description = document.getElementById("extras_description" + clicked_row)
+            rate = document.getElementById("extras_rate" + clicked_row)
+            unit = document.getElementById("extras_units" + clicked_row)
+            rolodex = JSON.parse("{{extras_json|escapejs}}");
+            for(let i =0; i < rolodex.length; i++){
+                if (rolodex[i].id == event.currentTarget.value){
+                    description.value = rolodex[i].item
+                    rate.value = rolodex[i].rate
+                    unit.value = rolodex[i].unit
+                }
+            }
+        }
+
+        function changequantity(){
+            if (event.currentTarget.id.substring(0,17) == "material_quantity") {type = "material"; clicked_row = event.currentTarget.id.substring(17,event.currentTarget.id.length)}
+            if (event.currentTarget.id.substring(0,18) == "equipment_quantity") {type = "equipment"; clicked_row = event.currentTarget.id.substring(18,event.currentTarget.id.length)}
+            if (event.currentTarget.id.substring(0,15) == "extras_quantity") {type = "extras"; clicked_row = event.currentTarget.id.substring(15,event.currentTarget.id.length)}
+            rate = document.getElementById(type + "_rate" + clicked_row)
+            hours = document.getElementById(type + "_quantity" + clicked_row)
+            total = document.getElementById(type + "_cost" + clicked_row)
+            total.value = hours.value * rate.value
+            calculate_final_cost()
+        }
+
+        function calculate_final_cost(){
+
+            var finalcost = 0
+            var materialcost = 0
+            for(let i =1; i < laborcount+1; i++){
+            finalcost = parseFloat(document.getElementById("labor_cost" + i).value) + finalcost
+            }
+            for(let i =1; i < glob_materialcount+1; i++){
+            materialcost = parseFloat(document.getElementById("material_cost" + i).value) + materialcost
+            finalcost = parseFloat(document.getElementById("material_cost" + i).value) + finalcost
+            }
+            document.getElementById("inventory_cost").value = materialcost *.15
+            document.getElementById("inventory_cost_display").innerHTML = "$" + String(parseInt(materialcost *.15))
+            for(let i =1; i < glob_equipmentcount+1; i++){
+            finalcost = parseFloat(document.getElementById("equipment_cost" + i).value) + finalcost
+            }
+            for(let i =1; i < glob_extrascount+1; i++){
+            finalcost = parseFloat(document.getElementById("extras_cost" + i).value) + finalcost
+            }
+            finalcost = finalcost + parseFloat(document.getElementById("inventory_cost").value)
+            document.getElementById("bond_cost").value = finalcost * parseFloat({{bond_rate}})
+            document.getElementById("bond_cost_display").innerHTML ="Bond Cost: $" + String(parseInt(document.getElementById("bond_cost").value))
+            finalcost = finalcost + parseFloat(document.getElementById("bond_cost").value)
+            document.getElementById("final_cost").value = parseInt(finalcost)
+            document.getElementById("final_cost_display").innerHTML = "<b>Final Cost: $" + parseInt(finalcost) + "</b>"
+
+        }
+        window.onload = function() {
+        alert("hi")
+            if ("{{email_send_error}}"=="yes"){alert("Error Sending Email")}
+        }
+    </script>
+</head>
+<body>
+
+<h2>{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} - Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</h2>
+<h4>Send Change Order to the Following People: </h4>
+<table id="labor_breakdown" class="display" style="width:90%" ><thead><tr><th></th></tr></thead><tbody>
+<form action="{% url 'preview_TMProposal' newproposal.id %}" method="post"   >
+	{% csrf_token %}
+	{% for x in client_list %}
+	{% if x.current == True %}
+		<tr><td>
+	 <select id="recipient" name="recipient{{x.person_pk}}" >
+		 <option value={{x.person_pk}}>{{x.name}}</option></select>
+			{% if x.default == True %}
+			<input type="submit" value="Remove from Default CO Recipients" name="remove{{x.person_pk}}" />
+						{% else %}
+			<input type="submit" value="Add to Default CO Recipients" name="adddefault{{x.person_pk}}" />
+			{% endif %}
+			<input type="submit" value="Remove from this change order" name="tempremove{{x.person_pk}}"/>
+			<input type="email" class= "emails" value="{{x.email}}" name="email{{x.person_pk}}" size="30" onchange = "add_button({{x.person_pk}})"/>
+			<input type="submit" class="emailbutton" value="Update Now!" id="button{{x.person_pk}}" name="updateemail{{x.person_pk}}"/>
+			</td></tr>
+	{% endif %}
+	{% endfor %}
+	<tr height="25px"></tr>
+	{% if extra_contacts == True %}
+		<tr><td>Click Below To Add Additional Recipients </td></tr><tr><td>
+		<select id="recipient" name="addrecipient" >
+			{% for x in client_list %}
+			{% if x.current == False %}
+			<option value={{x.person_pk}}>{{x.name}}</option>
+		{% endif %}
+			{% endfor %}
+		</select>
+	<input type="submit" value="Add as a Default Recipient" name="defaultadd"/>
+		<input type="submit" value="Add to this change order" name="tempadd"/>
+
+</td></tr>
+	{% endif %}
+</tbody></table>
+
+
+
+
+
+<div style="padding: 40px; width: 100%">
+    <div style="display: flex; width: 100%">
+        <div style="flex-grow: 1;"></div>
+        <div style="text-align: left">
+                {% csrf_token %}
+                <input type="submit" name="final" class="btn btn-sm btn-primary" value="SEND EMAIL WITH PROPOSAL"/>
+            <input type="submit" name="no_email" class="btn btn-sm btn-primary" value="DONT EMAIL (I will send myself)"/>
+<!--            <input type="submit" name="cancel" class="btn btn-sm btn-primary" value="Cancel"/>-->
+        </div>
+    </div>
+    <div style="width: 100%; text-align:center;">
+        <div class="col"><H2>Gerloff Painting T&M Price Breakdown</H2></div>
+    </div>
+    <div style="width: 100%; display:flex; justify-content: space-between;">
+        <div class="col">Job: {{changeorder.job_number}}</div>
+        <div class="col">Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</div>
+    </div>
+    <div style="width: 100%; display:flex; justify-content: space-between;">
+        <div class="col">Week Ending Date: {{ewt.week_ending}}</div>
+        <div class="col">Ticket Completed By: {{ewt.completed_by}}</div>
+    </div>
+    <div style="width: 100%; display:flex; justify-content: space-between;">
+        <div class="col"><p>Work Description: {{ewt.notes}}</p></div>
+    </div>
+</div>
+<hr>
+<div style="padding-left: 10px; padding-right: 10px; padding-bottom: 10px">
+    <div style="width: 100%; display:flex; justify-content: space-between;">
+        <div class="col">Description: {{newproposal.notes}}</div>
+    </div>
+    {% if laboritems %}
+    <hr>
+    <table style="width: 100%">
+        <tr>
+            <td><b>Labor Breakdown</b></td>
+            <td><b>Quantity</b></td>
+            <td><b>Units</b></td>
+            <td><b>Cost</b></td>
+        </tr>
+        {% for x in laboritems %}
+        <tr>
+            <td>{{x.description}}</td>
+            <td>{{x.quantity}}</td>
+            <td class="col-2">Hours</td>
+            <td class="col-2">${{x.total}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+    {% if materialitems %}
+    <hr>
+    <table style="width: 100%; margin-bottom: 12px;">
+        <tr>
+            <th>Material</th>
+            <th>Quantity</th>
+            <th>Units</th>
+            <th>Cost</th>
+        </tr>
+        {% for x in materialitems %}
+        <tr>
+            <td>{{x.category2}} {{x.description}}</td>
+            <td>{{x.quantity}}</td>
+            <td>{{x.units}}</td>
+            <td>${{x.total}}</td>
+        </tr>
+        {% endfor %}
+        {% if inventory_exists == True %}
+        <tr>
+            <td>Inventory</td>
+            <td>1</td>
+            <td>LS</td>
+            <td>${{inventory.total}}</td>
+        </tr>
+        {% endif %}
+    </table>
+    {% endif %}
+    {% if equipmentitems %}
+    <hr>
+    <table style="width: 100%">
+        <tr>
+            <th>Equipment</th>
+            <th>Quantity</th>
+            <th>Units</th>
+            <th>Cost</th>
+        </tr>
+        {% for x in equipmentitems %}
+        <tr>
+            <td>{{x.category2}} {{x.description}}</td>
+            <td class="col-2">{{x.quantity}}</td>
+            <td class="col-2">{{x.units}}</td>
+            <td class="col-2">${{x.total}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+    {% if extraitems %}
+    <hr>
+    <table style="width: 100%">
+        <tr>
+            <th>Extra Item</th>
+            <th><b>Quantity</b></th>
+            <th>Units</th>
+            <th>Cost</th>
+        </tr>
+        {% for x in extraitems %}
+        <tr>
+            <td>{{x.category2}} {{x.description}}</td>
+            <td>{{x.quantity}}</td>
+            <td>{{x.units}}</td>
+            <td>${{x.total}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+    <hr style="height:2px;border:none;color:#333;background-color:#333;">
+    <div>
+                {% if bond_exists == True %}
+
+           <h5><b>BOND: </b>${{bond.total}}</h5>
+
+        {% endif %}
+        <h4><b>TOTAL:&nbsp;&nbsp;</b>${{newproposal.total}}</h4>
+
+    </div>
+</div>
+<script src=”https://code.jquery.com/jquery-3.2.1.slim.min.js”
+        integrity=”sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN”
+        crossorigin=”anonymous”></script>
+
+<script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js
+        integrity=”sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q”
+        crossorigin=”anonymous”></script>
+<script src=”https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js”
+        integrity=”sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl”
+        crossorigin=”anonymous”></script>
+</body>
+</html>
+
