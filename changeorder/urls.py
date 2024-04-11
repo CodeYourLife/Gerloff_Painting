@@ -20,5 +20,5 @@ urlpatterns = [
     path('downloadFile', csrf_exempt(views.downloadFile), name='downloadFile'),
     path('email_signed_ticket/<changeorder>', views.email_signed_ticket, name='email_signed_ticket'),
     path('batch_approve_co/<id>', views.batch_approve_co, name='batch_approve_co'),
-
+    path('email_for_signature/<id>', views.email_for_signature, name='email_for_signature'),
 ]
