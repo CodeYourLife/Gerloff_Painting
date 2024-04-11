@@ -135,7 +135,7 @@ def index(request):
     send_data['rentals'] = Rentals.objects.filter(off_rent_number=None, is_closed=False).count()
     send_data['rentals_requested_off'] = Rentals.objects.filter(requested_off_rent=True, off_rent_number=None, is_closed=False).count()
     send_data['next_two_weeks'] = next_two_weeks
-    send_data['needs_super'] = Jobs.objects.filter(superintendent__isnull=True).count()
+    send_data['needs_super'] = Jobs.objects.filter(superintendent__isnull=True, is_closed=False).count()
     send_data['active_subcontracts'] = Subcontracts.objects.filter(job_number__is_closed=False, is_closed=False).count()
     send_data['pending_invoices'] = SubcontractorInvoice.objects.filter(is_sent=False).count()
     send_data['approved_invoices'] = SubcontractorInvoice.objects.filter(is_sent=True, processed=False).count()
@@ -152,9 +152,9 @@ def index(request):
         send_data['pending_invoices'] = SubcontractorInvoice.objects.filter(
             subcontract__job_number__superintendent=active_super, is_sent=False).count()
         send_data['tickets'] = 0  #
-        send_data['active_jobs'] = Jobs.objects.filter(superintendent=active_super, is_active=True).count()
+        send_data['active_jobs'] = Jobs.objects.filter(superintendent=active_super, is_active=True, is_closed=False).count()
         send_data['punchlist_jobs'] = Jobs.objects.filter(superintendent=active_super,
-                                                          is_waiting_for_punchlist=True).count()
+                                                          is_waiting_for_punchlist=True,is_closed=False).count()
 
         next_two_weeks = 0
         for x in Jobs.objects.filter(is_closed=False, is_active=False, superintendent=active_super, is_labor_done=False):
@@ -164,8 +164,8 @@ def index(request):
         send_data['super_equipment'] = Inventory.objects.filter(job_number__is_closed=False, is_closed=False).count()
         send_data['super_rentals'] = Rentals.objects.filter(off_rent_number=None, is_closed=False).count()
         send_data['tickets'] = 0  #
-        send_data['active_jobs'] = Jobs.objects.filter(is_active=True).count()
-        send_data['punchlist_jobs'] = Jobs.objects.filter(is_waiting_for_punchlist=True).count()
+        send_data['active_jobs'] = Jobs.objects.filter(is_active=True,is_closed=False).count()
+        send_data['punchlist_jobs'] = Jobs.objects.filter(is_waiting_for_punchlist=True,is_closed=False).count()
         next_two_weeks = 0
         for x in Jobs.objects.filter(is_closed=False, is_active=False, is_labor_done=False):
             if x.next_two_weeks() == True:
