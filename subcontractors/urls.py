@@ -18,4 +18,5 @@ path("subcontracts_home", views.subcontracts_home, name='subcontracts_home'),
 path("subcontract_invoices/<subcontract_id> <item_id>", views.subcontract_invoices, name='subcontract_invoices'),
 path("subcontractor_invoice_new/<subcontract_id>", views.subcontractor_invoice_new, name='subcontractor_invoice_new'),
 path("portal_invoice_new/<subcontract_id>", views.portal_invoice_new, name='portal_invoice_new'),
+path("sub_change_orders", views.sub_change_orders, name='sub_change_orders'),
 ]

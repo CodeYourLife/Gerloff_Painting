@@ -197,6 +197,7 @@
                     <div style="display: flex"><b>{{active_subcontracts}}</b> -Active Subcontracts</div>
                     <div style="display: flex"><b>{{pending_invoices}}</b> -Pending Invoices</div>
                      <div style="display: flex"><b>{{approved_invoices}}</b> -Invoices Ready for Payment</div>
+                    <div style="display: flex"><a href="{% url 'sub_change_orders' %}" ><b>{{unapproved_sub_changes}}</b> -Change Orders Not Approved</a></div>
                 </div>
             </div>
             <div class="card-footer">
