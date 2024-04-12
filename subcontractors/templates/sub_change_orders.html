@@ -150,7 +150,8 @@ hidden_form.submit()
             <td onclick="go_to_subcontract('{{x.subcontract.id}}')" ><a href="#">GoTo PO</a></td>
             {% endif %}
 
-            <td>${x.SOV_rate}}</td>
+            <td>${{x.SOV_rate}}</td>
+
             <td>{{x.notes}}</td>
 <!--            <td onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_name}}</a></td>-->
 <!--            <td style="white-space:nowrap" data-toggle="modal" data-target="#show_contact_info-modal" onclick="populate_contact_info('{{x.subcontractor_id}}')"><a href="#">{{x.subcontractor}}</td>-->
