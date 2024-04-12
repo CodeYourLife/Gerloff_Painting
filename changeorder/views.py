@@ -24,6 +24,7 @@ from media.utilities import MediaUtilities
 
 def email_for_signature(request, id):
     print("here")
+    return redirect('extra_work_ticket', id=id)
 
 @login_required(login_url='/accounts/login')
 def batch_approve_co(request, id):
@@ -891,6 +892,8 @@ def extra_work_ticket(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
     send_data['changeorder'] = changeorder
     send_data['client_list']= ClientEmployees.objects.filter(id=changeorder.job_number.client)
+
+    send_data['client_list_json'] = json.dumps(list(ClientEmployees.objects.filter(id=changeorder.job_number.client).values()), cls=DjangoJSONEncoder)
     ticket_needed = changeorder.need_ticket()
     send_data['ticket_needed'] = ticket_needed
     notes = ChangeOrderNotes.objects.filter(cop_number=id)
