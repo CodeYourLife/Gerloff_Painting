@@ -140,6 +140,7 @@ def index(request):
     send_data['pending_invoices'] = SubcontractorInvoice.objects.filter(is_sent=False).count()
     send_data['approved_invoices'] = SubcontractorInvoice.objects.filter(is_sent=True, processed=False).count()
     send_data['need_to_be_closed'] = Jobs.objects.filter(is_labor_done=True,is_closed=False).count()
+    send_data['unapproved_sub_changes'] = SubcontractItems.objects.filter(is_approved=False, subcontract__is_closed=False).count()
     if Jobs.objects.filter(is_closed=False, superintendent=Employees.objects.get(
             user=request.user)).exists() and request.user != Employees.objects.get(id=22).user:
         active_super = Employees.objects.get(user=request.user)
