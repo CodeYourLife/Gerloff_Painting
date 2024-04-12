@@ -15,7 +15,8 @@ from console.misc import Email
 def sub_change_orders(request):
     send_data = {}
     send_data['unapproved_change_orders'] = SubcontractItems.objects.filter(is_approved=False,
-                                                                            subcontract__is_closed=False)
+                                                                            subcontract__is_closed=False).order_by('subcontract__subcontractor', 'subcontract')
+
     return render(request, "sub_change_orders.html", send_data)
 
 
