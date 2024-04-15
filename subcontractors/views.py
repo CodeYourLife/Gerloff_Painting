@@ -270,9 +270,14 @@ def portal_invoice_new(request, subcontract_id):
                     InvoiceApprovals.objects.create(employee=subcontract.job_number.superintendent, invoice=invoice)
             email_body = "New Invoice Entered For " + str(subcontract.subcontractor.company) + "\n Job: " + str(
                 subcontract.job_number.job_name)
-            Email.sendEmail("New invoice", email_body,
-                            ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com', 'bridgette@gerloffpainting.com'],
-                            False)
+            try:
+                Email.sendEmail("New invoice", email_body,
+                                ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
+                                 'bridgette@gerloffpainting.com'],
+                                False)
+                success = True
+            except:
+                success = False
             return redirect('portal', sub_id=subcontract.subcontractor.id, contract_id=subcontract_id)
     return render(request, "portal_invoice_new.html",
                   {'friday': friday, 'next_number': next_number, 'items': items, 'subcontract': subcontract})
@@ -329,7 +334,10 @@ def subcontract_invoices(request, subcontract_id, item_id):
             for x in SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice):
                 invoicetotal = invoicetotal + x.total_cost()
             selected_invoice.final_amount = invoicetotal
-        if ('approved' in request.POST) or ('approved_with_changes' in request.POST) or ('reject_notes' in request.POST):
+
+        if ('approved' in request.POST) or ('approved_with_changes' in request.POST) or (
+                'reject_notes' in request.POST):
+
             approved = True
             if 'is_other_approver_id' in request.POST:
                 other_approval = InvoiceApprovals.objects.get(id=request.POST['is_other_approver_id'])
@@ -354,10 +362,16 @@ def subcontract_invoices(request, subcontract_id, item_id):
             if approved == True:
                 selected_invoice.is_sent = True
                 email_body = selected_invoice.subcontract.subcontractor.company + " invoice for " + selected_invoice.subcontract.job_number.job_name + " has been approved."
-                Email.sendEmail("Invoice Approved", email_body,
-                                ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
-                                 'bridgette@gerloffpainting.com'], False)
-            #this is the new part 4.14.24 that emails victor after supers approve
+
+                try:
+                    Email.sendEmail("Invoice Approved", email_body,
+                                    ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
+                                     'bridgette@gerloffpainting.com'], False)
+                    success = True
+                except:
+                    success = False
+            # this is the new part 4.14.24 that emails victor after supers approve
+
             today = datetime.date.today()
             this_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4)
             ready_for_victor = True
@@ -371,22 +385,44 @@ def subcontract_invoices(request, subcontract_id, item_id):
             this_week_status = Weekly_Approvals.objects.latest('id')
             if ready_for_victor == True:
                 if this_week_status.victor_email_sent == False:
-                    Email.sendEmail("Invoices Ready For Approval", "Subcontractor Invoices are Ready for Victor Approval",
-                                    ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com', 'admin2@gerloffpainting.com', 'victor@gerloffpainting.com'], False)
+
+                    try:
+                        Email.sendEmail("Invoices Ready For Approval",
+                                        "Subcontractor Invoices are Ready for Victor Approval",
+                                        ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
+                                         'admin2@gerloffpainting.com', 'victor@gerloffpainting.com'], False)
+                        success = True
+                    except:
+                        success = False
+
                     this_week_status.victor_email_sent = True
                     this_week_status.save()
             if ready_for_gene == True:
                 if this_week_status.gene_email_sent == False:
-                    Email.sendEmail("Invoices Ready For Approval", "Subcontractor Invoices are Ready for Gene Approval",
-                                    ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com', 'admin2@gerloffpainting.com', 'gene@gerloffpainting.com'], False)
+
+                    try:
+                        Email.sendEmail("Invoices Ready For Approval",
+                                        "Subcontractor Invoices are Ready for Gene Approval",
+                                        ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
+                                         'admin2@gerloffpainting.com', 'gene@gerloffpainting.com'], False)
+                        success = True
+                    except:
+                        success = False
+
                     this_week_status.gene_email_sent = True
                     this_week_status.save()
             if 'reject_notes' in request.POST:
                 email_body = selected_invoice.subcontract.subcontractor.company + " invoice for " + selected_invoice.subcontract.job_number.job_name + " has been rejected by " + current_employee.first_name + ". " + \
                              request.POST['reject_notes']
-                Email.sendEmail("Invoice Rejected", email_body,
-                                ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
-                                 'bridgette@gerloffpainting.com'], False)
+
+                try:
+                    Email.sendEmail("Invoice Rejected", email_body,
+                                    ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
+                                     'bridgette@gerloffpainting.com'], False)
+                    success = True
+                except:
+                    success = False
+
         selected_invoice.save()
         # make notes below
         if 'approved' in request.POST or 'approved_with_changes' in request.POST or 'reject_notes' in request.POST or 'editing_now' in request.POST:  # make note
@@ -597,7 +633,9 @@ def subcontractor_home(request):
         this_week_status = Weekly_Approvals.objects.create(Monday=today - datetime.timedelta(days=today.weekday()))
     send_data['this_week_status'] = this_week_status
     print(today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4))  # fridays date
-    this_week_status = Weekly_Approvals.objects.create(Monday=today - datetime.timedelta(days=today.weekday()))
+
+    # this_week_status = Weekly_Approvals.objects.create(Monday=today - datetime.timedelta(days=today.weekday()))
+
     return render(request, "subcontractor_home.html", send_data)
 
 
@@ -808,9 +846,14 @@ def subcontracts_new(request):
                                             user=Employees.objects.get(user=request.user),
                                             note="New Contract- " + request.POST['subcontract_notes'])
             message = "New Subcontract for " + subcontract1.subcontractor.company + "\n Job: " + subcontract1.job_number.job_name + "\n PO #: " + subcontract1.po_number
-            Email.sendEmail("New Subcontract", message,
-                            ['joe@gerloffpainting.com', 'admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com'],
-                            False)
+            try:
+                Email.sendEmail("New Subcontract", message,
+                                ['joe@gerloffpainting.com', 'admin2@gerloffpainting.com',
+                                 'bridgette@gerloffpainting.com'],
+                                False)
+                success = True
+            except:
+                success = False
             if 'is_retainage' in request.POST:
                 subcontract1.is_retainage = True
                 subcontract1.retainage_percentage = request.POST['retainage_amt']

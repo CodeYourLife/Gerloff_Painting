@@ -165,8 +165,12 @@ def update_job_info(request, jobnumber):
                             message = message + "\n -" + x.item + " GP Number #" + x.number
                         else:
                             message = message + "\n -" + x.item + " -No GP Number! "
-                    Email.sendEmail("Closed Job - " + selectedjob.job_name, message,
-                                    recipients, False)
+                    try:
+                        Email.sendEmail("Closed Job - " + selectedjob.job_name, message,
+                                        recipients, False)
+                        success = True
+                    except:
+                        success = False
                 if Subcontracts.objects.filter(is_closed=False, job_number=selectedjob).exists():
                     message = "Job: " + selectedjob.job_name + " cannot be closed. The following subcontracts are still open!\n "
                     recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com",
@@ -176,8 +180,12 @@ def update_job_info(request, jobnumber):
                             message += "\n -" + x.subcontractor.company + " - PO# " + x.po_number + "! "
                         else:
                             message += "\n -" + x.subcontractor.company + " - PO# N/A!"
-                    Email.sendEmail("Closed Job Error- " + selectedjob.job_name, message,
-                                    recipients, False)
+                    try:
+                        Email.sendEmail("Closed Job Error- " + selectedjob.job_name, message,
+                                        recipients, False)
+                        success = True
+                    except:
+                        success = False
                     send_data['subcontract_open_error'] = True
                     send_data['open_subcontracts'] = message
                 else:
@@ -516,9 +524,13 @@ def upload_new_job(request):
                                     type="auto_booking_note", date=date.today(),
                                     user=Employees.objects.get(user=request.user))
             email_body = "New Job Booked \n" + job.job_number + "\n" + job.job_name + "\n" + job.client.company
-            Email.sendEmail("New Job - " + job.job_name, email_body,
-                            ['admin1@gerloffpainting.com', 'admin2@gerloffpainting.com', 'joe@gerloffpainting.com'],
-                            False)
+            try:
+                Email.sendEmail("New Job - " + job.job_name, email_body,
+                                ['admin1@gerloffpainting.com', 'admin2@gerloffpainting.com', 'joe@gerloffpainting.com'],
+                                False)
+                success = True
+            except:
+                success = False
 
             return render(request, "upload_new_job.html")
     return render(request, "upload_new_job.html")
@@ -605,16 +617,24 @@ def job_page(request, jobnumber):
                                        note="Please call off-rent. " + request.POST['off_rent_note'])
             message = "Please call off this rental. " + selected_rental.item + ". From Job -" + selected_rental.job_number.job_name + "\n " + \
                       request.POST['off_rent_note']
-            Email.sendEmail("Call Off Rent", message, ["warehouse@gerloffpainting.com"], False)
+            try:
+                Email.sendEmail("Call Off Rent", message, ["warehouse@gerloffpainting.com"], False)
+                success = True
+            except:
+                success = False
         if 'select_status' in request.POST:
             if request.POST['select_status'] == 'nothing_done':
                 message = "Labor is not done."
                 if selectedjob.is_labor_done == True:
-                    Email.sendEmail("Labor not done - " + selectedjob.job_name,
-                                    "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is not done. Please make sure to Un-Click the LABOR DONE box in management console. " +
-                                    request.POST['closed_note'],
-                                    ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
-                                     'victor@gerloffpainting.com'], False)
+                    try:
+                        Email.sendEmail("Labor not done - " + selectedjob.job_name,
+                                        "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is not done. Please make sure to Un-Click the LABOR DONE box in management console. " +
+                                        request.POST['closed_note'],
+                                        ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
+                                         'victor@gerloffpainting.com'], False)
+                        success = True
+                    except:
+                        success = False
                 selectedjob.labor_done_Date = None
                 selectedjob.is_waiting_for_punchlist = False
                 selectedjob.is_labor_done = False
@@ -632,12 +652,16 @@ def job_page(request, jobnumber):
                         go_to_pickup = True
             if request.POST['select_status'] == 'done_done':
                 message = "Labor is 100% done."
-                Email.sendEmail("Labor Done - " + selectedjob.job_name,
-                                "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is 100% Done. Please make sure to Click the Labor Done button in Management Console. " +
-                                request.POST['closed_note'],
-                                ['joe@gerloffpainting.com', 'admin2@gerloffpainting.com',
-                                 'bridgette@gerloffpainting.com',
-                                 'victor@gerloffpainting.com'], False)
+                try:
+                    Email.sendEmail("Labor Done - " + selectedjob.job_name,
+                                    "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is 100% Done. Please make sure to Click the Labor Done button in Management Console. " +
+                                    request.POST['closed_note'],
+                                    ['joe@gerloffpainting.com', 'admin2@gerloffpainting.com',
+                                     'bridgette@gerloffpainting.com',
+                                     'victor@gerloffpainting.com'], False)
+                    success = True
+                except:
+                    success = False
                 selectedjob.labor_done_Date = date.today()
                 selectedjob.is_waiting_for_punchlist = True
                 selectedjob.is_labor_done = True
@@ -946,7 +970,11 @@ def register(request):
                                 type="auto_booking_note", date=date.today(),
                                 user=Employees.objects.get(user=request.user))
         email_body = "New Job Booked \n" + job.job_number + "\n" + job.job_name + "\n" + job.client.company
-        Email.sendEmail("New Job - " + job.job_name, email_body, ['joe@gerloffpainting.com'], False)
+        try:
+            Email.sendEmail("New Job - " + job.job_name, email_body, ['joe@gerloffpainting.com'], False)
+            success = True
+        except:
+            success = False
         job.save()
         # for x in checklist:
         #     checklist = Checklist(job_number=job_number, checklist_item=x, category="PM")
