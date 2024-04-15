@@ -97,11 +97,22 @@
 
 $(document).ready(function () {
     var table = $('#sub_table').DataTable({paging: false,searching:false,info:false});
+    var table = $('#weekly_status_table').DataTable({paging: false,searching:false,info:false});
     var table = $('#all_invoices_table').DataTable({paging: false,searching:false,info:false,columnDefs:[{targets: 2, render: $.fn.dataTable.render.number(',','.',0,'$')}]});
     var table = $('#my_invoices_table').DataTable({paging: false,searching:false,info:false,columnDefs:[{targets: 2, render: $.fn.dataTable.render.number(',','.',0,'$')}]});
     var table = $('#approved_invoices_table').DataTable({paging: false,searching:false,info:false,columnDefs:[{targets: [2,3], render: $.fn.dataTable.render.number(',','.',0,'$')}]});
-
+    var table = $('#late_invoices_table').DataTable({paging: false,searching:false,info:false});
+    if("{{failed}}"){alert("Auto Emails to Superintendents Didn't Work. Please let them know to approve their invoices")}
+    if("{{success}}"){alert("Auto Emails Were Sent to the Superintendents Successfully")}
 })
+
+function check_function(){
+	var name=prompt("Add Note");
+	if (name!=null){
+		all_invoices_entered_form.invoice_notes.value = name;
+    }
+    alert("Please do not click anything, until you get a message that the emails were sent successfully")
+}
 
 function populate_contact_info(subcontractor_id){
     contact_info_form.notes.value=""
@@ -276,7 +287,7 @@ function populate_pending_approvals_modal(invoice_id){
 </head>
 <body>
 	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Subcontractors</a>
+		<a class="navbar-brand sub-navbar-brand" href="{% url 'subcontractor_home' %}">Subcontractors</a>
 		<div id="navbarNavDropdown2">
 		  <ul class="sub-nav-list navbar-nav ">
         <li><a class="nav-item nav-link active" href="{% url 'subcontractor_home' %}">Subcontractor Home</a></li>
@@ -628,8 +639,69 @@ function populate_pending_approvals_modal(invoice_id){
             </div>
         </div>
 </div>
+<br><hr>
+{% if this_week_status.invoices_entered %}
+    <b>As of {{this_week_status.date_invoices_entered}}, All Invoices Have Been Entered.  {{this_week_status.notes}}</b>
+        <br>
 
+<table id="weekly_status_table" class="display table table-sm">
+    <thead>
+        <tr>
+            <th>Approver</th>
+            <th>Approvals Needed</th>
+        </tr>
+    </thead>
+    <tbody>
 
+    {% for key, value in approval_counts.items %}
+        <tr>
+            <td>{{ key }}</td>
+            <td>{{ value }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<br><br>
+<b>Late Invoices</b><br>
+<table id="late_invoices_table" class="display table table-sm">
+    <thead>
+        <tr>
+            <th>Subcontractor</th>
+            <th>Job</th>
+            <th>Invoice #</th>
+            <th>Date Submitted</th>
+        </tr>
+    </thead>
+    <tbody>
+
+    {% for x in late_invoices %}
+        {% if x.is_sent == False %}
+        <tr>
+            <td>{{ x.subcontract.subcontractor }}</td>
+            <td>{{ x.subcontract.job_number }}</td>
+            <td><a href="{% url 'subcontract_invoices' x.subcontract.id x.id %}">{{ x.pay_app_number }}</a></td>
+            <td>{{ x.date }}</td>
+        </tr>
+        {% endif %}
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="container">
+    Current Week - {{this_week_status.Monday}}
+    <br>
+    All Subcontractor Invoices Have Not Been Entered!
+    <br>
+    Click Here Once All Invoices Have Been Entered:
+    <br>
+    <form id="all_invoices_entered_form" action = "{% url 'subcontractor_home' %}" method = "post" onSubmit = "return check_function()">
+        {% csrf_token %}
+        <input type="hidden" id="invoice_notes" name = "invoice_notes" >
+        <input type="submit" class="btn btn-primary btn-sm" name = "invoices_entered" value="All Invoices Have Been Entered" />
+    </form>
+
+</div>
+{% endif %}
 
 </body>
 </html>
