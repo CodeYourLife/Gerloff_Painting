@@ -303,8 +303,10 @@ def subcontract_invoices(request, subcontract_id, item_id):
                                             user=Employees.objects.get(user=request.user),
                                             note=request.POST['invoice_notes'], invoice=selected_invoice)
         if 'change_notes' in request.POST:  # could be approved with changes or editing invoice
-            selected_invoice.retainage = request.POST['this_retainage']
             note2 = ""
+            if selected_invoice.retainage != request.POST['this_retainage']:
+                note2 += "Retainage changed from " + str(selected_invoice.retainage) + " to " + str(request.POST['this_retainage']) + ". "
+            selected_invoice.retainage = request.POST['this_retainage']
             for x in SubcontractItems.objects.filter(subcontract=subcontract):
                 if request.POST['quantity' + str(x.id)] != '':
                     if SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice, sov_item=x).exists():
@@ -699,12 +701,12 @@ def subcontract(request, id):
             SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
                                             user=Employees.objects.get(user=request.user),
                                             note="Retainage released- " + request.POST['new_note'],
-                                            invoice=selected_invoice)
-            InvoiceApprovals.objects.create(employee=Employees.objects.get(id=22), invoice=selected_invoice)
-            InvoiceApprovals.objects.create(employee=Employees.objects.get(id=18), invoice=selected_invoice)
+                                            invoice=invoice)
+            InvoiceApprovals.objects.create(employee=Employees.objects.get(id=22), invoice=invoice)
+            InvoiceApprovals.objects.create(employee=Employees.objects.get(id=18), invoice=invoice)
             if subcontract.job_number.superintendent != Employees.objects.get(id=22):
                 InvoiceApprovals.objects.create(employee=subcontract.job_number.superintendent,
-                                                invoice=selected_invoice)
+                                                invoice=invoice)
             return redirect('subcontract', id=id)
         if 'change_header' in request.POST:
             subcontract.po_number = request.POST['po_number']
