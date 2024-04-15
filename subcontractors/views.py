@@ -15,7 +15,8 @@ from console.misc import Email
 def sub_change_orders(request):
     send_data = {}
     send_data['unapproved_change_orders'] = SubcontractItems.objects.filter(is_approved=False,
-                                                                            subcontract__is_closed=False).order_by('subcontract__subcontractor', 'subcontract')
+                                                                            subcontract__is_closed=False).order_by(
+        'subcontract__subcontractor', 'subcontract')
 
     return render(request, "sub_change_orders.html", send_data)
 
@@ -282,128 +283,27 @@ def subcontract_invoices(request, subcontract_id, item_id):
     send_data = {}
     subcontract = Subcontracts.objects.get(id=subcontract_id)
     send_data['subcontract'] = subcontract
+    note2 = ""
+    current_employee = Employees.objects.get(user=request.user)
+    if item_id != 'ALL':
+        selected_invoice = SubcontractorInvoice.objects.get(id=item_id)
+        approvers = InvoiceApprovals.objects.filter(invoice=selected_invoice)
     if request.method == 'POST':
         if 'edit_invoice' in request.POST:
             send_data['edit_now'] = True
         if 'other_approver' in request.POST:
             send_data['other_approve'] = InvoiceApprovals.objects.get(id=request.POST['other_approver'])
         if 'invoice_notes' in request.POST:
-            selected_invoice = SubcontractorInvoice.objects.get(id=item_id)
             SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
                                             user=Employees.objects.get(user=request.user),
                                             note=request.POST['invoice_notes'], invoice=selected_invoice)
-            return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id=item_id)
-        if 'reject_notes' in request.POST:
-            selected_invoice = SubcontractorInvoice.objects.get(id=item_id)
-            invoice = SubcontractorInvoice.objects.get(id=item_id)
-            approvers = InvoiceApprovals.objects.filter(invoice=selected_invoice)
-            current_employee = Employees.objects.get(user=request.user)
-            if 'approved' in request.POST:
-                invoicetotal = 0
-                for x in SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice):
-                    invoicetotal = invoicetotal + x.total_cost()
-                invoice.final_amount = invoicetotal
-                approved = True
-                if 'is_other_approver_id' in request.POST:
-                    other_approval = InvoiceApprovals.objects.get(id=request.POST['is_other_approver_id'])
-                    current_employee = other_approval.employee
-                    note = "Invoice " + str(invoice.pay_app_number) + " Approved! On behalf of " + str(current_employee)
-                else:
-                    note = "Invoice " + str(invoice.pay_app_number) + " Approved!"
-                for x in approvers:
-                    if x.employee == current_employee:
-                        x.is_approved = True
-                        x.made_changes = False
-                        x.date = date.today()
-                        x.is_reviewed = True
-                        x.save()
-                    elif x.is_approved == False:
-                        approved = False
-                if approved == True: invoice.is_sent = True
-                invoice.save()
-                current_employee = Employees.objects.get(user=request.user)
-                SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
-                                                user=current_employee,
-                                                note=note,
-                                                invoice=selected_invoice)
-            else:  # rejected
-                if 'is_other_approver_id' in request.POST:
-                    other_approval = InvoiceApprovals.objects.get(id=request.POST['is_other_approver_id'])
-                    current_employee = Employees.objects.get(id=other_approval.employee.id)
-
-                    note = "Invoice " + str(
-                        invoice.pay_app_number) + " Rejected! On behalf of: " + str(current_employee) + ". " + \
-                           request.POST[
-                               'reject_notes']
-                else:
-                    note = "Invoice " + str(
-                        invoice.pay_app_number) + " Rejected! " + request.POST[
-                               'reject_notes']
-                for x in approvers:
-                    if x.employee == current_employee:
-                        x.is_approved = False
-                        x.made_changes = False
-                        x.date = date.today()
-                        x.is_reviewed = True
-                        x.save()
-                current_employee = Employees.objects.get(user=request.user)
-                SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
-                                                user=current_employee,
-                                                note=note,
-                                                invoice=selected_invoice)
-                email_body = selected_invoice.subcontract.subcontractor.company + " invoice for " + selected_invoice.subcontract.job_number.job_name + " has been rejected by " + current_employee.first_name + ". " + \
-                             request.POST['reject_notes']
-                Email.sendEmail("Invoice Rejected", email_body,
-                                ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
-                                 'bridgette@gerloffpainting.com'], False)
-            return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id=item_id)
-        if 'form5' in request.POST:  # approved
-            selected_invoice = SubcontractorInvoice.objects.get(id=item_id)
-            invoice = SubcontractorInvoice.objects.get(id=item_id)
-            invoicetotal = 0
-            for x in SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice):
-                invoicetotal = invoicetotal + x.total_cost()
-            invoice.final_amount = invoicetotal
-            approvers = InvoiceApprovals.objects.filter(invoice=selected_invoice)
-            approved = True
-            current_employee = Employees.objects.get(user=request.user)
-            if 'is_other_approver_id' in request.POST:
-                other_approval = InvoiceApprovals.objects.get(id=request.POST['is_other_approver_id'])
-                current_employee = Employees.objects.get(id=other_approval.employee.id)
-                note = "Invoice " + str(invoice.pay_app_number) + " Approved! On behalf of " + str(current_employee)
-            else:
-                note = "Invoice " + str(invoice.pay_app_number) + " Approved!"
-            for x in approvers:
-                if x.employee == current_employee:
-                    x.is_approved = True
-                    x.made_changes = False
-                    x.date = date.today()
-                    x.is_reviewed = True
-                    x.save()
-                elif x.is_approved == False:
-                    approved = False
-            if approved == True:
-                invoice.is_sent = True
-                email_body = selected_invoice.subcontract.subcontractor.company + " invoice for " + selected_invoice.subcontract.job_number.job_name + " has been approved."
-                Email.sendEmail("Invoice Approved", email_body,
-                                ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
-                                 'bridgette@gerloffpainting.com'], False)
-            invoice.save()
-            current_employee = Employees.objects.get(user=request.user)
-            SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
-                                            user=current_employee,
-                                            note=note,
-                                            invoice=selected_invoice)
-            return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id=item_id)
-        if 'change_notes' in request.POST:  # approved with changes
-            selected_invoice = SubcontractorInvoice.objects.get(id=item_id)
-            invoice = SubcontractorInvoice.objects.get(id=item_id)
-            invoicetotal = 0
+        if 'change_notes' in request.POST:  # could be approved with changes or editing invoice
+            selected_invoice.retainage = request.POST['this_retainage']
             note2 = ""
             for x in SubcontractItems.objects.filter(subcontract=subcontract):
                 if request.POST['quantity' + str(x.id)] != '':
-                    if SubcontractorInvoiceItem.objects.filter(invoice=invoice, sov_item=x).exists():
-                        item = SubcontractorInvoiceItem.objects.get(invoice=invoice, sov_item=x)
+                    if SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice, sov_item=x).exists():
+                        item = SubcontractorInvoiceItem.objects.get(invoice=selected_invoice, sov_item=x)
                         if item.quantity != request.POST['quantity' + str(x.id)]:
                             note2 += x.SOV_description + "- changed from " + str(item.quantity) + " to " + str(
                                 request.POST['quantity' + str(x.id)]) + ". "
@@ -411,62 +311,102 @@ def subcontract_invoices(request, subcontract_id, item_id):
                         item.notes = request.POST['note' + str(x.id)]
                         item.save()
                     else:
-                        SubcontractorInvoiceItem.objects.create(invoice=invoice, sov_item=x,
+                        SubcontractorInvoiceItem.objects.create(invoice=selected_invoice, sov_item=x,
                                                                 quantity=request.POST['quantity' + str(x.id)],
                                                                 notes=request.POST['note' + str(x.id)])
                         note2 += x.SOV_description + "- added to invoice. Quantity: " + str(
                             request.POST['quantity' + str(x.id)]) + ". "
                 else:
-                    if SubcontractorInvoiceItem.objects.filter(invoice=invoice, sov_item=x).exists():
-                        item = SubcontractorInvoiceItem.objects.get(invoice=invoice, sov_item=x)
+                    if SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice, sov_item=x).exists():
+                        item = SubcontractorInvoiceItem.objects.get(invoice=selected_invoice, sov_item=x)
                         if item.quantity != 0:
                             note2 += x.SOV_description + "- changed from " + str(item.quantity) + " to 0. "
                         item.quantity = 0
                         item.notes = request.POST['note' + str(x.id)]
                         item.save()
+        if 'approved' in request.POST or 'change_notes' in request.POST:  # invoice is approved
+            invoicetotal = 0
             for x in SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice):
                 invoicetotal = invoicetotal + x.total_cost()
-            invoice.final_amount = invoicetotal
-            invoice.retainage = request.POST['this_retainage']
-            approvers = InvoiceApprovals.objects.filter(invoice=selected_invoice)
+            selected_invoice.final_amount = invoicetotal
+        if ('approved' in request.POST) or ('approved_with_changes' in request.POST) or ('reject_notes' in request.POST):
             approved = True
-            current_employee = Employees.objects.get(user=request.user)
-            invoice.save()
             if 'is_other_approver_id' in request.POST:
                 other_approval = InvoiceApprovals.objects.get(id=request.POST['is_other_approver_id'])
-                current_employee = Employees.objects.get(id=other_approval.employee.id)
-                note = "Invoice " + str(invoice.pay_app_number) + " Approved - Made Changes! On behalf of " + str(
-                    current_employee) + ". " + note2 + ". " + request.POST['change_notes']
-            elif 'editing_now' in request.POST:
-                note = "Invoice " + str(invoice.pay_app_number) + " Edited. " + note2 + ". " + request.POST[
-                    'change_notes']
-            else:
-                note = "Invoice " + str(invoice.pay_app_number) + " Approved - Made Changes! " + note2 + ". " + \
-                       request.POST[
-                           'change_notes']
-            if 'editing_now' not in request.POST:
-                for x in approvers:
-                    if x.employee == current_employee:
+                current_employee = other_approval.employee
+            for x in approvers:
+                if x.employee == current_employee:
+                    x.date = date.today()
+                    x.is_reviewed = True
+                    if 'approved' in request.POST:
                         x.is_approved = True
-                        x.made_changes = True
-                        x.date = date.today()
-                        x.is_reviewed = True
-                        x.save()
-                    elif x.is_approved == False:
+                        x.made_changes = False
+                    if 'approved_with_changes' in request.POST:
+                        x.is_approved = True
+                        x.made_changes = False
+                    if 'reject_notes' in request.POST:
+                        x.is_approved = False
+                        x.made_changes = False
                         approved = False
-                if approved == True:
-                    email_body = selected_invoice.subcontract.subcontractor.company + " invoice for " + selected_invoice.subcontract.job_number.job_name + " has been approved."
-                    Email.sendEmail("Invoice Approved", email_body,
-                                    ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
-                                     'bridgette@gerloffpainting.com'], False)
-                    invoice.is_sent = True
-            invoice.save()
+                    x.save()
+                elif x.is_approved == False:
+                    approved = False
+            if approved == True:
+                selected_invoice.is_sent = True
+                email_body = selected_invoice.subcontract.subcontractor.company + " invoice for " + selected_invoice.subcontract.job_number.job_name + " has been approved."
+                Email.sendEmail("Invoice Approved", email_body,
+                                ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
+                                 'bridgette@gerloffpainting.com'], False)
+            #this is the new part 4.14.24 that emails victor after supers approve
+            today = datetime.date.today()
+            this_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4)
+            ready_for_victor = True
+            ready_for_gene = True
+            for x in InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday):
+                if x.employee.job_title.description == "Superintendent" and x.employee.first_name != "Victor":
+                    ready_for_victor = False
+                    ready_for_gene = False
+                if x.employee.first_name == "Victor":
+                    ready_for_gene = False
+            this_week_status = Weekly_Approvals.objects.latest('id')
+            if ready_for_victor == True:
+                if this_week_status.victor_email_sent == False:
+                    Email.sendEmail("Invoices Ready For Approval", "Subcontractor Invoices are Ready for Victor Approval",
+                                    ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com', 'admin2@gerloffpainting.com', 'victor@gerloffpainting.com'], False)
+                    this_week_status.victor_email_sent = True
+                    this_week_status.save()
+            if ready_for_gene == True:
+                if this_week_status.gene_email_sent == False:
+                    Email.sendEmail("Invoices Ready For Approval", "Subcontractor Invoices are Ready for Gene Approval",
+                                    ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com', 'admin2@gerloffpainting.com', 'gene@gerloffpainting.com'], False)
+                    this_week_status.gene_email_sent = True
+                    this_week_status.save()
+            if 'reject_notes' in request.POST:
+                email_body = selected_invoice.subcontract.subcontractor.company + " invoice for " + selected_invoice.subcontract.job_number.job_name + " has been rejected by " + current_employee.first_name + ". " + \
+                             request.POST['reject_notes']
+                Email.sendEmail("Invoice Rejected", email_body,
+                                ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
+                                 'bridgette@gerloffpainting.com'], False)
+        selected_invoice.save()
+        # make notes below
+        if 'approved' in request.POST or 'approved_with_changes' in request.POST or 'reject_notes' in request.POST or 'editing_now' in request.POST:  # make note
             current_employee = Employees.objects.get(user=request.user)
+            first = "Invoice " + str(selected_invoice.pay_app_number)
+            if 'approved' in request.POST: second = "Approved."
+            if 'approved_with_changes' in request.POST: second = "Approve with changes."
+            if 'reject_notes' in request.POST: second = "Rejected."
+            if 'editing_now' in request.POST: second = "Edited."
+            third = note2
+            fourth = ""
+            if 'is_other_approver_id' in request.POST:
+                other_approval = InvoiceApprovals.objects.get(id=request.POST['is_other_approver_id']).employee
+                fourth = "On behalf of " + str(other_approval)
+            note = first + " " + second + " " + third + " " + fourth
             SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
                                             user=current_employee,
                                             note=note,
                                             invoice=selected_invoice)
-            return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id=item_id)
+    # build the HTML page
     if item_id == 'ALL':
         invoices = SubcontractorInvoice.objects.filter(subcontract=subcontract)
         send_data['invoices'] = invoices
@@ -528,57 +468,94 @@ def subcontract_invoices(request, subcontract_id, item_id):
                  'notes': x.notes, 'quantity_billed': float(x.quantity_billed()),
                  'total_billed': round(x.total_billed(), 2), 'total_cost': round(x.total_cost(), 2)})
             send_data['items'] = items
-        return render(request, "subcontract_invoices.html", send_data)
     return render(request, "subcontract_invoices.html", send_data)
 
 
 @login_required(login_url='/accounts/login')
 def subcontractor_home(request):
-    if request.method == 'POST':
-        subcontractor = Subcontractors.objects.get(id=request.POST['subcontractor_id'])
-        if 'contact' in request.POST:
-            subcontractor.contact = request.POST['contact']
-            subcontractor.phone = request.POST['phone']
-            subcontractor.email = request.POST['email']
-            subcontractor.notes = request.POST['notes']
-        if 'is_inactive' in request.POST:
-            subcontractor.is_inactive = True
-        subcontractor.save()
-        if 'insurance' in request.POST:
-            if request.POST['insurance'] != "":
-                subcontractor.insurance_expire_date = request.POST['insurance']
-            if request.POST['w9_form_date'] != "":
-                subcontractor.w9_form_date = request.POST['w9_form_date']
-            if request.POST['business_license_expiration_date'] != "":
-                subcontractor.business_license_expiration_date = request.POST['business_license_expiration_date']
-
-            if 'has_workers_comp' in request.POST:
-                subcontractor.has_workers_comp = True
-            else:
-                subcontractor.has_workers_comp = False
-            if 'has_auto_insurance' in request.POST:
-                subcontractor.has_auto_insurance = True
-            else:
-                subcontractor.has_auto_insurance = False
-            if 'has_w9_form' in request.POST:
-                subcontractor.has_w9_form = True
-            else:
-                subcontractor.has_w9_form = False
-            if 'has_business_license' in request.POST:
-                subcontractor.has_business_license = True
-            else:
-                subcontractor.has_business_license = False
-            if 'is_signed_labor_agreement' in request.POST:
-                subcontractor.is_signed_labor_agreement = True
-            else:
-                subcontractor.is_signed_labor_agreement = False
-        subcontractor.save()
-        if 'go_back_to_subcontracts' in request.POST:
-            return redirect('subcontracts_home')
-        if 'go_back_to_subcontract' in request.POST:
-            return redirect('subcontract', id=request.POST['go_back_to_subcontract'])
-        return redirect('subcontractor_home')
     send_data = {}
+    approval_counts = {}
+    approval_counts_two = {}
+    today = datetime.date.today()
+    this_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4)
+    for x in InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday):
+        name = str(x.employee.first_name + " " + x.employee.last_name)
+        employee = x.employee
+        if name in approval_counts:
+            approval_counts[name] += 1
+        else:
+            approval_counts[name] = 1
+        if employee in approval_counts_two:
+            approval_counts_two[employee] += 1
+        else:
+            approval_counts_two[employee] = 1
+    if request.method == 'POST':
+        if 'invoices_entered' in request.POST:
+            this_week_status = Weekly_Approvals.objects.latest('id')
+            this_week_status.invoices_entered = True
+            this_week_status.date_invoices_entered = date.today()
+            this_week_status.notes = request.POST['invoice_notes']
+            this_week_status.save()
+            for x in approval_counts_two:
+                if x.job_title.description == "Superintendent":
+                    recipients = ["joe@gerloffpainting.com"]
+                    if x.email:
+                        recipients.append(x.email)
+                        email_body = "You have " + str(
+                            approval_counts_two[x]) + " Subcontractor Invoices to Approve in Trinity!"
+                    else:
+                        email_body = x.first_name + " Has " + str(approval_counts_two[
+                                                                      x]) + " Invoices to Approve in Trinity, However There is No Email Address on File!"
+                    try:
+                        Email.sendEmail("Invoice Approval Required", email_body, recipients, False)
+                        send_data['success'] = True
+                    except:
+                        send_data['failed'] = True
+        else:
+            subcontractor = Subcontractors.objects.get(id=request.POST['subcontractor_id'])
+            if 'contact' in request.POST:
+                subcontractor.contact = request.POST['contact']
+                subcontractor.phone = request.POST['phone']
+                subcontractor.email = request.POST['email']
+                subcontractor.notes = request.POST['notes']
+            if 'is_inactive' in request.POST:
+                subcontractor.is_inactive = True
+            subcontractor.save()
+            if 'insurance' in request.POST:
+                if request.POST['insurance'] != "":
+                    subcontractor.insurance_expire_date = request.POST['insurance']
+                if request.POST['w9_form_date'] != "":
+                    subcontractor.w9_form_date = request.POST['w9_form_date']
+                if request.POST['business_license_expiration_date'] != "":
+                    subcontractor.business_license_expiration_date = request.POST['business_license_expiration_date']
+
+                if 'has_workers_comp' in request.POST:
+                    subcontractor.has_workers_comp = True
+                else:
+                    subcontractor.has_workers_comp = False
+                if 'has_auto_insurance' in request.POST:
+                    subcontractor.has_auto_insurance = True
+                else:
+                    subcontractor.has_auto_insurance = False
+                if 'has_w9_form' in request.POST:
+                    subcontractor.has_w9_form = True
+                else:
+                    subcontractor.has_w9_form = False
+                if 'has_business_license' in request.POST:
+                    subcontractor.has_business_license = True
+                else:
+                    subcontractor.has_business_license = False
+                if 'is_signed_labor_agreement' in request.POST:
+                    subcontractor.is_signed_labor_agreement = True
+                else:
+                    subcontractor.is_signed_labor_agreement = False
+            subcontractor.save()
+            if 'go_back_to_subcontracts' in request.POST:
+                return redirect('subcontracts_home')
+            if 'go_back_to_subcontract' in request.POST:
+                return redirect('subcontract', id=request.POST['go_back_to_subcontract'])
+            return redirect('subcontractor_home')
+
     subcontractors = []
     for x in Subcontractors.objects.filter(is_inactive=False):
         subcontractors.append({'id': x.id, 'company': x.company, 'active_contracts': x.active_contracts(),
@@ -608,6 +585,19 @@ def subcontractor_home(request):
                  'approvals_needed': x.approvals_needed(), 'pay_date': x.pay_date, 'number': x.pay_app_number})
     send_data['my_approvals_count'] = my_approvals_count
     send_data['my_invoices'] = my_invoices
+    send_data['approval_counts'] = approval_counts
+    send_data['late_invoices'] = SubcontractorInvoice.objects.filter(pay_date__gt=this_friday)
+    print(today - datetime.timedelta(days=today.weekday()))  # provides mondays date
+    print(datetime.timedelta(days=today.weekday()))  # day of the week in numberical form, 0 is monday
+    print(datetime.timedelta(
+        days=today.weekday()).days)  # gives day of the week in integer form, stripped date data from it
+    this_week_status = Weekly_Approvals.objects.latest('id')
+    days_since_monday = today - this_week_status.Monday
+    if days_since_monday.days >= 7:
+        this_week_status = Weekly_Approvals.objects.create(Monday=today - datetime.timedelta(days=today.weekday()))
+    send_data['this_week_status'] = this_week_status
+    print(today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4))  # fridays date
+    this_week_status = Weekly_Approvals.objects.create(Monday=today - datetime.timedelta(days=today.weekday()))
     return render(request, "subcontractor_home.html", send_data)
 
 
@@ -670,11 +660,13 @@ def subcontract(request, id):
                                                           notes=request.POST['new_note'])
             SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
                                             user=Employees.objects.get(user=request.user),
-                                            note="Retainage released- " + request.POST['new_note'], invoice=invoice)
-            InvoiceApprovals.objects.create(employee=Employees.objects.get(id=22), invoice=invoice)
-            InvoiceApprovals.objects.create(employee=Employees.objects.get(id=18), invoice=invoice)
+                                            note="Retainage released- " + request.POST['new_note'],
+                                            invoice=selected_invoice)
+            InvoiceApprovals.objects.create(employee=Employees.objects.get(id=22), invoice=selected_invoice)
+            InvoiceApprovals.objects.create(employee=Employees.objects.get(id=18), invoice=selected_invoice)
             if subcontract.job_number.superintendent != Employees.objects.get(id=22):
-                InvoiceApprovals.objects.create(employee=subcontract.job_number.superintendent, invoice=invoice)
+                InvoiceApprovals.objects.create(employee=subcontract.job_number.superintendent,
+                                                invoice=selected_invoice)
             return redirect('subcontract', id=id)
         if 'change_header' in request.POST:
             subcontract.po_number = request.POST['po_number']

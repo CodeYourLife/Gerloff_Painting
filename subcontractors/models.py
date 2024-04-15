@@ -199,7 +199,7 @@ class SubcontractorInvoice(models.Model):
     retainage = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     final_amount = models.DecimalField(
         max_digits=10, decimal_places=2, null=True)
-    is_sent = models.BooleanField(default=False)  # this actually means approved by victor
+    is_sent = models.BooleanField(default=False)  # everyone has approved
     processed = models.BooleanField(default=False)  # check has been cut
     pay_date = models.DateField(null=True, blank=True)
     notes = models.CharField(
@@ -280,3 +280,12 @@ class InvoiceBatch(models.Model):
 class PurchaseOrderNumber(models.Model):
     id = models.BigAutoField(primary_key=True)
     next_po_number = models.IntegerField(default=0)
+
+class Weekly_Approvals(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    Monday = models.DateField()
+    invoices_entered = models.BooleanField(default=False)
+    date_invoices_entered = models.DateField(null=True, blank=True)
+    notes = models.CharField(null=True, max_length=2000, blank=True)
+    victor_email_sent = models.BooleanField(default=False)
+    gene_email_sent = models.BooleanField(default=False)

@@ -141,12 +141,11 @@ function made_changes_note(){
 	}
 	var name=prompt("Add Note");
 	if (name!=null){
-	changes_form.change_notes.value = name;
-		changes_form.submit()
-		}
+		changes_form.change_notes.value = name;
+	}
 	else{
-		return;
-		}
+		if ("{{edit_now}}"){return false}
+	}
 }
 function check_other_approver(){
 if (other_approval_form.other_approver.value=="please_select"){
@@ -200,21 +199,23 @@ function calculate_invoice_total(){
 			console.log("HERE")
 			if (input.value){
 				console.log("HERE")
-				quantity = parseInt(input.value)
+				quantity = Number(input.value)
 				if (document.getElementById("quantity_ordered"+ item_number).value == "1 Lump Sum"){
 					console.log("LUMP SUM")
 					console.log(quantity)
 					invoice_total += quantity
 				}
 				else {
-						rate = parseInt(document.getElementById("SOV_rate" + item_number).value)
+						rate = Number(document.getElementById("SOV_rate" + item_number).value)
+						console.log ("Here comes the rate")
+						console.log(rate)
 						invoice_total += rate*quantity
 											console.log("PER UNIT")
 					console.log(quantity)
 				}
 			}
-			previously_billed += parseInt(document.getElementById("previous"+ item_number).value)
-			total_contract += parseInt(document.getElementById("total_cost"+ item_number).value)
+			previously_billed += Number(document.getElementById("previous"+ item_number).value)
+			total_contract += Number(document.getElementById("total_cost"+ item_number).value)
 		}
 		console.log("HERE2")
 	});
@@ -408,17 +409,27 @@ function check_form(){
 
 {% if selected_invoice %}
 {% if me_approve or other_approve %}
-	<div id="container">
- <form id="reject_form" action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post" onSubmit ="return check_booking_data()">
-{% csrf_token %}
-	 {% if other_approve %}
-	  <input type="hidden" id="other_approver_id" name="is_other_approver_id" value="{{other_approve.id}}" />
-	 {% endif %}
-<input type="submit" name="approved" class="btn btn-success btn-sm" value="APPROVE INVOICE # {{selected_invoice.pay_app_number}} NOW" />
-	 <button type="button" name="reject" class="btn btn-danger btn-sm" onclick="add_reject_note()" >REJECT </button>
-	 <input type="hidden" id="reject_notes" name="reject_notes" />
- </form>
-	</div>
+<div id="container">
+	<form id="approve_form" action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post" >
+		{% csrf_token %}
+		{% if other_approve %}
+		  <input type="hidden" id="other_approver_id" name="is_other_approver_id" value="{{other_approve.id}}" />
+		{% endif %}
+		<input type="submit" name="approved" class="btn btn-success btn-sm" value="APPROVE INVOICE # {{selected_invoice.pay_app_number}} NOW" />
+<!--		<button type="button" name="reject" class="btn btn-danger btn-sm" onclick="add_reject_note()" >REJECT </button>-->
+<!--		<input type="hidden" id="reject_notes" name="reject_notes" />-->
+	</form>
+	<form id="reject_form" action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post" >
+		{% csrf_token %}
+		{% if other_approve %}
+		<input type="hidden" id="other_approver_id" name="is_other_approver_id" value="{{other_approve.id}}" />
+		{% endif %}
+<!--		<input type="submit" name="approved" class="btn btn-success btn-sm" value="APPROVE INVOICE # {{selected_invoice.pay_app_number}} NOW" />-->
+		<button type="button" name="reject" class="btn btn-danger btn-sm" onclick="add_reject_note()" >REJECT </button>
+		<input type="hidden" id="reject_notes" name="reject_notes" />
+	</form>
+
+</div>
 <br>
 <hr>
 <h3>OR</h3>
@@ -469,7 +480,7 @@ function check_form(){
 									{% if x.sov_item.id == item.id %}
 <!--										<td><div id="current_total{{item.id}}" >{{item.special}}%</div></td>-->
 										<td></td>
-										<td style="background-color:hsl(121, 67%, 87%);white-space: nowrap;"><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" value={{x.quantity}} size="5" step="1" onchange="update_percentage(event)" required  /></td>
+										<td style="background-color:hsl(121, 67%, 87%);white-space: nowrap;"><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" value={{x.quantity}} size="5" step="1" onchange="update_percentage(event)"  /></td>
 
 										<td style="white-space: nowrap;"><div id="percentage{{item.id}}" ></div>{{item.percentage}}%</td>
 										<td style="white-space: nowrap;"><input type="text"  name="note{{item.id}}" size="40" value="{{x.notes}}"/></td>
@@ -478,7 +489,7 @@ function check_form(){
 							{% else %}
 <!--								<td><div id="current_total{{item.id}}" >{{item.special}}</div></td>-->
 								<td></td>
-								<td style="background-color:hsl(121, 67%, 87%);white-space: nowrap;"><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost|floatformat}} size="5" step="1" onchange="update_percentage(event)" required  /></td>
+								<td style="background-color:hsl(121, 67%, 87%);white-space: nowrap;"><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost|floatformat}} size="5" step="1" onchange="update_percentage(event)"  /></td>
 
 								<td style="white-space: nowrap;"><div id="percentage{{item.id}}" ></div>{{item.percentage}}%</td>
 								<td style="white-space: nowrap;"><input type="text"  name="note{{item.id}}" size="40" /></td>
@@ -492,7 +503,7 @@ function check_form(){
 								{% for x in invoice_items %}
 									{% if x.sov_item.id == item.id %}
 
-										<td style="background-color:hsl(0, 67%, 87%);white-space: nowrap;"><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" value={{x.quantity|floatformat}} size="5" step="1" onchange="update_percentage(event)" required /></td>
+										<td style="background-color:hsl(0, 67%, 87%);white-space: nowrap;"><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" value={{x.quantity|floatformat}} size="5" step="1" onchange="update_percentage(event)"  /></td>
 <!--		<td><div id="current_total{{item.id}}" >${{item.special}}</div></td>-->
 					<td></td>
 										<td style="white-space: nowrap;"><div id="percentage{{item.id}}" ></div>{{item.percentage}}%</td>
@@ -501,7 +512,7 @@ function check_form(){
 								{% endfor %}
 							{% else %}
 
-								<td style="background-color:hsl(0, 67%, 87%);white-space: nowrap;"><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty|floatformat}} size="5" step="1" onchange="update_percentage(event)" required /></td>
+								<td style="background-color:hsl(0, 67%, 87%);white-space: nowrap;"><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty|floatformat}} size="5" step="1" onchange="update_percentage(event)"  /></td>
 
 <!--								<td><div id="current_total{{item.id}}" >${{item.special}}</div></td>-->
 					<td></td>
@@ -532,9 +543,9 @@ function check_form(){
 	 <div id="retainage_total"><b>Retainage - All Invoices Including This One:</b> ${{total_retainage|floatformat:2|intcomma }}</div>
 	 <br>
 	 {% if me_approve or other_approve %}
-	 <button type="button" name="form6" class="btn btn-primary btn-sm" onclick="made_changes_note()" >APPROVED WITH THE ABOVE CHANGES</button>
+	 <input type="submit" name="approved_with_changes" class="btn btn-primary btn-sm" onSubmit="return made_changes_note()" value = "APPROVED WITH THE ABOVE CHANGES" />
 	 {% else %}
-	 <button type="button" name="form6" class="btn btn-primary btn-sm" onclick="made_changes_note()" >MAKE CHANGES NOW</button>
+	 <input type="submit" name="form7" class="btn btn-primary btn-sm" onSubmit="return made_changes_note()" value = "MAKE CHANGES NOW" />
 	 {% endif %}
     </form>
 <br><br>
