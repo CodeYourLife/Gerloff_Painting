@@ -122,7 +122,11 @@ def rental_page(request, id, reverse):
                                        note="Please call off-rent. " + request.POST['off_rent_note'])
             message = "Please call off this rental. " + rental.item + ". From Job -" + rental.job_number.job_name + "\n " + \
                       request.POST['off_rent_note']
-            Email.sendEmail("Call Off Rent", message, ["warehouse@gerloffpainting.com"], False)
+            try:
+                Email.sendEmail("Call Off Rent", message, ["warehouse@gerloffpainting.com"], False)
+                success = True
+            except:
+                success = False
         if 'form_1' in request.POST:
             note = ""
             rental.company.company_phone = request.POST['company_phone']

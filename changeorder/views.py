@@ -620,8 +620,12 @@ def email_signed_ticket(request, changeorder):
                                                 user=current_user,
                                                 note="Signed Ticket emailed to " + str(recipients))
                 path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
-                Email.sendEmail("Signed Ticket", "Please find the Signed Extra Work Ticket attached", recipients,
-                                f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf")
+                try:
+                    Email.sendEmail("Signed Ticket", "Please find the Signed Extra Work Ticket attached", recipients,
+                                    f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf")
+                    success = True
+                except:
+                    success = False
                 return redirect('extra_work_ticket', id=changeorder.id)
     extra_contacts = False
     project_pm = ClientEmployees.objects.get(person_pk=changeorder.job_number.client_Pm.person_pk)
@@ -739,8 +743,12 @@ def change_order_send(request, id):
                     ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                     user=current_user,
                                                     note="COP Sent. Price: $" + request.POST['price'])
-                    Email.sendEmail("COP Proposal", "Please find the Change Order Proposal attached", recipients,
-                                    f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
+                    try:
+                        Email.sendEmail("COP Proposal", "Please find the Change Order Proposal attached", recipients,
+                                        f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
+                        success = True
+                    except:
+                        success = False
                 else:
                     ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                     user=current_user,
@@ -1002,8 +1010,11 @@ def extra_work_ticket(request, id):
             message = "Change Order " + str(changeorder.cop_number) + " Approved!\n"
             message += str(changeorder.job_number.job_number) + " - " + str(changeorder.job_number.job_name) + "\n"
             message += "GC# " + str(changeorder.gc_number)
-
-            Email.sendEmail("Change Order Approved", message, recipients, False)
+            try:
+                Email.sendEmail("Change Order Approved", message, recipients, False)
+                success = True
+            except:
+                success = False
             return redirect('extra_work_ticket', id=id)
         if 'submit_form3' in request.POST:
             if 'no_tm' in request.POST:

@@ -122,8 +122,12 @@ def complete_pickup(request, pickup):
                 else:
                     if selected_request.requested_by.email is not None:
                         recipients.append(selected_request.requested_by.email)
-                Email.sendEmail("Pickup Complete! " + selected_job.job_name, message,
-                                recipients, False)
+                try:
+                    Email.sendEmail("Pickup Complete! " + selected_job.job_name, message,
+                                    recipients, False)
+                    success = True
+                except:
+                    success = False
                 return redirect('warehouse_home')
     if selected_request.all_items == True:
         selected_items = Inventory.objects.filter(pickuprequested__isnull=True, job_number=selected_request.job_number,is_closed=False)
@@ -236,8 +240,12 @@ def request_pickup(request, jobnumber, item, pickup, status):
                 if selected_request.requested_by != selected_job.superintendent:
                     if selected_request.requested_by.email is not None:
                         recipients.append(selected_request.requested_by.email)
-            Email.sendEmail("Pickup Request! " + selected_job.job_name, message,
-                            recipients, False)
+            try:
+                Email.sendEmail("Pickup Request! " + selected_job.job_name, message,
+                                recipients, False)
+                success = True
+            except:
+                success = False
             JobNotes.objects.create(job_number=selected_job,
                                     note=message,
                                     type="auto_misc_note", user=Employees.objects.get(user=request.user), date=date.today())
