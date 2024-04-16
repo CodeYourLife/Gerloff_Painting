@@ -511,6 +511,7 @@ def subcontract_invoices(request, subcontract_id, item_id):
 
 @login_required(login_url='/accounts/login')
 def subcontractor_home(request):
+
     # for x in Subcontracts.objects.filter(is_closed=False):
     #     ready_to_close = True
     #     if int(x.total_contract_amount()) == int(0):
@@ -525,6 +526,7 @@ def subcontractor_home(request):
     #         x.is_closed = True
     #         x.save()
     #         SubcontractNotes.objects.create(subcontract=x, date=date.today(),user=Employees.objects.get(user=request.user),note="Subcontract Paid and Closed. Total Contract=$" + str(x.total_contract_amount()) + ". Total Billed =$" + str(x.total_billed()) + ". Total Retainage =$" + str(x.total_retainage()))
+
     send_data = {}
     approval_counts = {}
     approval_counts_two = {}
