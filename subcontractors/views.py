@@ -121,7 +121,7 @@ def subcontractor_invoice_new(request, subcontract_id):
     if today.weekday() == 4 or today.weekday() == 3 or today.weekday() == 2: friday = friday + timedelta(7)
     subcontract = Subcontracts.objects.get(id=subcontract_id)
     items = []
-    for x in SubcontractItems.objects.filter(subcontract=subcontract):
+    for x in SubcontractItems.objects.filter(subcontract=subcontract).order_by('id'):
         totalcost = float(x.total_cost())
         totalbilled = float(x.total_billed())
         totalordered = float(x.SOV_total_ordered)
@@ -511,6 +511,20 @@ def subcontract_invoices(request, subcontract_id, item_id):
 
 @login_required(login_url='/accounts/login')
 def subcontractor_home(request):
+    for x in Subcontracts.objects.filter(is_closed=False):
+        ready_to_close = True
+        if int(x.total_contract_amount()) == int(0):
+            ready_to_close = False
+        if int(x.total_billed()) != int(x.total_contract_amount()):
+            ready_to_close = False
+        if int(x.total_retainage()) != 0:
+            ready_to_close = False
+        if ready_to_close == True:
+            print("CLOSING")
+            print(x)
+            x.is_closed = True
+            x.save()
+            SubcontractNotes.objects.create(subcontract=x, date=date.today(),user=Employees.objects.get(user=request.user),note="Subcontract Paid and Closed. Total Contract=$" + str(x.total_contract_amount()) + ". Total Billed =$" + str(x.total_billed()) + ". Total Retainage =$" + str(x.total_retainage()))
     send_data = {}
     approval_counts = {}
     approval_counts_two = {}
@@ -942,14 +956,29 @@ def new_subcontractor_payment(request):
                     selected_invoice = x.invoice
                     selected_invoice.processed = True
                     selected_invoice.payment = payment
-                    selected_invoice.save()
+                    ready_to_close = True
+                    if int(selected_invoice.subcontract.total_billed()) == int(selected_invoice.subcontract.total_contract_amount()):
+                        print("BILLED 100%")
+                    else:
+                        ready_to_close = False
+                    if int(selected_invoice.subcontract.total_retainage())== 0:
+                        print("RETAINAGE PAID")
+                    else:
+                        ready_to_close = False
+
                     SubcontractNotes.objects.create(subcontract=selected_invoice.subcontract, date=date.today(),
                                                     user=Employees.objects.get(user=request.user),
                                                     note="Invoice Paid on " + str(request.POST['pay_date']) + ". " +
                                                          request.POST['note'],
                                                     invoice=selected_invoice)
+                    if ready_to_close == True:
+                        selected_invoice.subcontract.is_closed = True
+                        selected_invoice.subcontract.save()
+                        SubcontractNotes.objects.create(subcontract=selected_invoice.subcontract, date=date.today(),
+                                                        user=Employees.objects.get(user=request.user),
+                                                        note="Subcontract Paid and Closed. Total Contract=$" + str(selected_invoice.subcontract.total_contract_amount()) + ". Total Billed =$" + str(selected_invoice.subcontract.total_billed()) + ". Total Retainage =$" + str(selected_invoice.subcontract.total_retainage()))
+                    selected_invoice.save()
                 InvoiceBatch.objects.all().delete()
-
             return redirect('subcontractor_payments')
         if 'selected_invoice' in request.POST:
             InvoiceBatch.objects.create(invoice=SubcontractorInvoice.objects.get(id=request.POST['selected_invoice']))
