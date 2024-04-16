@@ -956,29 +956,38 @@ def new_subcontractor_payment(request):
                 for x in InvoiceBatch.objects.filter(invoice__subcontract__subcontractor=selected_sub,
                                                      invoice__is_sent=True, invoice__processed=False):
                     selected_invoice = x.invoice
+                    subcontract = selected_invoice.subcontract
                     selected_invoice.processed = True
                     selected_invoice.payment = payment
                     ready_to_close = True
-                    if int(selected_invoice.subcontract.total_billed()) == int(selected_invoice.subcontract.total_contract_amount()):
+
+                    if SubcontractItems.objects.filter(subcontract=subcontract, is_closed=False, is_approved=False).exists():
+                        ready_to_close = False
+                    if int(subcontract.total_billed()) == int(subcontract.total_contract_amount()):
                         print("BILLED 100%")
                     else:
                         ready_to_close = False
-                    if int(selected_invoice.subcontract.total_retainage())== 0:
+                    if int(subcontract.total_retainage())== 0:
+
                         print("RETAINAGE PAID")
                     else:
                         ready_to_close = False
 
-                    SubcontractNotes.objects.create(subcontract=selected_invoice.subcontract, date=date.today(),
+
+                    SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
+
                                                     user=Employees.objects.get(user=request.user),
                                                     note="Invoice Paid on " + str(request.POST['pay_date']) + ". " +
                                                          request.POST['note'],
                                                     invoice=selected_invoice)
                     if ready_to_close == True:
-                        selected_invoice.subcontract.is_closed = True
-                        selected_invoice.subcontract.save()
-                        SubcontractNotes.objects.create(subcontract=selected_invoice.subcontract, date=date.today(),
+
+                        subcontract.is_closed = True
+                        subcontract.save()
+                        SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
                                                         user=Employees.objects.get(user=request.user),
-                                                        note="Subcontract Paid and Closed. Total Contract=$" + str(selected_invoice.subcontract.total_contract_amount()) + ". Total Billed =$" + str(selected_invoice.subcontract.total_billed()) + ". Total Retainage =$" + str(selected_invoice.subcontract.total_retainage()))
+                                                        note="Subcontract Paid and Closed. Total Contract=$" + str(subcontract.total_contract_amount()) + ". Total Billed =$" + str(subcontract.total_billed()) + ". Total Retainage =$" + str(subcontract.total_retainage()))
+
                     selected_invoice.save()
                 InvoiceBatch.objects.all().delete()
             return redirect('subcontractor_payments')
