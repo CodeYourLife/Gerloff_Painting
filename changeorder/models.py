@@ -129,6 +129,7 @@ class EWT(models.Model):
     week_ending = models.DateField()
     notes = models.CharField(null=True, max_length=2000)
     completed_by = models.CharField(null=True, max_length=150)
+    recipient = models.CharField(null=True, max_length=150)
 
     def __str__(self):
         return f"{self.change_order.job_number} {self.change_order}"

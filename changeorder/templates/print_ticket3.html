@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <script type="text/javascript" class="init">
+        window.onload = function() {
+            if ("{{email_success}}"){alert("Email successfully sent!")}
+    if ("{{email_failed}}"){alert("Email failed to send!")}
+        }
+    </script>
+    <style>
+
+    </style>
+</head>
+<body style="margin: 22px; font-family: Helvetica">
+<b>Thank you. The signed ticket has been emailed to {{recipient}}</b>
+
+</body>
+</html>
+
