@@ -704,8 +704,11 @@ select_recipient_form.change_recipient_form.value = "No"
                     </form>
                               </div>
                                                   <div style="padding: 5px" class="form-group">
-                    <button type="button" data-toggle="modal" data-target="#email_approval_modal" class="btn btn-primary btn-sm" >Email Ticket For Signature</button>
-
+                    {% if EWT.recipient %}
+                                                       <button type="button" data-toggle="modal" data-target="#email_approval_modal" class="btn btn-primary btn-sm" >Email Ticket For Signature (Again)</button>
+                                                      {% else %}
+                                                      <button type="button" data-toggle="modal" data-target="#email_approval_modal" class="btn btn-primary btn-sm" >Email Ticket For Signature</button>
+                    {% endif %}
 <!--                    <form action="{% url 'email_for_signature' changeorder.id %}"><input type="submit" class="btn btn-primary btn-sm" value="Email Ticket For Signature"/>-->
 <!--                    </form>-->
                               </div>
@@ -794,6 +797,10 @@ select_recipient_form.change_recipient_form.value = "No"
                 <div style="padding: 5px" class="form-group">
                 <form action="{% url 'preview_TMProposal' tmproposal.id %}">
                     <input type="submit" class="btn btn-secondary btn-sm" style="margin-bottom: 5px" name="view_proposal" value="View Proposal"/></form>
+                </div>
+                <div style="padding: 5px" class="form-group">
+                <form action="{% url 'revise_TM_COP' changeorder.id %}">
+                    <input type="submit" class="btn btn-secondary btn-sm" style="margin-bottom: 5px" name="view_proposal" value="Revise Proposal"/></form>
                 </div>
                 </div>
                 </div>
