@@ -536,7 +536,9 @@ def subcontractor_home(request):
     for x in InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday):
         name = str(x.employee.first_name + " " + x.employee.last_name)
         employee = x.employee
+
         if employee.job_title.description == "Superintendent":
+
             super_approvals_needed += 1
         if name in approval_counts:
             approval_counts[name] += 1
