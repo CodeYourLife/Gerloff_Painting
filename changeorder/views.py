@@ -287,6 +287,96 @@ def print_TMProposal(request, id):
                    'equipmentitems': equipmentitems, 'extraitems': extraitems, 'newproposal': newproposal,
                    'changeorder': changeorder, 'ewt': ewt})
 
+
+@login_required(login_url='/accounts/login')
+def revise_TM_COP(request, id):
+    changeorder = ChangeOrders.objects.get(id=id)
+    ewt = EWT.objects.get(change_order = changeorder)
+    send_data={}
+    send_data['change_order']=changeorder
+    laboritems = []
+    counter = 0
+    totallaborcost=0
+    for x in TMList.objects.filter(change_order=changeorder,category="Labor").order_by('id'):
+        counter += 1
+        totallaborcost += x.total
+        laboritems.append({'rate': x.rate, 'counter': counter, 'item': x, 'hours': x.quantity, 'cost': x.total})
+    materials = []
+    counter = 0
+    totalmaterialcost=0
+    for x in TMList.objects.filter(change_order=changeorder, category="Material").order_by('id'):
+        counter += 1
+        totalmaterialcost += x.total
+        materials.append(
+            {'rate': x.rate, 'counter': counter,
+             'description': x.description,
+             'quantity': x.quantity, 'units': x.units,
+             'cost': x.total})
+    inventory = TMList.objects.get(change_order=changeorder, category="Inventory").total
+    equipment = []
+    counter = 0
+    totalequipmentcost=0
+    for x in TMList.objects.filter(change_order=changeorder, category="Equipment").order_by('id'):
+        counter += 1
+        totalequipmentcost+= x.total
+        equipment.append(
+            {'rate': x.rate, 'counter': counter,
+             'description': x.description,
+             'quantity': x.quantity, 'units': x.units,
+             'cost': x.total})
+    extras = []
+    counter = 0
+    totalextrascost=0
+    for x in TMList.objects.filter(change_order=changeorder, category="Extras").order_by('id'):
+        counter += 1
+        totalextrascost+= x.total
+        extras.append(
+            {'rate': x.rate, 'counter': counter,
+             'description': x.description,
+             'quantity': x.quantity, 'units': x.units,
+             'cost': x.total})
+    bond_rate = 0
+    bond_cost = 0
+    is_bonded = False
+    totalcost=totalmaterialcost+totallaborcost+totalequipmentcost+totalextrascost+inventory
+    if changeorder.job_number.is_bonded == True:
+        bond_rate = TMPricesMaster.objects.get(category='Bond').rate
+        bond_cost = bond_rate * totalcost
+        totalcost = totalcost + bond_cost
+        is_bonded = True
+    send_data['is_bonded'] = is_bonded
+    send_data['bond_cost'] = int(bond_cost)
+    send_data['bond_rate'] = int(bond_rate)
+    employees2 = TMPricesMaster.objects.filter(category="Labor").values()
+    materials2 = TMPricesMaster.objects.filter(category="Material").values()
+    equipment2 = TMPricesMaster.objects.filter(category="Equipment").values()
+    extras2 = TMPricesMaster.objects.filter(category="Misc").values()
+    send_data['employees_json'] = json.dumps(list(employees2), cls=DjangoJSONEncoder)
+    send_data['material_json'] = json.dumps(list(materials2), cls=DjangoJSONEncoder)
+    send_data['equipment_json'] = json.dumps(list(equipment2), cls=DjangoJSONEncoder)
+    send_data['extras_json'] = json.dumps(list(extras2), cls=DjangoJSONEncoder)
+    send_data['laborcount']=int(len(laboritems))
+    send_data['materialcount'] =int(len(materials))
+    send_data['equipmentcount']=int(len(equipment))
+    send_data['extrascount'] =int(len(extras))
+    send_data['extras'] = extras
+    send_data['totalcost'] =int(totalcost)
+    send_data['inventory']=inventory
+    send_data['equipment'] =equipment
+    send_data['materials']=materials
+    send_data['laboritems'] =laboritems
+    send_data['ewt'] = ewt
+    send_data['changeorder'] = changeorder
+    send_data['employees2']=employees2
+    send_data['materials2'] =materials2
+    send_data['equipment2']=equipment2
+    send_data['extras2'] =extras2
+    send_data['totalmaterialcost'] =int(totalmaterialcost)
+    send_data['totallaborcost'] =int(totallaborcost)
+    send_data['totalequipmentcost']=int(totalequipmentcost)
+    send_data['totalextrascost'] =int(totalextrascost)
+    return render(request, "revise_TM_COP.html",send_data)
+
 @login_required(login_url='/accounts/login')
 def price_ewt(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
@@ -994,6 +1084,8 @@ def extra_work_ticket(request, id):
     send_data['formals'] = job.formals()
     send_data['approved'] = ChangeOrders.objects.filter(job_number=job, is_approved=True, is_closed=False)
     send_data['pending'] = ChangeOrders.objects.filter(job_number=job, is_approved=False, is_closed=False)
+    if EWT.objects.filter(change_order=changeorder).exists():
+        send_data['EWT'] = EWT.objects.get(change_order=changeorder)
     tmproposal = []
     foldercontents = []
     try:

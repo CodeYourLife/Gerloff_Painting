@@ -22,4 +22,5 @@ urlpatterns = [
     path('batch_approve_co/<id>', views.batch_approve_co, name='batch_approve_co'),
     path('email_for_signature/<id>', views.email_for_signature, name='email_for_signature'),
     path('emailed_ticket/<id>', views.emailed_ticket, name='emailed_ticket'),
+    path('revise_TM_COP/<id>', views.revise_TM_COP, name='revise_TM_COP'),
 ]
