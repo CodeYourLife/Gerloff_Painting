@@ -536,9 +536,7 @@ def subcontractor_home(request):
     for x in InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday):
         name = str(x.employee.first_name + " " + x.employee.last_name)
         employee = x.employee
-
-        if employee.job_title.description == "Superintendent":
-
+        if employee.job_title.description == "Superintendent" and employee.first_name != "Victor":
             super_approvals_needed += 1
         if name in approval_counts:
             approval_counts[name] += 1
@@ -548,6 +546,7 @@ def subcontractor_home(request):
             approval_counts_two[employee] += 1
         else:
             approval_counts_two[employee] = 1
+    print(approval_counts_two)
     if request.method == 'POST':
         if 'invoices_entered' in request.POST:
             this_week_status = Weekly_Approvals.objects.latest('id')
@@ -557,7 +556,7 @@ def subcontractor_home(request):
             this_week_status.save()
             if super_approvals_needed == 0:
                 email_body = "Victor, the Subcontractor Invoices are Ready for Your Approval!"
-                recipients = ["victor@gerloffpainting.com", "joe@gerloffpainting.com"]
+                recipients = ["victor@gerloffpainting.com", "joe@gerloffpainting.com", "bridgette@gerloffpainting.com", "admin2@gerloffpainting.com"]
                 try:
                     Email.sendEmail("Invoice Approval Required", email_body, recipients, False)
                     send_data['success'] = True
@@ -565,8 +564,8 @@ def subcontractor_home(request):
                     send_data['failed'] = True
             else:
                 for x in approval_counts_two:
-                    if x.job_title.description == "Superintendent":
-                        recipients = ["joe@gerloffpainting.com"]
+                    if x.job_title.description == "Superintendent" and x.first_name != "Victor":
+                        recipients = ["joe@gerloffpainting.com", "bridgette@gerloffpainting.com", "admin2@gerloffpainting.com"]
                         if x.email:
                             recipients.append(x.email)
                             email_body = "You have " + str(
