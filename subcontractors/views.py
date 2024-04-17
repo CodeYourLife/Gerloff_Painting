@@ -532,9 +532,12 @@ def subcontractor_home(request):
     approval_counts_two = {}
     today = datetime.date.today()
     this_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4)
+    super_approvals_needed = 0
     for x in InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday):
         name = str(x.employee.first_name + " " + x.employee.last_name)
         employee = x.employee
+        if x.job_title.description == "Superintendent":
+            super_approvals_needed += 1
         if name in approval_counts:
             approval_counts[name] += 1
         else:
@@ -550,21 +553,30 @@ def subcontractor_home(request):
             this_week_status.date_invoices_entered = date.today()
             this_week_status.notes = request.POST['invoice_notes']
             this_week_status.save()
-            for x in approval_counts_two:
-                if x.job_title.description == "Superintendent":
-                    recipients = ["joe@gerloffpainting.com"]
-                    if x.email:
-                        recipients.append(x.email)
-                        email_body = "You have " + str(
-                            approval_counts_two[x]) + " Subcontractor Invoices to Approve in Trinity!"
-                    else:
-                        email_body = x.first_name + " Has " + str(approval_counts_two[
-                                                                      x]) + " Invoices to Approve in Trinity, However There is No Email Address on File!"
-                    try:
-                        Email.sendEmail("Invoice Approval Required", email_body, recipients, False)
-                        send_data['success'] = True
-                    except:
-                        send_data['failed'] = True
+            if super_approvals_needed == 0:
+                email_body = "Victor, the Subcontractor Invoices are Ready for Your Approval!"
+                recipients = ["victor@gerloffpainting.com", "joe@gerloffpainting.com"]
+                try:
+                    Email.sendEmail("Invoice Approval Required", email_body, recipients, False)
+                    send_data['success'] = True
+                except:
+                    send_data['failed'] = True
+            else:
+                for x in approval_counts_two:
+                    if x.job_title.description == "Superintendent":
+                        recipients = ["joe@gerloffpainting.com"]
+                        if x.email:
+                            recipients.append(x.email)
+                            email_body = "You have " + str(
+                                approval_counts_two[x]) + " Subcontractor Invoices to Approve in Trinity!"
+                        else:
+                            email_body = x.first_name + " Has " + str(approval_counts_two[
+                                                                          x]) + " Invoices to Approve in Trinity, However There is No Email Address on File!"
+                        try:
+                            Email.sendEmail("Invoice Approval Required", email_body, recipients, False)
+                            send_data['success'] = True
+                        except:
+                            send_data['failed'] = True
         else:
             subcontractor = Subcontractors.objects.get(id=request.POST['subcontractor_id'])
             if 'contact' in request.POST:
