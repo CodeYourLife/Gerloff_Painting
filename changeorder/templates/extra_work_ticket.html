@@ -175,6 +175,8 @@ window.onload = function() {
     var table3 = $('#formals_table').DataTable({paging: false,info:false, ordering:false, searching:false})
     document.getElementById("hidden_section_add").style.display = "none"
     document.getElementById("hidden_section_change").style.display = "none"
+    if ("{{email_success}}"){alert("Email successfully sent!")}
+    if ("{{email_failed}}"){alert("Email failed to send!")}
 }
 
 function populate_file_form(file_name){
@@ -238,23 +240,7 @@ function send_ticket_email(){
         alert("Change Drop Down Menu")
         return false;
     }
-    rolodex = JSON.parse("{{client_list_json|escapejs}}");
-    var changed = 0
-    for(let i =0; i < rolodex.length; i++){
-        if (rolodex[i].person_pk == selected_recipient_id){
-            if (select_recipient_form.recipient_name.value != rolodex[i].name){changed = 1}
-            if (select_recipient_form.recipient_email.value != rolodex[i].email){changed = 1}
-            if (select_recipient_form.recipient_phone.value != rolodex[i].phone){changed = 1}
-        }
-    }
-    alert(changed)
-<!--    var myModal = new-->
-<!--    bootstrap.Modal(document.getElementById('change_recipient_modal'), {keyboard: false})-->
-<!--    myModal.show()-->
-    var myModal = new
-    bootstrap.Modal(document.getElementById('email_approval_modal'), {keyboard: false})
-    myModal.hide()
-    return false;
+    alert("Please do not click anything, until you get the notification that the email was sent!")
 }
 
 function yes_add(){
@@ -307,7 +293,7 @@ select_recipient_form.change_recipient_form.value = "No"
                 </button>
             </div>
             <div class="modal-body">
-                <form id="select_recipient_form" action="{% url 'email_for_signature' changeorder.id %}" method="post" onSubmit = "return send_ticket_email()" >
+                <form id="select_recipient_form" action="{% url 'extra_work_ticket' changeorder.id %}" method="post" onSubmit = "return send_ticket_email()" >
                     {% csrf_token %}
                     <b>Who do you want to email the ticket to?</b>
                     <br>
@@ -346,47 +332,47 @@ select_recipient_form.change_recipient_form.value = "No"
         </div>
     </div>
 </div>
-<!-- Modal -->
-<div class="modal fade" id="email_approval_modal" tabindex="-1" role="dialog" aria-labelledby="title"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="title3"></h5>
-                <button onclick="location.reload();" type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="select_recipient_form" action="{% url 'email_for_signature' changeorder.id %}" method="post"   >
-                    {% csrf_token %}
-                    <b>Who do you want to email the ticket to?</b>
-                    <br>
-                     <select id="recipient" name="recipient" onchange="populate_ticket_recipient()">
-                         <option value="please_select">Please Select</option>
-                         <option value="add_new">Add New</option>
-                     {% for x in client_list %}
-                    {% if x.is_active %}
-                         <option value={{x.person_pk}}>{{x.name}}</option>
-                    {% endif %}
-                    {% endfor %}
-                     </select>
-                    <br>
-                            <input type="text" name="recipient_name" id="recipient_name" placeholder="Recipient Name"/>
-                    <input type="email" name="recipient_email" id="recipient_email" placeholder="Recipient Email"/>
-                    <input type="phone" name="recipient_phone" id="recipient_phone" placeholder="Recipient Phone"/>
+<!--&lt;!&ndash; Modal &ndash;&gt;-->
+<!--<div class="modal fade" id="email_approval_modal" tabindex="-1" role="dialog" aria-labelledby="title"-->
+<!--     aria-hidden="true">-->
+<!--    <div class="modal-dialog" role="document">-->
+<!--        <div class="modal-content">-->
+<!--            <div class="modal-header">-->
+<!--                <h5 class="modal-title" id="title3"></h5>-->
+<!--                <button onclick="location.reload();" type="button" class="close" data-dismiss="modal" aria-label="Close">-->
+<!--                    <span aria-hidden="true">&times;</span>-->
+<!--                </button>-->
+<!--            </div>-->
+<!--            <div class="modal-body">-->
+<!--                <form id="select_recipient_form" action="{% url 'email_for_signature' changeorder.id %}" method="post"   >-->
+<!--                    {% csrf_token %}-->
+<!--                    <b>Who do you want to email the ticket to?</b>-->
+<!--                    <br>-->
+<!--                     <select id="recipient" name="recipient" onchange="populate_ticket_recipient()">-->
+<!--                         <option value="please_select">Please Select</option>-->
+<!--                         <option value="add_new">Add New</option>-->
+<!--                     {% for x in client_list %}-->
+<!--                    {% if x.is_active %}-->
+<!--                         <option value={{x.person_pk}}>{{x.name}}</option>-->
+<!--                    {% endif %}-->
+<!--                    {% endfor %}-->
+<!--                     </select>-->
+<!--                    <br>-->
+<!--                            <input type="text" name="recipient_name" id="recipient_name" placeholder="Recipient Name"/>-->
+<!--                    <input type="email" name="recipient_email" id="recipient_email" placeholder="Recipient Email"/>-->
+<!--                    <input type="phone" name="recipient_phone" id="recipient_phone" placeholder="Recipient Phone"/>-->
 
 
-            </div>
-            <div class="modal-footer">
-                <div id="hidden-element"></div>
-                <input type="submit" value="Email Now" class="btn btn-primary" name="email_now"/>
-                </form>
-                <button type="button" class="btn btn-secondary" onclick="location.reload();" data-dismiss="modal">Cancel</button>
-            </div>
-        </div>
-    </div>
-</div>
+<!--            </div>-->
+<!--            <div class="modal-footer">-->
+<!--                <div id="hidden-element"></div>-->
+<!--                <input type="submit" value="Email Now" class="btn btn-primary" name="email_now"/>-->
+<!--                </form>-->
+<!--                <button type="button" class="btn btn-secondary" onclick="location.reload();" data-dismiss="modal">Cancel</button>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
 <!-- Modal -->
 <div class="modal fade" id="changeOrderFolderModal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">

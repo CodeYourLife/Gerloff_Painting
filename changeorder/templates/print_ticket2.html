@@ -2,13 +2,16 @@
 {% load static %}
 <html>
 <head>
-    <script src="{% static 'signature.js' %}">
-    </script>
-    <script type="text/javascript" class="init">
+        <script type="text/javascript" class="init">
 <!--        window.onload = function() {-->
+<!--        alert("HI")-->
 <!--        document.getElementById("final_button").style.display = "none";-->
 <!--        }-->
     </script>
+    <script src="{% static 'signature.js' %}">
+    </script>
+
+
     <style>
         table, td, th {
           border: 1px solid #ddd;
@@ -118,7 +121,7 @@
 </div>
 <hr style="width:100%">
 {% if status == 'NEW' %}
-<form action="{% url 'print_ticket' changeorder.id 'NEW' %}" method="post">
+<form action="{% url 'emailed_ticket' changeorder.id %}" method="post" onSubmit="signatureSave()">
     <div>
         <div style="margin-bottom: 12px;"><b>Signature:</b></div>
         {% if signature.signature %}
@@ -150,9 +153,9 @@
             {% csrf_token %}
             <script>signatureCapture();</script>
             {% if not signature %}
-            <button type="button" id="saveSignatureBtn" onclick="signatureSave()">Confirm signature</button>
-            <button type="button" id="clearSignatureBtn" onclick="signatureClear()">Clear signature</button>
-            <input type="submit" id= "final_button" value="Save PDF"/>
+<!--            <button type="button" id="saveSignatureBtn"  onclick="signatureSave()">Confirm signature</button>-->
+<!--            <button type="button" id="clearSignatureBtn" onclick="signatureClear()">Clear signature</button>-->
+            <input type="submit" id="final_button"  value="Email Signed Ticket Back To Gerloff (you will get a copy)"/>
             {% endif %}
         </div>
     </div>

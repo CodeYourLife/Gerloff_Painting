@@ -22,8 +22,92 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from media.utilities import MediaUtilities
 
+
+def emailed_ticket(request, id):
+    send_data = {}
+    changeorder = ChangeOrders.objects.get(id=id)
+    ewt = EWT.objects.get(change_order=changeorder)
+    recipient = ewt.recipient
+    send_data['recipient']=recipient
+
+    status = 'NEW'
+    try:
+        signature = Signature.objects.get(change_order_id=id)
+    except:
+        signature = None
+    laboritems = EWTicket.objects.filter(EWT=ewt).exclude(employee=None, custom_employee=None)
+    materials = EWTicket.objects.filter(EWT=ewt, master__category="Material")
+    equipment = EWTicket.objects.filter(EWT=ewt, master__category="Equipment")
+    if request.method == 'POST':
+        signatureValue = request.POST['signatureValue']
+        nameValue = request.POST['signatureName']
+        comments = request.POST['gc_notes']
+        if signature is None:
+            Signature.objects.create(change_order_id=id, type="changeorder", name=nameValue, signature=signatureValue,
+                                     date=date.today(), notes=comments)
+        else:
+            Signature.objects.update(change_order_id=id, type="changeorder", name=nameValue, signature=signatureValue,
+                                     date=date.today(), notes=comments)
+        ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                        user=Employees.objects.get(user=request.user),
+                                        note="Digital Signature Received. Signed by: " + request.POST[
+                                            'signatureName'] + ". Comments: " + request.POST['gc_notes'])
+        signature = Signature.objects.get(change_order_id=id)
+        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
+        result_file = open(f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf", "w+b")
+        changeorder.is_ticket_signed = True
+        changeorder.digital_ticket_signed_date = date.today()
+        changeorder.save()
+        html = render_to_string("print_ticket2.html",
+                                {'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
+                                 'changeorder': changeorder, 'signature': signature, 'status': status})
+        pisa.CreatePDF(
+            html,
+            dest=result_file
+        )
+        result_file.close()
+        recipients = ["joe@gerloffpainting.com"]
+        recipients.append(recipient)
+        try:
+            Email.sendEmail("Signed Gerloff Painting Ticket", "The signed ticket is attached", recipients,
+                            f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf")
+            send_data['email_success'] = True
+        except:
+            send_data['email_failed'] = True
+        return render(request, "print_ticket3.html", send_data)
+
+    return render(request, "print_ticket2.html",
+                  {'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
+                   'changeorder': changeorder, 'signature': signature, 'status': status})
+
+
 def email_for_signature(request, id):
-    print("here")
+    if request.method == 'POST':
+        if 'recipient' in request.POST:
+            changeorder = ChangeOrders.objects.get(id=id)
+            client = changeorder.job_number.client
+            name=request.POST['recipient_name']
+            phone = request.POST['recipient_phone']
+            email = request.POST['recipient_email']
+            recipient_id = request.POST['recipient']
+            if recipient_id == 'add_new':
+                if request.POST['add_recipient_form']:
+                    ClientEmployees.objects.create(id=client, name=name, phone=phone, email=email)
+            else:
+                recipient = ClientEmployees.objects.get(person_pk=recipient_id)
+                if request.POST['change_recipient_form']:
+                    recipient.name=name
+                    recipient.phone=phone
+                    recipient.email=email
+                    recipient.save()
+            email_body = "You have received an extra work ticket from Gerloff Painting.  \nPlease click this link http://www.google.com"
+            recipients = ["joe@gerloffpainting.com"]
+            recipients.append(email)
+            try:
+                Email.sendEmail("Extra Work Ticket", email_body, recipients, False)
+                success = True
+            except:
+                success = False
     return redirect('extra_work_ticket', id=id)
 
 
@@ -931,6 +1015,33 @@ def extra_work_ticket(request, id):
     if request.method == 'GET':
         return render(request, "extra_work_ticket.html", send_data)
     if request.method == 'POST':
+        if 'recipient' in request.POST:
+            client = changeorder.job_number.client
+            name=request.POST['recipient_name']
+            phone = request.POST['recipient_phone']
+            email = request.POST['recipient_email']
+            recipient_id = request.POST['recipient']
+            ewt = EWT.objects.get(change_order=changeorder)
+            ewt.recipient = email
+            ewt.save()
+            if recipient_id == 'add_new':
+                if request.POST['add_recipient_form'] == "Yes":
+                    ClientEmployees.objects.create(id=client, name=name, phone=phone, email=email)
+            else:
+                recipient = ClientEmployees.objects.get(person_pk=recipient_id)
+                if request.POST['change_recipient_form'] == "Yes":
+                    recipient.name=name
+                    recipient.phone=phone
+                    recipient.email=email
+                    recipient.save()
+            email_body = "You have received an extra work ticket from Gerloff Painting.  \nPlease click this link http://184.183.68.156/changeorder/emailed_ticket/" + str(changeorder.id)
+            recipients = ["joe@gerloffpainting.com"]
+            recipients.append(email)
+            try:
+                Email.sendEmail("Extra Work Ticket", email_body, recipients, False)
+                send_data['email_success'] = True
+            except:
+                send_data['email_failed'] = True
         if 'selected_file' in request.POST:
             return MediaUtilities().getDirectoryContents(id, request.POST['selected_file'], 'changeorder')
         if 'oldform' in request.POST:
