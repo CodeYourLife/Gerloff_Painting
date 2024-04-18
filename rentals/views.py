@@ -15,13 +15,22 @@ from django.conf import settings
 from employees.models import *
 from django.http import HttpResponse
 from console.misc import Email
+from equipment.filters import RentalsFilter
+
 
 # Create your views here.
 
 @login_required(login_url='/accounts/login')
 def rentals_home(request):
-    rentals = Rentals.objects.filter(is_closed=False).order_by('job_number', 'company')
-    return render(request, "rentals_home.html", {'rentals': rentals})
+    send_data = {}
+    if request.method == 'GET':
+        if 'closed_filter' in request.GET: send_data['closed_filter'] = True
+    filtered_rentals = RentalsFilter(request.GET,
+                                     queryset=Rentals.objects.filter(is_closed=False).order_by('job_number', 'company'))
+    # rentals = Rentals.objects.filter(is_closed=False).order_by('job_number', 'company')
+    send_data['rentals'] = filtered_rentals.qs
+    send_data['waiting_for_invoice'] = Rentals.objects.filter(off_rent_number__isnull=False, is_closed=False).count()
+    return render(request, "rentals_home.html", send_data)
 
 
 @login_required(login_url='/accounts/login')
@@ -45,9 +54,9 @@ def rental_new(request, jobnumber):
                                                 company_email=request.POST['new_client_bid_email'])
             else:
                 vendor = Vendors.objects.get(id=request.POST['select_company'])
-                vendor.company_name=request.POST['new_client']
-                vendor.company_phone=request.POST['new_client_phone']
-                vendor.company_email=request.POST['new_client_bid_email']
+                vendor.company_name = request.POST['new_client']
+                vendor.company_phone = request.POST['new_client_phone']
+                vendor.company_email = request.POST['new_client_bid_email']
                 vendor.save()
             rental = Rentals.objects.create(company=vendor,
                                             job_number=Jobs.objects.get(job_number=request.POST['select_job']),
@@ -60,9 +69,9 @@ def rental_new(request, jobnumber):
                                                               phone=request.POST['new_pm_phone'])
                 else:
                     rental.rep = VendorContact.objects.get(id=request.POST['select_pm'])
-                    rental.rep.name=request.POST['new_pm']
-                    rental.rep.phone=request.POST['new_pm_phone']
-                    rental.rep.email=request.POST['new_pm_email']
+                    rental.rep.name = request.POST['new_pm']
+                    rental.rep.phone = request.POST['new_pm_phone']
+                    rental.rep.email = request.POST['new_pm_email']
                     rental.rep.save()
 
             if request.POST['purchase_order'] != '': rental.purchase_order = request.POST['purchase_order']
