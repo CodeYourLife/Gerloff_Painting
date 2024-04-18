@@ -1,8 +1,23 @@
 from jobs.models import Jobs
 from equipment.models import InventoryNotes, Inventory
+from rentals.models import Rentals
 import django_filters
 from django.db.models import Q
 from django import forms
+
+class RentalsFilter(django_filters.FilterSet):
+    closed_filter = django_filters.filters.BooleanFilter(label='Show Closed', widget=forms.CheckboxInput,
+                                                   method='search_filter')
+
+    def search_filter(self, queryset, name, value):
+        if value:
+            return queryset.all()
+        else:
+            return queryset.filter(off_rent_number__isnull = True)
+
+    class Meta:
+        model = Rentals
+        fields = ['closed_filter']
 
 
 class JobsFilter2(django_filters.FilterSet):

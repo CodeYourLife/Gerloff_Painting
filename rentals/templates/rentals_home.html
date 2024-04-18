@@ -108,6 +108,11 @@ url = "{% url 'rental_page' 3 "YES" %}"
 url = url.replace(3, rental_id);
 window.location.href = url
 }
+
+function new_filter_now(){
+document.getElementById('filter_form').submit();
+}
+
     </script>
 </head>
 <body>
@@ -122,6 +127,16 @@ window.location.href = url
   </div>
 
 </nav>
+
+    <form class="form-control form-control-sm" id="filter_form" method="get">
+    <div class="container">
+        <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="closed_filter" name="closed_filter"  {% if closed_filter %} checked {% endif %}  onchange="new_filter_now()" />
+        <label for="closed_filter" class="form-check-label">Show the {{waiting_for_invoice}} Rentals Waiting For Final Invoice</label>
+        </div>
+
+    </div>
+</form>
 
 
 <div class="table-responsive">
