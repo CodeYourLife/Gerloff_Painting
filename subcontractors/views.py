@@ -376,48 +376,105 @@ def subcontract_invoices(request, subcontract_id, item_id):
             this_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4)
             ready_for_victor = True
             ready_for_gene = True
+            late_invoices_ready_for_victor = True
+            late_invoices_ready_for_gene = True
+            late_invoices_remaining = 0
+            if InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__gt=this_friday).exists():
+                current_invoices_remaining = InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__gt=this_friday).count()
             if InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday).exists():
-                for x in InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday):
-                    if x.employee.job_title.description == "Superintendent" and x.employee.first_name != "Victor":
-                        ready_for_victor = False
-                        ready_for_gene = False
-                    if x.employee.first_name == "Victor":
-                        ready_for_gene = False
-                this_week_status = Weekly_Approvals.objects.latest('id')
-                if ready_for_victor == True:
-                    if this_week_status.victor_email_sent == False:
-                        try:
-                            Email.sendEmail("Invoices Ready For Approval",
-                                            "Subcontractor Invoices are Ready for Victor Approval",
-                                            ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
-                                             'admin2@gerloffpainting.com', 'victor@gerloffpainting.com'], False)
-                            success = True
-                        except:
-                            success = False
+                current_invoices_remaining = InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday).count()
+            if selected_invoice.pay_date == this_friday:
+                if InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday).exists():
+                    for x in InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday):
+                        if x.employee.job_title.description == "Superintendent" and x.employee.first_name != "Victor":
+                            ready_for_victor = False
+                            ready_for_gene = False
+                        if x.employee.first_name == "Victor":
+                            ready_for_gene = False
+                    this_week_status = Weekly_Approvals.objects.latest('id')
+                    if ready_for_victor == True:
+                        if this_week_status.victor_email_sent == False:
+                            try:
+                                message = "Subcontractor Invoices are Ready for Victor Approval. There are " + str(late_invoices_remaining) + " Late Invoices that still need approval!"
 
-                        this_week_status.victor_email_sent = True
-                        this_week_status.save()
-                if ready_for_gene == True:
-                    if this_week_status.gene_email_sent == False:
-                        try:
-                            Email.sendEmail("Invoices Ready For Approval",
-                                            "Subcontractor Invoices are Ready for Gene Approval",
-                                            ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
-                                             'admin2@gerloffpainting.com', 'gene@gerloffpainting.com'], False)
-                            success = True
-                        except:
-                            success = False
-                        this_week_status.gene_email_sent = True
-                        this_week_status.save()
+                                Email.sendEmail("Invoices Ready For Approval",
+                                                message,
+                                                ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
+                                                 'admin2@gerloffpainting.com', 'victor@gerloffpainting.com'], False)
+                                success = True
+                                this_week_status.victor_email_sent = True
+                                this_week_status.save()
+                            except:
+                                success = False
+                    if ready_for_gene == True:
+                        if this_week_status.gene_email_sent == False:
+                            try:
+                                message = "Subcontractor Invoices are Ready for Gene Approval. There are " + str(late_invoices_remaining) + " Late Invoices that still need approval!"
+                                Email.sendEmail("Invoices Ready For Approval",
+                                                message,
+                                                ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
+                                                 'admin2@gerloffpainting.com', 'gene@gerloffpainting.com'], False)
+                                this_week_status.gene_email_sent = True
+                                this_week_status.save()
+                                success = True
+                            except:
+                                success = False
+                            this_week_status.gene_email_sent = True
+                            this_week_status.save()
+                else:
+                    try:
+                        Email.sendEmail("All Invoices are Approved",
+                                        "All Invoices that were turned in on time, are approved",
+                                        ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
+                                         'admin2@gerloffpainting.com', 'gene@gerloffpainting.com', 'victor@gerloffpainting.com'], False)
+                        success = True
+                    except:
+                        success = False
             else:
-                try:
-                    Email.sendEmail("All Invoices are Approved",
-                                    "All Invoices that were turned in on time, are approved",
-                                    ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
-                                     'admin2@gerloffpainting.com', 'gene@gerloffpainting.com', 'victor@gerloffpainting.com'], False)
-                    success = True
-                except:
-                    success = False
+                ready_for_victor = True
+                ready_for_gene = True
+                if InvoiceApprovals.objects.filter(is_approved=False).exists():
+                    for x in InvoiceApprovals.objects.filter(is_approved=False):
+                        if x.employee.job_title.description == "Superintendent" and x.employee.first_name != "Victor":
+                            ready_for_victor = False
+                            ready_for_gene = False
+                        if x.employee.first_name == "Victor":
+                            ready_for_gene = False
+                    this_week_status = Weekly_Approvals.objects.latest('id')
+                    if ready_for_victor:
+                        if this_week_status.victor_email_sent:
+                            try:
+                                message = "Late Invoices are Ready for Victor Approval."
+                                Email.sendEmail("Invoices Ready For Approval",
+                                                message,
+                                                ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
+                                                 'admin2@gerloffpainting.com', 'victor@gerloffpainting.com'], False)
+                                success = True
+                            except:
+                                success = False
+                    if ready_for_gene:
+                        if this_week_status.gene_email_sent:
+                            try:
+                                message = "Late Invoices are Ready for Gene Approval."
+                                Email.sendEmail("Invoices Ready For Approval",
+                                                message,
+                                                ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
+                                                 'admin2@gerloffpainting.com', 'gene@gerloffpainting.com'], False)
+                                success = True
+                            except:
+                                success = False
+                            this_week_status.gene_email_sent = True
+                            this_week_status.save()
+                else:
+                    try:
+                        Email.sendEmail("All Invoices are Approved",
+                                        "All Invoices, including late invoices, are approved",
+                                        ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
+                                         'admin2@gerloffpainting.com', 'gene@gerloffpainting.com',
+                                         'victor@gerloffpainting.com'], False)
+                        success = True
+                    except:
+                        success = False
             if 'reject_notes' in request.POST:
                 email_body = selected_invoice.subcontract.subcontractor.company + " invoice for " + selected_invoice.subcontract.job_number.job_name + " has been rejected by " + current_employee.first_name + ". " + \
                              request.POST['reject_notes']
