@@ -999,7 +999,8 @@ def subcontracts_home(request):
             return redirect('job_page', jobnumber=request.POST['job_number'])
     subcontracts = []
     for x in Subcontracts.objects.filter(is_closed=False):  # str(format(x.percent_complete(),".0%"))
-        subcontracts.append({'job_name': x.job_number.job_name, 'job_number': x.job_number.job_number,
+        change_orders = SubcontractItems.objects.filter(subcontract=x, is_approved=False).count()
+        subcontracts.append({'labor_done':x.job_number.is_labor_done,'change_orders':change_orders,'job_name': x.job_number.job_name, 'job_number': x.job_number.job_number,
                              'subcontractor': x.subcontractor.company, 'subcontractor_id': x.subcontractor.id,
                              'po_number': x.po_number, 'id': x.id, 'retainage': x.total_retainage(),
                              'percent_complete': format(x.percent_complete(), ".0%")})

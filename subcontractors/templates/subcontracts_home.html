@@ -253,6 +253,8 @@ function populate_contact_info(subcontractor_id){
             <th>PO#</th>
             <th>%</th>
             <th>Ret.</th>
+            <th>COs</th>
+            <th>Labor Done?</th>
         </tr>
         </thead>
         <tbody>
@@ -267,6 +269,12 @@ function populate_contact_info(subcontractor_id){
             {% endif %}
             <td>{{x.percent_complete}}</td>
             <td>${{x.retainage}}</td>
+            <td>{{x.change_orders}}</td>
+            {% if x.labor_done %}
+            <td>Yes</td>
+            {% else %}
+            <td></td>
+            {% endif %}
         </tr>
         {% endfor %}
         </tbody>
