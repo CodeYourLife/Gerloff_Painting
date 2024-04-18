@@ -336,7 +336,6 @@ def subcontract_invoices(request, subcontract_id, item_id):
             for x in SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice):
                 invoicetotal = invoicetotal + x.total_cost()
             selected_invoice.final_amount = invoicetotal
-
         if ('approved' in request.POST) or ('approved_with_changes' in request.POST) or (
                 'reject_notes' in request.POST):
             approved = True
@@ -363,7 +362,6 @@ def subcontract_invoices(request, subcontract_id, item_id):
             if approved == True:
                 selected_invoice.is_sent = True
                 email_body = selected_invoice.subcontract.subcontractor.company + " invoice for " + selected_invoice.subcontract.job_number.job_name + " has been approved."
-
                 try:
                     Email.sendEmail("Invoice Approved", email_body,
                                     ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
@@ -486,7 +484,6 @@ def subcontract_invoices(request, subcontract_id, item_id):
                     success = True
                 except:
                     success = False
-
         selected_invoice.save()
         # make notes below
         if 'approved' in request.POST or 'approved_with_changes' in request.POST or 'reject_notes' in request.POST or 'editing_now' in request.POST:  # make note
@@ -506,6 +503,14 @@ def subcontract_invoices(request, subcontract_id, item_id):
                                             user=current_employee,
                                             note=note,
                                             invoice=selected_invoice)
+            if 'approved_with_changes' in request.POST:
+                try:
+                    Email.sendEmail("Invoice CHanged", note,
+                                    ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
+                                     'bridgette@gerloffpainting.com'], False)
+                    success = True
+                except:
+                    success = False
     # build the HTML page
     if item_id == 'ALL':
         invoices = SubcontractorInvoice.objects.filter(subcontract=subcontract)
