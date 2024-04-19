@@ -392,33 +392,36 @@ def subcontract_invoices(request, subcontract_id, item_id):
                     this_week_status = Weekly_Approvals.objects.latest('id')
                     if ready_for_victor == True:
                         if this_week_status.victor_email_sent == False:
-                            try:
-                                message = "Subcontractor Invoices are Ready for Victor Approval. There are " + str(late_invoices_remaining) + " Late Invoices that still need approval!"
+                            if InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday, employee__first_name = "Victor" ).exists():
+                                try:
+                                    message = "Subcontractor Invoices are Ready for Victor Approval. There are " + str(late_invoices_remaining) + " Late Invoices that still need approval!"
 
-                                Email.sendEmail("Invoices Ready For Approval",
-                                                message,
-                                                ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
-                                                 'admin2@gerloffpainting.com', 'victor@gerloffpainting.com'], False)
-                                success = True
-                                this_week_status.victor_email_sent = True
-                                this_week_status.save()
-                            except:
-                                success = False
+                                    Email.sendEmail("Invoices Ready For Approval",
+                                                    message,
+                                                    ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
+                                                     'admin2@gerloffpainting.com', 'victor@gerloffpainting.com'], False)
+                                    success = True
+                                    this_week_status.victor_email_sent = True
+                                    this_week_status.save()
+                                except:
+                                    success = False
                     if ready_for_gene == True:
                         if this_week_status.gene_email_sent == False:
-                            try:
-                                message = "Subcontractor Invoices are Ready for Gene Approval. There are " + str(late_invoices_remaining) + " Late Invoices that still need approval!"
-                                Email.sendEmail("Invoices Ready For Approval",
-                                                message,
-                                                ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
-                                                 'admin2@gerloffpainting.com', 'gene@gerloffpainting.com'], False)
+                            if InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday,
+                                                               employee__first_name="Gene").exists():
+                                try:
+                                    message = "Subcontractor Invoices are Ready for Gene Approval. There are " + str(late_invoices_remaining) + " Late Invoices that still need approval!"
+                                    Email.sendEmail("Invoices Ready For Approval",
+                                                    message,
+                                                    ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
+                                                     'admin2@gerloffpainting.com', 'gene@gerloffpainting.com'], False)
+                                    this_week_status.gene_email_sent = True
+                                    this_week_status.save()
+                                    success = True
+                                except:
+                                    success = False
                                 this_week_status.gene_email_sent = True
                                 this_week_status.save()
-                                success = True
-                            except:
-                                success = False
-                            this_week_status.gene_email_sent = True
-                            this_week_status.save()
                 else:
                     try:
                         Email.sendEmail("All Invoices are Approved",
@@ -441,28 +444,32 @@ def subcontract_invoices(request, subcontract_id, item_id):
                     this_week_status = Weekly_Approvals.objects.latest('id')
                     if ready_for_victor:
                         if this_week_status.victor_email_sent:
-                            try:
-                                message = "Late Invoices are Ready for Victor Approval."
-                                Email.sendEmail("Invoices Ready For Approval",
-                                                message,
-                                                ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
-                                                 'admin2@gerloffpainting.com', 'victor@gerloffpainting.com'], False)
-                                success = True
-                            except:
-                                success = False
+                            if InvoiceApprovals.objects.filter(is_approved=False,
+                                                               employee__first_name="Victor").exists():
+                                try:
+                                    message = "Late Invoices are Ready for Victor Approval."
+                                    Email.sendEmail("Invoices Ready For Approval",
+                                                    message,
+                                                    ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
+                                                     'admin2@gerloffpainting.com', 'victor@gerloffpainting.com'], False)
+                                    success = True
+                                except:
+                                    success = False
                     if ready_for_gene:
                         if this_week_status.gene_email_sent:
-                            try:
-                                message = "Late Invoices are Ready for Gene Approval."
-                                Email.sendEmail("Invoices Ready For Approval",
-                                                message,
-                                                ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
-                                                 'admin2@gerloffpainting.com', 'gene@gerloffpainting.com'], False)
-                                success = True
-                            except:
-                                success = False
-                            this_week_status.gene_email_sent = True
-                            this_week_status.save()
+                            if InvoiceApprovals.objects.filter(is_approved=False,
+                                                               employee__first_name="Gene").exists():
+                                try:
+                                    message = "Late Invoices are Ready for Gene Approval."
+                                    Email.sendEmail("Invoices Ready For Approval",
+                                                    message,
+                                                    ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
+                                                     'admin2@gerloffpainting.com', 'gene@gerloffpainting.com'], False)
+                                    success = True
+                                except:
+                                    success = False
+                                this_week_status.gene_email_sent = True
+                                this_week_status.save()
                 else:
                     try:
                         Email.sendEmail("All Invoices are Approved",
