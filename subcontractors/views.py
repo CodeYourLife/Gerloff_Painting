@@ -392,6 +392,7 @@ def subcontract_invoices(request, subcontract_id, item_id):
                     this_week_status = Weekly_Approvals.objects.latest('id')
                     if ready_for_victor == True:
                         if this_week_status.victor_email_sent == False:
+
                             if InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday, employee__first_name = "Victor" ).exists():
                                 try:
                                     message = "Subcontractor Invoices are Ready for Victor Approval. There are " + str(late_invoices_remaining) + " Late Invoices that still need approval!"
@@ -422,6 +423,7 @@ def subcontract_invoices(request, subcontract_id, item_id):
                                     success = False
                                 this_week_status.gene_email_sent = True
                                 this_week_status.save()
+
                 else:
                     try:
                         Email.sendEmail("All Invoices are Approved",
@@ -444,6 +446,7 @@ def subcontract_invoices(request, subcontract_id, item_id):
                     this_week_status = Weekly_Approvals.objects.latest('id')
                     if ready_for_victor:
                         if this_week_status.victor_email_sent:
+
                             if InvoiceApprovals.objects.filter(is_approved=False,
                                                                employee__first_name="Victor").exists():
                                 try:
@@ -470,6 +473,7 @@ def subcontract_invoices(request, subcontract_id, item_id):
                                     success = False
                                 this_week_status.gene_email_sent = True
                                 this_week_status.save()
+
                 else:
                     try:
                         Email.sendEmail("All Invoices are Approved",
