@@ -763,6 +763,7 @@ function add_note2(){
 				<th>Invoice #</th>
 				<th>Amount</th>
 				<th>Retainage</th>
+                <th>Total Pay</th>
 				<th>Status</th>
 			</tr>
 			</thead>
@@ -770,11 +771,16 @@ function add_note2(){
 			{% if invoices %}
 			{% for x in invoices %}
 			<tr>
-			<td>{{x.date}}</td>
-			<td><a href = "{% url 'subcontract_invoices' subcontract.id x.id %}">{{x.pay_app_number}}</a></td>
-			<td>{{x.final_amount}}</td>
-			<td>{{x.retainage}}</td>
-			{% if x.is_sent == True %}
+			<td>{{x.invoice.date}}</td>
+			<td><a href = "{% url 'subcontract_invoices' subcontract.id x.invoice.id %}">{{x.invoice.pay_app_number}}</a></td>
+			<td>{{x.invoice.final_amount}}</td>
+            {% if x.retainage_positive %}
+				<td>-${{x.invoice.retainage}}</td>
+            {% else %}
+				<td>${{x.invoice.retainage}}</td>
+            {% endif %}
+			<td>${{x.total_pay_amount}}</td>
+			{% if x.invoice.is_sent == True %}
 				<td>Approved</td>
 			{% else %}
 				<td>Pending</td>

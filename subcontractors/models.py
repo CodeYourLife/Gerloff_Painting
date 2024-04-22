@@ -3,6 +3,7 @@ from jobs.models import *
 from wallcovering.models import Wallcovering
 import employees.models
 from datetime import date
+import datetime
 
 
 class Subcontractors(models.Model):
@@ -65,6 +66,54 @@ class Subcontracts(models.Model):
     def __str__(self):
         return f"{self.subcontractor} {self.job_number}"
 
+    def original_request(self):
+        today = datetime.date.today()
+        this_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4)
+        last_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4) - datetime.timedelta(days=7)
+        if today.weekday() > 4:
+            this_friday += datetime.timedelta(days=7)
+            last_friday += datetime.timedelta(days=7)
+        total = 0
+        for x in SubcontractorInvoice.objects.filter(subcontract=self, date__gt=last_friday, date__lte=this_friday):
+            total += x.original_amount
+        return total
+
+    def amount_this_week(self):
+        today = datetime.date.today()
+        this_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4)
+        last_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4) - datetime.timedelta(days=7)
+        if today.weekday() > 4:
+            this_friday += datetime.timedelta(days=7)
+            last_friday += datetime.timedelta(days=7)
+        total = 0
+        for x in SubcontractorInvoice.objects.filter(subcontract=self, date__gt=last_friday, date__lte=this_friday, is_sent=True):
+            total += x.final_amount
+        return total
+
+    def retainage_this_week(self):
+        today = datetime.date.today()
+        this_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4)
+        last_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4) - datetime.timedelta(days=7)
+        if today.weekday() > 4:
+            this_friday += datetime.timedelta(days=7)
+            last_friday += datetime.timedelta(days=7)
+        total = 0
+        for x in SubcontractorInvoice.objects.filter(subcontract=self, date__gt=last_friday, date__lte=this_friday, is_sent=True):
+            total += x.retainage
+        return total
+
+    def pay_amount_this_week(self):
+        today = datetime.date.today()
+        this_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4)
+        last_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4) - datetime.timedelta(days=7)
+        if today.weekday() > 4:
+            this_friday += datetime.timedelta(days=7)
+            last_friday += datetime.timedelta(days=7)
+        total = 0
+        for x in SubcontractorInvoice.objects.filter(subcontract=self, date__gt=last_friday, date__lte=this_friday, is_sent=True):
+            total += x.final_amount - x.retainage
+        return total
+
     def total_pending_amount(self):
         total = 0
         for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=False):
@@ -77,9 +126,27 @@ class Subcontracts(models.Model):
             total = total + x.final_amount
         return total
 
+    def total_paid(self):
+        total = 0
+        for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=True):
+            total += x.final_amount - x.retainage
+        return total
+
+    def total_billed_prior(self):
+        total = 0
+        for x in SubcontractorInvoice.objects.filter(subcontract=self, processed=True):
+            total = total + x.final_amount
+        return total
+
     def total_retainage(self):
         total = 0
         for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=True):
+            total = total + x.retainage
+        return total
+
+    def total_retainage_prior(self):
+        total = 0
+        for x in SubcontractorInvoice.objects.filter(subcontract=self, processed=True):
             total = total + x.retainage
         return total
 
@@ -206,7 +273,12 @@ class SubcontractorInvoice(models.Model):
         null=True, max_length=2000, blank=True)  # DONT USE
     payment = models.ForeignKey(
         SubcontractorPayments, on_delete=models.PROTECT, related_name="invoice2",null=True, blank=True)
-
+    release_retainage = models.DecimalField(max_digits=10, decimal_places=2,null=True, blank=True)
+    is_release_retainage = models.BooleanField(default=False)
+    retainage_note = models.CharField(
+        null=True, max_length=2000, blank=True)
+    original_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True)
     def __str__(self):
         return f"{self.subcontract} {self.pay_app_number}"
 
@@ -248,6 +320,16 @@ class SubcontractorOriginalInvoiceItem(models.Model):
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
     notes = models.CharField(null=True, max_length=2000, blank=True)
 
+    def __str__(self):
+        return f"{self.invoice} {self.sov_item}"
+
+    def total_cost(self):
+        totalcost = 0
+        if self.sov_item.SOV_is_lump_sum == False:
+            totalcost = self.quantity * self.sov_item.SOV_rate
+        else:
+            totalcost = self.quantity
+        return totalcost
 
 class SubcontractNotes(models.Model):
     id = models.BigAutoField(primary_key=True)
