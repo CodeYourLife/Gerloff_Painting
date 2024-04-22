@@ -243,30 +243,56 @@ function populate_contact_info(subcontractor_id){
     <input type="hidden" name="job_number" id="job_number" />
     {% csrf_token %}
 </form>
-
+    <b>Showing Invoice Information for {{last_saturday}} - {{this_friday}}</b>
+    <br>
 <div class="table-responsive">
     <table id="sub_table" class="display">
         <thead>
         <tr>
-            <th>Job</th>
-            <th>Subcontractor</th>
-            <th>PO#</th>
+            <th>Subcontract</th>
+<!--            <th>Subcontractor</th>-->
+<!--            <th>PO#</th>-->
+            <th>Total</th>
+			<th style="background-color:hsl(114, 100%, 90%)">Invoice</th>
+			<th style="background-color:hsl(114, 100%, 90%)">Approved</th>
+			<th style="background-color:hsl(114, 100%, 90%)">Retain</th>
+            <th style="background-color:hsl(114, 100%, 90%)">Paid</th>
+			<th style="background-color:hsla(69, 100%, 92%)" >Prev Billed</th>
+			<th style="background-color:hsla(69, 100%, 92%)">Prev Retain</th>
+			<th>Paid To Date</th>
             <th>%</th>
             <th>Ret.</th>
             <th>COs</th>
-            <th>Labor Done?</th>
+            <th>Job Done?</th>
         </tr>
         </thead>
         <tbody>
         {% for x in subcontracts %}
         <tr>
-            <td onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_name}}</a></td>
-            <td style="white-space:nowrap" data-toggle="modal" data-target="#show_contact_info-modal" onclick="populate_contact_info('{{x.subcontractor_id}}')"><a href="#">{{x.subcontractor}}</td>
             {% if x.po_number %}
-            <td onclick="go_to_subcontract('{{x.id}}')" ><a href="#">{{x.po_number}}</a></td>
+            <td onclick="go_to_subcontract('{{x.id}}')" ><a href="#"><b>{{x.subcontractor}}</b> - {{x.job_name}} - {{x.po_number}}</a></td>
             {% else %}
-            <td onclick="go_to_subcontract('{{x.id}}')" ><a href="#">GoTo PO</a></td>
+            <td onclick="go_to_subcontract('{{x.id}}')" ><a href="#"><b>{{x.subcontractor}}</b> - {{x.job_name}} - No PO #</a></td>
             {% endif %}
+<!--            <td onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_name}}</a></td>-->
+<!--            <td style="white-space:nowrap" data-toggle="modal" data-target="#show_contact_info-modal" onclick="populate_contact_info('{{x.subcontractor_id}}')"><a href="#">{{x.subcontractor}}</td>-->
+<!--            {% if x.po_number %}-->
+<!--            <td onclick="go_to_subcontract('{{x.id}}')" ><a href="#">{{x.po_number}}</a></td>-->
+<!--            {% else %}-->
+<!--            <td onclick="go_to_subcontract('{{x.id}}')" ><a href="#">GoTo PO</a></td>-->
+<!--            {% endif %}-->
+                        <td>{{x.total_contract_amount}}</td>
+			<td style="background-color:hsl(114, 100%, 90%)">{{x.billed_this_week}}</td>
+			<td style="background-color:hsl(114, 100%, 90%)">{{x.approved_this_week}}</td>
+			{% if retainage_negative %}
+			<td style="background-color:hsl(114, 100%, 90%)">{{x.retainage_this_week}}</td>
+			{% else %}
+			<td style="background-color:hsl(114, 100%, 90%)">-{{x.retainage_this_week}}</td>
+			{% endif %}
+			<td style="background-color:hsl(114, 100%, 90%)">{{x.pay_amount_this_week}}</td>
+			<td style="background-color:hsla(69, 100%, 92%)">{{x.total_billed_prior}}</td>
+			<td style="background-color:hsla(69, 100%, 92%)">-{{x.total_retainage_prior}}</td>
+			<td>{{x.total_paid}}</td>
             <td>{{x.percent_complete}}</td>
             <td>${{x.retainage}}</td>
             <td>{{x.change_orders}}</td>

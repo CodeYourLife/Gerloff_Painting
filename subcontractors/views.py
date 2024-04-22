@@ -27,27 +27,64 @@ def portal(request, sub_id, contract_id):
     send_data['selected_sub'] = selected_sub
     subcontracts = []
     if contract_id == 'ALL':
+        today = datetime.date.today()
+        this_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4)
+        last_saturday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(
+            days=4) - datetime.timedelta(days=6)
+        if today.weekday() > 4:
+            this_friday += datetime.timedelta(days=7)
+            last_saturday += datetime.timedelta(days=7)
+        send_data['this_friday'] = this_friday
+        send_data['last_saturday'] = last_saturday
         for x in Subcontracts.objects.filter(is_closed=False,
                                              subcontractor=selected_sub):
             total_contract_amount = "$" + f"{int(x.total_contract_amount()):,d}"
             total_billed = "$" + f"{int(x.total_billed()):,d}"
-            subcontracts.append({'invoice_ready': x.invoice_ready(), 'invoice_pending': x.invoice_pending(),
+            #
+            total_paid ="$" + f"{int(x.total_paid()):,d}"
+            pay_amount_this_week="$" + f"{int(x.pay_amount_this_week()):,d}"
+            retainage_this_week="$" + f"{int(x.retainage_this_week()):,d}"
+            approved_this_week="$" + f"{int(x.amount_this_week()):,d}"
+            billed_this_week="$" + f"{int(x.original_request()):,d}"
+            total_retainage_prior="$" + f"{int(x.total_retainage_prior()):,d}"
+            total_billed_prior="$" + f"{int(x.total_billed_prior()):,d}"
+
+
+            retainage_negative = False
+            if float(x.retainage_this_week()) < 0:
+                retainage_negative = True
+            print(x.pay_amount_this_week())
+            subcontracts.append({'total_paid': total_paid, 'pay_amount_this_week': pay_amount_this_week,
+                                 'retainage_negative': retainage_negative,
+                                 'retainage_this_week': retainage_this_week,
+                                 'approved_this_week': approved_this_week, 'billed_this_week': billed_this_week,
+                                 'total_retainage_prior': total_retainage_prior,
+                                 'total_billed_prior': total_billed_prior, 'invoice_ready': x.invoice_ready(),
+                                 'invoice_pending': x.invoice_pending(),
                                  'job_name': x.job_number.job_name,
                                  'job_number': x.job_number.job_number,
                                  'subcontractor': x.subcontractor.company, 'subcontractor_id': x.subcontractor.id,
                                  'po_number': x.po_number, 'id': x.id,
                                  'percent_complete': format(x.percent_complete(), ".0%"),
                                  'total_contract_amount': total_contract_amount, 'total_billed': total_billed})
+        print(subcontracts)
         send_data['subcontracts'] = subcontracts
     else:
         selected_contract = Subcontracts.objects.get(id=contract_id)
         if SubcontractorInvoice.objects.filter(subcontract=selected_contract, is_sent=False).exists():
             send_data['pending_invoices_exist'] = True
         send_data['selected_contract'] = selected_contract
-        send_data['invoices'] = SubcontractorInvoice.objects.filter(subcontract=selected_contract)
+        invoices=[]
+        for x in SubcontractorInvoice.objects.filter(subcontract=selected_contract):
+            if x.retainage > 0:
+                retainage_positive=True
+            else:
+                retainage_positive=False
+            invoices.append({'invoice':x, 'total_pay_amount': x.final_amount - x.retainage,'retainage_positive':retainage_positive})
+        send_data['invoices'] = invoices
         items = []
         number_items = 0
-        for x in SubcontractItems.objects.filter(subcontract=selected_contract):
+        for x in SubcontractItems.objects.filter(subcontract=selected_contract).order_by('id'):
             number_items = number_items + 1
             totalcost = float(x.total_cost())
             totalbilled = float(x.total_billed())
@@ -174,6 +211,7 @@ def subcontractor_invoice_new(request, subcontract_id):
             for x in SubcontractorInvoiceItem.objects.filter(invoice=invoice):
                 invoice_total += x.total_cost()
             invoice.final_amount = invoice_total
+            invoice.original_amount = invoice_total
             if subcontract.is_retainage == True:
                 invoice.retainage = invoice_total * subcontract.retainage_percentage
             else:
@@ -198,7 +236,7 @@ def portal_invoice_new(request, subcontract_id):
     if today.weekday() == 4 or today.weekday() == 3 or today.weekday() == 2: friday = friday + timedelta(7)
     subcontract = Subcontracts.objects.get(id=subcontract_id)
     items = []
-    for x in SubcontractItems.objects.filter(subcontract=subcontract):
+    for x in SubcontractItems.objects.filter(subcontract=subcontract).order_by('id'):
         totalcost = float(x.total_cost())
         totalbilled = float(x.total_billed())
         totalordered = float(x.SOV_total_ordered)
@@ -254,6 +292,7 @@ def portal_invoice_new(request, subcontract_id):
             for x in SubcontractorInvoiceItem.objects.filter(invoice=invoice):
                 invoice_total += x.total_cost()
             invoice.final_amount = invoice_total
+            invoice.original_amount = invoice_total
             if subcontract.is_retainage == True:
                 invoice.retainage = invoice_total * subcontract.retainage_percentage
             else:
@@ -304,14 +343,18 @@ def subcontract_invoices(request, subcontract_id, item_id):
                                             note=request.POST['invoice_notes'], invoice=selected_invoice)
         if 'change_notes' in request.POST:  # could be approved with changes or editing invoice
             note2 = ""
-            if selected_invoice.retainage != request.POST['this_retainage']:
-                note2 += "Retainage changed from " + str(selected_invoice.retainage) + " to " + str(request.POST['this_retainage']) + ". "
+            if 'retainage_adjust' in request.POST:
+                selected_invoice.is_release_retainage = True
+                selected_invoice.release_retainage = request.POST['retainage_adjust']
+                selected_invoice.retainage_note = request.POST['retainage_note']
+                note2 += "Retainage changed from " + str(selected_invoice.retainage) + " to " + str(
+                    request.POST['this_retainage']) + ". " + request.POST['retainage_note'] + ". "
             selected_invoice.retainage = request.POST['this_retainage']
             for x in SubcontractItems.objects.filter(subcontract=subcontract):
                 if request.POST['quantity' + str(x.id)] != '':
                     if SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice, sov_item=x).exists():
                         item = SubcontractorInvoiceItem.objects.get(invoice=selected_invoice, sov_item=x)
-                        if item.quantity != request.POST['quantity' + str(x.id)]:
+                        if float(item.quantity) != float(request.POST['quantity' + str(x.id)]):
                             note2 += x.SOV_description + "- changed from " + str(item.quantity) + " to " + str(
                                 request.POST['quantity' + str(x.id)]) + ". "
                         item.quantity = request.POST['quantity' + str(x.id)]
@@ -378,9 +421,11 @@ def subcontract_invoices(request, subcontract_id, item_id):
             late_invoices_ready_for_gene = True
             late_invoices_remaining = 0
             if InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__gt=this_friday).exists():
-                current_invoices_remaining = InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__gt=this_friday).count()
+                current_invoices_remaining = InvoiceApprovals.objects.filter(is_approved=False,
+                                                                             invoice__pay_date__gt=this_friday).count()
             if InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday).exists():
-                current_invoices_remaining = InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday).count()
+                current_invoices_remaining = InvoiceApprovals.objects.filter(is_approved=False,
+                                                                             invoice__pay_date__lte=this_friday).count()
             if selected_invoice.pay_date == this_friday:
                 if InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday).exists():
                     for x in InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday):
@@ -393,14 +438,17 @@ def subcontract_invoices(request, subcontract_id, item_id):
                     if ready_for_victor == True:
                         if this_week_status.victor_email_sent == False:
 
-                            if InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday, employee__first_name = "Victor" ).exists():
+                            if InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday,
+                                                               employee__first_name="Victor").exists():
                                 try:
-                                    message = "Subcontractor Invoices are Ready for Victor Approval. There are " + str(late_invoices_remaining) + " Late Invoices that still need approval!"
+                                    message = "Subcontractor Invoices are Ready for Victor Approval. There are " + str(
+                                        late_invoices_remaining) + " Late Invoices that still need approval!"
 
                                     Email.sendEmail("Invoices Ready For Approval",
                                                     message,
                                                     ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
-                                                     'admin2@gerloffpainting.com', 'victor@gerloffpainting.com'], False)
+                                                     'admin2@gerloffpainting.com', 'victor@gerloffpainting.com'],
+                                                    False)
                                     success = True
                                     this_week_status.victor_email_sent = True
                                     this_week_status.save()
@@ -411,11 +459,13 @@ def subcontract_invoices(request, subcontract_id, item_id):
                             if InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday,
                                                                employee__first_name="Gene").exists():
                                 try:
-                                    message = "Subcontractor Invoices are Ready for Gene Approval. There are " + str(late_invoices_remaining) + " Late Invoices that still need approval!"
+                                    message = "Subcontractor Invoices are Ready for Gene Approval. There are " + str(
+                                        late_invoices_remaining) + " Late Invoices that still need approval!"
                                     Email.sendEmail("Invoices Ready For Approval",
                                                     message,
                                                     ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
-                                                     'admin2@gerloffpainting.com', 'gene@gerloffpainting.com'], False)
+                                                     'admin2@gerloffpainting.com', 'gene@gerloffpainting.com'],
+                                                    False)
                                     this_week_status.gene_email_sent = True
                                     this_week_status.save()
                                     success = True
@@ -429,7 +479,8 @@ def subcontract_invoices(request, subcontract_id, item_id):
                         Email.sendEmail("All Invoices are Approved",
                                         "All Invoices that were turned in on time, are approved",
                                         ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
-                                         'admin2@gerloffpainting.com', 'gene@gerloffpainting.com', 'victor@gerloffpainting.com'], False)
+                                         'admin2@gerloffpainting.com', 'gene@gerloffpainting.com',
+                                         'victor@gerloffpainting.com'], False)
                         success = True
                     except:
                         success = False
@@ -454,7 +505,8 @@ def subcontract_invoices(request, subcontract_id, item_id):
                                     Email.sendEmail("Invoices Ready For Approval",
                                                     message,
                                                     ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
-                                                     'admin2@gerloffpainting.com', 'victor@gerloffpainting.com'], False)
+                                                     'admin2@gerloffpainting.com', 'victor@gerloffpainting.com'],
+                                                    False)
                                     success = True
                                 except:
                                     success = False
@@ -467,7 +519,8 @@ def subcontract_invoices(request, subcontract_id, item_id):
                                     Email.sendEmail("Invoices Ready For Approval",
                                                     message,
                                                     ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
-                                                     'admin2@gerloffpainting.com', 'gene@gerloffpainting.com'], False)
+                                                     'admin2@gerloffpainting.com', 'gene@gerloffpainting.com'],
+                                                    False)
                                     success = True
                                 except:
                                     success = False
@@ -516,7 +569,7 @@ def subcontract_invoices(request, subcontract_id, item_id):
                                             invoice=selected_invoice)
             if 'approved_with_changes' in request.POST:
                 try:
-                    Email.sendEmail("Invoice CHanged", note,
+                    Email.sendEmail("Invoice Changed", note,
                                     ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
                                      'bridgette@gerloffpainting.com'], False)
                     success = True
@@ -589,7 +642,6 @@ def subcontract_invoices(request, subcontract_id, item_id):
 
 @login_required(login_url='/accounts/login')
 def subcontractor_home(request):
-
     # for x in Subcontracts.objects.filter(is_closed=False):
     #     ready_to_close = True
     #     if int(x.total_contract_amount()) == int(0):
@@ -634,7 +686,8 @@ def subcontractor_home(request):
             this_week_status.save()
             if super_approvals_needed == 0:
                 email_body = "Victor, the Subcontractor Invoices are Ready for Your Approval!"
-                recipients = ["victor@gerloffpainting.com", "joe@gerloffpainting.com", "bridgette@gerloffpainting.com", "admin2@gerloffpainting.com"]
+                recipients = ["victor@gerloffpainting.com", "joe@gerloffpainting.com",
+                              "bridgette@gerloffpainting.com", "admin2@gerloffpainting.com"]
                 try:
                     Email.sendEmail("Invoice Approval Required", email_body, recipients, False)
                     send_data['success'] = True
@@ -643,7 +696,8 @@ def subcontractor_home(request):
             else:
                 for x in approval_counts_two:
                     if x.job_title.description == "Superintendent" and x.first_name != "Victor":
-                        recipients = ["joe@gerloffpainting.com", "bridgette@gerloffpainting.com", "admin2@gerloffpainting.com"]
+                        recipients = ["joe@gerloffpainting.com", "bridgette@gerloffpainting.com",
+                                      "admin2@gerloffpainting.com"]
                         if x.email:
                             recipients.append(x.email)
                             email_body = "You have " + str(
@@ -752,7 +806,16 @@ def subcontractor_home(request):
 def subcontract(request, id):
     send_data = {}
     subcontract = Subcontracts.objects.get(id=id)
-    send_data['invoices'] = SubcontractorInvoice.objects.filter(subcontract=subcontract).order_by('id')
+    invoices = []
+    for x in SubcontractorInvoice.objects.filter(subcontract=subcontract).order_by('id'):
+        if x.retainage > 0:
+            retainage_positive = True
+        else:
+            retainage_positive = False
+        invoices.append(
+            {'invoice': x, 'total_pay_amount': x.final_amount - x.retainage, 'retainage_positive': retainage_positive})
+    send_data['invoices'] = invoices
+    # send_data['invoices'] = SubcontractorInvoice.objects.filter(subcontract=subcontract).order_by('id')
     items = []
     number_items = 0
     for x in SubcontractItems.objects.filter(subcontract=subcontract).order_by('id'):
@@ -804,7 +867,8 @@ def subcontract(request, id):
             invoice = SubcontractorInvoice.objects.create(date=date.today(), pay_app_number=next_number,
                                                           subcontract=subcontract, pay_date=friday, final_amount=0,
                                                           retainage=0 - float(request.POST['retainage_released']),
-                                                          notes=request.POST['new_note'])
+                                                          notes=request.POST['new_note'], release_retainage=0 - float(
+                    request.POST['retainage_released']), is_release_retainage=True, original_amount=0)
             SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
                                             user=Employees.objects.get(user=request.user),
                                             note="Retainage released- " + request.POST['new_note'],
@@ -1008,6 +1072,16 @@ def subcontracts_new(request):
 
 @login_required(login_url='/accounts/login')
 def subcontracts_home(request):
+    send_data = {}
+    today = datetime.date.today()
+    this_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4)
+    last_saturday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(
+        days=4) - datetime.timedelta(days=6)
+    if today.weekday() > 4:
+        this_friday += datetime.timedelta(days=7)
+        last_saturday += datetime.timedelta(days=7)
+    send_data['this_friday'] = this_friday
+    send_data['last_saturday'] = last_saturday
     if request.method == 'POST':
         if request.POST['subcontract_id'] != "":
             return redirect('subcontract', id=request.POST['subcontract_id'])
@@ -1015,12 +1089,32 @@ def subcontracts_home(request):
             return redirect('job_page', jobnumber=request.POST['job_number'])
     subcontracts = []
     for x in Subcontracts.objects.filter(is_closed=False):  # str(format(x.percent_complete(),".0%"))
+        total_contract_amount = "$" + f"{int(x.total_contract_amount()):,d}"
+        total_billed = "$" + f"{int(x.total_billed()):,d}"
+        #
+        total_paid = "$" + f"{int(x.total_paid()):,d}"
+        pay_amount_this_week = "$" + f"{int(x.pay_amount_this_week()):,d}"
+        retainage_this_week = "$" + f"{int(x.retainage_this_week()):,d}"
+        approved_this_week = "$" + f"{int(x.amount_this_week()):,d}"
+        billed_this_week = "$" + f"{int(x.original_request()):,d}"
+        total_retainage_prior = "$" + f"{int(x.total_retainage_prior()):,d}"
+        total_billed_prior = "$" + f"{int(x.total_billed_prior()):,d}"
+        retainage_negative = False
+        if float(x.retainage_this_week()) < 0:
+            retainage_negative = True
         change_orders = SubcontractItems.objects.filter(subcontract=x, is_approved=False).count()
-        subcontracts.append({'labor_done':x.job_number.is_labor_done,'change_orders':change_orders,'job_name': x.job_number.job_name, 'job_number': x.job_number.job_number,
+        subcontracts.append({'total_contract_amount': total_contract_amount, 'total_billed': total_billed,'total_paid': total_paid, 'pay_amount_this_week': pay_amount_this_week,
+                             'retainage_negative': retainage_negative,
+                             'retainage_this_week': retainage_this_week,
+                             'approved_this_week': approved_this_week, 'billed_this_week': billed_this_week,
+                             'total_retainage_prior': total_retainage_prior,
+                             'total_billed_prior': total_billed_prior, 'labor_done': x.job_number.is_labor_done, 'change_orders': change_orders,
+                             'job_name': x.job_number.job_name, 'job_number': x.job_number.job_number,
                              'subcontractor': x.subcontractor.company, 'subcontractor_id': x.subcontractor.id,
                              'po_number': x.po_number, 'id': x.id, 'retainage': x.total_retainage(),
                              'percent_complete': format(x.percent_complete(), ".0%")})
-    return render(request, "subcontracts_home.html", {'subcontracts': subcontracts})
+        send_data['subcontracts']=subcontracts
+    return render(request, "subcontracts_home.html", send_data)
 
 
 def subcontractor_payments(request):
@@ -1053,18 +1147,18 @@ def new_subcontractor_payment(request):
                     selected_invoice.payment = payment
                     ready_to_close = True
 
-                    if SubcontractItems.objects.filter(subcontract=subcontract, is_closed=False, is_approved=False).exists():
+                    if SubcontractItems.objects.filter(subcontract=subcontract, is_closed=False,
+                                                       is_approved=False).exists():
                         ready_to_close = False
                     if int(subcontract.total_billed()) == int(subcontract.total_contract_amount()):
                         print("BILLED 100%")
                     else:
                         ready_to_close = False
-                    if int(subcontract.total_retainage())== 0:
+                    if int(subcontract.total_retainage()) == 0:
 
                         print("RETAINAGE PAID")
                     else:
                         ready_to_close = False
-
 
                     SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
 
@@ -1073,12 +1167,14 @@ def new_subcontractor_payment(request):
                                                          request.POST['note'],
                                                     invoice=selected_invoice)
                     if ready_to_close == True:
-
                         subcontract.is_closed = True
                         subcontract.save()
                         SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
                                                         user=Employees.objects.get(user=request.user),
-                                                        note="Subcontract Paid and Closed. Total Contract=$" + str(subcontract.total_contract_amount()) + ". Total Billed =$" + str(subcontract.total_billed()) + ". Total Retainage =$" + str(subcontract.total_retainage()))
+                                                        note="Subcontract Paid and Closed. Total Contract=$" + str(
+                                                            subcontract.total_contract_amount()) + ". Total Billed =$" + str(
+                                                            subcontract.total_billed()) + ". Total Retainage =$" + str(
+                                                            subcontract.total_retainage()))
 
                     selected_invoice.save()
                 InvoiceBatch.objects.all().delete()
