@@ -569,7 +569,7 @@ def subcontract_invoices(request, subcontract_id, item_id):
                                             invoice=selected_invoice)
             if 'approved_with_changes' in request.POST:
                 try:
-                    Email.sendEmail("Invoice Changed", selected_invoice + ". " + note + ". Changed by " + Employees.objects.get(user=request.user),
+                    Email.sendEmail("Invoice Changed", str(selected_invoice) + ". " + note + ". Changed by " + str(Employees.objects.get(user=request.user)),
                                     ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
                                      'bridgette@gerloffpainting.com'], False)
                     success = True
