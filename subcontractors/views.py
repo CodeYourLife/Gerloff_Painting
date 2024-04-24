@@ -833,7 +833,10 @@ def subcontract(request, id):
         quantitybilled = float(x.quantity_billed())
         remainingcost = totalcost - totalbilled
         remainingqnty = totalordered - quantitybilled
-        percentage = (totalbilled / totalcost) * 100
+        if totalcost == 0:
+            percentage = 0
+        else:
+            percentage = (totalbilled / totalcost) * 100
         items.append(
             {'is_approved': x.is_approved, 'date': x.date.strftime("%m/%d/%y"), 'percentage': str(round(percentage, 2)),
              'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
