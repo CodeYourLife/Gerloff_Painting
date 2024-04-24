@@ -233,7 +233,10 @@ class SubcontractItems(models.Model):
         for x in SubcontractorInvoiceItem.objects.filter(sov_item=self, invoice__is_sent=True):
             totalcost = float(totalcost) + float(x.quantity)
         if self.SOV_is_lump_sum == True:
-            totalcost = float(totalcost) / float(self.SOV_rate)
+            if float(self.SOV_rate) == 0:
+                totalcost = 0
+            else:
+                totalcost = float(totalcost) / float(self.SOV_rate)
         return totalcost
 
     def total_billed(self):
