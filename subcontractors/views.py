@@ -663,11 +663,14 @@ def subcontractor_home(request):
     today = datetime.date.today()
     this_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4)
     super_approvals_needed = 0
+    victor_approvals_needed = 0
     for x in InvoiceApprovals.objects.filter(is_approved=False, invoice__pay_date__lte=this_friday):
         name = str(x.employee.first_name + " " + x.employee.last_name)
         employee = x.employee
         if employee.job_title.description == "Superintendent" and employee.first_name != "Victor":
             super_approvals_needed += 1
+        if employee.first_name == 'Victor':
+            victor_approvals_needed += 1
         if name in approval_counts:
             approval_counts[name] += 1
         else:
@@ -684,16 +687,20 @@ def subcontractor_home(request):
             this_week_status.date_invoices_entered = date.today()
             this_week_status.notes = request.POST['invoice_notes']
             this_week_status.save()
-            if super_approvals_needed == 0:
+            if victor_approvals_needed == 0 and super_approvals_needed == 0:
+                email_body = "Gene, the Subcontractor Invoices are Ready for Your Approval!"
+                recipients = ["gene@gerloffpainting.com", "joe@gerloffpainting.com",
+                              "bridgette@gerloffpainting.com", "admin2@gerloffpainting.com"]
+            if super_approvals_needed == 0 and victor_approvals_needed != 0:
                 email_body = "Victor, the Subcontractor Invoices are Ready for Your Approval!"
                 recipients = ["victor@gerloffpainting.com", "joe@gerloffpainting.com",
                               "bridgette@gerloffpainting.com", "admin2@gerloffpainting.com"]
-                try:
-                    Email.sendEmail("Invoice Approval Required", email_body, recipients, False)
-                    send_data['success'] = True
-                except:
-                    send_data['failed'] = True
-            else:
+            try:
+                Email.sendEmail("Invoice Approval Required", email_body, recipients, False)
+                send_data['success'] = True
+            except:
+                send_data['failed'] = True
+            if super_approvals_needed != 0:
                 for x in approval_counts_two:
                     if x.job_title.description == "Superintendent" and x.first_name != "Victor":
                         recipients = ["joe@gerloffpainting.com", "bridgette@gerloffpainting.com",
