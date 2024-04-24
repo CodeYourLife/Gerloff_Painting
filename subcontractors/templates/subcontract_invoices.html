@@ -617,12 +617,8 @@ function check_form(){
 				{% if invoice_items %}
 				{% for x in invoice_items %}
 				<tr>
-					<td>{{x.sov_item.SOV_description}}</td>
-					{% if x.sov_item.SOV_is_lump_sum == True %}
-						<td>${{x.quantity}}</td>
-					{% else %}
-						<td>{{x.quantity}} {{x.sov_item.SOV_unit}}</td>
-					{% endif %}
+					<td>{{x.description}}</td>
+						<td>{{x.billed}}</td>
 					<td>{{x.notes}}</td>
 				</tr>
 				{% endfor %}
