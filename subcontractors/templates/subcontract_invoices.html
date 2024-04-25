@@ -521,14 +521,11 @@ function check_form(){
 						<td style="background-color:hsl(121, 67%, 87%);white-space: nowrap;"><input type="hidden" id="quantity_ordered{{item.id}}" value="1 Lump Sum" /><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>
 						<td style="white-space: nowrap;"><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.total_cost}}" />{% widthratio item.quantity_billed 1 100 %}%</td>
 						<td style="background-color:hsl(121, 67%, 87%);white-space: nowrap;"><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
-
 							{% if item.invoiced == True %}
 								{% for x in invoice_items %}
-									{% if x.sov_item.id == item.id %}
-<!--										<td><div id="current_total{{item.id}}" >{{item.special}}%</div></td>-->
+									{% if x.sov_item == item.id %}
 										<td></td>
-										<td style="background-color:hsl(121, 67%, 87%);white-space: nowrap;"><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" value={{x.quantity}} size="5" step="1" onchange="update_percentage(event)"  /></td>
-
+										<td style="background-color:hsl(121, 67%, 87%);white-space: nowrap;"><input type= "number" style="background-color: yellow" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" value={{x.quantity}} size="5" step=".01" onchange="update_percentage(event)"  /></td>
 										<td style="white-space: nowrap;"><div id="percentage{{item.id}}" ></div>{{item.percentage}}%</td>
 										<td style="white-space: nowrap;"><input type="text"  name="note{{item.id}}" size="40" value="{{x.notes}}"/></td>
 									{% endif %}
@@ -536,7 +533,7 @@ function check_form(){
 							{% else %}
 <!--								<td><div id="current_total{{item.id}}" >{{item.special}}</div></td>-->
 								<td></td>
-								<td style="background-color:hsl(121, 67%, 87%);white-space: nowrap;"><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost|floatformat}} size="5" step="1" onchange="update_percentage(event)"  /></td>
+								<td style="background-color:hsl(121, 67%, 87%);white-space: nowrap;"><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost|floatformat}} size="5" step=".01" onchange="update_percentage(event)"  /></td>
 
 								<td style="white-space: nowrap;"><div id="percentage{{item.id}}" ></div>{{item.percentage}}%</td>
 								<td style="white-space: nowrap;"><input type="text"  name="note{{item.id}}" size="40" /></td>
@@ -548,18 +545,20 @@ function check_form(){
 						<td style="white-space: nowrap;"><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
 							{% if item.invoiced == True %}
 								{% for x in invoice_items %}
-									{% if x.sov_item.id == item.id %}
 
-										<td style="background-color:hsl(0, 67%, 87%);white-space: nowrap;"><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" value={{x.quantity|floatformat}} size="5" step="1" onchange="update_percentage(event)"  /></td>
+									{% if x.sov_item == item.id %}
+
+										<td style="background-color:hsl(0, 67%, 87%);white-space: nowrap;"><input type= "number" style="background-color: yellow" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" value={{x.quantity|floatformat}} size="5" step=".01" onchange="update_percentage(event)"  /></td>
 <!--		<td><div id="current_total{{item.id}}" >${{item.special}}</div></td>-->
 					<td></td>
 										<td style="white-space: nowrap;"><div id="percentage{{item.id}}" ></div>{{item.percentage}}%</td>
 										<td><input type="text"  name="note{{item.id}}" size="40" value="{{x.notes}}"/></td>
 									{% endif %}
+
 								{% endfor %}
 							{% else %}
 
-								<td style="background-color:hsl(0, 67%, 87%);white-space: nowrap;"><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty|floatformat}} size="5" step="1" onchange="update_percentage(event)"  /></td>
+								<td style="background-color:hsl(0, 67%, 87%);white-space: nowrap;"><input type= "number" class="vIntegerField" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty|floatformat}} size="5" step=".01" onchange="update_percentage(event)"  /></td>
 
 <!--								<td><div id="current_total{{item.id}}" >${{item.special}}</div></td>-->
 					<td></td>
