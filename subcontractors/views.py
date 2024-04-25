@@ -587,14 +587,14 @@ def subcontract_invoices(request, subcontract_id, item_id):
         send_data['selected_invoice'] = selected_invoice
         invoice_items = []
         if selected_invoice.is_release_retainage:
-            invoice_items.append({'description':"Release Retainage",'billed':selected_invoice.release_retainage,'notes':selected_invoice.retainage_note})
+            invoice_items.append({'description':"Release Retainage",'billed':selected_invoice.release_retainage,'notes':selected_invoice.retainage_note, 'sov_item':0,'quantity':0})
         for x in SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice):
             if x.sov_item.SOV_is_lump_sum:
                 invoice_items.append({'description': x.sov_item.SOV_description, 'billed': "$" + str(x.quantity),
-                                  'notes': x.notes})
+                                  'notes': x.notes,'sov_item': x.sov_item.id,'quantity':x.quantity})
             else:
                 invoice_items.append({'description': x.sov_item.SOV_description, 'billed': str(x.quantity) + " " + str(x.sov_item.SOV_unit),
-                                      'notes': x.notes})
+                                      'notes': x.notes,'sov_item': x.sov_item.id,'quantity':x.quantity})
         # invoice_items = SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice)
         send_data['invoice_items'] = invoice_items
         notes = SubcontractNotes.objects.filter(subcontract=subcontract, invoice=selected_invoice)
