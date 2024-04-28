@@ -288,6 +288,7 @@ function calculatetotal(){
 				final_cost_summary.innerHTML = "<b>Final Cost: $</b>" + parseInt(change_order_total)
 				equipment_total_summary.innerHTML = "<b>Equipment Cost: $</b>" + parseInt(equipment_total)
 				other_total_summary.innerHTML = "<b>Other Cost: $</b>" + parseInt(other_total)
+				document.getElementById("final_cost").value = parseInt(change_order_total)
 }
 
 
@@ -551,8 +552,8 @@ function check_booking_data(){
 		<div class ="col">Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</div>
 	</div>
 	<div class ="row">
-		<div class ="col">Week Ending Date: <input type="text" name="week_ending_date" id="week_ending_date" placeholder="Date"></div>
-		<div class ="col">Ticket Completed By: <input type="text" name="completed_by" id="completed_by" placeholder="Name"></div>
+		<div class ="col">Week Ending Date: <input type="date" name="week_ending_date" id="week_ending_date" placeholder="Date" required></div>
+		<div class ="col">Ticket Completed By: <input type="text" name="completed_by" id="completed_by" placeholder="Name" required></div>
 	</div>
   </div>
 <hr>

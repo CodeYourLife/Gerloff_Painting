@@ -115,7 +115,7 @@ def super_ajax(request):
             return HttpResponse(open_dropbox(request.GET['job_number'], request.user))
         if 'client_employee_id' in request.GET:
             person = ClientEmployees.objects.get(person_pk=request.GET['client_employee_id'])
-            data_details = {'phone': person.phone, 'email': person.email}
+            data_details = {'phone': person.phone, 'email': person.email, 'name': person.name}
             return HttpResponse(json.dumps(data_details))
         if 'select_super' in request.GET:
             job = Jobs.objects.get(job_number=request.GET['job_number'])

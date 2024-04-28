@@ -136,20 +136,33 @@ function labor_done_changed(current_status){
 
 function before_postpm(){
     pmselect = change_client_pm_form.select_pm.value
-    newpm = change_client_pm_form.new_pm.value
     if (pmselect == 'add_new'){
+        newpm = change_client_pm_form.new_pm.value
+        newpmemail = change_client_pm_form.new_pm_email.value
        if(newpm == ""){
-         alert("You must type the new PM's name at least")
+         alert("You must type the new PM's name")
+         return false
+       }
+        if(newpmemail == ""){
+         alert("You must type the new PM's email")
          return false
        }
     }
-    if (pmselect == 'please_select'){
-        alert("You must select a PM")
+    else if (pmselect == 'please_select'){
+        alert("You must select a PM Option")
         return false
     }
-    if (change_client_pm_form.pm_email.value == ""){
-        alert("The PM must have an email address")
-        return false
+    else{
+        pmname = change_client_pm_form.pm_name.value
+        pmemail = change_client_pm_form.pm_email.value
+        if (pmemail == ""){
+            alert("The PM must have an email address")
+            return false
+        }
+        if (pmname == ""){
+            alert("You must enter a name")
+            return false
+        }
     }
 }
 function before_postsuper(){
@@ -177,6 +190,7 @@ function new_pm1(){
             data: {'client_employee_id':change_client_pm_form.select_pm.value},
             success: function (data) {
                 parsedData = JSON.parse(data);
+                change_client_pm_form.pm_name.value = parsedData.name
                 change_client_pm_form.pm_email.value = parsedData.email
                 change_client_pm_form.pm_phone.value = parsedData.phone
                 document.getElementById("show_new_pm").style.display = "none";
@@ -719,6 +733,7 @@ document.getElementById("notes_filter_button").style.display = "none";
                             <tr><td>Phone: <input type= "text" name="new_pm_phone" id="new_pm_phone" placeholder="Phone" size="30" /></td></tr>
                         </table>
                         <table id="show_existing_pm">
+                            <tr><td>Name: <input type= "text" name="pm_name" id="pm_name" placeholder="Name" size="30" /></td></tr>
                             <tr><td>Email: <input type= "text" name="pm_email" id="pm_email" {% if job.client_Pm.email %}value='{{job.client_Pm.email}}' {% else %} placeholder="Email" {% endif %} size="30" /></td></tr>
                             <tr><td>Phone: <input type= "text" name="pm_phone" id="pm_phone" {% if job.client_Pm.phone %}value='{{job.client_Pm.phone}}' {% else %} placeholder="Main Phone" {% endif %} size="30" /></td></tr>
                         </table>

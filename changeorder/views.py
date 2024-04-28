@@ -291,8 +291,10 @@ def print_TMProposal(request, id):
 @login_required(login_url='/accounts/login')
 def revise_TM_COP(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
-    ewt = EWT.objects.get(change_order = changeorder)
-    send_data={}
+    send_data = {}
+    if EWT.objects.filter(change_order = changeorder).exists():
+        ewt = EWT.objects.get(change_order = changeorder)
+        send_data['ewt']=ewt
     send_data['change_order']=changeorder
     laboritems = []
     counter = 0
@@ -365,7 +367,6 @@ def revise_TM_COP(request, id):
     send_data['equipment'] =equipment
     send_data['materials']=materials
     send_data['laboritems'] =laboritems
-    send_data['ewt'] = ewt
     send_data['changeorder'] = changeorder
     send_data['employees2']=employees2
     send_data['materials2'] =materials2
@@ -564,8 +565,11 @@ def price_old_ewt(request, id):
         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                         user=Employees.objects.get(user=request.user),
                                         note="COP Sent. Price: $" + request.POST['final_cost'])
+        ewt=EWT.objects.create(change_order=changeorder, week_ending=request.POST['week_ending_date'],
+                           notes="Paper Ticket", completed_by=request.POST['completed_by'])
         newproposal = TMProposal.objects.create(change_order=changeorder, total=request.POST['final_cost'],
-                                                notes=request.POST['notes'])
+                                                notes=request.POST['notes'],ticket=ewt)
+
         for x in request.POST:
             if x[0:10] == 'labor_item':
                 temp_number = x[10:len(x)]
@@ -1165,6 +1169,9 @@ def extra_work_ticket(request, id):
             changeorder.is_ticket_signed = True
             changeorder.date_signed = date.today()
             changeorder.save()
+            ChangeOrderNotes.objects.create(note="Paper Ticket Signed and Uploaded",
+                                            cop_number=changeorder, date=date.today(),
+                                            user=Employees.objects.get(user=request.user))
         if 'upload_file' in request.FILES:
             fileitem = request.FILES['upload_file']
             fn = os.path.basename(fileitem.name)
