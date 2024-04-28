@@ -117,6 +117,7 @@ var laborcount = {{laborcount}}
 var glob_materialcount= {{materialcount}}
 var glob_equipmentcount= {{equipmentcount}}
 var glob_extrascount = {{extrascount}}
+var custom_inventory = 0
 
 window.onload = function() {
 	var table = $('#labor_breakdown').DataTable({paging: false,info:false,ordering:false,searching:false })
@@ -170,15 +171,7 @@ function add_labor_dropdown(){
 		option.value = "custom";
 		option.text= "Custom";
 		select.appendChild(option);
-<!--		var label = document.createElement("label");-->
-<!--		document.getElementById("new_labor" + laborcount).appendChild(label).appendChild(select);-->
 		document.getElementById("new_labor" + laborcount).appendChild(select)
-<!--		var hidden_input = document.createElement("input");-->
-<!--		hidden_input.setAttribute("type", "hidden");-->
-<!--		hidden_input.setAttribute("name", "labor_rate" + laborcount);-->
-<!--		hidden_input.setAttribute("id", "labor_rate" + laborcount);-->
-<!--		hidden_input.setAttribute("value", 0);-->
-<!--		document.getElementById("new_labor" + laborcount).appendChild(hidden_input);-->
 }
 function changelabor(){
 	clicked_row = event.currentTarget.id.substring(12,event.currentTarget.id.length)
@@ -200,6 +193,14 @@ function changelabor(){
 }
 
 function calculatetotal(){
+	let custom_inventory_now = 0
+	if (event.target.id == "inventory_cost"){
+	custom_inventory_now = 1
+	custom_inventory = 1
+	}
+	else if(custom_inventory == 1){
+	alert("Changing the custom inventory of $" + String(document.getElementById("inventory_cost").value))
+	}
 	form = pricing_form
 	let labor_total = 0
 	let change_order_total = 0
@@ -216,7 +217,7 @@ function calculatetotal(){
 	let equipment_total_summary = document.getElementById("equipment_total_summary")
 	let other_total_summary = document.getElementById("other_total_summary")
 	let final_cost_summary = document.getElementById("final_cost_display")
-	inventory_display = document.getElementById("inventory_cost_display")
+<!--	inventory_display = document.getElementById("inventory_cost_display")-->
 	inventory_input = document.getElementById("inventory_cost")
 	Array.from(form.elements).forEach((input) => {
 			if (input.name.substring(0,10) == "labor_item"){
@@ -272,9 +273,10 @@ function calculatetotal(){
 			document.getElementById("extras_cost_desc" + item_number).innerHTML = "$" + String(parseInt(line_total))
 		}
 		})
-				inventory_total = material_total * 0.15
+				if (custom_inventory_now == 1){inventory_total = parseInt(document.getElementById("inventory_cost").value)}
+				else {inventory_total = material_total * 0.15}
 				change_order_total += inventory_total
-				inventory_display.innerHTML = "$" + String(parseInt(inventory_total))
+<!--				inventory_display.innerHTML = "$" + String(parseInt(inventory_total))-->
 				inventory_input.value = inventory_total
 				material_total += inventory_total
 				bondrate={{bond_rate}}
@@ -285,24 +287,13 @@ function calculatetotal(){
 				}
 				material_total_summary.innerHTML = "<b>Material Cost: $</b>" + parseInt(material_total)
 				labor_total_summary.innerHTML = "<b>Labor Cost: $</b>" + parseInt(labor_total)
+				document.getElementById("final_cost").value = parseInt(change_order_total)
 				final_cost_summary.innerHTML = "<b>Final Cost: $</b>" + parseInt(change_order_total)
 				equipment_total_summary.innerHTML = "<b>Equipment Cost: $</b>" + parseInt(equipment_total)
 				other_total_summary.innerHTML = "<b>Other Cost: $</b>" + parseInt(other_total)
 }
 
-
-function changehours(){
-	clicked_row = event.currentTarget.id.substring(11,event.currentTarget.id.length)
-	rate = document.getElementById("labor_rate" + clicked_row)
-	hours = document.getElementById("labor_hours" + clicked_row)
-	total = document.getElementById("labor_cost" + clicked_row)
-	total.value = hours.value * rate.value
-	calculate_final_cost()
-}
-
-
 function add_material_row(type) {
-
 	if (type == "material"){
 		glob_materialcount += 1
 		materialcount = glob_materialcount
@@ -345,7 +336,6 @@ function add_material_row(type) {
 	calculatetotal()
 }
 
-
 function add_material_dropdown(type){
 		var select = document.createElement("select");
 		var rate = 0.00
@@ -378,14 +368,7 @@ function add_material_dropdown(type){
 		option.value = "custom";
 		option.text= "Custom";
 		select.appendChild(option);
-<!--		var label = document.createElement("label");-->
 		document.getElementById("new_"  + type + String(materialcount)).appendChild(select);
-<!--		var hidden_input = document.createElement("input");-->
-<!--		hidden_input.setAttribute("type", "hidden");-->
-<!--		hidden_input.setAttribute("name", type + "_rate" + materialcount);-->
-<!--		hidden_input.setAttribute("id", type + "_rate" + materialcount);-->
-<!--		hidden_input.setAttribute("value", 0);-->
-<!--		document.getElementById("new_"  + type + String(materialcount)).appendChild(hidden_input);-->
 }
 
 function changematerial(){
@@ -449,48 +432,11 @@ function changeextras(){
 	}
 }
 
-function changequantity(){
-	if (event.currentTarget.id.substring(0,17) == "material_quantity") {type = "material"; clicked_row = event.currentTarget.id.substring(17,event.currentTarget.id.length)}
-	if (event.currentTarget.id.substring(0,18) == "equipment_quantity") {type = "equipment"; clicked_row = event.currentTarget.id.substring(18,event.currentTarget.id.length)}
-	if (event.currentTarget.id.substring(0,15) == "extras_quantity") {type = "extras"; clicked_row = event.currentTarget.id.substring(15,event.currentTarget.id.length)}
-	rate = document.getElementById(type + "_rate" + clicked_row)
-	hours = document.getElementById(type + "_quantity" + clicked_row)
-	total = document.getElementById(type + "_cost" + clicked_row)
-	total.value = hours.value * rate.value
-	calculate_final_cost()
-}
 
 function delete_row(btn){
 var row = btn.parentNode.parentNode;
 row.parentNode.removeChild(row);
 calculatetotal()
-}
-
-function calculate_final_cost(){
-	var finalcost = 0
-	var materialcost = 0
-	for(let i =1; i < laborcount+1; i++){
-	finalcost = parseFloat(document.getElementById("labor_cost" + i).value) + finalcost
-	}
-	for(let i =1; i < glob_materialcount+1; i++){
-	materialcost = parseFloat(document.getElementById("material_cost" + i).value) + materialcost
-	finalcost = parseFloat(document.getElementById("material_cost" + i).value) + finalcost
-	}
-	document.getElementById("inventory_cost").value = materialcost *.15
-	document.getElementById("inventory_cost_display").innerHTML = "$" + String(parseInt(materialcost *.15))
-	for(let i =1; i < glob_equipmentcount+1; i++){
-	finalcost = parseFloat(document.getElementById("equipment_cost" + i).value) + finalcost
-	}
-	for(let i =1; i < glob_extrascount+1; i++){
-	finalcost = parseFloat(document.getElementById("extras_cost" + i).value) + finalcost
-	}
-	finalcost = finalcost + parseFloat(document.getElementById("inventory_cost").value)
-	document.getElementById("bond_cost").value = finalcost * parseFloat({{bond_rate}})
-	document.getElementById("bond_total_summary").innerHTML ="<b>Bond Cost:</b> $" + String(parseInt(document.getElementById("bond_cost").value))
-	finalcost = finalcost + parseFloat(document.getElementById("bond_cost").value)
-	document.getElementById("final_cost").value = parseInt(finalcost)
-	document.getElementById("final_cost_display").innerHTML = "<b>Final Cost: $" + parseInt(finalcost) + "</b>"
-
 }
 
 
@@ -529,7 +475,7 @@ function calculate_final_cost(){
 	{% csrf_token %}
 <div class ="container">
 	<label for="notes">Description: </label> <br>
-	<textarea id="notes" name="notes" rows="2" cols="100" >{{notes}}</textarea>
+	<textarea id="notes" name="notes" rows="2" cols="100" >{{tmproposal.notes}}</textarea>
 </div>
 	<div class ="container" style="background-color:hsla(5, 100%, 92%);">
 	<h4>Labor Breakdown</h4>
@@ -576,7 +522,9 @@ function calculate_final_cost(){
 			<td><input type= "text" name="material_description{{x.counter}}" id="material_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="material_quantity{{x.counter}}" id="material_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="material_units{{x.counter}}" id="material_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="material_rate{{x.counter}}" size="7" id="material_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="material_cost{{x.counter}}" id="material_cost{{x.counter}}" value="{{x.cost}}" /><div id="material_cost_desc{{x.counter}}">${{x.cost}}</div></td>
 	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
 		{% endfor %}
-		<tr><td>Inventory</td><td></td><td>Lump Sum</td><td></td><td></td><td></td><td><input type= "hidden" name="inventory_cost" id="inventory_cost" value="{{inventory}}" size="7" required /><div id="inventory_cost_display">${{inventory}}</div></td></tr>
+		<tr><td>Inventory (Originally ${{inventory}})</td><td></td><td>Lump Sum</td><td></td><td></td><td></td><td><input type= "number" name="inventory_cost" id="inventory_cost" value="{{inventory}}" step=".01" size="7" required onchange = "calculatetotal(event)"/>
+<!--			<div id="inventory_cost_display">${{inventory}}</div>-->
+		</td></tr>
 	  {% endif %}
 
 		<tr><input type = "hidden" name="hidden_material" id = "hidden_material" value = "{{materialcount}}" /><td><button type="button" onclick="add_material_row('material')">Add Material Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
@@ -654,7 +602,9 @@ function calculate_final_cost(){
 	</div>
 	<hr>
 	<div class ="container" >
+	<input type="submit" class="btn btn-secondary btn-lg" name="cancel" value="Cancel" />
 		<input type="submit" class="btn btn-primary btn-lg" name="Form3" value="Send Price Now" />
+
 	</div>
     </form>
 
