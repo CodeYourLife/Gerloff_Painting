@@ -167,6 +167,7 @@ def batch_approve_co(request, id):
 
 @login_required(login_url='/accounts/login')
 def print_TMProposal(request, id):
+    send_data={}
     email_send_error = "no"
     newproposal = TMProposal.objects.get(id=id)
     changeorder = newproposal.change_order
@@ -178,6 +179,14 @@ def print_TMProposal(request, id):
     bond_exists = False
     inventory = []
     bond = []
+    foldercontents = []
+    try:
+        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
+        foldercontents = os.listdir(path)
+        print(foldercontents)
+        send_data['foldercontents'] = foldercontents
+    except Exception as e:
+        send_data['no_folder_contents'] = True
     if request.method != 'POST':
         for x in TempRecipients.objects.filter(changeorder=changeorder):
             x.delete()
@@ -214,7 +223,7 @@ def print_TMProposal(request, id):
                                                      employee=person).exists():
                     ClientJobRoles.objects.create(role="Change Orders", job=changeorder.job_number, employee=person)
                     TempRecipients.objects.create(person=person, changeorder=changeorder)
-            if x[0:5] == 'final' or x[0:8] == 'no_email':
+            if request.POST['status'] == 'Final' or x[0:8] == 'no_email':
                 recipients = ["bridgette@gerloffpainting.com"]
                 current_user = Employees.objects.get(user=request.user)
                 recipients.append(current_user.email)
@@ -234,18 +243,28 @@ def print_TMProposal(request, id):
                 )
                 result_file.close()
 
-                print("HERE")
-                if x[0:5] == 'final':
+                print("HERE99")
+                if request.POST['status'] == 'Final':
                     try:
-                        print("HERE2")
-                        Email.sendEmail("COP Proposal", "Please find the TM Proposal attached", recipients,
-                                        f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
-                        return redirect('extra_work_ticket', id=changeorder.id)
+                        files=[]
+                        files.append(f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
+                        files.append(f"{path}/" + request.POST['filename'])
+                        Email.sendEmail2("Change Order Proposal", "Please find the TM Proposal attached", recipients,files)
+                        # Email.sendEmail("Change Order Proposal", "Please find the TM Proposal attached", recipients,
+                        #                 f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
+                        ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                                        user=Employees.objects.get(user=request.user),
+                                                        note="COP Emails to " + str(recipients))
                     except:
-                        print("HERE8")
                         email_send_error = "yes"
+                        ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                                        user=Employees.objects.get(user=request.user),
+                                                        note="COP Email Failed to Send")
                 else:
-                    return redirect('extra_work_ticket', id=changeorder.id)
+                    ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                                    user=Employees.objects.get(user=request.user),
+                                                    note="User decided to send email themself")
+                return redirect('extra_work_ticket', id=changeorder.id)
 
     extra_contacts = False
     project_pm = ClientEmployees.objects.get(person_pk=changeorder.job_number.client_Pm.person_pk)
@@ -278,20 +297,102 @@ def print_TMProposal(request, id):
                 extra_contacts = True
                 client_list.append(
                     {'person_pk': x.person_pk, 'name': x.name, 'default': False, 'current': False, 'email': x.email})
-
-    return render(request, "preview_TMProposal.html",
-                  {'email_send_error': email_send_error, 'client_list': client_list,
-                   'extra_contacts': extra_contacts, 'inventory_exists': inventory_exists, 'bond_exists': bond_exists,
-                   'laboritems': laboritems,
-                   'materialitems': materialitems, 'inventory': inventory, 'bond': bond,
-                   'equipmentitems': equipmentitems, 'extraitems': extraitems, 'newproposal': newproposal,
-                   'changeorder': changeorder, 'ewt': ewt})
+    send_data['email_send_error']=email_send_error
+    send_data['client_list'] =client_list
+    send_data['extra_contacts'] =extra_contacts
+    send_data['inventory_exists'] =inventory_exists
+    send_data['bond_exists'] =bond_exists
+    send_data['laboritems'] =laboritems
+    send_data['materialitems']=materialitems
+    send_data['inventory'] =inventory
+    send_data['bond'] =bond
+    send_data['equipmentitems'] =equipmentitems
+    send_data['extraitems'] =extraitems
+    send_data['newproposal'] =newproposal
+    send_data['changeorder'] =changeorder
+    send_data['ewt'] =ewt
+    return render(request, "preview_TMProposal.html",send_data)
 
 
 @login_required(login_url='/accounts/login')
 def revise_TM_COP(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
+
+    if request.method == 'POST':
+        if 'cancel' in request.POST:
+            return redirect('extra_work_ticket', id=changeorder.id)
+        material_exists = 0
+        changeorder.price = request.POST['final_cost']
+        changeorder.date_sent = date.today()
+        changeorder.full_description = request.POST['notes']
+        changeorder.save()
+        ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                        user=Employees.objects.get(user=request.user),
+                                        note="Revised COP Sent. Price: $" + request.POST['final_cost'])
+        newproposal = TMProposal.objects.get(change_order=changeorder)
+        newproposal.total =request.POST['final_cost']
+        newproposal.notes = request.POST['notes']
+        newproposal.save()
+        for x in TMList.objects.filter(proposal=newproposal):
+            x.delete()
+        for x in request.POST:
+            if x[0:10] == 'labor_item':
+                temp_number = x[10:len(x)]
+                TMList.objects.create(change_order=changeorder, description=request.POST['labor_item' + temp_number],
+                                      quantity=request.POST['labor_hours' + temp_number], units="Hours",
+                                      rate=request.POST['labor_rate' + temp_number],
+                                      total=request.POST['labor_cost' + temp_number],
+                                      category="Labor", category2=request.POST['labor_item' + temp_number],
+                                      proposal=newproposal)
+            if x[0:20] == 'material_description':
+                material_exists = 1
+                temp_number = x[20:len(x)]
+                TMList.objects.create(change_order=changeorder,
+                                      description=request.POST['material_description' + temp_number],
+                                      quantity=request.POST['material_quantity' + temp_number],
+                                      units=request.POST['material_units' + temp_number],
+                                      rate=request.POST['material_rate' + temp_number],
+                                      total=request.POST['material_cost' + temp_number],
+                                      category="Material", category2=request.POST['material_category' + temp_number],
+                                      proposal=newproposal)
+            if x[0:21] == 'equipment_description':
+                temp_number = x[21:len(x)]
+                TMList.objects.create(change_order=changeorder,
+                                      description=request.POST['equipment_description' + temp_number],
+                                      quantity=request.POST['equipment_quantity' + temp_number],
+                                      units=request.POST['equipment_units' + temp_number],
+                                      rate=request.POST['equipment_rate' + temp_number],
+                                      total=request.POST['equipment_cost' + temp_number],
+                                      category="Equipment", category2=request.POST['equipment_category' + temp_number],
+                                      proposal=newproposal)
+            if x[0:15] == 'extras_category':
+                temp_number = x[15:len(x)]
+                TMList.objects.create(change_order=changeorder,
+                                      description=request.POST['extras_description' + temp_number],
+                                      quantity=request.POST['extras_quantity' + temp_number],
+                                      units=request.POST['extras_units' + temp_number],
+                                      rate=request.POST['extras_rate' + temp_number],
+                                      total=request.POST['extras_cost' + temp_number],
+                                      category="Extras", category2=request.POST['extras_category' + temp_number],
+                                      proposal=newproposal)
+        if material_exists == 1:
+            TMList.objects.create(change_order=changeorder, description="Inventory",
+                                  quantity="1",
+                                  units="Lump Sum",
+                                  rate="1", total=request.POST['inventory_cost'],
+                                  category="Inventory", category2="Inventory",
+                                  proposal=newproposal)
+        if 'bond_cost' in request.POST:
+            TMList.objects.create(change_order=changeorder, description="Bond",
+                                  quantity="1",
+                                  units="Lump Sum",
+                                  rate=request.POST['bond_rate'], total=request.POST['bond_cost'],
+                                  category="Bond", category2="Bond",
+                                  proposal=newproposal)
+        return redirect('preview_TMProposal', id=newproposal.id)
     send_data = {}
+    send_data['tmproposal'] = TMProposal.objects.get(change_order=changeorder)
+
     if EWT.objects.filter(change_order = changeorder).exists():
         ewt = EWT.objects.get(change_order = changeorder)
         send_data['ewt']=ewt
@@ -383,6 +484,8 @@ def price_ewt(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
     ewt = EWT.objects.get(change_order=changeorder)
     if request.method == 'POST':
+        if 'cancel' in request.POST:
+            return redirect('extra_work_ticket', id=changeorder.id)
         changeorder.price = request.POST['final_cost']
         changeorder.date_sent = date.today()
         changeorder.full_description = ewt.notes + " " + request.POST['notes']

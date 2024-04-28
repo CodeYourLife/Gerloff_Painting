@@ -1,299 +1,202 @@
+{% extends 'base.html' %}
+{% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
+{% block content %}
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>PROPOSAL</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous"
-          xmlns:margin-left="http://www.w3.org/1999/xhtml">
-    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-    <style type="text/css" class="init">
-        table, td, th {
-          border: 1px solid #ddd;
-          text-align: left;
+<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Trinity GP</title>
+<style type="text/css" class="init">
+#notes_table thead {
+    display: none;
+}
+
+.colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
+
+.dataTables_wrapper {
+font-family: tahoma;
+font-size: 13px;
+}
+
+    nav .active, .collapsible:hover {
+      background-color: Salmon;
+    }
+    .nav-pills a {
+        color: black;
+    }
+    .nav-pills li {
+        padding: 2px;
+    }
+    .nav-pills .active {
+        background-color: #6c757d !important;
+        padding: 5px;
+    }
+    label {
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+    input {
+        margin-left: 10px;
+        margin-right: 10px;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #495057;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    }
+    tr th {
+        width: fit-content !important;
+    }
+    .tab-content * {
+      color : black;
+      background-color: white !important;
+    }
+    .active * {
+        background-color: white !important;
+    }
+            .list-items {
+    border-bottom: 1px solid black; display: flex; justify-content: space-between;
+    }
+    .text-wrap{
+white-space:normal;
+}
+.width-200{
+width:200px;
+}
+.dataTables_filter {
+float: left !important;
+}
+.tb { border-collapse: collapse; width:300px; }
+
+.tb th, .tb td { padding: 5px; border: solid 1px #777; }
+.tb th { background-color: lightblue; }
+
+.table td {
+
+    }
+
+        .modal-content {
+            width: fit-content;
         }
 
-        table {
-          border-collapse: collapse;
-          width: 100%;
+#add-remove-button-container .btn {
+    padding: 5px 5px;
+}
+
+        .list-items {
+        border-bottom: 1px solid black; display: flex; justify-content: space-between;
         }
-
-        th, td {
-          padding: 5px;
+        #folderList {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #3f50b5;
+            border-radius: 2px;
         }
-    </style>
-    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.2/css/jquery.dataTables.min.css">
-    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
-            data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-    <script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html"
-            async></script>
-    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html"
-            async></script>
-    <script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-    <script type="text/javascript" language="javascript"
-            src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-    <script type="text/javascript" class="init">
-        var laborcount = {{laborcount}}
-        var glob_materialcount= {{materialcount}}
-        var glob_equipmentcount= {{equipmentcount}}
-        var glob_extrascount = {{extrascount}}
+</style>
 
-        function add_labor_row() {
-            laborcount = laborcount + 1
-            hidden = document.getElementById("hidden_labor");
-            hidden.value=laborcount
-            var table = document.getElementById("labor_breakdown");
-            var rows = table.getElementsByTagName("tr").length
-            var row = table.insertRow(rows-1);
-            var cell1 = row.insertCell(0);
-            var cell2 = row.insertCell(1);
-            var cell3 = row.insertCell(2);
-            var cell4 = row.insertCell(3);
-            cell1.innerHTML = "<div id='new_labor" + laborcount + "'></div>";
-            add_labor_dropdown()
-            cell2.innerHTML ="<input type= 'number' name='labor_hours" + laborcount + "' id='labor_hours" + laborcount + "'  onchange ='changehours(event)' size='10' required />"
-            cell3.innerHTML ="$<input type= 'number' name='labor_cost" + laborcount + "' id='labor_cost" + laborcount + "'  size='10' required />"
+<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+<link href="https://www.jqueryscript.net/css/jquerysctipttop.css" rel="stylesheet" type="text/css">
+<script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+<script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script src="https://www.jqueryscript.net/demo/Two-side-Multi-Select-Plugin-with-jQuery-multiselect-js/js/multiselect.js"></script>
+<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" language="javascript" src="../resources/demo.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
+<script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
+<script type="text/javascript" class="init">
+window.onload = function() {
+document.getElementById("hide_this").style.display="none"
+    if ("{{email_send_error}}"=="yes"){alert("Error Sending Email")}
+    var all = document.getElementsByTagName("*");
+    for (var i=0, max=all.length; i < max; i++) {
+        if (all[i].id.substring(0,6) == "button"){
+            all[i].style.display="none"
         }
+    }
+}
+function add_button(id){
+document.getElementById("button" + id).style.display="block"
+}
 
-        function add_labor_dropdown(){
-                var select = document.createElement("select");
-                var rate = 0.00
-                select.name = "select_labor" + laborcount;
-                select.id = "select_labor" + laborcount;
-                select.addEventListener('change',function() {changelabor(event);},false);
-                let rolodex = JSON.parse("{{employees_json|escapejs}}");
-                        var option = document.createElement("option");
-                option.value = "please_select";
-                option.text= "please select";
-                select.appendChild(option);
-                        for (const x of rolodex)
-                {
-                var option = document.createElement("option");
-                option.value = x.id;
-                option.text= x.item;
-                select.appendChild(option);
-                }
-                var label = document.createElement("label");
-                document.getElementById("new_labor" + laborcount).appendChild(label).appendChild(select);
-                var hidden_input = document.createElement("input");
-                hidden_input.setAttribute("type", "hidden");
-                hidden_input.setAttribute("name", "labor_rate" + laborcount);
-                hidden_input.setAttribute("id", "labor_rate" + laborcount);
-                hidden_input.setAttribute("value", 0);
-                document.getElementById("new_labor" + laborcount).appendChild(hidden_input);
-        }
-        function changelabor(){
-            clicked_row = event.currentTarget.id.substring(12,event.currentTarget.id.length)
-            description = document.getElementById("labor_rate" + clicked_row)
-            rolodex = JSON.parse("{{employees_json|escapejs}}");
-            for(let i =0; i < rolodex.length; i++){
-                if (rolodex[i].id == event.currentTarget.value){
-                    description.value = rolodex[i].rate
-                }
-            }
-        }
-        function changehours(){
-            clicked_row = event.currentTarget.id.substring(11,event.currentTarget.id.length)
-            rate = document.getElementById("labor_rate" + clicked_row)
-            hours = document.getElementById("labor_hours" + clicked_row)
-            total = document.getElementById("labor_cost" + clicked_row)
-            total.value = hours.value * rate.value
-            calculate_final_cost()
-        }
+function selected_file(){
+TMProposal_Form.filename.value = document.getElementById("selected_file").value
+TMProposal_Form.status.value = "Final"
+document.getElementById("final").style.display="none"
+document.getElementById("no_email").style.display="none"
+document.getElementById("hide_this").style.display="block"
+TMProposal_Form.submit()
+}
 
-
-        function add_material_row(type) {
-            if (type == "material"){
-                glob_materialcount=glob_materialcount+1
-                materialcount = glob_materialcount
-                hidden = document.getElementById("hidden_material");
-                var table = document.getElementById("material_breakdown");
-            }
-            if (type == "equipment"){
-                glob_equipmentcount=glob_equipmentcount+1
-                materialcount = glob_equipmentcount
-                hidden = document.getElementById("hidden_equipment");
-                var table = document.getElementById("equipment_breakdown");
-            }
-            if (type == "extras"){
-                glob_extrascount = glob_extrascount+1
-                materialcount = glob_extrascount
-                hidden = document.getElementById("hidden_extras");
-                var table = document.getElementById("extras_breakdown");
-            }
-            hidden.value = materialcount
-            var rows = table.getElementsByTagName("tr").length
-                if (type == "material"){
-                var row = table.insertRow(rows-2);
-            }
-            else {var row = table.insertRow(rows-1)}
-
-            var cell1 = row.insertCell(0);
-            var cell2 = row.insertCell(1);
-            var cell3 = row.insertCell(2);
-            var cell4 = row.insertCell(3);
-            var cell5 = row.insertCell(4);
-            cell1.innerHTML = "<div id='new_" + type + String(materialcount) + "'></div>";
-            add_material_dropdown(type)
-            cell2.innerHTML ="<input type= 'text' name='" + type + "_description"+ materialcount + "' id='" + type + "_description"+ materialcount + "'  size='30' required />"
-            cell3.innerHTML ="<input type= 'number' name='" + type + "_quantity"+ materialcount + "' id='" + type + "_quantity"+ materialcount + "'  onchange = 'changequantity(event)' size='10' required />"
-            cell4.innerHTML ="<input type= 'text' name='" + type + "_units"+ materialcount + "' id='" + type + "_units"+ materialcount + "'  size='7' required />"
-            cell5.innerHTML ="$<input type= 'number' name='" + type + "_cost"+ materialcount + "' id='" + type + "_cost"+ materialcount + "'  size='7' required />"
-        }
-
-
-        function add_material_dropdown(type){
-                var select = document.createElement("select");
-                var rate = 0.00
-                select.name = type + "_category" + String(materialcount);
-                select.id = type + "_category" + String(materialcount);
-                if (type == "material"){
-                    select.addEventListener('change',function() {changematerial(event);},false);
-                    rolodex = JSON.parse("{{material_json|escapejs}}");
-                }
-                if (type == "equipment"){
-                    select.addEventListener('change',function() {changeequipment(event);},false);
-                    rolodex = JSON.parse("{{equipment_json|escapejs}}");
-                }
-                if (type == "extras"){
-                    select.addEventListener('change',function() {changeextras(event);},false);
-                    rolodex = JSON.parse("{{extras_json|escapejs}}");
-                }
-                var option = document.createElement("option");
-                option.value = "please_select";
-                option.text= "please select";
-                select.appendChild(option);
-                for (const x of rolodex)
-                {
-                var option = document.createElement("option");
-                option.value = x.id;
-                option.text= x.item;
-                select.appendChild(option);
-                }
-                var label = document.createElement("label");
-                document.getElementById("new_"  + type + String(materialcount)).appendChild(label).appendChild(select);
-                var hidden_input = document.createElement("input");
-                hidden_input.setAttribute("type", "hidden");
-                hidden_input.setAttribute("name", type + "_rate" + materialcount);
-                hidden_input.setAttribute("id", type + "_rate" + materialcount);
-                hidden_input.setAttribute("value", 0);
-                document.getElementById("new_"  + type + String(materialcount)).appendChild(hidden_input);
-        }
-
-        function changematerial(){
-            clicked_row = event.currentTarget.id.substring(17,event.currentTarget.id.length)
-            description = document.getElementById("material_description" + clicked_row)
-            rate = document.getElementById("material_rate" + clicked_row)
-            unit = document.getElementById("material_units" + clicked_row)
-            rolodex = JSON.parse("{{material_json|escapejs}}");
-            for(let i =0; i < rolodex.length; i++){
-                if (rolodex[i].id == event.currentTarget.value){
-                    description.value = rolodex[i].item
-                    rate.value = rolodex[i].rate
-                    unit.value = rolodex[i].unit
-                }
-            }
-        }
-
-        function changeequipment(){
-            clicked_row = event.currentTarget.id.substring(18,event.currentTarget.id.length)
-            description = document.getElementById("equipment_description" + clicked_row)
-            rate = document.getElementById("equipment_rate" + clicked_row)
-            unit = document.getElementById("equipment_units" + clicked_row)
-            rolodex = JSON.parse("{{equipment_json|escapejs}}");
-            for(let i =0; i < rolodex.length; i++){
-                if (rolodex[i].id == event.currentTarget.value){
-                    description.value = rolodex[i].item
-                    rate.value = rolodex[i].rate
-                    unit.value = rolodex[i].unit
-                }
-            }
-        }
-
-        function changeextras(){
-            clicked_row = event.currentTarget.id.substring(15,event.currentTarget.id.length)
-            description = document.getElementById("extras_description" + clicked_row)
-            rate = document.getElementById("extras_rate" + clicked_row)
-            unit = document.getElementById("extras_units" + clicked_row)
-            rolodex = JSON.parse("{{extras_json|escapejs}}");
-            for(let i =0; i < rolodex.length; i++){
-                if (rolodex[i].id == event.currentTarget.value){
-                    description.value = rolodex[i].item
-                    rate.value = rolodex[i].rate
-                    unit.value = rolodex[i].unit
-                }
-            }
-        }
-
-        function changequantity(){
-            if (event.currentTarget.id.substring(0,17) == "material_quantity") {type = "material"; clicked_row = event.currentTarget.id.substring(17,event.currentTarget.id.length)}
-            if (event.currentTarget.id.substring(0,18) == "equipment_quantity") {type = "equipment"; clicked_row = event.currentTarget.id.substring(18,event.currentTarget.id.length)}
-            if (event.currentTarget.id.substring(0,15) == "extras_quantity") {type = "extras"; clicked_row = event.currentTarget.id.substring(15,event.currentTarget.id.length)}
-            rate = document.getElementById(type + "_rate" + clicked_row)
-            hours = document.getElementById(type + "_quantity" + clicked_row)
-            total = document.getElementById(type + "_cost" + clicked_row)
-            total.value = hours.value * rate.value
-            calculate_final_cost()
-        }
-
-        function calculate_final_cost(){
-
-            var finalcost = 0
-            var materialcost = 0
-            for(let i =1; i < laborcount+1; i++){
-            finalcost = parseFloat(document.getElementById("labor_cost" + i).value) + finalcost
-            }
-            for(let i =1; i < glob_materialcount+1; i++){
-            materialcost = parseFloat(document.getElementById("material_cost" + i).value) + materialcost
-            finalcost = parseFloat(document.getElementById("material_cost" + i).value) + finalcost
-            }
-            document.getElementById("inventory_cost").value = materialcost *.15
-            document.getElementById("inventory_cost_display").innerHTML = "$" + String(parseInt(materialcost *.15))
-            for(let i =1; i < glob_equipmentcount+1; i++){
-            finalcost = parseFloat(document.getElementById("equipment_cost" + i).value) + finalcost
-            }
-            for(let i =1; i < glob_extrascount+1; i++){
-            finalcost = parseFloat(document.getElementById("extras_cost" + i).value) + finalcost
-            }
-            finalcost = finalcost + parseFloat(document.getElementById("inventory_cost").value)
-            document.getElementById("bond_cost").value = finalcost * parseFloat({{bond_rate}})
-            document.getElementById("bond_cost_display").innerHTML ="Bond Cost: $" + String(parseInt(document.getElementById("bond_cost").value))
-            finalcost = finalcost + parseFloat(document.getElementById("bond_cost").value)
-            document.getElementById("final_cost").value = parseInt(finalcost)
-            document.getElementById("final_cost_display").innerHTML = "<b>Final Cost: $" + parseInt(finalcost) + "</b>"
-
-        }
-        window.onload = function() {
-        alert("hi")
-            if ("{{email_send_error}}"=="yes"){alert("Error Sending Email")}
-        }
     </script>
 </head>
 <body>
+<!--start date modal-->
+<div class="modal fade" id="startdate-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="title3"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                    <label for="selected_file">Select the Extra Work Ticket</label>
+                    <select id="selected_file" required class="form-control" name="selected_file" >
+                        <option value="please_select">Select The Extra Work Ticket</option>
+                        {% if foldercontents %}
+                        {% for x in foldercontents %}
+                        <option value="{{x}}" class="dropdown-item" >{{x}}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+            </div>
 
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="email_now_button" data-dismiss="modal" onclick="selected_file()">Email Now</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--<div class="container">-->
 <h2>{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} - Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</h2>
 <h4>Send Change Order to the Following People: </h4>
 <table id="labor_breakdown" class="display" style="width:90%" ><thead><tr><th></th></tr></thead><tbody>
-<form action="{% url 'preview_TMProposal' newproposal.id %}" method="post"   >
+<form id="TMProposal_Form" action="{% url 'preview_TMProposal' newproposal.id %}" method="post"   >
 	{% csrf_token %}
+    <input type="hidden" id="status" name="status">
+    <input type="hidden" id="filename" name="filename">
 	{% for x in client_list %}
 	{% if x.current == True %}
 		<tr><td>
 	 <select id="recipient" name="recipient{{x.person_pk}}" >
 		 <option value={{x.person_pk}}>{{x.name}}</option></select>
 			{% if x.default == True %}
-			<input type="submit" value="Remove from Default CO Recipients" name="remove{{x.person_pk}}" />
+			<input type="submit" class="btn btn-secondary btn-sm" value="Remove from Default CO Recipients" name="remove{{x.person_pk}}" />
 						{% else %}
-			<input type="submit" value="Add to Default CO Recipients" name="adddefault{{x.person_pk}}" />
+			<input type="submit" class="btn btn-secondary btn-sm" value="Add to Default CO Recipients" name="adddefault{{x.person_pk}}" />
 			{% endif %}
-			<input type="submit" value="Remove from this change order" name="tempremove{{x.person_pk}}"/>
-			<input type="email" class= "emails" value="{{x.email}}" name="email{{x.person_pk}}" size="30" onchange = "add_button({{x.person_pk}})"/>
-			<input type="submit" class="emailbutton" value="Update Now!" id="button{{x.person_pk}}" name="updateemail{{x.person_pk}}"/>
+			<input type="submit" class="btn btn-secondary btn-sm" value="Remove from this change order" name="tempremove{{x.person_pk}}"/>
+			<input type="email"  value="{{x.email}}" name="email{{x.person_pk}}" size="30" onchange = "add_button({{x.person_pk}})"/>
+			<input type="submit" class="btn btn-danger btn-sm" value="Click Here Permanently Change Email Address for {{x.name}}" id="button{{x.person_pk}}" name="updateemail{{x.person_pk}}"/>
 			</td></tr>
 	{% endif %}
 	{% endfor %}
@@ -307,8 +210,8 @@
 		{% endif %}
 			{% endfor %}
 		</select>
-	<input type="submit" value="Add as a Default Recipient" name="defaultadd"/>
-		<input type="submit" value="Add to this change order" name="tempadd"/>
+	<input type="submit" class="btn btn-secondary btn-sm" value="Add as a Default Recipient" name="defaultadd"/>
+		<input type="submit" class="btn btn-secondary btn-sm"  value="Add to this change order" name="tempadd"/>
 
 </td></tr>
 	{% endif %}
@@ -323,11 +226,12 @@
         <div style="flex-grow: 1;"></div>
         <div style="text-align: left">
                 {% csrf_token %}
-                <input type="submit" name="final" class="btn btn-sm btn-primary" value="SEND EMAIL WITH PROPOSAL"/>
-            <input type="submit" name="no_email" class="btn btn-sm btn-primary" value="DONT EMAIL (I will send myself)"/>
+            <button type="button" id="final" name="final" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#startdate-modal" onclick="tester()">SEND EMAIL WITH PROPOSAL</button>
+            <input type="submit" name="no_email" id="no_email" class="btn btn-sm btn-primary" value="DONT EMAIL (I will send myself)"/>
 <!--            <input type="submit" name="cancel" class="btn btn-sm btn-primary" value="Cancel"/>-->
         </div>
     </div>
+    <div id="hide_this" style="color:red;"><H1>PLEASE WAIT - DO NOT CLICK ANYTHING - EMAILING PROPOSAL NOW!!</H1></div>
     <div style="width: 100%; text-align:center;">
         <div class="col"><H2>Gerloff Painting T&M Price Breakdown</H2></div>
     </div>
@@ -378,7 +282,7 @@
         </tr>
         {% for x in materialitems %}
         <tr>
-            <td>{{x.category2}} {{x.description}}</td>
+            <td>{{x.description}}</td>
             <td>{{x.quantity}}</td>
             <td>{{x.units}}</td>
             <td>${{x.total}}</td>
@@ -405,7 +309,7 @@
         </tr>
         {% for x in equipmentitems %}
         <tr>
-            <td>{{x.category2}} {{x.description}}</td>
+            <td>{{x.description}}</td>
             <td class="col-2">{{x.quantity}}</td>
             <td class="col-2">{{x.units}}</td>
             <td class="col-2">${{x.total}}</td>
@@ -424,7 +328,7 @@
         </tr>
         {% for x in extraitems %}
         <tr>
-            <td>{{x.category2}} {{x.description}}</td>
+            <td>{{x.description}}</td>
             <td>{{x.quantity}}</td>
             <td>{{x.units}}</td>
             <td>${{x.total}}</td>
@@ -453,6 +357,8 @@
 <script src=”https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js”
         integrity=”sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl”
         crossorigin=”anonymous”></script>
+<!--    </div>-->
 </body>
 </html>
 
+{% endblock %}
