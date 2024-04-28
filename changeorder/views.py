@@ -317,6 +317,7 @@ def print_TMProposal(request, id):
 @login_required(login_url='/accounts/login')
 def revise_TM_COP(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
+
     if request.method == 'POST':
         if 'cancel' in request.POST:
             return redirect('extra_work_ticket', id=changeorder.id)
@@ -391,6 +392,7 @@ def revise_TM_COP(request, id):
         return redirect('preview_TMProposal', id=newproposal.id)
     send_data = {}
     send_data['tmproposal'] = TMProposal.objects.get(change_order=changeorder)
+
     if EWT.objects.filter(change_order = changeorder).exists():
         ewt = EWT.objects.get(change_order = changeorder)
         send_data['ewt']=ewt
