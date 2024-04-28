@@ -694,6 +694,7 @@ def job_page(request, jobnumber):
                 selectedjob.save()
                 selectedjob.client_Pm.email = request.POST['pm_email']
                 selectedjob.client_Pm.phone = request.POST['pm_phone']
+                selectedjob.client_Pm.name = request.POST['pm_name']
                 selectedjob.client_Pm.save()
         if 'submit_super' in request.POST:
             if request.POST['select_super'] == 'add_new':
