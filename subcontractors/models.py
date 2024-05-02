@@ -152,8 +152,15 @@ class Subcontracts(models.Model):
         return total
 
     def total_retainage_prior(self):
+        #saturday thru friday
+        today = datetime.date.today()
+        this_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4)
+        last_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4) - datetime.timedelta(days=7)
+        if today.weekday() > 4:
+            this_friday += datetime.timedelta(days=7)
+            last_friday += datetime.timedelta(days=7)
         total = 0
-        for x in SubcontractorInvoice.objects.filter(subcontract=self, processed=True):
+        for x in SubcontractorInvoice.objects.filter(subcontract=self, processed=True, date__lte=last_friday):
             total = total + x.retainage
         return total
 
