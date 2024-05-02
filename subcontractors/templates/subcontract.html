@@ -656,7 +656,8 @@ function add_note2(){
 					<th>Quantity</th>
 					<th>Unit</th>
 					<th>Price</th>
-					<th>Billed</th>
+					<th>Billed Prior</th>
+                    <th>Total Pending</th>
                     <th>Approved</th>
 					<th>Notes</th>
 					<th>Edit</th>
@@ -681,6 +682,7 @@ function add_note2(){
 					<td><input name="SOV_rate" id="SOV_rate" type= "number" value={{x.SOV_rate}} size="10" required /></td>
 					{% endif %}
 					<td>{{x.percentage}}%</td>
+                <td>{{x.percentage2}}%</td>
                     {% if x.is_approved %}
                     <td><input name="is_approved" id="is_approved" type= "checkbox" checked /></td>
                     {% else %}
@@ -706,6 +708,7 @@ function add_note2(){
 					{% endif %}
 					<td>{{x.SOV_rate}}</td>
 					<td>{{x.percentage}}%</td>
+                    <td>{{x.percentage2}}%</td>
                     {% if x.is_approved %}
                     <td>Yes</td>
                     {% else %}

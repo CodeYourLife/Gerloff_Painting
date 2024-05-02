@@ -133,8 +133,15 @@ class Subcontracts(models.Model):
         return total
 
     def total_billed_prior(self):
+        #saturday thru friday
+        today = datetime.date.today()
+        this_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4)
+        last_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4) - datetime.timedelta(days=7)
+        if today.weekday() > 4:
+            this_friday += datetime.timedelta(days=7)
+            last_friday += datetime.timedelta(days=7)
         total = 0
-        for x in SubcontractorInvoice.objects.filter(subcontract=self, processed=True):
+        for x in SubcontractorInvoice.objects.filter(subcontract=self, processed=True, date__lte=last_friday):
             total = total + x.final_amount
         return total
 
@@ -246,6 +253,15 @@ class SubcontractItems(models.Model):
         if self.SOV_is_lump_sum == False:
             totalcost = totalcost * self.SOV_rate
         return totalcost
+
+    def total_billed_and_pending(self):
+        totalcost = 0
+        for x in SubcontractorInvoiceItem.objects.filter(sov_item=self):
+            totalcost = totalcost + x.quantity
+        if self.SOV_is_lump_sum == False:
+            totalcost = totalcost * self.SOV_rate
+        return totalcost
+
 
 class SubcontractorPayments(models.Model):
     id = models.BigAutoField(primary_key=True)

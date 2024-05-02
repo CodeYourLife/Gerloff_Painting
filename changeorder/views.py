@@ -1011,7 +1011,7 @@ def change_order_send(request, id):
                 changeorder.save()
                 current_user = Employees.objects.get(user=request.user)
                 if x[0:5] == 'final':
-                    recipients = ["bridgette@gerloffpainting.com"]
+                    recipients = ["bridgette@gerloffpainting.com", 'joe@gerloffpainting.com']
                     recipients.append(current_user.email)
                     for x in request.POST:
                         if x[0:5] == 'email':
