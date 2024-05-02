@@ -839,16 +839,19 @@ def subcontract(request, id):
         number_items = number_items + 1
         totalcost = float(x.total_cost())
         totalbilled = float(x.total_billed())
+        totalbilledandpending = float(x.total_billed_and_pending())
         totalordered = float(x.SOV_total_ordered)
         quantitybilled = float(x.quantity_billed())
         remainingcost = totalcost - totalbilled
         remainingqnty = totalordered - quantitybilled
         if totalcost == 0:
             percentage = 0
+            percentage2 = 0
         else:
             percentage = (totalbilled / totalcost) * 100
+            percentage2 = (totalbilledandpending / totalcost) * 100
         items.append(
-            {'is_approved': x.is_approved, 'date': x.date.strftime("%m/%d/%y"), 'percentage': str(round(percentage, 2)),
+            {'is_approved': x.is_approved, 'date': x.date.strftime("%m/%d/%y"), 'percentage': str(round(percentage, 2)),'percentage2': str(round(percentage2, 2)),
              'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
              'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
              'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
