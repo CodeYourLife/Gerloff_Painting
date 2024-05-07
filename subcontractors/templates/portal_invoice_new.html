@@ -107,6 +107,7 @@ input[type=number] {
     <script type="text/javascript" class="init">
 $(document).ready(function () {
     var table = $('#job_table').DataTable({paging:false,searching:false,info: false, ordering:false});
+    document.getElementById("hide_this").style.display = "none"
 })
 
 
@@ -200,6 +201,9 @@ function check_form(){
 		alert("You need to enter at least 1 quantity")
 		return false;
 	}
+document.getElementById("hide_this").style.display = "block"
+document.getElementById("Form3").style.display = "none"
+
 }
 
 	</script>
@@ -301,8 +305,14 @@ function check_form(){
 	 <br>
  <div id="total_contract"></div>
 	 <br>
-<input type="submit" name="Form3" class="btn btn-primary btn-sm" value="Send Invoice for Approval" />
-    </form>
+<input type="submit" name="Form3" id="Form3" class="btn btn-primary btn-sm" value="Send Invoice for Approval" />
+	 <div id="hide_this"><h2><font color = "red" >Submitted.... Please wait, do not click anything while this is processing. </font></h2></div>
+ <br>
+	 <br>
+	 <br>
+	 .
+
+ </form>
 
 
 </body>
