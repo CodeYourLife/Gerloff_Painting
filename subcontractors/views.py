@@ -555,7 +555,7 @@ def subcontract_invoices(request, subcontract_id, item_id):
             first = "Invoice " + str(selected_invoice.pay_app_number)
             if 'approved' in request.POST: second = "Approved."
             if 'approved_with_changes' in request.POST: second = "Approved with changes."
-            if 'reject_notes' in request.POST: second = "Rejected."
+            if 'reject_notes' in request.POST: second = "Rejected. " + request.POST['reject_notes'] + "."
             if 'editing_now' in request.POST: second = "Edited."
             third = note2
             fourth = ""
