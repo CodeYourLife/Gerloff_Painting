@@ -5,9 +5,7 @@
     <script src="{% static 'signature.js' %}">
     </script>
     <script type="text/javascript" class="init">
-<!--        window.onload = function() {-->
-<!--        document.getElementById("final_button").style.display = "none";-->
-<!--        }-->
+
     </script>
     <style>
         table, td, th {
@@ -150,7 +148,7 @@
             {% csrf_token %}
             <script>signatureCapture();</script>
             {% if not signature %}
-            <button type="button" id="saveSignatureBtn" onclick="signatureSave()">Confirm signature</button>
+            <button type="button" id="saveSignatureBtn" onclick="signatureSave2()">Confirm signature</button>
             <button type="button" id="clearSignatureBtn" onclick="signatureClear()">Clear signature</button>
             <input type="submit" id= "final_button" value="Save PDF"/>
             {% endif %}

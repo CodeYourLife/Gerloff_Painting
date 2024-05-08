@@ -2,12 +2,7 @@
 {% load static %}
 <html>
 <head>
-        <script type="text/javascript" class="init">
-<!--        window.onload = function() {-->
-<!--        alert("HI")-->
-<!--        document.getElementById("final_button").style.display = "none";-->
-<!--        }-->
-    </script>
+
     <script src="{% static 'signature.js' %}">
     </script>
 
@@ -156,6 +151,7 @@
 <!--            <button type="button" id="saveSignatureBtn"  onclick="signatureSave()">Confirm signature</button>-->
 <!--            <button type="button" id="clearSignatureBtn" onclick="signatureClear()">Clear signature</button>-->
             <input type="submit" id="final_button"  value="Email Signed Ticket Back To Gerloff (you will get a copy)"/>
+            <div id="hide_this"><h3>Processing. Please do not click anything.</h3></div>
             {% endif %}
         </div>
     </div>

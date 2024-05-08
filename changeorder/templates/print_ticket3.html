@@ -4,8 +4,7 @@
 <head>
     <script type="text/javascript" class="init">
         window.onload = function() {
-            if ("{{email_success}}"){alert("Email successfully sent!")}
-    if ("{{email_failed}}"){alert("Email failed to send!")}
+            if ("{{error_message}}"){alert("{{error_message}}")}
         }
     </script>
     <style>
@@ -13,8 +12,11 @@
     </style>
 </head>
 <body style="margin: 22px; font-family: Helvetica">
+{% if email_failed %}
+<b>Thank you! The signed ticket has been saved in our system. Unfortunately, the email could not be processed.  Please reach out to your Gerloff Painting rep and they can send you the signed ticket for your records!</b>
+{% else %}
 <b>Thank you. The signed ticket has been emailed to {{recipient}}</b>
-
+{% endif %}
 </body>
 </html>
 

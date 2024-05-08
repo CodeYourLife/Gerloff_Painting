@@ -29,6 +29,7 @@ window.history.back()
 }
 
 window.onload = function() {
+if ("{{error_message}}"){alert("{{error_message}}")}
 if ('{{rental.rep}}' == 'None'){
 document.getElementById("rep_info").style.display = "none"
 }

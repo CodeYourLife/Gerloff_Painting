@@ -170,7 +170,7 @@ def update_job_info(request, jobnumber):
                                         recipients, False)
                         success = True
                     except:
-                        success = False
+                        send_data['error_message'] = "Email Failed to send. Please let warehouse know. " + message
                 if Subcontracts.objects.filter(is_closed=False, job_number=selectedjob).exists():
                     message = "Job: " + selectedjob.job_name + " cannot be closed. The following subcontracts are still open!\n "
                     recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com",
@@ -185,7 +185,7 @@ def update_job_info(request, jobnumber):
                                         recipients, False)
                         success = True
                     except:
-                        success = False
+                        send_data['error_message'] = "Email Failed to send. Please note that the job can't be closed because there are open subcontractors"
                     send_data['subcontract_open_error'] = True
                     send_data['open_subcontracts'] = message
                 else:
@@ -619,9 +619,9 @@ def job_page(request, jobnumber):
                       request.POST['off_rent_note']
             try:
                 Email.sendEmail("Call Off Rent", message, ["warehouse@gerloffpainting.com"], False)
-                success = True
+                send_data['error_message'] = "Email requesting off rent was successfully sent. "
             except:
-                success = False
+                send_data['error_message'] = "ERROR! Your Email requesting off rent was NOT sent. Please call the warehouse. "
         if 'select_status' in request.POST:
             if request.POST['select_status'] == 'nothing_done':
                 message = "Labor is not done."
@@ -632,9 +632,9 @@ def job_page(request, jobnumber):
                                         request.POST['closed_note'],
                                         ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
                                          'victor@gerloffpainting.com'], False)
-                        success = True
+                        send_data['error_message'] = "Email about labor not done was successfully sent. "
                     except:
-                        success = False
+                        send_data['error_message'] = "ERROR! Email about labor not done was NOT sent. Please call the office."
                 selectedjob.labor_done_Date = None
                 selectedjob.is_waiting_for_punchlist = False
                 selectedjob.is_labor_done = False
@@ -659,9 +659,9 @@ def job_page(request, jobnumber):
                                     ['joe@gerloffpainting.com', 'admin2@gerloffpainting.com',
                                      'bridgette@gerloffpainting.com',
                                      'victor@gerloffpainting.com'], False)
-                    success = True
+                    send_data['error_message'] = "Labor Complete Email was successfully sent. "
                 except:
-                    success = False
+                    send_data['error_message'] = "ERROR! Your email about job being complete was NOT sent.  Please call the office. "
                 selectedjob.labor_done_Date = date.today()
                 selectedjob.is_waiting_for_punchlist = True
                 selectedjob.is_labor_done = True

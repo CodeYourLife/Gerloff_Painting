@@ -545,9 +545,9 @@ def subcontract_invoices(request, subcontract_id, item_id):
                     Email.sendEmail("Invoice Rejected", email_body,
                                     ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
                                      'bridgette@gerloffpainting.com'], False)
-                    success = True
+                    send_data['error_message'] = "Rejection Email Successfully Sent!"
                 except:
-                    success = False
+                    send_data['error_message'] = "ERROR! Email not sent.  Please tell the office this was rejected."
         selected_invoice.save()
         # make notes below 2
         if 'approved' in request.POST or 'approved_with_changes' in request.POST or 'reject_notes' in request.POST or 'editing_now' in request.POST:  # make note
@@ -572,9 +572,9 @@ def subcontract_invoices(request, subcontract_id, item_id):
                     Email.sendEmail("Invoice Changed", str(selected_invoice) + ". " + note + ". Changed by " + str(Employees.objects.get(user=request.user)),
                                     ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
                                      'bridgette@gerloffpainting.com'], False)
-                    success = True
+                    send_data['error_message'] = "Invoiced Changed Email Successfully Sent!"
                 except:
-                    success = False
+                    send_data['error_message'] = "ERROR! Email not sent.  Please tell the office that you made changes to this invoice."
     # build the HTML page
     if item_id == 'ALL':
         invoices = SubcontractorInvoice.objects.filter(subcontract=subcontract)

@@ -294,6 +294,7 @@ else if (booking_input.select_company.value == "add_new") {
         window.onload = function() {
             if ("{{email_sent}}"){alert("Email Was Sent")}
             if ("{{email_not_sent}}"){alert("Email Was Not Sent")}
+            if ("{{error_message}}"){alert("{{error_message}}")}
             var today = new Date();
             var dd = String(today.getDate()).padStart(2, '0');
             var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!

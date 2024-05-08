@@ -1,6 +1,6 @@
 from equipment.models import Vendors, VendorContact, VendorCategory
 from rentals.models import Rentals, RentalNotes
-from jobs.models import Jobs, Clients, ClientEmployees
+from jobs.models import Jobs, Clients, ClientEmployees, Email_Errors
 from django.shortcuts import render, redirect
 from .tables import RentalsTable
 from django_tables2 import RequestConfig
@@ -114,6 +114,10 @@ def rental_ajax(request):
 
 @login_required(login_url='/accounts/login')
 def rental_page(request, id, reverse):
+    send_data = {}
+    if Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).exists():
+        send_data['error_message']= Email_Errors.objects.get(user=request.user.first_name + " " + request.user.last_name).error
+    Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
     rental = Rentals.objects.get(id=id)
     reverse = reverse
     reps = VendorContact.objects.filter(company=rental.company)
@@ -131,11 +135,14 @@ def rental_page(request, id, reverse):
                                        note="Please call off-rent. " + request.POST['off_rent_note'])
             message = "Please call off this rental. " + rental.item + ". From Job -" + rental.job_number.job_name + "\n " + \
                       request.POST['off_rent_note']
+            Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
             try:
                 Email.sendEmail("Call Off Rent", message, ["warehouse@gerloffpainting.com"], False)
-                success = True
+                error_message = "Your email to call off rent was sent successfully!"
             except:
-                success = False
+                error_message = "ERROR! Your email was not sent.  Please call the warehouse and let them know to call it off rent."
+            Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name, error=error_message,
+                                        date=date.today())
         if 'form_1' in request.POST:
             note = ""
             rental.company.company_phone = request.POST['company_phone']
@@ -192,5 +199,9 @@ def rental_page(request, id, reverse):
             fn2 = os.path.join(settings.MEDIA_ROOT, "rentals", str(rental.id), fn)
             open(fn2, 'wb').write(fileitem.file.read())
         return redirect("rental_page", id=rental.id, reverse='YES')
-    return render(request, "rental_page.html", {'rental': rental, 'reverse': reverse, 'reps': reps, 'notes': notes,
-                                                'foldercontents': foldercontents})
+    send_data['rental']=rental
+    send_data['reverse'] =reverse
+    send_data['reps'] =reps
+    send_data['notes'] =notes
+    send_data['foldercontents'] =foldercontents
+    return render(request, "rental_page.html", send_data)

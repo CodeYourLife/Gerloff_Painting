@@ -269,8 +269,13 @@
 
         }
         window.onload = function() {
-        alert("hi")
+            document.getElementById("hide_this").style.display = "none"
             if ("{{email_send_error}}"=="yes"){alert("Error Sending Email")}
+        }
+        function hide_buttons(){
+        document.getElementById("hide_this").style.display = "block"
+        document.getElementById("final").style.display = "none"
+        document.getElementById("no_email").style.display = "none"
         }
     </script>
 </head>
@@ -279,7 +284,7 @@
 <h2>{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} - Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</h2>
 <h4>Send Change Order to the Following People: </h4>
 <table id="labor_breakdown" class="display" style="width:90%" ><thead><tr><th></th></tr></thead><tbody>
-<form action="{% url 'preview_TMProposal' newproposal.id %}" method="post"   >
+<form action="{% url 'preview_TMProposal' newproposal.id %}" method="post" onSubmit="hide_buttons()">
 	{% csrf_token %}
 	{% for x in client_list %}
 	{% if x.current == True %}
@@ -323,8 +328,9 @@
         <div style="flex-grow: 1;"></div>
         <div style="text-align: left">
                 {% csrf_token %}
-                <input type="submit" name="final" class="btn btn-sm btn-primary" value="SEND EMAIL WITH PROPOSAL"/>
-            <input type="submit" name="no_email" class="btn btn-sm btn-primary" value="DONT EMAIL (I will send myself)"/>
+                <input type="submit" name="final" id="final" class="btn btn-sm btn-primary" value="SEND EMAIL WITH PROPOSAL"/>
+            <input type="submit" name="no_email" id="no_email" class="btn btn-sm btn-primary" value="DONT EMAIL (I will send myself)"/>
+            <div id="hide_this"><h3>Processing. Please wait, do not click anything!</h3></div>
 <!--            <input type="submit" name="cancel" class="btn btn-sm btn-primary" value="Cancel"/>-->
         </div>
     </div>

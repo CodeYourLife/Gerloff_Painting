@@ -5,7 +5,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
 from equipment.tables import *
 from equipment.models import *
-from jobs.models import Jobs, JobNotes
+from jobs.models import Jobs, JobNotes, Email_Errors
 from equipment.filters import EquipmentFilter, EquipmentFilter2, EquipmentFilter3
 import json
 from django.core.serializers.json import DjangoJSONEncoder
@@ -24,7 +24,6 @@ from employees.models import *
 
 
 def complete_pickup(request, pickup):
-    print("PUMPKIN")
     send_data = {}
     selected_request = PickupRequest.objects.get(id=pickup)
     if selected_request.completed_notes is None:
@@ -122,12 +121,15 @@ def complete_pickup(request, pickup):
                 else:
                     if selected_request.requested_by.email is not None:
                         recipients.append(selected_request.requested_by.email)
+                Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
                 try:
                     Email.sendEmail("Pickup Complete! " + selected_job.job_name, message,
                                     recipients, False)
-                    success = True
+                    message = "Your email about the pickup being complete was sent succesfully"
                 except:
-                    success = False
+                    message = "Error! Your email about the pickup being complete failed to send. Please call them and let them know it was completed."
+                Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name, error=message,
+                                            date=date.today())
                 return redirect('warehouse_home')
     if selected_request.all_items == True:
         selected_items = Inventory.objects.filter(pickuprequested__isnull=True, job_number=selected_request.job_number,is_closed=False)
@@ -142,7 +144,6 @@ def request_pickup(request, jobnumber, item, pickup, status):
     # item either ALL or ID
     # Pickup either 'ADD' or ID or 'ALL' or 'CHANGE' or 'ITEMADD' or 'ITEMREMOVE'
     # status either 'ALL' or 'CHANGE' or 'ADD' or 'REVISE'
-    print("PUMPKIN")
     selected_job = Jobs.objects.get(job_number=jobnumber)
     send_data = {}
     if status == 'REVISE':
@@ -240,12 +241,15 @@ def request_pickup(request, jobnumber, item, pickup, status):
                 if selected_request.requested_by != selected_job.superintendent:
                     if selected_request.requested_by.email is not None:
                         recipients.append(selected_request.requested_by.email)
+            Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
             try:
                 Email.sendEmail("Pickup Request! " + selected_job.job_name, message,
                                 recipients, False)
-                success = True
+                message = "Your email requesting a pickup was sent succesfully!"
             except:
-                success = False
+                message = "ERROR! Your pickup request was not sent. Please call the warehouse."
+            Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name, error=message,
+                                        date=date.today())
             JobNotes.objects.create(job_number=selected_job,
                                     note=message,
                                     type="auto_misc_note", user=Employees.objects.get(user=request.user), date=date.today())
