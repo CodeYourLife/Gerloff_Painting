@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from changeorder.models import *
-from jobs.models import Jobs, JobCharges, ClientEmployees
+from jobs.models import Jobs, JobCharges, ClientEmployees, Email_Errors
 from employees.models import *
 from django.shortcuts import render, redirect
 from datetime import date
@@ -71,8 +71,9 @@ def emailed_ticket(request, id):
         try:
             Email.sendEmail("Signed Gerloff Painting Ticket", "The signed ticket is attached", recipients,
                             f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf")
-            send_data['email_success'] = True
+            send_data['error_message'] = "The email with the signed ticket was successfully sent!"
         except:
+            send_data['error_message'] = "ERROR! The email with the signed ticket was not sent!"
             send_data['email_failed'] = True
         return render(request, "print_ticket3.html", send_data)
 
@@ -103,11 +104,13 @@ def email_for_signature(request, id):
             email_body = "You have received an extra work ticket from Gerloff Painting.  \nPlease click this link http://www.google.com"
             recipients = ["joe@gerloffpainting.com"]
             recipients.append(email)
+            Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
             try:
                 Email.sendEmail("Extra Work Ticket", email_body, recipients, False)
-                success = True
+                message = "The email with the link to the extra work ticket was successfully sent!"
             except:
-                success = False
+                message = "ERROR! The email with the extra work ticket failed to send. You will need to try again later."
+            Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name, error=message,date = date.today())
     return redirect('extra_work_ticket', id=id)
 
 
@@ -245,6 +248,7 @@ def print_TMProposal(request, id):
 
                 print("HERE99")
                 if request.POST['status'] == 'Final':
+                    Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
                     try:
                         files=[]
                         files.append(f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
@@ -255,11 +259,15 @@ def print_TMProposal(request, id):
                         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                         user=Employees.objects.get(user=request.user),
                                                         note="COP Emails to " + str(recipients))
+                        error = "COP was succesfully emailed"
                     except:
                         email_send_error = "yes"
                         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                         user=Employees.objects.get(user=request.user),
                                                         note="COP Email Failed to Send")
+                        error = "COP FAILED to Email! Please try again later!"
+                    Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name,
+                                                error=message, date=date.today())
                 else:
                     ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                     user=Employees.objects.get(user=request.user),
@@ -1024,12 +1032,15 @@ def change_order_send(request, id):
                     ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                     user=current_user,
                                                     note="COP Sent. Price: $" + request.POST['price'])
+                    Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
                     try:
                         Email.sendEmail("COP Proposal", "Please find the Change Order Proposal attached", recipients,
                                         f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
-                        success = True
+                        message = "Change Order Proposal was succesfully emailed"
                     except:
-                        success = False
+                        message = "Error! Change Order Proposal failed to email. Please retry later!"
+                    Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name,
+                                                error=message, date=date.today())
                 else:
                     ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                     user=current_user,
@@ -1179,6 +1190,9 @@ def change_order_home(request):
 @login_required(login_url='/accounts/login')
 def extra_work_ticket(request, id):
     send_data = {}
+    if Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).exists():
+        send_data['error_message']= Email_Errors.objects.get(user=request.user.first_name + " " + request.user.last_name).error
+    Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
     changeorder = ChangeOrders.objects.get(id=id)
     send_data['changeorder'] = changeorder
     send_data['client_list']= ClientEmployees.objects.filter(id=changeorder.job_number.client)
@@ -1200,9 +1214,7 @@ def extra_work_ticket(request, id):
         foldercontents = os.listdir(path)
         send_data['foldercontents'] = foldercontents
     except Exception as e:
-
         send_data['no_folder_contents'] = True
-
     # if TMList.objects.filter(change_order=changeorder).exists():
     #     TMList.objects.filter(change_order=changeorder).delete()
     # if TMProposal.objects.filter(change_order=changeorder).exists():
@@ -1238,9 +1250,9 @@ def extra_work_ticket(request, id):
             recipients.append(email)
             try:
                 Email.sendEmail("Extra Work Ticket", email_body, recipients, False)
-                send_data['email_success'] = True
+                send_data['error_message'] = "The email with the link to the extra work ticket was successfully sent!"
             except:
-                send_data['email_failed'] = True
+                send_data['error_message'] = "ERROR! The email with the extra work ticket failed to send. Please try again later. "
         if 'selected_file' in request.POST:
             return MediaUtilities().getDirectoryContents(id, request.POST['selected_file'], 'changeorder')
         if 'oldform' in request.POST:

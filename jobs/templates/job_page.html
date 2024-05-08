@@ -112,6 +112,7 @@ float: left !important;
 <script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
 <script type="text/javascript" class="init">
 $(document).ready(function() {
+  if ("{{error_message}}"){alert("{{error_message}}")}
   $('#undo_redo').multiselect();
 });
 

@@ -27,11 +27,14 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 
-
+$(document).ready(function () {
+    document.getElementById("hide_this").style.display = "none"
+})
 
 	function check_booking_data(){
 alert("Please be patient until this completes")
-
+document.getElementById("send_now").style.display = "none"
+    document.getElementById("hide_this").style.display = "block"
 	}
 
 	</script>
@@ -122,10 +125,14 @@ alert("Please be patient until this completes")
 		<textarea id="request_notes" name="request_notes" rows="4" style="width: 100%"></textarea>
 		 <br>
 		 {% if selected_request.all_items == True %}
-		 	<input type="submit" class="btn btn-primary btn-sm" name = "send_now" value="Send Request Now!" />
+		 	<input type="submit" class="btn btn-primary btn-sm" id="send_now" name = "send_now" value="Send Request Now!" />
 		 {% elif selected_items %}
-		  	<input type="submit" class="btn btn-primary btn-sm" name = "send_now" value="Send Request Now!" />
+		  	<input type="submit" class="btn btn-primary btn-sm" id="send_now" name = "send_now" value="Send Request Now!" />
 		{% endif %}
+			<div id="hide_this"><h3>PROCESSING! Please do not click anything until complete!</h3></div>
+			<br>
+			<br>
+
 		</form>
  	{% endif %}
  {% endif %}

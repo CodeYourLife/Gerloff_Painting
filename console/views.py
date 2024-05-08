@@ -179,6 +179,9 @@ def index(request):
 @login_required(login_url='/accounts/login')
 def warehouse_home(request):
     send_data = {}
+    if Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).exists():
+        send_data['error_message']= Email_Errors.objects.get(user=request.user.first_name + " " + request.user.last_name).error
+    Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
     if PickupRequest.objects.filter(confirmed=True, is_closed=False).exists():
         send_data['pending_pickups'] = PickupRequest.objects.filter(confirmed=True, is_closed=False).order_by('date')
     return render(request, 'warehouse_home.html', send_data)

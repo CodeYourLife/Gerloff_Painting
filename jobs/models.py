@@ -357,3 +357,12 @@ class JobCharges(models.Model):
 
     def __str__(self):
         return f"{self.job} {self.master}"
+
+
+class Email_Errors(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    error = models.CharField(null=True, max_length=2000)
+    user = models.CharField(null=True, max_length=2000)
+    #user = request.user.first_name + " " + request.user.last_name
+    #for subs =
+    date = models.DateField(null=True, blank=True)

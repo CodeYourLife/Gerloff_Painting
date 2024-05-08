@@ -28,6 +28,7 @@ class Email:
         s.sendmail(sender, to, text)
         s.quit()
         print("HERE4")
+
     def sendEmail2(title, body, to, filename):
         msg = MIMEMultipart()
         # sender = to

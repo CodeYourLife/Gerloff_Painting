@@ -30,6 +30,17 @@ function add_button(pk){
 hidden = document.getElementById("button"+ pk);
 hidden.style.visibility= "visible"
 }
+
+function hide_buttons(){
+document.getElementById("final1").style.display = "none"
+document.getElementById("final2").style.display = "none"
+document.getElementById("hide_this").style.display = "block"
+}
+
+$(document).ready(function () {
+	document.getElementById("hide_this").style.display = "none"
+})
+
 	</script>
 </head>
 <body>
@@ -46,7 +57,7 @@ hidden.style.visibility= "visible"
 <h2>{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} - Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</h2>
 <h4>Send Signed Ticket to the Following People: </h4>
 <table id="labor_breakdown" class="display" style="width:90%" ><thead><tr><th></th></tr></thead><tbody>
-<form action="{% url 'email_signed_ticket' changeorder.id %}" method="post"   >
+<form action="{% url 'email_signed_ticket' changeorder.id %}" method="post" onSubmit="hide_buttons()"  >
 	{% csrf_token %}
 	{% for x in client_list %}
 	{% if x.current == True %}
@@ -85,8 +96,9 @@ hidden.style.visibility= "visible"
 
 
 <br>
-<input type="submit" class="btn btn-primary btn-lg" value="Email To GC Above" name="final1" />
-	<input type="submit" class="btn btn-primary btn-lg" value="Email Only to Bridgette" name="final2" />
+<input type="submit" class="btn btn-primary btn-lg" value="Email To GC Above" name="final1" id="final1" />
+	<input type="submit" class="btn btn-primary btn-lg" value="Email Only to Bridgette" name="final2" id="final2" />
+	<div id="hide_this"><h3>Processing! Please do not click anything until complete!</h3></div>
 </form>
 
 </body>

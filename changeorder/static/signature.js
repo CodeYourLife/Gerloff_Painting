@@ -115,9 +115,26 @@
 		  document.getElementById("signatureValue").value = dataURL;
 		  document.getElementById("saveSignature").src = dataURL;
 		  document.getElementById("newSignature").style.display = "none";
+		  document.getElementById("final_button").style.display = "none";
+		  document.getElementById("hide_this").style.display = "block";
+		};
+
+		function signatureSave2() {
+		  document.getElementById("signatureName").readOnly = true;
+		  document.getElementById("saveSignature").style.display = "block";
+		  var canvas = document.getElementById("newSignature");// save canvas image as data url (png format by default)
+		  var dataURL = canvas.toDataURL("image/png");
+		  document.getElementById("signatureValue").value = dataURL;
+		  document.getElementById("saveSignature").src = dataURL;
+		  document.getElementById("newSignature").style.display = "none";
 		  document.getElementById("saveSignatureBtn").style.display = "none";
 		  document.getElementById("clearSignatureBtn").style.display = "none";
 		};
+
+    window.onload = function() {
+    document.getElementById("hide_this").style.display = "none";
+    }
+
 
 		function signatureClear() {
 		  document.getElementById("signatureName").readOnly = false;

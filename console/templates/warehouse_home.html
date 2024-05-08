@@ -21,7 +21,9 @@
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
-
+window.onload = function() {
+    if ("{{error_message}}"){alert("{{error_message}}")}
+}
 
 	</script>
 </head>

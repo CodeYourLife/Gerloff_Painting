@@ -110,6 +110,7 @@ var global_total_contract = 0
 var showing_retainage = 0
 
 $(document).ready(function () {
+ if ("{{error_message}}"){alert("{{error_message}}")}
     var table = $('#sub_table').DataTable({paging:false,searching:false,info:false, ordering:false});
 })
 $(document).ready(function () {
