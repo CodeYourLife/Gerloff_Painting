@@ -114,6 +114,8 @@ float: left !important;
 $(document).ready(function() {
   if ("{{error_message}}"){alert("{{error_message}}")}
   $('#undo_redo').multiselect();
+  document.getElementById("hide_this").style.display = "none"
+
 });
 
 function add_new_note(){
@@ -268,6 +270,9 @@ function showEmployeeData(status, client, client_email, client_phone,pm,superint
 }
 
 function change_start(){
+    document.getElementById("hide_this").style.display = "block"
+    document.getElementById("hide_button1").style.display = "none"
+    document.getElementById("hide_button2").style.display = "none"
     $.ajax({
         method: 'GET',
         url: '/superintendent/super_ajax',
@@ -479,8 +484,9 @@ document.getElementById("notes_filter_button").style.display = "none";
             </div>
             <div class="modal-footer">
 
-                <button type="button" class="btn btn-primary" name="change_start_date" onclick="change_start()" > Save Changes </button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" id="hide_button1" class="btn btn-primary" name="change_start_date" onclick="change_start()" > Save Changes </button>
+                <button type="button" id="hide_button2" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <div id="hide_this">Processing. Do not click anything.</div>
             </div>
         </div>
     </div>
