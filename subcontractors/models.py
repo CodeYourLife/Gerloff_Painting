@@ -78,6 +78,21 @@ class Subcontracts(models.Model):
             total += x.original_amount
         return total
 
+    def original_retainage_request(self):
+        today = datetime.date.today()
+        this_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4)
+        last_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4) - datetime.timedelta(days=7)
+        if today.weekday() > 4:
+            this_friday += datetime.timedelta(days=7)
+            last_friday += datetime.timedelta(days=7)
+        total = 0
+        for x in SubcontractorInvoice.objects.filter(subcontract=self, date__gt=last_friday, date__lte=this_friday):
+            if x.original_retainage_amount:
+                total += x.original_retainage_amount
+            else:
+                total += x.retainage
+        return total
+
     def amount_this_week(self):
         today = datetime.date.today()
         this_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4)
@@ -141,7 +156,11 @@ class Subcontracts(models.Model):
             this_friday += datetime.timedelta(days=7)
             last_friday += datetime.timedelta(days=7)
         total = 0
+
+        print(self)
         for x in SubcontractorInvoice.objects.filter(subcontract=self, processed=True, date__lte=last_friday):
+            print(x.final_amount)
+
             total = total + x.final_amount
         return total
 
@@ -304,6 +323,8 @@ class SubcontractorInvoice(models.Model):
     retainage_note = models.CharField(
         null=True, max_length=2000, blank=True)
     original_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True)
+    original_retainage_amount = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True)
     def __str__(self):
         return f"{self.subcontract} {self.pay_app_number}"

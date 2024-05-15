@@ -100,6 +100,7 @@
             var table = $('#sub_table').DataTable({paging: false, searching: false, ordering:false});
             var table = $('#sub2_table').DataTable({paging: false, searching: false, ordering:false});
             var table = $('#invoice_table').DataTable({paging: false, searching: false, ordering:false});
+            document.getElementById("hide_this").style.display = "none"
         })
 function populate_invoices_modal(invoice_id){
     $.ajax({
@@ -129,7 +130,15 @@ alert("You cannot enter new invoice because you have one pending")
 return false;
 }
 }
-
+function check_pending2(){
+if ('{{pending_invoices_exist}}'){
+	alert("You cannot enter new invoice because you have one pending")
+	return false;
+}
+document.getElementById("retainage_request").style.display = "none"
+document.getElementById("Form3").style.display = "none"
+document.getElementById("hide_this").style.display = "block"
+}
     </script>
 </head>
 <body>
@@ -208,7 +217,8 @@ Showing Invoice Information for {{last_saturday}} - {{this_friday}}
         <tr>
             <th>Job</th>
             <th>Total</th>
-			<th style="background-color:hsl(114, 100%, 90%)">You Billed</th>
+			<th style="background-color:hsl(216, 100%, 90%)">You Billed</th>
+			<th style="background-color:hsl(216, 100%, 90%)">Your Retainage</th>
 			<th style="background-color:hsl(114, 100%, 90%)">Approved</th>
 			<th style="background-color:hsl(114, 100%, 90%)">Retainage</th>
             <th style="background-color:hsl(114, 100%, 90%)">Pay Amount</th>
@@ -222,7 +232,8 @@ Showing Invoice Information for {{last_saturday}} - {{this_friday}}
         <tr>
             <td><a href = "{% url 'portal' selected_sub.id x.id %}">{{x.job_name}}</a></td>
             <td>{{x.total_contract_amount}}</td>
-			<td style="background-color:hsl(114, 100%, 90%)">{{x.billed_this_week}}</td>
+			<td style="background-color:hsl(216, 100%, 90%)">{{x.billed_this_week}}</td>
+			<td style="background-color:hsl(216, 100%, 90%)">{{x.your_retainage}}</td>
 			<td style="background-color:hsl(114, 100%, 90%)">{{x.approved_this_week}}</td>
 			{% if retainage_negative %}
 			<td style="background-color:hsl(114, 100%, 90%)">{{x.retainage_this_week}}</td>
@@ -246,9 +257,15 @@ Showing Invoice Information for {{last_saturday}} - {{this_friday}}
 
 <form action="{% url 'portal_invoice_new' selected_contract.id %}" method="post"  onsubmit="return check_pending()">
 {% csrf_token %}
-<input type="submit" name="Form3" class="btn btn-success btn-sm" value="NEW INVOICE" />
+<input type="submit" name="Form3" id="Form3" class="btn btn-success btn-sm" value="NEW INVOICE" />
+	<div id="hide_this"><h4>PROCESSING! Do not click anything.</h4></div>
 </form>
-
+{% if retainage_allowed %}
+	<form action="{% url 'portal_invoice_new' selected_contract.id %}" method="post"  onsubmit="return check_pending2()">
+		{% csrf_token %}
+	<input type="submit" name="retainage_request" id="retainage_request" class="btn btn-danger btn-sm" value="REQUEST RETAINAGE" />
+	</form>
+{% endif %}
 <br>
 
 <div class="demo-html" style="width:90%">

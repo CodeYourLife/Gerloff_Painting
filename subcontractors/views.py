@@ -48,13 +48,12 @@ def portal(request, sub_id, contract_id):
             billed_this_week="$" + f"{int(x.original_request()):,d}"
             total_retainage_prior="$" + f"{int(x.total_retainage_prior()):,d}"
             total_billed_prior="$" + f"{int(x.total_billed_prior()):,d}"
-
+            your_retainage = "$" + f"{0-int(x.original_retainage_request()):,d}"
 
             retainage_negative = False
             if float(x.retainage_this_week()) < 0:
                 retainage_negative = True
-            print(x.pay_amount_this_week())
-            subcontracts.append({'total_paid': total_paid, 'pay_amount_this_week': pay_amount_this_week,
+            subcontracts.append({'your_retainage':your_retainage,'total_paid': total_paid, 'pay_amount_this_week': pay_amount_this_week,
                                  'retainage_negative': retainage_negative,
                                  'retainage_this_week': retainage_this_week,
                                  'approved_this_week': approved_this_week, 'billed_this_week': billed_this_week,
@@ -67,12 +66,13 @@ def portal(request, sub_id, contract_id):
                                  'po_number': x.po_number, 'id': x.id,
                                  'percent_complete': format(x.percent_complete(), ".0%"),
                                  'total_contract_amount': total_contract_amount, 'total_billed': total_billed})
-        print(subcontracts)
         send_data['subcontracts'] = subcontracts
     else:
         selected_contract = Subcontracts.objects.get(id=contract_id)
         if SubcontractorInvoice.objects.filter(subcontract=selected_contract, is_sent=False).exists():
             send_data['pending_invoices_exist'] = True
+        if selected_contract.percent_complete() >= 1:
+            send_data['retainage_allowed']=True
         send_data['selected_contract'] = selected_contract
         invoices=[]
         for x in SubcontractorInvoice.objects.filter(subcontract=selected_contract):
@@ -235,6 +235,36 @@ def portal_invoice_new(request, subcontract_id):
     friday = today + datetime.timedelta((4 - today.weekday()) % 7)
     if today.weekday() == 4 or today.weekday() == 3 or today.weekday() == 2: friday = friday + timedelta(7)
     subcontract = Subcontracts.objects.get(id=subcontract_id)
+    if SubcontractorInvoice.objects.filter(subcontract=subcontract).exists():
+        next_number = SubcontractorInvoice.objects.filter(subcontract=subcontract).latest(
+            'pay_app_number').pay_app_number + 1
+    else:
+        next_number = 1
+    if request.method == 'POST':
+        if 'retainage_request' in request.POST:
+            total_retainage= float(subcontract.total_retainage())
+            invoice = SubcontractorInvoice.objects.create(date=date.today(), pay_app_number=next_number,
+                                                          subcontract=subcontract, pay_date=friday, original_amount=0, final_amount=0, retainage=0-total_retainage, original_retainage_amount=0-total_retainage, is_release_retainage=True,release_retainage=total_retainage,retainage_note="Requested from portal")
+            SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
+                                            user=Employees.objects.get(id=42),
+                                            note="Retainage Request From Portal",
+                                            invoice=invoice)
+            InvoiceApprovals.objects.create(employee=Employees.objects.get(id=22), invoice=invoice)
+            InvoiceApprovals.objects.create(employee=Employees.objects.get(id=18), invoice=invoice)
+            if subcontract.job_number.superintendent:
+                if subcontract.job_number.superintendent != Employees.objects.get(id=22):
+                    InvoiceApprovals.objects.create(employee=subcontract.job_number.superintendent, invoice=invoice)
+            email_body = "Retainage Request Entered For " + str(subcontract.subcontractor.company) + "\n Job: " + str(
+                subcontract.job_number.job_name)
+            try:
+                Email.sendEmail("New Retainage Request", email_body,
+                                ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
+                                 'bridgette@gerloffpainting.com'],
+                                False)
+                success = True
+            except:
+                success = False
+            return redirect('portal', sub_id=subcontract.subcontractor.id, contract_id=subcontract_id)
     items = []
     for x in SubcontractItems.objects.filter(subcontract=subcontract).order_by('id'):
         totalcost = float(x.total_cost())
@@ -257,11 +287,7 @@ def portal_invoice_new(request, subcontract_id):
                           'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
                           'notes': x.notes, 'quantity_billed': int(x.quantity_billed()),
                           'total_billed': round(x.total_billed(), 2), 'total_cost': round(x.total_cost(), 2)})
-    if SubcontractorInvoice.objects.filter(subcontract=subcontract).exists():
-        next_number = SubcontractorInvoice.objects.filter(subcontract=subcontract).latest(
-            'pay_app_number').pay_app_number + 1
-    else:
-        next_number = 1
+
     if request.method == 'POST':
         if 'subcontract_note' in request.POST:
             invoice_total = 0
@@ -295,8 +321,10 @@ def portal_invoice_new(request, subcontract_id):
             invoice.original_amount = invoice_total
             if subcontract.is_retainage == True:
                 invoice.retainage = invoice_total * subcontract.retainage_percentage
+                invoice.original_retainage_amount = invoice_total * subcontract.retainage_percentage
             else:
                 invoice.retainage = 0
+                invoice.original_retainage_amount = 0
             # # Email.sendEmail('test', 'test body', 'joe@gerloffpainting.com')
             # invoice.final_amount = invoice_total
             # if invoice.subcontract.is_retainage: invoice.retainage = float(invoice_total) * float(.1)
@@ -1122,11 +1150,13 @@ def subcontracts_home(request):
         billed_this_week = "$" + f"{int(x.original_request()):,d}"
         total_retainage_prior = "$" + f"{int(x.total_retainage_prior()):,d}"
         total_billed_prior = "$" + f"{int(x.total_billed_prior()):,d}"
+        print(x.total_billed_prior())
         retainage_negative = False
+        your_retainage = "$" + f"{0 - int(x.original_retainage_request()):,d}"
         if float(x.retainage_this_week()) < 0:
             retainage_negative = True
         change_orders = SubcontractItems.objects.filter(subcontract=x, is_approved=False).count()
-        subcontracts.append({'total_contract_amount': total_contract_amount, 'total_billed': total_billed,'total_paid': total_paid, 'pay_amount_this_week': pay_amount_this_week,
+        subcontracts.append({'your_retainage':your_retainage,'total_contract_amount': total_contract_amount, 'total_billed': total_billed,'total_paid': total_paid, 'pay_amount_this_week': pay_amount_this_week,
                              'retainage_negative': retainage_negative,
                              'retainage_this_week': retainage_this_week,
                              'approved_this_week': approved_this_week, 'billed_this_week': billed_this_week,

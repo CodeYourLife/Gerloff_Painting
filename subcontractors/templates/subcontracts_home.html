@@ -253,8 +253,9 @@ function populate_contact_info(subcontractor_id){
 <!--            <th>Subcontractor</th>-->
 <!--            <th>PO#</th>-->
             <th>Total</th>
-			<th style="background-color:hsl(114, 100%, 90%)">Invoice</th>
-			<th style="background-color:hsl(114, 100%, 90%)">Approved</th>
+			<th style="background-color:hsl(216, 100%, 90%)">Invoice</th>
+			<th style="background-color:hsl(216, 100%, 90%)">Retainage</th>
+            <th style="background-color:hsl(114, 100%, 90%)">Approved</th>
 			<th style="background-color:hsl(114, 100%, 90%)">Retain</th>
             <th style="background-color:hsl(114, 100%, 90%)">Paid</th>
 			<th style="background-color:hsla(69, 100%, 92%)" >Prev Billed</th>
@@ -282,8 +283,9 @@ function populate_contact_info(subcontractor_id){
 <!--            <td onclick="go_to_subcontract('{{x.id}}')" ><a href="#">GoTo PO</a></td>-->
 <!--            {% endif %}-->
                         <td>{{x.total_contract_amount}}</td>
-			<td style="background-color:hsl(114, 100%, 90%)">{{x.billed_this_week}}</td>
-			<td style="background-color:hsl(114, 100%, 90%)">{{x.approved_this_week}}</td>
+			<td style="background-color:hsl(216, 100%, 90%)">{{x.billed_this_week}}</td>
+			<td style="background-color:hsl(216, 100%, 90%)">{{x.your_retainage}}</td>
+            <td style="background-color:hsl(114, 100%, 90%)">{{x.approved_this_week}}</td>
 			{% if retainage_negative %}
 			<td style="background-color:hsl(114, 100%, 90%)">{{x.retainage_this_week}}</td>
 			{% else %}
