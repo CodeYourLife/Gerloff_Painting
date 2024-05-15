@@ -386,10 +386,12 @@ def request_pickup(request, jobnumber, item, pickup, status):
             try:
                 Email.sendEmail("Pickup Request! " + selected_job.job_name, message,
                                 recipients, False)
+
                 message2 = "Your email requesting a pickup was sent succesfully!"
             except:
                 message2 = "ERROR! Your pickup request was not sent. Please call the warehouse."
             Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name, error=message2,
+
                                         date=date.today())
             JobNotes.objects.create(job_number=selected_job,
                                     note=message,
