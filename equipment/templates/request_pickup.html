@@ -37,6 +37,32 @@ document.getElementById("send_now").style.display = "none"
     document.getElementById("hide_this").style.display = "block"
 	}
 
+function check_paint_boxes(){
+	save_paint = document.getElementById("save_paint")
+	remove_trash = document.getElementById("remove_trash")
+	if (event.target == save_paint){
+		if(save_paint.checked == true){remove_trash.checked = true}
+	}
+	if (event.target == remove_trash){
+		if (remove_trash.checked == false){save_paint.checked = false}
+	}
+}
+function check_paint_boxes2(){
+	save_paint = document.getElementById("save_paint")
+	remove_trash = document.getElementById("remove_trash")
+	if (event.target == save_paint){
+		if(save_paint.checked == true){
+			remove_trash.checked = true
+		}
+		form5.submit()
+	}
+	if (event.target == remove_trash){
+		if (remove_trash.checked == false){
+		save_paint.checked = false
+		}
+		form5.submit()
+	}
+}
 	</script>
 </head>
 <body>
@@ -54,16 +80,39 @@ document.getElementById("send_now").style.display = "none"
 </nav>
 
 <h1>{{selected_job}}</h1>
+
 {% if existing_request_all %}
-	<h3>There is already an existing request to remove all equipment from the job</h3>
+	<h3>There is already an existing request to pickup all equipment from the job.</h3>
+		{% if remove_trash %}
+	{% if save_paint %}
+	<h3>There is also a request to remove the trash, and save the leftover paint</h3>
+	{% else %}
+	<h3>There is also a request to remove the trash</h3>
+	{% endif %}
+	{% endif %}
+
+
+		<h3>Would you like to edit this request?</h3>
+	<form name = job_update action="{%  url 'request_pickup' selected_job.job_number 'ALL' existing_request_all.id 'REVISE' %}" method="post" >
+		{% csrf_token %}
+		<input type="submit" class="btn btn-primary btn-lg" name = "revise" value="Yes Revise Order" />
+		<input type="submit" class="btn btn-secondary btn-lg" name = "cancel" value="No Thanks" />
+	</form>
 {% elif existing_request %}
-	<h3>There is already an existing request to remove the following equipment:</h3>
+	<h3>There is already an existing request to pickup the following equipment:</h3>
 	<table id="allitems" class="display" style="width:90%">
 	<tr>{{existing_request.date}}</tr>
 	{% for x in existing_request_items %}
 	<tr><td>#{{x.item.number}}- {{x.item.item}}</td></tr>
 	{% endfor %}
 	</table>
+	{% if remove_trash %}
+	{% if save_paint %}
+	<h3>There is also a request to remove the trash, and save the leftover paint</h3>
+	{% else %}
+	<h3>There is also a request to remove the trash</h3>
+	{% endif %}
+	{% endif %}
 	<h4>Would you like to add on to this request?</h4>
 	<form name = job_update action="{%  url 'request_pickup' selected_job.job_number 'ALL' existing_request.id 'REVISE' %}" method="post" >
 		{% csrf_token %}
@@ -84,12 +133,22 @@ document.getElementById("send_now").style.display = "none"
 		<form name = job_update action="{%  url 'request_pickup' selected_job.job_number 'ALL' 'ALL' 'ADD' %}" method="post" >
 		{% endif %}
 		{% csrf_token %}
+		<br>
+			<b>Pickup Trash?  </b><input type="checkbox" id="remove_trash" name="remove_trash" {% if remove_trash %} checked {% endif %} onchange="check_paint_boxes()">
+		<br>
+			<b>Save Leftover Paint?  </b><input type="checkbox" id="save_paint" name="save_paint" {% if save_paint %} checked {% endif %} onchange="check_paint_boxes()">
+	<br>
 		<input type="submit" class="btn btn-primary btn-lg" name = "all_items" value="Pickup All Items From Job" />
 		<input type="submit" class="btn btn-primary btn-lg" name = "this_item_only" value="Pickup Certain Items Only" />
 		</form>
 	{% else %}
 	 	<form name = job_update action="{%  url 'request_pickup' selected_job.job_number 'ALL' selected_request.id 'CHANGE' %}" method="post" >
 		{% csrf_token %}
+					<br>
+<!--			<b>Pickup Trash?  </b><input type="checkbox" id="remove_trash" name="remove_trash" {% if remove_trash %} checked {% endif %} onchange="check_paint_boxes()">-->
+<!--		<br>-->
+<!--			<b>Save Leftover Paint?  </b><input type="checkbox" id="save_paint" name="save_paint" {% if save_paint %} checked {% endif %} onchange="check_paint_boxes()">-->
+<!--<br>-->
 		 {% if selected_request.all_items == False %}
 			<input type="submit" class="btn btn-danger btn-sm" name = "change_to_all_items" value="Pickup All Items From Job Instead" />
 		 {% else %}
@@ -118,16 +177,26 @@ document.getElementById("send_now").style.display = "none"
 		{% else %}
 		 	<h3>Pickup All Items From the Jobsite!</h3>
 		 {% endif %}
-		<form name = job_update action="{%  url 'request_pickup' selected_job.job_number 'ALL' selected_request.id 'CHANGE' %}" method="post"  onSubmit = "return check_booking_data()">
+		<form id="form5" action="{%  url 'request_pickup' selected_job.job_number 'ALL' selected_request.id 'CHANGE' %}" method="post"  onSubmit = "return check_booking_data()">
 		{% csrf_token %}
 		 <br><hr><br>
 		 <label for="request_notes"> Make a note: </label> <br>
 		<textarea id="request_notes" name="request_notes" rows="4" style="width: 100%"></textarea>
 		 <br>
+			<br>
+					<br>
+			<b>Pickup Trash?  </b><input type="checkbox" id="remove_trash" name="remove_trash" {% if remove_trash %} checked {% endif %} onchange="check_paint_boxes2()">
+		<br>
+			<b>Save Leftover Paint?  </b><input type="checkbox" id="save_paint" name="save_paint" {% if save_paint %} checked {% endif %} onchange="check_paint_boxes2()">
+<br>
 		 {% if selected_request.all_items == True %}
 		 	<input type="submit" class="btn btn-primary btn-sm" id="send_now" name = "send_now" value="Send Request Now!" />
 		 {% elif selected_items %}
 		  	<input type="submit" class="btn btn-primary btn-sm" id="send_now" name = "send_now" value="Send Request Now!" />
+
+		 {% elif remove_trash %}
+		  	<input type="submit" class="btn btn-primary btn-sm" id="send_now" name = "send_now" value="Send Request Now!" />
+
 		{% endif %}
 			<div id="hide_this"><h3>PROCESSING! Please do not click anything until complete!</h3></div>
 			<br>

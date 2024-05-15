@@ -158,7 +158,10 @@ class PickupRequest(models.Model):
     all_items = models.BooleanField(default=False)
     confirmed = models.BooleanField(default=False)
     requested_by = models.ForeignKey('employees.Employees', on_delete=models.PROTECT,null=True, blank=True)
-
+    remove_trash = models.BooleanField(default=False)
+    trash_removed = models.BooleanField(default=False)
+    save_leftover_paint = models.BooleanField(default=False)
+    leftover_paint_saved = models.BooleanField(default=False)
 
 
 class PickupRequestItems(models.Model):

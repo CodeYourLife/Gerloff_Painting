@@ -979,10 +979,19 @@ document.getElementById("notes_filter_button").style.display = "none";
         </div>
         {% if has_equipment %}
         <div style="margin: 5px;" class="col-sm-4">
-            <form action="{% url 'request_pickup' jobnumber=job.job_number item='ALL' pickup='ALL' status='ALL' %}"><input type="submit" class="btn btn-primary btn-sm" value="Request Equipment Pickup"/>
+            <form action="{% url 'request_pickup' jobnumber=job.job_number item='ALL' pickup='ALL' status='ALL' %}">{% if pickup_exists %}<input type="submit" class="btn btn-primary btn-sm" value="Change Equipment Pickup"/>{% else %}<input type="submit" class="btn btn-primary btn-sm" value="Request Equipment Pickup"/> {% endif %}
             </form>
         </div>
         {% endif %}
+        <div style="margin: 5px;" class="col-sm-4">
+            {% if trash_pickup_requested %}
+            <form action="{% url 'request_pickup' jobnumber=job.job_number item='ALL' pickup='ALL' status='ALL' %}"><input type="submit" class="btn btn-primary btn-sm" value="Trash Pickup Already Requested" />
+            </form>
+            {% else %}
+            <form action="{% url 'request_trash_pickup' jobnumber=job.job_number %}"> <input type="submit" class="btn btn-primary btn-sm" value="Request Trash/Paint Pickup" />
+            </form>
+            {% endif %}
+        </div>
         <div style="margin: 5px;" class="col-sm-4">
     {% if job.is_waiting_for_punchlist == True %}
         {% if job.is_labor_done == True %}

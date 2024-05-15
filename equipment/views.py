@@ -31,8 +31,24 @@ def complete_pickup(request, pickup):
     selected_request.save()
     selected_job = selected_request.job_number
     if request.method == 'POST':
-        print(request.POST)
         for x in request.POST:
+            if x == 'trash_done':
+                selected_request.trash_removed = True
+                selected_request.completed_notes += " Trash Picked Up \n"
+                selected_request.save()
+            if x == 'paint_saved':
+                selected_request.leftover_paint_saved = True
+                selected_request.completed_notes += " Leftover Paint Saved \n"
+                selected_request.save()
+            if x == 'trash_not_done':
+                selected_request.trash_removed = True
+                selected_request.completed_notes += "Trash pickup not done. " + str(request.POST['trash_problem_note']) + "\n"
+                selected_request.save()
+            if x == 'paint_not_saved':
+                selected_request.leftover_paint_saved = True
+                selected_request.completed_notes += "Leftover Paint Not Saved. " + str(
+                    request.POST['paint_saved_note']) + "\n"
+                selected_request.save()
             if x[0:8] == 'check_in':
                 if selected_request.all_items == True:
                     item = Inventory.objects.get(id=x[8:len(x)])
@@ -131,14 +147,104 @@ def complete_pickup(request, pickup):
                 Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name, error=message,
                                             date=date.today())
                 return redirect('warehouse_home')
+    items_not_ready = False
     if selected_request.all_items == True:
         selected_items = Inventory.objects.filter(pickuprequested__isnull=True, job_number=selected_request.job_number,is_closed=False)
+        if selected_items.exists(): items_not_ready=True
     else:
         selected_items = PickupRequestItems.objects.filter(request=selected_request, returned=False)
+        if selected_items.exists(): items_not_ready=True
     send_data['selected_request'] = selected_request
     send_data['selected_items'] = selected_items
+    if selected_request.remove_trash:
+        if not selected_request.trash_removed:
+            items_not_ready=True
+            send_data['remove_trash'] = True
+    if selected_request.save_leftover_paint:
+        if not selected_request.leftover_paint_saved:
+            items_not_ready=True
+            send_data['save_paint'] = True
+    if items_not_ready:
+        send_data['items_not_ready'] = True
     return render(request, 'complete_pickup.html', send_data)
 
+def request_trash_pickup(request, jobnumber):
+    send_data={}
+    selected_job = Jobs.objects.get(job_number=jobnumber)
+    send_data['selected_job']=selected_job
+    if PickupRequest.objects.filter(job_number=selected_job, confirmed=False, is_closed=False).exists():
+        return redirect('request_pickup',jobnumber=jobnumber,item='ALL',pickup='ALL',status='ALL')
+    if PickupRequest.objects.filter(job_number=selected_job, confirmed=True, is_closed=False).exists():
+        send_data['pickup_exists']=True
+    if request.method == 'POST':
+        if 'add_trash_request' in request.POST:
+            if PickupRequest.objects.filter(job_number=selected_job, confirmed=True, is_closed=False).exists():
+                message = "Request for job: " + str(selected_job.job_name)
+                message += " In addition to the requested equipment, please also pickup the trash!"
+                if 'save_paint' in request.POST:
+                    message += " Please save the leftover paint in our warehouse, until I can review it"
+                JobNotes.objects.create(job_number=selected_job,
+                                        note=message,
+                                        type="auto_misc_note", user=Employees.objects.get(user=request.user),
+                                        date=date.today())
+                Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
+                recipients = ["warehouse@gerloffpainting.com"]
+                current_user = Employees.objects.get(user=request.user)
+                if current_user.email: recipients.append(current_user.email)
+                try:
+                    Email.sendEmail("Trash Pickup", message, recipients, False)
+                    message2 = "Trash Pickup Request was succesfully emailed"
+                except:
+                    message2 = "Error! Trash Pickup Request failed to email. Please retry later!"
+                Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name,
+                                            error=message2, date=date.today())
+                selected_request = PickupRequest.objects.get(job_number=selected_job, confirmed=True, is_closed=False)
+                selected_request.remove_trash = True
+                selected_request.request_notes = selected_request.request_notes + " Trash Pickup Request Added. " + request.POST['notes']
+                if 'save_paint' in request.POST:
+                    selected_request.save_leftover_paint=True
+                selected_request.save()
+                return redirect('job_page', jobnumber=jobnumber)
+            else:
+                #no existing request
+                send_data['new_request'] = True
+                if 'save_paint' in request.POST: send_data['save_paint'] = True
+        if 'cancel' in request.POST:
+            return redirect('job_page', jobnumber=jobnumber)
+        if 'pickup_all_equipment' in request.POST or 'pickup_certain_equipment' in request.POST or 'no_equipment' in request.POST:
+            message = "Request for job: " + str(selected_job.job_name) + ". \n"
+            new_request= PickupRequest.objects.create(date=date.today(), job_number=selected_job, confirmed=False, request_notes="Trash Pickup Requested")
+            new_request.remove_trash = True
+            if 'save_paint' in request.POST: new_request.save_leftover_paint = True
+            if 'pickup_all_equipment' in request.POST:
+                new_request.all_items = True
+            message += " Please pickup the trash!"
+            if 'save_paint' in request.POST:
+                message += " Please save the leftover paint in our warehouse, until I can review it."
+            if 'pickup_all_equipment' in request.POST:
+                message += " Please also pickup all the equipment from the jobsite. "
+            new_request.save()
+            if 'pickup_all_equipment' in request.POST or 'no_equipment' in request.POST:
+                new_request.confirmed = True
+                new_request.save()
+                JobNotes.objects.create(job_number=selected_job,
+                                        note=message,
+                                        type="auto_misc_note", user=Employees.objects.get(user=request.user),
+                                        date=date.today())
+                Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
+                recipients = ["warehouse@gerloffpainting.com"]
+                current_user = Employees.objects.get(user=request.user)
+                if current_user.email: recipients.append(current_user.email)
+                try:
+                    Email.sendEmail("Trash Pickup", message, recipients, False)
+                    message2 = "Trash Pickup Request was succesfully emailed"
+                except:
+                    message2 = "Error! Trash Pickup Request failed to email. Please retry later!"
+                Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name,
+                                        error=message2, date=date.today())
+                return redirect('job_page', jobnumber=jobnumber)
+            return redirect('request_pickup',jobnumber=jobnumber,item='ALL',pickup='ALL',status='ALL')
+    return render(request, 'request_trash_pickup.html', send_data)
 
 def request_pickup(request, jobnumber, item, pickup, status):
     # item either ALL or ID
@@ -146,6 +252,7 @@ def request_pickup(request, jobnumber, item, pickup, status):
     # status either 'ALL' or 'CHANGE' or 'ADD' or 'REVISE'
     selected_job = Jobs.objects.get(job_number=jobnumber)
     send_data = {}
+
     if status == 'REVISE':
         if 'revise' in request.POST:
             selected_request = PickupRequest.objects.get(id=pickup)
@@ -156,19 +263,32 @@ def request_pickup(request, jobnumber, item, pickup, status):
             return redirect("equipment_home")
     if PickupRequest.objects.filter(job_number=selected_job, confirmed=True, is_closed=False, all_items=True).exists():
         status = "CHECK"
-        send_data['existing_request_all'] = PickupRequest.objects.filter(job_number=selected_job, confirmed=True,
-                                                                         is_closed=False, all_items=True)
+        selected_request = PickupRequest.objects.get(job_number=selected_job, confirmed=True, is_closed=False, all_items=True)
+        if selected_request.remove_trash:
+            send_data['remove_trash'] = True
+            if selected_request.save_leftover_paint:
+                send_data['save_paint'] = True
+        send_data['existing_request_all'] = selected_request
     elif PickupRequest.objects.filter(job_number=selected_job, confirmed=True, is_closed=False).exists():
         status = "CHECK"
         selected_request = PickupRequest.objects.get(job_number=selected_job, confirmed=True, is_closed=False)
+        if selected_request.remove_trash:
+            send_data['remove_trash'] = True
+            if selected_request.save_leftover_paint:
+                send_data['save_paint'] = True
         send_data['existing_request'] = selected_request
         send_data['existing_request_items'] = PickupRequestItems.objects.filter(request=selected_request)
+
     if pickup == 'ALL':
         PickupRequestItems.objects.filter(request__confirmed=False).exclude(request__date=date.today()).delete()
         PickupRequest.objects.filter(confirmed=False).exclude(date=date.today()).delete()
         if PickupRequest.objects.filter(job_number=selected_job, confirmed=False):
             pickup = PickupRequest.objects.get(job_number=selected_job, confirmed=False).id
             selected_request = PickupRequest.objects.get(job_number=selected_job, confirmed=False)
+            if selected_request.remove_trash:
+                send_data['remove_trash'] = True
+                if selected_request.save_leftover_paint:
+                    send_data['save_paint'] = True
     if pickup == 'ALL' and status == 'ALL' and item != 'ALL':
         selected_request = PickupRequest.objects.create(date=date.today(), job_number=selected_job, confirmed=False,request_notes=" ")
         pickup = selected_request.id
@@ -183,6 +303,10 @@ def request_pickup(request, jobnumber, item, pickup, status):
     if pickup != 'ALL':
         selected_request = PickupRequest.objects.get(id=pickup)
         send_data['selected_request'] = selected_request
+        if selected_request.remove_trash:
+            send_data['remove_trash'] = True
+            if selected_request.save_leftover_paint:
+                send_data['save_paint'] = True
     if status == 'ITEMADD': PickupRequestItems.objects.create(request=selected_request, item=selected_item)
     if status == 'ITEMREMOVE': PickupRequestItems.objects.get(id=item).delete()
     if request.method == 'POST':
@@ -195,17 +319,34 @@ def request_pickup(request, jobnumber, item, pickup, status):
                 PickupRequestItems.objects.create(request=selected_request, item=selected_item)
         if 'change_to_all_items' in request.POST:
             selected_request.all_items = True
+            selected_request.save()
             for x in PickupRequestItems.objects.filter(request=selected_request):
                 x.delete()
         if 'change_to_certain_items' in request.POST:
             selected_request.all_items = False
+            selected_request.save()
+        selected_request.remove_trash = False
+        selected_request.save_leftover_paint = False
+        if 'remove_trash' in request.POST:
+            selected_request.remove_trash = True
+            send_data['remove_trash']=True
+        if 'save_paint' in request.POST:
+            selected_request.save_leftover_paint = True
+            send_data['save_paint'] =True
         selected_request.save()
         if 'send_now' in request.POST:
             selected_request.confirmed = True
             selected_request.requested_by = Employees.objects.get(user=request.user)
-            selected_request.save()
-
             message = "Pickup Request For Job: " + selected_job.job_name + ".\n"
+            selected_request.remove_trash = False
+            selected_request.save_leftover_paint = False
+            if 'remove_trash' in request.POST:
+                selected_request.remove_trash = True
+                message += " Remove all trash."
+            if 'save_paint' in request.POST:
+                selected_request.save_leftover_paint = True
+                message += " Save leftover paint in our warehouse until i can review. "
+            selected_request.save()
             if selected_request.all_items == True:
                 if selected_request.request_notes is None:
                     selected_request.request_notes = ""
@@ -213,10 +354,10 @@ def request_pickup(request, jobnumber, item, pickup, status):
                 selected_request.request_notes = selected_request.request_notes + " Pickup All Items. " + request.POST[
                     'request_notes']
                 selected_request.save()
-                message = message + "Please pickup all items. \n"
+                message = message + ". Please pickup all items. \n"
             else:
-                tempnote = "Please pickup the following items: \n"
-                message = message + "Please pickup the following items: \n\n"
+                tempnote = ". Please pickup the following items: \n"
+                message = message + ". Please pickup the following items: \n\n"
                 for x in PickupRequestItems.objects.filter(request=selected_request):
                     InventoryNotes.objects.create(inventory_item=x.item, date=date.today(),
                                                   user=Employees.objects.get(user=request.user),
@@ -224,16 +365,16 @@ def request_pickup(request, jobnumber, item, pickup, status):
                                                       selected_request.requested_by),
                                                   category="Misc",job_number=selected_job.job_number,job_name=selected_job.job_name)
                     if x.item.number:
-                        tempnote = tempnote + "#:" + x.item.number + "- " + x.item.item + "\n"
-                        message = message + "#:" + x.item.number + "- " + x.item.item + "\n"
+                        tempnote = tempnote + "#:" + x.item.number + "- " + x.item.item + ". \n"
+                        message = message + "#:" + x.item.number + "- " + x.item.item + ". \n"
                     else:
-                        tempnote = tempnote + "#:N/A- " + x.item.item + "\n"
-                        message = message + "#:N/A- " + x.item.item + "\n"
+                        tempnote = tempnote + "#:N/A- " + x.item.item + ". \n"
+                        message = message + "#:N/A- " + x.item.item + ". \n"
                 selected_request.request_notes = selected_request.request_notes + tempnote + "\n" + request.POST[
-                    'request_notes']
+                    'request_notes'] + ". "
                 selected_request.save()
             message = message + "\n Requested by: " + str(selected_request.requested_by) + "\n\n" + request.POST[
-                'request_notes']
+                'request_notes'] + ". "
             recipients = ["warehouse@gerloffpainting.com", "joe@gerloffpainting.com"]
             if selected_job.superintendent:
                 if selected_job.superintendent.email:
@@ -245,15 +386,19 @@ def request_pickup(request, jobnumber, item, pickup, status):
             try:
                 Email.sendEmail("Pickup Request! " + selected_job.job_name, message,
                                 recipients, False)
-                message = "Your email requesting a pickup was sent succesfully!"
+
+                message2 = "Your email requesting a pickup was sent succesfully!"
             except:
-                message = "ERROR! Your pickup request was not sent. Please call the warehouse."
-            Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name, error=message,
+                message2 = "ERROR! Your pickup request was not sent. Please call the warehouse."
+            Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name, error=message2,
+
                                         date=date.today())
             JobNotes.objects.create(job_number=selected_job,
                                     note=message,
                                     type="auto_misc_note", user=Employees.objects.get(user=request.user), date=date.today())
-            return redirect('warehouse_home')
+            if selected_job: return redirect('job_page', jobnumber=selected_job.job_number)
+            else: return redirect('warehouse_home')
+
 
     if pickup != 'ALL': send_data['selected_items'] = PickupRequestItems.objects.filter(request=selected_request)
     send_data['equipment'] = Inventory.objects.filter(job_number=selected_job,is_closed=False)

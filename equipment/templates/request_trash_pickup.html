@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+{% load render_table from django_tables2 %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>Trinity GP</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+    .list-items {
+    border-bottom: 1px solid black; display: flex; justify-content: space-between;
+    }
+	</style>
+	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+
+$(document).ready(function () {
+ 	if ("{{error_message}}"){alert("{{error_message}}")}
+    document.getElementById("hide_this").style.display = "none"
+})
+
+
+
+function add_note(){
+	document.getElementById("cancel").style.display = "none"
+	document.getElementById("add_trash_request").style.display = "none"
+	document.getElementById("hide_this").style.display = "block"
+	var name=prompt("Add Notes for this request:");
+	if (name!=null){
+		trash_form.notes.value=name
+	}
+}
+
+function hide_buttons(){
+	document.getElementById("pickup_all_equipment").style.display = "none"
+	document.getElementById("pickup_certain_equipment").style.display = "none"
+	document.getElementById("no_equipment").style.display = "none"
+	 document.getElementById("hide_this").style.display = "block"
+}
+	</script>
+</head>
+<body>
+	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+		<a class="navbar-brand sub-navbar-brand" href="#">Equipment</a>
+		<div id="navbarNavDropdown2">
+		  <ul class="sub-nav-list navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'equipment_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'equipment_new' %}">New</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
+	  	<li><a class="nav-item nav-link active" >Request Trash Pickup</a></li>
+    </ul>
+  </div>
+</nav>
+
+<h1>Trash Pickup Request for {{selected_job}}</h1>
+{% if new_request %}
+	<form action="{%  url 'request_trash_pickup' selected_job.job_number %}" method="post" onSubmit="hide_buttons()" >
+		{% csrf_token %}
+		{% if save_paint %}
+		<input type="hidden" name="save_paint" value="True">
+		{% endif %}
+		<input type="submit" class="btn btn-primary btn-lg" id="pickup_all_equipment" name="pickup_all_equipment" value="Please Also Pickup All Equipment" />
+		<br><br>
+		<input type="submit" class="btn btn-primary btn-lg" id="pickup_certain_equipment" name="pickup_certain_equipment" value="Please Also Pickup Certain Equipment" />
+		<br><br>
+		<input type="submit" class="btn btn-primary btn-lg" id="no_equipment" name="no_equipment" value="Trash Only, No Equipment Pickup Needed" />
+		<div id="hide_this">Processing. Please wait - do not click anything.</div>
+		<br><br>
+	</form>
+{% else %}
+	{% if pickup_exists %}
+		<h4>This request will be added to the existing equipment pickup request!</h4>
+	{% endif %}
+	<br>
+	<form id="trash_form" action="{%  url 'request_trash_pickup' selected_job.job_number %}" method="post" onSubmit="add_note()" >
+		{% csrf_token %}
+		<b>Would you like to save any leftover paint?</b> <input type="checkbox" id="save_paint" name="save_paint">
+		<input type="hidden" id="notes" name="notes">
+		<br>
+	<br>
+		<div id="hide_this"><h4>Processing.  Please wait. </h4></div>
+		<input type="submit" class="btn btn-secondary btn-lg" id="cancel" name="cancel" value="Cancel" />
+		<input type="submit" class="btn btn-primary btn-lg" id="add_trash_request" name="add_trash_request" value="Request Now" />
+	</form>
+
+{% endif %}
+
+</body>
+</html>
+
+{% endblock %}
