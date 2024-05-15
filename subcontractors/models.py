@@ -156,9 +156,11 @@ class Subcontracts(models.Model):
             this_friday += datetime.timedelta(days=7)
             last_friday += datetime.timedelta(days=7)
         total = 0
+
         print(self)
         for x in SubcontractorInvoice.objects.filter(subcontract=self, processed=True, date__lte=last_friday):
             print(x.final_amount)
+
             total = total + x.final_amount
         return total
 
