@@ -26,6 +26,25 @@
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
+window.onload = function() {
+document.getElementById("hide_this").style.display = "none"
+}
+
+function trash_problem(){
+var notes_section = document.getElementById("trash_problem_note")
+            var name=prompt("Please clarify");
+            if (name!=null){
+                notes_section.value = name;
+            }
+}
+
+function paint_problem(){
+var notes_section = document.getElementById("paint_saved_note")
+            var name=prompt("Please clarify");
+            if (name!=null){
+                notes_section.value = name;
+            }
+}
 
 function missing_explanation(status){
 job_update.notes.value = missing_form.date_note.value
@@ -50,6 +69,8 @@ document.getElementById("missing_title").innerHTML = name
 
 	function check_booking_data2(){
    		alert("Please be patient while this processes. Do not click anything until it is complete.")
+   		document.getElementById("send_now").style.display = "none"
+   		document.getElementById("hide_this").style.display = "block"
 	}
 	</script>
 </head>
@@ -129,7 +150,7 @@ document.getElementById("missing_title").innerHTML = name
     </div>
 </div>
 
-{% if selected_items %}
+{% if items_not_ready %}
 	<br>
 	 <b>Check-In These Items </b>
 	<br>
@@ -164,9 +185,26 @@ document.getElementById("missing_title").innerHTML = name
 				 {% else %}
 				  <button type="button" data-toggle="modal" data-target="#missing-modal" class="btn btn-primary btn-xs" onclick="populate_title('{{x.item.item}}')"> OTHER </button>
 				 {% endif %}
-			 </td></form>
-			</tr>
+			 </td>
+			</tr></form>
 			{% endfor %}
+		{% if remove_trash %}
+		<form id="trash_pickup_form" action="{%  url 'complete_pickup' selected_request.id %}" method="post"  >
+			{% csrf_token %}
+		<tr>
+			<td>Remove Trash From Jobsite</td><td> <input id="trash_done" class="btn btn-success btn-xs" name="trash_done" type="submit" value="Completed" /></td><td><input type="hidden" id="trash_problem_note" name="trash_problem_note" ><input id="trash_not_done" class="btn btn-primary btn-xs" name="trash_not_done" type="submit" value="OTHER" onclick="trash_problem()" /></td>
+		</tr>
+		</form>
+		{% endif %}
+		{% if save_paint %}
+		<form id="save_paint_form" action="{%  url 'complete_pickup' selected_request.id %}" method="post"  >
+			{% csrf_token %}
+		<tr>
+			<td>Save Leftover Paint</td><td> <input id="paint_saved" class="btn btn-success btn-xs" name="paint_saved" type="submit" value="Completed" /></td><td><input type="hidden" id="paint_saved_note" name="paint_saved_note" ><input id="paint_not_saved" class="btn btn-primary btn-xs" name="paint_not_saved" type="submit" value="OTHER" onclick="paint_problem()" /></td>
+		</tr>
+		</form>
+		{% endif %}
+
 			</table>
 
 		 <br><hr><br>
@@ -184,8 +222,8 @@ document.getElementById("missing_title").innerHTML = name
                 <textarea id="request_notes" name="request_notes" rows="4" style="width: 100%"></textarea>
 		 <br>
 
-		 	<input type="submit" class="btn btn-primary btn-sm" name = "send_now" value="Pickup Request Complete" />
-
+		 	<input type="submit" class="btn btn-primary btn-sm" id="send_now" name = "send_now" value="Pickup Request Complete" />
+<div id="hide_this">Processing. Please do not click anything. </div>
 		{% endif %}
 
 

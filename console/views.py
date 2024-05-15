@@ -40,6 +40,23 @@ def seperate_test(request):
     open(fn2, 'wb').write(fileitem.file.read())
     return redirect('index')
 
+
+@login_required(login_url='/accounts/login')
+def client_info_job(request, jobnumber):
+    send_data = {}
+    job = Jobs.objects.get(job_number=job_number)
+    client = job.client
+    employees = ClientEmployees.objects.filter(id=client)
+    send_data['job'] =job
+    send_data['client'] =client
+    send_data['employees'] =employees
+    clientemployees = []
+    for person in employees:
+        changeorder= False
+        for x in ClientJobRoles.objects.filter(job=job):
+
+
+            clientemployees.append({'person':'test'})
 @login_required(login_url='/accounts/login')
 def client_info(request, id):
     send_data = {}

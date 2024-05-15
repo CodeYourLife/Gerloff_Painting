@@ -598,6 +598,14 @@ def job_page(request, jobnumber):
     go_to_pickup = False
     selectedjob = Jobs.objects.get(job_number=jobnumber)
     send_data = {}
+    if Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).exists():
+        send_data['error_message']= Email_Errors.objects.get(user=request.user.first_name + " " + request.user.last_name).error
+    Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
+    if PickupRequest.objects.filter(job_number=selectedjob, is_closed=False, confirmed=True).exists():
+        pickup_request = PickupRequest.objects.get(job_number=selectedjob, is_closed=False, confirmed=True)
+        send_data['pickup_exists'] = True
+        if pickup_request.remove_trash:
+            send_data['trash_pickup_requested'] = True
     if request.method == 'POST':
         if 'undo_redo' in request.POST:
             selectedEmployeeIds = request.POST.getlist('undo_redo')
