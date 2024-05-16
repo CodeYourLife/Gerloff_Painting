@@ -110,17 +110,36 @@ function populate_invoices_modal(invoice_id){
         success: function (data) {
            parsedData = JSON.parse(data);
             let text = "<table border='1' class='table display'>"
-            text += "<thead><tr><th>Item</th><th>Billed</th></tr></thead>"
+<!--            text += "<thead><tr><th>Item</th><th>Billed</th></tr></thead>"-->
+<!--            parsedData.sovs.forEach((element) => {-->
+<!--                if (element.unit == "Lump Sum"){-->
+<!--                text += "<tr><td>" + element.item + "</td><td>$" + element.quantity +"</td></tr>";-->
+<!--                }-->
+<!--                else{-->
+<!--                text += "<tr><td>" + element.item + " " + element.unit + "</td><td>" + element.quantity + " " + element.unit + "</td></tr>";-->
+<!--                }-->
+<!--            })-->
+
+			text += "<thead><tr><th>Item</th><th>Original</th><th>Final</th></tr></thead>"
             parsedData.sovs.forEach((element) => {
                 if (element.unit == "Lump Sum"){
-                text += "<tr><td>" + element.item + "</td><td>$" + element.quantity +"</td></tr>";
+                	text += "<tr><td>" + element.item + "</td><td>$" + element.original +"</td><td>$" + element.billed +"</td></tr>";
                 }
                 else{
-                text += "<tr><td>" + element.item + "</td><td>" + element.quantity + " " + element.unit + "</td></tr>";
+                	text += "<tr><td>" + element.item + "</td><td>" + element.original + " " + element.unit + "</td><td>" + element.billed + " " + element.unit + "</td></tr>";
                 }
             })
             text += "</table>"
             document.getElementById("invoice_info").innerHTML = text;
+			text=""
+			text = "<table border='1' class='table display'>"
+			text += "<thead><tr><th>Date</th><th>User</th><th>Note</th></tr></thead>"
+            parsedData.notes.forEach((element) => {
+                text += "<tr><td>" + element.date + "</td><td>" + element.user +"</td><td>" + element.note +"</td></tr>";
+            })
+            text += "</table>"
+            document.getElementById("invoice_notes_info").innerHTML = text;
+            document.getElementById("title3").innerHTML = "Invoice #" + parsedData.invoice_number;
         }
     })
 }
@@ -163,8 +182,23 @@ document.getElementById("hide_this").style.display = "block"
                 </button>
             </div>
             <div class="modal-body">
+				<ul class="nav nav-pills">
+                    <li>
+                        <a href="#7a" class="active" data-toggle="tab">- Amounts  -</a>
+                    </li>
+                    <li><a href="#8a" data-toggle="tab">-   Notes   -</a>
+                    </li>
+                </ul>
+					<div class="tab-content clearfix">
+                    <div class="tab-pane active" id="7a">
                 <div id="invoice_info"></div>
             </div>
+
+				<div class="tab-pane" id="8a">
+					<div id="invoice_notes_info"></div>
+					</div>
+				</div>
+			</div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
             </div>

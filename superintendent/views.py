@@ -29,16 +29,38 @@ def super_ajax(request):
         if 'invoice_id' in request.GET:
             send_data = {}
             selected_invoice = SubcontractorInvoice.objects.get(id=request.GET['invoice_id'])
+            send_data['invoice_number'] = str(selected_invoice.pay_app_number)
             sovs = []
-            for x in SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice):
-                sovs.append({'item': x.sov_item.SOV_description, 'quantity': f"{int(x.quantity):,d}",
-                             'unit': str(x.sov_item.SOV_unit)})
-            orig_sovs = []
-            for x in SubcontractorOriginalInvoiceItem.objects.filter(invoice=selected_invoice):
-                orig_sovs.append(
-                    {'item': x.sov_item.SOV_description, 'quantity': str(x.quantity), 'unit': str(x.sov_item.SOV_unit)})
+            for x in SubcontractItems.objects.filter(subcontract=selected_invoice.subcontract):
+                if SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice,sov_item=x).exists():
+                    final_item = SubcontractorInvoiceItem.objects.get(invoice=selected_invoice,sov_item=x)
+                    final_quantity = f"{int(final_item.quantity):,d}"
+                else:
+                    final_quantity = 0
+                if SubcontractorOriginalInvoiceItem.objects.filter(invoice=selected_invoice,sov_item=x).exists():
+                    original_item = SubcontractorOriginalInvoiceItem.objects.get(invoice=selected_invoice,sov_item=x)
+                    original_quantity = f"{int(original_item.quantity):,d}"
+                else:
+                    original_quantity = 0
+                sovs.append({'item': x.SOV_description, 'billed': final_quantity,'unit': str(x.SOV_unit), 'original': original_quantity})
+            if selected_invoice.original_retainage_amount:
+                sovs.append({'item': "Retainage", 'billed': f"{int(0-selected_invoice.retainage):,d}",'unit': "Lump Sum", 'original': f"{int(0-selected_invoice.original_retainage_amount):,d}"})
+            else:
+                sovs.append({'item': "Retainage", 'billed': f"{int(0-selected_invoice.retainage):,d}", 'unit': "Lump Sum",
+                             'original': f"{int(0):,d}"})
+            notes = []
+            for x in SubcontractNotes.objects.filter(invoice=selected_invoice):
+                notes.append({'date':str(x.date),'user':str(x.user),'note':x.note})
+            send_data['notes']=notes
+            # for x in SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice):
+            #     sovs.append({'item': x.sov_item.SOV_description, 'quantity': f"{int(x.quantity):,d}",
+            #                  'unit': str(x.sov_item.SOV_unit)})
+            # orig_sovs = []
+            # for x in SubcontractorOriginalInvoiceItem.objects.filter(invoice=selected_invoice):
+            #     orig_sovs.append(
+            #         {'item': x.sov_item.SOV_description, 'quantity': str(x.quantity), 'unit': str(x.sov_item.SOV_unit)})
             send_data['sovs'] = sovs
-            send_data['orig_sovs'] = orig_sovs
+            # send_data['orig_sovs'] = orig_sovs
             return HttpResponse(json.dumps(send_data))
         if 'pending_invoices' in request.GET:
             send_data = {}
@@ -92,6 +114,18 @@ def super_ajax(request):
             subcontractor = Subcontractors.objects.get(id=request.GET['subcontractor_id'])
             send_data = {}
             send_data['company'] = subcontractor.company
+            send_data['id'] = subcontractor.id
+            approvers = []
+            for x in Subcontractor_Approvers.objects.filter(subcontractor=subcontractor):
+                if x.employee:
+                    approvers.append({'id': x.id, 'approver': str(x.employee)})
+                if x.job_description:
+                    approvers.append({'id': x.id, 'approver': str(x.job_description)})
+            # employees = []
+            # for x in Employees.objects.all():
+            #     employees.append({'name':str(x)})
+            # send_data['employees']=employees
+            send_data['approvers'] = approvers
             if subcontractor.contact: send_data['contact'] = subcontractor.contact
             if subcontractor.phone: send_data['phone'] = subcontractor.phone
             if subcontractor.email: send_data['email'] = subcontractor.email
@@ -103,7 +137,6 @@ def super_ajax(request):
             if subcontractor.has_auto_insurance: send_data['has_auto_insurance'] = subcontractor.has_auto_insurance
             if subcontractor.has_business_license: send_data['has_business_license'] = subcontractor.has_business_license
             if subcontractor.has_w9_form: send_data['has_w9_form'] = subcontractor.has_w9_form
-
             if subcontractor.is_signed_labor_agreement: send_data['is_signed_labor_agreement'] = True
             return HttpResponse(json.dumps(send_data))
         if 'dropbox' in request.GET:

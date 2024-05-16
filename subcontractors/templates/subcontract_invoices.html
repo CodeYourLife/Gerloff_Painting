@@ -111,6 +111,9 @@ var showing_retainage = 0
 
 $(document).ready(function () {
  if ("{{error_message}}"){alert("{{error_message}}")}
+
+ document.getElementById("show_this").style.display = "none";
+
     var table = $('#sub_table').DataTable({paging:false,searching:false,info:false, ordering:false});
 })
 $(document).ready(function () {
@@ -154,11 +157,14 @@ function add_reject_note(){
 	var name=prompt("Add Note");
 	if (name!=null){
 	reject_form.reject_notes.value = name;
+		 document.getElementById("hide_this").style.display = "none";
+	  	document.getElementById("show_this").style.display = "block";
 		reject_form.submit()
 		}
 	else{
 		return;
 		}
+
 }
 function made_changes_note(){
 	if (check_form()){
@@ -171,7 +177,15 @@ function made_changes_note(){
 	else{
 		if ("{{edit_now}}"){return false}
 	}
+	 document.getElementById("hide_this").style.display = "none";
+	  document.getElementById("show_this").style.display = "block";
 }
+
+function hide_content(){
+	document.getElementById("hide_this").style.display = "none";
+	document.getElementById("show_this").style.display = "block";
+}
+
 function check_other_approver(){
 if (other_approval_form.other_approver.value=="please_select"){
 alert("Please select another approver")
@@ -332,7 +346,8 @@ function check_form(){
     </ul>
   </div>
 </nav>
-
+<div id="show_this">PROCESSING!! Please do not click anything until the screen changes. </div>
+	<div id="hide_this">
 	{% if other_approve %}
 	<h4>Approving for {{other_approve.employee}}</h4>
 {% elif edit_now %}
@@ -448,12 +463,12 @@ function check_form(){
 {% if selected_invoice %}
 {% if me_approve or other_approve %}
 <div id="container">
-	<form id="approve_form" action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post" >
+	<form id="approve_form" action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post" onSubmit="hide_content()">
 		{% csrf_token %}
 		{% if other_approve %}
 		  <input type="hidden" id="other_approver_id" name="is_other_approver_id" value="{{other_approve.id}}" />
 		{% endif %}
-		<input type="submit" name="approved" class="btn btn-success btn-sm" value="APPROVE INVOICE # {{selected_invoice.pay_app_number}} NOW" />
+		<input type="submit" name="approved" class="btn btn-success btn-sm" value="APPROVE INVOICE # {{selected_invoice.pay_app_number}} NOW"  />
 <!--		<button type="button" name="reject" class="btn btn-danger btn-sm" onclick="add_reject_note()" >REJECT </button>-->
 <!--		<input type="hidden" id="reject_notes" name="reject_notes" />-->
 	</form>
@@ -478,7 +493,7 @@ function check_form(){
 <h3>Make Changes</h3>
 
 
- <form id="changes_form" action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post" >
+ <form id="changes_form" action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post" onSubmit="return made_changes_note()">
 {% csrf_token %}
 	 	 {% if other_approve %}
 	  <input type="hidden" id="other_approver_id" name="is_other_approver_id" value="{{other_approve.id}}" />
@@ -643,7 +658,7 @@ function check_form(){
 	 <br>
 {% endif %}
 {% endif %}
-
+</div>
 </body>
 </html>
 

@@ -418,3 +418,21 @@ class Weekly_Approvals(models.Model):
     notes = models.CharField(null=True, max_length=2000, blank=True)
     victor_email_sent = models.BooleanField(default=False)
     gene_email_sent = models.BooleanField(default=False)
+
+class Standard_Approvers(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    job_description = models.CharField(null=True, max_length=2000, blank=True) #should be estimator or superintendent
+    employee = models.ForeignKey(employees.models.Employees, on_delete=models.PROTECT,null=True, blank=True)
+
+class Subcontractor_Approvers(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    job_description = models.CharField(null=True, max_length=2000, blank=True) #should be estimator or superintendent
+    employee = models.ForeignKey(employees.models.Employees, on_delete=models.PROTECT,null=True, blank=True)
+    subcontractor = models.ForeignKey(Subcontractors, on_delete=models.PROTECT)
+
+class Subcontract_Approvers(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    job_description = models.CharField(null=True, max_length=2000, blank=True) #should be estimator or superintendent
+    employee = models.ForeignKey(employees.models.Employees, on_delete=models.PROTECT,null=True, blank=True)
+    subcontract = models.ForeignKey(Subcontracts, on_delete=models.PROTECT)
+

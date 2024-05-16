@@ -19,4 +19,6 @@ path("subcontract_invoices/<subcontract_id> <item_id>", views.subcontract_invoic
 path("subcontractor_invoice_new/<subcontract_id>", views.subcontractor_invoice_new, name='subcontractor_invoice_new'),
 path("portal_invoice_new/<subcontract_id>", views.portal_invoice_new, name='portal_invoice_new'),
 path("sub_change_orders", views.sub_change_orders, name='sub_change_orders'),
+path("build_subcontractor_approvers", views.build_subcontractor_approvers, name='build_subcontractor_approvers'),
+path("subcontractor_approvers/<subcontractor_id>", views.subcontractor_approvers, name='subcontractor_approvers'),
 ]

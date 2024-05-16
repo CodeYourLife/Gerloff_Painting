@@ -210,6 +210,13 @@ function populate_contact_info(subcontractor_id){
             document.getElementById("contact_info_title").innerHTML = parsedData.company
             text += "</table>";
             document.getElementById("contact_info_here").innerHTML = text;
+            text2=""
+            parsedData.approvers.forEach((element) => {
+                text2 += "<br>" + element.approver;
+            })
+            text2 +="<br><br><a style='color:blue;' href = \"{% url 'subcontractor_approvers' '9a3' %}\">Click Here to Change Approvers</a>"
+            text2= text2.replace('9a3', parsedData.id);
+            document.getElementById("subcontractor_approvers").innerHTML = text2;
         }
     })
 }
@@ -362,9 +369,11 @@ function populate_pending_approvals_modal(invoice_id){
             <div class="modal-body">
                 <ul class="nav nav-pills">
                     <li>
-                        <a href="#7a" class="active" data-toggle="tab">Contact Info</a>
+                        <a href="#7a" class="active" data-toggle="tab">- Contact Info  -</a>
                     </li>
-                    <li><a href="#8a" data-toggle="tab">Paperwork</a>
+                    <li><a href="#8a" data-toggle="tab">-   Paperwork   -</a>
+                    </li>
+                    <li><a href="#9a" data-toggle="tab">-   Invoice Approvers  -</a>
                     </li>
                 </ul>
                 <div class="tab-content clearfix">
@@ -440,6 +449,13 @@ function populate_pending_approvals_modal(invoice_id){
     <input type="submit" class="btn btn-primary" value="Save Changes" />
                                 </form>
                     </div>
+
+                                        <div class="tab-pane" id="9a">
+    <div id="subcontractor_approvers"></div>
+                                            <br>
+
+                    </div>
+
                 </div>
             </div>
             <div class="modal-footer">
