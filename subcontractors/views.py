@@ -254,6 +254,7 @@ def portal_invoice_new(request, subcontract_id):
                                             user=Employees.objects.get(id=42),
                                             note="Retainage Request From Portal",
                                             invoice=invoice)
+
             for x in Subcontract_Approvers.objects.filter(subcontract=subcontract):
                 if x.employee:
                     InvoiceApprovals.objects.create(employee=x.employee, invoice=invoice)
@@ -264,6 +265,7 @@ def portal_invoice_new(request, subcontract_id):
                             job_super = subcontract.job_number.superintendent
                             if not InvoiceApprovals.objects.filter(invoice=invoice, employee=job_super).exists():
                                 InvoiceApprovals.objects.create(employee=job_super, invoice=invoice)
+
             email_body = "Retainage Request Entered For " + str(subcontract.subcontractor.company) + "\n Job: " + str(
                 subcontract.job_number.job_name)
             try:
