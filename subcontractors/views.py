@@ -80,7 +80,7 @@ def portal(request, sub_id, contract_id):
                 retainage_positive=True
             else:
                 retainage_positive=False
-            invoices.append({'invoice':x, 'total_pay_amount': x.final_amount - x.retainage,'retainage_positive':retainage_positive})
+            invoices.append({'invoice':x, 'total_pay_amount': x.final_amount - x.retainage,'retainage_positive':retainage_positive, 'retainage_formatted':"$" + f"{0-int(x.retainage):,d}"})
         send_data['invoices'] = invoices
         items = []
         number_items = 0
