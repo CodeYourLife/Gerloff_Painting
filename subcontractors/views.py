@@ -6,10 +6,12 @@ from datetime import date
 from wallcovering.models import Wallcovering
 from subcontractors.models import *
 from jobs.models import *
+from equipment.filters import SubcontractsFilter
 from django.contrib.auth.decorators import login_required
 from employees.models import *
 import datetime
 from console.misc import Email
+
 
 
 def sub_change_orders(request):
@@ -1190,6 +1192,11 @@ def subcontracts_new(request):
 @login_required(login_url='/accounts/login')
 def subcontracts_home(request):
     send_data = {}
+    if request.method == 'GET':
+        if 'search1' in request.GET: send_data['search1_exists'] = True  # Include Closed Subcontracts
+        if 'search2' in request.GET:send_data['search2_exists'] = True #show only labor done jobs
+        if 'search3' in request.GET: send_data['search3_exists'] = True #show paid 100%
+    search_subcontracts = SubcontractsFilter(request.GET, queryset=Subcontracts.objects.filter())
     today = datetime.date.today()
     this_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4)
     last_saturday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(
@@ -1205,7 +1212,7 @@ def subcontracts_home(request):
         if request.POST['job_number'] != "":
             return redirect('job_page', jobnumber=request.POST['job_number'])
     subcontracts = []
-    for x in Subcontracts.objects.filter(is_closed=False):  # str(format(x.percent_complete(),".0%"))
+    for x in search_subcontracts.qs:
         total_contract_amount = "$" + f"{int(x.total_contract_amount()):,d}"
         total_billed = "$" + f"{int(x.total_billed()):,d}"
         #
@@ -1222,16 +1229,49 @@ def subcontracts_home(request):
         if float(x.retainage_this_week()) < 0:
             retainage_negative = True
         change_orders = SubcontractItems.objects.filter(subcontract=x, is_approved=False).count()
-        subcontracts.append({'your_retainage':your_retainage,'total_contract_amount': total_contract_amount, 'total_billed': total_billed,'total_paid': total_paid, 'pay_amount_this_week': pay_amount_this_week,
-                             'retainage_negative': retainage_negative,
-                             'retainage_this_week': retainage_this_week,
-                             'approved_this_week': approved_this_week, 'billed_this_week': billed_this_week,
-                             'total_retainage_prior': total_retainage_prior,
-                             'total_billed_prior': total_billed_prior, 'labor_done': x.job_number.is_labor_done, 'change_orders': change_orders,
-                             'job_name': x.job_number.job_name, 'job_number': x.job_number.job_number,
-                             'subcontractor': x.subcontractor.company, 'subcontractor_id': x.subcontractor.id,
-                             'po_number': x.po_number, 'id': x.id, 'retainage': x.total_retainage(),
-                             'percent_complete': format(x.percent_complete(), ".0%")})
+
+        if request.method == 'GET':
+            if 'search3' in request.GET and x.percent_complete() >= 1:
+                subcontracts.append(
+                    {'your_retainage': your_retainage, 'total_contract_amount': total_contract_amount,
+                     'total_billed': total_billed, 'total_paid': total_paid,
+                     'pay_amount_this_week': pay_amount_this_week,
+                     'retainage_negative': retainage_negative,
+                     'retainage_this_week': retainage_this_week,
+                     'approved_this_week': approved_this_week, 'billed_this_week': billed_this_week,
+                     'total_retainage_prior': total_retainage_prior,
+                     'total_billed_prior': total_billed_prior, 'labor_done': x.job_number.is_labor_done,
+                     'change_orders': change_orders,
+                     'job_name': x.job_number.job_name, 'job_number': x.job_number.job_number,
+                     'subcontractor': x.subcontractor.company, 'subcontractor_id': x.subcontractor.id,
+                     'po_number': x.po_number, 'id': x.id, 'retainage': x.total_retainage(),
+                     'percent_complete': format(x.percent_complete(), ".0%")})
+            elif 'search3' not in request.GET:
+                subcontracts.append({'your_retainage':your_retainage,'total_contract_amount': total_contract_amount, 'total_billed': total_billed,'total_paid': total_paid, 'pay_amount_this_week': pay_amount_this_week,
+                                     'retainage_negative': retainage_negative,
+                                     'retainage_this_week': retainage_this_week,
+                                     'approved_this_week': approved_this_week, 'billed_this_week': billed_this_week,
+                                     'total_retainage_prior': total_retainage_prior,
+                                     'total_billed_prior': total_billed_prior, 'labor_done': x.job_number.is_labor_done, 'change_orders': change_orders,
+                                     'job_name': x.job_number.job_name, 'job_number': x.job_number.job_number,
+                                     'subcontractor': x.subcontractor.company, 'subcontractor_id': x.subcontractor.id,
+                                     'po_number': x.po_number, 'id': x.id, 'retainage': x.total_retainage(),
+                                     'percent_complete': format(x.percent_complete(), ".0%")})
+        else:
+            subcontracts.append({'your_retainage': your_retainage, 'total_contract_amount': total_contract_amount,
+                                 'total_billed': total_billed, 'total_paid': total_paid,
+                                 'pay_amount_this_week': pay_amount_this_week,
+                                 'retainage_negative': retainage_negative,
+                                 'retainage_this_week': retainage_this_week,
+                                 'approved_this_week': approved_this_week, 'billed_this_week': billed_this_week,
+                                 'total_retainage_prior': total_retainage_prior,
+                                 'total_billed_prior': total_billed_prior, 'labor_done': x.job_number.is_labor_done,
+                                 'change_orders': change_orders,
+                                 'job_name': x.job_number.job_name, 'job_number': x.job_number.job_number,
+                                 'subcontractor': x.subcontractor.company, 'subcontractor_id': x.subcontractor.id,
+                                 'po_number': x.po_number, 'id': x.id, 'retainage': x.total_retainage(),
+                                 'percent_complete': format(x.percent_complete(), ".0%")})
+
         send_data['subcontracts']=subcontracts
     return render(request, "subcontracts_home.html", send_data)
 
