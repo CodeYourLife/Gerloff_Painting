@@ -1,6 +1,7 @@
 from jobs.models import Jobs
 from equipment.models import InventoryNotes, Inventory
 from rentals.models import Rentals
+from subcontractors.models import Subcontracts
 import django_filters
 from django.db.models import Q
 from django import forms
@@ -126,6 +127,29 @@ class JobsFilter(django_filters.FilterSet):
     class Meta:
         model = Jobs
         fields = ['search']
+
+class SubcontractsFilter(django_filters.FilterSet):
+    search1 = django_filters.filters.BooleanFilter(label='Show Closed POs', widget=forms.CheckboxInput,
+                                                   method='search_filter1')
+    search2 = django_filters.filters.BooleanFilter(label='Show Jobs Marked Labor Done', widget=forms.CheckboxInput,
+                                                   method='search_filter2')
+
+    def search_filter1(self, queryset, name, value):
+        if value == True:
+            return queryset.all()
+        else:
+            return queryset.filter(is_closed=False)
+
+    def search_filter2(self, queryset, name, value):
+        if value == True:
+            return queryset.filter(job_number__is_labor_done=True)
+        else:
+            return queryset.all()
+
+
+    class Meta:
+        model = Subcontracts
+        fields = ['search1','search2']
 
 
 class EquipmentNotesFilter(django_filters.FilterSet):

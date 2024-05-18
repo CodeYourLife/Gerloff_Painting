@@ -147,6 +147,10 @@ function populate_contact_info(subcontractor_id){
         })
         }
 
+function new_filter_now(){
+    document.getElementById('filter_form').submit();
+}
+
     </script>
 </head>
 <body>
@@ -245,6 +249,28 @@ function populate_contact_info(subcontractor_id){
 </form>
     <b>Showing Invoice Information for {{last_saturday}} - {{this_friday}}</b>
     <br>
+
+    <!--filter form-->
+<form class="form-control form-control-sm" id="filter_form" method="get" >
+    <div class="container">
+        <div class="form-group">
+        <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="search1" name="search1"  {% if search1_exists %} checked {% endif %}  onchange="new_filter_now()" />
+        <label for="search1" class="form-check-label">Include Closed Subcontracts</label>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="search2" name="search2" {% if search2_exists %} checked {% endif %} onchange="new_filter_now()">
+            <label class="form-check-label" for="search2">Show Only Jobs That Are Done</label>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="search3" name="search3" {% if search3_exists %} checked {% endif %} onchange="new_filter_now()">
+            <label class="form-check-label" for="search3">Show PO's that are Paid in Full</label>
+        </div>
+        </div>
+    </div>
+    </form>
+
+
 <div class="table-responsive">
     <table id="sub_table" class="display">
         <thead>
