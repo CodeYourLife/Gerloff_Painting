@@ -208,18 +208,24 @@ def request_trash_pickup(request, jobnumber):
             else:
                 #no existing request
                 send_data['new_request'] = True
+
                 send_data['notes'] = request.POST['notes']
+
                 if 'save_paint' in request.POST: send_data['save_paint'] = True
         if 'cancel' in request.POST:
             return redirect('job_page', jobnumber=jobnumber)
         if 'pickup_all_equipment' in request.POST or 'pickup_certain_equipment' in request.POST or 'no_equipment' in request.POST:
             message = "Request for job: " + str(selected_job.job_name) + ". \n"
+
             new_request= PickupRequest.objects.create(date=date.today(), job_number=selected_job, confirmed=False, request_notes="Trash Pickup Requested- " + str(request.POST['notes'])) + ". \n"
+
             new_request.remove_trash = True
             if 'save_paint' in request.POST: new_request.save_leftover_paint = True
             if 'pickup_all_equipment' in request.POST:
                 new_request.all_items = True
+
             message += " Please pickup the trash! " + request.POST['notes'] + ". "
+
             if 'save_paint' in request.POST:
                 message += " Please save the leftover paint in our warehouse, until I can review it."
             if 'pickup_all_equipment' in request.POST:
@@ -387,10 +393,12 @@ def request_pickup(request, jobnumber, item, pickup, status):
             try:
                 Email.sendEmail("Pickup Request! " + selected_job.job_name, message,
                                 recipients, False)
+
                 message2 = "Your email requesting a pickup was sent succesfully!"
             except:
                 message2 = "ERROR! Your pickup request was not sent. Please call the warehouse."
             Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name, error=message2,
+
                                         date=date.today())
             JobNotes.objects.create(job_number=selected_job,
                                     note=message,
