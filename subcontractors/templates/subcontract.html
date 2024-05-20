@@ -571,7 +571,7 @@ function add_note2(){
                                     <form class="form-control form-control-sm" id="form1" action="{% url 'subcontract' subcontract.id %}" method="post" >
                                     {% csrf_token %}
                                     {% for x in approvers %}
-                                    <tr><td>{% if x.employee %}{{x.employee}}{% elif x.job_description %}{{x.job_description}}{% endif %}</td><td><input type="submit" class= "btn btn-danger btn-sm" name="delete{{x.id}}" value="Delete"></td></tr>
+                                    <tr><td>{% if x.employee %}{{x.employee}}{% elif x.job_description %}{{x.job_description}}{% endif %}</td><td><input type="submit" class= "btn btn-danger btn-sm" name="deleteapprover{{x.id}}" value="Delete"></td></tr>
                                     {% endfor %}
                                     </form>
                                     <tr><td>
