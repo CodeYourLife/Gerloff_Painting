@@ -256,6 +256,7 @@ def portal_invoice_new(request, subcontract_id):
                                             user=Employees.objects.get(id=42),
                                             note="Retainage Request From Portal",
                                             invoice=invoice)
+
             for x in Subcontract_Approvers.objects.filter(subcontract=subcontract):
                 if x.employee:
                     InvoiceApprovals.objects.create(employee=x.employee, invoice=invoice)
@@ -266,6 +267,7 @@ def portal_invoice_new(request, subcontract_id):
                             job_super = subcontract.job_number.superintendent
                             if not InvoiceApprovals.objects.filter(invoice=invoice, employee=job_super).exists():
                                 InvoiceApprovals.objects.create(employee=job_super, invoice=invoice)
+
             email_body = "Retainage Request Entered For " + str(subcontract.subcontractor.company) + "\n Job: " + str(
                 subcontract.job_number.job_name)
             try:
@@ -1227,6 +1229,7 @@ def subcontracts_home(request):
         if float(x.retainage_this_week()) < 0:
             retainage_negative = True
         change_orders = SubcontractItems.objects.filter(subcontract=x, is_approved=False).count()
+
         if request.method == 'GET':
             if 'search3' in request.GET and x.percent_complete() >= 1:
                 subcontracts.append(
@@ -1268,6 +1271,7 @@ def subcontracts_home(request):
                                  'subcontractor': x.subcontractor.company, 'subcontractor_id': x.subcontractor.id,
                                  'po_number': x.po_number, 'id': x.id, 'retainage': x.total_retainage(),
                                  'percent_complete': format(x.percent_complete(), ".0%")})
+
         send_data['subcontracts']=subcontracts
     return render(request, "subcontracts_home.html", send_data)
 

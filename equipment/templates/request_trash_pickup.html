@@ -73,9 +73,11 @@ function hide_buttons(){
 		{% if save_paint %}
 		<input type="hidden" name="save_paint" value="True">
 		{% endif %}
+
 		{% if notes %}
 		<input type="hidden" name="notes" value="{{notes}}">
 		{% endif %}
+
 		<input type="submit" class="btn btn-primary btn-lg" id="pickup_all_equipment" name="pickup_all_equipment" value="Please Also Pickup All Equipment" />
 		<br><br>
 		<input type="submit" class="btn btn-primary btn-lg" id="pickup_certain_equipment" name="pickup_certain_equipment" value="Please Also Pickup Certain Equipment" />
