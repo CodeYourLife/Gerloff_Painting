@@ -1188,6 +1188,13 @@ def change_order_home(request):
 
 
 @login_required(login_url='/accounts/login')
+def change_order_email(request, jobnumber):
+    send_data={}
+    print("HERE")
+    return render(request, "change_order_email.html", send_data)
+
+
+@login_required(login_url='/accounts/login')
 def extra_work_ticket(request, id):
     send_data = {}
     if Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).exists():
