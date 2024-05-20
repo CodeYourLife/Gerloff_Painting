@@ -943,8 +943,8 @@ def subcontract(request, id):
         send_data['wallcovering_json'] = json.dumps(list(wallcovering_json1), cls=DjangoJSONEncoder)
     if request.method == 'POST':
         for x in request.POST:
-            if x[0:6] == 'delete':
-                item_number = x[6:len(x)]
+            if x[0:14] == 'deleteapprover':
+                item_number = x[14:len(x)]
                 Subcontract_Approvers.objects.get(id=item_number).delete()
             if x == 'add_new_approver':
                 if request.POST['add_new'] == 'Superintendent':
