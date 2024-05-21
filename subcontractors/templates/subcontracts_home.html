@@ -286,7 +286,7 @@ function new_filter_now(){
             <th style="background-color:hsl(114, 100%, 90%)">Paid</th>
 			<th style="background-color:hsla(69, 100%, 92%)" >Prev Billed</th>
 			<th style="background-color:hsla(69, 100%, 92%)">Prev Retain</th>
-			<th>Paid To Date</th>
+			<th>Approved To Date</th>
             <th>%</th>
             <th>Ret.</th>
             <th>COs</th>
@@ -308,16 +308,20 @@ function new_filter_now(){
 <!--            {% else %}-->
 <!--            <td onclick="go_to_subcontract('{{x.id}}')" ><a href="#">GoTo PO</a></td>-->
 <!--            {% endif %}-->
-                        <td>{{x.total_contract_amount}}</td>
+            <td>{{x.total_contract_amount}}</td>
+            {% if x.is_invoiced %}
 			<td style="background-color:hsl(216, 100%, 90%)">{{x.billed_this_week}}</td>
 			<td style="background-color:hsl(216, 100%, 90%)">{{x.your_retainage}}</td>
+            {% else %}
+            <td></td><td></td>
+            {% endif %}
+            {% if x.is_approved %}
             <td style="background-color:hsl(114, 100%, 90%)">{{x.approved_this_week}}</td>
-			{% if retainage_negative %}
 			<td style="background-color:hsl(114, 100%, 90%)">{{x.retainage_this_week}}</td>
-			{% else %}
-			<td style="background-color:hsl(114, 100%, 90%)">-{{x.retainage_this_week}}</td>
-			{% endif %}
 			<td style="background-color:hsl(114, 100%, 90%)">{{x.pay_amount_this_week}}</td>
+            {% else %}
+            <td></td><td></td><td></td>
+            {% endif %}
 			<td style="background-color:hsla(69, 100%, 92%)">{{x.total_billed_prior}}</td>
 			<td style="background-color:hsla(69, 100%, 92%)">-{{x.total_retainage_prior}}</td>
 			<td>{{x.total_paid}}</td>

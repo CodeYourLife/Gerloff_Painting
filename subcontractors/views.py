@@ -45,7 +45,7 @@ def portal(request, sub_id, contract_id):
             #
             total_paid ="$" + f"{int(x.total_paid()):,d}"
             pay_amount_this_week="$" + f"{int(x.pay_amount_this_week()):,d}"
-            retainage_this_week="$" + f"{int(x.retainage_this_week()):,d}"
+            retainage_this_week="$" + f"{0-int(x.retainage_this_week()):,d}"
             approved_this_week="$" + f"{int(x.amount_this_week()):,d}"
             billed_this_week="$" + f"{int(x.original_request()):,d}"
             total_retainage_prior="$" + f"{int(x.total_retainage_prior()):,d}"
@@ -55,7 +55,7 @@ def portal(request, sub_id, contract_id):
             retainage_negative = False
             if float(x.retainage_this_week()) < 0:
                 retainage_negative = True
-            subcontracts.append({'your_retainage':your_retainage,'total_paid': total_paid, 'pay_amount_this_week': pay_amount_this_week,
+            subcontracts.append({'is_invoiced':x.is_invoiced_this_week(), 'is_approved':x.is_approved_this_week(), 'your_retainage':your_retainage,'total_paid': total_paid, 'pay_amount_this_week': pay_amount_this_week,
                                  'retainage_negative': retainage_negative,
                                  'retainage_this_week': retainage_this_week,
                                  'approved_this_week': approved_this_week, 'billed_this_week': billed_this_week,
@@ -124,7 +124,6 @@ def connect(request):
             send_data['enter_pin'] = True
             return render(request, "portal_registration.html", send_data)
         if 'pin' in request.POST:
-            print(request.POST)
             if Subcontractors.objects.filter(pin=request.POST['pin']).exists():
                 selected_sub = Subcontractors.objects.get(pin=request.POST['pin'])
                 if selected_sub.username:
@@ -751,7 +750,6 @@ def subcontractor_home(request):
             approval_counts_two[employee] += 1
         else:
             approval_counts_two[employee] = 1
-    print(approval_counts_two)
     if request.method == 'POST':
         if 'invoices_entered' in request.POST:
             this_week_status = Weekly_Approvals.objects.latest('id')
@@ -865,16 +863,15 @@ def subcontractor_home(request):
     send_data['my_invoices'] = my_invoices
     send_data['approval_counts'] = approval_counts
     send_data['late_invoices'] = SubcontractorInvoice.objects.filter(pay_date__gt=this_friday)
-    print(today - datetime.timedelta(days=today.weekday()))  # provides mondays date
-    print(datetime.timedelta(days=today.weekday()))  # day of the week in numberical form, 0 is monday
-    print(datetime.timedelta(
-        days=today.weekday()).days)  # gives day of the week in integer form, stripped date data from it
+    # print(today - datetime.timedelta(days=today.weekday()))  # provides mondays date
+    # print(datetime.timedelta(days=today.weekday()))  # day of the week in numberical form, 0 is monday
+    # print(datetime.timedelta(days=today.weekday()).days)  # gives day of the week in integer form, stripped date data from it
     this_week_status = Weekly_Approvals.objects.latest('id')
     days_since_monday = today - this_week_status.Monday
     if days_since_monday.days >= 7:
         this_week_status = Weekly_Approvals.objects.create(Monday=today - datetime.timedelta(days=today.weekday()))
     send_data['this_week_status'] = this_week_status
-    print(today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4))  # fridays date
+    # print(today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4))  # fridays date
 
     # this_week_status = Weekly_Approvals.objects.create(Monday=today - datetime.timedelta(days=today.weekday()))
 
@@ -893,8 +890,9 @@ def subcontract(request, id):
             retainage_positive = True
         else:
             retainage_positive = False
+        retainage = "$" + f"{0-int(x.retainage):,d}"
         invoices.append(
-            {'invoice': x, 'total_pay_amount': x.final_amount - x.retainage, 'retainage_positive': retainage_positive})
+            {'retainage':retainage, 'invoice': x, 'total_pay_amount': x.final_amount - x.retainage, 'retainage_positive': retainage_positive})
     send_data['invoices'] = invoices
     # send_data['invoices'] = SubcontractorInvoice.objects.filter(subcontract=subcontract).order_by('id')
     items = []
@@ -924,14 +922,11 @@ def subcontract(request, id):
     send_data['items'] = items
     send_data['number_items'] = number_items
     send_data['notes'] = SubcontractNotes.objects.filter(subcontract=subcontract)
-    send_data['total_billed'] = subcontract.total_billed()
-    send_data['total_contract'] = subcontract.total_contract_amount()
-    send_data['total_retainage'] = subcontract.total_retainage()
+    send_data['total_retainage'] = 0-subcontract.total_retainage_approved()
     send_data['total_pending'] = subcontract.total_pending_amount()
-    send_data['total_billed_and_pending'] = float(subcontract.total_pending_amount()) + float(
-        subcontract.total_billed())
-    send_data['total_retainage_pending'] = subcontract.total_retainage_pending()
-    send_data['final_retainage'] = float(subcontract.total_retainage_pending()) + float(subcontract.total_retainage())
+    send_data['total_billed_and_pending'] = float(subcontract.total_billed())
+    send_data['total_retainage_pending'] = 0-subcontract.total_retainage_pending()
+    send_data['final_retainage'] = 0- float(subcontract.total_retainage())
     if subcontract.invoice_pending(): send_data['is_invoice_pending'] = True
     if Wallcovering.objects.filter(job_number=subcontract.job_number):
         wallcovering = Wallcovering.objects.filter(job_number=subcontract.job_number)
@@ -1066,7 +1061,7 @@ def subcontract(request, id):
     send_data['subcontract'] = subcontract
     send_data['percent_complete'] = format(subcontract.percent_complete(), ".0%")
     send_data['total_contract'] = "{:,}".format(round(subcontract.total_contract_amount(), 2))
-    send_data['total_billed'] = "{:,}".format(round(subcontract.total_billed(), 2))
+    send_data['total_billed'] = "{:,}".format(round(subcontract.total_approved(), 2))
     send_data['subcontract_date'] = str(subcontract.date)
     return render(request, "subcontract.html", send_data)
 
@@ -1132,7 +1127,6 @@ def subcontracts_new(request):
                                             user=Employees.objects.get(user=request.user),
                                             note="New Contract- " + request.POST['subcontract_notes'])
             for y in Subcontractor_Approvers.objects.filter(subcontractor=subcontractor1):
-                print(y)
                 if y.employee:
                     Subcontract_Approvers.objects.create(subcontract=subcontract1, employee=y.employee)
                 if y.job_description:
@@ -1218,12 +1212,11 @@ def subcontracts_home(request):
         #
         total_paid = "$" + f"{int(x.total_paid()):,d}"
         pay_amount_this_week = "$" + f"{int(x.pay_amount_this_week()):,d}"
-        retainage_this_week = "$" + f"{int(x.retainage_this_week()):,d}"
+        retainage_this_week = "$" + f"{0-int(x.retainage_this_week()):,d}"
         approved_this_week = "$" + f"{int(x.amount_this_week()):,d}"
         billed_this_week = "$" + f"{int(x.original_request()):,d}"
-        total_retainage_prior = "$" + f"{int(x.total_retainage_prior()):,d}"
+        total_retainage_prior = "$" + f"{0-int(x.total_retainage_prior()):,d}"
         total_billed_prior = "$" + f"{int(x.total_billed_prior()):,d}"
-        print(x.total_billed_prior())
         retainage_negative = False
         your_retainage = "$" + f"{0 - int(x.original_retainage_request()):,d}"
         if float(x.retainage_this_week()) < 0:
@@ -1233,7 +1226,7 @@ def subcontracts_home(request):
         if request.method == 'GET':
             if 'search3' in request.GET and x.percent_complete() >= 1:
                 subcontracts.append(
-                    {'your_retainage': your_retainage, 'total_contract_amount': total_contract_amount,
+                    {'is_invoiced':x.is_invoiced_this_week(), 'is_approved':x.is_approved_this_week(),'your_retainage': your_retainage, 'total_contract_amount': total_contract_amount,
                      'total_billed': total_billed, 'total_paid': total_paid,
                      'pay_amount_this_week': pay_amount_this_week,
                      'retainage_negative': retainage_negative,
@@ -1244,10 +1237,10 @@ def subcontracts_home(request):
                      'change_orders': change_orders,
                      'job_name': x.job_number.job_name, 'job_number': x.job_number.job_number,
                      'subcontractor': x.subcontractor.company, 'subcontractor_id': x.subcontractor.id,
-                     'po_number': x.po_number, 'id': x.id, 'retainage': x.total_retainage(),
+                     'po_number': x.po_number, 'id': x.id, 'retainage': x.total_retainage_approved(),
                      'percent_complete': format(x.percent_complete(), ".0%")})
             elif 'search3' not in request.GET:
-                subcontracts.append({'your_retainage':your_retainage,'total_contract_amount': total_contract_amount, 'total_billed': total_billed,'total_paid': total_paid, 'pay_amount_this_week': pay_amount_this_week,
+                subcontracts.append({'is_invoiced':x.is_invoiced_this_week(), 'is_approved':x.is_approved_this_week(), 'your_retainage':your_retainage,'total_contract_amount': total_contract_amount, 'total_billed': total_billed,'total_paid': total_paid, 'pay_amount_this_week': pay_amount_this_week,
                                      'retainage_negative': retainage_negative,
                                      'retainage_this_week': retainage_this_week,
                                      'approved_this_week': approved_this_week, 'billed_this_week': billed_this_week,
@@ -1255,10 +1248,10 @@ def subcontracts_home(request):
                                      'total_billed_prior': total_billed_prior, 'labor_done': x.job_number.is_labor_done, 'change_orders': change_orders,
                                      'job_name': x.job_number.job_name, 'job_number': x.job_number.job_number,
                                      'subcontractor': x.subcontractor.company, 'subcontractor_id': x.subcontractor.id,
-                                     'po_number': x.po_number, 'id': x.id, 'retainage': x.total_retainage(),
+                                     'po_number': x.po_number, 'id': x.id, 'retainage': x.total_retainage_approved(),
                                      'percent_complete': format(x.percent_complete(), ".0%")})
         else:
-            subcontracts.append({'your_retainage': your_retainage, 'total_contract_amount': total_contract_amount,
+            subcontracts.append({'is_invoiced':x.is_invoiced_this_week(), 'is_approved':x.is_approved_this_week(), 'your_retainage': your_retainage, 'total_contract_amount': total_contract_amount,
                                  'total_billed': total_billed, 'total_paid': total_paid,
                                  'pay_amount_this_week': pay_amount_this_week,
                                  'retainage_negative': retainage_negative,
@@ -1269,7 +1262,7 @@ def subcontracts_home(request):
                                  'change_orders': change_orders,
                                  'job_name': x.job_number.job_name, 'job_number': x.job_number.job_number,
                                  'subcontractor': x.subcontractor.company, 'subcontractor_id': x.subcontractor.id,
-                                 'po_number': x.po_number, 'id': x.id, 'retainage': x.total_retainage(),
+                                 'po_number': x.po_number, 'id': x.id, 'retainage': x.total_retainage_approved(),
                                  'percent_complete': format(x.percent_complete(), ".0%")})
 
         send_data['subcontracts']=subcontracts
@@ -1314,7 +1307,6 @@ def new_subcontractor_payment(request):
                     else:
                         ready_to_close = False
                     if int(subcontract.total_retainage()) == 0:
-
                         print("RETAINAGE PAID")
                     else:
                         ready_to_close = False
@@ -1368,7 +1360,6 @@ def new_subcontractor_payment(request):
     subcontractors = []
     for x in Subcontractors.objects.all():
         if x.needs_payment() == True:
-            print(x.company)
             subcontractors.append({'id': x.id, 'company': x.company})
     send_data['subcontractors'] = subcontractors
     return render(request, "new_subcontractor_payment.html", send_data)
