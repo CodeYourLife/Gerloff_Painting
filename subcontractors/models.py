@@ -30,18 +30,21 @@ class Subcontractors(models.Model):
         return f"{self.company}"
 
     def active_contracts(self):
+        # used one time in subcontractor_home
         totalquantity = 0
         for x in Subcontracts.objects.filter(subcontractor=self, is_closed=False):
             totalquantity = totalquantity + 1
         return totalquantity
 
     def pending_invoices(self):
+        #used one time in subcontractor_home
         totalquantity = 0
         for x in SubcontractorInvoice.objects.filter(subcontract__subcontractor=self, is_sent=False):
             totalquantity = totalquantity + 1
         return totalquantity
 
     def needs_payment(self):
+        #used in new_subcontractor_payment
         if SubcontractorInvoice.objects.filter(subcontract__subcontractor=self, is_sent=True, processed=False).exists():
             return True
         else:
@@ -74,8 +77,17 @@ class Subcontracts(models.Model):
             this_friday += datetime.timedelta(days=7)
             last_friday += datetime.timedelta(days=7)
         total = 0
-        for x in SubcontractorInvoice.objects.filter(subcontract=self, date__gt=last_friday, date__lte=this_friday):
-            total += x.original_amount
+        # for x in SubcontractorInvoice.objects.filter(subcontract=self, date__gt=last_friday, date__lte=this_friday):
+        #     total += x.original_amount
+            #changing this to include all prior invoices if they weren't paid
+        for x in SubcontractorInvoice.objects.filter(subcontract=self):
+            print(x)
+            if last_friday < x.date <= this_friday:
+                if x.original_amount:total += x.original_amount
+                else: total += 0
+            elif not x.processed:
+                if x.original_amount: total += x.original_amount
+                else: total += 0
         return total
 
     def original_retainage_request(self):
@@ -86,12 +98,51 @@ class Subcontracts(models.Model):
             this_friday += datetime.timedelta(days=7)
             last_friday += datetime.timedelta(days=7)
         total = 0
-        for x in SubcontractorInvoice.objects.filter(subcontract=self, date__gt=last_friday, date__lte=this_friday):
-            if x.original_retainage_amount:
-                total += x.original_retainage_amount
-            else:
-                total += x.retainage
+        for x in SubcontractorInvoice.objects.filter(subcontract=self):
+        # for x in SubcontractorInvoice.objects.filter(subcontract=self, date__gt=last_friday, date__lte=this_friday):
+            if last_friday < x.date <= this_friday:
+                if x.original_retainage_amount:
+                    total += x.original_retainage_amount
+                else:
+                    total += x.retainage
+            elif not x.processed:
+                if x.original_retainage_amount:
+                    total += x.original_retainage_amount
+                else:
+                    total += x.retainage
         return total
+
+    def is_approved_this_week(self):
+        approved=False
+        today = datetime.date.today()
+        this_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4)
+        last_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4) - datetime.timedelta(days=7)
+        if today.weekday() > 4:
+            this_friday += datetime.timedelta(days=7)
+            last_friday += datetime.timedelta(days=7)
+        for x in SubcontractorInvoice.objects.filter(subcontract=self):
+            if last_friday < x.date <= this_friday:
+                if x.is_sent:
+                    approved=True
+            elif not x.processed:
+                if x.is_sent:
+                    approved = True
+        return approved
+
+    def is_invoiced_this_week(self):
+        approved=False
+        today = datetime.date.today()
+        this_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4)
+        last_friday = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4) - datetime.timedelta(days=7)
+        if today.weekday() > 4:
+            this_friday += datetime.timedelta(days=7)
+            last_friday += datetime.timedelta(days=7)
+        for x in SubcontractorInvoice.objects.filter(subcontract=self):
+            if last_friday < x.date <= this_friday:
+                approved=True
+            elif not x.processed:
+                approved = True
+        return approved
 
     def amount_this_week(self):
         today = datetime.date.today()
@@ -101,8 +152,13 @@ class Subcontracts(models.Model):
             this_friday += datetime.timedelta(days=7)
             last_friday += datetime.timedelta(days=7)
         total = 0
-        for x in SubcontractorInvoice.objects.filter(subcontract=self, date__gt=last_friday, date__lte=this_friday, is_sent=True):
-            total += x.final_amount
+        for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=True):
+            if last_friday < x.date <= this_friday:
+                total += x.final_amount
+            elif not x.processed:
+                total += x.final_amount
+        # for x in SubcontractorInvoice.objects.filter(subcontract=self, date__gt=last_friday, date__lte=this_friday, is_sent=True):
+        #     total += x.final_amount
         return total
 
     def retainage_this_week(self):
@@ -113,8 +169,13 @@ class Subcontracts(models.Model):
             this_friday += datetime.timedelta(days=7)
             last_friday += datetime.timedelta(days=7)
         total = 0
-        for x in SubcontractorInvoice.objects.filter(subcontract=self, date__gt=last_friday, date__lte=this_friday, is_sent=True):
-            total += x.retainage
+        for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=True):
+            if last_friday < x.date <= this_friday:
+                total += x.retainage
+            elif not x.processed:
+                total += x.retainage
+        # for x in SubcontractorInvoice.objects.filter(subcontract=self, date__gt=last_friday, date__lte=this_friday, is_sent=True):
+        #     total += x.retainage
         return total
 
     def pay_amount_this_week(self):
@@ -125,8 +186,13 @@ class Subcontracts(models.Model):
             this_friday += datetime.timedelta(days=7)
             last_friday += datetime.timedelta(days=7)
         total = 0
-        for x in SubcontractorInvoice.objects.filter(subcontract=self, date__gt=last_friday, date__lte=this_friday, is_sent=True):
-            total += x.final_amount - x.retainage
+        for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=True):
+            if last_friday < x.date <= this_friday:
+                total += x.final_amount - x.retainage
+            elif not x.processed:
+                total += x.final_amount - x.retainage
+        # for x in SubcontractorInvoice.objects.filter(subcontract=self, date__gt=last_friday, date__lte=this_friday, is_sent=True):
+        #     total += x.final_amount - x.retainage
         return total
 
     def total_pending_amount(self):
@@ -136,10 +202,21 @@ class Subcontracts(models.Model):
         return total
 
     def total_billed(self):
+        #used in subcontract.
         total = 0
+        # for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=True):
+        for x in SubcontractorInvoice.objects.filter(subcontract=self):
+            total = total + x.final_amount
+        return total
+
+    def total_approved(self):
+        #joe added this 5.21.24. Only used in one place - in subcontract home (used in the summar bottom of page)
+        total = 0
+        # for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=True):
         for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=True):
             total = total + x.final_amount
         return total
+
 
     def total_paid(self):
         total = 0
@@ -156,19 +233,25 @@ class Subcontracts(models.Model):
             this_friday += datetime.timedelta(days=7)
             last_friday += datetime.timedelta(days=7)
         total = 0
-
-        print(self)
         for x in SubcontractorInvoice.objects.filter(subcontract=self, processed=True, date__lte=last_friday):
-            print(x.final_amount)
-
             total = total + x.final_amount
         return total
 
     def total_retainage(self):
+        #portal invoice new - used if you do a retainage release
+        total = 0
+        for x in SubcontractorInvoice.objects.filter(subcontract=self):
+            total = total + x.retainage
+        return total
+
+
+    def total_retainage_approved(self):
+        #portal invoice new - used if you do a retainage release
         total = 0
         for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=True):
             total = total + x.retainage
         return total
+
 
     def total_retainage_prior(self):
         #saturday thru friday
@@ -273,6 +356,7 @@ class SubcontractItems(models.Model):
         return totalcost
 
     def total_billed(self):
+        #subcontractor invoice new and portal invoice new
         totalcost = 0
         for x in SubcontractorInvoiceItem.objects.filter(sov_item=self, invoice__is_sent=True):
             totalcost = totalcost + x.quantity
