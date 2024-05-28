@@ -1307,6 +1307,7 @@ def new_subcontractor_payment(request):
                     ready_to_close = True
                     if SubcontractorInvoice.objects.filter(subcontract=subcontract, processed=False).exists():
                         ready_to_close = False
+
                     #1 - check that all invoices (billed and pending) equal 100%
                     for x in SubcontractItems.objects.filter(subcontract=subcontract):
                         totalcost = float(x.total_cost())
@@ -1323,6 +1324,7 @@ def new_subcontractor_payment(request):
                     # else:
                     #     ready_to_close = False
                     if int(subcontract.total_retainage()) != 0:
+
                         ready_to_close = False
 
                     SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
