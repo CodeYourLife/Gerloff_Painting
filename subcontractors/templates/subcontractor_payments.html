@@ -93,9 +93,14 @@
 	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
     <script type="text/javascript" class="init">
+
+
 $(document).ready(function () {
+    alert("HI")
     var table = $('#payments_table').DataTable({ordering:false, pageLength: 50});
+  if ("{{error_message}}"){alert("{{error_message}}")}
 })
+
 function populate_super_modal(payment_id){
 
     $.ajax({
