@@ -923,6 +923,7 @@ def subcontract(request, id):
     send_data['number_items'] = number_items
     send_data['notes'] = SubcontractNotes.objects.filter(subcontract=subcontract)
     send_data['total_retainage'] = 0-subcontract.total_retainage_approved()
+    send_data['retainage_to_release'] = subcontract.total_retainage_approved()
     send_data['total_pending'] = subcontract.total_pending_amount()
     send_data['total_billed_and_pending'] = float(subcontract.total_billed())
     send_data['total_retainage_pending'] = 0-subcontract.total_retainage_pending()
@@ -1272,6 +1273,11 @@ def subcontracts_home(request):
 def subcontractor_payments(request):
     send_data = {}
     send_data['payments'] = SubcontractorPayments.objects.all().order_by('-date')
+    if Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).exists():
+        send_data['error_message']= Email_Errors.objects.get(user=request.user.first_name + " " + request.user.last_name).error
+        print("NOW PRINTING THE ERROR MESSAGE")
+        print(Email_Errors.objects.get(user=request.user.first_name + " " + request.user.last_name).error)
+    Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
     if request.method == 'POST':
         if 'new_payment' in request.POST:
             return redirect('new_subcontractor_payment')
@@ -1297,18 +1303,28 @@ def new_subcontractor_payment(request):
                     subcontract = selected_invoice.subcontract
                     selected_invoice.processed = True
                     selected_invoice.payment = payment
+                    selected_invoice.save()
                     ready_to_close = True
+                    if SubcontractorInvoice.objects.filter(subcontract=subcontract, processed=False).exists():
+                        ready_to_close = False
 
-                    if SubcontractItems.objects.filter(subcontract=subcontract, is_closed=False,
-                                                       is_approved=False).exists():
-                        ready_to_close = False
-                    if int(subcontract.total_billed()) == int(subcontract.total_contract_amount()):
-                        print("BILLED 100%")
-                    else:
-                        ready_to_close = False
-                    if int(subcontract.total_retainage()) == 0:
-                        print("RETAINAGE PAID")
-                    else:
+                    #1 - check that all invoices (billed and pending) equal 100%
+                    for x in SubcontractItems.objects.filter(subcontract=subcontract):
+                        totalcost = float(x.total_cost())
+                        totalbilledandpending = float(x.total_billed_and_pending())
+                        if totalcost == 0:
+                            percentage = 0
+                        else:
+                            percentage = (totalbilledandpending / totalcost) * 100
+                        if percentage < 1:
+                            ready_to_close = False
+                    #
+                    # if int(subcontract.total_billed()) == int(subcontract.total_contract_amount()):
+                    #     print("BILLED 100%")
+                    # else:
+                    #     ready_to_close = False
+                    if int(subcontract.total_retainage()) != 0:
+
                         ready_to_close = False
 
                     SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
@@ -1326,7 +1342,11 @@ def new_subcontractor_payment(request):
                                                             subcontract.total_contract_amount()) + ". Total Billed =$" + str(
                                                             subcontract.total_billed()) + ". Total Retainage =$" + str(
                                                             subcontract.total_retainage()))
-
+                        print("Making message now")
+                        print("Subcontract " + str(subcontract) + " CLOSED!")
+                        Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name,
+                                                    error="Subcontract " + str(subcontract) + " CLOSED!",
+                                                    date=date.today())
                     selected_invoice.save()
                 InvoiceBatch.objects.all().delete()
             return redirect('subcontractor_payments')

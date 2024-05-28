@@ -391,7 +391,7 @@ function add_note2(){
     	return false;
     	}
     	else{
-            if (release_retainage_form.retainage_released.value > Number("{{total_retainage}}")){
+            if (release_retainage_form.retainage_released.value > Number("{{retainage_to_release}}")){
                 alert("Cannot release more than what we held")
                 return false;
             }
@@ -653,9 +653,9 @@ function add_note2(){
                     {% csrf_token %}
                     <br>
                     <input type="hidden" name="new_note" id="new_note">
-                    <b>Total Retainage Held:</b> ${{total_retainage}}
+                    <b>Total Retainage Held:</b> ${{retainage_to_release}}
                     <br>
-                    <b>Amount to Release Now:</b><input type="number" step="0.01" name="retainage_released" id="retainage_released" value="{{total_retainage}}" />
+                    <b>Amount to Release Now:</b><input type="number" step="0.01" name="retainage_released" id="retainage_released" value="{{retainage_to_release}}" />
             </div>
             <div class="modal-footer">
                 <input type="submit" class="btn btn-primary" value="Release Now" />
