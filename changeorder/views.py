@@ -1198,7 +1198,7 @@ def change_order_email(request, jobnumber):
 def extra_work_ticket(request, id):
     send_data = {}
     if Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).exists():
-        send_data['error_message']= Email_Errors.objects.get(user=request.user.first_name + " " + request.user.last_name).error
+        send_data['error_message']= Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).last().error
     Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
     changeorder = ChangeOrders.objects.get(id=id)
     send_data['changeorder'] = changeorder
