@@ -197,7 +197,7 @@ def index(request):
 def warehouse_home(request):
     send_data = {}
     if Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).exists():
-        send_data['error_message']= Email_Errors.objects.get(user=request.user.first_name + " " + request.user.last_name).error
+        send_data['error_message']= Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).last().error
     Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
     if PickupRequest.objects.filter(confirmed=True, is_closed=False).exists():
         send_data['pending_pickups'] = PickupRequest.objects.filter(confirmed=True, is_closed=False).order_by('date')

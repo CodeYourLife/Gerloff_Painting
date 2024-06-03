@@ -116,7 +116,7 @@ def rental_ajax(request):
 def rental_page(request, id, reverse):
     send_data = {}
     if Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).exists():
-        send_data['error_message']= Email_Errors.objects.get(user=request.user.first_name + " " + request.user.last_name).error
+        send_data['error_message']= Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).last().error
     Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
     rental = Rentals.objects.get(id=id)
     reverse = reverse

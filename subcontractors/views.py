@@ -1274,9 +1274,9 @@ def subcontractor_payments(request):
     send_data = {}
     send_data['payments'] = SubcontractorPayments.objects.all().order_by('-date')
     if Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).exists():
-        send_data['error_message']= Email_Errors.objects.get(user=request.user.first_name + " " + request.user.last_name).error
+        send_data['error_message']= Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).last().error
         print("NOW PRINTING THE ERROR MESSAGE")
-        print(Email_Errors.objects.get(user=request.user.first_name + " " + request.user.last_name).error)
+        print(Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).last().error)
     Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
     if request.method == 'POST':
         if 'new_payment' in request.POST:
