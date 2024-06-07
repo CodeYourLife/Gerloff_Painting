@@ -1305,6 +1305,7 @@ def new_subcontractor_payment(request):
                     selected_invoice.payment = payment
                     selected_invoice.save()
                     ready_to_close = True
+                    #check to see if there are open invoices still
                     if SubcontractorInvoice.objects.filter(subcontract=subcontract, processed=False).exists():
                         ready_to_close = False
 
@@ -1316,7 +1317,9 @@ def new_subcontractor_payment(request):
                             percentage = 0
                         else:
                             percentage = (totalbilledandpending / totalcost) * 100
-                        if percentage < 1:
+                        print("PUMPKIN KING")
+                        print(percentage)
+                        if percentage < 100:
                             ready_to_close = False
                     #
                     # if int(subcontract.total_billed()) == int(subcontract.total_contract_amount()):
@@ -1324,11 +1327,9 @@ def new_subcontractor_payment(request):
                     # else:
                     #     ready_to_close = False
                     if int(subcontract.total_retainage()) != 0:
-
                         ready_to_close = False
 
                     SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
-
                                                     user=Employees.objects.get(user=request.user),
                                                     note="Invoice Paid on " + str(request.POST['pay_date']) + ". " +
                                                          request.POST['note'],
@@ -1342,8 +1343,6 @@ def new_subcontractor_payment(request):
                                                             subcontract.total_contract_amount()) + ". Total Billed =$" + str(
                                                             subcontract.total_billed()) + ". Total Retainage =$" + str(
                                                             subcontract.total_retainage()))
-                        print("Making message now")
-                        print("Subcontract " + str(subcontract) + " CLOSED!")
                         Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name,
                                                     error="Subcontract " + str(subcontract) + " CLOSED!",
                                                     date=date.today())
