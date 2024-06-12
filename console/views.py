@@ -65,6 +65,7 @@ def client_info(request, id):
         selected_client = Clients.objects.get(id=id)
         send_data['selected_client'] = selected_client
         send_data['client_employees'] = ClientEmployees.objects.filter(id=selected_client).order_by('name')
+        send_data['jobs']=Jobs.objects.filter(client=selected_client)
     if request.method == "POST":
         if 'combine_companies_now' in request.POST:
             company1 = Clients.objects.get(id=request.POST['select_client1'])
@@ -84,6 +85,8 @@ def client_info(request, id):
         if request.POST['select_client'] != 'please_select':
             selected_client = Clients.objects.get(id=request.POST['select_client'])
             send_data['selected_client'] = selected_client
+            print("PUPMKING HERE")
+            print(selected_client)
             if 'make_client_inactive' in request.POST:
                 selected_client.is_active=False
                 selected_client.save()
@@ -134,6 +137,7 @@ def client_info(request, id):
             if 'add_new_person' in request.POST:
                 ClientEmployees.objects.create(id=selected_client, name=request.POST['add_name'], phone=request.POST['add_phone'], email = request.POST['add_email'])
             send_data['client_employees'] = ClientEmployees.objects.filter(id=selected_client).order_by('name')
+    print(send_data)
     return render(request, 'client_info.html', send_data)
 
 

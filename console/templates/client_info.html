@@ -223,12 +223,23 @@ window.onload = function() {
 <br>
 {% if selected_client %}
 <br>
+    Select a project for job-specific employee roles<br>
+<!--     <select id="select_job" name="select_job" onchange="search_now()">-->
+<!--            <option value="please_select">Select a job</option>-->
+<!--                            {% for x in jobs %}-->
+<!--                        <option value={{x.job_number}}>{{x.job_name}}</option>-->
+<!--						{% endfor %}-->
+<!--         </select>-->
+<br>
+    <br>
 {% if selected_client.is_active %}<input type="submit" class="btn btn-danger btn-sm" name="make_client_inactive" value="De-Activate Client" />
 {% else %}<h2>THIS CLIENT IS NO LONGER ACTIVE!</h2><br><input type="submit" class="btn btn-primary btn-sm" name="make_client_active" value="Make this Client Active Again" />
 {% endif %}
 <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#combinepeople-modal" >Combine People</button>
 <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#combinecompanies-modal" >Combine Companies</button>
 <br>
+</form>
+<form name="client_info_form" id="client_info_form" action="{% url 'client_info' 'ALL' %}" method="post">
     Company Name: <input type="text" name="company_name" value = "{{selected_client.company}}" size="50" onchange="search_now()" /><br>
     Email to Send Bids: <input type="email" name="company_email" value = "{{selected_client.bid_email}}" size="50"  onchange="search_now()" /><br>
     Main Phone: <input type="phone" name="company_phone" value = "{{selected_client.phone}}" size="50" onchange="search_now()" /><br>
