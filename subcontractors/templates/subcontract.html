@@ -724,7 +724,7 @@ function add_note2(){
 					{% if invoiced_already %}
 					<td>{{x.SOV_rate}}</td>
 					{% else %}
-					<td><input name="SOV_rate" id="SOV_rate" type= "number" value={{x.SOV_rate}} size="10" required /></td>
+					<td><input name="SOV_rate" id="SOV_rate" type= "number" step="0.01" value={{x.SOV_rate}} size="10" required /></td>
 					{% endif %}
 					<td>{{x.percentage}}%</td>
                 <td>{{x.percentage2}}%</td>
