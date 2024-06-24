@@ -94,7 +94,10 @@ def portal(request, sub_id, contract_id):
             quantitybilled = float(x.quantity_billed())
             remainingcost = totalcost - totalbilled
             remainingqnty = totalordered - quantitybilled
-            percentage = (totalbilled / totalcost) * 100
+            if totalcost==0:
+                percentage=0
+            else:
+                percentage = (totalbilled / totalcost) * 100
             totalordered = f"{int(x.SOV_total_ordered):,d}"
             items.append({'is_approved': x.is_approved, 'percentage': str(round(percentage, 2)),
                           'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
