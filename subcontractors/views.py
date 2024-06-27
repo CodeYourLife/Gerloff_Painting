@@ -693,16 +693,25 @@ def subcontract_invoices(request, subcontract_id, item_id):
                 if x.SOV_is_lump_sum:
                     special = (float(SubcontractorInvoiceItem.objects.get(invoice=selected_invoice,
                                                                           sov_item=x).quantity) / totalcost) * 100
-                    percentage = ((float(SubcontractorInvoiceItem.objects.get(invoice=selected_invoice,
+                    if totalcost == 0:
+                        percentage = 0
+                    else:
+                        percentage = ((float(SubcontractorInvoiceItem.objects.get(invoice=selected_invoice,
                                                                               sov_item=x).quantity) + totalbilled) / totalcost) * 100
                 else:
                     special = int(SubcontractorInvoiceItem.objects.get(invoice=selected_invoice,
                                                                        sov_item=x).quantity) * x.SOV_rate
-                    percentage = ((float(SubcontractorInvoiceItem.objects.get(invoice=selected_invoice,
+                    if totalcost == 0:
+                        percentage = 0
+                    else:
+                        percentage = ((float(SubcontractorInvoiceItem.objects.get(invoice=selected_invoice,
                                                                               sov_item=x).quantity) + quantitybilled) / totalordered) * 100
             else:
                 special = 0
-                percentage = (totalbilled / totalcost) * 100
+                if totalcost == 0:
+                    percentage = 0
+                else:
+                    percentage = (totalbilled / totalcost) * 100
             items.append(
                 {'percentage': str(round(percentage, 2)), 'special': str(round(special, 2)), 'invoiced': invoiced,
                  'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
