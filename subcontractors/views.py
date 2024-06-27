@@ -698,6 +698,7 @@ def subcontract_invoices(request, subcontract_id, item_id):
                         percentage = ((float(SubcontractorInvoiceItem.objects.get(invoice=selected_invoice, sov_item=x).quantity) + totalbilled) / totalcost) * 100
                 else:
                     special = int(SubcontractorInvoiceItem.objects.get(invoice=selected_invoice,sov_item=x).quantity) * x.SOV_rate
+
                     if totalcost == 0:
                         percentage = 0
                     else:
