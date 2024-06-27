@@ -152,7 +152,6 @@ def update_job_info(request, jobnumber):
         if 'is_closed' in request.POST:
             if selectedjob.is_closed == False:
                 if Inventory.objects.filter(job_number=selectedjob, is_closed=False).exists():
-
                     message = "Job: " + selectedjob.job_name + " is closed. The following equipment is assigned to the job and must be returned immediately!\n "
                     recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com",
                                   "warehouse@gerloffpainting.com", "joe@gerloffpainting.com"]
@@ -340,37 +339,97 @@ def audit_MC_open_jobs(request):
             open(fn2, 'wb').write(fileitem.file.read())
             wb_obj = openpyxl.load_workbook(filename=request.FILES['upload_file'].file)
             sheet_obj = wb_obj["Booked"]
-            client_name = sheet_obj.cell(row=16, column=2).value
+            # client_name = sheet_obj.cell(row=16, column=2).value
             needs_to_be_opened = []
             needs_to_be_closed = []
+            needs_to_be_labor_done = []
             not_found = []
             open_jobs = []
+            labor_done = []
+            needs_to_not_be_labor_done = []
+            closed_but_equipment = []
+            closed_but_subs = []
+            error_message = ""
             a = 3
             while sheet_obj.cell(row=a, column=1).value != None:
-                job_number = sheet_obj.cell(row=a, column=1).value
-                open_jobs.append(job_number)
-                if Jobs.objects.filter(job_number=job_number).exists():
-                    job = Jobs.objects.get(job_number=job_number)
-                    if job.is_closed == True:
-                        job.is_closed = False
-                        job.save()
-                        needs_to_be_opened.append({'job_number': job_number, 'job_name': job.job_name})
-                else:
-                    not_found.append(job_number)
+                mc_labor_done = 0
+                if sheet_obj.cell(row=a, column=18).value == "Open":  #if open in MC
+                    job_number = sheet_obj.cell(row=a, column=1).value
+                    open_jobs.append(job_number)
+                    if sheet_obj.cell(row=a, column=25).value != None:  #job has been marked labor done in MC
+                        mc_labor_done = 1
+                    if Jobs.objects.filter(job_number=job_number).exists():  #job exists in Trinity
+                        job = Jobs.objects.get(job_number=job_number)
+                        if job.is_closed == True:
+                            job.is_closed = False
+                            job.save()
+                            needs_to_be_opened.append({'job_number': job_number, 'job_name': job.job_name})
+                        if mc_labor_done == 1:
+                            labor_done.append({'job_number': job_number, 'job_name': job.job_name})
+                            if job.is_labor_done is False:
+                                # job.is_labor_done = True
+                                # job.labor_done_Date = date.today()
+                                # job.save()
+                                needs_to_be_labor_done.append({'job_number': job_number, 'job_name': job.job_name})
+                        else:
+                            if job.is_labor_done is True:
+                                needs_to_not_be_labor_done.append({'job_number': job_number, 'job_name': job.job_name})
+                    else:
+                        not_found.append(job_number)
                 a = a + 1
-                if a > 1000:
+                if a > 200000:
                     break
-            for x in Jobs.objects.filter(is_closed=False):
+            for x in Jobs.objects.filter(is_closed=False): #scroll through open jobs in Trinity
                 if x.job_number not in open_jobs:
-                    needs_to_be_closed.append({'job_number': x.job_number, 'job_name': x.job_name})
-                    x.is_closed = True
-                    x.save()
+                    if Inventory.objects.filter(job_number=x, is_closed=False).exists():
+                        closed_but_equipment.append({'job_number': x.job_number, 'job_name': x.job_name})
+                        message = "Job: " + x.job_name + " is closed. The following equipment is assigned to the job and must be returned immediately!\n "
+                        recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com",
+                                      "warehouse@gerloffpainting.com", "joe@gerloffpainting.com"]
+                        if x.superintendent.email is None:
+                            message = message + "\n No email address for " + str(x.superintendent)
+                        else:
+                            recipients.append(x.superintendent.email)
+                        for y in Inventory.objects.filter(job_number=x, is_closed=False):
+                            if y.number:
+                                message = message + "\n -" + y.item + " GP Number #" + y.number
+                            else:
+                                message = message + "\n -" + y.item + " -No GP Number! "
+                        try:
+                            Email.sendEmail("Closed Job - " + x.job_name, message,
+                                            recipients, False)
+                        except:
+                            error_message += message
+                    if Subcontracts.objects.filter(is_closed=False, job_number=x).exists():
+                        closed_but_subs.append({'job_number': x.job_number, 'job_name': x.job_name})
+                        message = "Job: " + x.job_name + " cannot be closed. The following subcontracts are still open!\n "
+                        recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com",
+                                      "joe@gerloffpainting.com"]
+                        for y in Subcontracts.objects.filter(is_closed=False, job_number=x):
+                            if y.po_number:
+                                message += "\n -" + y.subcontractor.company + " - PO# " + y.po_number + "! "
+                            else:
+                                message += "\n -" + y.subcontractor.company + " - PO# N/A!"
+                        try:
+                            Email.sendEmail("Closed Job Error- " + x.job_name, message,
+                                            recipients, False)
+                        except:
+                            error_message += message
 
+                    else:
+                        needs_to_be_closed.append({'job_number': x.job_number, 'job_name': x.job_name})
+                        x.is_closed = True
+                        x.save()
+    send_data['closed_but_subs']= closed_but_subs
+    send_data['closed_but_equipment'] =closed_but_equipment
+    send_data['need_to_be_labor_done'] =needs_to_be_labor_done
+    send_data['needs_to_not_be_labor_done'] = needs_to_not_be_labor_done
     send_data['needs_to_be_opened'] = needs_to_be_opened
     send_data['needs_to_be_closed'] = needs_to_be_closed
     send_data['not_found'] = not_found
     send_data['employees'] = Employees.objects.filter(user__isnull=True, active=True)
     send_data['subs'] = Subcontractors.objects.filter(is_inactive=False)
+    send_data['error_message'] = "These Emails Failed to send. Please let everyone know. " + error_message
     return render(request, 'multi_use_page.html', send_data)
 
 

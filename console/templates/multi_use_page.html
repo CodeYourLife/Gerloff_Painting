@@ -26,31 +26,70 @@
 </head>
 <body>
 
-				{% if needs_to_be_opened %}
-				<b>Jobs Opened</b><br>
-				{% for x in needs_to_be_opened %}
-				{{x.job_number}} {{x.job_name}}<br>
-				{% endfor %}
-				{% else %}
-				<b>No Jobs Were Opened</b><br>
-				{% endif %}
-				{% if needs_to_be_closed %}
-				<b>Jobs Closed</b><br>
-				{% for x in needs_to_be_closed %}
-				{{x.job_number}} {{x.job_name}}<br>
-				{% endfor %}
-				{% else %}
-				<b>No Jobs Closed</b><br>
-				{% endif %}
-				{% if not_found %}
-				<b>Not found in Trinity</b><br>
-				{% for x in not_found %}
-				{{x}}<br>
-				{% endfor %}
-				{% else %}
-				<b>No Jobs Couldn't be Found in Trinity</b><br>
-				{% endif %}
+{% if needs_to_be_opened %}
+	<b>Jobs Opened</b><br>
+	{% for x in needs_to_be_opened %}
+	{{x.job_number}} {{x.job_name}}<br>
+	{% endfor %}
+{% else %}
+	<b>No Jobs Were Opened</b><br>
+{% endif %}
+{% if needs_to_be_closed %}
+	<b>Jobs Closed</b><br>
+	{% for x in needs_to_be_closed %}
+		{{x.job_number}} {{x.job_name}}<br>
+	{% endfor %}
+{% else %}
+	<b>No Jobs Closed</b><br>
+{% endif %}
+{% if not_found %}
+	<b>Not found in Trinity</b><br>
+	{% for x in not_found %}
+		{{x}}<br>
+	{% endfor %}
+{% else %}
+	<b>No Jobs Couldn't be Found in Trinity</b><br>
+{% endif %}
 
+{% if closed_but_subs %}
+	<b>Jobs Need to be Closed in Trinity, But Open Subcontractors!</b><br>
+	{% for x in closed_but_subs %}
+		{{x.job_number}} {{x.job_name}}<br>
+	{% endfor %}
+{% else %}
+	<b>No Jobs Need to be Closed in Trinity that have open Subcontractors</b><br>
+{% endif %}
+
+{% if closed_but_equipment %}
+	<b>These Jobs were closed in Trinity, but had equipment assigned! </b><br>
+	{% for x in closed_but_equipment %}
+		{{x.job_number}} {{x.job_name}}<br>
+	{% endfor %}
+{% else %}
+	<b>No Jobs Were Closed that had equipment assigned</b><br>
+{% endif %}
+
+{% if need_to_be_labor_done %}
+	<b>These Jobs are marked labor complete in MC, but not in Trinity! </b><br>
+	{% for x in need_to_be_labor_done %}
+		{{x.job_number}} {{x.job_name}}<br>
+	{% endfor %}
+{% else %}
+	<b>No Jobs Were marked labor complete in MC, but not in trinity</b><br>
+{% endif %}
+
+{% if needs_to_not_be_labor_done %}
+	<b>These Jobs are marked labor complete in Trinity, but not in MC! </b><br>
+	{% for x in needs_to_not_be_labor_done %}
+		{{x.job_number}} {{x.job_name}}<br>
+	{% endfor %}
+{% else %}
+	<b>No Jobs Were marked labor complete in Trinity, but not in MC</b><br>
+{% endif %}
+
+{% if error_message %}
+<b>{{error_message}}</b>
+{% endif %}
 </body>
 </html>
 
