@@ -133,7 +133,20 @@ else{
 }
 total_to_date = current_total + previous
 percentage_calc = parseFloat(total_to_date/totalcost *100).toFixed(1)
-if (previous + current_total > totalcost){
+if (totalcost < 0){
+	if (total_to_date > 0){
+		alert("You can't bill for a positive amount on a negative line item")
+		event.currentTarget.value = ""
+		percentage_cell.innerHTML = ""
+	}
+	if (total_to_date < totalcost){
+		alert("You can't deduct more than the contract")
+		event.currentTarget.value = ""
+		percentage_cell.innerHTML = ""
+	}
+}
+
+else if (previous + current_total > totalcost){
 alert("You can't bill for more than the contract")
 event.currentTarget.value = ""
 percentage_cell.innerHTML = ""
