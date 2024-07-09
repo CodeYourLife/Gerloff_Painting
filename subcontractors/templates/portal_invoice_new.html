@@ -274,7 +274,7 @@ document.getElementById("Form3").style.display = "none"
 					<td style="white-space: nowrap;"><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>
 					<td style="white-space: nowrap;"><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
 					{% if item.is_approved %}
-					<td style="white-space: nowrap;"><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost}} size="5" step="1" onchange="update_percentage(event)" />$</td>
+					<td style="white-space: nowrap;"><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost}} size="5" step="0.01" onchange="update_percentage(event)" />$</td>
 
 					<td><div id="percentage{{item.id}}" >{% widthratio item.total_billed item.total_cost 100 %}%</div></td>
 					{% else %}
@@ -288,7 +288,7 @@ document.getElementById("Form3").style.display = "none"
 					<td style="white-space: nowrap;"><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" /><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.quantity_billed}}" />{{item.quantity_billed|floatformat}} {{item.SOV_unit}}</td>
 <!--					<td><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>-->
 					{% if item.is_approved %}
-					<td style="white-space: nowrap;"><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty|floatformat}} size="5" step="1" onchange="update_percentage(event)" />{{item.SOV_unit}}</td>
+					<td style="white-space: nowrap;"><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty|floatformat}} size="5" step="0.01" onchange="update_percentage(event)" />{{item.SOV_unit}}</td>
 <!--					<td><input type="hidden" id="current_total{{item.id}}" value="" /></td>-->
 					<td><div id="percentage{{item.id}}" >{% widthratio item.quantity_billed item.SOV_total_ordered 100 %}%</div></td>
 					{% else %}
