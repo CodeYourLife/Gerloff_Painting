@@ -673,6 +673,7 @@ def subcontract_invoices(request, subcontract_id, item_id):
         send_data['other_retainage'] = other_retainage
         send_data['total_retainage'] = other_retainage + selected_invoice.retainage
         send_data['total_contract'] = subcontract.total_contract_amount()
+        send_data['invoice_total_after_retainage'] = selected_invoice.final_amount - selected_invoice.retainage
         if InvoiceApprovals.objects.filter(employee=Employees.objects.get(user=request.user), invoice=selected_invoice,
                                            is_approved=False).exists():
             send_data['me_approve'] = True
