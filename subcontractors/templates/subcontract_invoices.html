@@ -110,6 +110,9 @@ var global_total_contract = 0
 var showing_retainage = 0
 
 $(document).ready(function () {
+<!-- if ("{{me_approve}}"){document.getElementById("show_this").style.display = "none";}-->
+<!--  if ("{{other_approve}}"){document.getElementById("show_this").style.display = "none";}-->
+document.getElementById("approved_with_changes").style.display = "none";
  if ("{{error_message}}"){alert("{{error_message}}")}
 
  document.getElementById("show_this").style.display = "none";
@@ -127,6 +130,11 @@ $(document).ready(function () {
 
 function add_retainage(){
 	showing_retainage = 1
+	document.getElementById("approved").style.display = "none";
+	document.getElementById("reject").style.display = "none";
+	document.getElementById("approved_with_changes").style.display = "block";
+	document.getElementById("change_retainage_button").style.display = "none";
+	document.getElementById("notes_button").style.display = "none";
 	var table = document.getElementById("detail_table");
 	var row = table.insertRow(1);
 	var cell1 = row.insertCell(0);
@@ -195,6 +203,10 @@ return false;
 
 
 function update_percentage(event){
+document.getElementById("approved").style.display = "none";
+document.getElementById("reject").style.display = "none";
+document.getElementById("approved_with_changes").style.display = "block";
+document.getElementById("notes_button").style.display = "none";
 percentage_cell = document.getElementById("percentage"+event.currentTarget.id)
 if(event.currentTarget.value){
 		current_total=parseFloat(event.currentTarget.value)
@@ -289,24 +301,36 @@ function calculate_invoice_total(){
 		changes_form.this_retainage.value = this_retainage
 		total_retainage = Number("{{other_retainage}}") + Number(this_retainage)
 	}
-	if (this_retainage > invoice_total){
-		alert("Total retainage cannot be more than the invoice total")
-		this_retainage = retainage_percentage * invoice_total
-		changes_form.retainage_adjust.value = invoice_total - this_retainage
-		this_retainage += Number(changes_form.retainage_adjust.value)
-		changes_form.this_retainage.value = this_retainage
-		total_retainage = Number("{{other_retainage}}") + Number(this_retainage)
-	}
+<!--	if (this_retainage > invoice_total){-->
+<!--		if (invoice_total > 0){-->
+<!--		alert("Total retainage cannot be more than the invoice total")-->
+<!--		this_retainage = retainage_percentage * invoice_total-->
+<!--		if (showing_retainage == 1){-->
+<!--			changes_form.retainage_adjust.value = invoice_total - this_retainage-->
+<!--			this_retainage += Number(changes_form.retainage_adjust.value)-->
+<!--			changes_form.this_retainage.value = this_retainage-->
+<!--		}-->
+<!--		else{-->
+<!--			this_retainage += Number(invoice_total - this_retainage)-->
+<!--		}-->
+<!--		total_retainage = Number("{{other_retainage}}") + Number(this_retainage)-->
+<!--		}-->
+<!--	}-->
 	document.getElementById("retainage_total").innerHTML="<b>Retainage - All Invoices Including This One:</b> $" + total_retainage
 	document.getElementById("total_to_date").innerHTML="<b>Total Billed To Date:</b> $" + total_to_date
 	document.getElementById("previously_billed").innerHTML="<b>Previously Billed:</b> $" + previously_billed
 	document.getElementById("total_contract").innerHTML="<b>Total Contract:</b> $" + total_contract
 	document.getElementById("retainage_this").innerHTML="<b>Retainage - This Invoice:</b> $" + this_retainage
 	document.getElementById("retainage_this2").innerHTML= this_retainage
+	invoice_total_after_retainage = invoice_total - this_retainage
+	document.getElementById("invoice_total_after_retainage").innerHTML= "<b>Total Invoice After Retainage:</b> $" + invoice_total_after_retainage
 	global_to_date = total_to_date
 	global_total_contract = total_contract
 }
 
+function picked_person(){
+other_approval_form.submit()
+}
 
 function check_form(){
 	if (global_to_date > global_total_contract){
@@ -367,7 +391,7 @@ function check_form(){
 {% elif other_approvers %}
 	<form id="other_approval_form" name="other_approval_form" action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post" onSubmit ="return check_other_approver()" >
 		{% csrf_token %}
-		<select id="other_approver" name="other_approver" >
+		<select id="other_approver" name="other_approver" onchange='picked_person()'>
 		<option value="please_select">Please Select</option>
 		{% for x in other_approvers %}
 		<option value={{x.id}}>{{x.employee}}</option>
@@ -376,10 +400,10 @@ function check_form(){
 		<input type="submit" class="btn btn-danger btn-sm" value="Approve for this person" />
 	</form>
 {% endif %}
-{% if no_approvals_yet and edit_now == None %}
+{% if no_approvals_yet and edit_now == None and me_approve == None and other_approve == None %}
 	<form action="{% url 'subcontract_invoices' subcontract.id selected_invoice.id %}" method="post" >
 		{% csrf_token %}
-		<input type="submit" class="btn btn-danger btn-sm" name="edit_invoice" value="Edit Invoice" />
+		<input type="submit" class="btn btn-danger btn-sm" name="edit_invoice" id="edit_invoice" value="Edit Invoice" />
 	</form>
 {% endif %}
 
@@ -411,7 +435,7 @@ function check_form(){
 		<input type="hidden" id="invoice_notes" name="invoice_notes" />
 <!--			<textarea id="invoice_notes" name="invoice_notes" rows="1" cols="100" /></textarea>-->
 
-<button type="button" onclick="notes_prompt()" class="btn btn-warning btn-sm" >Add Note</button>
+<button type="button" onclick="notes_prompt()" id="notes_button" class="btn btn-warning btn-sm" >Add Note</button>
 <!--		<input type="submit" name="form99" class="btn btn-warning btn-sm" value="Add Note" />-->
 	</form>
 
@@ -480,7 +504,7 @@ function check_form(){
 		{% if other_approve %}
 		  <input type="hidden" id="other_approver_id" name="is_other_approver_id" value="{{other_approve.id}}" />
 		{% endif %}
-		<input type="submit" name="approved" class="btn btn-success btn-sm" value="APPROVE INVOICE # {{selected_invoice.pay_app_number}} NOW"  />
+		<input type="submit" name="approved" id="approved" class="btn btn-success btn-sm" value="APPROVE INVOICE # {{selected_invoice.pay_app_number}} NOW"  />
 <!--		<button type="button" name="reject" class="btn btn-danger btn-sm" onclick="add_reject_note()" >REJECT </button>-->
 <!--		<input type="hidden" id="reject_notes" name="reject_notes" />-->
 	</form>
@@ -490,7 +514,7 @@ function check_form(){
 		<input type="hidden" id="other_approver_id" name="is_other_approver_id" value="{{other_approve.id}}" />
 		{% endif %}
 <!--		<input type="submit" name="approved" class="btn btn-success btn-sm" value="APPROVE INVOICE # {{selected_invoice.pay_app_number}} NOW" />-->
-		<button type="button" name="reject" class="btn btn-danger btn-sm" onclick="add_reject_note()" >REJECT </button>
+		<button type="button" name="reject" id="reject" class="btn btn-danger btn-sm" onclick="add_reject_note()" >REJECT </button>
 		<input type="hidden" id="reject_notes" name="reject_notes" />
 	</form>
 
@@ -617,8 +641,10 @@ function check_form(){
 	 <br>
 	 <div id="retainage_total"><b>Retainage - All Invoices Including This One:</b> ${{total_retainage|floatformat:2|intcomma }}</div>
 	 <br>
+	 	 <div id="invoice_total_after_retainage"><b>Total Invoice After Retainage:</b> ${{invoice_total_after_retainage|floatformat:2|intcomma }}</div>
+	 <br>
 	 {% if me_approve or other_approve %}
-	 <input type="submit" name="approved_with_changes" class="btn btn-primary btn-sm" onSubmit="return made_changes_note()" value = "APPROVED WITH THE ABOVE CHANGES" />
+	 <input type="submit" name="approved_with_changes" id="approved_with_changes" class="btn btn-primary btn-sm" onSubmit="return made_changes_note()" value = "APPROVED WITH THE ABOVE CHANGES" />
 	 {% else %}
 	 <input type="submit" name="form7" class="btn btn-primary btn-sm" onSubmit="return made_changes_note()" value = "MAKE CHANGES NOW" />
 	 {% endif %}
@@ -667,6 +693,8 @@ function check_form(){
 	 <div id="retainage_this"><b>Retainage - This Invoice:</b> ${{selected_invoice.retainage|floatformat:2|intcomma }}</div>
 	 <br>
 	 <div id="retainage_total"><b>Retainage - All Invoices Including This One:</b> ${{total_retainage|floatformat:2|intcomma }}</div>
+	 <br>
+	 <div id="invoice_total_after_retainage"><b>Total Invoice After Retainage:</b> ${{invoice_total_after_retainage|floatformat:2|intcomma }}</div>
 	 <br>
 {% endif %}
 {% endif %}
