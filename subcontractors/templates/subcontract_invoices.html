@@ -110,6 +110,7 @@ var global_total_contract = 0
 var showing_retainage = 0
 
 $(document).ready(function () {
+
 	if ("{{me_approve}}" || "{{other_approve}}" || "{{edit_now}}"){
 		<!-- 	document.getElementById("show_this").style.display = "none";}-->
 		document.getElementById("approved_with_changes").style.display = "none";
@@ -117,6 +118,7 @@ $(document).ready(function () {
 	<!--  if ("{{other_approve}}"){document.getElementById("show_this").style.display = "none";}-->
 	if ("{{error_message}}"){alert("{{error_message}}")}
  	document.getElementById("show_this").style.display = "none";
+
     var table = $('#sub_table').DataTable({paging:false,searching:false,info:false, ordering:false});
 })
 $(document).ready(function () {
@@ -203,10 +205,12 @@ return false;
 
 
 function update_percentage(event){
+
 if ("{{me_approve}}" || "{{other_approve}}"){
 	document.getElementById("approved").style.display = "none";
 	document.getElementById("reject").style.display = "none";
 }
+
 document.getElementById("approved_with_changes").style.display = "block";
 document.getElementById("notes_button").style.display = "none";
 percentage_cell = document.getElementById("percentage"+event.currentTarget.id)
