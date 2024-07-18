@@ -132,8 +132,10 @@ $(document).ready(function () {
 
 function add_retainage(){
 	showing_retainage = 1
-	document.getElementById("approved").style.display = "none";
-	document.getElementById("reject").style.display = "none";
+	if ("{{me_approve}}" || "{{other_approve}}"){
+		document.getElementById("approved").style.display = "none";
+		document.getElementById("reject").style.display = "none";
+	}
 	document.getElementById("approved_with_changes").style.display = "block";
 	document.getElementById("change_retainage_button").style.display = "none";
 	document.getElementById("notes_button").style.display = "none";
