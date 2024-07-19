@@ -124,8 +124,11 @@ def rental_page(request, id, reverse):
     vendor = rental.company
     notes = RentalNotes.objects.filter(rental=rental)
     path = os.path.join(settings.MEDIA_ROOT, "rentals", str(rental.id))
-    foldercontents = os.listdir(path)
-
+    try:
+        foldercontents = os.listdir(path)
+    except:
+        createfolder("rentals/" + str(rental.id))
+        foldercontents = os.listdir(path)
     if request.method == 'POST':
         if 'off_rent_note' in request.POST:
             rental.requested_off_rent = True
