@@ -198,7 +198,7 @@ $(document).ready(function () {
                 {% csrf_token %}
                    <input type="hidden" name="select_subcontractor" value={{selected_sub}}>
                    <label for="final_amount" >Final Amount</label>
-                   <input type="number" value={{final_amount}} id="final_amount" name="final_amount" required >
+                   <input type="number" value={{final_amount}} id="final_amount" name="final_amount" step="0.01" required >
                    <br>
                    <label for="pay_date">Pay Date</label>
                    <input type="date" id="pay_date" name="pay_date" required>
