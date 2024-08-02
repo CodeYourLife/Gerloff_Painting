@@ -157,6 +157,7 @@ document.getElementById('filter_form').submit();
             <th scope="col">Category</th>
             <th scope="col">Item</th>
             <th scope="col">Labeled?</th>
+            <th scope="col">Note</th>
             <th scope="col">Location</th>
         </tr>
         </thead>
@@ -174,6 +175,11 @@ document.getElementById('filter_form').submit();
                 {% else %}
                     <td>No</td>
                 {% endif %}
+            {% endif %}
+            {% if inventory.notes is None %}
+            <td></td>
+            {% else %}
+            <td>{{inventory.notes}}</td>
             {% endif %}
             {% if inventory.job_number == None %}
                 {% if inventory.service_vendor == None %}

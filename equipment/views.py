@@ -608,6 +608,9 @@ def equipment_page(request, id):
             folder_count += 1
     jobs = Jobs.objects.filter(is_closed=False).order_by('job_name')
     if request.method == 'POST':
+        if 'current_status' in request.POST:
+            inventory.notes = request.POST['current_status']
+            inventory.save()
         if 'selected_file' in request.POST:
             print(request.POST['selected_file'])
             return MediaUtilities().getDirectoryContents(id, request.POST['selected_file'], 'equipment')
@@ -740,6 +743,8 @@ def equipment_page(request, id):
 @login_required(login_url='/accounts/login')
 def equipment_home(request):
     send_data={}
+    for x in Inventory.objects.all():
+        if x.notes == "": x.notes = None
     if request.method == 'GET':
         if 'available_filter' in request.GET: send_data['available_filter'] = True
         if 'checked_out_filter' in request.GET: send_data['checked_out_filter'] = True

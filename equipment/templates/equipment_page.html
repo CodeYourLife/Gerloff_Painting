@@ -250,11 +250,24 @@ function myFunction(type){
                 <div class="container">
                     <div class="row">
                         <div class="col-12">
-
+                            <form name=add_status_form action="{% url 'equipment_page' inventories.id %}" method="post">
+                                {% csrf_token %}
+                                {% if inventories.notes is None %}
+                                <input type="text" size = "110" id="current_status" name="current_status" placeholder ="Example - we are waiting for new motor">
+                                {% else %}
+                                <input type="text" size = "110" id="current_status" name="current_status" value ="{{inventories.notes}}">
+                                {% endif %}
+                                <input type="submit" class="btn btn-primary" value="Update Status">
+                            </form>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="row">
+                        <div class="col-12">
                             <form name=add_note_form action="{% url 'equipment_page' inventories.id %}" method="post">
                                 {% csrf_token %}
                                 <input type="hidden" id="equipment_note" name="equipment_note">
-                                <button type="button" class="btn btn-primary" onclick = "prompt_note()">Add Note</button>
+                                <button type="button" class="btn btn-primary" onclick = "prompt_note()">Add Note To Below:</button>
                             </form>
                         </div>
                     </div>
