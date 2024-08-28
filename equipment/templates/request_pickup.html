@@ -149,7 +149,9 @@ function check_paint_boxes2(){
 <!--		<br>-->
 <!--			<b>Save Leftover Paint?  </b><input type="checkbox" id="save_paint" name="save_paint" {% if save_paint %} checked {% endif %} onchange="check_paint_boxes()">-->
 <!--<br>-->
-		 {% if selected_request.all_items == False %}
+
+		{% if selected_request.all_items == False %}
+
 			<input type="submit" class="btn btn-danger btn-sm" name = "change_to_all_items" value="Pickup All Items From Job Instead" />
 		 {% else %}
 			 <input type="submit" class="btn btn-danger btn-sm" name = "change_to_certain_items" value="Pickup Only Certain Items Instead" />
