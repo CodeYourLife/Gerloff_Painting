@@ -34,7 +34,6 @@ from console.misc import Email
 @login_required(login_url='/accounts/login')
 def seperate_test(request):
     fileitem = request.FILES['filename']
-    print(fileitem)
     fn = os.path.basename(fileitem.name)
     fn2 = os.path.join("C:/Trinity/", fn)
     open(fn2, 'wb').write(fileitem.file.read())
@@ -57,6 +56,64 @@ def client_info_job(request, jobnumber):
 
 
             clientemployees.append({'person':'test'})
+
+
+@login_required(login_url='/accounts/login')
+def client_job_info(request, id):
+    send_data = {}
+    selected_job = Jobs.objects.get(job_number=id)
+    selected_client = selected_job.client
+    send_data['selected_client'] = selected_client
+    send_data['selected_job'] = selected_job
+    send_data['error_message'] = ""
+    if request.method == "POST":
+        if 'go_back' in request.POST:
+            return redirect('client_info', id=selected_client.id)
+        selected_employee = ClientEmployees.objects.get(person_pk=request.POST['person_pk'])
+        person_pk = request.POST['person_pk']
+        if 'pm' + person_pk in request.POST:
+            if selected_job.client_Pm != selected_employee:
+                if selected_employee.email:
+                    selected_job.client_Pm = selected_employee
+                    selected_job.save()
+                else:
+                    send_data['error_message'] = "Employee must have an email address in order to be PM"
+        if 'super' + person_pk in request.POST:
+            selected_job.client_Super = selected_employee
+            selected_job.save()
+        if 'changeorder' + person_pk in request.POST:
+            if not ClientJobRoles.objects.filter(job=selected_job, employee=selected_employee,
+                                             role="Change Orders").exists():
+                ClientJobRoles.objects.create(job=selected_job, employee=selected_employee,
+                                             role="Change Orders")
+        else:
+            # if ClientJobRoles.objects.filter(job=selected_job, employee=selected_employee,
+            #                                  role="Change Orders").exists():
+            ClientJobRoles.objects.filter(job=selected_job, employee=selected_employee,
+                                              role="Change Orders").delete()
+        if 'ewt' + person_pk in request.POST:
+            if not ClientJobRoles.objects.filter(job=selected_job, employee=selected_employee,
+                                             role="Extra Work Tickets").exists():
+                ClientJobRoles.objects.create(job=selected_job, employee=selected_employee,
+                                             role="Extra Work Tickets")
+        else:
+            ClientJobRoles.objects.filter(job=selected_job, employee=selected_employee,
+                                              role="Extra Work Tickets").delete()
+    people=[]
+    for x in ClientEmployees.objects.filter(id=selected_client):
+        changeorder='No'
+        ewt='No'
+        super ='No'
+        pm='No'
+        if selected_job.client_Super == x: super = 'Yes'
+        if selected_job.client_Pm == x: pm = 'Yes'
+        if ClientJobRoles.objects.filter(job=selected_job, employee=x,role="Change Orders").exists(): changeorder='Yes'
+        if ClientJobRoles.objects.filter(job=selected_job, employee=x,
+                                         role="Extra Work Tickets").exists(): ewt = 'Yes'
+        people.append({'person':x,'changeorder': changeorder, 'ewt':ewt,'super':super,'pm':pm})
+    send_data['people'] = people
+
+    return render(request, 'client_job_info.html', send_data)
 @login_required(login_url='/accounts/login')
 def client_info(request, id):
     send_data = {}
@@ -67,6 +124,7 @@ def client_info(request, id):
         send_data['client_employees'] = ClientEmployees.objects.filter(id=selected_client).order_by('name')
         send_data['jobs']=Jobs.objects.filter(client=selected_client)
     if request.method == "POST":
+        print(request.POST)
         if 'combine_companies_now' in request.POST:
             company1 = Clients.objects.get(id=request.POST['select_client1'])
             company2 = Clients.objects.get(id=request.POST['select_client2'])
@@ -78,66 +136,70 @@ def client_info(request, id):
                 x.save()
             company1.delete()
             return redirect('client_info',id=company2.id)
-
         if 'search_client' in request.POST:
             send_data['clients'] = Clients.objects.filter(company__icontains=request.POST['search_client'], is_active=True)
             send_data['search_client_word'] = request.POST['search_client']
-        if request.POST['select_client'] != 'please_select':
-            selected_client = Clients.objects.get(id=request.POST['select_client'])
-            send_data['selected_client'] = selected_client
-            print("PUPMKING HERE")
-            print(selected_client)
-            if 'make_client_inactive' in request.POST:
-                selected_client.is_active=False
-                selected_client.save()
-            if 'make_client_active' in request.POST:
-                selected_client.is_active=True
-                selected_client.save()
-            if 'combine_people_now' in request.POST:
-                person1 = ClientEmployees.objects.get(person_pk=request.POST['select_person1'])
-                person2 = ClientEmployees.objects.get(person_pk=request.POST['select_person2'])
-                for x in Jobs.objects.filter(client_Pm=person1):
-                    x.client_Pm = person2
-                    x.save()
-                for x in Jobs.objects.filter(client_Submittal_Contact=person1):
-                    x.client_Submittal_Contact = person2
-                    x.save()
-                for x in Jobs.objects.filter(client_Super=person1):
-                    x.client_Super = person2
-                    x.save()
-                for x in ClientJobRoles.objects.filter(employee=person1):
-                    x.employee = person2
-                    x.save()
-                for x in TempRecipients.objects.filter(person=person1):
-                    x.person = person2
-                    x.save()
-                person1.delete()
-            else:
-                for x in request.POST:
-                    if x[0:4]=='name':
-                        current_person_pk = x[4:len(x)]
-                        current_person = ClientEmployees.objects.get(person_pk=current_person_pk)
-                        current_person.name = request.POST[x]
-                        current_person.email = request.POST['email' + current_person_pk]
-                        current_person.phone = request.POST['phone' + current_person_pk]
-                        if 'closed' + current_person_pk in request.POST:
-                            current_person.is_active=False
-                        else:
-                            current_person.is_active = True
-                        current_person.save()
-                    if x[0:7] == 'company':
-                        selected_client.company = request.POST['company_name']
-                        selected_client.bid_email= request.POST['company_email']
-                        selected_client.phone= request.POST['company_phone']
-                        selected_client.address= request.POST['company_address']
-                        selected_client.city= request.POST['company_city']
-                        selected_client.state= request.POST['company_state']
-                        selected_client.save()
-
+        if 'search_job' in request.POST:
+            send_data['jobs'] = Jobs.objects.filter(client=selected_client, job_name__icontains=request.POST['search_job'])
+            send_data['search_job_word'] = request.POST['search_job']
+        if 'select_client' in request.POST:
+            if request.POST['select_client'] != 'please_select':
+                return redirect('client_info', id=request.POST['select_client'])
+                # selected_client = Clients.objects.get(id=request.POST['select_client'])
+                # send_data['selected_client'] = selected_client
+        if 'select_job' in request.POST:
+            if request.POST['select_job'] != 'please_select':
+                return redirect('client_job_info', id=request.POST['select_job'])
+        if 'make_client_inactive' in request.POST:
+            selected_client.is_active=False
+            selected_client.save()
+        if 'make_client_active' in request.POST:
+            selected_client.is_active=True
+            selected_client.save()
+        if 'company_name' in request.POST:
+            selected_client.company = request.POST['company_name']
+            selected_client.bid_email = request.POST['company_email']
+            selected_client.phone = request.POST['company_phone']
+            selected_client.address = request.POST['company_address']
+            selected_client.city = request.POST['company_city']
+            selected_client.state = request.POST['company_state']
+            selected_client.save()
+        if 'combine_people_now' in request.POST:
+            person1 = ClientEmployees.objects.get(person_pk=request.POST['select_person1'])
+            person2 = ClientEmployees.objects.get(person_pk=request.POST['select_person2'])
+            for x in Jobs.objects.filter(client_Pm=person1):
+                x.client_Pm = person2
+                x.save()
+            for x in Jobs.objects.filter(client_Submittal_Contact=person1):
+                x.client_Submittal_Contact = person2
+                x.save()
+            for x in Jobs.objects.filter(client_Super=person1):
+                x.client_Super = person2
+                x.save()
+            for x in ClientJobRoles.objects.filter(employee=person1):
+                x.employee = person2
+                x.save()
+            for x in TempRecipients.objects.filter(person=person1):
+                x.person = person2
+                x.save()
+            person1.delete()
+        if 'people_form' in request.POST:
+            for x in request.POST:
+                if x[0:4]=='name':
+                    current_person_pk = x[4:len(x)]
+                    current_person = ClientEmployees.objects.get(person_pk=current_person_pk)
+                    current_person.name = request.POST[x]
+                    current_person.email = request.POST['email' + current_person_pk]
+                    current_person.phone = request.POST['phone' + current_person_pk]
+                    if 'closed' + current_person_pk in request.POST:
+                        current_person.is_active=False
+                    else:
+                        current_person.is_active = True
+                    current_person.save()
             if 'add_new_person' in request.POST:
                 ClientEmployees.objects.create(id=selected_client, name=request.POST['add_name'], phone=request.POST['add_phone'], email = request.POST['add_email'])
             send_data['client_employees'] = ClientEmployees.objects.filter(id=selected_client).order_by('name')
-    print(send_data)
+
     return render(request, 'client_info.html', send_data)
 
 
@@ -796,7 +858,7 @@ def import_csv2(request):
             else:
                 current_table.objects.create(id=row[a], description=row[b])
 
-    print("SUCCESS MOTHER")
+
     return render(request, 'index.html')
 
 
@@ -837,7 +899,7 @@ def reset_databases(request):
 def create_folders(request):
     for x in Inventory.objects.all():
         createfolder("equipment/" + str(x.id))
-    print("HI")
+
     return render(request, 'index.html')
 
 
@@ -858,8 +920,7 @@ def customize(request):
         elif x.user == "D'Angelo Smith":
             x.user = 40
         else:
-            print("Change Order Notes")
-            print(x.user)
+            print("nothing")
         x.save()
 
     for x in RentalNotes.objects.all():
@@ -878,8 +939,7 @@ def customize(request):
         elif x.user == "D'Angelo Smith":
             x.user = 40
         else:
-            print("Change Order Notes")
-            print(x.user)
+            print("nothing")
         x.save()
 
     return redirect('/')

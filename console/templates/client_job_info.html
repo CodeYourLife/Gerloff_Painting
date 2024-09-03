@@ -104,9 +104,9 @@ function new_filter_now(){
     document.getElementById('filter_form').submit();
 }
 
-function search_now(formnumber){
-    selected_form = document.getElementById('form'+formnumber)
-    selected_form.submit();
+function search_now(employeenumber){
+    form6.person_pk.value = employeenumber
+    form6.submit();
 }
 
 window.onload = function() {
@@ -125,203 +125,45 @@ window.onload = function() {
     </ul>
   </div>
 </nav>
-    <!--combine companies modal-->
-<div class="modal fade" id="combinecompanies-modal" tabindex="-1" role="dialog" aria-labelledby="title"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="title1"></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                                <form name="client_info_form" id="client_info_form" action="{% url 'client_info' 'ALL' %}" method="post">
-    {% csrf_token %}
-            Move this Company<select id="select_client1" name="select_client1" >
-                       <option value="please_select">Select Client</option>
-                {% for x in clients %}
-                        <option value={{x.id}}>{{x.company}}-{{x.id}}</option>
-						{% endfor %}
-            </select>
-                <br>
-                          To this Company<select id="select_client2" name="select_client2" >
-                       <option value="please_select">Select Client</option>
-                {% for x in clients %}
-                        <option value={{x.id}}>{{x.company}}-{{x.id}}</option>
-						{% endfor %}
-            </select>
-
-            </div>
-
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                 <input type="submit" class="btn btn-primary" name="combine_companies_now" value="Combine Now" />
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<form name="form1" id="form1" action="{% url 'client_info' 'ALL' %}" method="post">
-    {% csrf_token %}
-    <br>
-    {% if search_client_word %}
-    <input type="text" name="search_client" id="search_client" size="40" value="{{search_client_word}}" onchange="search_now(1)" />
-    {% else %}
-    <input type="text" name="search_client" id="search_client" size="40" placeholder = "Type Client Name to Search" onchange="search_now(1)" />
-    {% endif %}
-    <br>
-    </form>
-<form name="form2" id="form2" action="{% url 'client_info' 'ALL' %}" method="post">
-    {% csrf_token %}
-                        <select id="select_client" name="select_client" onchange="search_now(2)">
-                        {% if selected_client %}
-                            <option value="{{selected_client.id}}">{{selected_client.company}}</option>
-                        {% else %}
-                            <option value="please_select">Select Client</option>
-						{% endif %}
-                            {% for x in clients %}
-                        <option value={{x.id}}>{{x.company}}</option>
-						{% endfor %}
-                    </select>
-</form>
 <br>
-{% if selected_client %}
-
-<!--combine people modal-->
-<div class="modal fade" id="combinepeople-modal" tabindex="-1" role="dialog" aria-labelledby="title"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="title2"></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form name="client_info_form" id="client_info_form" action="{% url 'client_info' selected_client.id %}" method="post">
-    {% csrf_token %}
-            Move this Person<select id="select_person1" name="select_person1" >
-                       <option value="please_select">Select Person</option>
-                {% for x in client_employees %}
-                        <option value={{x.person_pk}}>{{x.name}}- {{x.email}}- {{x.phone}}</option>
-						{% endfor %}
-            </select>
-                <br>
-            To this Person<select id="select_person2" name="select_person2" >
-                       <option value="please_select">Select Person</option>
-                {% for x in client_employees %}
-                        <option value={{x.person_pk}}>{{x.name}}- {{x.email}}- {{x.phone}}</option>
-						{% endfor %}
-            </select>
-            </div>
-
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <input type="submit" class="btn btn-primary" name="combine_people_now" value="Combine Now" />
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<form name="form3" id="form3" action="{% url 'client_info' selected_client.id %}" method="post">
-    {% csrf_token %}
-<br>
-    Select a project for job-specific employee roles<br>
-        {% if search_job_word %}
-    <input type="text" name="search_job" id="search_job" size="40" value="{{search_job_word}}" onchange="search_now(3)" />
-    {% else %}
-    <input type="text" name="search_job" id="search_job" size="40" placeholder = "Type Job Name to Search" onchange="search_now(3)" />
-    {% endif %}
-<br>
-     <select id="select_job" name="select_job" onchange="search_now(3)">
-            <option value="please_select">Select a job</option>
-                            {% for x in jobs %}
-                        <option value={{x.job_number}}>{{x.job_name}}</option>
-						{% endfor %}
-         </select>
-    </form>
-<br>
-    <br>
-<form name="form4" id="form4" action="{% url 'client_info' selected_client.id %}" method="post">
-    {% csrf_token %}
-{% if selected_client.is_active %}<input type="submit" class="btn btn-danger btn-sm" name="make_client_inactive" value="De-Activate Client" />
-{% else %}<h2>THIS CLIENT IS NO LONGER ACTIVE!</h2><br><input type="submit" class="btn btn-primary btn-sm" name="make_client_active" value="Make this Client Active Again" />
-{% endif %}
-</form>
-<button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#combinepeople-modal" >Combine People</button>
-<button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#combinecompanies-modal" >Combine Companies</button>
-<br>
-
-<form name="form5" id="form5" action="{% url 'client_info' selected_client.id %}" method="post">
-        {% csrf_token %}
-
-    Company Name: <input type="text" name="company_name" value = "{{selected_client.company}}" size="50" onchange="search_now(5)" /><br>
-    Email to Send Bids: <input type="email" name="company_email" value = "{{selected_client.bid_email}}" size="50"  onchange="search_now(5)" /><br>
-    Main Phone: <input type="phone" name="company_phone" value = "{{selected_client.phone}}" size="50" onchange="search_now(5)" /><br>
-    Address: <input type="text" name="company_address" value = "{{selected_client.address}}" size="40" onchange="search_now(5)" /> City:  <input type="text" name="company_city" value = "{{selected_client.city}}" size="25" onchange="search_now(5)" />State:  <input type="text" name="company_state" value = "{{selected_client.state}}" size="15" onchange="search_now(5)" />
-</form>
-    <br>
-    <hr>
+<H2>{{selected_client}}</H2>
+<a href = "{% url 'job_page' selected_job.job_number %}">{{selected_job}}</a>
+<h4 style="color:red">{{error_message}}</h4>
 
 <div class="table-responsive">
-<form name="form6" id="form6" action="{% url 'client_info' selected_client.id %}" method="post">
+<form name="form6" id="form6" action="{% url 'client_job_info' selected_job.job_number %}" method="post">
 {% csrf_token %}
-    <input type="hidden" name="people_form" value = "YES" />
+    <input type="hidden" name="person_pk" id="person_pk" value="0" />
+    <input class= "btn btn-danger btn-sm" type="submit" name="go_back" value="Go Back to Client Page"/>
+    <br>
 <table id="jobs_table" class="display table table-sm">
     <thead>
     <tr>
         <th scope="col">Name</th>
         <th scope="col">Email</th>
-        <th scope="col">Phone Number</th>
-        <th scope="col">No Longer There</th>
+        <th scope="col">PM</th>
+        <th scope="col">Super</th>
+        <th scope="col">Change Order Proposals</th>
+        <th scope="col">Extra Work Tickets</th>
     </tr>
     </thead>
     <tbody>
+    {% for x in people %}
     <tr style="background-color:hsla(52, 100%, 88%);">
-        <td> <input type="text" name="add_name" placeholder = "Name of New Person" size="50" /></td>
-        <td><input type="email" name="add_email" placeholder = "Email" size="50"  /></td>
-        <td><input type="phone" name="add_phone" placeholder = "Phone" /></td>
-        <td><input type="submit" class="btn btn-primary btn-sm" name="add_new_person" value="Add" /></td>
+        <td>{{x.person.name}}</td>
+        <td> {{x.person.email}}</td>
+        <td><input type="checkbox" name="pm{{x.person.person_pk}}" {% if x.pm == 'Yes' %} checked {% endif %} onchange="search_now({{x.person.person_pk}})"/></td>
+        <td><input type="checkbox" name="super{{x.person.person_pk}}" {% if x.super == 'Yes' %} checked {% endif %} onchange="search_now({{x.person.person_pk}})"/></td>
+        <td><input type="checkbox" name="changeorder{{x.person.person_pk}}" {% if x.changeorder == 'Yes' %} checked {% endif %} onchange="search_now({{x.person.person_pk}})"/></td>
+        <td><input type="checkbox" name="ewt{{x.person.person_pk}}" {% if x.ewt == 'Yes' %} checked {% endif %} onchange="search_now({{x.person.person_pk}})"/></td>
     </tr>
-    {% for x in client_employees %}
-        <tr>
-        <td> <input type="text" name="name{{x.person_pk}}" value="{{x.name}}" size="50" onchange="search_now(6)" /></td>
-        <td>
-            {% if x.email %}
-            <input type="email" name="email{{x.person_pk}}" value="{{x.email}}" size="50" onchange="search_now(6)" />
-        {% else %}
-            <input type="email" name="email{{x.person_pk}}" placeholder="Email" size="50" onchange="search_now(6)" />
-            {% endif %}
-            </td>
-            <td>
-            {% if x.phone %}
-            <input type="phone" name="phone{{x.person_pk}}" value="{{x.phone}}" onchange="search_now(6)" />
-        {% else %}
-                <input type="phone" name="phone{{x.person_pk}}" placeholder="Phone" onchange="search_now(6)" />
-            {% endif %}
-            </td>
-            <td>
-        {% if x.is_active %}
-            <input type="checkbox" name="closed{{x.person_pk}}" onchange="search_now(6)" />
-        {% else %}
-            <input type="checkbox" name="closed{{x.person_pk}}" checked onchange="search_now(6)" />
-        {% endif %}
-        </td>
-        </tr>
     {% endfor %}
-
     </tbody>
 </table>
+
 </form>
 </div>
-{% endif %}
+
 
 <!--filter form-->
 <!--<form class="form-control form-control-sm" id="filter_form" method="get">-->
