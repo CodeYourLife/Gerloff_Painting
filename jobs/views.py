@@ -361,6 +361,7 @@ def audit_MC_open_jobs2(request):
                     break
             for x in Jobs.objects.filter(is_closed=False):  # scroll through open jobs in Trinity
                 if x.superintendent:
+
                     print("NOTHING")
                     # trinitysuper = x.superintendent.first_name
                     # mcsuper = "couldn't find"
@@ -383,6 +384,7 @@ def audit_MC_open_jobs2(request):
                             else:
                                 superintendenterrors.append('CONGRATS AGAIN! Job ' + str(
                                     x.job_number) + ' has no Super in MC, and also no Super in Trinity')
+
                             break
             print(superintendenterrors)
     return redirect("/")
