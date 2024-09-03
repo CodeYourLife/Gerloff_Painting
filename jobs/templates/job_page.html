@@ -932,9 +932,13 @@ document.getElementById("notes_filter_button").style.display = "none";
 <!--Header info-->
 <div style="margin-left: 12px; margin-right: 12px;">
     <div style=" padding-top: 12px;" class="d-flex flex-row">
-        <div  class="col-sm-12" >
+        <div  class="col-sm-6" >
             <form action="{% url 'update_job_info' job.job_number %}"><input type="submit" class="btn btn-info btn-sm"
                                                                              value="Update Job Information"/></form>
+        </div>
+                <div  class="col-sm-6" >
+            <form action="{% url 'client_job_info' job.job_number %}"><input type="submit" class="btn btn-info btn-sm"
+                                                                             value="View/Change Client Contacts"/></form>
         </div>
     </div>
     <div class="row">

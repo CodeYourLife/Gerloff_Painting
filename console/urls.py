@@ -16,4 +16,5 @@ urlpatterns = [
     path('create_folders', views.create_folders, name='create_folders'),
     path('customize', views.customize, name='customize'),
     path('client_info/<id>', views.client_info, name='client_info'),
+    path('client_job_info/<id>', views.client_job_info, name='client_job_info'),
 ]
