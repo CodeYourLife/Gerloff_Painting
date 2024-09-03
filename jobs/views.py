@@ -329,6 +329,63 @@ def update_job_info(request, jobnumber):
     return render(request, 'update_job_info.html', send_data)
 
 
+def audit_MC_open_jobs2(request):
+    send_data = {}
+    if request.method == 'POST':
+        if 'upload_file' in request.FILES:
+            fileitem = request.FILES['upload_file']
+            fn2 = os.path.join(settings.MEDIA_ROOT, "job_upload", "Temp.xlsx")
+            open(fn2, 'wb').write(fileitem.file.read())
+            wb_obj = openpyxl.load_workbook(filename=request.FILES['upload_file'].file)
+            sheet_obj = wb_obj["Booked"]
+            # client_name = sheet_obj.cell(row=16, column=2).value
+            needs_to_be_opened = []
+            needs_to_be_closed = []
+            needs_to_be_labor_done = []
+            not_found = []
+            open_jobs = []
+            labor_done = []
+            needs_to_not_be_labor_done = []
+            closed_but_equipment = []
+            closed_but_subs = []
+            superintendents = []
+            superintendenterrors=[]
+            error_message = ""
+            a = 3
+            while sheet_obj.cell(row=a, column=1).value != None:
+                mc_labor_done = 0
+                superintendents.append({'job_number': sheet_obj.cell(row=a, column=1).value,
+                                        'super': sheet_obj.cell(row=a, column=7).value})
+                a = a + 1
+                if a > 200000:
+                    break
+            for x in Jobs.objects.filter(is_closed=False):  # scroll through open jobs in Trinity
+                if x.superintendent:
+                    trinitysuper = x.superintendent.first_name
+                    mcsuper = "couldn't find"
+                    for y in superintendents:
+                        if y['job_number'] == x.job_number:
+                            mcsuper = y['super']
+                            if mcsuper == 'Sub' and not trinitysuper == 'Victor':
+                                superintendenterrors.append('Job ' + str(x.job_number) + ' has ' + mcsuper + ' in MC, but ' + trinitysuper + ' in Trinity')
+                            elif mcsuper == 'Steve' and not trinitysuper == 'Steve':
+                                superintendenterrors.append('Job ' + str(x.job_number) + ' has ' + mcsuper + ' in MC, but ' + trinitysuper + ' in Trinity')
+                            elif mcsuper == 'Ed' and not trinitysuper == 'Edward':
+                                superintendenterrors.append('Job ' + str(x.job_number) + ' has ' + mcsuper + ' in MC, but ' + trinitysuper + ' in Trinity')
+                            else: superintendenterrors.append('CONGRATS! Job ' + str(x.job_number) + ' has ' + mcsuper + ' in MC, and ' + trinitysuper + ' in Trinity')
+                            break
+                else:
+                    for y in superintendents:
+                        if y['job_number'] == x.job_number:
+                            if y['super'] != "":
+                                superintendenterrors.append('Job ' + str(x.job_number) + ' has ' + y['super'] + ' in MC, but no Super in Trinity')
+                            else:
+                                superintendenterrors.append('CONGRATS AGAIN! Job ' + str(
+                                    x.job_number) + ' has ' + y['super'] + ' in MC, and also no Super in Trinity')
+                            break
+            print(superintendenterrors)
+    return redirect("/")
+
 @login_required(login_url='/accounts/login')
 def audit_MC_open_jobs(request):
     send_data = {}
@@ -349,10 +406,13 @@ def audit_MC_open_jobs(request):
             needs_to_not_be_labor_done = []
             closed_but_equipment = []
             closed_but_subs = []
+            superintendents = []
+            superintendenterrors = []
             error_message = ""
             a = 3
             while sheet_obj.cell(row=a, column=1).value != None:
                 mc_labor_done = 0
+                superintendents.append({'job_number':sheet_obj.cell(row=a, column=1).value, 'super':sheet_obj.cell(row=a, column=7).value})
                 if sheet_obj.cell(row=a, column=18).value == "Open":  #if open in MC
                     job_number = sheet_obj.cell(row=a, column=1).value
                     open_jobs.append(job_number)
@@ -380,6 +440,35 @@ def audit_MC_open_jobs(request):
                 if a > 200000:
                     break
             for x in Jobs.objects.filter(is_closed=False): #scroll through open jobs in Trinity
+                if x.superintendent:
+                    trinitysuper = x.superintendent.first_name
+                    mcsuper = "couldn't find"
+                    for y in superintendents:
+                        if y['job_number'] == x.job_number:
+                            mcsuper = y['super']
+                            if mcsuper == 'Sub' and not trinitysuper == 'Victor':
+                                superintendenterrors.append('Job ' + str(
+                                    x.job_number) + ' has ' + mcsuper + ' in MC, but ' + trinitysuper + ' in Trinity')
+                            elif mcsuper == 'Steve' and not trinitysuper == 'Steve':
+                                superintendenterrors.append('Job ' + str(
+                                    x.job_number) + ' has ' + mcsuper + ' in MC, but ' + trinitysuper + ' in Trinity')
+                            elif mcsuper == 'Ed' and not trinitysuper == 'Edward':
+                                superintendenterrors.append('Job ' + str(
+                                    x.job_number) + ' has ' + mcsuper + ' in MC, but ' + trinitysuper + ' in Trinity')
+                            else:
+                                superintendenterrors.append('CONGRATS! Job ' + str(
+                                    x.job_number) + ' has ' + mcsuper + ' in MC, and ' + trinitysuper + ' in Trinity')
+                            break
+                else:
+                    for y in superintendents:
+                        if y['job_number'] == x.job_number:
+                            if y['super'] != "":
+                                superintendenterrors.append('Job ' + str(x.job_number) + ' has ' + y[
+                                    'super'] + ' in MC, but no Super in Trinity')
+                            else:
+                                superintendenterrors.append('CONGRATS AGAIN! Job ' + str(
+                                    x.job_number) + ' has ' + y['super'] + ' in MC, and also no Super in Trinity')
+                            break
                 if x.job_number not in open_jobs:
                     if Inventory.objects.filter(job_number=x, is_closed=False).exists():
                         closed_but_equipment.append({'job_number': x.job_number, 'job_name': x.job_name})
@@ -430,6 +519,7 @@ def audit_MC_open_jobs(request):
     send_data['employees'] = Employees.objects.filter(user__isnull=True, active=True)
     send_data['subs'] = Subcontractors.objects.filter(is_inactive=False)
     send_data['error_message'] = "These Emails Failed to send. Please let everyone know. " + error_message
+    send_data['superintendenterrors'] = superintendenterrors
     return render(request, 'multi_use_page.html', send_data)
 
 

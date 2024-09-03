@@ -87,6 +87,16 @@
 	<b>No Jobs Were marked labor complete in Trinity, but not in MC</b><br>
 {% endif %}
 
+{% if superintendenterrors %}
+	<b>Superintendent Audit </b><br>
+	{% for x in superintendenterrors %}
+		{{x}}<br>
+	{% endfor %}
+{% else %}
+	<b>There were no discrepancies with superintendents between Trinity and MC</b><br>
+{% endif %}
+
+
 {% if error_message %}
 <b>{{error_message}}</b>
 {% endif %}
