@@ -458,9 +458,6 @@ def audit_MC_open_jobs(request):
                             elif mcsuper == 'Ed' and not trinitysuper == 'Edward':
                                 superintendenterrors.append('Job ' + str(
                                     x.job_number) + ' has ' + mcsuper + ' in MC, but ' + trinitysuper + ' in Trinity')
-                            else:
-                                superintendenterrors.append('CONGRATS! Job ' + str(
-                                    x.job_number) + ' has ' + mcsuper + ' in MC, and ' + trinitysuper + ' in Trinity')
                             break
                 else:
                     for y in superintendents:
