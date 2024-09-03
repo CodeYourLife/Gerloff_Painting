@@ -361,27 +361,28 @@ def audit_MC_open_jobs2(request):
                     break
             for x in Jobs.objects.filter(is_closed=False):  # scroll through open jobs in Trinity
                 if x.superintendent:
-                    trinitysuper = x.superintendent.first_name
-                    mcsuper = "couldn't find"
-                    for y in superintendents:
-                        if y['job_number'] == x.job_number:
-                            mcsuper = y['super']
-                            if mcsuper == 'Sub' and not trinitysuper == 'Victor':
-                                superintendenterrors.append('Job ' + str(x.job_number) + ' has ' + mcsuper + ' in MC, but ' + trinitysuper + ' in Trinity')
-                            elif mcsuper == 'Steve' and not trinitysuper == 'Steve':
-                                superintendenterrors.append('Job ' + str(x.job_number) + ' has ' + mcsuper + ' in MC, but ' + trinitysuper + ' in Trinity')
-                            elif mcsuper == 'Ed' and not trinitysuper == 'Edward':
-                                superintendenterrors.append('Job ' + str(x.job_number) + ' has ' + mcsuper + ' in MC, but ' + trinitysuper + ' in Trinity')
-                            else: superintendenterrors.append('CONGRATS! Job ' + str(x.job_number) + ' has ' + mcsuper + ' in MC, and ' + trinitysuper + ' in Trinity')
-                            break
+                    print("NOTHING")
+                    # trinitysuper = x.superintendent.first_name
+                    # mcsuper = "couldn't find"
+                    # for y in superintendents:
+                    #     if y['job_number'] == x.job_number:
+                    #         mcsuper = y['super']
+                    #         if mcsuper == 'Sub' and not trinitysuper == 'Victor':
+                    #             superintendenterrors.append('Job ' + str(x.job_number) + ' has ' + mcsuper + ' in MC, but ' + trinitysuper + ' in Trinity')
+                    #         elif mcsuper == 'Steve' and not trinitysuper == 'Steve':
+                    #             superintendenterrors.append('Job ' + str(x.job_number) + ' has ' + mcsuper + ' in MC, but ' + trinitysuper + ' in Trinity')
+                    #         elif mcsuper == 'Ed' and not trinitysuper == 'Edward':
+                    #             superintendenterrors.append('Job ' + str(x.job_number) + ' has ' + mcsuper + ' in MC, but ' + trinitysuper + ' in Trinity')
+                    #         else: superintendenterrors.append('CONGRATS! Job ' + str(x.job_number) + ' has ' + mcsuper + ' in MC, and ' + trinitysuper + ' in Trinity')
+                    #         break
                 else:
                     for y in superintendents:
                         if y['job_number'] == x.job_number:
-                            if y['super'] != "":
+                            if y['super']:
                                 superintendenterrors.append('Job ' + str(x.job_number) + ' has ' + y['super'] + ' in MC, but no Super in Trinity')
                             else:
                                 superintendenterrors.append('CONGRATS AGAIN! Job ' + str(
-                                    x.job_number) + ' has ' + y['super'] + ' in MC, and also no Super in Trinity')
+                                    x.job_number) + ' has no Super in MC, and also no Super in Trinity')
                             break
             print(superintendenterrors)
     return redirect("/")
@@ -462,12 +463,9 @@ def audit_MC_open_jobs(request):
                 else:
                     for y in superintendents:
                         if y['job_number'] == x.job_number:
-                            if y['super'] != "":
+                            if y['super']:
                                 superintendenterrors.append('Job ' + str(x.job_number) + ' has ' + y[
                                     'super'] + ' in MC, but no Super in Trinity')
-                            else:
-                                superintendenterrors.append('CONGRATS AGAIN! Job ' + str(
-                                    x.job_number) + ' has ' + y['super'] + ' in MC, and also no Super in Trinity')
                             break
                 if x.job_number not in open_jobs:
                     if Inventory.objects.filter(job_number=x, is_closed=False).exists():
