@@ -67,6 +67,23 @@ class Rentals(models.Model):
 			months += 1
 			return str(str(months) + " Months")
 
+	def colorize(self):
+		if self.off_rent_date:
+			return False
+		else:
+			today = date.today()
+			daysonrent = (today - self.on_rent_date).days + 1
+			print(daysonrent)
+			while daysonrent > 28:
+				daysonrent -= 28
+			if daysonrent > 14 and daysonrent < 29:
+				remaining = 29 - daysonrent
+				if remaining <6:
+					return True
+				else:
+					return False
+			else: return False
+
 
 class RentalNotes(models.Model):
     id = models.BigAutoField(primary_key=True)

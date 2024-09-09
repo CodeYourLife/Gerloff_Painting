@@ -216,6 +216,10 @@ def index(request):
     send_data['service'] = Inventory.objects.filter(service_vendor__isnull=False, is_closed=False).count()
     send_data['pickup_requests'] = PickupRequest.objects.filter(is_closed=False).count()
     send_data['rentals'] = Rentals.objects.filter(off_rent_number=None, is_closed=False).count()
+    check_rentals=0
+    for x in Rentals.objects.filter(off_rent_number=None, is_closed=False):
+        if x.colorize(): check_rentals += 1
+    send_data['check_rentals'] = check_rentals
     send_data['rentals_requested_off'] = Rentals.objects.filter(requested_off_rent=True, off_rent_number=None, is_closed=False).count()
     send_data['next_two_weeks'] = next_two_weeks
     send_data['needs_super'] = Jobs.objects.filter(superintendent__isnull=True, is_closed=False).count()
