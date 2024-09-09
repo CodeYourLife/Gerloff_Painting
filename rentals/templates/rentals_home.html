@@ -167,8 +167,14 @@ document.getElementById('filter_form').submit();
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.rental.company}}</td>
 
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.rental.on_rent_date}}</td>
-                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.next_period}}</td>
-                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.current_duration}}</td>
+
+            {% if x.colorize %}
+            <td style="background-color:hsl(63, 85%, 79%); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.next_period}}</td>
+            {% else %}
+            <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.next_period}}</td>
+            {% endif %}
+            <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.current_duration}}</td>
+
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.rental.off_rent_date}}</td>
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.rental.notes}}</td>
         </tr>
