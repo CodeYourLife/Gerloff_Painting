@@ -28,7 +28,10 @@ def rentals_home(request):
     filtered_rentals = RentalsFilter(request.GET,
                                      queryset=Rentals.objects.filter(is_closed=False).order_by('job_number', 'company'))
     # rentals = Rentals.objects.filter(is_closed=False).order_by('job_number', 'company')
-    send_data['rentals'] = filtered_rentals.qs
+    rentals=[]
+    for x in filtered_rentals.qs:
+        rentals.append({'rental':x,'next_period':x.next_period(),'current_duration':x.current_duration()})
+    send_data['rentals'] = rentals
     send_data['waiting_for_invoice'] = Rentals.objects.filter(off_rent_number__isnull=False, is_closed=False).count()
     return render(request, "rentals_home.html", send_data)
 

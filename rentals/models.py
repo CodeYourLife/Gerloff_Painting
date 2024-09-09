@@ -2,6 +2,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from equipment.models import Vendors, VendorContact
 import employees.models
+from datetime import date
 
 class Rentals(models.Model):
 	id = models.BigAutoField(primary_key=True)
@@ -21,6 +22,50 @@ class Rentals(models.Model):
 	requested_off_rent = models.BooleanField(default=False)
 	def __str__(self):
 		return f"{self.job_number} {self.item}"
+
+
+	def next_period(self):
+		if self.off_rent_date:
+			return ""
+		else:
+			today = date.today()
+			daysonrent = (today - self.on_rent_date).days + 1
+			print(daysonrent)
+			while daysonrent > 28:
+				daysonrent -= 28
+			if daysonrent >2 and daysonrent < 8:
+				return str("Another Week Starts in " + str(8- daysonrent) + " Days")
+			if daysonrent >7 and daysonrent < 15:
+				return str("Another Week Starts in " + str(15- daysonrent) + " Days")
+			elif daysonrent > 14 and daysonrent < 29:
+				return str("Another Month Starts in " + str(29 - daysonrent) + " Days")
+			else: return ""
+
+	def current_duration(self):
+		if self.off_rent_date:
+			daysonrent = (self.off_rent_date - self.on_rent_date).days + 1
+		else:
+			today = date.today()
+			daysonrent = (today - self.on_rent_date).days + 1
+		months= 0
+		duration = ""
+		while daysonrent > 28:
+			months += 1
+			duration = str(str(months) + " Months ")
+			daysonrent -= 28
+		if daysonrent < 3:
+			return str(duration + str(daysonrent) + " Days ")
+		elif daysonrent < 8:
+			return str(duration + "1 Week ")
+		elif daysonrent < 10:
+			return str(duration + "1 Week " + str(daysonrent -7) + " Days")
+		elif daysonrent < 15:
+			return str(duration + "2 Weeks ")
+		elif daysonrent < 17:
+			return str(duration + "2 Weeks " + str(daysonrent-14) + " Days")
+		else:
+			months += 1
+			return str(str(months) + " Months")
 
 
 class RentalNotes(models.Model):

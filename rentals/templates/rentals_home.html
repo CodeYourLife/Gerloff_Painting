@@ -147,25 +147,30 @@ document.getElementById('filter_form').submit();
             <th scope="col">Item</th>
             <th scope="col">Vendor</th>
             <th scope="col">On Rent Date</th>
+            <th scope="col">Next Period</th>
+            <th scope="col">Duration</th>
             <th scope="col">Off Rent Date</th>
             <th scope="col">Notes</th>
         </tr>
         </thead>
         <tbody>
         {% for x in rentals %}
-         {% if x.off_rent_number %}
+         {% if x.rental.off_rent_number %}
         <tr style="background-color:hsla(0,0%, 32%)" >
-            {% elif x.off_rent_date %}
+            {% elif x.rental.off_rent_date %}
                 <tr style="background-color:hsla(0,0%, 65%);" >
             {% else %}
             <tr>
             {% endif %}
-                <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{x.job_number.job_number}}')"><a href="#">{{x.job_number}}</a></td>
-                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_rental('{{x.id}}')"><a href="#">{{x.item}} {% if x.off_rent_date and x.off_rent_number == None %} [Need Off-Rent #]{% elif x.requested_off_rent and x.off_rent_date == None %} [Requested Off-Rent] {% endif %}  </a></td>
-                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.company}}</td>
-                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.on_rent_date}}</td>
-                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.off_rent_date}}</td>
-                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.notes}}</td>
+                <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{x.job_number.job_number}}')"><a href="#">{{x.rental.job_number}}</a></td>
+                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_rental('{{x.rental.id}}')"><a href="#">{{x.rental.item}} {% if x.rental.off_rent_date and x.rental.off_rent_number == None %} [Need Off-Rent #]{% elif x.rental.requested_off_rent and x.rental.off_rent_date == None %} [Requested Off-Rent] {% endif %}  </a></td>
+                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.rental.company}}</td>
+
+                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.rental.on_rent_date}}</td>
+                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.next_period}}</td>
+                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.current_duration}}</td>
+                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.rental.off_rent_date}}</td>
+                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.rental.notes}}</td>
         </tr>
             {% endfor %}
         </tbody>
