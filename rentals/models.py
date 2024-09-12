@@ -67,6 +67,7 @@ class Rentals(models.Model):
 			months += 1
 			return str(str(months) + " Months")
 
+
 	def colorize(self):
 		if self.off_rent_date:
 			return False
@@ -83,7 +84,6 @@ class Rentals(models.Model):
 				else:
 					return False
 			else: return False
-
 
 class RentalNotes(models.Model):
     id = models.BigAutoField(primary_key=True)
