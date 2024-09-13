@@ -67,6 +67,7 @@ class Rentals(models.Model):
 			months += 1
 			return str(str(months) + " Months")
 
+
 	def colorize(self):
 		if self.off_rent_date:
 			return False
