@@ -1368,7 +1368,7 @@ def new_subcontractor_payment(request):
         for x in SubcontractorInvoice.objects.filter(subcontract__subcontractor=selected_sub, is_sent=True,
                                                      processed=False, batch__isnull=True):
             invoices.append(
-                {'po_number':x.subcontract.po_number,'total': x.final_amount, 'retainage': x.retainage, 'id': x.id, 'pay_app_number': x.pay_app_number,
+                {'subcontact_id':x.subcontract.id,'po_number':x.subcontract.po_number,'total': x.final_amount, 'retainage': x.retainage, 'id': x.id, 'pay_app_number': x.pay_app_number,
                  'job_name': x.subcontract.job_number.job_name, 'amount': x.final_amount - x.retainage,
                  'pay_date': x.pay_date})
         send_data['invoices'] = invoices
@@ -1376,7 +1376,7 @@ def new_subcontractor_payment(request):
         final_amount = 0
         for x in InvoiceBatch.objects.filter(invoice__subcontract__subcontractor=selected_sub, invoice__is_sent=True,
                                              invoice__processed=False):
-            selected_invoices.append({'po_number':x.invoice.subcontract.po_number,'total': x.invoice.final_amount, 'retainage': x.invoice.retainage, 'id': x.id,
+            selected_invoices.append({'subcontact_id':x.invoice.subcontract.id, 'po_number':x.invoice.subcontract.po_number,'total': x.invoice.final_amount, 'retainage': x.invoice.retainage, 'id': x.id,
                                       'pay_app_number': x.invoice.pay_app_number,
                                       'job_name': x.invoice.subcontract.job_number.job_name,
                                       'amount': x.invoice.final_amount - x.invoice.retainage,
