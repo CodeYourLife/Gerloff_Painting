@@ -135,6 +135,7 @@ $(document).ready(function () {
         <tr>
             <th scope="col">Pay Date</th>
             <th scope="col">Invoice</th>
+            <th scope="col">PO#</th>
             <th scope="col">Total</th>
             <th scope="col">Retainage</th>
             <th scope="col">Pay Now</th>
@@ -145,7 +146,10 @@ $(document).ready(function () {
         {% for x in invoices %}
         <tr>
         <td>{{x.pay_date}}</td>
-        <td>{{x.job_name}} PO#{{x.po_number}} - {{x.pay_app_number}}</td>
+
+        <td>{{x.job_name}} - {{x.pay_app_number}}</td>
+        <td> <a href = "{% url 'subcontract' x.subcontact_id %}">PO#{{x.po_number}} </a></td>
+
         <td>${{x.total}}</td>
         <td>${{x.retainage}}</td>
         <td>${{x.amount}}</td>
@@ -168,6 +172,7 @@ $(document).ready(function () {
         <tr>
             <th scope="col">Pay Date</th>
             <th scope="col">Invoice</th>
+            <th scope="col">PO#</th>
             <th scope="col">Total</th>
             <th scope="col">Retainage</th>
             <th scope="col">Pay Now</th>
@@ -178,7 +183,10 @@ $(document).ready(function () {
         {% for x in selected_invoices %}
         <tr>
         <td>{{x.pay_date}}</td>
-        <td>{{x.job_name}} PO#{{x.po_number}} -{{x.pay_app_number}}</td>
+
+        <td>{{x.job_name}} {{x.pay_app_number}}</td>
+        <td> <a href = "{% url 'subcontract' x.subcontact_id %}">PO#{{x.po_number}} </a></td>
+
         <td>${{x.total}}</td>
         <td>${{x.retainage}}</td>
         <td>${{x.amount}}</td>

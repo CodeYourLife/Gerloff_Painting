@@ -85,6 +85,7 @@ class Rentals(models.Model):
 					return False
 			else: return False
 
+
 class RentalNotes(models.Model):
     id = models.BigAutoField(primary_key=True)
     rental = models.ForeignKey(Rentals, on_delete=models.PROTECT)
