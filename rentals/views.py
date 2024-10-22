@@ -31,6 +31,7 @@ def rentals_home(request):
     rentals=[]
     for x in filtered_rentals.qs:
         rentals.append({'rental':x,'next_period':x.next_period(),'current_duration':x.current_duration(),'colorize':x.colorize()})
+
     send_data['rentals'] = rentals
     send_data['waiting_for_invoice'] = Rentals.objects.filter(off_rent_number__isnull=False, is_closed=False).count()
     return render(request, "rentals_home.html", send_data)

@@ -146,8 +146,10 @@ $(document).ready(function () {
         {% for x in invoices %}
         <tr>
         <td>{{x.pay_date}}</td>
+
         <td>{{x.job_name}} - {{x.pay_app_number}}</td>
         <td> <a href = "{% url 'subcontract' x.subcontact_id %}">PO#{{x.po_number}} </a></td>
+
         <td>${{x.total}}</td>
         <td>${{x.retainage}}</td>
         <td>${{x.amount}}</td>
@@ -181,8 +183,10 @@ $(document).ready(function () {
         {% for x in selected_invoices %}
         <tr>
         <td>{{x.pay_date}}</td>
+
         <td>{{x.job_name}} {{x.pay_app_number}}</td>
         <td> <a href = "{% url 'subcontract' x.subcontact_id %}">PO#{{x.po_number}} </a></td>
+
         <td>${{x.total}}</td>
         <td>${{x.retainage}}</td>
         <td>${{x.amount}}</td>
