@@ -483,6 +483,9 @@ class InvoiceApprovals(models.Model):
     made_changes = models.BooleanField(default=False)
     notes = models.CharField(null=True, max_length=2000, blank=True)
 
+    def __str__(self):
+        return f"{self.invoice} {self.employee}"
+
 
 class InvoiceBatch(models.Model):
     id = models.BigAutoField(primary_key=True)
