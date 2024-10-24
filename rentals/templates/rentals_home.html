@@ -99,6 +99,7 @@ window.onload = function() {
 var table = $('#equipment_table').DataTable({paging: false})
 };
 function go_to_job(jobnumber){
+alert(jobnumber)
 url = "{% url 'job_page' 'ALL' %}"
 url = url.replace('ALL', jobnumber);
 window.location.href = url
@@ -162,7 +163,7 @@ document.getElementById('filter_form').submit();
             {% else %}
             <tr>
             {% endif %}
-                <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{x.job_number.job_number}}')"><a href="#">{{x.rental.job_number}}</a></td>
+                <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{x.rental.job_number.job_number}}')"><a href="#">{{x.rental.job_number}}</a></td>
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_rental('{{x.rental.id}}')"><a href="#">{{x.rental.item}} {% if x.rental.off_rent_date and x.rental.off_rent_number == None %} [Need Off-Rent #]{% elif x.rental.requested_off_rent and x.rental.off_rent_date == None %} [Requested Off-Rent] {% endif %}  </a></td>
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px" >{{x.rental.company}}</td>
 
