@@ -784,7 +784,7 @@ def job_page(request, jobnumber):
                         Email.sendEmail("Labor not done - " + selectedjob.job_name,
                                         "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is not done. Please make sure to Un-Click the LABOR DONE box in management console. " +
                                         request.POST['closed_note'],
-                                        ['joe@gerloffpainting.com', 'bridgette@gerloffpainting.com',
+                                        ['bridgette@gerloffpainting.com',
                                          'victor@gerloffpainting.com'], False)
                         send_data['error_message'] = "Email about labor not done was successfully sent. "
                     except:
@@ -810,7 +810,7 @@ def job_page(request, jobnumber):
                     Email.sendEmail("Labor Done - " + selectedjob.job_name,
                                     "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is 100% Done. Please make sure to Click the Labor Done button in Management Console. " +
                                     request.POST['closed_note'],
-                                    ['joe@gerloffpainting.com', 'admin2@gerloffpainting.com',
+                                    ['admin2@gerloffpainting.com',
                                      'bridgette@gerloffpainting.com',
                                      'victor@gerloffpainting.com'], False)
                     send_data['error_message'] = "Labor Complete Email was successfully sent. "
