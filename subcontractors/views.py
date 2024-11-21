@@ -274,8 +274,7 @@ def portal_invoice_new(request, subcontract_id):
                 subcontract.job_number.job_name)
             try:
                 Email.sendEmail("New Retainage Request", email_body,
-                                ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
-                                 'bridgette@gerloffpainting.com'],
+                                ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com'],
                                 False)
                 success = True
             except:
@@ -359,8 +358,7 @@ def portal_invoice_new(request, subcontract_id):
                 subcontract.job_number.job_name)
             try:
                 Email.sendEmail("New invoice", email_body,
-                                ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
-                                 'bridgette@gerloffpainting.com'],
+                                ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com'],
                                 False)
                 success = True
             except:
@@ -456,8 +454,7 @@ def subcontract_invoices(request, subcontract_id, item_id):
                 email_body = selected_invoice.subcontract.subcontractor.company + " invoice for " + selected_invoice.subcontract.job_number.job_name + " has been approved."
                 try:
                     Email.sendEmail("Invoice Approved", email_body,
-                                    ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
-                                     'bridgette@gerloffpainting.com'], False)
+                                    ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com'], False)
                     success = True
                 except:
                     success = False
@@ -607,8 +604,7 @@ def subcontract_invoices(request, subcontract_id, item_id):
 
                 try:
                     Email.sendEmail("Invoice Rejected", email_body,
-                                    ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
-                                     'bridgette@gerloffpainting.com'], False)
+                                    ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com'], False)
                     send_data['error_message'] = "Rejection Email Successfully Sent!"
                 except:
                     send_data['error_message'] = "ERROR! Email not sent.  Please tell the office this was rejected."
@@ -634,8 +630,7 @@ def subcontract_invoices(request, subcontract_id, item_id):
             if 'approved_with_changes' in request.POST:
                 try:
                     Email.sendEmail("Invoice Changed", str(selected_invoice) + ". " + note + ". Changed by " + str(Employees.objects.get(user=request.user)),
-                                    ['admin2@gerloffpainting.com', 'joe@gerloffpainting.com',
-                                     'bridgette@gerloffpainting.com'], False)
+                                    ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com'], False)
                     send_data['error_message'] = "Invoiced Changed Email Successfully Sent!"
                 except:
                     send_data['error_message'] = "ERROR! Email not sent.  Please tell the office that you made changes to this invoice."

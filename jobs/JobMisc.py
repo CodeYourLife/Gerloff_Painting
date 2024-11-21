@@ -29,7 +29,7 @@ def start_date_change(job, newdate, status, note, author, did_date_change, notif
                                 note="Start Date Changed to " + newdate + ". " + note + ". " + statusnote,
                                 type="auto_start_date_note", user=author, date=date.today())
         if notify == True:
-            recipients = ["joe@gerloffpainting.com"]
+            recipients = ["operations@gerloffpainting.com"]
             if job.superintendent:
                 if job.superintendent.email:
                     recipients.append(job.superintendent.email)
@@ -47,7 +47,7 @@ def start_date_change(job, newdate, status, note, author, did_date_change, notif
         JobNotes.objects.create(job_number=job, note=statusnote + ". " + note,
                                 type="auto_start_date_note", user=author, date=date.today())
         if notify == True:
-            recipients = ["joe@gerloffpainting.com"]
+            recipients = ["operations@gerloffpainting.com"]
             if job.superintendent:
                 if job.superintendent.email:
                     recipients.append(job.superintendent.email)
