@@ -121,7 +121,7 @@ class Inventory(models.Model):
     is_closed = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.inventory_type} {self.item}"
+        return f"{self.id} {self.inventory_type} {self.item}"
 
 
 class InventoryNotes(models.Model):
