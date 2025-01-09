@@ -772,9 +772,10 @@ def closed_equipment_report(request):
         for y in notes:
             inventory_notes.append({'id': x.id, 'date': y.date, 'user': y.user, 'note': y.note})
             if y.job_name:
-                last_job = y.job_name
-                if Jobs.objects.filter(job_number=y.job_number).exists():
-                    last_super = Jobs.objects.get(job_number=y.job_number).superintendent
+                if Jobs.objects.filter(job_name=y.job_name).exists():
+                    last_job = y.job_name
+                    if Jobs.objects.filter(job_number=y.job_number).exists():
+                        last_super = Jobs.objects.get(job_number=y.job_number).superintendent
         items_adjust.append({'item':x,'last_job':last_job,'last_super':last_super})
     for z in Employees.objects.all():
         a =0
