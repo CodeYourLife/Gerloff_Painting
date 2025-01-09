@@ -770,7 +770,7 @@ def closed_equipment_report(request):
         last_super =""
         notes=InventoryNotes.objects.filter(inventory_item=x)
         for y in notes:
-            inventory_notes.append({'id': x.id, 'date': y.date, 'user': y.user, 'note': y.note})
+            inventory_notes.append({'id': x.id, 'date': y.date, 'user': y.user, 'note': y.note, 'job_name':y.job_name})
             if y.job_name:
                 if Jobs.objects.filter(job_name=y.job_name).exists():
                     last_job = y.job_name
