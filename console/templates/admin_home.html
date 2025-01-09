@@ -166,6 +166,13 @@ document.getElementById("check_booked_jobs").style.display = "block"
 {% if emailconfirmation %}
 Test Email Sent!
 {% endif %}
+
+<br>
+<a href = "{% url 'closed_equipment_report' %}">
+							<div style="height:100%;width:100%">
+								Closed Equipment Report	</div>
+						</a>
+<br>
 <!--<a href = "{% url 'reset_databases' %}">-->
 <!--							<div style="height:100%;width:100%">-->
 <!--								Reset Databases-Don't Click	</div>-->

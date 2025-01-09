@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<html>
+<head>
+    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+    <style type="text/css" class="init">
+        .list-items {
+        border-bottom: 1px solid black; display: flex; justify-content: space-between;
+        }
+    </style>
+    <script src="{% static 'equipment.js' %}"></script>
+    <script type="text/javascript" class="init">
+    </script>
+</head>
+
+
+<body>
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="#">Equipment</a>
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav ">
+            <li><a class="nav-item nav-link" href="{% url 'equipment_home' %}">Home</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'equipment_new' %}">New</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
+            <li><a class="nav-item nav-link active" href="#">Closed Equipment Report</a></li>
+        </ul>
+    </div>
+</nav>
+<h3>Lost Equipment by Super</h3>
+
+{% for x in super_count %}
+<b>{{x.Super}}:</b> {{x.Count}}
+<br>
+{% endfor %}
+<br><br>
+<h3>List of Equipment</h3>
+{% for equipment in item %}
+<b><font color="red">{% if equipment.item.number %}GP# {{equipment.item.number}}{% endif %} {{equipment.item.item}} </font></b>Id: {{equipment.item.id}}
+<br>
+<b><font color="red">Last Job: </font></b>{{equipment.last_job}}  <b><font color="red">Super: </font></b>{{equipment.last_super}}</b>
+<br>
+{% for note in notes %}
+{% if note.id == equipment.item.id %}
+<b>{{note.date}}</b> {{note.user}} - {{note.note}}
+<br>
+{% endif %}
+{% endfor %}
+<br>
+{% endfor %}
+</body>
+
+</html>
+{% endblock %}
