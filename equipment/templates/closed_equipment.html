@@ -44,7 +44,7 @@
 <br>
 {% for note in notes %}
 {% if note.id == equipment.item.id %}
-<b>{{note.date}}</b> {{note.user}} - {{note.note}}
+<b>{{note.date}}</b> {{note.user}} - {{note.note}} {% if note.job_name %} <font color="red"> {{note.job_name}}</font>{% endif %}
 <br>
 {% endif %}
 {% endfor %}
