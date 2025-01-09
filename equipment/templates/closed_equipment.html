@@ -38,9 +38,11 @@
 <br><br>
 <h3>List of Equipment</h3>
 {% for equipment in item %}
-<b><font color="red">{% if equipment.item.number %}GP# {{equipment.item.number}}{% endif %} {{equipment.item.item}} </font></b>Id: {{equipment.item.id}}
+<b><font color="blue">{% if equipment.item.number %}GP# {{equipment.item.number}}{% endif %} {{equipment.item.item}} </font></b>Id: {{equipment.item.id}}
+{% if equipment.last_job %}
 <br>
-<b><font color="red">Last Job: </font></b>{{equipment.last_job}}  <b><font color="red">Super: </font></b>{{equipment.last_super}}</b>
+<b><font color="blue">Last Job: </font></b>{{equipment.last_job}}  <b><font color="blue">Super: </font></b>{{equipment.last_super}}</b>
+{% endif %}
 <br>
 {% for note in notes %}
 {% if note.id == equipment.item.id %}
