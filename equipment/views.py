@@ -782,7 +782,7 @@ def closed_equipment_report(request):
         for x in items_adjust:
             if str(x.get('last_super')) == str(z):
                 a += 1
-        if a > 1:
+        if a > 0:
             super_count.append({'Super':str(z),'Count':a})
     print(super_count)
     send_data['super_count'] = super_count
