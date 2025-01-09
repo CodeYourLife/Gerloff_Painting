@@ -757,3 +757,34 @@ def equipment_home(request):
     #     if inventory.service_vendor is not None:
     #         inventory.service_vendor.company_name = inventory.service_vendor.company_name.strip()
     return render(request, "equipment_home.html", send_data)
+
+
+def closed_equipment_report(request):
+    send_data = {}
+    items = Inventory.objects.filter(is_closed=True).order_by('date_out')
+    items_adjust =[]
+    inventory_notes = []
+    super_count = []
+    for x in items:
+        last_job=""
+        last_super =""
+        notes=InventoryNotes.objects.filter(inventory_item=x)
+        for y in notes:
+            inventory_notes.append({'id': x.id, 'date': y.date, 'user': y.user, 'note': y.note})
+            if y.job_name:
+                last_job = y.job_name
+                if Jobs.objects.filter(job_number=y.job_number).exists():
+                    last_super = Jobs.objects.get(job_number=y.job_number).superintendent
+        items_adjust.append({'item':x,'last_job':last_job,'last_super':last_super})
+    for z in Employees.objects.all():
+        a =0
+        for x in items_adjust:
+            if str(x.get('last_super')) == str(z):
+                a += 1
+        if a > 1:
+            super_count.append({'Super':str(z),'Count':a})
+    print(super_count)
+    send_data['super_count'] = super_count
+    send_data['item'] = items_adjust
+    send_data['notes'] = inventory_notes
+    return render(request, "closed_equipment.html", send_data)
