@@ -191,6 +191,20 @@ def subcontractor_invoice_new(request, subcontract_id):
     if request.method == 'POST':
         if 'subcontract_note' in request.POST:
             invoice_total = 0
+            if subcontract.job_number.is_wage_scale:
+                if not subcontract.is_certified_payroll_email_sent:
+                    email_body = "New Subcontractor Invoice on a Certified Payroll Job! " + str(
+                        subcontract.subcontractor.company) + "\n Job: " + str(
+                        subcontract.job_number.job_name)
+                    try:
+                        Email.sendEmail("New Sub Invoice on Certified Payroll Job", email_body,
+                                        ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com', 'joe@gerloffpainting.com'],
+                                        False)
+                        success = True
+                        subcontract.is_certified_payroll_email_sent = True
+                        subcontract.save()
+                    except:
+                        success = False
             invoice = SubcontractorInvoice.objects.create(date=date.today(), pay_app_number=next_number,
                                                           subcontract=subcontract, pay_date=friday)
             for x in SubcontractItems.objects.filter(subcontract=subcontract, is_approved=True):
@@ -252,6 +266,20 @@ def portal_invoice_new(request, subcontract_id):
     if request.method == 'POST':
         if 'retainage_request' in request.POST:
             total_retainage= float(subcontract.total_retainage())
+            if subcontract.job_number.is_wage_scale:
+                if not subcontract.is_certified_payroll_email_sent:
+                    email_body = "New Subcontractor Invoice on a Certified Payroll Job! " + str(
+                        subcontract.subcontractor.company) + "\n Job: " + str(
+                        subcontract.job_number.job_name)
+                    try:
+                        Email.sendEmail("New Sub Invoice on Certified Payroll Job", email_body,
+                                        ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com', 'joe@gerloffpainting.com'],
+                                        False)
+                        success = True
+                        subcontract.is_certified_payroll_email_sent = True
+                        subcontract.save()
+                    except:
+                        success = False
             invoice = SubcontractorInvoice.objects.create(date=date.today(), pay_app_number=next_number,
                                                           subcontract=subcontract, pay_date=friday, original_amount=0, final_amount=0, retainage=0-total_retainage, original_retainage_amount=0-total_retainage, is_release_retainage=True,release_retainage=total_retainage,retainage_note="Requested from portal")
             SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
@@ -306,6 +334,20 @@ def portal_invoice_new(request, subcontract_id):
     if request.method == 'POST':
         if 'subcontract_note' in request.POST:
             invoice_total = 0
+            if subcontract.job_number.is_wage_scale:
+                if not subcontract.is_certified_payroll_email_sent:
+                    email_body = "New Subcontractor Invoice on a Certified Payroll Job! " + str(
+                        subcontract.subcontractor.company) + "\n Job: " + str(
+                        subcontract.job_number.job_name)
+                    try:
+                        Email.sendEmail("New Sub Invoice on Certified Payroll Job", email_body,
+                                        ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com', 'joe@gerloffpainting.com'],
+                                        False)
+                        success = True
+                        subcontract.is_certified_payroll_email_sent = True
+                        subcontract.save()
+                    except:
+                        success = False
             invoice = SubcontractorInvoice.objects.create(date=date.today(), pay_app_number=next_number,
                                                           subcontract=subcontract, pay_date=friday)
             for x in SubcontractItems.objects.filter(subcontract=subcontract, is_approved=True):
@@ -968,6 +1010,20 @@ def subcontract(request, id):
             else:
                 next_number = 1
             if today.weekday() == 4 or today.weekday() == 3 or today.weekday() == 2: friday = friday + timedelta(7)
+            if subcontract.job_number.is_wage_scale:
+                if not subcontract.is_certified_payroll_email_sent:
+                    email_body = "New Subcontractor Invoice on a Certified Payroll Job! " + str(
+                        subcontract.subcontractor.company) + "\n Job: " + str(
+                        subcontract.job_number.job_name)
+                    try:
+                        Email.sendEmail("New Sub Invoice on Certified Payroll Job", email_body,
+                                        ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com', 'joe@gerloffpainting.com'],
+                                        False)
+                        success = True
+                        subcontract.is_certified_payroll_email_sent = True
+                        subcontract.save()
+                    except:
+                        success = False
             invoice = SubcontractorInvoice.objects.create(date=date.today(), pay_app_number=next_number,
                                                           subcontract=subcontract, pay_date=friday, final_amount=0,
                                                           retainage=0 - float(request.POST['retainage_released']),
