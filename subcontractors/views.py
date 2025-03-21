@@ -165,24 +165,39 @@ def subcontractor_invoice_new(request, subcontract_id):
     for x in SubcontractItems.objects.filter(subcontract=subcontract).order_by('id'):
         totalcost = float(x.total_cost())
         totalbilled = float(x.total_billed())
+        totalbilledandpending = float(x.total_billed_and_pending())
         totalordered = float(x.SOV_total_ordered)
         quantitybilled = float(x.quantity_billed())
+        quantitybilledandpending = float(x.quantity_billed_and_pending())
         remainingcost = totalcost - totalbilled
         remainingqnty = totalordered - quantitybilled
         if x.SOV_is_lump_sum == True:
+            #1
+            # items.append({'is_approved': x.is_approved, 'remainingqnty': remainingqnty, 'remainingcost': remainingcost,
+            #               'id': x.id,
+            #               'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
+            #               'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
+            #               'notes': x.notes, 'quantity_billed': float(x.quantity_billed()),
+            #               'total_billed': round(x.total_billed(), 2), 'total_cost': round(x.total_cost(), 2)})
             items.append({'is_approved': x.is_approved, 'remainingqnty': remainingqnty, 'remainingcost': remainingcost,
                           'id': x.id,
                           'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
                           'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
-                          'notes': x.notes, 'quantity_billed': float(x.quantity_billed()),
-                          'total_billed': round(x.total_billed(), 2), 'total_cost': round(x.total_cost(), 2)})
+                          'notes': x.notes, 'quantity_billed': float(x.quantity_billed_and_pending()),
+                          'total_billed': round(x.total_billed_and_pending(), 2), 'total_cost': round(x.total_cost(), 2)})
         else:
+            # items.append({'is_approved': x.is_approved, 'remainingqnty': remainingqnty, 'remainingcost': remainingcost,
+            #               'id': x.id,
+            #               'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
+            #               'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
+            #               'notes': x.notes, 'quantity_billed': int(x.quantity_billed()),
+            #               'total_billed': round(x.total_billed(), 2), 'total_cost': round(x.total_cost(), 2)})
             items.append({'is_approved': x.is_approved, 'remainingqnty': remainingqnty, 'remainingcost': remainingcost,
                           'id': x.id,
                           'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
                           'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
-                          'notes': x.notes, 'quantity_billed': int(x.quantity_billed()),
-                          'total_billed': round(x.total_billed(), 2), 'total_cost': round(x.total_cost(), 2)})
+                          'notes': x.notes, 'quantity_billed': int(x.quantity_billed_and_pending()),
+                          'total_billed': round(x.total_billed_and_pending(), 2), 'total_cost': round(x.total_cost(), 2)})
     if SubcontractorInvoice.objects.filter(subcontract=subcontract).exists():
         next_number = SubcontractorInvoice.objects.filter(subcontract=subcontract).latest(
             'pay_app_number').pay_app_number + 1
