@@ -374,6 +374,7 @@ class SubcontractItems(models.Model):
         return totalcost
 
     def quantity_billed_and_pending(self):
+        #1
         totalcost = 0
         for x in SubcontractorInvoiceItem.objects.filter(sov_item=self):
             totalcost = float(totalcost) + float(x.quantity)

@@ -172,6 +172,7 @@ def subcontractor_invoice_new(request, subcontract_id):
         remainingcost = totalcost - totalbilled
         remainingqnty = totalordered - quantitybilled
         if x.SOV_is_lump_sum == True:
+            #1
             # items.append({'is_approved': x.is_approved, 'remainingqnty': remainingqnty, 'remainingcost': remainingcost,
             #               'id': x.id,
             #               'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
