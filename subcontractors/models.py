@@ -373,6 +373,17 @@ class SubcontractItems(models.Model):
             totalcost = totalcost * self.SOV_rate
         return totalcost
 
+    def quantity_billed_and_pending(self):
+        totalcost = 0
+        for x in SubcontractorInvoiceItem.objects.filter(sov_item=self):
+            totalcost = float(totalcost) + float(x.quantity)
+        if self.SOV_is_lump_sum == True:
+            if float(self.SOV_rate) == 0:
+                totalcost = 0
+            else:
+                totalcost = float(totalcost) / float(self.SOV_rate)
+        return totalcost
+
 
 class SubcontractorPayments(models.Model):
     id = models.BigAutoField(primary_key=True)
