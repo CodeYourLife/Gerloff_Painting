@@ -185,7 +185,7 @@ function new_pm1(){
         document.getElementById("show_new_pm").style.display = "block";
         document.getElementById("show_existing_pm").style.display = "none";
     }
-    else if (existingPM != newPM){
+    else {
         $.ajax({
             method: 'GET',
             url: '/superintendent/super_ajax',
@@ -200,12 +200,7 @@ function new_pm1(){
             }
         })
     }
-    else {
-         document.getElementById("show_new_pm").style.display = "none";
-         document.getElementById("show_existing_pm").style.display = "block";
-         change_client_pm_form.pm_email.value = "{{job.client_Pm.email}}"
-        change_client_pm_form.pm_phone.value = "{{job.client_Pm.phone}}"
-    }
+
 }
 
 function new_super1(){
@@ -215,31 +210,39 @@ function new_super1(){
         document.getElementById("show_new_super").style.display = "block";
         document.getElementById("show_existing_super").style.display = "none";
     }
-    else if (existingPM != newPM){
+    else if (newPM == "not_sure"){
+        document.getElementById("show_new_super").style.display = "none";
+        document.getElementById("show_existing_super").style.display = "block";
+        document.getElementById("super_name_row").style.display = "none";
+        document.getElementById("super_email_row").style.display = "none";
+        document.getElementById("super_phone_row").style.display = "none";
+    }
+    else {
         $.ajax({
             method: 'GET',
             url: '/superintendent/super_ajax',
             data: {'client_employee_id':change_client_super_form.select_super.value},
             success: function (data) {
                 parsedData = JSON.parse(data);
+                change_client_super_form.super_name.value = parsedData.name
                 change_client_super_form.super_email.value = parsedData.email
                 change_client_super_form.super_phone.value = parsedData.phone
                 document.getElementById("show_new_super").style.display = "none";
                 document.getElementById("show_existing_super").style.display = "block";
+                document.getElementById("super_name_row").style.display = "block";
+                document.getElementById("super_email_row").style.display = "block";
+                document.getElementById("super_phone_row").style.display = "block";
             }
         })
-    }
-    else {
-         document.getElementById("show_new_super").style.display = "none";
-         document.getElementById("show_existing_super").style.display = "block";
-         change_client_super_form.super_email.value = "{{job.client_Super.email}}"
-        change_client_super_form.super_phone.value = "{{job.client_Super.phone}}"
     }
 }
 
 $('#test_header').on('click', 'th', function () {
   var index = table.column(this).index();
 });
+
+function hi(){
+}
 
 function showEmployeeData(status, client, client_email, client_phone,pm,superintendent,super_phone,super_email, pm_phone,pm_email) {
     document.getElementById("client_title").innerHTML = client;
@@ -399,7 +402,11 @@ window.onload = function() {
     document.getElementById("dropbox_link_hide").style.display = "none";
     document.getElementById("dropbox_button_hide").style.display = "block";
     document.getElementById("notes_filter_and_button").style.display = "none";
-
+    if ('{{job.client_Super}}'=='None'){
+            document.getElementById("super_name_row").style.display = "none";
+        document.getElementById("super_email_row").style.display = "none";
+        document.getElementById("super_phone_row").style.display = "none";
+    }
     if ('{{notes_open_button}}'){document.getElementById("collapseOne").style.display = "block";}
 
 };
@@ -777,13 +784,15 @@ document.getElementById("notes_filter_button").style.display = "none";
                                             <select id="select_super" name="select_super" onchange="new_super1()">
                                             {% if job.client_Super %}
                                             <option value={{job.client_Super.person_pk}}>{{job.client_Super.name}}</option>
+                                            {% else %}
+                                            <option value="not_sure">Not Sure</option>
                                             {% endif %}
                                             <option value="not_sure">Not Sure</option>
-                                            <option value="add_new">Add New</option>
                                             {% if client_employees %}
                                             {% for employee in client_employees %}
                                             <option value={{employee.person_pk}}>{{employee.name}}</option>
                                             {% endfor %}
+                                            <option value="add_new">Add New</option>
                                             {% endif %}
                                             </select>
                                         </td></tr>
@@ -794,8 +803,9 @@ document.getElementById("notes_filter_button").style.display = "none";
                                         <tr><td>Phone: <input type= "text" name="new_super_phone" id="new_super_phone" placeholder="Phone" size="30" /></td></tr>
                                     </table>
                                     <table id="show_existing_super">
-                                        <tr><td>Email: <input type= "text" name="super_email" id="super_email" {% if job.client_Super.email %}value='{{job.client_Super.email}}' {% else %} placeholder="Email" {% endif %} size="30" /></td></tr>
-                                        <tr><td>Phone: <input type= "text" name="super_phone" id="super_phone" {% if job.client_Super.phone %}value='{{job.client_Super.phone}}' {% else %} placeholder="Main Phone" {% endif %} size="30"  /></td></tr>
+                                        <tr id="super_name_row"><td>Name: <input type= "text" name="super_name" id="super_name" {% if job.client_Super.name %}value='{{job.client_Super.name}}' {% else %} placeholder="Name" {% endif %} size="30" /></td></tr>
+                                        <tr id="super_email_row"><td>Email: <input type= "text" name="super_email" id="super_email" {% if job.client_Super.email %}value='{{job.client_Super.email}}' {% else %} placeholder="Email" {% endif %} size="30" /></td></tr>
+                                        <tr id="super_phone_row"><td>Phone: <input type= "text" name="super_phone" id="super_phone" {% if job.client_Super.phone %}value='{{job.client_Super.phone}}' {% else %} placeholder="Main Phone" {% endif %} size="30"  /></td></tr>
                                     </table>
                                      <table><tr><td><input type="submit" name="submit_super" class="btn btn-danger" value="Save Changes to Super" /></td></tr></table>
                                  </form>
