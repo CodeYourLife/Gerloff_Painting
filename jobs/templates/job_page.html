@@ -739,7 +739,7 @@ document.getElementById("notes_filter_button").style.display = "none";
                             <tr><td>Phone: <input type= "text" name="new_pm_phone" id="new_pm_phone" placeholder="Phone" size="30" /></td></tr>
                         </table>
                         <table id="show_existing_pm">
-                            <tr><td>Name: <input type= "text" name="pm_name" id="pm_name" placeholder="Name" size="30" /></td></tr>
+                            <tr><td>Name: <input type= "text" name="pm_name" id="pm_name" {% if job.client_Pm.name %}value='{{job.client_Pm.name}}' {% else %} placeholder="Name" {% endif %} size="30" /></td></tr>
                             <tr><td>Email: <input type= "text" name="pm_email" id="pm_email" {% if job.client_Pm.email %}value='{{job.client_Pm.email}}' {% else %} placeholder="Email" {% endif %} size="30" /></td></tr>
                             <tr><td>Phone: <input type= "text" name="pm_phone" id="pm_phone" {% if job.client_Pm.phone %}value='{{job.client_Pm.phone}}' {% else %} placeholder="Main Phone" {% endif %} size="30" /></td></tr>
                         </table>
