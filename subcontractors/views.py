@@ -279,7 +279,12 @@ def portal_invoice_new(request, subcontract_id):
     else:
         next_number = 1
     if request.method == 'POST':
+        # return redirect('portal', sub_id=subcontract.subcontractor.id, contract_id=subcontract_id)
+        # if SubcontractorInvoice.objects.filter(subcontract=subcontract, is_sent=False).exists():
+        #     return redirect('portal', sub_id=subcontract.subcontractor.id, contract_id=subcontract_id)
         if 'retainage_request' in request.POST:
+            if SubcontractorInvoice.objects.filter(subcontract=subcontract, is_sent=False).exists():
+                return redirect('portal', sub_id=subcontract.subcontractor.id, contract_id=subcontract_id)
             total_retainage= float(subcontract.total_retainage())
             if subcontract.job_number.is_wage_scale:
                 if not subcontract.is_certified_payroll_email_sent:
@@ -348,6 +353,8 @@ def portal_invoice_new(request, subcontract_id):
 
     if request.method == 'POST':
         if 'subcontract_note' in request.POST:
+            if SubcontractorInvoice.objects.filter(subcontract=subcontract, is_sent=False).exists():
+                return redirect('portal', sub_id=subcontract.subcontractor.id, contract_id=subcontract_id)
             invoice_total = 0
             if subcontract.job_number.is_wage_scale:
                 if not subcontract.is_certified_payroll_email_sent:
