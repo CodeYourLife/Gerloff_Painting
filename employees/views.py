@@ -5,12 +5,41 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
 from equipment.models import Inventory
-from jobs.models import Jobs
+from jobs.models import Jobs, JobNotes
 from django.http import HttpResponse
 import json
 import os
 from django.conf import settings
 
+@login_required(login_url='/accounts/login')
+def employee_notes(request, employee):
+    send_data = {}
+    special = False
+    if employee == 'AUTO':
+        selected_superid = Employees.objects.get(user=request.user).id
+    else:
+        selected_superid = employee  # selected_superid = either 'ALL' or the ID of super
+    if request.method == 'GET':
+        if 'search2' in request.GET:
+            send_data['search2_exists'] = request.GET['search2']  # super name
+            if request.GET['search2'] == 'ALL':
+                selected_superid = 'ALL'
+            else:
+                selected_superid = request.GET['search2']
+    if selected_superid == 'ALL':
+        send_data['filter_status'] = 'ALL'
+        send_data['notes'] = JobNotes.objects.all()
+    else:
+        selected_employee = Employees.objects.get(id=selected_superid)
+        send_data['selected_super'] = selected_employee
+        send_data['notes'] = JobNotes.objects.filter(user=selected_employee)
+    send_data['supers'] = Employees.objects.filter(active=True)
+    # notes = []
+    # for x in notes_list:
+    #     notes.append({'job_name': jobs.objects.get(job_number=x.job_number)})
+    # invoice_items.append({'description': "Release Retainage", 'billed': selected_invoice.release_retainage,
+    #                       'notes': selected_invoice.retainage_note, 'sov_item': 0, 'quantity': 0})
+    return render(request, "employee_notes.html", send_data)
 @login_required(login_url='/accounts/login')
 def new_production_report(request, jobnumber):
     send_data = {}
