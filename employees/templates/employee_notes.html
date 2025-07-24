@@ -103,7 +103,7 @@ white-space:normal;
 
 window.onload = function() {
     $.fn.dataTable.moment( 'MMM-DD-YYYY' );
-    var table = $('#jobs_table').DataTable({paging:false})
+    var table = $('#jobs_table').DataTable({paging:false, order:[[2,'desc']]})
 
 }
 function new_filter_now(){
@@ -172,7 +172,7 @@ function new_filter_now(){
                                 <td>{{note.user.first_name}} {{note.user.last_name}}</td>
                                 <td><a href="{% url 'job_page' note.job_number.job_number %}"> {{note.job_number.job_name}}</a></td>
 
-                                <td>{{note.date}}</td>
+                                <td>{{note.date|date:'M-d-Y'}}</td>
 <!--                                <td>{{note.type}}</td>-->
                                 <td>{{note.note}}</td>
                             </tr>
