@@ -505,7 +505,7 @@ function submit_new_super(){
 
                                 <td style="white-space:nowrap" width="200">{% endif %}<a
                                         href="{% url 'job_page' job.job_number %}">
-                                    <div style="height:100%;width:100%">{% if job.is_labor_done == True %}<b>[DONE]</b>{% elif job.is_waiting_for_punchlist == True %}<b>[PUNCH]</b>{% endif %} {% if job.is_painting_subbed == True %}<b>[SUB]</b>{% endif %}{{job.job_name}}</div>
+                                    <div style="height:100%;width:100%">{% if job.is_labor_done == True %}<b>[DONE]</b>{% elif job.is_waiting_for_punchlist == True %}<b>[PUNCH]</b>{% endif %}{{job.job_name}}{% if job.is_painting_subbed == True %}<b>[SUB]</b>{% endif %}</div>
                                 </a></td>
                                 {% if job.check_start_date == True and job.is_labor_done == False and job.is_waiting_for_punchlist == False %}
 
