@@ -327,6 +327,8 @@ function new_per_unit(){
     <br>
     <input type="checkbox" name ="is_retainage" id="is_retainage" onchange="update_retainage(event)" checked /> <label for="is_retainage">Retainage?    </label><input type= "number" name="retainage_amt" id="retainage_amt" value="0.10" size="7" step="0.01" onchange="update_retainage(event)" />
     <br>
+    <input type="checkbox" name ="is_entire_job" id="is_entire_job" /> <label for="is_entire_job">Are you Subcontracting the Entire Paint Job?    </label>
+    <br>
     <input type="hidden" id="selected_job" name="selected_job" value = {{selectedjob.job_number}} />
     <textarea id="subcontract_notes" name="subcontract_notes" placeholder="General Notes about this subcontract" rows="2" cols="100" /></textarea>
     <input type="hidden" id="hidden_number_items" name="number_items" />

@@ -952,8 +952,11 @@ def subcontractor_home(request):
 def subcontract(request, id):
     send_data = {}
     subcontract = Subcontracts.objects.get(id=id)
+    current_job = subcontract.job_number
     send_data['approvers']=Subcontract_Approvers.objects.filter(subcontract=subcontract)
     send_data['employees']=Employees.objects.all()
+    if subcontract.is_entire_paint_job:
+        send_data['is_entire_paint_job'] = True
     invoices = []
     for x in SubcontractorInvoice.objects.filter(subcontract=subcontract).order_by('id'):
         if x.retainage > 0:
@@ -1023,6 +1026,20 @@ def subcontract(request, id):
                     if not Subcontract_Approvers.objects.filter(subcontract=subcontract,
                                                                   employee=employee).exists():
                         Subcontract_Approvers.objects.create(subcontract=subcontract, employee=employee)
+        if 'retainage_percentage' in request.POST:
+            if 'is_entire_paint_job' in request.POST:
+                subcontract.is_entire_paint_job = True
+                subcontract.save()
+                # current_job.is_painting_subbed = True
+                # current_job.save()
+            else:
+                subcontract.is_entire_paint_job = False
+                subcontract.save()
+                # if current_job.is_entire_job_subbed():
+                #     current_job.is_painting_subbed = True
+                # else:
+                #     current_job.is_painting_subbed = False
+                # current_job.save()
         if 'retainage_released' in request.POST:
             today = datetime.date.today()
             friday = today + datetime.timedelta((4 - today.weekday()) % 7)
@@ -1142,6 +1159,7 @@ def subcontract(request, id):
                                             note=request.POST['new_note'])
             send_data['notes'] = SubcontractNotes.objects.filter(subcontract=subcontract)
             return redirect("subcontract", subcontract.id)
+
     subcontract = Subcontracts.objects.get(id=id)
     send_data['subcontract'] = subcontract
     send_data['percent_complete'] = format(subcontract.percent_complete(), ".0%")
@@ -1229,6 +1247,12 @@ def subcontracts_new(request):
                 subcontract1.is_retainage = True
                 subcontract1.retainage_percentage = request.POST['retainage_amt']
                 subcontract1.save()
+            if 'is_entire_job' in request.POST:
+                subcontract1.is_entire_paint_job = True
+                subcontract1.save()
+                selectedjob = Jobs.objects.get(job_number=request.POST['select_job'])
+                selectedjob.is_painting_subbed = True
+                selectedjob.save()
             for x in range(1, int(request.POST['number_items']) + 1):
                 if 'item_type' + str(x) in request.POST:
                     if request.POST['item_type' + str(x)] == "Per Unit":
