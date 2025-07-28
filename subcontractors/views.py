@@ -805,10 +805,7 @@ def subcontractor_home(request):
     #         x.is_closed = True
     #         x.save()
     #         SubcontractNotes.objects.create(subcontract=x, date=date.today(),user=Employees.objects.get(user=request.user),note="Subcontract Paid and Closed. Total Contract=$" + str(x.total_contract_amount()) + ". Total Billed =$" + str(x.total_billed()) + ". Total Retainage =$" + str(x.total_retainage()))
-    for x in SubcontractorInvoice.objects.all():
-        job = x.subcontract.job_number
-        job.is_active = True
-        job.save()
+
     send_data = {}
     approval_counts = {}
     approval_counts_two = {}
