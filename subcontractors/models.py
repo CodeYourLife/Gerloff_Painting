@@ -66,6 +66,7 @@ class Subcontracts(models.Model):
     retainage_percentage = models.DecimalField(
         max_digits=4, decimal_places=2, blank=True, null=True)
     is_certified_payroll_email_sent = models.BooleanField(default=False)
+    is_entire_paint_job = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.subcontractor} {self.job_number}"
