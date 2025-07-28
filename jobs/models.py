@@ -241,11 +241,14 @@ class Jobs(models.Model):
             formals_list.append({'gc_number': current_gc_number,'description':description, 'total':"$" + str(('{:,}'.format(current_total)))})
         return formals_list
     def check_start_date(self):
-        difference = date.today() - self.start_date_checked
-        if int(difference.days) > 30:
-            return True
-        else:
+        if self.is_active:
             return False
+        else:
+            difference = date.today() - self.start_date_checked
+            if int(difference.days) > 30:
+                return True
+            else:
+                return False
 
     def time_since_checking(self):
         difference = date.today() - self.start_date_checked
