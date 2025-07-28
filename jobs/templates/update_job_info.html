@@ -421,6 +421,18 @@ function changed_super(){
         <hr>
         <div class ="row">
             <div class="col-sm-6">
+                <label for="is_painting_subbed"><b>Is the Entire Paint Job Subbed Out?</b> </label>
+
+                {% if selectedjob.is_painting_subbed == True %}
+                <input type="checkbox" name ="is_painting_subbed" id="is_painting_subbed" checked />
+                {% else %}
+                <input type="checkbox" name ="is_painting_subbed" id="is_painting_subbed" />
+                {% endif %}
+            </div>
+        </div>
+        <hr>
+        <div class ="row">
+            <div class="col-sm-6">
                 <label for="on_base2"><b>Security Clearance Required?</b> </label>
 
                 {% if selectedjob.is_on_base == True %}

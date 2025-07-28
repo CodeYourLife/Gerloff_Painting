@@ -133,6 +133,10 @@ def update_job_info(request, jobnumber):
             selectedjob.is_on_base = True
         else:
             selectedjob.is_on_base = False
+        if 'is_painting_subbed' in request.POST:
+            selectedjob.is_painting_subbed = True
+        else:
+            selectedjob.is_painting_subbed = False
         if 'is_wage_rate' in request.POST:
             selectedjob.is_wage_scale = True
         else:
@@ -738,6 +742,14 @@ def jobs_home(request):
     send_data['jobs'] = 'ALL'
     return render(request, "jobs_home.html", send_data)
 
+def activate_sub_job(request,jobnumber):
+    selected_job=Jobs.objects.get(job_number=jobnumber)
+    if selected_job.is_painting_subbed:
+        selected_job.is_painting_subbed = False
+    else:
+        selected_job.is_painting_subbed = True
+    selected_job.save()
+    return redirect('job_page', jobnumber=jobnumber)
 
 @login_required(login_url='/accounts/login')
 def job_page(request, jobnumber):

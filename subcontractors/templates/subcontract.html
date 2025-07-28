@@ -553,6 +553,14 @@ function add_note2(){
 											<label for="retainage_percentage" >Retainage Amt.</label>
                                         </div>
                                     </td></tr>
+                                    <tr><td>
+                                    {% if is_entire_paint_job %}
+                                    <input type="checkbox" id="is_entire_paint_job" name="is_entire_paint_job" checked />
+										{% else %}
+										<input type="checkbox" id="is_entire_paint_job" name="is_entire_paint_job" />
+										{% endif %}
+                                        <label for="is_entire_paint_job">Entire Paint Job?</label>
+                                    </td></tr>
 									<tr><td>
                                         {% if subcontract.is_closed %}
 										<input type="checkbox" id="is_closed" name="is_closed" checked />
