@@ -205,6 +205,11 @@ def subcontractor_invoice_new(request, subcontract_id):
         next_number = 1
     if request.method == 'POST':
         if 'subcontract_note' in request.POST:
+            if SubcontractorInvoice.objects.filter(subcontract=subcontract, is_sent=False).exists():
+                return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id='ALL')
+            current_job = subcontract.job_number
+            current_job.is_active = True
+            current_job.save()
             invoice_total = 0
             if subcontract.job_number.is_wage_scale:
                 if not subcontract.is_certified_payroll_email_sent:
@@ -285,6 +290,9 @@ def portal_invoice_new(request, subcontract_id):
         if 'retainage_request' in request.POST:
             if SubcontractorInvoice.objects.filter(subcontract=subcontract, is_sent=False).exists():
                 return redirect('portal', sub_id=subcontract.subcontractor.id, contract_id=subcontract_id)
+            current_job = subcontract.job_number
+            current_job.is_active = True
+            current_job.save()
             total_retainage= float(subcontract.total_retainage())
             if subcontract.job_number.is_wage_scale:
                 if not subcontract.is_certified_payroll_email_sent:
@@ -797,7 +805,10 @@ def subcontractor_home(request):
     #         x.is_closed = True
     #         x.save()
     #         SubcontractNotes.objects.create(subcontract=x, date=date.today(),user=Employees.objects.get(user=request.user),note="Subcontract Paid and Closed. Total Contract=$" + str(x.total_contract_amount()) + ". Total Billed =$" + str(x.total_billed()) + ". Total Retainage =$" + str(x.total_retainage()))
-
+    for x in SubcontractorInvoice.objects.all():
+        job = x.subcontract.job_number
+        job.is_active = True
+        job.save()
     send_data = {}
     approval_counts = {}
     approval_counts_two = {}
