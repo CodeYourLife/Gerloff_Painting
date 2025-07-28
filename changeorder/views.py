@@ -3,7 +3,7 @@ from changeorder.models import *
 from jobs.models import Jobs, JobCharges, ClientEmployees, Email_Errors
 from employees.models import *
 from django.shortcuts import render, redirect
-from datetime import date
+from datetime import date, datetime
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django_tables2 import RequestConfig
@@ -1258,6 +1258,9 @@ def extra_work_ticket(request, id):
             try:
                 Email.sendEmail("Extra Work Ticket", email_body, recipients, False)
                 send_data['error_message'] = "The email with the link to the extra work ticket was successfully sent!"
+                ChangeOrderNotes.objects.create(note="Ticket Emailed To: " + str(email),
+                                                cop_number=changeorder, date=date.today(),
+                                                user=Employees.objects.get(user=request.user))
             except:
                 send_data['error_message'] = "ERROR! The email with the extra work ticket failed to send. Please try again later. "
         if 'selected_file' in request.POST:
@@ -1589,7 +1592,9 @@ def process_ewt(request, id):
             bond = EWTicket.objects.filter(EWT=ewt, master__category="Bond").values
             # bond = json.dumps(list(bond1), cls=DjangoJSONEncoder)
             send_data['bond'] = bond
-
+    else:
+        adjust_date = date.today().strftime("%Y-%m-%d")
+        send_data['ewtdate'] = adjust_date
     return render(request, "process_ewt.html", send_data)
 
 

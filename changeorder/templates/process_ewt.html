@@ -27,8 +27,10 @@ var material_row_counter = 1;
 var equipment_row_counter = 1;
 
 window.onload = function() {
+
 rolodex = JSON.parse("{{laboritems|escapejs}}");
 alert(rolodex[0].employee.id)
+var table = $('#labor_breakdown').DataTable({paging: false, aaSorting:[]})
 }
 
 
@@ -164,7 +166,7 @@ function add_ot(){
 function add_day(daycolumn){
 		var select = document.createElement("INPUT");
 		select.setAttribute("type", "number");
-		select.setAttribute("size", 4);
+		select.setAttribute("size", 1);
 		select.name = daycolumn + row_counter;
 		select.id = daycolumn + row_counter;
 		select.value = 0
@@ -305,7 +307,7 @@ if (elementTypeSelector[i].value =='please_select'){
         <br /> <hr>
 
 	<h3>LABOR BREAKDOWN</h3>
-
+<div class="table-responsive">
 	<table id="labor_breakdown" class="display" style="width:90%" >
 		<thead>
 			<tr>
@@ -339,13 +341,13 @@ if (elementTypeSelector[i].value =='please_select'){
 						{% endif %}
             		</select>
 				</td>
-				<td><input type="number" id="monday" name="monday" size=4 value ={{x.monday}} ></td>
-				<td><input type="number" id="tuesday" name="tuesday" value ={{x.tuesday}} size=4 ></td>
-				<td><input type="number" id="wednesday" name="wednesday" value ={{x.wednesday}} size=4 ></td>
-				<td><input type="number" id="thursday" name="thursday" value ={{x.thursday}} size=4 ></td>
-				<td><input type="number" id="friday" name="friday" value ={{x.friday}} size=4 ></td>
-				<td><input type="number" id="saturday" name="saturday" value ={{x.saturday}} size=4 ></td>
-				<td><input type="number" id="sunday" name="sunday" value ={{x.sunday}} size=4 ></td>
+				<td><input type="number" id="monday" name="monday" size=2 value ={{x.monday}} ></td>
+				<td><input type="number" id="tuesday" name="tuesday" value ={{x.tuesday}} size=2 ></td>
+				<td><input type="number" id="wednesday" name="wednesday" value ={{x.wednesday}} size=2 ></td>
+				<td><input type="number" id="thursday" name="thursday" value ={{x.thursday}} size=2 ></td>
+				<td><input type="number" id="friday" name="friday" value ={{x.friday}} size=2 ></td>
+				<td><input type="number" id="saturday" name="saturday" value ={{x.saturday}} size=2 ></td>
+				<td><input type="number" id="sunday" name="sunday" value ={{x.sunday}} size=2 ></td>
 				{% if x.master_id == 8 %}
 				<td>OT?
 					<input type='hidden' value='notchecked' name="is_overtime" id="is_overtime" >
@@ -364,6 +366,7 @@ if (elementTypeSelector[i].value =='please_select'){
 
 		</tbody>
 	</table>
+</div>
 	<button type="button" class="btn btn-info btn-sm" onclick="add_painter_row()">Add Painter Row </button>
 <br><br><hr>
 	<h3>MATERIAL BREAKDOWN</h3>
