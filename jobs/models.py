@@ -147,6 +147,7 @@ class Jobs(models.Model):
     man_hours_used = models.IntegerField(null=True, blank=True)
     is_waiting_for_punchlist = models.BooleanField(default=False)
     is_labor_done = models.BooleanField(default=False)
+    is_painting_subbed = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.job_name}"
@@ -176,6 +177,13 @@ class Jobs(models.Model):
         for x in ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=True):
             if x.price: total_amount += x.price
         return total_amount
+
+    def is_entire_job_subbed(self):
+        subbed_paint_jobs = Subcontracts.objects.filter(job_number=self, is_entire_paint_job=True)
+        if not subbed_paint_jobs:
+            return False
+        else:
+            return True
 
     def count_approved_changes(self):
         total_amount =0
