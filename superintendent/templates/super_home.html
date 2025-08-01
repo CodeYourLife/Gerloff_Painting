@@ -99,6 +99,21 @@ white-space:normal;
     <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
     <script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
     <script type="text/javascript" class="init">
+
+var original_start_date = "Test"
+
+function check_if_start_date_changed(){
+    if (original_start_date != pmform.start_date.value){
+        confirm_date_button.style.display = "none"
+        pmform.confirm_date.checked = true
+    }
+    else {
+        confirm_date_button.style.display = "block"
+        pmform.confirm_date.checked = false
+    }
+
+}
+
 function go_to_job(jobnumber){
     url = "{% url 'job_page' 'ALL' %}"
     url = url.replace('ALL', jobnumber);
@@ -127,6 +142,9 @@ window.onload = function() {
 }
 
 function populate_start_date_modal(jobnumber,startdate,is_active,x){
+       original_start_date = pmform.start_date.value
+    confirm_date_button.style.display = "block"
+    pmform.confirm_date.checked = false
     $.ajax({
         method: 'GET',
         url: '/superintendent/super_ajax',
@@ -160,7 +178,7 @@ function change_start_date(){
     $.ajax({
         method: 'GET',
         url: '/superintendent/super_ajax',
-        data: {'notify':pmform.notify_super.checked, 'job_number':pmform.job_number.value, 'start_date': pmform.start_date.value,'is_active':pmform.is_active.checked,'notes':pmform.date_note.value,'row':pmform.row_number.value},
+        data: {'confirm_date':pmform.confirm_date.checked, 'notify':pmform.notify_super.checked, 'job_number':pmform.job_number.value, 'start_date': pmform.start_date.value,'is_active':pmform.is_active.checked,'notes':pmform.date_note.value,'row':pmform.row_number.value},
         success: function (data) {
             parsedData = JSON.parse(data);
             if (parsedData.email_sent){alert("Email Sent")}
@@ -178,8 +196,7 @@ function change_start_date(){
             }
 
             document.getElementById("jobs_table").rows[pmform.row_number.value].cells[2].innerHTML = "<a href='#'>" + parsedData.new_date + "</a>"
-<!--            document.getElementById("jobs_table").rows[pmform.row_number.value].cells[2].innerHTML = "<a href='#'>" + Date(parsedData.new_date) + "</a>"-->
-            document.getElementById("jobs_table").rows[pmform.row_number.value].cells[2].style.backgroundColor = ""
+if (pmform.confirm_date.checked){            document.getElementById("jobs_table").rows[pmform.row_number.value].cells[2].style.backgroundColor = ""}
             if (parsedData.is_active == "true"){
                 if ('{{search5_exists}}'){
                     document.getElementById("jobs_table").deleteRow(pmform.row_number.value)
@@ -347,7 +364,7 @@ function submit_new_super(){
                                     <table>
                                         <tr>
                                             <td>
-                                                Start date:<input type="date" id="start_date" name="start_date"
+                                                Start date:<input type="date" id="start_date" name="start_date" onchange="check_if_start_date_changed()"
                                                                   value="1999-01-01">
                                                 <br>
                                                 <input type="checkbox" name="is_active" id="is_active" checked/> <label
@@ -359,18 +376,21 @@ function submit_new_super(){
                                                 <textarea id="date_note" name="date_note" class="form-control"
                                                           style="min-width: 100%"></textarea>
                                                                                     <br>
-
+<div id="confirm_date_button">
+                                    <input type="checkbox" name ="confirm_date" id="confirm_date" /> <label for="confirm_date">Confirm Date for 30 More Days</label>
+                                        <br>
+    </div>
                                     <input type="checkbox" name ="notify_super" id="notify_super" checked /> <label for="notify_super">Notify Superintendent?</label>
                                                 <br>
 
                                             </td>
                                         </tr>
                                     </table>
-
-
+                                </form>
+                                </div>
                             </div>
                         </div>
-                    </div>
+
                     <div class="tab-pane" id="9a">
                         <div style="margin-top: 12px" class="table-responsive">
                             <div id="notes_tab">

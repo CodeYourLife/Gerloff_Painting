@@ -191,6 +191,9 @@ def super_ajax(request):
                 datechange = True
             else:
                 datechange = False
+            if request.GET['confirm_date'] == "true":
+                datechange = True
+            print("YEE HAW BOY")
             if request.GET['notify'] == "true":
                 notify = True
             else:

@@ -13,9 +13,11 @@ import json
 
 def start_date_change(job, newdate, status, note, author, did_date_change, notify):
     # status is 1- active, 2- not active, 3 - no change
+    print("PUMPKING HERE")
     success=False
     statusnote = ""
-    job.start_date_checked = date.today()
+    if did_date_change:
+        job.start_date_checked = date.today()
     if status == 1:
         job.is_active = True
         statusnote = "Changed Status to Active"
