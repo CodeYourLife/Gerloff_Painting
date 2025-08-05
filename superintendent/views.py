@@ -170,6 +170,7 @@ def super_ajax(request):
                 notes.append({'note': x.note, 'user': str(x.user),
                               'date': str(x.date)})
             send_data['notes']=notes
+            send_data['is_active']=job.is_active
             data_details = {'notes': notes}
             return HttpResponse(json.dumps(send_data))
         elif 'filter_type' in request.GET:
