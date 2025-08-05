@@ -1128,6 +1128,8 @@ def subcontract(request, id):
             item.delete()
             return redirect("subcontract", subcontract.id)
         if 'added_row' in request.POST:
+            subcontract.is_closed = False
+            subcontract.save()
             for x in range(1, int(request.POST['number_items']) + 1):
                 if 'item_type' + str(x) in request.POST:
                     if request.POST['item_type' + str(x)] == "Per Unit":
