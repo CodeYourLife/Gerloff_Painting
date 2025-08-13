@@ -206,7 +206,12 @@ def subcontractor_invoice_new(request, subcontract_id):
     if request.method == 'POST':
         if 'subcontract_note' in request.POST:
             if SubcontractorInvoice.objects.filter(subcontract=subcontract, is_sent=False).exists():
-                return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id='ALL')
+                check_function = False
+                for x in SubcontractorInvoice.objects.filter(subcontract=subcontract, is_sent=False):
+                    if x.pay_app_number == next_number:
+                        check_function = True
+                if check_function:
+                    return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id='ALL')
             current_job = subcontract.job_number
             current_job.is_active = True
             current_job.save()
