@@ -771,7 +771,7 @@ function add_note2(){
 					{% if edit_row %}
 					<td></td>
 					{% else %}
-					<td> <button class="btn btn-success" name="edit_now" onclick="edit_row({{x.id}})">Edit Item</button></td>
+					<td> {% if job_open %}<button class="btn btn-success" name="edit_now" onclick="edit_row({{x.id}})">Edit Item</button>{% endif %}</td>
 					{% endif %}
 				</tr>
 			{% endif %}
@@ -781,8 +781,9 @@ function add_note2(){
 	</div>
 	<div id="new_item_here" name="new_item_here" /></div>
     <br>
- 	<button type="button" name="new_item" class="btn btn-primary" onclick="new_lump_sum()">New Lump Sum Item</button>
+ 	{% if job_open %}<button type="button" name="new_item" class="btn btn-primary" onclick="new_lump_sum()">New Lump Sum Item</button>
     <button type="button" name="new_item" class="btn btn-primary" onclick="new_per_unit()">New Item - Per Unit</button>
+    {% else %} JOB IS CLOSED {% endif %}
 	<br><br>
 </form>
 <br>
@@ -796,16 +797,19 @@ function add_note2(){
 <!--        <div style="margin: 5px;" class="col-sm-4">-->
             <form action="{% url 'subcontractor_invoice_new' subcontract.id %}" method="post"  >
             {% csrf_token %}
-            <input type="submit" name="Form3" class="btn btn-success btn-sm" value="NEW INVOICE" />
+            {% if job_open %}
+                <input type="submit" name="Form3" class="btn btn-success btn-sm" value="NEW INVOICE" />{% endif %}
             </form>
         </div>
 
           <div class="p-2">
 <!--        <div style="margin: 5px;" class="col-sm-4">-->
+              {% if job_open %}
               {% if is_invoice_pending %}
             <button class="btn btn-secondary btn-sm" onclick="sorry()" >RELEASE RETAINAGE</button>
               {% else %}
               <button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#retainage-modal" >RELEASE RETAINAGE</button>
+              {% endif %}
               {% endif %}
         </div>
 </div>

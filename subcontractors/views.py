@@ -968,6 +968,9 @@ def subcontract(request, id):
     current_job = subcontract.job_number
     send_data['approvers']=Subcontract_Approvers.objects.filter(subcontract=subcontract)
     send_data['employees']=Employees.objects.all()
+    if not current_job.is_closed:
+        print("PUMPKIN")
+        send_data['job_open']= True
     if subcontract.is_entire_paint_job:
         send_data['is_entire_paint_job'] = True
     invoices = []
