@@ -399,6 +399,8 @@ class SubcontractorPayments(models.Model):
     subcontractor = models.ForeignKey(
         Subcontractors, on_delete=models.PROTECT, related_name="payment")
 
+    def __str__(self):
+        return f"{self.subcontractor} {self.date} {self.check_number}"
 
 class SubcontractorInvoice(models.Model):
     id = models.BigAutoField(primary_key=True)
