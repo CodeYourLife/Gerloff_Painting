@@ -97,9 +97,10 @@
 
 $(document).ready(function () {
 
-    var table = $('#payments_table').DataTable({ordering:false, pageLength: 50});
+  var table = $('#payments_table').DataTable({ordering:false, pageLength: 50});
   if ("{{error_message}}"){alert("{{error_message}}")}
 })
+
 
 function populate_super_modal(payment_id){
 

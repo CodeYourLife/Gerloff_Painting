@@ -1399,10 +1399,15 @@ def subcontracts_home(request):
 def subcontractor_payments(request):
     send_data = {}
     send_data['payments'] = SubcontractorPayments.objects.all().order_by('-date')
+
     if Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).exists():
-        send_data['error_message']= Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).last().error
+        error_message = ""
+        send_data['error_message'] = Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name)
+        for x in Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name):
+            error_message += "-NOTE- " + x.error
+        send_data['error_message']= error_message
         print("NOW PRINTING THE ERROR MESSAGE")
-        print(Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).last().error)
+        print(error_message)
     Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
     if request.method == 'POST':
         if 'new_payment' in request.POST:
@@ -1423,13 +1428,19 @@ def new_subcontractor_payment(request):
                                                                check_number=request.POST['check_number'],
                                                                final_amount=request.POST['final_amount'],
                                                                notes=request.POST['note'])
+                new_email_message = "You have a new payment.\nPayment Amount: $" + str(payment.final_amount) + "\nCheck Number #" + str(payment.check_number) + "\n"
                 for x in InvoiceBatch.objects.filter(invoice__subcontract__subcontractor=selected_sub,
                                                      invoice__is_sent=True, invoice__processed=False):
                     selected_invoice = x.invoice
                     subcontract = selected_invoice.subcontract
                     selected_invoice.processed = True
                     selected_invoice.payment = payment
+                    amount_paid = selected_invoice.final_amount - selected_invoice.retainage
                     selected_invoice.save()
+                    new_email_message += "\nJob: " + str(subcontract.job_number.job_name) + "\n"
+                    new_email_message += "Amount Paid This Week-  $" + str(amount_paid) + "\n"
+                    new_email_message += "Total Contract Amount-  $" + str(subcontract.total_contract_amount()) + "\n"
+                    new_email_message += "Total Paid To Date-  $" + str(subcontract.total_actually_paid()) + "\n\n"
                     ready_to_close = True
                     #check to see if there are open invoices still
                     if SubcontractorInvoice.objects.filter(subcontract=subcontract, processed=False).exists():
@@ -1473,6 +1484,25 @@ def new_subcontractor_payment(request):
                                                     error="Subcontract " + str(subcontract) + " CLOSED!",
                                                     date=date.today())
                     selected_invoice.save()
+                recipients = ["admin1@gerloffpainting.com"]
+                recipients.append("admin2@gerloffpainting.com")
+                recipients.append("joe@gerloffpainting.com")
+                print("Now showing the email message")
+                print(new_email_message)
+                if 'send_email' in request.POST:
+                    print("Trying to send email now")
+                    if selected_sub.email:
+                        recipients.append(selected_sub.email)
+                    else:
+                        Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name,
+                                                    error="Email Not Sent-No Email on File for Sub",
+                                                    date=date.today())
+                    try:
+                        Email.sendEmail("New Payment " + selected_sub.company, new_email_message, recipients, False)
+                    except:
+                        Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name,
+                                                    error="Email Not Sent",
+                                                    date=date.today())
                 InvoiceBatch.objects.all().delete()
             return redirect('subcontractor_payments')
         if 'selected_invoice' in request.POST:

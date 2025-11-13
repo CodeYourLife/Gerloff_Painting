@@ -226,6 +226,12 @@ class Subcontracts(models.Model):
             total += x.final_amount - x.retainage
         return total
 
+    def total_actually_paid(self):
+        total = 0
+        for x in SubcontractorInvoice.objects.filter(subcontract=self, processed=True):
+            total += x.final_amount - x.retainage
+        return total
+
     def total_billed_prior(self):
         #saturday thru friday
         today = datetime.date.today()
@@ -305,6 +311,8 @@ class Subcontracts(models.Model):
             return True
         else:
             return False
+
+
 
 
 class SubcontractItems(models.Model):
