@@ -1437,10 +1437,10 @@ def new_subcontractor_payment(request):
                     selected_invoice.payment = payment
                     amount_paid = selected_invoice.final_amount - selected_invoice.retainage
                     selected_invoice.save()
-                    new_email_message += "\nJob: " + str(subcontract.job_number.job_name) + "\n"
-                    new_email_message += "Amount Paid This Week-  $" + str(amount_paid) + "\n"
-                    new_email_message += "Total Contract Amount-  $" + str(subcontract.total_contract_amount()) + "\n"
-                    new_email_message += "Total Paid To Date-  $" + str(subcontract.total_actually_paid()) + "\n\n"
+                    new_email_message += "\n\nJob: " + str(subcontract.job_number.job_name)
+                    new_email_message += "\nAmount Paid This Week-  $" + str(amount_paid)
+                    new_email_message += "\nTotal Contract Amount-  $" + str(subcontract.total_contract_amount())
+                    new_email_message += "\nTotal Paid To Date-  $" + str(subcontract.total_actually_paid())
                     ready_to_close = True
                     #check to see if there are open invoices still
                     if SubcontractorInvoice.objects.filter(subcontract=subcontract, processed=False).exists():
