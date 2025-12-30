@@ -43,51 +43,16 @@ $(document).ready(function () {
         <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>
         <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
         <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
-        <li><a class="nav-item nav-link" active href="{% url 'add_new_employee' %}">New Employee</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'safety_home' %}">Safety</a></li>
-    </ul>
-  </div>
-</nav>
+        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
+	  	<li><a class="nav-item nav-link active" href="{% url 'safety_home' %}">Safety</a></li>
+		  </ul>
+  		</div>
+	</nav><br>
 
+<h4><a href = "{% url 'toolbox_talks_master' %}">Master List of Toolbox Talks</a></h4>
 
+<h4><a href = "{% url 'scheduled_toolbox_talks' %}">Scheduled Toolbox Talks</a></h4>
 
-<div style="padding-top: 50px; padding-bottom: 50px" class="row align-items-center justify-content-center align-middle">
-    <div class="col-6" >
-
-        <form action = "{% url 'add_new_employee' %}" method = "post" class="form-group">
-            {% csrf_token %}
-<!--            <label for="username">Username</label>-->
-<!--            <input id="username" type="text" name = "userName" placeholder="Employee Username" class="form-control">-->
-<!--            <label for="password">Password</label>-->
-<!--            <input id="password" type="text" name = "password" placeholder="Employee Password" class="form-control">-->
-            <label for="firstName">First Name</label>
-            <input id="firstName" type="text" name = "first_name" placeholder="Employee First Name" class="form-control">
-            <label for="middleName">Middle Name</label>
-            <input id="middleName" type="text" name = "middle_name" placeholder="Employee Middle Name" class="form-control">
-            <label for="lastName">Last Name</label>
-            <input id="lastName" type="text" name = "last_name" placeholder="Employee Last Name" class="form-control">
-			 <label for="jobTitle">Job Title</label>
-            <select id="jobTitle" name="jobTitle" class="form-control">
-                <option value="not_selected">Select Title</option>
-                {% if jobtitles %}
-                {% for x in jobtitles %}
-                <option value={{x.id}}>{{x.description}}</option>
-                {% endfor %}
-                {% endif %}
-            </select>
-                <label for="employer">Employer</label>
-				<select id="employer" name="employer" class="form-control">
-                <option value="not_selected">Select Employer</option>
-                {% if employers %}
-                {% for x in employers %}
-                <option value={{x.id}}>{{x.company_name}}</option>
-                {% endfor %}
-                {% endif %}
-            </select>
-            <input type="submit" style="margin-top: 10px" class="btn btn-primary btn-sm" name="add_new" value="Submit" >
-        </form>
-    </div>
-</div>
 </body>
 </html>
 

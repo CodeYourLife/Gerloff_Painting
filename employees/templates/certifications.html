@@ -44,10 +44,10 @@ $(document).ready(function () {
         <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
         <li><a class="nav-item nav-link active" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
         <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
-
-    </ul>
-  </div>
-</nav><br>
+	  	<li><a class="nav-item nav-link" href="{% url 'safety_home' %}">Safety</a></li>
+		  </ul>
+  		</div>
+	</nav><br>
 <form action="{% url 'new_certification' %}">
     <input type="submit" value="NEW CERTIFICATION - CLICK HERE" />
 </form>

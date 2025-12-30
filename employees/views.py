@@ -3,13 +3,16 @@ from employees.models import *
 from django.shortcuts import render, redirect
 import json
 from django.core.serializers.json import DjangoJSONEncoder
-from datetime import date
+from datetime import date, timedelta
 from equipment.models import Inventory
 from jobs.models import Jobs, JobNotes
 from django.http import HttpResponse
+from console.misc import createfolder
 import json
 import os
 from django.conf import settings
+from media.utilities import MediaUtilities
+
 
 @login_required(login_url='/accounts/login')
 def employee_notes(request, employee):
@@ -424,8 +427,21 @@ def training(request):
 
 @login_required(login_url='/accounts/login')
 def my_page(request):
-    send_data = {}
     employee = Employees.objects.get(user=request.user)
+    if request.method == 'POST':
+        if 'nickname' in request.POST:
+            employee.nickname = request.POST['nickname']
+            employee.phone = request.POST['phone']
+            employee.email = request.POST['email']
+            employee.save()
+        if 'selected_file' in request.POST:
+            if request.POST['selected_file'] == "pumpkin":
+                selected_talk = ScheduledToolboxTalks.objects.get(id=request.POST['selected_language'])
+                CompletedToolboxTalks.objects.create(employee=employee, date=date.today(), master=selected_talk)
+            else:
+                id = str(request.POST['selected_id'] + "/" + request.POST['selected_language'])
+                return MediaUtilities().getDirectoryContents(id, request.POST['selected_file'], 'toolbox_talks')
+    send_data = {}
     send_data['employeeJobs'] = EmployeeJob.objects.filter(employee=employee.id)
     send_data['employee'] = employee
     send_data['inventory'] = Inventory.objects.filter(assigned_to=employee,is_closed=False)
@@ -443,12 +459,24 @@ def my_page(request):
     send_data['mentorship_apprentice'] = Mentorship.objects.filter(apprentice=employee)
     send_data['certifications'] = Certifications.objects.filter(employee=employee)
     send_data['actions'] = Certifications.objects.filter(employee=employee, action_required=True)
-
-    if request.method == 'POST':
-        employee.nickname = request.POST['nickname']
-        employee.phone = request.POST['phone']
-        employee.email = request.POST['email']
-        employee.save()
+    if employee.job_title.description == "Painter":
+        toolbox_talks_required = []
+        folder_name = settings.MEDIA_ROOT
+        for x in ScheduledToolboxTalks.objects.filter(date__lte = date.today()):
+            if not CompletedToolboxTalks.objects.filter(employee=employee,master=x).exists():
+                toolbox_talk=x.master
+                path = folder_name + "/toolbox_talks/" + str(toolbox_talk.id) + "/Spanish"
+                for entry in os.listdir(path):
+                    full_path = os.path.join(path, entry)
+                    if os.path.isfile(full_path):
+                        spanish = entry
+                path = folder_name + "/toolbox_talks/" + str(toolbox_talk.id) + "/English"
+                for entry in os.listdir(path):
+                    full_path = os.path.join(path, entry)
+                    if os.path.isfile(full_path):
+                        english = entry
+                toolbox_talks_required.append({'id':x.master.id, 'item':x.id,'description': str(x.master.id) + "- " + x.master.description,'date':x.date, 'english': english, 'spanish': spanish})
+        send_data['toolbox_talks_required'] = toolbox_talks_required
     return render(request, "my_page.html", send_data)
 
 
@@ -549,7 +577,7 @@ def add_new_employee(request):
                                             middle_name=request.POST['middle_name'],
                                             last_name=request.POST['last_name'],
                                             job_title=EmployeeTitles.objects.get(id=request.POST['jobTitle']),
-                                            employer=Employers.objects.get(id=request.POST['employer']))
+                                            employer=Employers.objects.get(id=request.POST['employer']), date_added=date.today())
         try:
             # check if employees directory exists
             employeesFolderPath = os.path.join(settings.MEDIA_ROOT, "employees")
@@ -632,3 +660,69 @@ def daily_reports(request, id):
         send_data['selected_item'] = DailyReports.objects.get(id=id)
         send_data['items'] = ProductionItems.objects.filter(daily_report__id=id)
     return render(request, "daily_reports.html", send_data)
+
+def safety_home(request):
+    return render(request, 'safety_home.html')
+
+def toolbox_talks_master(request):
+    send_data = {}
+    toolboxtalks = []
+    folder_name = settings.MEDIA_ROOT
+    for x in ToolboxTalks.objects.all():
+        path = folder_name + "/toolbox_talks/" + str(x.id) + "/Spanish"
+        for entry in os.listdir(path):
+            full_path = os.path.join(path, entry)
+            if os.path.isfile(full_path):
+                spanish = entry
+        path = folder_name + "/toolbox_talks/" + str(x.id) + "/English"
+        for entry in os.listdir(path):
+            full_path = os.path.join(path, entry)
+            if os.path.isfile(full_path):
+                english = entry
+        toolboxtalks.append({'id':x.id, 'description': x.description,'english': english, 'spanish': spanish})
+    send_data['toolboxtalks']= toolboxtalks
+    if request.method == 'POST':
+        print(request.POST)
+        if 'description' in request.POST:
+            newitem = ToolboxTalks.objects.create(description = request.POST['description'])
+            createfolder("toolbox_talks/" + str(newitem.id))
+            createfolder("toolbox_talks/" + str(newitem.id) + "/English")
+            createfolder("toolbox_talks/" + str(newitem.id) + "/Spanish")
+            return redirect('toolbox_talks_master')
+        if 'selected_id' in request.POST:
+            id = str(request.POST['selected_id'] + "/" + request.POST['selected_language'])
+            return MediaUtilities().getDirectoryContents(id, request.POST['selected_file'], 'toolbox_talks')
+    return render(request, 'toolbox_talks_master.html', send_data)
+
+def scheduled_toolbox_talks(request):
+    if request.method == 'POST':
+        if not ScheduledToolboxTalks.objects.all().exists():
+            today = date.today()
+            days_until_monday = (0 - today.weekday()+7) % 7
+            if days_until_monday == 0:
+                days_until_monday = 7
+            next_monday_date = today + timedelta(days=days_until_monday)
+            #next_date = next_monday_date
+            next_date = next_monday_date - timedelta(days=7)
+        else:
+            latest_object = ScheduledToolboxTalks.objects.all().order_by('-date')[0]
+            next_date = latest_object.date + timedelta(days=7)
+        print(next_date)
+        for x in ToolboxTalks.objects.all():
+            print(x)
+            ScheduledToolboxTalks.objects.create(master=x, date=next_date)
+            next_date = next_date + timedelta(days=7)
+
+    send_data = {}
+    toolboxtalks = []
+    for x in ScheduledToolboxTalks.objects.all():
+        total_painters = Employees.objects.filter(date_added__lte=x.date, job_title__description = "Painter").count()
+        painters_completed = 0
+        for y in Employees.objects.filter(date_added__lte=x.date, job_title__description = "Painter"):
+            if CompletedToolboxTalks.objects.filter(master=x, employee=y).exists():
+                painters_completed += 1
+        ratio = str(painters_completed) + " of " + str(total_painters)
+        description = str(x.master.id) + " - " + x.master.description
+        toolboxtalks.append({'Item':x.id, 'description': description, 'date': x.date, 'ratio': ratio})
+    send_data['toolboxtalks']= toolboxtalks
+    return render(request, 'scheduled_toolbox_talks.html', send_data)

@@ -61,6 +61,7 @@ class Employees(models.Model):
     job_title = models.ForeignKey(EmployeeTitles, on_delete=models.CASCADE, null=True)
     employer = models.CharField(max_length=100)  # Gerloff Painting, Nam, JuarezPro, etc.
     pin = models.IntegerField(null=True, blank=True)
+    date_added = models.DateField(null=False, blank=False)
 
 
 
@@ -414,3 +415,19 @@ class ProductionItems(models.Model):
 
     def __str__(self):
         return f"{self.employee} {self.date}"
+
+class ToolboxTalks(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    description = models.CharField(max_length=2000, blank=True, null=True)
+
+class ScheduledToolboxTalks(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    master = models.ForeignKey(ToolboxTalks, on_delete=models.PROTECT, null=True)
+    date = models.DateField(null=True, blank=True)
+    description = models.CharField(max_length=2000, blank=True, null=True) #use this only for a custom one
+
+class CompletedToolboxTalks(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    date = models.DateField(null=True, blank=True)
+    employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
+    master = models.ForeignKey(ScheduledToolboxTalks, on_delete=models.PROTECT)
