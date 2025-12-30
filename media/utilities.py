@@ -16,4 +16,5 @@ class MediaUtilities(object):
             name = value.split('.')[0]
             mimetype = value.split('.')[1]
             with open(file_path, 'rb') as fh:
-                return HttpResponse(fh.read(), headers={'Content-Type': f'image/{mimetype}','Content-Disposition': f'attachment; filename="{name}.{mimetype}"'})
+                return HttpResponse(fh.read(), headers={'Content-Type': f'image/{mimetype}','Content-Disposition': f'inline; filename="{name}.{mimetype}"'})
+                #return HttpResponse(fh.read(), headers={'Content-Type': f'image/{mimetype}','Content-Disposition': f'attachment; filename="{name}.{mimetype}"'})
