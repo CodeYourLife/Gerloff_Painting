@@ -703,33 +703,31 @@ def toolbox_talks_master(request):
     return render(request, 'toolbox_talks_master.html', send_data)
 
 def scheduled_toolbox_talks(request):
+    today = date.today()
+    days_until_monday = (0 - today.weekday() + 7) % 7
+    if days_until_monday == 0:
+        days_until_monday = 7
+    next_monday_date = today + timedelta(days=days_until_monday)
+    next_date = next_monday_date - timedelta(days=7)
     if request.method == 'POST':
-        if not ScheduledToolboxTalks.objects.all().exists():
-            today = date.today()
-            days_until_monday = (0 - today.weekday()+7) % 7
-            if days_until_monday == 0:
-                days_until_monday = 7
-            next_monday_date = today + timedelta(days=days_until_monday)
-            #next_date = next_monday_date
-            next_date = next_monday_date - timedelta(days=7)
-        else:
+        if ScheduledToolboxTalks.objects.all().exists():
             latest_object = ScheduledToolboxTalks.objects.all().order_by('-date')[0]
             next_date = latest_object.date + timedelta(days=7)
-        print(next_date)
         for x in ToolboxTalks.objects.all():
-            print(x)
             ScheduledToolboxTalks.objects.create(master=x, date=next_date)
             next_date = next_date + timedelta(days=7)
-
     send_data = {}
     toolboxtalks = []
     for x in ScheduledToolboxTalks.objects.all():
-        total_painters = Employees.objects.filter(date_added__lte=x.date, job_title__description = "Painter").count()
-        painters_completed = 0
-        for y in Employees.objects.filter(date_added__lte=x.date, job_title__description = "Painter"):
-            if CompletedToolboxTalks.objects.filter(master=x, employee=y).exists():
-                painters_completed += 1
-        ratio = str(painters_completed) + " of " + str(total_painters)
+        if x.date >= next_monday_date:
+            ratio = "Not Issued Yet"
+        else:
+            total_painters = Employees.objects.filter(date_added__lte=x.date, job_title__description = "Painter").count()
+            painters_completed = 0
+            for y in Employees.objects.filter(date_added__lte=x.date, job_title__description = "Painter"):
+                if CompletedToolboxTalks.objects.filter(master=x, employee=y).exists():
+                    painters_completed += 1
+            ratio = str(painters_completed) + " of " + str(total_painters)
         description = str(x.master.id) + " - " + x.master.description
         toolboxtalks.append({'Item':x.id, 'description': description, 'date': x.date, 'ratio': ratio})
     send_data['toolboxtalks']= toolboxtalks
