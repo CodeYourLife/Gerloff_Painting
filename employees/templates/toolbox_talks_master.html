@@ -132,9 +132,17 @@
             <tr>
                 <td>{{x.id}}</td>
                 <td>{{x.description}}</td>
-                <td><a style="color: blue; cursor: pointer;" onclick = "populate_file_form('{{x.id}}','{{x.spanish}}', 'Spanish')" >Spanish</a></td>
+                {% if x.english == "Need to upload" %}
+                <td>Need to Upload</td>
+                {% else %}
                 <td><a style="color: blue; cursor: pointer;" onclick = "populate_file_form('{{x.id}}','{{x.english}}', 'English')" >English</a></td>
-               <!-- <td><a href="file:///C:/Users/joe/PycharmProjects/Gerloff_Painting/media/toolbox_talks/3/English/Forman.pdf">{{x.english}}</a></td>-->
+                {% endif %}
+                {% if x.spanish == "Need to upload" %}
+                <td>Need to Upload</td>
+                {% else %}
+                <td><a style="color: blue; cursor: pointer;" onclick = "populate_file_form('{{x.id}}','{{x.spanish}}', 'Spanish')" >Spanish</a></td>
+               {% endif %}
+                <!-- <td><a href="file:///C:/Users/joe/PycharmProjects/Gerloff_Painting/media/toolbox_talks/3/English/Forman.pdf">{{x.english}}</a></td>-->
                 <!--<td><a href="file:///{{x.spanish}}">hi</a></td>-->
             </tr>
             {% endfor %}

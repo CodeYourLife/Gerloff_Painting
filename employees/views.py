@@ -670,15 +670,23 @@ def toolbox_talks_master(request):
     folder_name = settings.MEDIA_ROOT
     for x in ToolboxTalks.objects.all():
         path = folder_name + "/toolbox_talks/" + str(x.id) + "/Spanish"
+        spanish = "Need to upload"
+        english = "Need to upload"
         for entry in os.listdir(path):
+            print("test")
+            print(entry)
             full_path = os.path.join(path, entry)
             if os.path.isfile(full_path):
+                print("test2")
+                print(entry)
                 spanish = entry
         path = folder_name + "/toolbox_talks/" + str(x.id) + "/English"
         for entry in os.listdir(path):
             full_path = os.path.join(path, entry)
             if os.path.isfile(full_path):
                 english = entry
+        print(spanish)
+        print(english)
         toolboxtalks.append({'id':x.id, 'description': x.description,'english': english, 'spanish': spanish})
     send_data['toolboxtalks']= toolboxtalks
     if request.method == 'POST':
