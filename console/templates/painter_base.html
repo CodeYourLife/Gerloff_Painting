@@ -62,43 +62,14 @@
         <ul class="navbar-nav ">
             <li><a class="nav-item nav-link {% block nav_item_index %}{% endblock nav_item_index %}"
                    href="{% url 'index' %}">Home</a></li>
-            <li><a class="nav-item nav-link {% block nav_item_equipment %}{% endblock nav_item_equipment %}"
-                   href="{% url 'equipment_home' %}">Equipment</a></li>
-            <li><a class="nav-item nav-link {% block nav_item_rentals %}{% endblock nav_item_rentals %}"
-                   href="{% url 'rentals_home' %}">Rentals</a></li>
-            <li class="manager"><a class="nav-item nav-link {% block nav_item_jobs %}{% endblock nav_item_jobs %}"
-                                   href="{% url 'jobs_home' %}">Jobs</a></li>
-            <li><a class="nav-item nav-link {% block nav_item_subs %}{% endblock nav_item_subs %}"
-                   href="{% url 'subcontractor_home' %}">Subcontractors</a></li>
-            <li><a class="nav-item nav-link {% block nav_item_autos %}{% endblock nav_item_autos %}"
-                   href="{% url 'autos_home' %}">Autos</a></li>
+
             {% if user.is_superuser %}
             <li><a class="nav-item nav-link {% block nav_item_employees %}{% endblock nav_item_employees %}"
                    href="{% url 'employees_home' %}">Employees</a></li>
             {% else %}
             <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
             {% endif %}
-            <li><a class="nav-item nav-link {% block nav_item_wallcovering %}{% endblock nav_item_wallcovering %}"
-                   href="{% url 'wallcovering_home' %}">Wallcovering</a></li>
-            <li><a class="nav-item nav-link {% block nav_item_changeorder %}{% endblock nav_item_changeorder %}"
-                   href="{% url 'change_order_home' %}">Change Orders</a></li>
-            <li><a class="nav-item nav-link {% block nav_item_submittals %}{% endblock nav_item_submittals %}"
-                   href="{% url 'submittals_home' %}">Submittals</a></li>
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle {% block nav_item_roles %}{% endblock nav_item_roles %}" href="#"
-                   id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Roles
-                </a>
-                <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                    <a class="manager dropdown-item" href="{% url 'super_home' 'ALL' %}">Superintendent</a>
-                    <a class="dropdown-item" href="{% url 'warehouse_home' %}">Warehouse</a>
-                    <a class="dropdown-item" href="{% url 'safety_home' %}">Safety</a>
-                    {% if user.is_superuser %}
-                    <a class="dropdown-item" href="{% url 'admin:index' %}">Website Admin</a>
-                    <a class="dropdown-item" href="{% url 'admin_home' %}">Gerloff Painting Admin</a>
-                    {% endif %}
-                </div>
-            </li>
+
             {% if user.is_authenticated %}
             <li>Hello, {{user.first_name}}</li>
             <li><a class="nav-item nav-link {% block nav_item_logout %}{% endblock nav_item_logout %}"

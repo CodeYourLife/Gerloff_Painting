@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'painter_base.html' %}
 {% load static %}
 {% block nav_item_employees %}active{% endblock nav_item_employees %}
 {% block content %}
@@ -77,6 +77,18 @@
         $(document).ready(function () {
             var table = $('#employees2_table').DataTable({});
         })
+        function populate_file_form(id, file_name,language){
+        select_file.selected_file.value= file_name
+        select_file.selected_id.value= id
+        select_file.selected_language.value= language
+        select_file.submit()
+        }
+        function class_completed(id,item){
+        select_file.selected_file.value= "pumpkin"
+        select_file.selected_id.value= id
+        select_file.selected_language.value= item
+        select_file.submit()
+        }
     </script>
 </head>
 <body>
@@ -84,6 +96,8 @@
     <a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
     <div id="navbarNavDropdown2">
         <ul class="sub-nav-list navbar-nav ">
+            {% if employee.job_title.description == "Painter" %}
+            {% else %}
             {% if user.is_superuser %}
             <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
             {% else %}
@@ -94,6 +108,8 @@
             <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
             <li><a class="nav-item nav-link" href="{% url 'write_ups' 'ALL' %}">Write_Ups</a></li>
             <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'safety_home' %}">Safety</a></li>
+            {% endif %}
         </ul>
     </div>
 </nav>
@@ -251,7 +267,7 @@
             </div>
         </div>
 
-        <div class="card">
+        <!--<div class="card">
             <div class="card-header" id="headingTwo">
                 <h5 class="mb-0">
                     <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false"
@@ -326,8 +342,8 @@
                     {% endif %}
                 </div>
             </div>
-        </div>
-
+        </div>-->
+<!--
         <div class="card">
             <div class="card-header" id="headingFour">
                 <h5 class="mb-0">
@@ -366,7 +382,7 @@
                     {% endif %}
                 </div>
             </div>
-        </div>
+        </div>-->
 
         <div class="card">
             <div class="card-header" id="headingFive">
@@ -448,6 +464,7 @@
                 </div>
             </div>
         </div>
+<!--
 
         <div class="card">
             <div class="card-header" id="headingSeven">
@@ -744,6 +761,7 @@
                 </div>
             </div>
         </div>
+-->
 
 
         <div class="card-header" id="headingFourteen">
@@ -788,7 +806,55 @@
             </div>
         </div>
 
+        <div class="card-header" id="headingSixteen">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSixteen"
+                        aria-expanded="false"
+                        aria-controls="collapseFourteen">
+                    Toolbox Talks Required
+                </button>
+            </h5>
+        </div>
+        <div id="collapseSixteen" class="collapse hide" aria-labelledby="headingSixteen" data-parent="#accordion">
+            <div class="card-body">
+                <form name = "select_file" id = "select_file" action="{% url 'my_page' %}" method="post">
+                     {% csrf_token %}
+                    <input type="hidden" id="selected_file" name="selected_file" value="pumpkin">
+                    <input type="hidden" id="selected_id" name="selected_id" >
+                    <input type="hidden" id="selected_language" name="selected_language" >
+                {% if toolbox_talks_required %}
+                <div class="table-responsive">
+                    <table class="table display">
+                        <tr>
+                            <th>Item</th>
+                            <th>Description</th>
+                            <th>Date</th>
+                            <th>English</th>
+                            <th>Spanish</th>
+                            <th>Completed</th>
+                        </tr>
+                        <tbody>
+                        {% for x in toolbox_talks_required %}
+                        <tr>
+                            <td>{{x.item}}</td>
+                            <td>{{x.description}}</td>
+                            <td>{{x.date}}</td>
+                            <td><a style="color: blue; cursor: pointer;" onclick = "populate_file_form('{{x.id}}','{{x.spanish}}', 'Spanish')" >Spanish</a></td>
+                            <td><a style="color: blue; cursor: pointer;" onclick = "populate_file_form('{{x.id}}','{{x.english}}', 'English')" >English</a></td>
+                            <td><button type="button" class="btn btn-danger" onclick="class_completed('{{x.id}}','{{x.item}}')" value="Pumpklin" />Course Completed</button></td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div>No Certifications To Show</div>
+                {% endif %}
+                </form>
+            </div>
 
+        </div>
+<!--
         <div class="card-header" id="headingFifteen">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFifteen" aria-expanded="false"
@@ -829,7 +895,7 @@
                 <div>No Certifications Requiring Action</div>
                 {% endif %}
             </div>
-        </div>
+        </div>-->
 
     </div>
 

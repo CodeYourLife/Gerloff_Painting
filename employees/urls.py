@@ -25,4 +25,7 @@ path("write_ups/<id>", views.write_ups, name='write_ups'),
 path("write_ups_new", views.write_ups_new, name='write_ups_new'),
 path("employee_notes/<employee>", views.employee_notes, name='employee_notes'),
 path("daily_reports/<id>", views.daily_reports, name='daily_reports'),
+path('safety_home', views.safety_home, name='safety_home'),
+path('toolbox_talks_master', views.toolbox_talks_master, name='toolbox_talks_master'),
+path('scheduled_toolbox_talks', views.scheduled_toolbox_talks, name='scheduled_toolbox_talks'),
 ]

@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_item_employees %}active{% endblock nav_item_employees %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <title>Trinity GP</title>
+    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+    <style type="text/css" class="init">
+        nav .active, .collapsible:hover {
+          background-color: Salmon;
+        }
+        .nav-pills a {
+            color: black;
+        }
+        .nav-pills li {
+            padding: 2px;
+        }
+        .nav-pills .active {
+            background-color: #6c757d !important;
+            padding: 5px;
+        }
+        .table td {
+            overflow-x: hidden;
+            text-wrap: nowrap !important;
+            word-wrap: normal !important;
+        }
+        label {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+        input {
+            margin-left: 10px;
+            margin-right: 10px;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+        tr th {
+            width: fit-content !important;
+        }
+        .tab-content * {
+          color : black;
+          background-color: white !important;
+        }
+
+        .active * {
+            background-color: white !important;
+        }
+    </style>
+    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
+            data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+    <script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html"
+            async></script>
+    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html"
+            async></script>
+    <script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script type="text/javascript" language="javascript"
+            src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+    <script type="text/javascript" class="init">
+        $(document).ready(function () {
+            var table = $('#employees_table').DataTable({"paging": false, "order": [[2,'asc']]});
+        })
+        function populate_file_form(id, file_name,language){
+        select_file.selected_file.value= file_name
+        select_file.selected_id.value= id
+        select_file.selected_language.value= language
+        select_file.submit()
+        }
+        function populate_employees_modal(id){
+            $.ajax({
+                method: 'GET',
+                url: '/superintendent/super_ajax',
+                data: {'scheduled_toolbox_talk_id':id},
+                success: function (data) {
+                    parsedData = JSON.parse(data);
+                    modal_text = document.getElementById('missing_employee_list')
+                    modal_text.innerHTML = "<b>Painters Needed to Complete:</b><br>"
+                    parsedData.painters.forEach((element) => {
+                        modal_text.innerHTML += element.name + "<br>"
+                    })
+                }
+            })
+        }
+    </script>
+
+</head>
+<body>
+
+
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav ">
+            <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'employee_notes' 'AUTO' %}">Employee Notes</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'safety_home' %}">Safety</a></li>
+            <li><a class="nav-item nav-link active" href="{% url 'scheduled_toolbox_talks' %}">Scheduled Toolbox Talks</a></li>
+        </ul>
+    </div>
+
+</nav>
+<!-- Modal -->
+<div class="modal fade" id="notes-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="notes_title">Missing Employees</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="missing_employee_list"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick = "add_note()" data-dismiss="modal">Add New Note</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Exit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div>
+    <form name="create_schedule" action="{% url 'scheduled_toolbox_talks' %}" method="post">
+        {% csrf_token %}
+        <p>If you click this button, it will add all of the toolbox talks from the master list to the end of the schedule.</p>
+        <input type="submit" name= "extend_schedule" class= "btn btn-danger btn" value="Add to Schedule" />
+    </form>
+</div>
+
+    <div style="margin-top: 12px" class="table-responsive">
+        <table id="employees_table" class="table display">
+            <thead>
+            <tr>
+                <th class="col">Item</th>
+                <th class="col">Description</th>
+                <th class="col">Week</th>
+                <th class="col">Participation</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for x in toolboxtalks %}
+            <tr>
+                <td>{{x.Item}}</td>
+                <td>{{x.description}}</td>
+                <td data-order=YYYY-MM-DD>{{x.date}}</td>
+                <td onclick="populate_employees_modal('{{x.Item}}')" data-toggle="modal" data-target="#notes-modal"><a style="color: blue; cursor: pointer;">{{x.ratio}}</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>
+
+{% endblock %}

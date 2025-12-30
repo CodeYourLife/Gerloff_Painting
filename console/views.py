@@ -205,6 +205,10 @@ def client_info(request, id):
 
 @login_required(login_url='/accounts/login')
 def index(request):
+    current_employee = Employees.objects.get(user=request.user)
+    print(current_employee.job_title.description)
+    if current_employee.job_title.description == "Painter":
+        return redirect('my_page')
     send_data = {}
     next_two_weeks = 0
     for x in Jobs.objects.filter(is_closed=False, is_active=False, is_labor_done=False):
