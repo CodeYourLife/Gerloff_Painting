@@ -811,7 +811,11 @@
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSixteen"
                         aria-expanded="false"
                         aria-controls="collapseFourteen">
-                    Toolbox Talks Required
+                    {% if toolbox_talks_required %}
+                    {{toolbox_talks_required_count}} Toolbox Talks Required
+                    {% else %}
+                    No Toolbox Talks Required At This Time
+                    {% endif %}
                 </button>
             </h5>
         </div>

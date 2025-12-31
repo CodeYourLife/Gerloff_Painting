@@ -461,9 +461,11 @@ def my_page(request):
     send_data['actions'] = Certifications.objects.filter(employee=employee, action_required=True)
     if employee.job_title.description == "Painter":
         toolbox_talks_required = []
+        toolbox_talks_required_count = 0
         folder_name = settings.MEDIA_ROOT
-        for x in ScheduledToolboxTalks.objects.filter(date__lte = date.today()):
+        for x in ScheduledToolboxTalks.objects.filter(date__lte = date.today(), date__gte = employee.date_added):
             if not CompletedToolboxTalks.objects.filter(employee=employee,master=x).exists():
+                toolbox_talks_required_count += 1
                 toolbox_talk=x.master
                 path = folder_name + "/toolbox_talks/" + str(toolbox_talk.id) + "/Spanish"
                 for entry in os.listdir(path):
@@ -477,6 +479,7 @@ def my_page(request):
                         english = entry
                 toolbox_talks_required.append({'id':x.master.id, 'item':x.id,'description': str(x.master.id) + "- " + x.master.description,'date':x.date, 'english': english, 'spanish': spanish})
         send_data['toolbox_talks_required'] = toolbox_talks_required
+        send_data['toolbox_talks_required_count'] = toolbox_talks_required_count
     return render(request, "my_page.html", send_data)
 
 
