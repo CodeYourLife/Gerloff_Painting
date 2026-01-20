@@ -558,7 +558,7 @@ def certifications(request, id):
 @login_required(login_url='/accounts/login')
 def new_certification(request):
     send_data = {}
-    send_data['employees'] = Employees.objects.filter(active=True)
+    send_data['employees'] = Employees.objects.filter(active=True,job_title__description="Painter")
     send_data['jobs'] = Jobs.objects.filter(is_closed=False)
     send_data['categories'] = CertificationCategories.objects.all()
     send_data['actions'] = CertificationActionRequired.objects.all()
@@ -937,7 +937,7 @@ def respirator_clearance_section6(request):
         main.date_completed = date.today()
         main.save()
         message = "Respirator Clearance Completed. \n Employee: " + employee.first_name + employee.last_name
-        recipients = ["joe@gerloffpainting.com"]
+        recipients = ["skip@gerloffpainting.com","bridgette@gerloffpainting.com"]
         Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
         try:
             Email.sendEmail("Respirator Clearance Completed", message,
@@ -1036,3 +1036,10 @@ def view_respirator_certification(request,id):
     send_data['certification_id'] = selected_cert.id
     send_data['notes'] = CertificationNotes.objects.filter(certification=selected_cert)
     return render(request, 'view_respirator_certification.html', send_data)
+
+def delete_employee(request,id):
+    deleted_employee = Employees.objects.get(id=id)
+    deleted_employee.active=False
+    deleted_employee.save()
+    return redirect('employees_home')
+

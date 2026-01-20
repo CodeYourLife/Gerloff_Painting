@@ -49,36 +49,47 @@ $(document).ready(function () {
     </ul>
   </div>
 </nav>
+<br>
 
-<h4><a href = "{% url 'employees_page' employee.id %}">First Name, Last Name</a></h4>
+<form name="add_new" action="{% url 'delete_employee' employee.id %}" >
+{% csrf_token %}
+<input type="submit" class= "btn btn-danger btn" value="Delete Employee" />
+</form>
 
-<h4><a href = "{% url 'employees_page' employee.id %}">Phone Number, Email</a></h4>
+<br>
 
-<h4><a href = "{% url 'employees_page' employee.id %}">Current Level</a></h4>
 
-<h4><a href = "{% url 'employees_page' employee.id %}">View Assessments</a></h4>
+<H3>The bottom of this page is still in production</H3>
+<br><hr>
+<H5><a href = "{% url 'employees_page' employee.id %}">First Name, Last Name</a></H5>
 
-<h4><a href = "{% url 'employees_page' employee.id %}">View Production Reports</a></h4>
+<H5><a href = "{% url 'employees_page' employee.id %}">Phone Number, Email</a></H5>
 
-<h4><a href = "{% url 'employees_page' employee.id %}">View Mentorships</a></h4>
+<H5><a href = "{% url 'employees_page' employee.id %}">Current Level</a></H5>
 
-<h4><a href = "{% url 'employees_page' employee.id %}">View Certifications</a></h4>
+<H5><a href = "{% url 'employees_page' employee.id %}">View Assessments</a></H5>
 
-<h4><a href = "{% url 'employees_page' employee.id %}">View Exams</a></h4>
+<H5><a href = "{% url 'employees_page' employee.id %}">View Production Reports</a></H5>
 
-<h4><a href = "{% url 'employees_page' employee.id %}">View Classes</a></h4>
+<H5><a href = "{% url 'employees_page' employee.id %}">View Mentorships</a></H5>
 
-<h4><a href = "{% url 'employees_page' employee.id %}">View Write Ups</a></h4>
+<H5><a href = "{% url 'employees_page' employee.id %}">View Certifications</a></H5>
 
-<h4><a href = "{% url 'employees_page' employee.id %}">View Vacations</a></h4>
+<H5><a href = "{% url 'employees_page' employee.id %}">View Exams</a></H5>
 
-<h4><a href = "{% url 'employees_page' employee.id %}">View Assessments Completed</a></h4>
+<H5><a href = "{% url 'employees_page' employee.id %}">View Classes</a></H5>
 
-<h4><a href = "{% url 'employees_page' employee.id %}">View Daily Reports Completed</a></h4>
+<H5><a href = "{% url 'employees_page' employee.id %}">View Write Ups</a></H5>
 
-<h4><a href = "{% url 'employees_page' employee.id %}">View Weekly Super Reports Completed</a></h4>
+<H5><a href = "{% url 'employees_page' employee.id %}">View Vacations</a></H5>
 
-<h4><a href = "{% url 'employees_page' employee.id %}">View Assigned Equipment</a></h4>
+<H5><a href = "{% url 'employees_page' employee.id %}">View Assessments Completed</a></H5>
+
+<H5><a href = "{% url 'employees_page' employee.id %}">View Daily Reports Completed</a></H5>
+
+<H5><a href = "{% url 'employees_page' employee.id %}">View Weekly Super Reports Completed</a></H5>
+
+<H5><a href = "{% url 'employees_page' employee.id %}">View Assigned Equipment</a></H5>
 
 </body>
 </html>

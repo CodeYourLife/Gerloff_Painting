@@ -148,6 +148,7 @@ class Jobs(models.Model):
     is_waiting_for_punchlist = models.BooleanField(default=False)
     is_labor_done = models.BooleanField(default=False)
     is_painting_subbed = models.BooleanField(default=False)
+    has_safety_packet_been_sent = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.job_name}"
@@ -376,4 +377,10 @@ class Email_Errors(models.Model):
     user = models.CharField(null=True, max_length=2000)
     #user = request.user.first_name + " " + request.user.last_name
     #for subs =
+    date = models.DateField(null=True, blank=True)
+
+class Competent_Persons(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    job = models.ForeignKey(Jobs, on_delete=models.PROTECT)
+    employee = models.ForeignKey(employees.models.Employees, on_delete=models.PROTECT)
     date = models.DateField(null=True, blank=True)

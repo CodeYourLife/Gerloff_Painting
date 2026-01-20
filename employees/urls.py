@@ -39,4 +39,5 @@ path('respirator_clearance_base', views.respirator_clearance_base, name='respira
 path('respirator_clearance_completed/<respirator_id>', views.respirator_clearance_completed, name='respirator_clearance_completed'),
 path('toolbox_talks_by_employee', views.toolbox_talks_by_employee, name='toolbox_talks_by_employee'),
 path("view_respirator_certification/<id>", views.view_respirator_certification, name='view_respirator_certification'),
+path("delete_employee/<id>", views.delete_employee, name='delete_employee'),
 ]
