@@ -59,14 +59,14 @@ class Employees(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, null=True, blank=True)
     job_title = models.ForeignKey(EmployeeTitles, on_delete=models.CASCADE, null=True)
-    employer = models.CharField(max_length=100)  # Gerloff Painting, Nam, JuarezPro, etc.
+    employer = models.CharField(max_length=100)  # dont use, use employment_company instead
     pin = models.IntegerField(null=True, blank=True)
     date_added = models.DateField(null=False, blank=False)
     birth_date = models.DateField(null=True, blank=True)
     gender = models.CharField(max_length=10, choices=[("Male", "Male"), ("Female", "Female"),("Unassigned", "Unassigned"),("Select", "Select")], default="Select")
     height = models.CharField(max_length=100,null=True, blank=True)
     weight = models.CharField(max_length=100, null=True, blank=True)
-
+    employment_company = models.ForeignKey(Employers, on_delete=models.CASCADE, null=True)
 
 
     def __str__(self):

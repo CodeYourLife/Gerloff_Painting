@@ -118,6 +118,13 @@ document.getElementById("check_booked_jobs").style.display = "block"
         </div>
         <div id="collapse2" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">
             <div class="card-body">
+		<br>
+<a href = "{% url 'upload_employees' %}">
+			<div style="height:100%;width:100%">
+				Upload Employee File	</div>
+		</a>
+<br>
+
 <a href = "{% url 'grant_web_access' %}">
 							<div style="height:100%;width:100%">
 								Give Employee Web Access	</div>

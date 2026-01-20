@@ -40,4 +40,5 @@ path('respirator_clearance_completed/<respirator_id>', views.respirator_clearanc
 path('toolbox_talks_by_employee', views.toolbox_talks_by_employee, name='toolbox_talks_by_employee'),
 path("view_respirator_certification/<id>", views.view_respirator_certification, name='view_respirator_certification'),
 path("delete_employee/<id>", views.delete_employee, name='delete_employee'),
+path("upload_employees", views.upload_employees, name="upload_employees"),
 ]

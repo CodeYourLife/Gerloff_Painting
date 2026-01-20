@@ -3,7 +3,7 @@ from employees.models import *
 from django.shortcuts import render, redirect
 import json
 from django.core.serializers.json import DjangoJSONEncoder
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from equipment.models import Inventory
 from jobs.models import Jobs, JobNotes, Email_Errors
 from django.http import HttpResponse
@@ -16,8 +16,11 @@ from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, redirect, get_object_or_404
 from console.misc import Email
-# from .forms import RespiratorSection3Form,RespiratorSection4Form,RespiratorSection5Form
-
+import openpyxl
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.db import transaction
+from .forms import EmployeeUploadForm
 
 
 @login_required(login_url='/accounts/login')
@@ -1042,4 +1045,85 @@ def delete_employee(request,id):
     deleted_employee.active=False
     deleted_employee.save()
     return redirect('employees_home')
+
+def upload_employees(request):
+    if request.method == "POST":
+        form = EmployeeUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            excel_file = request.FILES["excel_file"]
+
+            wb = openpyxl.load_workbook(excel_file)
+            sheet = wb.active
+
+            created = 0
+            skipped = 0
+
+            with transaction.atomic():
+                for row in sheet.iter_rows(min_row=2, values_only=True):
+                    (
+                        employee_number,
+                        active,
+                        first_name,
+                        middle_name,
+                        last_name,
+                        phone,
+                        email,
+                        level_name,
+                        nickname,
+                        job_title,
+                        employer,
+                        pin,
+                        date_added,
+                        birth_date,
+                        gender,
+                        height,
+                        weight,
+                    ) = row
+
+                    # REQUIRED FIELDS CHECK
+                    if not first_name or not last_name or not employer:
+                        skipped += 1
+                        continue
+
+                    # Resolve Foreign Keys safely
+                    level = None
+                    if level_name:
+                        level = EmployeeLevels.objects.filter(name=level_name).first()
+
+                    # job_title = None
+                    # if job_title_name:
+                    #     job_title = EmployeeTitles.objects.filter(description=job_title_name).first()
+
+                    Employees.objects.create(
+                        employee_number=employee_number or 0,
+                        active=bool(active) if active is not None else True,
+                        first_name=first_name,
+                        middle_name=middle_name,
+                        last_name=last_name,
+                        phone=phone,
+                        email=email,
+                        level=level,
+                        nickname=nickname,
+                        job_title=EmployeeTitles.objects.get(id=job_title),
+                        employment_company=Employers.objects.get(id=employer),
+                        pin=pin,
+                        date_added=date_added if isinstance(date_added, datetime) else datetime.today(),
+                        birth_date=birth_date if isinstance(birth_date, datetime) else None,
+                        gender=gender if gender in ["Male", "Female", "Unassigned"] else "Select",
+                        height=height,
+                        weight=weight,
+                    )
+
+                    created += 1
+
+            messages.success(
+                request,
+                f"Employees imported: {created}. Rows skipped: {skipped}."
+            )
+            return redirect("employees_home")
+
+    else:
+        form = EmployeeUploadForm()
+
+    return render(request, "upload_employees.html", {"form": form})
 
