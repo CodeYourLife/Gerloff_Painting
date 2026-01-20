@@ -40,7 +40,7 @@ $(document).ready(function () {
 		<div id="navbarNavDropdown2">
 		  <ul class="sub-nav-list navbar-nav ">
         <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>
+        <!--            <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>-->
         <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
         <li><a class="nav-item nav-link active" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
         <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
@@ -68,11 +68,9 @@ $(document).ready(function () {
 			</thead>
 			<tbody>
 			{% for x in certifications %}
-			{% if x.is_closed == False %}
 			<tr><td>{{x.employee}}</td><td>{{x.category}}</td><td><a href = "{% url 'certifications' x.id %}">View</td><td>{{x.date_received}}</td><td>{{x.date_expires}}</td><td>{% if x.action_required == True %}
 				{{x.action}}{% endif %}</td>
 			</tr>
-			{% endif %}
 			{% endfor %}
 			</tbody>
 		</table>
@@ -92,52 +90,66 @@ $(document).ready(function () {
 		<div class ="col"><b>Received: </b>{{selected_item.date_received}}</div><div class ="col"><b>Expires: </b>{{selected_item.date_expires}}</div></div>
 	<div class ="row">
 			<div class ="col" ><b>Job: - </b>{{selected_item.job}}</div></div>
-
-
 		<div class ="row">
 		<div class ="col"><b>Note: </b>{{selected_item.note}}</div>
 	</div>
+	<br>
+<!--	Notes-->
+	<div style="background-color: powderblue;">
+	<div class ="row"><div class ="col"><h3>NOTES</h3></div></div>
 	{% if notes2 %}
 	{% for y in notes2 %}
-			<div class ="row">
-		<div class ="col"><b>Note: </b>{{y.date}} - {{y.user}} - {{y.note}}</div>
-	</div>
+			<div class ="row"><div class ="col"><b>Note: </b>{{y.date}} - {{y.user}} - {{y.note}}</div></div>
 	{% endfor %}
 	{% endif %}
 		 <form action="{% url 'certifications' selected_item.id %}" method="post" >
 			 {% csrf_token %}
 			 <div class ="row"><div class ="col"><input type="text" name="note" size="100" placeholder ='New Note Here' /> <input type="submit" name="new_note" value="ADD NOTE" /></div></div>
-		<br>
-			 <hr>
+	<br>
+	</div>
+			 <br><hr>
 			 <div class ="row"><div class ="col"><h3>UPDATE RECORD:</h3></div></div>
-			 <div class ="row">
-				 <div class ="col">{% if selected_item.is_closed == False %} <input type="submit" name="closed_item" value="Certification No Longer Valid" /><input type="text" name="closed_note" size="100" placeholder ='Add Note' />{% endif %}</div></div>
+<!--	actions required-->
+	<div style="background-color: beige;">
 			 {% if selected_item.action_required == True %}
+			 	<div class ="row"><div class ="col"><h4>CURRENT ACTIONS REQUIRED</h4></div></div>
 			 <br>
-			 <div class ="row"><div class ="col"><b>{{selected_item.action}}</b><input type="submit" name="closed_action" value="Completed" /><input type="text" name="closed_action_note" size="75" placeholder ='Add Note' /></div></div>
-			 {% else %}
+			 <div class ="row"><div class ="col"><b>{{selected_item.action}}</b><input type="text" name="closed_action_note" size="75" placeholder ='Add Note Regarding Completion' /><input type="submit" name="closed_action" value="Completed" /></div></div>
+	{% else %}
 			 <br>
 			 <div class ="row"><div class ="col">
-				             <select id="select_action" name="select_action" >
+			 <select id="select_action" name="select_action" >
 				<option value="please_select">Please Select Action Required</option>
-
                 {% for x in actions %}
                 <option value={{x.id}}>{{x.action}}</option>
                 {% endfor %}
             </select>
-
-
-				 <input type="submit" name="select_action_now" value="Action Required" /></div></div>
+			 <input type="submit" name="select_action_now" value="Action Required" /></div></div>
 
 			 <div class ="row"><div class ="col">Or Enter Custom Item:</div></div>
-
-			 <div class ="row"><div class ="col"><input type="text" name="custom_action" size="75" placeholder ='Custom Action Required' /><input type="submit" name="custom_action_now" value="Action Required" /></div></div>
-
-{% endif %}
-		<br><br>
+			 <div class ="row"><div class ="col"><input type="text" name="custom_action" size="75" placeholder ='Custom Action Required' /><input type="submit" name="custom_action_now" value="Add Now" /></div></div>
+	{% endif %}
+			<br><br>
+			</div>
+	<br>
+	<!--	change dates-->
+	<div style="background-color: DarkSalmon;">
+				 	<div class ="row">
+		<div class ="col"><h4>CHANGE DATES</h4></div></div>
+		<br>
 			 <div class ="row"><div class ="col"><input type="date" name="start_date"  /><input type="text" name="start_date_note" size="60" placeholder ='Clarify Date Change' /><input type="submit" name="change_start_date" value="Change Start Date" /></div></div>
 			 <div class ="row"><div class ="col"><input type="date" name="end_date"  /><input type="text" name="end_date_note" size="60" placeholder ='Clarify Date Change' /><input type="submit" name="change_end_date" value="Change End Date" /></div></div>
-
+	<br>
+	</div>
+	<br><br>
+		<!--	expired-->
+		<div style="background-color: FireBrick;">
+			<div class = "row"><div class ="col"><h4>VOID THIS RECORD</h4></div></div>
+		<br>
+			<div class = "row">
+			 <div class ="col">{% if selected_item.is_closed == False %}<input type="text" name="closed_note" size="100" placeholder ='Add Note To Indicate Why This is Void' /> <input type="submit" name="closed_item" value="Certification No Longer Valid" />{% endif %}</div></div>
+<br>
+	</div>
 	</div>
 		 </form>
 {% endif %}

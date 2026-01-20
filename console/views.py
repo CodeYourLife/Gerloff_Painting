@@ -28,7 +28,7 @@ from wallcovering.models import *
 import random
 from django.http import HttpResponse
 import json
-from datetime import datetime
+from datetime import datetime,date
 from console.misc import Email
 
 @login_required(login_url='/accounts/login')
@@ -264,6 +264,24 @@ def index(request):
                 next_two_weeks += 1
     send_data['super_jobs'] = next_two_weeks  #
     send_data['current_user'] = request.user.first_name
+    clearance_forms_needing_review = RespiratorClearance.objects.filter(approved_for_use=False).count()
+    send_data['clearance_forms_needing_review']=clearance_forms_needing_review
+    painters_needing_respirator=0
+    for x in Employees.objects.filter(job_title__description="Painter"):
+        if not RespiratorClearance.objects.filter(employee=x).exists():
+            painters_needing_respirator+=1
+    send_data['painters_needing_respirator'] = painters_needing_respirator
+    missing_toolbox_talks = 0
+    today = date.today()
+    days_until_monday = (0 - today.weekday() + 7) % 7
+    if days_until_monday == 0:
+        days_until_monday = 7
+    next_monday_date = today + timedelta(days=days_until_monday)
+    for toolbox_talk in ScheduledToolboxTalks.objects.filter(date__lt = next_monday_date).order_by('-date'):
+        for employee in Employees.objects.filter(date_added__lte=toolbox_talk.date, job_title__description="Painter"):
+            if not CompletedToolboxTalks.objects.filter(master=toolbox_talk, employee=employee).exists():
+                missing_toolbox_talks +=1
+    send_data['missing_toolbox_talks'] = missing_toolbox_talks
     return render(request, 'index.html', send_data)
 
 

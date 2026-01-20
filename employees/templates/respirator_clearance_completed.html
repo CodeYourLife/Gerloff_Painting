@@ -1,0 +1,186 @@
+{% extends 'painter_base.html' %}
+{% load static %}
+{% block nav_item_employees %}active{% endblock nav_item_employees %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>Trinity GP</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+
+	</style>
+	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+    </script>
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2 class="mb-4">Respirator Clearance Summary</h2>
+
+        <div class="card mb-4">
+        <div class="card-header bg-primary text-white">Employee Info</div>
+        <div class="card-body">
+            <p><strong>Employee Name</strong> {{employee.first_name}} {{employee.last_name}}</p>
+            <p><strong>Gender</strong> {{employee.gender}}</p>
+            <p><strong>Height</strong> {{employee.height}}</p>
+            <p><strong>Weight</strong> {{employee.weight}}</p>
+            <p><strong>Phone</strong> {{employee.phone}}</p>
+            <p><strong>Questionnaire Completed: </strong> {{main.date_completed}}</p>
+        </div>
+        </div>
+
+    <!-- Section 1 -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">Part 1: Smoking, Seizures, Diabetes, and Lung Conditions</div>
+        <div class="card-body">
+            <p><strong>Do you smoke:</strong> {{ part1.do_you_smoke }}</p>
+            <p><strong>Cigarettes per day:</strong> {{ part1.how_many_cigarettes }}</p>
+            <p><strong>Years smoking:</strong> {{ part1.how_many_years }}</p>
+            <hr>
+            <p><strong>History of seizures?:</strong> {{ part1.do_you_have_seizures }}</p>
+            <p><strong>How Many Years?:</strong> {{ part1.seizures_year_diagnosed }}</p>
+            <p><strong>Seizure difficulties:</strong> {{ part1.seizures_difficulties }}</p>
+            <hr>
+            <p><strong>History of diabetes?</strong> {{ part1.do_you_have_diabetes }}</p>
+            <p><strong>How Many Years?:</strong> {{ part1.diabetes_year_diagnosed }}</p>
+            <p><strong>Diabetes difficulties:</strong> {{ part1.diabetes_difficulties }}</p>
+            <hr>
+            <p><strong>Allergic Reactions that interfere with your breathing?:</strong> {{ part1.allergic_reactions }}</p>
+            <p><strong>Claustrophobia (fear of closed-in places)?:</strong> {{ part1.claustrophobia }}</p>
+            <p><strong>Trouble Smelling Odors?:</strong> {{ part1.trouble_smelling }}</p>
+
+            </div>
+    </div>
+        <div class="card mb-4">
+        <div class="card-header bg-primary text-white">Part 2: Pulmonary or Lung Problems</div>
+        <div class="card-body">
+
+            <p><strong>Asbestosis:</strong> {{ part1.asbestosis }}</p>
+            <p><strong>Asthma:</strong> {{ part1.asthma }}</p>
+            <p><strong>Chronic Bronchitis:</strong> {{ part1.chronic_bronchitis }}</p>
+            <p><strong>Emphysema:</strong> {{ part1.emphysema }}</p>
+            <p><strong>Pneumonia:</strong> {{ part1.pneumonia }}</p>
+            <p><strong>Tuberculosis:</strong> {{ part1.tuberculosis }}</p>
+            <p><strong>Silicosis:</strong> {{ part1.silicosis }}</p>
+            <p><strong>Pneumothorax:</strong> {{ part1.pneumothorax }}</p>
+            <p><strong>Lung Cancer:</strong> {{ part1.lung_cancer }}</p>
+            <p><strong>Broken Ribs:</strong> {{ part1.broken_ribs }}</p>
+            <p><strong>Chest Injuries or Surgeries:</strong> {{ part1.chest_injuries }}</p>
+            <p><strong>Other Lung Problems:</strong> {{ part1.other_lung_problems }}</p>
+            <p><strong>If Yes to Any of the Above, Please Explain:</strong> {{ part1.lung_problem_explanation }}</p>
+        </div>
+    </div>
+
+    <!-- Section 2 -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">Part 3: Respiratory and Cardiac History</div>
+        <div class="card-body">
+            <p>Do you currently have any of the following symptoms of pulmonary or lung illness?</p>
+            <p><strong>1) Do you experience shortness of breath when doing low stress activites (such as walking at an ordinary pace or washing/dressing yourself). Or shortness of breath that interferes with your job?:</strong> {{ part2.breath_shortness }}</p>
+            <p><strong>2) Do you have coughing issues (ie. coughing that produces phlegm, wakes you up in the morning, occurs mostly when lying down, or produces blood in the mouth)?</strong> {{ part2.coughing_issues }}</p>
+            <p><strong>3) Do you experience wheezing that interferes with your job?</strong> {{ part2.wheezing_issues }}</p>
+            <p><strong>4) Do you experience chest pain when breathing deeply or exercising?</strong> {{ part2.chest_pain }}</p>
+            <p><strong>5) Have you seen a physician for any breathing/lung issues?</strong> {{ part2.other_lung_problems }}</p>
+            <p><strong>6) If yes to any of the above, please explain:</strong> {{ part2.lung_problem_explanation }}</p>
+            <hr>
+            <p>Have you ever had any of the following cardiovascular or heart problems:</p>
+            <p><strong>1) Heart Attack:</strong> {{ part2.heart_attack }}</p>
+            <p><strong>2) Stroke:</strong> {{ part2.stroke }}</p>
+            <p><strong>3) Angina or chest pain from heart disease?</strong> {{ part2.angina }}</p>
+            <p><strong>4) Heart Failure:</strong> {{ part2.heart_failure }}</p>
+            <p><strong>5) Swelling in your legs or feet not caused from walking?</strong> {{ part2.swelling }}</p>
+            <p><strong>6) Heart arrhythmia (irregular heartbeat)?</strong> {{ part2.arrhythmia }}</p>
+            <p><strong>7) High Blood Pressure:</strong> {{ part2.high_blood_pressure }}</p>
+            <p><strong>8) Any other heart problem that you've been told about?</strong> {{ part2.other_heart_problem }}</p>
+            <p><strong>9) If yes to any of the above, please explain:</strong> {{ part2.heart_problem_explanation }}</p>
+        </div>
+    </div>
+
+    <!-- Section 3 -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">Part 4: Heart Symptoms and Medications</div>
+        <div class="card-body">
+            <p>Have you ever had any of the following cardiovascular or heart symptoms?</p>
+            <p><strong>1) Do you have frequent pain or tightness in your chest?</strong> {{ part3.chest_pain }}</p>
+            <p><strong>2) In the past two years, have you noticed your heart skipping or missing a beat?</strong> {{ part3.heart_skipping }}</p>
+            <p><strong>3) Do you experience frequent heartburn or acid reflux that is not related to eating?</strong> {{ part3.heartburn }}</p>
+            <p><strong>4) Any other symptoms that you think may be related to heart or circulation problems?</strong> {{ part3.other }}</p>
+            <p><strong>5) If you answered “Yes” to any of the above, please explain:</strong> {{ part3.explanation }}</p>
+            <hr>
+            <p>Do you CURRENTLY take medication for any of the following problems?</p>
+            <p><strong>1) Breathing or Lung Problems?</strong> {{ part3.breathing_medication }}</p>
+            <p><strong>2) Heart Trouble?</strong> {{ part3.heart_medication }}</p>
+            <p><strong>3) Blood Pressure?</strong> {{ part3.blood_pressure_medication }}</p>
+            <p><strong>4) Seizures (fits)?</strong> {{ part3.seizure_medication }}</p>
+            <p><strong>5) If you answered “Yes” to any of the above, please explain:</strong> {{ part3.medication_explanation }}</p>
+        </div>
+    </div>
+
+    <!-- Section 4 -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">Part 5: Respirator Usage & Other Symptoms</div>
+        <div class="card-body">
+            <p><strong>Have you worn a respirator before:</strong> {{ part4.worn_respirator }}</p>
+            <p>If you answered "Yes" - please fill out the following: </p>
+            <p><strong> - Respirator type:</strong> {{ part4.respirator_type }}</p>
+            <p><strong> - Eye irritation while wearing a respirator?</strong> {{ part4.eye_irritation }}</p>
+            <p><strong> - Skin allergies or rashes when wearing respirator?</strong> {{ part4.allergies }}</p>
+            <p><strong> - Anxiety, panic, or claustrophobia while wearing a respirator?</strong> {{ part4.anxiety }}</p>
+            <p><strong> - Weakness, dizziness, lightheadedness, or fatigue while wearing a respirator?</strong> {{ part4.weakness }}</p>
+            <p><strong> - Any other problems while wearing a respirator?</strong> {{ part4.other_problem }}</p>
+            <p><strong> - If you answered “Yes” to any of the above, please explain:</strong> {{ part4.explanation }}</p>
+        </div>
+    </div>
+
+    <!-- Section 5 -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">Part 6: Exposure History</div>
+        <div class="card-body">
+            <p><strong>At work or at home, have you ever been exposed to hazardous solvents, airborne chemicals (e.g. gases, fumes, or dust), or have you come into skin contact with hazardous chemicals?</strong> {{ part5.home_exposure }}</p>
+            <p><strong>If "Yes", please explain:</strong> {{ part5.home_exposure_explained }}</p>
+            <p>Have you ever worked with any of the materials, or under any of the conditions listed below?</p>
+            <p><strong>Asbestos:</strong> {{ part5.asbestos }}</p>
+            <p><strong>Silica (e.g., in sandblasting)):</strong> {{ part5.silica }}</p>
+            <p><strong>Tungsten/cobalt (e.g. grinding or welding this material):</strong> {{ part5.tungsten_cobalt }}</p>
+            <p><strong>Beryllium:</strong> {{ part5.beryllium }}</p>
+            <p><strong>Aluminum:</strong> {{ part5.aluminum }}</p>
+            <p><strong>Coal (e.g. mining):</strong> {{ part5.coal }}</p>
+            <p><strong>Iron:</strong> {{ part5.iron }}</p>
+            <p><strong>Tin:</strong> {{ part5.tin }}</p>
+            <p><strong>Dusty Environments:</strong> {{ part5.dusty_environments }}</p>
+            <p><strong>Any other hazardous material exposure?:</strong> {{ part5.other_exposure }}</p>
+            <p><strong>If you answered "Yes" to any of the above, please explain:</strong> {{ part5.explanation }}</p>
+        </div>
+    </div>
+
+    <!-- Section 6 -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">Part 7: Work History & Other Exposure</div>
+        <div class="card-body">
+            <p><strong>List any second jobs or side businesses you have:</strong> {{ part6.second_job }}</p>
+            <p><strong>Previous Occupations:</strong> {{ part6.previous_occupations }}</p>
+            <p><strong>Hobbies:</strong> {{ part6.hobbies }}</p>
+            <p><strong>Have you ever been to exposed to biological or chemical agents (either in training or combat?)</strong> {{ part6.military_exposure }}</p>
+            <p><strong>Have you ever served on a HAZMAT team?</strong> {{ part6.hazmat_team }}</p>
+            <p><strong>Are you currently taking any other medications not mentioned previously?</strong> {{ part6.other_medications }}</p>
+            <p><strong>If yes, please list the medications:</strong> {{ part6.list_medications }}</p>
+            <p><strong>Would you like to talk to the health care professional who will review this questionnaire about your answers? If you choose 'yes' the evaluations cannot be approved until we contact you.</strong> {{ part6.physician }}</p>
+        </div>
+    </div>
+</div>
+</body>
+{% endblock %}

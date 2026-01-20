@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_item_employees %}active{% endblock nav_item_employees %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <title>Trinity GP</title>
+    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+    <style type="text/css" class="init">
+        nav .active, .collapsible:hover {
+          background-color: Salmon;
+        }
+        .nav-pills a {
+            color: black;
+        }
+        .nav-pills li {
+            padding: 2px;
+        }
+        .nav-pills .active {
+            background-color: #6c757d !important;
+            padding: 5px;
+        }
+        .table td {
+            overflow-x: hidden;
+            text-wrap: nowrap !important;
+            word-wrap: normal !important;
+        }
+        label {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+        input {
+            margin-left: 10px;
+            margin-right: 10px;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+        tr th {
+            width: fit-content !important;
+        }
+        .tab-content * {
+          color : black;
+          background-color: white !important;
+        }
+
+        .active * {
+            background-color: white !important;
+        }
+
+    </style>
+    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
+            data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+    <script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html"
+            async></script>
+    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html"
+            async></script>
+    <script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script type="text/javascript" language="javascript"
+            src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+    <script type="text/javascript" class="init">
+    window.onload = function() {
+        show_hidden()
+    }
+
+    function show_hidden(){
+        hide_physician_section = document.getElementById('physician_review');
+        is_physician_required_select = document.getElementById('is_physician_required');
+        physician_approved_select = document.getElementById('physician_approved');
+        if (is_physician_required_select.value == "Yes"){
+            hide_physician_section.style.display = "block"
+            physician_approved_select.value = "Please Select"
+        }
+        else {
+            hide_physician_section.style.display = "none"
+            physician_approved_select.value = "Not Applicable"
+        }
+    }
+
+
+    function employee_approved() {
+        myForm = document.getElementById('employee_form');
+        is_physician_required_select = document.getElementById('is_physician_required');
+        physician_approved_select = document.getElementById('physician_approved');
+        submit_status = document.getElementById('submit_status');
+        form_completed = "yes"
+        Array.from(myForm.elements).forEach(element => {
+            if (element.type === 'select-one' && element.value === 'Please Select') {
+                alert(element.labels[0].textContent + " Not Completed");
+                element.scrollIntoView();
+                form_completed = "no";
+                process.exit()
+                return;
+            }
+        })
+        if (is_physician_required_select.value == "Yes"){
+            if (physician_approved_select.value != "Yes"){
+                form_completed = "no"
+                alert("Physician Must Approve")
+                process.exit()
+                return;
+            }
+        }
+        if (form_completed == "yes"){
+            submit_status.value = "Approved"
+            myForm.submit()
+        }
+    }
+
+    function submit_later() {
+        is_physician_required_select = document.getElementById('is_physician_required');
+        physician_approved_select = document.getElementById('physician_approved');
+        form_completed = "yes"
+        myForm = document.getElementById('employee_form');
+        submit_status = document.getElementById('submit_status');
+        Array.from(myForm.elements).forEach(element => {
+            if (element.type === 'select-one' && element.value === 'Please Select') {
+                alert(element.labels[0].textContent + " Not Completed");
+                element.scrollIntoView();
+                form_completed = "no";
+                process.exit()
+                return;
+            }
+        })
+        if (form_completed == "yes"){
+            submit_status.value = "Not Approved"
+            myForm.submit()
+        }
+    }
+
+
+	</script>
+</head>
+<body>
+	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+		<a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
+		<div id="navbarNavDropdown2">
+		  <ul class="sub-nav-list navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
+       <!--            <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>-->
+        <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
+	  	<li><a class="nav-item nav-link" href="{% url 'safety_home' %}">Safety</a></li>
+        <li><a class="nav-item nav-link active" href="{% url 'certifications' 'ALL' %}">Respirator Clearance</a></li>
+		  </ul>
+  		</div>
+	</nav><br>
+
+
+
+<div class="demo-html" style="width:90%">
+    <!--    	<div style="background-color: powderblue;">-->
+	<div class ="row"><div class ="col"><h3>Respirator Clearance for {{certification.employee}}</h3></div></div>
+    <br>
+    <div class ="row"><div class ="col"><b>Questionnaire Completion Date:</b> {{certification.date_completed}}</div></div>
+    <br>
+    {% if certification.is_physician_required %}
+        <div class ="row"><div class ="col"><b>Note</b> The employee requested that a physician review the form</div></div>
+    <br>
+    {% endif %}
+
+    <div class ="row"><div class ="col">
+    <form id="view_clearance" action="{% url 'respirator_clearance_completed' certification.id %}" method="POST">
+    {% csrf_token %}
+    <input type="submit" class= "btn btn-danger btn" value="View Completed Respirator Clearance Form" />
+    </form>
+    </div></div>
+    <br>
+    <!--	Notes-->
+	<div style="background-color: Ivory;">
+	<div class ="row"><div class ="col"><h3>NOTES</h3></div></div>
+	{% if notes %}
+	{% for y in notes %}
+			<div class ="row"><div class ="col"><b>Note: </b>{{y.date}} - {{y.user}} - {{y.note}}</div></div>
+	{% endfor %}
+	{% endif %}
+		 <form id="add_note_form" action="{% url 'view_respirator_certification' certification_id %}" method="POST">
+			 {% csrf_token %}
+			 <div class ="row"><div class ="col"><input type="text" name="note" size="100" placeholder ='New Note Here' /> <input type="submit" name="new_note" value="ADD NOTE" /></div></div>
+         </form>
+             <br>
+	</div>
+    <hr>
+    {% if approved_for_use %}
+    <br><br>
+    <div class ="row"><div class ="col"><h4>Employee Approved For Respirator</h4></div></div>
+    {% else %}
+    <br>
+    <div style="background-color: powderblue;">
+        <br>
+        <div class ="row"><div class ="col"><h4>Safety Director Review</h4></div></div>
+        <br>
+        <form id="employee_form" name="employee_form" method="POST" action="{% url 'view_respirator_certification' certification_id %}">
+        {% csrf_token %}
+             <div class="form-group">
+        <div class ="row"><div class ="col">
+        <label for="is_physician_required">Does a Physician Need to Review?</label>
+        <select class="form-control" id="is_physician_required" name="is_physician_required" onchange="show_hidden()" >
+            {% if certification.is_physician_actually_required %}
+            <option value="Yes" selected>"Yes"</option>
+            {% else %}
+            <option value="Please Select" selected>"Please Select"</option>
+            <option value="Yes">"Yes"</option>
+            {% endif %}
+            <option value="No">"No"</option>
+            <option value="TBD">"TBD"</option>
+        </select>
+        </div></div>
+
+            <br>
+        <div id="physician_review">
+            <div class ="row"><div class ="col">
+            <label for="physician_approved">Has the Physician Approved?</label>
+            <select class="form-control" id="physician_approved" name="physician_approved" >
+            {% if certification.is_physician_actually_required %}
+            <option value="Please Select" selected>"Please Select"</option>
+            <option value="Not Applicable">"Not Applicable"</option>
+            {% else %}
+            <option value="Please Select">"Please Select"</option>
+            <option value="Not Applicable" selected>"Not Applicable"</option>
+            {% endif %}
+            <option value="Yes">"Yes"</option>
+            <option value="No">"No"</option>
+            <option value="TBD">"TBD"</option>
+            </select>
+            </div></div>
+            <br>
+        </div>
+            <br>
+            <div class ="row"><div class ="col">
+            <button type="button" class="btn btn-success" onclick="employee_approved()" />Employee is Approved For Respirator</button>
+            <br><br>
+            <button type="button" class="btn btn-secondary" onclick="submit_later()" />Save Changes and Exit</button>
+            </div></div>
+            <br>
+
+        <input type="hidden" name="submit_status" id="submit_status">
+             </div>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+</body>
+</html>
+
+{% endblock %}

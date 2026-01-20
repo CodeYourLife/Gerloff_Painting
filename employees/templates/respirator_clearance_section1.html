@@ -1,0 +1,329 @@
+{% extends 'painter_base.html' %}
+{% load static %}
+{% block nav_item_employees %}active{% endblock nav_item_employees %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>Trinity GP</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+
+	</style>
+	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+    window.onload = function() {
+        show_hidden()
+}
+
+    function show_hidden(){
+        do_you_smoke = document.getElementById('do_you_smoke');
+        hide_smoke = document.getElementById('cigarettes');
+        do_you_have_seizures =document.getElementById('do_you_have_seizures');
+        hide_seizures =document.getElementById('seizures');
+        do_you_have_diabetes =document.getElementById('do_you_have_diabetes');
+        hide_diabetes =document.getElementById('diabetes');
+        if (do_you_smoke.value == "Yes"){hide_smoke.style.display = "block"}
+        else {
+            hide_smoke.style.display = "none"
+            document.getElementById('how_many_cigarettes').value = 0
+            document.getElementById('how_many_years').value = 0
+        }
+        if (do_you_have_seizures.value == "Yes"){hide_seizures.style.display = "block"}
+        else {
+            hide_seizures.style.display = "none"
+            document.getElementById('seizures_year_diagnosed').value = 0
+            document.getElementById('seizures_difficulties').value = ""
+        }
+        if (do_you_have_diabetes.value == "Yes"){hide_diabetes.style.display = "block"}
+        else {
+            hide_diabetes.style.display = "none"
+            document.getElementById('diabetes_year_diagnosed').value = 0
+            document.getElementById('diabetes_difficulties').value = ""
+        }
+    }
+
+    function check_form() {
+        form_completed = "yes"
+        myForm = document.getElementById('employee_form');
+        Array.from(myForm.elements).forEach(element => {
+            if (element.type === 'select-one' && element.value === 'Please Select') {
+                alert(element.labels[0].textContent + " Not Completed");
+                element.scrollIntoView();
+                form_completed = "no";
+                process.exit()
+                return;
+            }
+        })
+        do_you_smoke = document.getElementById('do_you_smoke');
+        if (do_you_smoke.value == "Yes"){
+            if (document.getElementById('how_many_cigarettes').value == 0){
+                form_completed = "no";
+                document.getElementById('how_many_cigarettes').scrollIntoView();
+                alert("How Many Cigarettes Do you Smoke Per Day")
+                return
+            }
+            if (document.getElementById('how_many_years').value == 0){
+                form_completed = "no";
+                document.getElementById('how_many_years').scrollIntoView();
+                alert("How Many Years Have You Smoked?")
+                return
+            }
+        }
+                do_you_smoke = document.getElementById('do_you_smoke');
+        if (do_you_have_seizures.value == "Yes"){
+            if (document.getElementById('seizures_year_diagnosed').value == 0){
+                form_completed = "no";
+                document.getElementById('seizures_year_diagnosed').scrollIntoView();
+                alert("How Many Years Have You Had Seizures")
+                return
+            }
+            if (document.getElementById('seizures_difficulties').value == ""){
+                form_completed = "no";
+                document.getElementById('seizures_difficulties').scrollIntoView();
+                alert("Please Provide More Information About Your Seizures")
+                return
+            }
+        }
+        if (do_you_have_diabetes.value == "Yes"){
+            if (document.getElementById('diabetes_year_diagnosed').value == 0){
+                form_completed = "no";
+                document.getElementById('diabetes_year_diagnosed').scrollIntoView();
+                alert("How Many Years Have You Had Diabetes")
+                return
+            }
+            if (document.getElementById('diabetes_difficulties').value == ""){
+                form_completed = "no";
+                document.getElementById('diabetes_difficulties').scrollIntoView();
+                alert("Please Provide More Information About Your Diabetes")
+                return
+            }
+        }
+
+        if (form_completed == "yes"){myForm.submit()}
+    }
+    </script>
+</head>
+<body>
+<div class="container mt-5">
+    <h2>Respirator Clearance Form {{employee.first_name}} {{employee.last_name}} - Section 1 of 6</h2>
+    <form id="employee_form" method="POST" action="{% url 'respirator_clearance_section1' %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <br>
+            <b>1. Smoking History</b>
+<!--            do_you_smoke-->
+                        <br>
+             <label for="do_you_smoke">Do you currently smoke tobacco, or have you smoked tobacco in the last month?:</label>
+                <select id="do_you_smoke" name="do_you_smoke" class="form-control" style="width: 250px;" onchange ="show_hidden()">
+                    <option value ="{{part1.do_you_smoke}}">{{part1.do_you_smoke}}</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            <div id="cigarettes">
+<!--            how_many_cigarettes-->
+                <br>
+             <label for="how_many_cigarettes">How many cigarettes per day?</label>
+                <input type="number" id="how_many_cigarettes" name="how_many_cigarettes" value="{{part1.how_many_cigarettes}}">
+
+<!--            how_many_years-->
+                <br>
+             <label for="how_many_years">How many years have you been smoking?</label>
+                <input type="number" id="how_many_years" name="how_many_years" value="{{part1.how_many_years}}">
+
+            </div>
+                        <br>
+            <b>2. Seizures History</b>
+<!--            do_you_have_seizures-->
+                                    <br>
+             <label for="do_you_have_seizures">Have you ever had a seizure:</label>
+                <select id="do_you_have_seizures" name="do_you_have_seizures" class="form-control" style="width: 250px;" onchange ="show_hidden()">
+                    <option value ="{{part1.do_you_have_seizures}}">{{part1.do_you_have_seizures}}</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            <div id="seizures">
+<!--            seizures_year_diagnosed-->
+                                <br>
+             <label for="seizures_year_diagnosed">How many years have you had an issue with seizures?</label>
+                <input type="number" id="seizures_year_diagnosed" name="seizures_year_diagnosed" value="{{part1.seizures_year_diagnosed}}">
+
+<!--            seizures_difficulties-->
+                <br>
+                <label for="seizures_difficulties">Please provide more information about your history with seizures.</label>
+                <textarea rows="4" style="width: 100%" class="form-control" id="seizures_difficulties" name="seizures_difficulties">{{part1.seizures_difficulties}}</textarea>
+                </div>
+
+                                    <br>
+            <b>3. Diabetes History</b>
+<!--            do_you_have_diabetes-->
+                                    <br>
+             <label for="do_you_have_diabetes">Have you been diagnosed with diabetes?:</label>
+                <select id="do_you_have_diabetes" name="do_you_have_diabetes" class="form-control" style="width: 250px;" onchange ="show_hidden()">
+                    <option value ="{{part1.do_you_have_diabetes}}">{{part1.do_you_have_diabetes}}</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+
+            <div id="diabetes">
+<!--            diabetes_year_diagnosed-->
+                                                <br>
+             <label for="diabetes_year_diagnosed">How many years have you been diagnosed with diabetes?</label>
+                <input type="number" id="diabetes_year_diagnosed" name="diabetes_year_diagnosed" value="{{part1.diabetes_year_diagnosed}}">
+<!--            diabetes_difficulties-->
+                <br>
+                <label for="diabetes_difficulties">Please provide more information about your history with diabetes.</label>
+                <textarea rows="4" style="width: 100%" class="form-control" id="diabetes_difficulties" name="diabetes_difficulties">{{part1.diabetes_difficulties}}</textarea>
+                </div>
+
+
+                                            <br>
+            <b>4. Other Conditions</b>
+<!--            allergic_reactions-->
+                                            <br>
+             <label for="allergic_reactions">Allergic Reactions that interfere with your breathing?:</label>
+                <select id="allergic_reactions" name="allergic_reactions" class="form-control" style="width: 250px;" onchange ="show_hidden()">
+                    <option value ="{{part1.allergic_reactions}}">{{part1.allergic_reactions}}</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+<!--            claustrophobia-->
+                                            <br>
+             <label for="claustrophobia">Claustrophobia (fear of closed-in places?:</label>
+                <select id="claustrophobia" name="claustrophobia" class="form-control" style="width: 250px;" onchange ="show_hidden()">
+                    <option value ="{{part1.claustrophobia}}">{{part1.claustrophobia}}</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+
+<!--            trouble_smelling-->
+                                            <br>
+             <label for="trouble_smelling">Trouble Smelling Odors?:</label>
+                <select id="trouble_smelling" name="trouble_smelling" class="form-control" style="width: 250px;" onchange ="show_hidden()">
+                    <option value ="{{part1.trouble_smelling}}">{{part1.trouble_smelling}}</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+        <br>
+        <b>5. Have you ever had any of the following pulmonary or lung problems?</b>
+        <br>
+<!--            asbestosis-->
+                                                    <br>
+             <label for="asbestosis">Asbestosis?:</label>
+                <select id="asbestosis" name="asbestosis" class="form-control" style="width: 250px;" onchange ="show_hidden()">
+                    <option value ="{{part1.asbestosis}}">{{part1.asbestosis}}</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+<!--            asthma-->
+                                                    <br>
+             <label for="asthma">Asthma?:</label>
+                <select id="asthma" name="asthma" class="form-control" style="width: 250px;" onchange ="show_hidden()">
+                    <option value ="{{part1.asthma}}">{{part1.asthma}}</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+<!--            chronic_bronchitis-->
+                                                    <br>
+             <label for="chronic_bronchitis">Chronic bronchitis?:</label>
+                <select id="chronic_bronchitis" name="chronic_bronchitis" class="form-control" style="width: 250px;" onchange ="show_hidden()">
+                    <option value ="{{part1.chronic_bronchitis}}">{{part1.chronic_bronchitis}}</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+<!--            emphysema-->
+                                                    <br>
+             <label for="emphysema">Emphysema?:</label>
+                <select id="emphysema" name="emphysema" class="form-control" style="width: 250px;" onchange ="show_hidden()">
+                    <option value ="{{part1.emphysema}}">{{part1.emphysema}}</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+<!--            pneumonia-->
+                                                    <br>
+             <label for="pneumonia">Pneumonia?:</label>
+                <select id="pneumonia" name="pneumonia" class="form-control" style="width: 250px;" onchange ="show_hidden()">
+                    <option value ="{{part1.pneumonia}}">{{part1.pneumonia}}</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+<!--            tuberculosis-->
+                                                    <br>
+             <label for="tuberculosis">Tuberculosis?:</label>
+                <select id="tuberculosis" name="tuberculosis" class="form-control" style="width: 250px;" onchange ="show_hidden()">
+                    <option value ="{{part1.tuberculosis}}">{{part1.tuberculosis}}</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+<!--            silicosis-->
+                                                    <br>
+             <label for="silicosis">Silicosis?:</label>
+                <select id="silicosis" name="silicosis" class="form-control" style="width: 250px;" onchange ="show_hidden()">
+                    <option value ="{{part1.silicosis}}">{{part1.silicosis}}</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+<!--            pneumothorax-->
+                                                    <br>
+             <label for="pneumothorax">Pneumothorax?:</label>
+                <select id="pneumothorax" name="pneumothorax" class="form-control" style="width: 250px;" onchange ="show_hidden()">
+                    <option value ="{{part1.pneumothorax}}">{{part1.pneumothorax}}</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+<!--            lung_cancer-->
+                                                    <br>
+             <label for="lung_cancer">Lung cancer?:</label>
+                <select id="lung_cancer" name="lung_cancer" class="form-control" style="width: 250px;" onchange ="show_hidden()">
+                    <option value ="{{part1.lung_cancer}}">{{part1.lung_cancer}}</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+<!--            broken_ribs-->
+                                                    <br>
+             <label for="broken_ribs">Broken Ribs?:</label>
+                <select id="broken_ribs" name="broken_ribs" class="form-control" style="width: 250px;" onchange ="show_hidden()">
+                    <option value ="{{part1.broken_ribs}}">{{part1.broken_ribs}}</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+<!--            chest_injuries-->
+                                                    <br>
+             <label for="chest_injuries">Any Chest Injuries or Surgeries?:</label>
+                <select id="chest_injuries" name="chest_injuries" class="form-control" style="width: 250px;" onchange ="show_hidden()">
+                    <option value ="{{part1.chest_injuries}}">{{part1.chest_injuries}}</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+<!--            other_lung_problems-->
+                                                    <br>
+             <label for="other_lung_problems">Any other lung problem that you've been told about?:</label>
+                <select id="other_lung_problems" name="other_lung_problems" class="form-control" style="width: 250px;" onchange ="show_hidden()">
+                    <option value ="{{part1.other_lung_problems}}">{{part1.other_lung_problems}}</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+<!--            lung_problem_explanation-->
+<br>
+                <label for="lung_problem_explanation">If you answered yes to any of the questions from number 5, please explain.</label>
+                <textarea rows="4" style="width: 100%" class="form-control" id="lung_problem_explanation" name="lung_problem_explanation">{{part1.lung_problem_explanation}}</textarea>
+
+        <button type="button" class="btn btn-primary" onclick='check_form()'>Proceed to Next Page</button>
+   </div>
+    </form>
+
+</div>
+</body>
+{% endblock %}
