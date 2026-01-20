@@ -128,8 +128,9 @@ function check_if_start_date_changed(){
 
 $(document).ready(function() {
   if ("{{error_message}}"){alert("{{error_message}}")}
-  document.getElementById("hide_this").style.display = "none"
-
+    document.getElementById("hide_this").style.display = "none"
+    hide_submit_button.style.display = "none"
+    hide_competent_person_list.style.display = "none"
 });
 
 function add_new_note(){
@@ -443,6 +444,7 @@ window.onload = function() {
     var table = $('#tickets_table8').DataTable({paging: false, ordering:false, searching:false,info:false})
     var table = $('#tickets_table9').DataTable({paging: false, ordering:false, searching:false,info:false})
     var table = $('#tickets_table10').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#competent_persons_table').DataTable({paging: false, ordering:false, searching:false,info:false})
     document.getElementById("show_new_pm").style.display = "none";
     document.getElementById("show_new_super").style.display = "none";
     document.getElementById("dropbox_link_hide").style.display = "none";
@@ -466,6 +468,22 @@ document.getElementById("notes_filter_and_button").style.display = "block";
 document.getElementById("notes_filter_button").style.display = "none";
 }
 
+function submit_safety_packet(){
+    myForm= document.getElementById("safety_packet_form")
+    myForm.submit()
+}
+
+function show_competent_person_list(){
+    hide_competent_person_list= document.getElementById("hide_competent_person_list")
+    hide_competent_person_list.style.display = "block"
+    hide_first_competent_button = document.getElementById("hide_first_competent_button")
+    hide_first_competent_button.style.display = "none"
+}
+
+function show_submit_button(){
+    hide_submit_button= document.getElementById("hide_submit_button")
+    hide_submit_button.style.display = "block"
+}
 </script>
 
 </head>
@@ -1105,7 +1123,7 @@ document.getElementById("notes_filter_button").style.display = "none";
 
 
 
-<!--notes-->
+<!--notes 1-->
 <div class="card" style="background-color:hsl(54, 100%, 95%);">
     <div class="card-header" id="headingOne">
         <h5 class="mb-0">
@@ -1195,6 +1213,7 @@ document.getElementById("notes_filter_button").style.display = "none";
         </div>
 </div>
 
+<!--tickets not done 2-->
 {% if tickets_not_done %}
     <div class="card">
         <div class="card-header" id="headingTwo">
@@ -1239,7 +1258,7 @@ document.getElementById("notes_filter_button").style.display = "none";
         </div>
     </div>
 {% endif %}
-
+<!--tickets not signed 3-->
 {% if tickets_not_signed %}
     <div class="card">
         <div class="card-header" id="headingThree">
@@ -1283,18 +1302,18 @@ document.getElementById("notes_filter_button").style.display = "none";
         </div>
     </div>
 {% endif %}
-
+<!--tickets not sent 4-->
 {% if tickets_not_sent %}
     <div class="card">
-        <div class="card-header" id="headingThree">
+        <div class="card-header" id="headingFour">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false"
-                        aria-controls="collapseThree">
+                        aria-controls="headingFour">
                    {{tickets_not_sent_count}} - Tickets Signed, But Not Sent Yet
                 </button>
             </h5>
         </div>
-        <div id="collapseFour" class="collapse hide" aria-labelledby="headingThree" data-parent="#accordion">
+        <div id="collapseFour" class="collapse hide" aria-labelledby="headingFour" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="tickets_table2" class="display table">
@@ -1326,18 +1345,18 @@ document.getElementById("notes_filter_button").style.display = "none";
         </div>
     </div>
 {% endif %}
-
+<!--open cos 5-->
 {% if open_cos %}
     <div class="card">
-        <div class="card-header" id="headingThree">
+        <div class="card-header" id="headingFive">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFive" aria-expanded="false"
-                        aria-controls="collapseThree">
+                        aria-controls="collapseFive">
                     {{open_cos_count}}- Change Orders Sent, Not Approved
                 </button>
             </h5>
         </div>
-        <div id="collapseFive" class="collapse hide" aria-labelledby="headingThree" data-parent="#accordion">
+        <div id="collapseFive" class="collapse hide" aria-labelledby="headingFive" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="tickets_table9" class="display table">
@@ -1371,18 +1390,18 @@ document.getElementById("notes_filter_button").style.display = "none";
     </div>
 {% endif %}
 
-
+<!--informal cos 99-->
 {% if informal_cos %}
     <div class="card">
         <div class="card-header" id="heading99">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapse99" aria-expanded="false"
-                        aria-controls="collapseThree">
+                        aria-controls="collapse99">
                     {{informal_cos_count}}- Change Orders Informally Approved
                 </button>
             </h5>
         </div>
-        <div id="collapse99" class="collapse hide" aria-labelledby="headingThree" data-parent="#accordion">
+        <div id="collapse99" class="collapse hide" aria-labelledby="heading99" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="tickets_table10" class="display table">
@@ -1415,18 +1434,18 @@ document.getElementById("notes_filter_button").style.display = "none";
         </div>
     </div>
 {% endif %}
-
+<!--approved cos 6-->
 {% if approved_cos %}
     <div class="card">
-        <div class="card-header" id="headingFour">
+        <div class="card-header" id="headingSix">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSix" aria-expanded="false"
-                        aria-controls="collapseFour">
+                        aria-controls="collapseSix">
                   {{approved_cos_count}}-  Approved Change Orders
                 </button>
             </h5>
         </div>
-        <div id="collapseSix" class="collapse hide" aria-labelledby="headingFour" data-parent="#accordion">
+        <div id="collapseSix" class="collapse hide" aria-labelledby="headingSix" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="approved_changes_table" class="display table">
@@ -1459,18 +1478,18 @@ document.getElementById("notes_filter_button").style.display = "none";
         </div>
     </div>
 {% endif %}
-
+<!--equipment 7-->
 {% if equipments %}
     <div class="card">
-        <div class="card-header" id="headingFive">
+        <div class="card-header" id="headingSeven">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSeven" aria-expanded="false"
-                        aria-controls="collapseFive">
+                        aria-controls="collapseSeven">
                     Equipment
                 </button>
             </h5>
         </div>
-        <div id="collapseSeven" class="collapse hide" aria-labelledby="headingFive" data-parent="#accordion">
+        <div id="collapseSeven" class="collapse hide" aria-labelledby="headingSeven" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="tickets_table3" class="display table">
@@ -1498,18 +1517,18 @@ document.getElementById("notes_filter_button").style.display = "none";
         </div>
     </div>
 {% endif %}
-
+<!--rentals 8-->
 {% if rentals %}
     <div class="card">
-        <div class="card-header" id="headingSix">
+        <div class="card-header" id="headingEight">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseEight" aria-expanded="false"
-                        aria-controls="collapseSix">
+                        aria-controls="collapseEight">
                     Rentals
                 </button>
             </h5>
         </div>
-        <div id="collapseEight" class="collapse hide" aria-labelledby="headingSix" data-parent="#accordion">
+        <div id="collapseEight" class="collapse hide" aria-labelledby="headingEight" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="tickets_table4" class="display table">
@@ -1541,18 +1560,18 @@ document.getElementById("notes_filter_button").style.display = "none";
         </div>
     </div>
 {% endif %}
-
+<!--wc not ordered 9-->
 {% if wc_not_ordereds %}
     <div class="card">
-        <div class="card-header" id="headingSeven">
+        <div class="card-header" id="headingNine">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseNine" aria-expanded="false"
-                        aria-controls="collapseSeven">
+                        aria-controls="collapseNine">
                     Wallcovering Not Ordered
                 </button>
             </h5>
         </div>
-        <div id="collapseNine" class="collapse hide" aria-labelledby="headingSeven" data-parent="#accordion">
+        <div id="collapseNine" class="collapse hide" aria-labelledby="headingNine" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="tickets_table5" class="display table">
@@ -1581,18 +1600,18 @@ document.getElementById("notes_filter_button").style.display = "none";
         </div>
     </div>
 {% endif %}
-
+<!--wc ordered 10-->
 {% if wc_ordereds %}
     <div class="card">
-        <div class="card-header" id="headingEight">
+        <div class="card-header" id="headingTen">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTen" aria-expanded="false"
-                        aria-controls="collapseEight">
+                        aria-controls="collapseTen">
                     Wallcovering Ordered But Not Received
                 </button>
             </h5>
         </div>
-        <div id="collapseTen" class="collapse hide" aria-labelledby="headingEight" data-parent="#accordion">
+        <div id="collapseTen" class="collapse hide" aria-labelledby="headingTen" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="tickets_table6" class="display table">
@@ -1619,18 +1638,18 @@ document.getElementById("notes_filter_button").style.display = "none";
         </div>
     </div>
 {% endif %}
-
+<!--wc ordered 11-->
 {% if packages %}
     <div class="card">
-        <div class="card-header" id="headingNine">
+        <div class="card-header" id="headingEleven">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseEleven" aria-expanded="false"
-                        aria-controls="collapseNine">
+                        aria-controls="collapseEleven">
                     Received Wallcovering
                 </button>
             </h5>
         </div>
-        <div id="collapseEleven" class="collapse hide" aria-labelledby="headingNine" data-parent="#accordion">
+        <div id="collapseEleven" class="collapse hide" aria-labelledby="headingEleven" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="tickets_table7" class="display table">
@@ -1683,18 +1702,18 @@ document.getElementById("notes_filter_button").style.display = "none";
         </div>
     </div>
 {% endif %}
-
+<!--submittals 12-->
 {% if submittals %}
     <div class="card">
-        <div class="card-header" id="headingTen" >
+        <div class="card-header" id="headingTwelve" >
             <h5 class="mb-0" >
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwelve" aria-expanded="false"
-                        aria-controls="collapseTen">
+                        aria-controls="collapseTwelve">
                     Submittals
                 </button>
             </h5>
         </div>
-        <div id="collapseTwelve" class="collapse hide" aria-labelledby="headingTen" data-parent="#accordion">
+        <div id="collapseTwelve" class="collapse hide" aria-labelledby="headingTwelve" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="tickets_table8" class="display table">
@@ -1725,18 +1744,18 @@ document.getElementById("notes_filter_button").style.display = "none";
         </div>
     </div>
 {% endif %}
-
+<!--subcontracts 13-->
 {% if subcontracts %}
     <div class="card">
-        <div class="card-header" id="headingNine">
+        <div class="card-header" id="headingThirteen">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseThirteen" aria-expanded="false"
-                        aria-controls="collapseENine">
+                        aria-controls="collapseThirteen">
                     Subcontractors
                 </button>
             </h5>
         </div>
-        <div id="collapseThirteen" class="collapse hide" aria-labelledby="headingNine" data-parent="#accordion">
+        <div id="collapseThirteen" class="collapse hide" aria-labelledby="headingThirteen" data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="subcontractors_table" class="display table table-sm">
@@ -1770,6 +1789,79 @@ document.getElementById("notes_filter_button").style.display = "none";
         </div>
     </div>
 {% endif %}
+
+<!--Safety 14-->
+
+    <div class="card">
+        <div class="card-header" id="headingFourteen">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFourteen" aria-expanded="false"
+                        aria-controls="collapseFourteen">
+                    Safety
+                </button>
+            </h5>
+        </div>
+        <div id="collapseFourteen" class="collapse hide" aria-labelledby="headingFourteen" data-parent="#accordion">
+            <div class="card-body">
+                <form id="safety_packet_form" action="{% url 'job_page' job.job_number %}" method="post" >
+                    {% csrf_token %}
+                    <b>Safety Packet Sent?</b>
+                    <input type="hidden" name="safety_packet" id="safety_packet" />
+                    {% if job.has_safety_packet_been_sent %}
+                    <input type="checkbox" id="safety_packet_sent" name="safety_packet_sent"  onchange="submit_safety_packet()" checked />
+                    {% else %}
+                    <input type="checkbox" id="safety_packet_sent" name="safety_packet_sent" onchange="submit_safety_packet()" />
+                    {% endif %}
+                </form>
+                <br><hr>
+                {% if competent_persons %}
+                <div class="table-responsive">
+                    <table id="competent_persons_table" class="display table table-sm">
+                        <thead class="colored-header">
+
+                        <tr>
+                            <th scope="col" >Competent Person</th>
+                            <th scope="col" >Date Assigned</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for x in competent_persons %}
+                        <tr>
+                            <td>{{x.employee.first_name}} {{x.employee.last_name}}</td>
+                            <td>{{x.date}}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <b>No Competent Persons Have Been Assigned</b>
+                {% endif %}
+                <br>
+                <div id="hide_first_competent_button">
+                <button type="button" class="btn btn-primary btn-sm" onclick="show_competent_person_list()">Add Competent Person</button>
+                </div>
+
+                <form id="competent_person_form" action="{% url 'job_page' job.job_number %}" method="post" >
+                    {% csrf_token %}
+                    <div id="hide_competent_person_list">
+                <select id="add_competent_person" name="add_competent_person" class="form-control" style="width: 300px" onchange="show_submit_button()">
+                <option value="Please Select" selected>Please Select</option>
+                    {% for x in painters %}
+                <option value={{x.id}}>{{x.first_name}} {{x.last_name}}</option>
+                {% endfor %}
+
+                </select>
+                    </div>
+                    <div id="hide_submit_button">
+                    <input type="submit" class="btn btn-primary" value="Add Now"/>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
 
 
 <script>

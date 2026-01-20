@@ -765,6 +765,32 @@ def job_page(request, jobnumber):
         if pickup_request.remove_trash:
             send_data['trash_pickup_requested'] = True
     if request.method == 'POST':
+        if 'add_competent_person' in request.POST:
+            selected_competent_person_id = request.POST['add_competent_person']
+            selected_competent_person = Employees.objects.get(id=selected_competent_person_id)
+            if not Competent_Persons.objects.filter(employee=selected_competent_person,job=selectedjob).exists():
+                Competent_Persons.objects.create(employee=selected_competent_person,job=selectedjob,date=date.today())
+                message = "Competent Person " + selected_competent_person.first_name + " " + selected_competent_person.last_name + " has been assigned to " + selectedjob.job_name
+                recipients = ["skip@gerloffpainting.com","bridgette@gerloffpainting.com"]
+                if selectedjob.superintendent:
+                    if selectedjob.superintendent.email:
+                        recipients.append(selectedjob.superintendent.email)
+                    else:
+                        recipients.append("victor@gerloffpainting.com")
+                else:
+                    recipients.append("victor@gerloffpainting.com")
+                try:
+                    Email.sendEmail("Competent Person Assigned", message, recipients, False)
+                    send_data['error_message'] = "Email announcing competent person was successfully sent. "
+                except:
+                    send_data['error_message'] = "ERROR! Your Email announcing competent person was NOT sent. Please tell the super. "
+        if 'safety_packet' in request.POST:
+            if 'safety_packet_sent' in request.POST:
+                print("PUMPKING HERE")
+                selectedjob.has_safety_packet_been_sent = True
+            else:
+                selectedjob.has_safety_packet_been_sent = False
+            selectedjob.save()
         if 'undo_redo' in request.POST:
             selectedEmployeeIds = request.POST.getlist('undo_redo')
             EmployeeJob.objects.filter(job=jobnumber).delete()
@@ -1031,6 +1057,8 @@ def job_page(request, jobnumber):
                 filteredEmployees.append(employee)
         send_data['employees'] = filteredEmployees
         send_data['selectedEmployees'] = selectedEmployees
+        send_data['painters'] = Employees.objects.filter(job_title__description="Painter",active=True)
+        send_data['competent_persons'] = Competent_Persons.objects.filter(job=selectedjob)
         return render(request, 'job_page.html', send_data)
 
 
