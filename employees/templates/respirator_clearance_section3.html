@@ -1,0 +1,132 @@
+{% extends 'painter_base.html' %}
+{% load static %}
+{% block nav_item_employees %}active{% endblock nav_item_employees %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>Trinity GP</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+
+	</style>
+	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+
+
+    function check_form() {
+        form_completed = "yes"
+        myForm = document.getElementById('employee_form');
+        Array.from(myForm.elements).forEach(element => {
+            if (element.type === 'select-one' && element.value === 'Please Select') {
+                alert(element.labels[0].textContent + " Not Completed");
+                element.scrollIntoView();
+                form_completed = "no";
+                process.exit()
+                return;
+            }
+        })
+
+        if (form_completed == "yes"){myForm.submit()}
+    }
+    </script>
+</head>
+<body>
+<div class="container mt-5">
+    <h2>Respirator Clearance Form {{employee.first_name}} {{employee.last_name}} - Section 3 of 6</h2>
+    <form id="employee_form" method="POST" action="{% url 'respirator_clearance_section3' %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <br>
+            <b>1. Have you ever had any of the following cardiovascular or heart symptoms?</b>
+        <br>
+            <br>
+            <label for="chest_pain">Do you have frequent pain or tightness in your chest?</label>
+        <select id="chest_pain" name="chest_pain" class="form-control">
+            <option selected>{{ part1.chest_pain }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="heart_skipping">In the past two years, have you noticed your heart skipping or missing a beat?</label>
+        <select id="heart_skipping" name="heart_skipping" class="form-control">
+            <option selected>{{ part1.heart_skipping }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="heartburn">Do you experience frequent heartburn or acid reflux that is not related to eating?</label>
+        <select id="heartburn" name="heartburn" class="form-control">
+            <option selected>{{ part1.heartburn }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="other">Any other symptoms that you think may be related to heart or circulation problems?</label>
+        <select id="other" name="other" class="form-control">
+            <option selected>{{ part1.other }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="explanation">If you answered “Yes” to any of the above, please explain:</label>
+        <textarea id="explanation" name="explanation" class="form-control" rows="4">{{ part1.explanation }}</textarea>
+    </div>
+
+    <hr>
+
+    <div class="form-group">
+        <b>2. Do you CURRENTLY take medication for any of the following problems?</b>
+<br>
+        <br>
+        <label for="breathing_medication">Breathing or Lung Problems?</label>
+        <select id="breathing_medication" name="breathing_medication" class="form-control">
+            <option selected>{{ part1.breathing_medication }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="heart_medication">Heart Trouble?</label>
+        <select id="heart_medication" name="heart_medication" class="form-control">
+            <option selected>{{ part1.heart_medication }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="blood_pressure_medication">Blood Pressure?</label>
+        <select id="blood_pressure_medication" name="blood_pressure_medication" class="form-control">
+            <option selected>{{ part1.blood_pressure_medication }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="seizure_medication">Seizures (fits)?</label>
+        <select id="seizure_medication" name="seizure_medication" class="form-control">
+            <option selected>{{ part1.seizure_medication }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="medication_explanation">If you answered “Yes” to any of the above, please explain:</label>
+        <textarea id="medication_explanation" name="medication_explanation" class="form-control" rows="4">{{ part1.medication_explanation }}</textarea>
+    </div>
+            
+        <button type="button" class="btn btn-primary" onclick='check_form()'>Proceed to Next Page</button>
+
+    </form>
+
+</div>
+</body>
+{% endblock %}

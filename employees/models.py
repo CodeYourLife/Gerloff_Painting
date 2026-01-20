@@ -62,7 +62,10 @@ class Employees(models.Model):
     employer = models.CharField(max_length=100)  # Gerloff Painting, Nam, JuarezPro, etc.
     pin = models.IntegerField(null=True, blank=True)
     date_added = models.DateField(null=False, blank=False)
-
+    birth_date = models.DateField(null=True, blank=True)
+    gender = models.CharField(max_length=10, choices=[("Male", "Male"), ("Female", "Female"),("Unassigned", "Unassigned"),("Select", "Select")], default="Select")
+    height = models.CharField(max_length=100,null=True, blank=True)
+    weight = models.CharField(max_length=100, null=True, blank=True)
 
 
 
@@ -240,8 +243,9 @@ class MentorshipNotes(models.Model):
 
 class CertificationCategories(models.Model):
     id = models.BigAutoField(primary_key=True)
-    # OSHA30, dbids card, tuburculosis, CRMC
+    # OSHA30, dbids card, tuburculosis, CRMC, Respirator Clearance
     description = models.CharField(null=True, max_length=200)
+    expiration_days = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.description}"
@@ -278,6 +282,7 @@ class CertificationNotes(models.Model):
 class CertificationActionRequired(models.Model):
     id = models.BigAutoField(primary_key=True)
     action = models.CharField(null=True, max_length=200)
+    main = models.ForeignKey(Certifications, on_delete=models.PROTECT)
 
     def __str__(self):
         return f"{self.action}"
@@ -431,3 +436,139 @@ class CompletedToolboxTalks(models.Model):
     date = models.DateField(null=True, blank=True)
     employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
     master = models.ForeignKey(ScheduledToolboxTalks, on_delete=models.PROTECT)
+
+class RespiratorClearance(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    employee = models.ForeignKey(Employees, on_delete=models.CASCADE)
+    date_created = models.DateField(null=True, blank=True)
+    date_completed = models.DateField(null=True, blank=True)
+    is_physician_required = models.BooleanField(default=False) #this is true if the employee requested it
+    is_physician_actually_required = models.BooleanField(default=False)
+    physician_approved = models.BooleanField(default=False)
+    approved_for_use = models.BooleanField(default=False)
+    date_approved = models.DateField(blank=True, null=True)
+    certification = models.ForeignKey(Certifications, on_delete=models.CASCADE, null=True)
+
+class RespiratorClearance1(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    main = models.ForeignKey(RespiratorClearance, on_delete=models.CASCADE)
+    do_you_smoke = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    how_many_cigarettes = models.IntegerField(default=0, blank=True, null=True)
+    how_many_years = models.IntegerField(default=0, blank=True, null=True)
+    do_you_have_seizures = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    seizures_year_diagnosed = models.IntegerField(default=0, blank=True, null=True)
+    seizures_difficulties = models.CharField(max_length=2000, blank=True, null=True)
+    do_you_have_diabetes = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    diabetes_year_diagnosed = models.IntegerField(default=0, blank=True, null=True)
+    diabetes_difficulties = models.CharField(max_length=2000, blank=True, null=True)
+    allergic_reactions = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    claustrophobia = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    trouble_smelling = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    asbestosis = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    asthma = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    chronic_bronchitis = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    emphysema = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    pneumonia = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    tuberculosis = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    silicosis = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    pneumothorax = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    lung_cancer = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    broken_ribs = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    chest_injuries = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    other_lung_problems = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    lung_problem_explanation = models.CharField(max_length=2000, blank=True, null=True)
+
+class RespiratorClearance2(models.Model):
+    #PAGE 7
+    id = models.BigAutoField(primary_key=True)
+    main = models.ForeignKey(RespiratorClearance, on_delete=models.CASCADE)
+    breath_shortness = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    coughing_issues = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    wheezing_issues = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    chest_pain = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    other_lung_problems = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    lung_problem_explanation = models.CharField(max_length=2000, blank=True, null=True)
+    heart_attack = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    stroke = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    angina = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    heart_failure = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    swelling = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    arrhythmia = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    high_blood_pressure = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    other_heart_problem = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    heart_problem_explanation = models.CharField(max_length=2000, blank=True, null=True)
+
+
+class RespiratorClearance3(models.Model):
+    # page 11
+    id = models.BigAutoField(primary_key=True)
+    main = models.ForeignKey(RespiratorClearance, on_delete=models.CASCADE)
+    chest_pain = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    heart_skipping = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    heartburn = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    other = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    explanation = models.CharField(max_length=2000, blank=True, null=True)
+    #page 12
+    breathing_medication = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    heart_medication = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    blood_pressure_medication = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    seizure_medication = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    medication_explanation = models.CharField(max_length=2000, blank=True, null=True)
+
+
+class RespiratorClearance4(models.Model):
+    #page 13
+    id = models.BigAutoField(primary_key=True)
+    main = models.ForeignKey(RespiratorClearance, on_delete=models.CASCADE)
+    worn_respirator = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    respirator_type = models.CharField(max_length=2000, blank=True, null=True)
+    eye_irritation = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("N/A", "Not Applicable"),("Please Select", "Please Select")], default="Please Select")
+    allergies = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("N/A", "Not Applicable"),("Please Select", "Please Select")], default="Please Select")
+    anxiety = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("N/A", "Not Applicable"),("Please Select", "Please Select")], default="Please Select")
+    weakness = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("N/A", "Not Applicable"),("Please Select", "Please Select")], default="Please Select")
+    other_problem = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("N/A", "Not Applicable"),("Please Select", "Please Select")], default="Please Select")
+    explanation = models.CharField(max_length=2000, blank=True, null=True)
+
+
+
+class RespiratorClearance5(models.Model):
+    #page 14
+    id = models.BigAutoField(primary_key=True)
+    main = models.ForeignKey(RespiratorClearance, on_delete=models.CASCADE)
+    home_exposure = models.CharField(max_length=20,
+                                choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")],
+                                default="Please Select")
+    home_exposure_explained = models.CharField(max_length=2000, blank=True, null=True)
+    asbestos = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    silica = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    tungsten_cobalt = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    beryllium = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    aluminum = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    coal = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    iron = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    tin = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    dusty_environments = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    other_exposure = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    explanation = models.CharField(max_length=2000, blank=True, null=True)
+
+
+class RespiratorClearance6(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    main = models.ForeignKey(RespiratorClearance, on_delete=models.CASCADE)
+    #page 16
+    second_job = models.CharField(max_length=2000, blank=True, null=True)
+    previous_occupations = models.CharField(max_length=2000, blank=True, null=True)
+    hobbies = models.CharField(max_length=2000, blank=True, null=True)
+    military_exposure = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    hazmat_team = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    other_medications = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")], default="Please Select")
+    list_medications = models.CharField(max_length=2000, blank=True, null=True)
+    physician = models.CharField(max_length=20, choices=[("Yes", "Yes"), ("No", "No"), ("Please Select", "Please Select")],default="Please Select")
+
+
+class RespiratorNotes(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    main = models.ForeignKey(RespiratorClearance, on_delete=models.CASCADE)
+    date = models.DateField()
+    employee = models.ForeignKey(Employees, on_delete=models.CASCADE)
+    note = models.CharField(max_length=2000, blank=True, null=True)

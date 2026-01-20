@@ -1,0 +1,165 @@
+{% extends 'painter_base.html' %}
+{% load static %}
+{% block nav_item_employees %}active{% endblock nav_item_employees %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>Trinity GP</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+
+	</style>
+	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+
+
+    function check_form() {
+        form_completed = "yes"
+        myForm = document.getElementById('employee_form');
+        Array.from(myForm.elements).forEach(element => {
+            if (element.type === 'select-one' && element.value === 'Please Select') {
+                alert(element.labels[0].textContent + " Not Completed");
+                element.scrollIntoView();
+                form_completed = "no";
+                process.exit()
+                return;
+            }
+        })
+
+        if (form_completed == "yes"){myForm.submit()}
+    }
+    </script>
+</head>
+<body>
+<div class="container mt-5">
+    <h2>Respirator Clearance Form {{employee.first_name}} {{employee.last_name}} - Section 2 of 6</h2>
+    <form id="employee_form" method="POST" action="{% url 'respirator_clearance_section2' %}">
+        {% csrf_token %}
+        <div class="form-group">
+<b>Section 1 - Do you currently have any of the following symptoms of pulmonary or lung illness? </b>
+            <br>
+            <br>
+        <label for="breath_shortness">Do you experience shortness of breath when doing low stress activites (such as walking at an ordinary pace or washing/dressing yourself). Or shortness of breath that interferes with your job?</label>
+        <select name="breath_shortness" id="breath_shortness" class="form-control">
+            <option selected>{{ part1.breath_shortness }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="coughing_issues">Do you have coughing issues (ie. coughing that produces phlegm, wakes you up in the morning, occurs mostly when lying down, or produces blood in the mouth)?</label>
+        <select name="coughing_issues" id="coughing_issues" class="form-control">
+            <option selected>{{ part1.coughing_issues }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="wheezing_issues">Do you experience wheezing that interferes with your job?</label>
+        <select name="wheezing_issues" id="wheezing_issues" class="form-control">
+            <option selected>{{ part1.wheezing_issues }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="chest_pain">Do you experience chest pain when breathing deeply or exercising?</label>
+        <select name="chest_pain" id="chest_pain" class="form-control">
+            <option selected>{{ part1.chest_pain }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="other_lung_problems">Have you seen a physician for any breathing/lung issues?</label>
+        <select name="other_lung_problems" id="other_lung_problems" class="form-control">
+            <option selected>{{ part1.other_lung_problems }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="lung_problem_explanation">If yes to any of the above, please explain:</label>
+        <textarea name="lung_problem_explanation" id="lung_problem_explanation" class="form-control" rows="3">{{ part1.lung_problem_explanation }}</textarea>
+
+        <hr>
+
+            <b>Section 2 - Have you ever had any of the following cardiovascular or heart problems? </b>
+            <br>
+            <br>
+
+<label for="heart_attack">Heart attack?</label>
+<select name="heart_attack" id="heart_attack" class="form-control">
+    <option selected>{{ part1.heart_attack }}</option>
+    <option value="Yes">Yes</option>
+    <option value="No">No</option>
+</select>
+
+<label for="stroke">Stroke?</label>
+<select name="stroke" id="stroke" class="form-control">
+    <option selected>{{ part1.stroke }}</option>
+    <option value="Yes">Yes</option>
+    <option value="No">No</option>
+</select>
+
+<label for="angina">Angina or chest pain from heart disease?</label>
+<select name="angina" id="angina" class="form-control">
+    <option selected>{{ part1.angina }}</option>
+    <option value="Yes">Yes</option>
+    <option value="No">No</option>
+</select>
+
+<label for="heart_failure">Heart failure?</label>
+<select name="heart_failure" id="heart_failure" class="form-control">
+    <option selected>{{ part1.heart_failure }}</option>
+    <option value="Yes">Yes</option>
+    <option value="No">No</option>
+</select>
+
+<label for="swelling">Swelling in your legs or feet not caused from walking?</label>
+<select name="swelling" id="swelling" class="form-control">
+    <option selected>{{ part1.swelling }}</option>
+    <option value="Yes">Yes</option>
+    <option value="No">No</option>
+</select>
+
+<label for="arrhythmia">Heart arrhythmia (irregular heartbeat)?</label>
+<select name="arrhythmia" id="arrhythmia" class="form-control">
+    <option selected>{{ part1.arrhythmia }}</option>
+    <option value="Yes">Yes</option>
+    <option value="No">No</option>
+</select>
+
+<label for="high_blood_pressure">High blood pressure?</label>
+<select name="high_blood_pressure" id="high_blood_pressure" class="form-control">
+    <option selected>{{ part1.high_blood_pressure }}</option>
+    <option value="Yes">Yes</option>
+    <option value="No">No</option>
+</select>
+
+<label for="other_heart_problem">Any other heart problem that you've been told about?</label>
+<select name="other_heart_problem" id="other_heart_problem" class="form-control">
+    <option selected>{{ part1.other_heart_problem }}</option>
+    <option value="Yes">Yes</option>
+    <option value="No">No</option>
+</select>
+
+        <label for="heart_problem_explanation">If yes to any of the above, please explain:</label>
+        <textarea name="heart_problem_explanation" id="heart_problem_explanation" class="form-control" rows="3">{{ part1.heart_problem_explanation }}</textarea>
+
+        <br>
+        <button type="button" class="btn btn-primary" onclick='check_form()'>Proceed to Next Page</button>
+    </div>
+    </form>
+
+</div>
+</body>
+{% endblock %}

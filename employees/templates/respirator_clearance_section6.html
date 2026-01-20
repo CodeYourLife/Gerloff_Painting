@@ -1,0 +1,106 @@
+{% extends 'painter_base.html' %}
+{% load static %}
+{% block nav_item_employees %}active{% endblock nav_item_employees %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>Trinity GP</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+
+	</style>
+	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+
+
+    function check_form() {
+        form_completed = "yes"
+        myForm = document.getElementById('employee_form');
+        Array.from(myForm.elements).forEach(element => {
+            if (element.type === 'select-one' && element.value === 'Please Select') {
+                alert(element.labels[0].textContent + " Not Completed");
+                element.scrollIntoView();
+                form_completed = "no";
+                process.exit()
+                return;
+            }
+        })
+
+        if (form_completed == "yes"){myForm.submit()}
+    }
+    </script>
+</head>
+<body>
+<div class="container mt-5">
+    <h2>Respirator Clearance Form {{employee.first_name}} {{employee.last_name}} - Section 6 of 6</h2>
+    <form id="employee_form" method="POST" action="{% url 'respirator_clearance_section6' %}">
+        {% csrf_token %}
+        <div class="form-group">
+
+    <label for="second_job">List any second jobs or side businesses you have:</label>
+    <textarea id="second_job" name="second_job" class="form-control" rows="2">{{ part1.second_job }}</textarea>
+    <br>
+    <label for="previous_occupations">List any of your previous occupations:</label>
+    <textarea id="previous_occupations" name="previous_occupations" class="form-control" rows="2">{{ part1.previous_occupations }}</textarea>
+    <br>
+    <label for="hobbies">List any hobbies or activities you participate in regularly:</label>
+    <textarea id="hobbies" name="hobbies" class="form-control" rows="2">{{ part1.hobbies }}</textarea>
+
+    <br><b>Occupational Exposures</b><br><br>
+    <label for="military_exposure">Have you ever been to exposed to biological or chemical agents (either in training or combat?)</label>
+    <select id="military_exposure" name="military_exposure" class="form-control" style="width: 250px;">
+      <option value="{{ part1.military_exposure }}">{{ part1.military_exposure }}</option>
+      <option value="Yes">Yes</option>
+      <option value="No">No</option>
+    </select>
+
+    <br>
+    <label for="hazmat_team">Have you ever served on a HAZMAT team?</label>
+    <select id="hazmat_team" name="hazmat_team" class="form-control" style="width: 250px;">
+      <option value="{{ part1.hazmat_team }}">{{ part1.hazmat_team }}</option>
+      <option value="Yes">Yes</option>
+      <option value="No">No</option>
+    </select>
+
+    <br><b>3. Medication</b><br>
+    <label for="other_medications">Are you currently taking any other medications not mentioned previously?</label>
+    <select id="other_medications" name="other_medications" class="form-control" style="width: 250px;">
+      <option value="{{ part1.other_medications }}">{{ part1.other_medications }}</option>
+      <option value="Yes">Yes</option>
+      <option value="No">No</option>
+    </select>
+
+    <br>
+    <label for="list_medications">If yes, please list the medications:</label>
+    <textarea id="list_medications" name="list_medications" class="form-control" rows="2">{{ part1.list_medications }}</textarea>
+
+    <br>
+    <label for="physician">Would you like to talk to the health care professional who will review this questionnaire about your answers? If you choose 'yes' the evaluations cannot be approved until we contact you.</label>
+    <select id="physician" name="physician" class="form-control" style="width: 250px;">
+      <option value="{{ part1.physician }}">{{ part1.physician }}</option>
+      <option value="Yes">Yes</option>
+      <option value="No">No</option>
+    </select>
+
+    <br>
+
+        <button type="button" class="btn btn-primary" onclick='check_form()'>SUBMIT FORM</button>
+		</div>
+    </form>
+
+</div>
+</body>
+{% endblock %}

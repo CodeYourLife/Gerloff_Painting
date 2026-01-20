@@ -1,0 +1,165 @@
+{% extends 'painter_base.html' %}
+{% load static %}
+{% block nav_item_employees %}active{% endblock nav_item_employees %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>Trinity GP</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+
+	</style>
+	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+function show_hidden(){
+    myForm = document.getElementById('employee_form');
+    worn_respirator = document.getElementById('worn_respirator')
+
+        Array.from(myForm.elements).forEach(element => {
+            if (element.type === 'select-one' && element.name !== 'worn_respirator') {
+                if (worn_respirator.value == "Yes") {
+                    element.value = "Please Select"
+                }
+                else {
+                    element.value = "N/A"
+                }
+            }
+        })
+        if (worn_respirator.value == "No") {
+                    document.getElementById('respirator_type').value = "Not Applicable"
+                    document.getElementById('explanation').value = "Not Applicable"
+                }
+        else{
+            document.getElementById('respirator_type').value = ""
+                    document.getElementById('explanation').value = ""
+        }
+}
+
+    function check_form() {
+        form_completed = "yes"
+        myForm = document.getElementById('employee_form');
+        Array.from(myForm.elements).forEach(element => {
+            if (element.type === 'select-one' && element.value === 'Please Select') {
+                alert(element.labels[0].textContent + " Not Completed");
+                element.scrollIntoView();
+                form_completed = "no";
+                process.exit()
+                return;
+            }
+        })
+
+        if (form_completed == "yes"){myForm.submit()}
+    }
+    </script>
+</head>
+<body>
+<div class="container mt-5">
+    <h2>Respirator Clearance Form {{employee.first_name}} {{employee.last_name}} - Section 4 of 6</h2>
+    <form id="employee_form" method="POST" action="{% url 'respirator_clearance_section4' %}">
+        {% csrf_token %}
+        <div class="form-group">
+
+        <label for="worn_respirator">
+            Have you used a respirator before?
+        </label>
+        <select id="worn_respirator" name="worn_respirator" class="form-control" onchange ="show_hidden()">
+            <option selected>{{ part1.worn_respirator }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+        </select>
+        <br>
+            <b>If you have worn a respirator before, please complete the following: </b>
+            <br>
+            <br>
+        <label for="respirator_type">
+            What type of respirator did you wear?
+        </label>
+        <textarea id="respirator_type"
+                  name="respirator_type"
+                  class="form-control"
+                  rows="3">{{ part1.respirator_type }}</textarea>
+
+        <hr>
+
+
+        <label for="eye_irritation">
+            Eye irritation while wearing a respirator?
+        </label>
+        <select id="eye_irritation" name="eye_irritation" class="form-control">
+            <option selected>{{ part1.eye_irritation }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            <option value="N/A">Not Applicable</option>
+        </select>
+
+        <label for="allergies">
+            Skin allergies or rashes when wearing respirator?
+        </label>
+        <select id="allergies" name="allergies" class="form-control">
+            <option selected>{{ part1.allergies }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            <option value="N/A">Not Applicable</option>
+        </select>
+
+        <label for="anxiety">
+            Anxiety, panic, or claustrophobia while wearing a respirator?
+        </label>
+        <select id="anxiety" name="anxiety" class="form-control">
+            <option selected>{{ part1.anxiety }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            <option value="N/A">Not Applicable</option>
+        </select>
+
+        <label for="weakness">
+            Weakness, dizziness, lightheadedness, or fatigue while wearing a respirator?
+        </label>
+        <select id="weakness" name="weakness" class="form-control">
+            <option selected>{{ part1.weakness }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            <option value="N/A">Not Applicable</option>
+        </select>
+
+        <label for="other_problem">
+            Any other problems while wearing a respirator?
+        </label>
+        <select id="other_problem" name="other_problem" class="form-control">
+            <option selected>{{ part1.other_problem }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            <option value="N/A">Not Applicable</option>
+        </select>
+
+        <label for="explanation">
+            If you answered “Yes” to any of the above, please explain:
+        </label>
+        <textarea id="explanation"
+                  name="explanation"
+                  class="form-control"
+                  rows="4">{{ part1.explanation }}</textarea>
+
+        <hr>
+
+        <br>
+        <button type="button" class="btn btn-primary" onclick='check_form()'>Proceed to Next Page</button>
+        </div>
+    </form>
+
+</div>
+</body>
+{% endblock %}

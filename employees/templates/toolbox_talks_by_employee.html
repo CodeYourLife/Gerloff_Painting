@@ -74,106 +74,59 @@
     <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
     <script type="text/javascript" class="init">
         $(document).ready(function () {
-            var table = $('#employees_table').DataTable({"paging": false, "order": [[2,'asc']]});
+            var table = $('#employees_table').DataTable({paging: false});
         })
-        function populate_file_form(id, file_name,language){
-        select_file.selected_file.value= file_name
-        select_file.selected_id.value= id
-        select_file.selected_language.value= language
-        select_file.submit()
-        }
-        function populate_employees_modal(id){
-            $.ajax({
-                method: 'GET',
-                url: '/superintendent/super_ajax',
-                data: {'scheduled_toolbox_talk_id':id},
-                success: function (data) {
-                    parsedData = JSON.parse(data);
-                    modal_text = document.getElementById('missing_employee_list')
-                    modal_text.innerHTML = "<b>Painters Needed to Complete:</b><br>"
-                    parsedData.painters.forEach((element) => {
-                        modal_text.innerHTML += element.name + "<br>"
-                    })
-                }
-            })
-        }
+
     </script>
 
 </head>
 <body>
-
 
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
     <a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
     <div id="navbarNavDropdown2">
         <ul class="sub-nav-list navbar-nav ">
             <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
-           <!--            <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>-->
+<!--            <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>-->
             <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
             <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
             <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
             <li><a class="nav-item nav-link" href="{% url 'employee_notes' 'AUTO' %}">Employee Notes</a></li>
             <li><a class="nav-item nav-link" href="{% url 'safety_home' %}">Safety</a></li>
-            <li><a class="nav-item nav-link active" href="{% url 'scheduled_toolbox_talks' %}">Scheduled Toolbox Talks</a></li>
+            <li><a class="nav-item nav-link active" href="{% url 'safety_home' %}">Toolbox Talks By Employee</a></li>
         </ul>
     </div>
 
 </nav>
-<!-- Modal -->
-<div class="modal fade" id="notes-modal" tabindex="-1" role="dialog" aria-labelledby="title"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="notes_title">Missing Employees</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div id="missing_employee_list"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" onclick = "add_note()" data-dismiss="modal">Add New Note</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Exit</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-<div>
-    <form name="create_schedule" action="{% url 'scheduled_toolbox_talks' %}" method="post">
-        {% csrf_token %}
-        <p>If you click this button, it will add all of the toolbox talks from the master list to the end of the schedule.</p>
-        <input type="submit" name= "extend_schedule" class= "btn btn-danger btn" value="Add to Schedule" />
-    </form>
-</div>
 
     <div style="margin-top: 12px" class="table-responsive">
         <table id="employees_table" class="table display">
             <thead>
             <tr>
-                <th class="col">Item</th>
-                <th class="col">Description</th>
-                <th class="col">Week</th>
-                <th class="col">Participation</th>
+                <th class="col">Topic</th>
+                <th class="col">Date</th>
+                <th class="col">Employee</th>
+                <th class="col">Status</th>
             </tr>
             </thead>
             <tbody>
-            {% for x in toolboxtalks %}
+            {% for toolboxtalk in toolbox_talks %}
             <tr>
-                <td>{{x.Item}}</td>
-                <td>{{x.description}}</td>
-                <td data-order=YYYY-MM-DD>{{x.date}}</td>
-                <td onclick="populate_employees_modal('{{x.Item}}')" data-toggle="modal" data-target="#notes-modal"><a style="color: blue; cursor: pointer;">{{x.ratio}}</a></td>
+                <td>{{toolboxtalk.topic}}</td>
+                <td>{{toolboxtalk.date}}</td>
+                <td>{{toolboxtalk.employee}}</td>
+                {% if toolboxtalk.status == "Incomplete" %}
+                <td><p style="color: red;">{{toolboxtalk.status}}</p></td>
+                {% else %}
+                <td>{{toolboxtalk.status}}</td>
+                {% endif %}
             </tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
 
+</div>
 </body>
 </html>
 

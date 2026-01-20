@@ -1,0 +1,95 @@
+{% extends 'painter_base.html' %}
+{% load static %}
+{% block nav_item_employees %}active{% endblock nav_item_employees %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>Trinity GP</title>
+	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+	<style type="text/css" class="init">
+
+	</style>
+	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
+	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+	<script type="text/javascript" class="init">
+    function check_form() {
+        form_completed = "yes"
+        myForm = document.getElementById('employee_form');
+        Array.from(myForm.elements).forEach(element => {
+            if (element.type === 'select-one' && element.value === 'not_selected') {
+                alert(element.labels[0].textContent + " Not Completed");
+                form_completed = "no";
+            } else if (element.type === 'text' && element.value === '') {
+                alert(element.labels[0].textContent + " Not Completed");
+                form_completed = "no";
+            }
+        })
+        if (form_completed == "yes"){myForm.submit()}
+    }
+    </script>
+</head>
+<body>
+<div class="container mt-5">
+    <h2>Respirator Clearance Form - Employee Info</h2>
+    <form id="employee_form" method="POST" action="{% url 'respirator_clearance_section0' %}">
+        {% csrf_token %}
+        <div class="form-group">
+           <input type="hidden" name="employee_id" id="employee_id" value="{{employee.id}}" />
+            <p>Employee = <b>{{employee.first_name}} {{employee.last_name}}</b></p>
+            <br>
+             <label for="gender">Gender:</label>
+                <select id="gender" name="gender" class="form-control" style="width: 250px;">
+					{% if employee.gender != "Select" %}
+                    <option value ="{{employee.gender}}">{{employee.gender}}</option>
+                    {% endif %}
+                    <option value="not_selected">Please Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Unassigned">Unassigned</option>
+                </select>
+
+            <br>
+            <label for="height">Height: </label>
+            {% if employee.height %}
+            <input type="text" name = "height" id = "height" value = "{{employee.height}}">
+            {% else %}
+            <input type="text" name = "height" id = "height">
+            {% endif %}
+            <br>
+            <label for="weight">Weight: </label>
+            {% if employee.weight %}
+            <input type="text" name = "weight" id = "weight" value = "{{employee.weight}}">
+            {% else %}
+            <input type="text" name = "weight" id = "weight" >
+            {% endif %}
+            <br>
+            <label for="phone">Phone Number: </label>
+            {% if employee.phone %}
+            <input type="text" name = "phone" id = "phone" value = "{{employee.phone}}">
+            {% else %}
+            <input type="text" name = "phone" id = "phone" >
+            {% endif %}
+        </div>
+        {% if started_at_base %}
+        <input type="hidden" name="next_page" value="back_to_base">
+        <button type="button" class="btn btn-primary" onclick='check_form()'>Save Now</button>
+        {% else %}
+        <input type="hidden" name="next_page" value="next_page">
+        <button type="button" class="btn btn-primary" onclick='check_form()'>Proceed to Next Page</button>
+        {% endif %}
+    </form>
+</div>
+</body>
+{% endblock %}

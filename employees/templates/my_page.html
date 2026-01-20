@@ -103,7 +103,7 @@
             {% else %}
             <li><a class="nav-item nav-link" href="{% url 'my_page' %}">Home</a></li>
             {% endif %}
-            <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>
+            <!--            <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>-->
             <li><a class="nav-item nav-link active" href="{% url 'my_page' %}">My Page</a></li>
             <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
             <li><a class="nav-item nav-link" href="{% url 'write_ups' 'ALL' %}">Write_Ups</a></li>
@@ -116,7 +116,8 @@
 <div style="width: 100%; text-align:center; margin-top: 5px;"><h4>{{employee}}'s Page</h4></div>
 <!--{{employee.}}-->
 <div id="accordion">
-        <div class="card">
+<!--    # my info 0-->
+    <div class="card">
             <div class="card-header" id="headingZero">
                 <h5 class="mb-0">
                     <button class="btn btn-link" data-toggle="collapse" data-target="#collapseZero"
@@ -172,7 +173,8 @@
                 </div>
             </div>
         </div>
-        <div class="card">
+<!--    # jobs assigned to (-1)-->
+    <div class="card">
         <div class="card-header" id="headingNegativeOne">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseNegativeOne"
@@ -231,7 +233,9 @@
                 </div>
             </div>
         </div>
-        <div class="card">
+    </div>
+<!--    #assigned tools 1-->
+    <div class="card">
             <div class="card-header" id="headingOne">
                 <h5 class="mb-0">
                     <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false"
@@ -247,14 +251,15 @@
                         <table id="employees_table" class="table display">
                             <tr>
                                 <th>Item</th>
-                                <th>Link</th>
+                                <th>Date Assigned</th>
+
                             </tr>
                             <tbody>
 
                             {% for x in inventory %}
                             <tr>
-                                <td>{{x.item}}</td>
-                                <td><a href="{%  url 'equipment_page' x.id %}">View</a></td>
+                                <td>#{{x.number}}-{{x.item}}</td>
+                                <td>{{x.date_out}}</td>
                             </tr>
                             {% endfor %}
                             </tbody>
@@ -266,8 +271,9 @@
                 </div>
             </div>
         </div>
-
-        <!--<div class="card">
+<!-- #just to collapse the commented code-->
+    <div>
+    <!--<div class="card">
             <div class="card-header" id="headingTwo">
                 <h5 class="mb-0">
                     <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false"
@@ -383,8 +389,9 @@
                 </div>
             </div>
         </div>-->
-
-        <div class="card">
+</div>
+<!--    #writeups 5-->
+    <div class="card">
             <div class="card-header" id="headingFive">
                 <h5 class="mb-0">
                     <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFive"
@@ -424,7 +431,8 @@
             </div>
         </div>
 
-        <div class="card">
+<!--    #vacations 6-->
+    <div class="card">
             <div class="card-header" id="headingSix">
                 <h5 class="mb-0">
                     <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSix" aria-expanded="false"
@@ -464,6 +472,8 @@
                 </div>
             </div>
         </div>
+  <!--    #collapse commented code-->
+    <div>
 <!--
 
         <div class="card">
@@ -762,8 +772,9 @@
             </div>
         </div>
 -->
-
-
+    </div>
+<!--#certifications 14-->
+ <div class="card">
         <div class="card-header" id="headingFourteen">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFourteen"
@@ -790,7 +801,15 @@
                         {% for x in certifications %}
                         <tr>
                             <td>{{x.category}}</td>
+                            {% if x.category.description == "Respirator Clearance" %}
+                            {% if respirator_not_approved %}
+                            <td>Not Approved For Respirator</td>
+                            {% else %}
+                            <td>Approved For Respirator</td>
+                            {% endif %}
+                            {% else %}
                             <td>{{x.description}}</td>
+                            {% endif %}
                             <td><a href="{%  url 'certifications' x.id %}">View</a></td>
                             <td>{{x.date_received}} -</td>
                             <td>{{x.date_expires}}</td>
@@ -805,8 +824,57 @@
                 {% endif %}
             </div>
         </div>
+ </div>
 
-        <div class="card-header" id="headingSixteen">
+<!--#certification action required-->
+    <div class = "card">
+        <div class="card-header" id="headingTwo">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false"
+                        aria-controls="collapseTwo">
+                    Actions Required At This Time!
+                </button>
+            </h5>
+        </div>
+
+        <div id="collapseTwo" class="collapse hide" aria-labelledby="headingTwo" data-parent="#accordion">
+            <div class="card-body">
+                {% if actions %}
+                <div class="table-responsive">
+                    <table class="table display">
+                        <tr>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Link</th>
+                            <th>Date Received</th>
+                            <th>Date Expires</th>
+                            <th>Action</th>
+                        </tr>
+                        <tbody>
+                        {% for x in actions %}
+                        <tr>
+                            <td>{{x.category}} -</td>
+                            <td>{{x.description}} -</td>
+                            <td><a href="{%  url 'certifications' x.id %}">View</a></td>
+                            <td>{{x.date_received}}</td>
+                            <td>{{x.date_expires}}</td>
+                            <td>{{x.action}}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div>No Certifications Requiring Action</div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <!--#toolbox talks 16-->
+    <div class = "card">
+    <div class="card-header" id="headingSixteen">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSixteen"
                         aria-expanded="false"
@@ -858,48 +926,38 @@
             </div>
 
         </div>
-<!--
+</div>
+
+<!--#respirator clearance 15-->
+    <div class = "card">
         <div class="card-header" id="headingFifteen">
             <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFifteen" aria-expanded="false"
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFifteen"
+                        aria-expanded="false"
                         aria-controls="collapseFifteen">
-                    Certification (Actions Required)
+                    {% if respirator_clearance_required %}
+                    Respirator Clearance Required!
+                    {% else %}
+                    Respirator Clearance Completed
+                    {% endif %}
                 </button>
             </h5>
         </div>
-
         <div id="collapseFifteen" class="collapse hide" aria-labelledby="headingFifteen" data-parent="#accordion">
             <div class="card-body">
-                {% if actions %}
-                <div class="table-responsive">
-                    <table class="table display">
-                        <tr>
-                            <th>Category</th>
-                            <th>Description</th>
-                            <th>Link</th>
-                            <th>Date Received</th>
-                            <th>Date Expires</th>
-                            <th>Action</th>
-                        </tr>
-                        <tbody>
-                        {% for x in actions %}
-                        <tr>
-                            <td>{{x.category}} -</td>
-                            <td>{{x.description}} -</td>
-                            <td><a href="{%  url 'certifications' x.id %}">View</a></td>
-                            <td>{{x.date_received}}</td>
-                            <td>{{x.date_expires}}</td>
-                            <td>{{x.action}}</td>
-                        </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                {% if respirator_clearance_required %}
+                        <form name="add_new" action="{% url 'respirator_clearance_section0' %}" >
+                        {% csrf_token %}
+                      <input type="submit" class= "btn btn-danger btn" value="Complete Respirator Clearance Now" />
+                        </form>
                 {% else %}
-                <div>No Certifications Requiring Action</div>
+                                        <form name="add_new" action="{% url 'respirator_clearance_completed' respirator_clearance_id %}" >
+                        {% csrf_token %}
+                      <input type="submit" class= "btn btn-danger btn" value="View Completed Respirator Clearance Form" />
+                        </form>
                 {% endif %}
             </div>
-        </div>-->
+        </div>
 
     </div>
 

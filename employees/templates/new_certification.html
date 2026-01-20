@@ -38,7 +38,7 @@
     <div id="navbarNavDropdown2">
       <ul class="sub-nav-list navbar-nav ">
         <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>
+        <!--            <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>-->
         <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
         <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
         <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
@@ -47,16 +47,27 @@
     </ul>
   </div>
 </nav><br>
+	<div style="background-color: powderblue;">
+        <br>
  <form action="{% url 'new_certification' %}" method="post" >
      	 {% csrf_token %}
-          			 <label for="select_category">Select Certification: </label>
+        <input type="text" name="new_certification_type" placeholder="Check Drop Down Menu First" size="30">
+     <input type="submit" name="complete" value="ADD NEW CERTIFICATION TYPE" />
+ </form>
+<br>
+ <form action="{% url 'new_certification' %}" method="post" >
+     	 {% csrf_token %}
+          			 <label for="select_category">Select Certification Type: </label>
             <select id="select_category" name="select_category" >
 				<option value="please_select">Please Select</option>
                 {% for x in categories %}
                 <option value={{x.id}}>{{x.description}}</option>
                 {% endfor %}
             </select>
+
      <br><br>
+     </div>
+  <br>
 			 <label for="select_employee">Select Employee: </label>
             <select id="select_employee" name="select_employee" >
 				<option value="please_select">Please Select</option>

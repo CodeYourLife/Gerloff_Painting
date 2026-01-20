@@ -5,13 +5,19 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date, timedelta
 from equipment.models import Inventory
-from jobs.models import Jobs, JobNotes
+from jobs.models import Jobs, JobNotes, Email_Errors
 from django.http import HttpResponse
 from console.misc import createfolder
 import json
 import os
 from django.conf import settings
 from media.utilities import MediaUtilities
+from django.shortcuts import render, redirect
+from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import render, redirect, get_object_or_404
+from console.misc import Email
+# from .forms import RespiratorSection3Form,RespiratorSection4Form,RespiratorSection5Form
+
 
 
 @login_required(login_url='/accounts/login')
@@ -442,6 +448,12 @@ def my_page(request):
                 id = str(request.POST['selected_id'] + "/" + request.POST['selected_language'])
                 return MediaUtilities().getDirectoryContents(id, request.POST['selected_file'], 'toolbox_talks')
     send_data = {}
+    if not RespiratorClearance.objects.filter(employee=employee, date_completed__isnull=False).exists():
+        send_data['respirator_clearance_required'] = "Yes"
+    else:
+        send_data['respirator_clearance_id'] = RespiratorClearance.objects.get(employee=employee).id
+        if not RespiratorClearance.objects.get(employee=employee).approved_for_use:
+            send_data['respirator_not_approved'] = "Yes"
     send_data['employeeJobs'] = EmployeeJob.objects.filter(employee=employee.id)
     send_data['employee'] = employee
     send_data['inventory'] = Inventory.objects.filter(assigned_to=employee,is_closed=False)
@@ -464,6 +476,8 @@ def my_page(request):
         toolbox_talks_required_count = 0
         folder_name = settings.MEDIA_ROOT
         for x in ScheduledToolboxTalks.objects.filter(date__lte = date.today(), date__gte = employee.date_added):
+            spanish = "File Not Found"
+            english = "File Not Found"
             if not CompletedToolboxTalks.objects.filter(employee=employee,master=x).exists():
                 toolbox_talks_required_count += 1
                 toolbox_talk=x.master
@@ -486,11 +500,13 @@ def my_page(request):
 @login_required(login_url='/accounts/login')
 def certifications(request, id):
     send_data = {}
-    send_data['certifications'] = Certifications.objects.all()
-    send_data['actions'] = CertificationActionRequired.objects.all()
     if id != 'ALL':
-        send_data['selected_item'] = Certifications.objects.get(id=id)
-        send_data['notes2'] = CertificationNotes.objects.filter(certification__id=id)
+        selected_cert = Certifications.objects.get(id=id)
+        if selected_cert.category.description=="Respirator Clearance":
+            return redirect('view_respirator_certification',id=id)
+        else:
+            send_data['selected_item'] = Certifications.objects.get(id=id)
+            send_data['notes2'] = CertificationNotes.objects.filter(certification__id=id)
     if request.method == 'POST':
         cert = Certifications.objects.get(id=id)
         if 'new_note' in request.POST:
@@ -534,6 +550,8 @@ def certifications(request, id):
                                               note="Expiration Date Changed to: " + cert.date_expires + "- " +
                                                    request.POST['end_date_note'])
         cert.save()
+    send_data['certifications'] = Certifications.objects.filter(is_closed=False)
+    send_data['actions'] = CertificationActionRequired.objects.all()
     return render(request, "certifications.html", send_data)
 
 
@@ -545,28 +563,32 @@ def new_certification(request):
     send_data['categories'] = CertificationCategories.objects.all()
     send_data['actions'] = CertificationActionRequired.objects.all()
     if request.method == 'POST':
-        print(request.POST)
-        new_cert = Certifications.objects.create(
-            category=CertificationCategories.objects.get(id=request.POST['select_category']),
-            employee=Employees.objects.get(id=request.POST['select_employee']), note=request.POST['note'])
-        if 'dont_know_end' in request.POST:
-            print("HI")
+        if 'new_certification_type' in request.POST:
+            if not CertificationCategories.objects.filter(description=request.POST['new_certification_type']).exists():
+                CertificationCategories.objects.create(description = request.POST['new_certification_type'])
+            return redirect('new_certification')
         else:
-            new_cert.date_expires = request.POST['end_date']
-        if 'dont_know_start' in request.POST:
-            print("HI")
-        else:
-            new_cert.date_received = request.POST['start_date']
-        if request.POST['select_job'] != 'please_select':
-            new_cert.job = Jobs.objects.get(job_number=request.POST['select_job'])
-        if 'is_action_required' in request.POST:
-            new_cert.action_required = True
-            if request.POST['custom_action'] != "":
-                new_cert.action = request.POST['custom_action']
+            new_cert = Certifications.objects.create(
+                category=CertificationCategories.objects.get(id=request.POST['select_category']),
+                employee=Employees.objects.get(id=request.POST['select_employee']), note=request.POST['note'])
+            if 'dont_know_end' in request.POST:
+                print("HI")
             else:
-                new_cert.action = CertificationActionRequired.objects.get(id=request.POST['select_action']).action
-        new_cert.save()
-        return redirect('certifications', id=new_cert.id)
+                new_cert.date_expires = request.POST['end_date']
+            if 'dont_know_start' in request.POST:
+                print("HI")
+            else:
+                new_cert.date_received = request.POST['start_date']
+            if request.POST['select_job'] != 'please_select':
+                new_cert.job = Jobs.objects.get(job_number=request.POST['select_job'])
+            if 'is_action_required' in request.POST:
+                new_cert.action_required = True
+                if request.POST['custom_action'] != "":
+                    new_cert.action = request.POST['custom_action']
+                else:
+                    new_cert.action = CertificationActionRequired.objects.get(id=request.POST['select_action']).action
+            new_cert.save()
+            return redirect('certifications', id=new_cert.id)
     return render(request, "new_certification.html", send_data)
 
 
@@ -735,3 +757,282 @@ def scheduled_toolbox_talks(request):
         toolboxtalks.append({'Item':x.id, 'description': description, 'date': x.date, 'ratio': ratio})
     send_data['toolboxtalks']= toolboxtalks
     return render(request, 'scheduled_toolbox_talks.html', send_data)
+
+def respirator_clearance_base(request):
+    send_data = {}
+    employee = Employees.objects.get(user=request.user)
+    send_data['employee'] = employee
+    if RespiratorClearance.objects.filter(employee=employee).exists():
+        send_data['started_at_base'] = True
+        send_data['respirator_clearance0'] = True
+        main = RespiratorClearance.objects.get(employee=employee)
+        if RespiratorClearance1.objects.filter(main=main).exists():
+            send_data['respirator_clearance1'] = True
+        if RespiratorClearance2.objects.filter(main=main).exists():
+            send_data['respirator_clearance2'] = True
+        if RespiratorClearance3.objects.filter(main=main).exists():
+            send_data['respirator_clearance3'] = True
+        if RespiratorClearance4.objects.filter(main=main).exists():
+            send_data['respirator_clearance4'] = True
+        if RespiratorClearance5.objects.filter(main=main).exists():
+            send_data['respirator_clearance5'] = True
+        if RespiratorClearance6.objects.filter(main=main).exists():
+            send_data['respirator_clearance6'] = True
+    return render(request, 'respirator_clearance_base.html', send_data)
+
+def respirator_clearance_section0(request):
+    #basic employee info
+    send_data = {}
+    employee = Employees.objects.get(user=request.user)
+    send_data['employee'] = employee
+    if request.method == 'POST':
+        if not RespiratorClearance.objects.filter(employee=employee).exists():
+            rc = RespiratorClearance(employee = employee,date_created=date.today())
+            rc.save()
+        employee.gender = request.POST.get('gender')
+        employee.height = request.POST.get('height')
+        employee.weight = request.POST.get('weight')
+        employee.phone = request.POST.get('phone')
+        employee.save()
+        if request.POST['next_page'] == 'back_to_base':
+            return redirect('respirator_clearance_base')
+        if request.POST['next_page'] == 'next_page':
+            return redirect('respirator_clearance_section1')
+    return render(request, 'respirator_clearance_section0.html', send_data)
+
+
+
+@csrf_exempt
+def respirator_clearance_section1(request):
+    send_data = {}
+    employee = Employees.objects.get(user=request.user)
+    send_data['employee'] = employee
+    main = RespiratorClearance.objects.get(employee=employee)
+    if not RespiratorClearance1.objects.filter(main=main).exists():
+        RespiratorClearance1.objects.create(main=main)
+    part1 = RespiratorClearance1.objects.get(main=main)
+    send_data['part1'] = part1
+    if request.method == 'POST':
+        for field in part1._meta.fields:
+            name = field.name
+            print(name)
+            if name == 'id' or name == 'main':
+                continue
+            if name in request.POST:
+                value = request.POST[name]
+                setattr(part1, name, value)
+                part1.save()
+        return redirect('respirator_clearance_section2')
+    return render(request, 'respirator_clearance_section1.html', send_data)
+
+@csrf_exempt
+def respirator_clearance_section2(request):
+    send_data = {}
+    employee = Employees.objects.get(user=request.user)
+    send_data['employee'] = employee
+    main = RespiratorClearance.objects.get(employee=employee)
+    if not RespiratorClearance2.objects.filter(main=main).exists():
+        RespiratorClearance2.objects.create(main=main)
+    part1 = RespiratorClearance2.objects.get(main=main)
+    send_data['part1'] = part1
+    if request.method == 'POST':
+        for field in part1._meta.fields:
+            name = field.name
+            print(name)
+            if name == 'id' or name == 'main':
+                continue
+            if name in request.POST:
+                value = request.POST[name]
+                setattr(part1, name, value)
+                part1.save()
+        return redirect('respirator_clearance_section3')
+    return render(request, 'respirator_clearance_section2.html', send_data)
+
+def respirator_clearance_section3(request):
+    send_data = {}
+    employee = Employees.objects.get(user=request.user)
+    send_data['employee'] = employee
+    main = RespiratorClearance.objects.get(employee=employee)
+    if not RespiratorClearance3.objects.filter(main=main).exists():
+        RespiratorClearance3.objects.create(main=main)
+    part1 = RespiratorClearance3.objects.get(main=main)
+    send_data['part1'] = part1
+    if request.method == 'POST':
+        for field in part1._meta.fields:
+            name = field.name
+            print(name)
+            if name == 'id' or name == 'main':
+                continue
+            if name in request.POST:
+                value = request.POST[name]
+                setattr(part1, name, value)
+                part1.save()
+        return redirect('respirator_clearance_section4')
+    return render(request, 'respirator_clearance_section3.html', send_data)
+
+
+def respirator_clearance_section4(request):
+    send_data = {}
+    employee = Employees.objects.get(user=request.user)
+    send_data['employee'] = employee
+    main = RespiratorClearance.objects.get(employee=employee)
+    if not RespiratorClearance4.objects.filter(main=main).exists():
+        RespiratorClearance4.objects.create(main=main)
+    part1 = RespiratorClearance4.objects.get(main=main)
+    send_data['part1'] = part1
+    if request.method == 'POST':
+        for field in part1._meta.fields:
+            name = field.name
+            print(name)
+            if name == 'id' or name == 'main':
+                continue
+            if name in request.POST:
+                value = request.POST[name]
+                setattr(part1, name, value)
+                part1.save()
+        return redirect('respirator_clearance_section5')
+    return render(request, 'respirator_clearance_section4.html', send_data)
+
+def respirator_clearance_section5(request):
+    send_data = {}
+    employee = Employees.objects.get(user=request.user)
+    send_data['employee'] = employee
+    main = RespiratorClearance.objects.get(employee=employee)
+    if not RespiratorClearance5.objects.filter(main=main).exists():
+        RespiratorClearance5.objects.create(main=main)
+    part1 = RespiratorClearance5.objects.get(main=main)
+    send_data['part1'] = part1
+    if request.method == 'POST':
+        for field in part1._meta.fields:
+            name = field.name
+            print(name)
+            if name == 'id' or name == 'main':
+                continue
+            if name in request.POST:
+                value = request.POST[name]
+                setattr(part1, name, value)
+                part1.save()
+        return redirect('respirator_clearance_section6')
+    return render(request, 'respirator_clearance_section5.html', send_data)
+
+def respirator_clearance_section6(request):
+    send_data = {}
+    employee = Employees.objects.get(user=request.user)
+    send_data['employee'] = employee
+    main = RespiratorClearance.objects.get(employee=employee)
+    if not RespiratorClearance6.objects.filter(main=main).exists():
+        RespiratorClearance6.objects.create(main=main)
+    part1 = RespiratorClearance6.objects.get(main=main)
+    send_data['part1'] = part1
+    if request.method == 'POST':
+        for field in part1._meta.fields:
+            name = field.name
+            print(name)
+            if name == 'id' or name == 'main':
+                continue
+            if name in request.POST:
+                value = request.POST[name]
+                setattr(part1, name, value)
+                part1.save()
+        main.date_completed = date.today()
+        main.save()
+        message = "Respirator Clearance Completed. \n Employee: " + employee.first_name + employee.last_name
+        recipients = ["joe@gerloffpainting.com"]
+        Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
+        try:
+            Email.sendEmail("Respirator Clearance Completed", message,
+                            recipients, False)
+            message = "Your email about the respirator clearance was sent successfully"
+        except:
+            message = "Error! Your email about the respirator clearance failed to send. Please call them and let them know it was completed."
+        Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name, error=message,
+                                    date=date.today())
+        RespiratorNotes.objects.create(employee=employee,date=date.today(),main=main, note="Respirator Clearance Form Completed")
+        new_cert = Certifications.objects.create(employee=employee,category=CertificationCategories.objects.get(description="Respirator Clearance"))
+        CertificationNotes.objects.create(certification=new_cert,date=date.today(),user=employee,note="Respirator Clearance Form Completed")
+        main.certification=new_cert
+        main.save()
+        if request.POST['physician'] == 'Yes':
+            main.is_physician_required = True
+            main.is_physician_actually_required = True
+            main.save()
+            CertificationNotes.objects.create(certification=new_cert, date=date.today(), user=employee,
+                                              note="Employee Requested Physician Review")
+        CertificationActionRequired.objects.create(main=new_cert,action="Waiting for Safety Director")
+        return redirect('my_page')
+    return render(request, 'respirator_clearance_section6.html', send_data)
+
+def respirator_clearance_completed(request,respirator_id):
+    send_data = {}
+    main = RespiratorClearance.objects.get(id=respirator_id)
+    employee = main.employee
+    send_data['employee'] = employee
+    send_data['main'] = main
+    send_data['part1'] = RespiratorClearance1.objects.get(main=main)
+    send_data['part2'] = RespiratorClearance2.objects.get(main=main)
+    send_data['part3'] = RespiratorClearance3.objects.get(main=main)
+    send_data['part4'] = RespiratorClearance4.objects.get(main=main)
+    send_data['part5'] = RespiratorClearance5.objects.get(main=main)
+    send_data['part6'] = RespiratorClearance6.objects.get(main=main)
+    return render(request, 'respirator_clearance_completed.html', send_data)
+
+def toolbox_talks_by_employee(request):
+    send_data = {}
+    today = date.today()
+    days_until_monday = (0 - today.weekday() + 7) % 7
+    if days_until_monday == 0:
+        days_until_monday = 7
+    next_monday_date = today + timedelta(days=days_until_monday)
+    toolbox_talks = []
+    for toolbox_talk in ScheduledToolboxTalks.objects.filter(date__lt = next_monday_date).order_by('-date'):
+        for employee in Employees.objects.filter(date_added__lte=toolbox_talk.date, job_title__description="Painter"):
+            topic = toolbox_talk.master.description
+            scheduled_date = toolbox_talk.date.strftime('%Y/%m/%d')
+            name = employee.first_name + " " + employee.last_name
+            if CompletedToolboxTalks.objects.filter(master=toolbox_talk, employee=employee).exists():
+                status = "Completed"
+            else:
+                status = "Incomplete"
+            toolbox_talks.append({'topic':topic, 'date':scheduled_date,'employee':name, 'status':status})
+    send_data['toolbox_talks'] = toolbox_talks
+    return render(request, 'toolbox_talks_by_employee.html', send_data)
+
+def view_respirator_certification(request,id):
+    send_data = {}
+    selected_cert = Certifications.objects.get(id=id)
+    selected_respirator_cert = RespiratorClearance.objects.get(certification=selected_cert)
+    if request.method == 'POST':
+        if 'note' in request.POST:
+            CertificationNotes.objects.create(certification=selected_cert,date=date.today(), user=Employees.objects.get(user=request.user), note=request.POST['note'])
+        else:
+            if request.POST['submit_status'] == 'Approved':
+                selected_cert.date_received = date.today()
+                selected_cert.save()
+                CertificationActionRequired.objects.filter(main=selected_cert,action="Waiting for Safety Director").delete()
+                selected_respirator_cert.approved_for_use = True
+                selected_respirator_cert.date_approved = date.today()
+                if request.POST['is_physician_required'] == 'Yes':
+                    selected_respirator_cert.is_physician_actually_required = True
+                    selected_respirator_cert.physician_approved = True
+                else:
+                    selected_respirator_cert.is_physician_actually_required = False
+                    selected_respirator_cert.physician_approved = False
+                CertificationNotes.objects.create(certification=selected_cert, date=date.today(),
+                                                  user=Employees.objects.get(user=request.user),
+                                                  note="Approved for Respirator Use")
+            else:
+                if request.POST['is_physician_required'] == 'No':
+                    selected_respirator_cert.is_physician_actually_required = False
+                if request.POST['is_physician_required'] == 'Yes':
+                    selected_respirator_cert.is_physician_actually_required = True
+                CertificationNotes.objects.create(certification=selected_cert, date=date.today(),
+                                                  user=Employees.objects.get(user=request.user),
+                                                  note="Not Approved Yet. Physician Required? - " + request.POST['is_physician_required'] + ". Physician Approved? - " + request.POST['physician_approved'])
+            selected_respirator_cert.save()
+            return redirect('certifications', id='ALL')
+    if selected_respirator_cert.approved_for_use:
+        send_data['approved_for_use'] = 'True'
+    send_data['certification'] = selected_respirator_cert
+    send_data['certification_id'] = selected_cert.id
+    send_data['notes'] = CertificationNotes.objects.filter(certification=selected_cert)
+    return render(request, 'view_respirator_certification.html', send_data)

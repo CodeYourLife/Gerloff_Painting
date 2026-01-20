@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Respirator Clearance Form- Main Page -{{employee.first_name}} {{employee.last_name}} </h2>
+    <br>
+        <form action="{% url 'respirator_clearance_completed' %}" >
+            <button type="submit" class="btn btn-primary">VIEW COMPLETED FORM</button>
+        </form>
+    {% if respirator_clearance0 %}
+    <br>
+    <form action="{% url 'respirator_clearance_section0' %}" >
+            <button type="submit" class="btn btn-primary">Employee Info Completed</button>
+        </form>
+        {% if respirator_clearance1 %}
+     <br>
+    <form action="{% url 'respirator_clearance_section1' %}" >
+                <button type="submit" class="btn btn-primary">Section 1 Completed</button>
+            </form>
+        {% else %}
+     <br>
+    <form action="{% url 'respirator_clearance_section1' %}" >
+                <button type="submit" class="btn btn-danger">Section 1 Incomplete</button>
+            </form>
+        {% endif %}
+
+        {% if respirator_clearance2 %}
+     <br>
+    <form action="{% url 'respirator_clearance_section2' %}" >
+                <button type="submit" class="btn btn-primary">Section 2 Completed</button>
+            </form>
+        {% else %}
+     <br>
+    <form action="{% url 'respirator_clearance_section2' %}" >
+                <button type="submit" class="btn btn-danger">Section 2 Incomplete</button>
+            </form>
+        {% endif %}
+
+        {% if respirator_clearance3 %}
+            <br>
+            <form action="{% url 'respirator_clearance_section3' %}" >
+                <button type="submit" class="btn btn-primary">Section 3 Completed</button>
+            </form>
+        {% else %}
+     <br>
+    <form action="{% url 'respirator_clearance_section3' %}" >
+                <button type="submit" class="btn btn-danger">Section 1 Incomplete</button>
+            </form>
+        {% endif %}
+
+        {% if respirator_clearance4 %}
+     <br>
+    <form action="{% url 'respirator_clearance_section4' %}" >
+                <button type="submit" class="btn btn-primary">Section 4 Completed</button>
+            </form>
+        {% else %}
+             <br>
+             <form action="{% url 'respirator_clearance_section4' %}" >
+                <button type="submit" class="btn btn-danger">Section 4 Incomplete</button>
+            </form>
+        {% endif %}
+
+        {% if respirator_clearance5 %}
+     <br>
+    <form action="{% url 'respirator_clearance_section5' %}" >
+                <button type="submit" class="btn btn-primary">Section 5 Completed</button>
+            </form>
+        {% else %}
+             <br>
+             <form action="{% url 'respirator_clearance_section5' %}" >
+                <button type="submit" class="btn btn-danger">Section 5 Incomplete</button>
+            </form>
+        {% endif %}
+
+        {% if respirator_clearance6 %}
+            <br>
+            <form action="{% url 'respirator_clearance_section6' %}" >
+                <button type="submit" class="btn btn-primary">Section 6 Completed</button>
+            </form>
+        {% else %}
+            <br>
+             <form action="{% url 'respirator_clearance_section6' %}" >
+                <button type="submit" class="btn btn-danger">Section 6 Incomplete</button>
+            </form>
+        {% endif %}
+
+    {% else %}
+        <br>
+        <form action="{% url 'respirator_clearance_section0' %}" >
+            <button type="submit" class="btn btn-danger">Start Now</button>
+        </form>
+    {% endif %}
+
+</div>
+{% endblock %}
