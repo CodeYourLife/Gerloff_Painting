@@ -1145,7 +1145,17 @@ def upload_clockshark(form, excel_file,notes):
                 if clock_out_time and timezone.is_naive(clock_out_time):
                     clock_out_time = timezone.make_aware(clock_out_time, timezone.get_current_timezone())
 
-                if not job:
+                if job:
+                    if not job.is_active:
+                        if not JobNotes.objects.filter(job_number=job,
+                                                       note__contains="Changed Status to Active").exists():
+                            job.is_active = True
+                            job.save()
+                            JobNotes.objects.create(job_number=job,
+                                                    note="Changed Status to Active From Clock Shark Import",
+                                                    type="auto_start_date_note",
+                                                    user=Employees.objects.filter().first(), date=date.today())
+                else:
                     # message.append({'message': "couldn't find " + job_name + " row: " + str(a)})
                     print("couldn't find " + job_name + " row: " + str(a))
                 if work_day < date.today():
@@ -1153,13 +1163,13 @@ def upload_clockshark(form, excel_file,notes):
                                                        employee_first_name=employee_first_name,
                                                        employee_last_name=employee_last_name, work_day=work_day,
                                                        clock_in=clock_in_time, job=job, clock_out=clock_out_time,
-                                                       hours=minutes / 60)
+                                                       hours=minutes / 60, hours_adjust_note="AUTO IMPORT")
                 else:
                     if clock_in_time and clock_out_time:
                         ClockSharkTimeEntry.objects.create(clockshark_id=clockshark_id, job_name=job_name,
                                                            employee_first_name=employee_first_name,
                                                            employee_last_name=employee_last_name, work_day=work_day,
-                                                           clock_in=clock_in_time,job=job, clock_out=clock_out_time, hours=minutes/60)
+                                                           clock_in=clock_in_time,job=job, clock_out=clock_out_time, hours=minutes/60, hours_adjust_note="AUTO IMPORT")
                     else:
                         # message.append({'message': "skipped " + clockshark_id + " row" + str(a)})
                         print("skipped " + clockshark_id + " row" + str(a))
