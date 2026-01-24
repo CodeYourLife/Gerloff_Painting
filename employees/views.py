@@ -79,7 +79,6 @@ def new_production_report(request, jobnumber):
             return render(request, "new_production_report.html", send_data)
         send_data['selected_reviewer'] = Employees.objects.get(id=request.POST['select_reviewer'])
         if 'report_complete' in request.POST:
-            print(request.POST)
             daily_report = DailyReports.objects.create(
                 foreman=Employees.objects.get(id=request.POST['select_reviewer']), date=date.today(),
                 note=request.POST['report_note'], job=Jobs.objects.get(job_number=request.POST['selected_job']))
@@ -187,7 +186,6 @@ def new_assessment(request, id):
                                                    employee=Employees.objects.get(id=request.POST['employee']))
             for x in request.POST:
                 if request.POST[x] == 'on':
-                    print(x)
                     # if x[0:4] != 'note':
                     category = MetricCategories.objects.get(id=x)
                     MetricAssessmentItem.objects.create(assessment=review,
@@ -317,7 +315,6 @@ def new_exam(request):
 def mentorships(request, id):
     send_data = {}
     send_data['mentorships'] = Mentorship.objects.all()
-    print(request.POST)
     if request.method == 'POST':
         if 'new_note' in request.POST:
             MentorshipNotes.objects.create(mentorship=Mentorship.objects.get(id=id), date=date.today(),
@@ -701,24 +698,17 @@ def toolbox_talks_master(request):
         spanish = "Need to upload"
         english = "Need to upload"
         for entry in os.listdir(path):
-            print("test")
-            print(entry)
             full_path = os.path.join(path, entry)
             if os.path.isfile(full_path):
-                print("test2")
-                print(entry)
                 spanish = entry
         path = folder_name + "/toolbox_talks/" + str(x.id) + "/English"
         for entry in os.listdir(path):
             full_path = os.path.join(path, entry)
             if os.path.isfile(full_path):
                 english = entry
-        print(spanish)
-        print(english)
         toolboxtalks.append({'id':x.id, 'description': x.description,'english': english, 'spanish': spanish})
     send_data['toolboxtalks']= toolboxtalks
     if request.method == 'POST':
-        print(request.POST)
         if 'description' in request.POST:
             newitem = ToolboxTalks.objects.create(description = request.POST['description'])
             createfolder("toolbox_talks/" + str(newitem.id))
@@ -818,7 +808,6 @@ def respirator_clearance_section1(request):
     if request.method == 'POST':
         for field in part1._meta.fields:
             name = field.name
-            print(name)
             if name == 'id' or name == 'main':
                 continue
             if name in request.POST:
@@ -841,7 +830,6 @@ def respirator_clearance_section2(request):
     if request.method == 'POST':
         for field in part1._meta.fields:
             name = field.name
-            print(name)
             if name == 'id' or name == 'main':
                 continue
             if name in request.POST:
@@ -863,7 +851,6 @@ def respirator_clearance_section3(request):
     if request.method == 'POST':
         for field in part1._meta.fields:
             name = field.name
-            print(name)
             if name == 'id' or name == 'main':
                 continue
             if name in request.POST:
@@ -886,7 +873,6 @@ def respirator_clearance_section4(request):
     if request.method == 'POST':
         for field in part1._meta.fields:
             name = field.name
-            print(name)
             if name == 'id' or name == 'main':
                 continue
             if name in request.POST:
@@ -908,7 +894,6 @@ def respirator_clearance_section5(request):
     if request.method == 'POST':
         for field in part1._meta.fields:
             name = field.name
-            print(name)
             if name == 'id' or name == 'main':
                 continue
             if name in request.POST:
@@ -930,7 +915,6 @@ def respirator_clearance_section6(request):
     if request.method == 'POST':
         for field in part1._meta.fields:
             name = field.name
-            print(name)
             if name == 'id' or name == 'main':
                 continue
             if name in request.POST:

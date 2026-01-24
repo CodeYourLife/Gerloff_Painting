@@ -384,3 +384,53 @@ class Competent_Persons(models.Model):
     job = models.ForeignKey(Jobs, on_delete=models.PROTECT)
     employee = models.ForeignKey(employees.models.Employees, on_delete=models.PROTECT)
     date = models.DateField(null=True, blank=True)
+
+class ClockSharkTimeEntry(models.Model):
+    clockshark_id = models.CharField(max_length=255, null=True)
+    job = models.ForeignKey(Jobs,on_delete=models.CASCADE,related_name="clockshark_entries",null=True,blank=True)
+    employee_first_name = models.CharField(max_length=100,null=True)
+    employee_last_name = models.CharField(max_length=100, null=True)
+    job_number = models.CharField(max_length=50,null=True)
+    clock_in = models.DateTimeField(null=True, blank=True)
+    clock_out = models.DateTimeField(null=True, blank=True)
+    hours = models.DecimalField(max_digits=6, decimal_places=2,null=True)
+    synced_at = models.DateTimeField(auto_now=True)
+    work_day = models.DateField(null=True, blank=True)
+    job_name = models.CharField(null=True, max_length=250)
+    hours_adjust = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    hours_adjust_note = models.CharField(null=True, max_length=250, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["job_number"]),
+            models.Index(fields=["clock_in"]),
+        ]
+
+class ClockSharkErrors(models.Model):
+    job = models.ForeignKey(Jobs,on_delete=models.CASCADE,related_name="clockshark_entry_errors",null=True,blank=True)
+    employee_first_name = models.CharField(max_length=100,null=True)
+    employee_last_name = models.CharField(max_length=100, null=True)
+    job_number = models.CharField(max_length=50,null=True)
+    clock_in = models.DateTimeField(null=True, blank=True)
+    clock_out = models.DateTimeField(null=True, blank=True)
+    hours = models.DecimalField(max_digits=6, decimal_places=2,null=True)
+    synced_at = models.DateTimeField(auto_now=True)
+    work_day = models.DateField(null=True, blank=True)
+    error = models.CharField(null=True, max_length=2000)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["job_number"]),
+            models.Index(fields=["clock_in"]),
+        ]
+
+class SiriusHours(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    job = models.ForeignKey(Jobs,on_delete=models.CASCADE,related_name="sirius_hours",null=True,blank=True)
+    job_number = models.CharField(max_length=50,null=True) #this may not match a booked job
+    date = models.DateField(null=True, blank=True)
+    hours = models.DecimalField(max_digits=8, decimal_places=2,null=True)
+    notes = models.CharField(null=True, max_length=2000)
+
+    def __str__(self):
+        return f"{self.job_number} {self.job}"

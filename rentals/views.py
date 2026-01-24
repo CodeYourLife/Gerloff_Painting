@@ -93,7 +93,6 @@ def rental_new(request, jobnumber):
 
 
 def rental_ajax(request):
-    print("PUMPKIN")
     if request.is_ajax():
         send_data = {}
         if 'rep_id' in request.GET:
@@ -105,7 +104,6 @@ def rental_ajax(request):
             send_data['email'] = Vendors.objects.get(id=request.GET['vendor_id']).company_email
             send_data['name'] = Vendors.objects.get(id=request.GET['vendor_id']).company_name
         if 'client_id' in request.GET:
-            print("HERE")
             send_data['phone'] = Clients.objects.get(id=request.GET['client_id']).phone
             send_data['email'] = Clients.objects.get(id=request.GET['client_id']).bid_email
             send_data['name'] = Clients.objects.get(id=request.GET['client_id']).company

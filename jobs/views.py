@@ -1,30 +1,47 @@
-from django.contrib.auth.decorators import login_required
-from changeorder.models import ClientJobRoles
+from changeorder.models import ClientJobRoles, ChangeOrders
 from console.models import *
-from django.shortcuts import render, redirect
-import json
-from django.core.serializers.json import DjangoJSONEncoder
+from console.misc import Email
+
 from datetime import date
-from changeorder.models import ChangeOrders
+from dateutil.parser import parse as parse_date
+
+from decimal import Decimal
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import Q
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.dateparse import parse_datetime
+from django.conf import settings
+from django.utils import timezone
+
+from django_tables2 import RequestConfig
+
+from employees.models import *
+from employees.models import Employees
+from equipment.models import Inventory
 from equipment.tables import JobsTable
 from equipment.filters import JobsFilter
 from jobs.models import *
-from employees.models import *
-from equipment.models import Inventory
-from rentals.models import Rentals
-from subcontractors.models import *
-from wallcovering.models import Wallcovering, Packages, OutgoingItem, OrderItems
-from submittals.models import *
-from console.misc import Email
-import os
-import os.path
-from django.conf import settings
-import csv
+from jobs.models import ClockSharkTimeEntry, Jobs
 from jobs.JobMisc import start_date_change, gerloff_super_change
 from jobs.filters import JobNotesFilter
-from django.db.models import Q
+from rentals.models import Rentals
+from subcontractors.models import *
+from submittals.models import *
+from wallcovering.models import Wallcovering, Packages, OutgoingItem, OrderItems
+
+import csv
+import json
+import os
+import os.path
 import openpyxl
-from django_tables2 import RequestConfig
+import requests
+
+
+
 
 
 @login_required(login_url='/accounts/login')
@@ -533,7 +550,7 @@ def upload_new_job(request):
             fn2 = os.path.join(settings.MEDIA_ROOT, "job_upload", "Temp.xlsx")
             open(fn2, 'wb').write(fileitem.file.read())
             send_data = {}
-            # send_data['employees'] = Employees.objects.filter(user__isnull=True)
+
             wb_obj = openpyxl.load_workbook(filename=request.FILES['upload_file'].file)
             sheet_obj = wb_obj["Data"]
             client_name = sheet_obj.cell(row=16, column=2).value
@@ -682,6 +699,31 @@ def upload_new_job(request):
             except:
                 success = False
 
+
+            job_state = "Virginia"
+            if job.state == "NC":
+                job_state="North Carolina"
+            payload = {
+                #"job_name": job.job_name,
+                "job_name": job.job_name,
+                "job_number": job.job_number,
+                "address": job.address,
+                "city": job.city,
+                "state": job_state,
+                "country": "United States",
+
+            }
+
+            try:
+                requests.post(
+                    settings.ZAPIER_CREATE_JOB_WEBHOOK,
+                    json=payload,
+                    timeout=5,
+                )
+            except requests.RequestException:
+                print("PUMPKIN ERROR")
+                pass
+
             return render(request, "upload_new_job.html")
     return render(request, "upload_new_job.html")
 
@@ -786,7 +828,6 @@ def job_page(request, jobnumber):
                     send_data['error_message'] = "ERROR! Your Email announcing competent person was NOT sent. Please tell the super. "
         if 'safety_packet' in request.POST:
             if 'safety_packet_sent' in request.POST:
-                print("PUMPKING HERE")
                 selectedjob.has_safety_packet_been_sent = True
             else:
                 selectedjob.has_safety_packet_been_sent = False
@@ -963,7 +1004,6 @@ def job_page(request, jobnumber):
         'inventory_type')
     send_data['rentals'] = Rentals.objects.filter(job_number=selectedjob, off_rent_number__isnull=True, is_closed=False)
     send_data['formals'] = selectedjob.formals()
-    print(selectedjob.formals())
     if Inventory.objects.filter(job_number=selectedjob, is_closed=False).order_by('inventory_type').exists():
         send_data['has_equipment'] = True
     if Rentals.objects.filter(job_number=selectedjob, off_rent_number__isnull=True).exists():
@@ -1179,7 +1219,7 @@ def register(request):
 
 
 @login_required(login_url='/accounts/login')
-class Checklist(models.Model):
+class Checklist(models.Model): #as of 1/20/2026 joe doesnt think this is used
     id = models.BigAutoField(primary_key=True)
     category = models.CharField(null=True, max_length=1000)
     checklist_item = models.CharField(null=True, max_length=2000)
@@ -1203,3 +1243,117 @@ class Checklist(models.Model):
 
     def __str__(self):
         return f"{self.job_number} {self.checklist_item}"
+
+def get_work_day(time_raw):
+    """
+    Determine the work day (date only) for this entry.
+    Prefer start date; fall back to end date.
+    """
+    if time_raw:
+        return parse_date(time_raw).date()
+    if end_raw:
+        return parse_date(end_raw).date()
+    return None
+
+@csrf_exempt
+def clockshark_webhook(request):
+    if request.headers.get("X-ZAPIER-SECRET") != settings.ZAPIER_SECRET:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid method"}, status=405)
+
+    try:
+        payload = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    employee_first_name = payload.get("employee_first_name")
+    employee_last_name = payload.get("employee_last_name")
+    job_name = payload.get("job_name")
+
+    start_raw = payload.get("start")   # may be missing on clock-out
+    end_raw = payload.get("end")       # should exist on clock-out
+
+    clock_in_time = parse_date(start_raw) if start_raw else None
+    clock_out_time = parse_date(end_raw) if end_raw else None
+
+    # Normalize to timezone-aware if needed (dateutil sometimes returns naive)
+    if clock_in_time and timezone.is_naive(clock_in_time):
+        clock_in_time = timezone.make_aware(clock_in_time, timezone.get_current_timezone())
+    if clock_out_time and timezone.is_naive(clock_out_time):
+        clock_out_time = timezone.make_aware(clock_out_time, timezone.get_current_timezone())
+
+    if clock_in_time:
+        work_day = parse_date(start_raw).date()
+    if clock_out_time:
+        work_day = parse_date(end_raw).date()
+
+    clockshark_id = f"{employee_first_name}|{employee_last_name}|{job_name}|{work_day}"
+    # ---- Case A: CLOCK IN event (has start, no end) ----
+    if clock_in_time:
+        if ClockSharkTimeEntry.objects.filter(clockshark_id=clockshark_id,clock_out__isnull=False,clock_in__isnull=True).exists():
+            ClockSharkErrors.objects.create(clockshark_id=clockshark_id,job_name=job_name,employee_first_name=employee_first_name,employee_last_name=employee_last_name,work_day=work_day,clock_in=clock_in_time, error="already an entry with a clock out time, without a clock in time")
+            entry = ClockSharkTimeEntry.objects.filter(clockshark_id=clockshark_id,clock_out__isnull=False,clock_in__isnull=True).first()
+            ClockSharkErrors.objects.create(clockshark_id=entry.clockshark_id, job_name=entry.job_name,
+                                            employee_first_name=entry.employee_first_name,
+                                            employee_last_name=entry.employee_last_name, work_day=entry.work_day,
+                                            clock_out=entry.clock_out,
+                                            error="no clock in time")
+            entry.delete()
+        elif ClockSharkTimeEntry.objects.filter(clockshark_id=clockshark_id,clock_out__isnull=True,clock_in__isnull=False).exists():
+            ClockSharkErrors.objects.create(clockshark_id=clockshark_id,job_name=job_name,employee_first_name=employee_first_name,employee_last_name=employee_last_name,work_day=work_day,clock_in=clock_in_time, error="already an entry with a clock-in time, without a clock out time")
+            entry = ClockSharkTimeEntry.objects.filter(clockshark_id=clockshark_id,clock_out__isnull=True,clock_in__isnull=False).first()
+            ClockSharkErrors.objects.create(clockshark_id=clockshark_id, job_name=job_name,
+                                            employee_first_name=employee_first_name,
+                                            employee_last_name=employee_last_name, work_day=work_day,
+                                            clock_in=entry.clock_in,
+                                            error="another clock-in came in, before a clock out time")
+            entry.delete()
+        else:
+            ClockSharkTimeEntry.objects.create(clockshark_id=clockshark_id,job_name=job_name,employee_first_name=employee_first_name,employee_last_name=employee_last_name,work_day=work_day,clock_in=clock_in_time)
+            return JsonResponse({"status": "clock_in_saved"})
+
+
+    # ---- Case B: CLOCK OUT event  ----
+    if clock_out_time:
+        if ClockSharkTimeEntry.objects.filter(clockshark_id=clockshark_id,clock_out__isnull=False, clock_in__isnull=True).exists():
+            ClockSharkErrors.objects.create(clockshark_id=clockshark_id,job_name=job_name, employee_first_name=employee_first_name,
+                                            employee_last_name=employee_last_name, work_day=work_day,
+                                            clock_out=clock_out_time,
+                                            error="already an entry with a clock-out time, without a clock in time")
+            entry = ClockSharkTimeEntry.objects.filter(clockshark_id=clockshark_id,clock_out__isnull=False, clock_in__isnull=True).first()
+            ClockSharkErrors.objects.create(clockshark_id=clockshark_id,job_name=job_name, employee_first_name=employee_first_name,
+                                            employee_last_name=employee_last_name, work_day=work_day,
+                                            clock_out=entry.clock_out,
+                                            error="no clock in time")
+            entry.delete()
+        else:
+            if ClockSharkTimeEntry.objects.filter(clockshark_id=clockshark_id,clock_in__isnull=False,clock_out__isnull=True).exists():
+                entry = ClockSharkTimeEntry.objects.filter(clockshark_id=clockshark_id, clock_in__isnull=False,clock_out__isnull=True).first()
+                if clock_out_time > entry.clock_in:
+                    entry.clock_out = clock_out_time
+                    entry.save()
+                    success=True
+                else:
+                    ClockSharkErrors.objects.create(job_name=job_name, employee_first_name=employee_first_name,
+                                                    employee_last_name=employee_last_name, work_day=work_day,
+                                                    clock_out=clock_out_time,
+                                                    error="clock out time is less than clock in time")
+            else:
+                ClockSharkErrors.objects.create(job_name=job_name, employee_first_name=employee_first_name,
+                                                employee_last_name=employee_last_name, work_day=work_day,
+                                                clock_out=clock_out_time,
+                                                error="couldn't find a clock in time")
+
+
+
+        # Compute hours from the stored clock_in
+        if success:
+            delta = clock_out_time - entry.clock_in
+            hours = Decimal(delta.total_seconds() / 3600).quantize(Decimal("0.01"))
+            entry.hours = hours
+            entry.save()
+            return JsonResponse({"status": "clock_out_updated", "hours": str(hours)})
+
+    return JsonResponse({"status": "ignored"})

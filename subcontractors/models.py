@@ -83,7 +83,6 @@ class Subcontracts(models.Model):
         #     total += x.original_amount
             #changing this to include all prior invoices if they weren't paid
         for x in SubcontractorInvoice.objects.filter(subcontract=self):
-            print(x)
             if last_friday < x.date <= this_friday:
                 if x.original_amount:total += x.original_amount
                 else: total += 0

@@ -969,7 +969,6 @@ def subcontract(request, id):
     send_data['approvers']=Subcontract_Approvers.objects.filter(subcontract=subcontract)
     send_data['employees']=Employees.objects.all()
     if not current_job.is_closed:
-        print("PUMPKIN")
         send_data['job_open']= True
     if subcontract.is_entire_paint_job:
         send_data['is_entire_paint_job'] = True
@@ -1406,8 +1405,6 @@ def subcontractor_payments(request):
         for x in Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name):
             error_message += "-NOTE- " + x.error
         send_data['error_message']= error_message
-        print("NOW PRINTING THE ERROR MESSAGE")
-        print(error_message)
     Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
     if request.method == 'POST':
         if 'new_payment' in request.POST:
@@ -1454,8 +1451,7 @@ def new_subcontractor_payment(request):
                             percentage = 0
                         else:
                             percentage = (totalbilledandpending / totalcost) * 100
-                        print("PUMPKIN KING")
-                        print(percentage)
+
                         if percentage < 100:
                             ready_to_close = False
                     #
@@ -1487,10 +1483,9 @@ def new_subcontractor_payment(request):
                 recipients = ["admin1@gerloffpainting.com"]
                 recipients.append("admin2@gerloffpainting.com")
                 recipients.append("joe@gerloffpainting.com")
-                print("Now showing the email message")
-                print(new_email_message)
+
                 if 'send_email' in request.POST:
-                    print("Trying to send email now")
+
                     if selected_sub.email:
                         recipients.append(selected_sub.email)
                     else:

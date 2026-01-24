@@ -25,12 +25,21 @@ $(document).ready(function () {
     var table = $('#employees_table').DataTable({paging:false});
     var table = $('#subs_table').DataTable({paging:false});
     document.getElementById("check_booked_jobs").style.display = "none"
+    document.getElementById("hide_sirius_hours").style.display = "none"
+    document.getElementById("hide_clockshark_hours").style.display = "none"
 })
 
 function show_check_booked_jobs(){
 document.getElementById("check_booked_jobs").style.display = "block"
 }
 
+		function show_sirius_hours(){
+		document.getElementById("hide_sirius_hours").style.display = "block"
+		}
+
+		function show_clockshark_hours(){
+		document.getElementById("hide_clockshark_hours").style.display = "block"
+		}
 	</script>
 </head>
 <body>
@@ -43,7 +52,12 @@ document.getElementById("check_booked_jobs").style.display = "block"
     </ul>
   </div>
 </nav>
-
+{% if error_message %}
+	{% for x in error_message %}
+		{{error_message}}
+		<br>
+	{% endfor %}
+{% endif %}
 
 <div id="accordion">
     <div class="card">
@@ -119,6 +133,36 @@ document.getElementById("check_booked_jobs").style.display = "block"
         <div id="collapse2" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">
             <div class="card-body">
 		<br>
+
+<a href="javascript:void(0);" onclick="show_sirius_hours()">Upload Sirius Hours</a>
+<div id="hide_sirius_hours">
+	<form method="post" enctype="multipart/form-data">
+		{% csrf_token %}
+		{{ sirius_form.as_p }}
+		<input type="test" name="sirius_notes">
+		<button class="btn btn-primary">Upload Sirius Hours</button>
+	</form>
+</div>
+<br><br>
+
+<a href="javascript:void(0);" onclick="show_clockshark_hours()">Upload ClockShark Hours</a>
+<div id="hide_clockshark_hours">
+	<form method="post" enctype="multipart/form-data">
+		{% csrf_token %}
+		{{ clockshark_form.as_p }}
+		<input type="test" name="clockshark_notes">
+		<button class="btn btn-primary">Upload Clockshark Hours</button>
+	</form>
+</div>
+<br><br>
+
+<a href = "{% url 'upload_employees' %}">
+<div style="height:100%;width:100%">
+Upload Employee File	</div>
+</a>
+<br>
+
+
 <a href = "{% url 'upload_employees' %}">
 			<div style="height:100%;width:100%">
 				Upload Employee File	</div>

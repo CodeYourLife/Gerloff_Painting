@@ -186,7 +186,6 @@ def print_TMProposal(request, id):
     try:
         path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
         foldercontents = os.listdir(path)
-        print(foldercontents)
         send_data['foldercontents'] = foldercontents
     except Exception as e:
         send_data['no_folder_contents'] = True
@@ -246,7 +245,6 @@ def print_TMProposal(request, id):
                 )
                 result_file.close()
 
-                print("HERE99")
                 if request.POST['status'] == 'Final':
                     Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
                     try:
@@ -1190,7 +1188,6 @@ def change_order_home(request):
 @login_required(login_url='/accounts/login')
 def change_order_email(request, jobnumber):
     send_data={}
-    print("HERE")
     return render(request, "change_order_email.html", send_data)
 
 

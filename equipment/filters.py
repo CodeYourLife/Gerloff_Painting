@@ -102,7 +102,6 @@ class JobsFilter(django_filters.FilterSet):
             return queryset.filter(superintendent__id=value)
 
     def search_filter3(self, queryset, name, value):
-        print(value)
         if value == True:
             return queryset.all()
         else:
