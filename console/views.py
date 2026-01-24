@@ -4,11 +4,16 @@ import changeorder.models
 import employees.models
 import equipment.models
 import jobs.models
+import openpyxl
+
 from employees.models import *
 from .models import *
+from dateutil.parser import parse as parse_date
 from django.contrib.auth.models import User, auth
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.db import transaction
+from django.utils import timezone
 import os
 import os.path
 import csv
@@ -19,6 +24,7 @@ from accounts.models import *
 from changeorder.models import *
 from console.models import *
 from employees.models import *
+from employees.forms import SiriusUploadForm,ClockSharkUploadForm
 from equipment.models import *
 from rentals.models import *
 from subcontractors.models import *
@@ -124,7 +130,6 @@ def client_info(request, id):
         send_data['client_employees'] = ClientEmployees.objects.filter(id=selected_client).order_by('name')
         send_data['jobs']=Jobs.objects.filter(client=selected_client)
     if request.method == "POST":
-        print(request.POST)
         if 'combine_companies_now' in request.POST:
             company1 = Clients.objects.get(id=request.POST['select_client1'])
             company2 = Clients.objects.get(id=request.POST['select_client2'])
@@ -206,7 +211,6 @@ def client_info(request, id):
 @login_required(login_url='/accounts/login')
 def index(request):
     current_employee = Employees.objects.get(user=request.user)
-    print(current_employee.job_title.description)
     if current_employee.job_title.description == "Painter":
         return redirect('my_page')
     send_data = {}
@@ -299,12 +303,31 @@ def warehouse_home(request):
 @login_required(login_url='/accounts/login')
 def admin_home(request):
     send_data = {}
-    send_data['employees'] = Employees.objects.filter(user__isnull=True, active=True)
-    send_data['subs'] = Subcontractors.objects.filter(is_inactive=False)
-    if request.method == 'POST':
+    if request.method == "POST":
+        if 'sirius_notes' in request.POST:
+            form = SiriusUploadForm(request.POST, request.FILES)
+            if form.is_valid():
+                excel_file = request.FILES["excel_file"]
+                notes = request.POST["sirius_notes"]
+                upload_sirius(form, excel_file,notes)
+        if 'clockshark_notes' in request.POST:
+            form = ClockSharkUploadForm(request.POST, request.FILES)
+            if form.is_valid():
+                excel_file = request.FILES["excel_file"]
+                notes = request.POST["clockshark_notes"]
+                # message = upload_clockshark(form, excel_file,notes)
+                upload_clockshark(form, excel_file, notes)
+                send_data['error_message'] = "Success"
         if 'email_test' in request.POST:
             send_data['emailconfirmation'] = True
-            Email.sendEmail("Trinity Email Test", "Trinity Test Email sent on " + datetime.now().strftime("%d/%m/%Y %H:%M:%S"), ['joe@gerloffpainting.com', 'doug@hrdata.com'], False)
+            Email.sendEmail("Trinity Email Test",
+                            "Trinity Test Email sent on " + datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                            ['joe@gerloffpainting.com', 'doug@hrdata.com'], False)
+
+    send_data['employees'] = Employees.objects.filter(user__isnull=True, active=True)
+    send_data['subs'] = Subcontractors.objects.filter(is_inactive=False)
+    send_data['sirius_form'] = SiriusUploadForm()
+    send_data['clockshark_form'] = ClockSharkUploadForm()
     return render(request, 'admin_home.html', send_data)
 
 def base(request):
@@ -987,3 +1010,159 @@ def import_csv(request):
             except:
                 print(row[0])
         return render(request, 'index.html')
+
+def upload_sirius(form, excel_file,notes):
+    wb = openpyxl.load_workbook(excel_file)
+    sheet = wb.active
+    created = 0
+    skipped = 0
+    with transaction.atomic():
+        for row in sheet.iter_rows(min_row=1, values_only=True):
+            (
+                job_number,
+                hours,
+            ) = row
+
+            # REQUIRED FIELDS CHECK
+            # if not first_name or not last_name or not employer:
+            #     skipped += 1
+            #     continue
+
+            # Resolve Foreign Keys safely
+            # level = None
+            # if level_name:
+            #     level = EmployeeLevels.objects.filter(name=level_name).first()
+
+            # job_title = None
+            # if job_title_name:
+            #     job_title = EmployeeTitles.objects.filter(description=job_title_name).first()
+            job = Jobs.objects.filter(job_number=job_number).first()
+            SiriusHours.objects.create(
+                job=job,
+                job_number=job_number,
+                date=date.today(),
+                hours=hours,
+                notes = notes
+            )
+
+            created += 1
+
+def upload_clockshark(form, excel_file,notes):
+    print("PUMPKIN")
+    wb = openpyxl.load_workbook(excel_file)
+    sheet = wb.active
+    created = 0
+    skipped = 0
+    print("PUMPKIN3")
+    with transaction.atomic():
+        for row in sheet.iter_rows(min_row=2, max_row=2, values_only=True):#24
+            (
+                first_name,
+                last_name,
+                ignore,
+                ignore,
+                job_name,
+                job_number,
+                ignore,
+                ignore,
+                start_raw,
+                end_time,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+            ) = row
+        # oldest_date = parse_date(start_raw)
+        # oldest_date = datetime.strptime(start_raw, "%m/%d/%Y %I:%M:%S %p")
+        oldest_date=start_raw
+        if oldest_date and timezone.is_naive(oldest_date):
+            oldest_date = timezone.make_aware(oldest_date, timezone.get_current_timezone())
+        message = []
+
+        # message.append({'message':str(ClockSharkTimeEntry.objects.filter(clock_in__gte=oldest_date, work_day__lt=date.today()).count()) + " entries deleted"})
+        print(str(ClockSharkTimeEntry.objects.filter(clock_in__gte=oldest_date, work_day__lt=date.today()).count()) + " entries deleted")
+        ClockSharkTimeEntry.objects.filter(clock_in__gt=oldest_date,work_day__lt=date.today()).delete()
+        print("DID IT GET HERE?")
+        a=1
+        with transaction.atomic():
+            for row in sheet.iter_rows(min_row=2, values_only=True):  # 24
+                (
+                    employee_first_name,
+                    employee_last_name,
+                    ignore,
+                    ignore,
+                    job_name,
+                    job_number,
+                    ignore,
+                    ignore,
+                    start_raw,
+                    end_raw,
+                    ignore,
+                    ignore,
+                    ignore,
+                    ignore,
+                    ignore,
+                    ignore,
+                    ignore,
+                    ignore,
+                    minutes,
+                    ignore,
+                    ignore,
+                    ignore,
+                    ignore,
+                    ignore,
+                ) = row
+                a=a+1
+                if job_number:
+                    job_number=str(job_number).strip()
+                    job_number=job_number[:5]
+                if job_name:
+                    job_name=str(job_name).strip()
+                clock_in_time=start_raw
+                clock_out_time=end_raw
+                # clock_in_time = datetime.strptime(start_raw, "%m/%d/%Y %I:%M:%S %p")
+                # clock_in_time = parse_date(start_raw) if start_raw else None
+                # clock_out_time = datetime.strptime(end_raw, "%m/%d/%Y %I:%M:%S %p")
+                # clock_out_time = parse_date(end_raw) if end_raw else None
+                job = Jobs.objects.filter(job_number=job_number).first()
+                if clock_in_time:
+                    work_day = clock_in_time.date()
+                if clock_out_time:
+                    work_day = clock_out_time.date()
+                clockshark_id = f"{employee_first_name}|{employee_last_name}|{job_name}|{work_day}"
+                if clock_in_time and timezone.is_naive(clock_in_time):
+                    clock_in_time = timezone.make_aware(clock_in_time, timezone.get_current_timezone())
+                if clock_out_time and timezone.is_naive(clock_out_time):
+                    clock_out_time = timezone.make_aware(clock_out_time, timezone.get_current_timezone())
+
+                if not job:
+                    # message.append({'message': "couldn't find " + job_name + " row: " + str(a)})
+                    print("couldn't find " + job_name + " row: " + str(a))
+                if work_day < date.today():
+                    ClockSharkTimeEntry.objects.create(clockshark_id=clockshark_id, job_name=job_name,
+                                                       employee_first_name=employee_first_name,
+                                                       employee_last_name=employee_last_name, work_day=work_day,
+                                                       clock_in=clock_in_time, job=job, clock_out=clock_out_time,
+                                                       hours=minutes / 60)
+                else:
+                    if clock_in_time and clock_out_time:
+                        ClockSharkTimeEntry.objects.create(clockshark_id=clockshark_id, job_name=job_name,
+                                                           employee_first_name=employee_first_name,
+                                                           employee_last_name=employee_last_name, work_day=work_day,
+                                                           clock_in=clock_in_time,job=job, clock_out=clock_out_time, hours=minutes/60)
+                    else:
+                        # message.append({'message': "skipped " + clockshark_id + " row" + str(a)})
+                        print("skipped " + clockshark_id + " row" + str(a))
+    # return message
+
+

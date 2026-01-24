@@ -30,7 +30,6 @@ class Rentals(models.Model):
 		else:
 			today = date.today()
 			daysonrent = (today - self.on_rent_date).days + 1
-			print(daysonrent)
 			while daysonrent > 28:
 				daysonrent -= 28
 			if daysonrent >2 and daysonrent < 8:
@@ -73,7 +72,6 @@ class Rentals(models.Model):
 		else:
 			today = date.today()
 			daysonrent = (today - self.on_rent_date).days + 1
-			print(daysonrent)
 			while daysonrent > 28:
 				daysonrent -= 28
 			if daysonrent > 14 and daysonrent < 29:
@@ -91,7 +89,6 @@ class Rentals(models.Model):
 		else:
 			today = date.today()
 			daysonrent = (today - self.on_rent_date).days + 1
-			print(daysonrent)
 			while daysonrent > 28:
 				daysonrent -= 28
 			if daysonrent > 14 and daysonrent < 29:

@@ -12,7 +12,12 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv()  # THIS loads the .env file
 
+# clockshark integration
+ZAPIER_SECRET = os.getenv("ZAPIER_SECRET")
+ZAPIER_CREATE_JOB_WEBHOOK = os.getenv("ZAPIER_CREATE_JOB_WEBHOOK")
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,8 +30,8 @@ SECRET_KEY = 'django-insecure-3t5e#t@#xt)=#557w!n_y@vrm-c8x7_71z=8tw-0+(_^&6&$_w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.168.120', '98.174.216.233', '184.183.68.156']
-
+#ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.168.120', '98.174.216.233', '184.183.68.156']
+ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [

@@ -16,12 +16,12 @@ class ChangeOrderFilter(django_filters.FilterSet):
 
     def search_filter7(self, queryset, name, value):#needs to be sent
         if value == True:
-            print("PUMPKIN")
+
             return queryset.filter(date_sent=None).exclude(Q(is_t_and_m=True) & Q(is_ticket_signed=False))
         else:
             return queryset.all()
     def search_filter(self, queryset, name, value):#needs ticket
-        print(value)
+
         if value == True:
             return queryset.filter(is_t_and_m=True, is_ticket_signed=False,date_sent=None)
         else:

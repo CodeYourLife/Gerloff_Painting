@@ -26,7 +26,6 @@ def super_ajax(request):
                 if not CompletedToolboxTalks.objects.filter(master=x, employee=y).exists():
                     painters_incomplete.append({'name':y.first_name + " " + y.last_name})
             send_data['painters'] = painters_incomplete
-            print(painters_incomplete)
             return HttpResponse(json.dumps(send_data))
         if 'payment_id' in request.GET:
             send_data = {}
@@ -204,7 +203,7 @@ def super_ajax(request):
                 datechange = False
             if request.GET['confirm_date'] == "true":
                 datechange = True
-            print("YEE HAW BOY")
+
             if request.GET['notify'] == "true":
                 notify = True
             else:

@@ -23,11 +23,9 @@ class Email:
                 # attach.add_header('Content-Disposition', 'attachment', filename=filename)
                 msg.attach(attach)
         text = msg.as_string()
-        print("HERE3")
         s = smtplib.SMTP('remote.gerloffpainting.com')
         s.sendmail(sender, to, text)
         s.quit()
-        print("HERE4")
 
     def sendEmail2(title, body, to, filename):
         msg = MIMEMultipart()
@@ -37,10 +35,7 @@ class Email:
         msg['To'] = ", ".join(to)
         msg['Subject'] = title
         msg.attach(MIMEText(body, 'plain'))
-        print(filename)
         for f in filename:
-            print("Lets go")
-            print(f)
             att_name = os.path.basename(f)
             with open(f, 'rb') as file:
                 attach = MIMEApplication(file.read(), _subtype='pdf')
@@ -48,11 +43,10 @@ class Email:
                 # attach.add_header('Content-Disposition', 'attachment', filename=filename)
                 msg.attach(attach)
         text = msg.as_string()
-        print("HERE3")
         s = smtplib.SMTP('remote.gerloffpainting.com')
         s.sendmail(sender, to, text)
         s.quit()
-        print("HERE4")
+
 def createfolder(subfolder):
         parent_dir = settings.MEDIA_ROOT
         path = os.path.join(parent_dir, subfolder)

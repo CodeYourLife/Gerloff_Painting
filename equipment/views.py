@@ -96,7 +96,6 @@ def complete_pickup(request, pickup):
                                                        request.POST['notes'],
                                                   category="Missing")
                 elif request.POST['status'] == '2':    #still on job
-                    print("PUMPKIN2")
                     if selected_request.all_items == True:
                         PickupRequestItems.objects.create(request=selected_request, item=item)
                     selected_request.completed_notes = selected_request.completed_notes + " Didn't pickup " + item.item + " we left it on the job. " + request.POST['notes'] + "\n"
@@ -587,7 +586,6 @@ def equipment_new(request):
 
 @login_required(login_url='/accounts/login')
 def get_directory_contents(request, id, value, app):
-    print(value)
     return MediaUtilities().getDirectoryContents(id, value, app)
 
 
@@ -609,7 +607,6 @@ def equipment_page(request, id):
             inventory.notes = request.POST['current_status']
             inventory.save()
         if 'selected_file' in request.POST:
-            print(request.POST['selected_file'])
             return MediaUtilities().getDirectoryContents(id, request.POST['selected_file'], 'equipment')
         if 'search_job' in request.POST:
             jobs = Jobs.objects.filter(is_closed=False, job_name__icontains=request.POST['search_job']).order_by(
@@ -784,7 +781,6 @@ def closed_equipment_report(request):
                 a += 1
         if a > 0:
             super_count.append({'Super':str(z),'Count':a})
-    print(super_count)
     send_data['super_count'] = super_count
     send_data['item'] = items_adjust
     send_data['notes'] = inventory_notes

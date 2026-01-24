@@ -1,5 +1,5 @@
 from django.urls import path
-
+from .views import clockshark_webhook
 from . import views
 
 
@@ -14,4 +14,5 @@ urlpatterns = [
     path('upload_new_job', views.upload_new_job, name='upload_new_job'),
     path('activate_sub_job/<jobnumber>', views.activate_sub_job, name='activate_sub_job'),
     path('audit_MC_open_jobs', views.audit_MC_open_jobs, name='audit_MC_open_jobs'),
+    path("webhooks/clockshark/",clockshark_webhook, name="clockshark_webhook"),
 ]

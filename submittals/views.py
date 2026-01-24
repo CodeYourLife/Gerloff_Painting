@@ -39,8 +39,7 @@ def submittals_page(request, id):
                                           note=request.POST['new_note'])
         for x in request.POST:
             if x[0:4] == 'note':
-                print(x[0:4])
-                print(x[4:len(x)])
+
                 item_number = x[4:len(x)]
                 selected_item = SubmittalItems.objects.get(id=item_number)
                 selected_item.notes = request.POST['new_note' + x[4:len(x)]]
