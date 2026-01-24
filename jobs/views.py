@@ -1311,7 +1311,21 @@ def clockshark_webhook(request):
                                             error="another clock-in came in, before a clock out time")
             entry.delete()
         else:
-            ClockSharkTimeEntry.objects.create(clockshark_id=clockshark_id,job_name=job_name,employee_first_name=employee_first_name,employee_last_name=employee_last_name,work_day=work_day,clock_in=clock_in_time)
+            job = Jobs.objects.filter(job_name=job_name).first()
+            if not job:
+                ClockSharkErrors.objects.create(clockshark_id=clockshark_id, job_name=job_name,
+                                                employee_first_name=employee_first_name,
+                                                employee_last_name=employee_last_name, work_day=work_day,
+                                                clock_out=clock_out_time,
+                                                error="can't find job")
+            ClockSharkTimeEntry.objects.create(clockshark_id=clockshark_id,job_name=job_name,employee_first_name=employee_first_name,employee_last_name=employee_last_name,work_day=work_day,clock_in=clock_in_time,job=job)
+            if job:
+                if not job.is_active:
+                    if not JobNotes.objects.filter(job_number=job, note__contains="Changed Status to Active").exists():
+                        job.is_active = True
+                        job.save()
+                        JobNotes.objects.create(job_number=job, note="Changed Status to Active From Clock Shark Import",
+                                                type="auto_start_date_note", user=Employees.objects.filter().first(), date=date.today())
             return JsonResponse({"status": "clock_in_saved"})
 
 
