@@ -20,11 +20,13 @@ class ClockSharkTimeEntryAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "job",
+        "job_name",
         "employee_first_name",
         "employee_last_name",
         "clock_in",
         "clock_out",
         "hours",
+
     )
 
     list_filter = (
@@ -48,7 +50,7 @@ class ClockSharkTimeEntryAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("Job", {
-            "fields": ("job",),
+            "fields": ("job","job_name"),
         }),
         ("Employee", {
             "fields": (
