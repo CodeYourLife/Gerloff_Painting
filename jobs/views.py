@@ -1267,14 +1267,12 @@ def clockshark_webhook(request):
         payload = json.loads(request.body)
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
-
+    success=False
     employee_first_name = payload.get("employee_first_name")
     employee_last_name = payload.get("employee_last_name")
     job_name = payload.get("job_name")
-
     start_raw = payload.get("start")   # may be missing on clock-out
     end_raw = payload.get("end")       # should exist on clock-out
-
     clock_in_time = parse_date(start_raw) if start_raw else None
     clock_out_time = parse_date(end_raw) if end_raw else None
 
@@ -1285,6 +1283,7 @@ def clockshark_webhook(request):
             clock_in_time,
             timezone.utc
         )
+        print(clock_in_time)
     if clock_out_time and timezone.is_naive(clock_out_time):
         #clock_out_time = timezone.make_aware(clock_out_time, timezone.get_current_timezone())
         clock_out_time = timezone.make_aware(
@@ -1297,6 +1296,7 @@ def clockshark_webhook(request):
         work_day = parse_date(end_raw).date()
 
     clockshark_id = f"{employee_first_name}|{employee_last_name}|{job_name}|{work_day}"
+    job = Jobs.objects.filter(job_name=job_name).first()
     # ---- Case A: CLOCK IN event (has start, no end) ----
     if clock_in_time:
         if ClockSharkTimeEntry.objects.filter(clockshark_id=clockshark_id,clock_out__isnull=False,clock_in__isnull=True).exists():
@@ -1308,6 +1308,7 @@ def clockshark_webhook(request):
                                             clock_out=entry.clock_out,
                                             error="no clock in time")
             entry.delete()
+            return JsonResponse({"status": "already an entry with clock out time, no clock in time"})
         elif ClockSharkTimeEntry.objects.filter(clockshark_id=clockshark_id,clock_out__isnull=True,clock_in__isnull=False).exists():
             ClockSharkErrors.objects.create(clockshark_id=clockshark_id,job_name=job_name,employee_first_name=employee_first_name,employee_last_name=employee_last_name,work_day=work_day,clock_in=clock_in_time, error="already an entry with a clock-in time, without a clock out time")
             entry = ClockSharkTimeEntry.objects.filter(clockshark_id=clockshark_id,clock_out__isnull=True,clock_in__isnull=False).first()
@@ -1317,23 +1318,33 @@ def clockshark_webhook(request):
                                             clock_in=entry.clock_in,
                                             error="another clock-in came in, before a clock out time")
             entry.delete()
+            return JsonResponse({"status": "another clock-in came in, before a clock out time"})
         else:
-            job = Jobs.objects.filter(job_name=job_name).first()
             if not job:
                 ClockSharkErrors.objects.create(clockshark_id=clockshark_id, job_name=job_name,
                                                 employee_first_name=employee_first_name,
                                                 employee_last_name=employee_last_name, work_day=work_day,
                                                 clock_out=clock_out_time,
                                                 error="can't find job")
-            ClockSharkTimeEntry.objects.create(clockshark_id=clockshark_id,job_name=job_name,employee_first_name=employee_first_name,employee_last_name=employee_last_name,work_day=work_day,clock_in=clock_in_time,job=job)
+                ClockSharkTimeEntry.objects.create(clockshark_id=clockshark_id, job_name=job_name,
+                                               employee_first_name=employee_first_name,
+                                               employee_last_name=employee_last_name, work_day=work_day,
+                                               clock_in=clock_in_time)
+                return JsonResponse({"status": "success. but couldn't find job"})
+
+            #ClockSharkTimeEntry.objects.create(clockshark_id=clockshark_id,job_name=job_name,employee_first_name=employee_first_name,employee_last_name=employee_last_name,work_day=work_day,clock_in=clock_in_time,job=job)
             if job:
+                ClockSharkTimeEntry.objects.create(clockshark_id=clockshark_id, job_name=job_name,
+                                                   employee_first_name=employee_first_name,
+                                                   employee_last_name=employee_last_name, work_day=work_day,
+                                                   clock_in=clock_in_time, job=job)
                 if not job.is_active:
                     if not JobNotes.objects.filter(job_number=job, note__contains="Changed Status to Active").exists():
                         job.is_active = True
                         job.save()
                         JobNotes.objects.create(job_number=job, note="Changed Status to Active From Clock Shark Import",
                                                 type="auto_start_date_note", user=Employees.objects.filter().first(), date=date.today())
-            return JsonResponse({"status": "clock_in_saved"})
+                return JsonResponse({"status": "clock_in_saved"})
 
 
     # ---- Case B: CLOCK OUT event  ----
@@ -1349,6 +1360,7 @@ def clockshark_webhook(request):
                                             clock_out=entry.clock_out,
                                             error="no clock in time")
             entry.delete()
+            return JsonResponse({"status": "no clock in before clock out"})
         else:
             if ClockSharkTimeEntry.objects.filter(clockshark_id=clockshark_id,clock_in__isnull=False,clock_out__isnull=True).exists():
                 entry = ClockSharkTimeEntry.objects.filter(clockshark_id=clockshark_id, clock_in__isnull=False,clock_out__isnull=True).first()
@@ -1361,11 +1373,13 @@ def clockshark_webhook(request):
                                                     employee_last_name=employee_last_name, work_day=work_day,
                                                     clock_out=clock_out_time,
                                                     error="clock out time is less than clock in time")
+                    return JsonResponse({"status": "clock out time is less than clock in time"})
             else:
                 ClockSharkErrors.objects.create(job_name=job_name, employee_first_name=employee_first_name,
                                                 employee_last_name=employee_last_name, work_day=work_day,
                                                 clock_out=clock_out_time,
                                                 error="couldn't find a clock in time")
+                return JsonResponse({"status": "couldn't find a clock in time"})
 
 
 
