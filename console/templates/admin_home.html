@@ -27,6 +27,7 @@ $(document).ready(function () {
     document.getElementById("check_booked_jobs").style.display = "none"
     document.getElementById("hide_sirius_hours").style.display = "none"
     document.getElementById("hide_clockshark_hours").style.display = "none"
+    document.getElementById("hide_toolbox_talks").style.display = "none"
 })
 
 function show_check_booked_jobs(){
@@ -39,6 +40,9 @@ document.getElementById("check_booked_jobs").style.display = "block"
 
 		function show_clockshark_hours(){
 		document.getElementById("hide_clockshark_hours").style.display = "block"
+		}
+		function show_toolbox_talks(){
+		document.getElementById("hide_toolbox_talks").style.display = "block"
 		}
 	</script>
 </head>
@@ -53,10 +57,8 @@ document.getElementById("check_booked_jobs").style.display = "block"
   </div>
 </nav>
 {% if error_message %}
-	{% for x in error_message %}
 		{{error_message}}
 		<br>
-	{% endfor %}
 {% endif %}
 
 <div id="accordion">
@@ -139,7 +141,7 @@ document.getElementById("check_booked_jobs").style.display = "block"
 	<form method="post" enctype="multipart/form-data">
 		{% csrf_token %}
 		{{ sirius_form.as_p }}
-		<input type="test" name="sirius_notes">
+		<input type="text" name="sirius_notes">
 		<button class="btn btn-primary">Upload Sirius Hours</button>
 	</form>
 </div>
@@ -150,11 +152,23 @@ document.getElementById("check_booked_jobs").style.display = "block"
 	<form method="post" enctype="multipart/form-data">
 		{% csrf_token %}
 		{{ clockshark_form.as_p }}
-		<input type="test" name="clockshark_notes">
+		<input type="text" name="clockshark_notes">
 		<button class="btn btn-primary">Upload Clockshark Hours</button>
 	</form>
 </div>
 <br><br>
+
+<a href="javascript:void(0);" onclick="show_toolbox_talks()">Upload Toolbox Talks</a>
+<div id="hide_toolbox_talks">
+	<form method="post" enctype="multipart/form-data">
+		{% csrf_token %}
+		{{ clockshark_form.as_p }}
+		<input type="hidden" name="toolbox_talks">
+		<button class="btn btn-primary">Upload Toolbox Talks</button>
+	</form>
+</div>
+<br><br>
+
 
 <a href = "{% url 'upload_employees' %}">
 <div style="height:100%;width:100%">

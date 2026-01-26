@@ -1280,10 +1280,17 @@ def clockshark_webhook(request):
 
     # Normalize to timezone-aware if needed (dateutil sometimes returns naive)
     if clock_in_time and timezone.is_naive(clock_in_time):
-        clock_in_time = timezone.make_aware(clock_in_time, timezone.get_current_timezone())
+        #clock_in_time = timezone.make_aware(clock_in_time, timezone.get_current_timezone())
+        clock_in_time = timezone.make_aware(
+            clock_in_time,
+            timezone.utc
+        )
     if clock_out_time and timezone.is_naive(clock_out_time):
-        clock_out_time = timezone.make_aware(clock_out_time, timezone.get_current_timezone())
-
+        #clock_out_time = timezone.make_aware(clock_out_time, timezone.get_current_timezone())
+        clock_out_time = timezone.make_aware(
+            clock_out_time,
+            timezone.utc
+        )
     if clock_in_time:
         work_day = parse_date(start_raw).date()
     if clock_out_time:
@@ -1366,6 +1373,8 @@ def clockshark_webhook(request):
         if success:
             delta = clock_out_time - entry.clock_in
             hours = Decimal(delta.total_seconds() / 3600).quantize(Decimal("0.01"))
+            if hours >= Decimal("6.00"):
+                hours -= Decimal("0.50")
             entry.hours = hours
             entry.save()
             return JsonResponse({"status": "clock_out_updated", "hours": str(hours)})
