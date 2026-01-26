@@ -428,12 +428,12 @@ class ClockSharkErrors(models.Model):
     synced_at = models.DateTimeField(auto_now=True)
     work_day = models.DateField(null=True, blank=True)
     error = models.CharField(null=True, max_length=2000)
+    job_name = models.CharField(null=True, max_length=250)
+    clockshark_id = models.CharField(max_length=255, null=True)
 
-    class Meta:
-        indexes = [
-            models.Index(fields=["job_number"]),
-            models.Index(fields=["clock_in"]),
-        ]
+    def __str__(self):
+        return f"{self.employee_first_name} {self.employee_last_name} {self.error}"
+
 
 class SiriusHours(models.Model):
     id = models.BigAutoField(primary_key=True)
