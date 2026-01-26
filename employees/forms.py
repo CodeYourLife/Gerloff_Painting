@@ -10,3 +10,6 @@ class SiriusUploadForm(forms.Form):
 
 class ClockSharkUploadForm(forms.Form):
     excel_file = forms.FileField()
+
+class ToolboxTalksUploadForm(forms.Form):
+    excel_file = forms.FileField()

@@ -23,8 +23,9 @@ from jobs.models import *
 from accounts.models import *
 from changeorder.models import *
 from console.models import *
+from console.misc import createfolder
 from employees.models import *
-from employees.forms import SiriusUploadForm,ClockSharkUploadForm
+from employees.forms import SiriusUploadForm,ClockSharkUploadForm, ToolboxTalksUploadForm
 from equipment.models import *
 from rentals.models import *
 from subcontractors.models import *
@@ -317,7 +318,13 @@ def admin_home(request):
                 notes = request.POST["clockshark_notes"]
                 # message = upload_clockshark(form, excel_file,notes)
                 upload_clockshark(form, excel_file, notes)
-                send_data['error_message'] = "Success"
+                send_data['error_message'] = "Success Uploading ClockShark Hours"
+        if 'toolbox_talks' in request.POST:
+            form = ToolboxTalksUploadForm(request.POST, request.FILES)
+            if form.is_valid():
+                excel_file = request.FILES["excel_file"]
+                upload_toolbox_talk(form, excel_file, "none")
+                send_data['error_message'] = "Success Uploading Toolbox Talks"
         if 'email_test' in request.POST:
             send_data['emailconfirmation'] = True
             Email.sendEmail("Trinity Email Test",
@@ -328,6 +335,7 @@ def admin_home(request):
     send_data['subs'] = Subcontractors.objects.filter(is_inactive=False)
     send_data['sirius_form'] = SiriusUploadForm()
     send_data['clockshark_form'] = ClockSharkUploadForm()
+    send_data['clockshark_form'] = ToolboxTalksUploadForm()
     return render(request, 'admin_home.html', send_data)
 
 def base(request):
@@ -1174,5 +1182,23 @@ def upload_clockshark(form, excel_file,notes):
                         # message.append({'message': "skipped " + clockshark_id + " row" + str(a)})
                         print("skipped " + clockshark_id + " row" + str(a))
     # return message
+
+def upload_toolbox_talk(form, excel_file,notes):
+    wb = openpyxl.load_workbook(excel_file)
+    sheet = wb.active
+    created = 0
+    skipped = 0
+    with transaction.atomic():
+        for row in sheet.iter_rows(min_row=1, values_only=True):
+            (
+                description,
+            ) = row
+
+            newitem = ToolboxTalks.objects.create(
+                description=description,
+            )
+            createfolder("toolbox_talks/" + str(newitem.id))
+            createfolder("toolbox_talks/" + str(newitem.id) + "/English")
+            createfolder("toolbox_talks/" + str(newitem.id) + "/Spanish")
 
 

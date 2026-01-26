@@ -425,6 +425,8 @@ class ToolboxTalks(models.Model):
     id = models.BigAutoField(primary_key=True)
     description = models.CharField(max_length=2000, blank=True, null=True)
 
+    def __str__(self):
+        return f"{self.id} {self.description}"
 class ScheduledToolboxTalks(models.Model):
     id = models.BigAutoField(primary_key=True)
     master = models.ForeignKey(ToolboxTalks, on_delete=models.PROTECT, null=True)

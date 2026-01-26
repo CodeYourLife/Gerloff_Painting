@@ -527,6 +527,8 @@ function active_button_changed(){
                                 <th scope="col">Super</th>
                                 {% endif %}
                                 <th scope="col">GC</th>
+                                <th scope="col">Hours</th>
+                                <th scope="col">Budget</th>
                                 <th scope="col">Equip</th>
                                 <th scope="col">Subs</th>
                                 <th scope="col">VWC</th>
@@ -573,7 +575,8 @@ function active_button_changed(){
                                     <a href="#">{{job.superintendent.first_name}}</a></td>
                                 {% endif %}
                                 <td style="white-space:nowrap" width="90">{{job.client}}</td>
-
+                                <td>{{job.hours_to_date}}</td>
+                                <td></td>
                                 <td>{{job.equipment_count}}</td>
                                 <td>{{job.subcontract_count}}</td>
                                 <td>{{job.wc_count}}</td>

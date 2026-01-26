@@ -10,7 +10,8 @@ from subcontractors.models import *
 from rentals.models import *
 from datetime import date, timedelta
 from django.db.models import Q
-
+from django.db.models import Sum
+from decimal import Decimal, ROUND_HALF_UP
 
 def validate_job_notes(value):
     if value == "auto_booking_note" or value == "auto_misc_note" or value == "employee_note" or value == "auto_co_note" or value == "auto_submittal_note" or value == "auto_start_date_note" or value == "daily_report":
@@ -152,6 +153,16 @@ class Jobs(models.Model):
 
     def __str__(self):
         return f"{self.job_name}"
+
+    def hours_to_date(self):
+        result = self.clockshark_entries.aggregate(
+            total=Sum("hours")
+        )["total"]
+
+        if result is None:
+            return Decimal("0")
+
+        return result.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
 
     def subcontract_count(self):
         return Subcontracts.objects.filter(job_number=self).count()
