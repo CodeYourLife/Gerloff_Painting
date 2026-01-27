@@ -66,6 +66,6 @@ class ClockSharkTimeEntryAdmin(admin.ModelAdmin):
             ),
         }),
         ("System", {
-            "fields": ("clockshark_id","lunch", "hours_adjust_note"),
+            "fields": ("clockshark_id","hours_adjust_note"),
         }),
     )
