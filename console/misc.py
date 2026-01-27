@@ -6,6 +6,12 @@ from email.mime.application import MIMEApplication
 import os
 import os.path
 from django.conf import settings
+
+from jobs.models import ClockSharkTimeEntry
+from django.db.models import Sum
+
+
+
 class Email:
     def sendEmail(title, body, to, filename):
         msg = MIMEMultipart()
@@ -62,3 +68,5 @@ def getFilesOrFolders(subfolder, item):
     return filesOrFolders
 
 
+def get_total_clockshark_hours():
+    return ClockSharkTimeEntry.objects.all().aggregate(total=Sum("hours"))

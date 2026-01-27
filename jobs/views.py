@@ -1389,6 +1389,7 @@ def clockshark_webhook(request):
             hours = Decimal(delta.total_seconds() / 3600).quantize(Decimal("0.01"))
             if hours >= Decimal("6.00"):
                 hours -= Decimal("0.50")
+                entry.lunch = Decimal("30.00")
             entry.hours = hours
             entry.save()
             return JsonResponse({"status": "clock_out_updated", "hours": str(hours)})
