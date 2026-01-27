@@ -1075,7 +1075,7 @@ def upload_clockshark(form, excel_file,notes):
                 ignore,
                 start_raw,
                 end_time,
-                lunch,
+                ignore,
                 ignore,
                 ignore,
                 ignore,
@@ -1115,7 +1115,7 @@ def upload_clockshark(form, excel_file,notes):
                     ignore,
                     start_raw,
                     end_raw,
-                    lunch,
+                    ignore,
                     ignore,
                     ignore,
                     ignore,
@@ -1136,11 +1136,6 @@ def upload_clockshark(form, excel_file,notes):
                     job_number=job_number[:5]
                 if job_name:
                     job_name=str(job_name).strip()
-
-                if lunch in (None, "", 0):
-                    lunch = Decimal("0")
-                else:
-                    lunch = Decimal(str(lunch))
                 clock_in_time=start_raw
                 clock_out_time=end_raw
                 # clock_in_time = datetime.strptime(start_raw, "%m/%d/%Y %I:%M:%S %p")
@@ -1176,10 +1171,10 @@ def upload_clockshark(form, excel_file,notes):
                                                        employee_first_name=employee_first_name,
                                                        employee_last_name=employee_last_name, work_day=work_day,
                                                        clock_in=clock_in_time, job=job, clock_out=clock_out_time,
-                                                       hours=minutes / 60, hours_adjust_note="AUTO IMPORT",lunch=lunch)
+                                                       hours=minutes / 60, hours_adjust_note="AUTO IMPORT")
                 else:
                     if clock_in_time and clock_out_time:
-                        ClockSharkTimeEntry.objects.create(lunch=lunch,clockshark_id=clockshark_id, job_name=job_name,
+                        ClockSharkTimeEntry.objects.create(clockshark_id=clockshark_id, job_name=job_name,
                                                            employee_first_name=employee_first_name,
                                                            employee_last_name=employee_last_name, work_day=work_day,
                                                            clock_in=clock_in_time,job=job, clock_out=clock_out_time, hours=minutes/60, hours_adjust_note="AUTO IMPORT")

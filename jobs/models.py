@@ -410,15 +410,12 @@ class ClockSharkTimeEntry(models.Model):
     job_name = models.CharField(null=True, max_length=250)
     hours_adjust = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     hours_adjust_note = models.CharField(null=True, max_length=250, blank=True)
-    lunch = models.DecimalField(max_digits=6, decimal_places=2,null=True)
 
     class Meta:
         indexes = [
             models.Index(fields=["job_number"]),
             models.Index(fields=["clock_in"]),
         ]
-
-
 
 class ClockSharkErrors(models.Model):
     job = models.ForeignKey(Jobs,on_delete=models.CASCADE,related_name="clockshark_entry_errors",null=True,blank=True)
