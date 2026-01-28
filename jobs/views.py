@@ -807,6 +807,18 @@ def job_page(request, jobnumber):
         if pickup_request.remove_trash:
             send_data['trash_pickup_requested'] = True
     if request.method == 'POST':
+        if 'manhours_adjust' in request.POST:
+            added_hours = int(request.POST['manhours_adjust'])
+            if selectedjob.man_hours_budgeted:
+                new_hours = selectedjob.man_hours_budgeted + added_hours
+            else:
+                new_hours = added_hours
+            author = Employees.objects.get(user=request.user)
+            JobNotes.objects.create(job_number=selectedjob,
+                                    note="Budget Hours Changed From " + str(selectedjob.man_hours_budgeted) + " To " + str(new_hours) + ". " + request.POST['manhours_note'],
+                                    type="manhours_note", user=author, date=date.today())
+            selectedjob.man_hours_budgeted = new_hours
+            selectedjob.save()
         if 'add_competent_person' in request.POST:
             selected_competent_person_id = request.POST['add_competent_person']
             selected_competent_person = Employees.objects.get(id=selected_competent_person_id)
@@ -1082,6 +1094,9 @@ def job_page(request, jobnumber):
         notes = JobNotes.objects.filter(job_number=selectedjob)
     send_data['notes'] = notes.order_by('date')
     send_data['supers'] = Employees.objects.filter(job_title__description="Superintendent", active=True)
+    send_data['man_hours_budgeted'] = selectedjob.man_hours_budgeted
+    send_data['man_hours_used'] = selectedjob.hours_to_date()
+    send_data['manhours_notes'] = JobNotes.objects.filter(job_number=selectedjob, type="manhours_note")
     if go_to_pickup:
         return redirect('request_pickup', jobnumber=selectedjob.job_number, item='ALL', pickup='ALL', status='ALL')
     else:
@@ -1275,6 +1290,10 @@ def clockshark_webhook(request):
     end_raw = payload.get("end")       # should exist on clock-out
     clock_in_time = parse_date(start_raw) if start_raw else None
     clock_out_time = parse_date(end_raw) if end_raw else None
+    if job_name:
+        job_name = str(job_name).strip()
+    if job_name.endswith("*"):
+        job_name = job_name[:-1]
 
     # Normalize to timezone-aware if needed (dateutil sometimes returns naive)
     if clock_in_time and timezone.is_naive(clock_in_time):

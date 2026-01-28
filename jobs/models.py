@@ -14,7 +14,7 @@ from django.db.models import Sum
 from decimal import Decimal, ROUND_HALF_UP
 
 def validate_job_notes(value):
-    if value == "auto_booking_note" or value == "auto_misc_note" or value == "employee_note" or value == "auto_co_note" or value == "auto_submittal_note" or value == "auto_start_date_note" or value == "daily_report":
+    if value == "manhours_note" or value == "auto_booking_note" or value == "auto_misc_note" or value == "employee_note" or value == "auto_co_note" or value == "auto_submittal_note" or value == "auto_start_date_note" or value == "daily_report":
         return value
     else:
         raise ValidationError("Category Not Allowed")
@@ -404,13 +404,13 @@ class ClockSharkTimeEntry(models.Model):
     job_number = models.CharField(max_length=50,null=True)
     clock_in = models.DateTimeField(null=True, blank=True)
     clock_out = models.DateTimeField(null=True, blank=True)
-    hours = models.DecimalField(max_digits=6, decimal_places=2,null=True)
+    hours = models.DecimalField(max_digits=6, decimal_places=2,null=True,blank=True)
     synced_at = models.DateTimeField(auto_now=True)
     work_day = models.DateField(null=True, blank=True)
     job_name = models.CharField(null=True, max_length=250)
     hours_adjust = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     hours_adjust_note = models.CharField(null=True, max_length=250, blank=True)
-    lunch = models.DecimalField(max_digits=6, decimal_places=2,null=True)
+    lunch = models.DecimalField(max_digits=6, decimal_places=2,null=True,blank=True)
 
     class Meta:
         indexes = [
@@ -418,7 +418,37 @@ class ClockSharkTimeEntry(models.Model):
             models.Index(fields=["clock_in"]),
         ]
 
+    def calculate_hours(self):
+        """
+        Calculate hours from clock_in / clock_out minus lunch.
+        Returns Decimal or None.
+        """
+        if not self.clock_in or not self.clock_out:
+            return None
 
+        if self.clock_out <= self.clock_in:
+            return None
+
+        delta = self.clock_out - self.clock_in
+        hours = Decimal(delta.total_seconds() / 3600)
+
+        # Deduct lunch (stored as minutes: 0 or 30)
+        if self.lunch:
+            hours -= Decimal(self.lunch) / Decimal(60)
+
+        # Round to 2 decimal places
+        return hours.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+    def save(self, *args, **kwargs):
+        """
+        Auto-recalculate hours unless hours_adjust is set.
+        """
+        if not self.hours_adjust:
+            calculated = self.calculate_hours()
+            if calculated is not None:
+                self.hours = calculated
+
+        super().save(*args, **kwargs)
 
 class ClockSharkErrors(models.Model):
     job = models.ForeignKey(Jobs,on_delete=models.CASCADE,related_name="clockshark_entry_errors",null=True,blank=True)

@@ -56,7 +56,7 @@ INSTALLED_APPS = [
     'superintendent',
     'submittals',
     'accounts',
-    'autos'
+    'autos',
 ]
 
 # django.setup()
@@ -129,15 +129,15 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
-#TIME_ZONE = 'UTC'
-
 TIME_ZONE = "US/Eastern"
 USE_TZ = True
-
+DATETIME_FORMAT = "m/d/Y g:i A"
+TIME_FORMAT = "g:i A"
 USE_I18N = True
+DATETIME_INPUT_FORMATS = [
+    "%m/%d/%Y %I:%M %p",  # 12-hour with AM/PM
+]
 
-USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
