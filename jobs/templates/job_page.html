@@ -1005,6 +1005,127 @@ function show_submit_button(){
         </div>
     </div>
 </div>
+
+<!-- Manhours Modal -->
+<div class="modal fade" id="manhours-modal" tabindex="-1" role="dialog"
+     aria-labelledby="manhoursModalTitle" aria-hidden="true">
+
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+
+            <!-- Header -->
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="manhours_modal_title">
+                    Man Hours Overview
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body">
+                <div class="container-fluid">
+
+                    <!-- Summary Row -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="p-3 border rounded bg-white">
+                                <h6 class="text-muted mb-2">Summary</h6>
+                                <p class="mb-1">
+                                    <strong>Used:</strong>
+                                    {{ man_hours_used }}
+                                </p>
+                                <p class="mb-0">
+                                    <strong>Budgeted:</strong>
+                                    {{ man_hours_budgeted }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Adjustment Form -->
+                        <div class="col-md-6">
+                            <div class="p-3 border rounded bg-light">
+                                <h6 class="text-muted mb-2">Adjust Budget</h6>
+
+                                <form id="add_manhours"
+                                      action="{% url 'job_page' job.job_number %}"
+                                      method="post">
+                                    {% csrf_token %}
+
+                                    <div class="form-group mb-2">
+                                        <label class="small font-weight-bold">
+                                            Adjust Man Hours
+                                        </label>
+                                        <input type="number"
+                                               name="manhours_adjust"
+                                               class="form-control form-control-sm"
+                                               placeholder="e.g. +8 or -4">
+                                    </div>
+
+                                    <div class="form-group mb-2">
+                                        <label class="small font-weight-bold">
+                                            Reason for Change
+                                        </label>
+                                        <textarea name="manhours_note"
+                                                  class="form-control form-control-sm"
+                                                  rows="3"
+                                                  placeholder="Explain why you changed the budget"></textarea>
+                                    </div>
+
+                                    <button type="submit"
+                                            class="btn btn-warning btn-sm">
+                                        Update Man Hours
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes Section -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="p-3 border rounded bg-white">
+                                <h6 class="text-muted mb-2">Notes</h6>
+
+                                {% if manhours_notes %}
+                                    <ul class="list-unstyled mb-0">
+                                        {% for x in manhours_notes %}
+                                            <li class="mb-2">
+                                                <small class="text-muted">
+                                                    {{ x.user.first_name }} {{ x.user.last_name }}
+                                                    • {{ x.date }}
+                                                </small>
+                                                <div>{{ x.note }}</div>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p class="text-muted mb-0">
+                                        No notes recorded.
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary btn-sm"
+                        data-dismiss="modal">
+                    Close
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
 {% if job.is_closed %}
 <div style="background-color:hsl(0, 0%, 75%);">
 <h4>JOB IS CLOSED</h4>
@@ -1043,9 +1164,10 @@ function show_submit_button(){
 
         <div class="col-sm-4 list-items" data-toggle="modal" data-target="#contract_amount-modal"><b>Contract Amount:</b><a href ='#'>${{contract_amount}}</a>
         </div>
-        <div class="col-sm-8 list-items">
-        </div>
+        <div class="col-sm-4 list-items" data-toggle="modal" data-target="#manhours-modal"><b>Hours Used vs. Budgeted:</b> <a href="#">{{man_hours_used}} / {{man_hours_budgeted}}</a>  </div>
+        <div class="col-sm-4 list-items"></div>
     </div>
+
 
 
 </div>

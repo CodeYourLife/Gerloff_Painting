@@ -1136,7 +1136,8 @@ def upload_clockshark(form, excel_file,notes):
                     job_number=job_number[:5]
                 if job_name:
                     job_name=str(job_name).strip()
-
+                if job_name.endswith("*"):
+                    job_name=job_name[:-1]
                 if lunch in (None, "", 0):
                     lunch = Decimal("0")
                 else:

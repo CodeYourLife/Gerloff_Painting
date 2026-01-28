@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import *
 
+
 # Register your models here.
 admin.site.register(Jobs)
 admin.site.register(JobNumbers)
@@ -14,9 +15,9 @@ admin.site.register(Plans)
 admin.site.register(JobCharges)
 admin.site.register(ClockSharkErrors)
 admin.site.register(SiriusHours)
-
 @admin.register(ClockSharkTimeEntry)
 class ClockSharkTimeEntryAdmin(admin.ModelAdmin):
+
     list_display = (
         "id",
         "job",
@@ -26,12 +27,9 @@ class ClockSharkTimeEntryAdmin(admin.ModelAdmin):
         "clock_in",
         "clock_out",
         "hours",
-
     )
 
-    list_filter = (
-        "job",
-    )
+    list_filter = ("job",)
 
     search_fields = (
         "employee_first_name",
@@ -41,16 +39,11 @@ class ClockSharkTimeEntryAdmin(admin.ModelAdmin):
 
     ordering = ("-clock_in",)
 
-    readonly_fields = (
-        "clockshark_id",
-        "clock_in",
-        "clock_out",
-        "hours",
-    )
+    readonly_fields = ("hours",)
 
     fieldsets = (
         ("Job", {
-            "fields": ("job","job_name"),
+            "fields": ("job", "job_name"),
         }),
         ("Employee", {
             "fields": (
@@ -66,6 +59,11 @@ class ClockSharkTimeEntryAdmin(admin.ModelAdmin):
             ),
         }),
         ("System", {
-            "fields": ("clockshark_id","lunch", "hours_adjust_note"),
+            "fields": ("clockshark_id", "lunch", "hours_adjust_note"),
         }),
     )
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "job":
+            kwargs["queryset"] = Jobs.objects.filter(is_closed=False).order_by('job_name')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
