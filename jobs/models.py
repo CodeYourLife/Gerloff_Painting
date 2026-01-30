@@ -478,3 +478,12 @@ class SiriusHours(models.Model):
 
     def __str__(self):
         return f"{self.job_number} {self.job}"
+
+class ClockSharkJobMap(models.Model):
+    clockshark_job_name = models.CharField(max_length=255, unique=True)
+    job = models.ForeignKey(Jobs, on_delete=models.CASCADE)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.clockshark_job_name} → {self.job}"

@@ -1316,6 +1316,15 @@ def clockshark_webhook(request):
 
     clockshark_id = f"{employee_first_name}|{employee_last_name}|{job_name}|{work_day}"
     job = Jobs.objects.filter(job_name=job_name).first()
+    if not job:
+        if job_name:
+            mapping = ClockSharkJobMap.objects.filter(
+                clockshark_job_name=job_name
+            ).first()
+
+            if mapping:
+                job = mapping.job
+
     # ---- Case A: CLOCK IN event (has start, no end) ----
     if clock_in_time:
         if ClockSharkTimeEntry.objects.filter(clockshark_id=clockshark_id,clock_out__isnull=False,clock_in__isnull=True).exists():
@@ -1340,6 +1349,7 @@ def clockshark_webhook(request):
             return JsonResponse({"status": "another clock-in came in, before a clock out time"})
         else:
             if not job:
+
                 ClockSharkErrors.objects.create(clockshark_id=clockshark_id, job_name=job_name,
                                                 employee_first_name=employee_first_name,
                                                 employee_last_name=employee_last_name, work_day=work_day,
