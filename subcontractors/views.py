@@ -240,6 +240,9 @@ def subcontractor_invoice_new(request, subcontract_id):
                     SubcontractorOriginalInvoiceItem.objects.create(invoice=invoice, sov_item=x,
                                                                     quantity=request.POST['quantity' + str(x.id)],
                                                                     notes=request.POST['note' + str(x.id)])
+                    current_job = subcontract.job_number
+                    current_job.is_active = True
+                    current_job.save()
                 # elif request.POST['note' + str(x.id)] != '':
                 #     SubcontractorInvoiceItem.objects.create(invoice=invoice, sov_item=x, quantity=0,
                 #                                             notes=request.POST['note' + str(x.id)])
@@ -393,6 +396,9 @@ def portal_invoice_new(request, subcontract_id):
                     SubcontractorOriginalInvoiceItem.objects.create(invoice=invoice, sov_item=x,
                                                                     quantity=request.POST['quantity' + str(x.id)],
                                                                     notes=request.POST['note' + str(x.id)])
+                    current_job = subcontract.job_number
+                    current_job.is_active = True
+                    current_job.save()
                     # if x.SOV_is_lump_sum:
                     #     invoice_total += float(request.POST['quantity' + str(x.id)])
                     # else:
@@ -403,6 +409,9 @@ def portal_invoice_new(request, subcontract_id):
                     SubcontractorOriginalInvoiceItem.objects.create(invoice=invoice, sov_item=x,
                                                                     quantity=request.POST['quantity' + str(x.id)],
                                                                     notes=request.POST['note' + str(x.id)])
+                    current_job = subcontract.job_number
+                    current_job.is_active = True
+                    current_job.save()
             SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
                                             user=Employees.objects.get(id=42),
                                             note="New Invoice From Portal- " + request.POST['subcontract_note'],
