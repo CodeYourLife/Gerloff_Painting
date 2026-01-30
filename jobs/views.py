@@ -1349,17 +1349,19 @@ def clockshark_webhook(request):
             return JsonResponse({"status": "another clock-in came in, before a clock out time"})
         else:
             if not job:
-
-                ClockSharkErrors.objects.create(clockshark_id=clockshark_id, job_name=job_name,
-                                                employee_first_name=employee_first_name,
-                                                employee_last_name=employee_last_name, work_day=work_day,
-                                                clock_out=clock_out_time,
-                                                error="can't find job")
+                if not job_name=="Gerloff Painting Inc" or job_name == "Vacation" or job_name == "Requested Day Off":
+                    ClockSharkErrors.objects.create(clockshark_id=clockshark_id, job_name=job_name,
+                                                    employee_first_name=employee_first_name,
+                                                    employee_last_name=employee_last_name, work_day=work_day,
+                                                    clock_out=clock_out_time,
+                                                    error="can't find job")
                 ClockSharkTimeEntry.objects.create(clockshark_id=clockshark_id, job_name=job_name,
                                                employee_first_name=employee_first_name,
                                                employee_last_name=employee_last_name, work_day=work_day,
                                                clock_in=clock_in_time)
-                return JsonResponse({"status": "success. but couldn't find job"})
+                if not job_name == "Gerloff Painting Inc" or job_name == "Vacation" or job_name == "Requested Day Off":
+                    return JsonResponse({"status": "success. but couldn't find job"})
+                return JsonResponse({"status": "success"})
 
             #ClockSharkTimeEntry.objects.create(clockshark_id=clockshark_id,job_name=job_name,employee_first_name=employee_first_name,employee_last_name=employee_last_name,work_day=work_day,clock_in=clock_in_time,job=job)
             if job:
