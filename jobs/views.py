@@ -808,17 +808,23 @@ def job_page(request, jobnumber):
             send_data['trash_pickup_requested'] = True
     if request.method == 'POST':
         if 'manhours_adjust' in request.POST:
-            added_hours = int(request.POST['manhours_adjust'])
-            if selectedjob.man_hours_budgeted:
-                new_hours = selectedjob.man_hours_budgeted + added_hours
-            else:
-                new_hours = added_hours
             author = Employees.objects.get(user=request.user)
-            JobNotes.objects.create(job_number=selectedjob,
-                                    note="Budget Hours Changed From " + str(selectedjob.man_hours_budgeted) + " To " + str(new_hours) + ". " + request.POST['manhours_note'],
-                                    type="manhours_note", user=author, date=date.today())
-            selectedjob.man_hours_budgeted = new_hours
-            selectedjob.save()
+            if not request.POST['manhours_adjust'] == "":
+                added_hours = int(request.POST['manhours_adjust'])
+                if selectedjob.man_hours_budgeted:
+                    new_hours = selectedjob.man_hours_budgeted + added_hours
+                else:
+                    new_hours = added_hours
+                JobNotes.objects.create(job_number=selectedjob,
+                                        note="Budget Hours Changed From " + str(selectedjob.man_hours_budgeted) + " To " + str(new_hours) + ". " + request.POST['manhours_note'],
+                                        type="manhours_note", user=author, date=date.today())
+                selectedjob.man_hours_budgeted = new_hours
+                selectedjob.save()
+            else:
+                JobNotes.objects.create(job_number=selectedjob,
+                                        note="No Change to Hours. " + request.POST['manhours_note'],
+                                        type="manhours_note", user=author, date=date.today())
+
         if 'add_competent_person' in request.POST:
             selected_competent_person_id = request.POST['add_competent_person']
             selected_competent_person = Employees.objects.get(id=selected_competent_person_id)
