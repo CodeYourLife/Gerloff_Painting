@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load safety_extras %}
+
+
+{% block content %}
+<div class="container-fluid mt-3 mb-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Jobsite Safety Inspection</h3>
+        <span class="badge badge-info p-2">
+            Safety Score: {{ safety_score|default:"N/A" }}%
+        </span>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <strong>Job:</strong> {{ inspection.job.job_number }} – {{ inspection.job.job_name }}<br>
+            <strong>Date:</strong> {{ inspection.inspection_date }}<br>
+            <strong>Inspector:</strong> {{ inspection.inspector }}
+        </div>
+    </div>
+
+    {% if unsatisfactory_items %}
+    <div class="alert alert-danger">
+        <strong>Unsatisfactory Items:</strong>
+        <ul class="mb-0">
+            {% for item in unsatisfactory_items %}
+                <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% if inspection.comments %}
+    <div class="card mb-4 border-warning">
+        <div class="card-header font-weight-bold">
+            Comments / Corrective Actions
+        </div>
+        <div class="card-body">
+            {{ inspection.comments|linebreaks }}
+        </div>
+    </div>
+    {% endif %}
+
+    <h5 class="mt-4 mb-2">Inspection Details</h5>
+
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-sm table-bordered">
+              <thead class="thead-light">
+                  <tr>
+                      <th>Item</th>
+                      <th>Status</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  {% for item in inspection_items %}
+                  <tr>
+                      <td>{{ item.label }}</td>
+                      <td>
+                          {% if item.value == "S" %}
+                              <span class="text-success font-weight-bold">Satisfactory</span>
+                          {% elif item.value == "U" %}
+                              <span class="text-danger font-weight-bold">Unsatisfactory</span>
+                          {% else %}
+                              <span class="text-secondary">Not Observed</span>
+                          {% endif %}
+                      </td>
+                  </tr>
+                  {% endfor %}
+              </tbody>
+</table>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'safety_home' %}" class="btn btn-secondary">
+            Back Home
+        </a>
+    </div>
+
+</div>
+{% endblock %}

@@ -95,6 +95,10 @@ $(document).ready(function () {
   		</div>
 	</nav><br>
 
+<form action="{% url 'new_jobsite_safety_inspection' %}" >
+    <input type="submit" value="Perform Jobsite Inspection" class= "btn btn-danger btn-lg"/>
+</form>
+<br>
 
 <!--{{employee.}}-->
 <div id="accordion">
@@ -105,16 +109,16 @@ $(document).ready(function () {
                     <button class="btn btn-link" data-toggle="collapse" data-target="#collapseZero"
                             aria-expanded="false"
                             aria-controls="collapseZero">
-                        Master List of Toolbox Topics
+                        <a href = "{% url 'toolbox_talks_master' %}">Master List of Toolbox Topics</a>
                     </button>
                 </h5>
             </div>
-            <div id="collapseZero" class="collapse hide" aria-labelledby="headingZero" data-parent="#accordion">
-                <div class="card-body">
-                    <a href = "{% url 'toolbox_talks_master' %}">Master List of Toolbox Talks</a>
-                </div>
-            </div>
-        </div>
+<!--            <div id="collapseZero" class="collapse hide" aria-labelledby="headingZero" data-parent="#accordion">-->
+<!--                <div class="card-body">-->
+<!--                    <a href = "{% url 'toolbox_talks_master' %}">Master List of Toolbox Talks</a>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
 
 <!--    Toolbox Talk Scheduler 1-->
     <div class="card">
@@ -122,32 +126,32 @@ $(document).ready(function () {
                 <h5 class="mb-0">
                     <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false"
                             aria-controls="collapseOne">
-                        Scheduled Toolbox Talks
+                        <a href = "{% url 'scheduled_toolbox_talks' %}">Scheduled Toolbox Talks</a>
                     </button>
                 </h5>
             </div>
-            <div id="collapseOne" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">
-                <div class="card-body">
-                    <a href = "{% url 'scheduled_toolbox_talks' %}">Scheduled Toolbox Talks</a>
-                </div>
-            </div>
-        </div>
+<!--            <div id="collapseOne" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">-->
+<!--                <div class="card-body">-->
+<!--                    <a href = "{% url 'scheduled_toolbox_talks' %}">Scheduled Toolbox Talks</a>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
 <!--    Toolbox Talks By Employee 2-->
     <div class="card">
             <div class="card-header" id="headingTwo">
                 <h5 class="mb-0">
                     <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false"
                             aria-controls="collapseTwo">
-                        Toolbox Talks By Employee
+                        <a href = "{% url 'toolbox_talks_by_employee' %}">Toolbox Talks By Employee</a>
                     </button>
                 </h5>
             </div>
-            <div id="collapseTwo" class="collapse hide" aria-labelledby="headingTwo" data-parent="#accordion">
-                <div class="card-body">
-                   <a href = "{% url 'toolbox_talks_by_employee' %}">Toolbox Talks By Employee</a>
-                </div>
-            </div>
-        </div>
+<!--            <div id="collapseTwo" class="collapse hide" aria-labelledby="headingTwo" data-parent="#accordion">-->
+<!--                <div class="card-body">-->
+<!--                   <a href = "{% url 'toolbox_talks_by_employee' %}">Toolbox Talks By Employee</a>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
 
  <!--    Respirator Clearance Forms Needing to Complete 3-->
     <div class="card">
@@ -213,7 +217,102 @@ $(document).ready(function () {
                 </div>
             </div>
         </div>
+         <!--    safety inspections -->
+<div class="card">
 
+    <div class="card-header" id="headingSafetyInspections">
+        <h5 class="mb-0">
+            <button class="btn btn-link collapsed" type="button"
+                    data-toggle="collapse"
+                    data-target="#collapseSafetyInspections"
+                    aria-expanded="false"
+                    aria-controls="collapseSafetyInspections">
+                🦺 Safety Inspections
+            </button>
+        </h5>
+    </div>
+
+    <div id="collapseSafetyInspections"
+         class="collapse"
+         aria-labelledby="headingSafetyInspections"
+         data-parent="#safetyAccordion">
+
+        <div class="card-body">
+
+            {% if safety_inspections %}
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Job</th>
+                            <th>Inspector</th>
+                            <th>Score</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        {% for inspection in safety_inspections %}
+                        <tr>
+                            <td>{{ inspection.inspection_date }}</td>
+
+                            <td>
+                                {{ inspection.job.job_number }}<br>
+                                <small class="text-muted">
+                                    {{ inspection.job.job_name }}
+                                </small>
+                            </td>
+
+                            <td>
+                                {{ inspection.inspector|default:"—" }}
+                            </td>
+
+                            <td>
+                                {% with score=inspection.safety_score %}
+                                    {% if score %}
+                                        <span class="font-weight-bold
+                                            {% if score >= 90 %}text-success
+                                            {% elif score >= 75 %}text-warning
+                                            {% else %}text-danger{% endif %}">
+                                            {{ score }}%
+                                        </span>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+
+                            <td>
+                                {% if inspection.get_unsatisfactory_items %}
+                                    <span class="badge badge-danger">Issues</span>
+                                {% else %}
+                                    <span class="badge badge-success">OK</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-right">
+                                <a href="{% url 'jobsite_safety_inspection_detail' inspection.id %}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <p class="text-muted mb-0">
+                    No safety inspections found.
+                </p>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
 
 <!-- #just to collapse the commented code-->
     <div>

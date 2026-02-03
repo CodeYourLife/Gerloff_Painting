@@ -11,6 +11,7 @@ from rentals.models import *
 from datetime import date, timedelta
 from django.db.models import Q
 from django.db.models import Sum
+from django.utils.text import capfirst
 from decimal import Decimal, ROUND_HALF_UP
 
 def validate_job_notes(value):
@@ -487,3 +488,164 @@ class ClockSharkJobMap(models.Model):
 
     def __str__(self):
         return f"{self.clockshark_job_name} → {self.job}"
+
+class InspectionStatus(models.TextChoices):
+    SATISFACTORY = "S", "Satisfactory"
+    UNSATISFACTORY = "U", "Unsatisfactory"
+    NOT_OBSERVED = "N", "Not Observed"
+
+
+class JobsiteSafetyInspection(models.Model):
+    job = models.ForeignKey(
+        "jobs.Jobs",
+        on_delete=models.CASCADE,
+        related_name="safety_inspections"
+    )
+
+    inspector = models.ForeignKey(
+        "employees.Employees",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    inspection_date = models.DateField(auto_now_add=True)
+
+    # --------------------
+    # General Safety & Housekeeping
+    # --------------------
+    housekeeping = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    walkways_clear = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    wet_paint_signs = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    proper_uniforms = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    floor_protection = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    proper_lighting = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+
+    # --------------------
+    # Access Equipment
+    # --------------------
+    ladders = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    scaffolding = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    aerial_lifts = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    fall_protection = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+
+    # --------------------
+    # PPE & Health
+    # --------------------
+    ppe = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    respirators = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    eye_protection = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    hand_protection = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    hard_hats = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    hearing_protection = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    heat_cold_stress = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    first_aid_kit = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+
+    # --------------------
+    # Paint, Materials & Environmental
+    # --------------------
+    paint_storage = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    flammables = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    sds = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    ventilation = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    lead_containment = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    silica_control = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    overspray = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+
+    # --------------------
+    # Tools, Electrical & Site Hazards
+    # --------------------
+    power_tools = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    extension_cords = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    electrical_safety = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    overhead_work = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    traffic_control = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    signage = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    fire_extinguishers = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    weather_conditions = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+    spray_equipment = models.CharField(max_length=1, choices=InspectionStatus.choices, default=InspectionStatus.NOT_OBSERVED)
+
+    # --------------------
+    # Comments / Notes
+    # --------------------
+    comments = models.TextField(blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-inspection_date"]
+
+    def __str__(self):
+        return f"Safety Inspection – {self.job} – {self.inspection_date}"
+
+    def has_unsafe_conditions(self):
+        """
+        Returns True if any inspection item is marked Unsatisfactory
+        """
+        return any(
+            value == InspectionStatus.UNSATISFACTORY
+            for value in self.__dict__.values()
+        )
+
+    def get_unsatisfactory_items(self):
+        """
+        Returns a list of (field_name, verbose_label) for Unsatisfactory items
+        """
+        unsatisfactory = []
+
+        for field in self._meta.fields:
+            if field.name in ["id", "job", "inspector", "inspection_date", "comments", "created_at"]:
+                continue
+
+            value = getattr(self, field.name)
+            if value == InspectionStatus.UNSATISFACTORY:
+                label = capfirst(field.verbose_name.replace("_", " "))
+                unsatisfactory.append(label)
+
+        return unsatisfactory
+
+    def safety_score(self):
+        """
+        Returns safety score as an integer percentage
+        """
+        sat = 0
+        unsat = 0
+
+        for field in self._meta.fields:
+            value = getattr(self, field.name, None)
+            if value == InspectionStatus.SATISFACTORY:
+                sat += 1
+            elif value == InspectionStatus.UNSATISFACTORY:
+                unsat += 1
+
+        if sat + unsat == 0:
+            return None
+
+        return round((sat / (sat + unsat)) * 100)
+
+    def inspection_items(self):
+        """
+        Returns a list of dicts:
+        [
+            {"label": "Housekeeping", "value": "S"},
+            {"label": "Overspray", "value": "U"},
+            ...
+        ]
+        """
+        items = []
+
+        exclude = {
+            "id", "job", "inspector",
+            "inspection_date", "comments", "created_at"
+        }
+
+        for field in self._meta.fields:
+            if field.name in exclude:
+                continue
+
+            items.append({
+                "label": field.verbose_name.replace("_", " ").title(),
+                "value": getattr(self, field.name),
+            })
+
+        return items
