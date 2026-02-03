@@ -1061,9 +1061,9 @@ def upload_clockshark(form, excel_file,notes):
     sheet = wb.active
     created = 0
     skipped = 0
-    print("PUMPKIN3")
+    a=0
     with transaction.atomic():
-        for row in sheet.iter_rows(min_row=2, max_row=2, values_only=True):#24
+        for row in sheet.iter_rows(min_row=2, values_only=True):#24
             (
                 first_name,
                 last_name,
@@ -1074,7 +1074,7 @@ def upload_clockshark(form, excel_file,notes):
                 ignore,
                 ignore,
                 start_raw,
-                end_time,
+                end_raw,
                 lunch,
                 ignore,
                 ignore,
@@ -1090,18 +1090,22 @@ def upload_clockshark(form, excel_file,notes):
                 ignore,
                 ignore,
             ) = row
-        # oldest_date = parse_date(start_raw)
-        # oldest_date = datetime.strptime(start_raw, "%m/%d/%Y %I:%M:%S %p")
-        oldest_date=start_raw
+            if a==0:
+                oldest_date = start_raw
+                newest_date = start_raw
+            else:
+                newest_date = start_raw
+            a += 1
+
         if oldest_date and timezone.is_naive(oldest_date):
             oldest_date = timezone.make_aware(oldest_date, timezone.get_current_timezone())
         message = []
-
-        # message.append({'message':str(ClockSharkTimeEntry.objects.filter(clock_in__gte=oldest_date, work_day__lt=date.today()).count()) + " entries deleted"})
-        print(str(ClockSharkTimeEntry.objects.filter(clock_in__gte=oldest_date, work_day__lt=date.today()).count()) + " entries deleted")
-        ClockSharkTimeEntry.objects.filter(clock_in__gt=oldest_date,work_day__lt=date.today()).delete()
-        print("DID IT GET HERE?")
-        a=1
+        if newest_date and timezone.is_naive(newest_date):
+            newest_date = timezone.make_aware(newest_date, timezone.get_current_timezone())
+        oldest_day = oldest_date.date()
+        newest_day = newest_date.date()
+        print(str(ClockSharkTimeEntry.objects.filter(work_day__gte=oldest_date, work_day__lte=newest_date).count()) + " entries deleted")
+        ClockSharkTimeEntry.objects.filter(work_day__gte=oldest_date, work_day__lte=newest_date).delete()
         with transaction.atomic():
             for row in sheet.iter_rows(min_row=2, values_only=True):  # 24
                 (
@@ -1144,10 +1148,6 @@ def upload_clockshark(form, excel_file,notes):
                     lunch = Decimal(str(lunch))
                 clock_in_time=start_raw
                 clock_out_time=end_raw
-                # clock_in_time = datetime.strptime(start_raw, "%m/%d/%Y %I:%M:%S %p")
-                # clock_in_time = parse_date(start_raw) if start_raw else None
-                # clock_out_time = datetime.strptime(end_raw, "%m/%d/%Y %I:%M:%S %p")
-                # clock_out_time = parse_date(end_raw) if end_raw else None
                 job = Jobs.objects.filter(job_number=job_number).first()
                 if clock_in_time:
                     work_day = clock_in_time.date()
