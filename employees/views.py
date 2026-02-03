@@ -691,7 +691,8 @@ def safety_home(request):
     painters_needing_respirator = []
     for x in Employees.objects.filter(job_title__description="Painter"):
         if not RespiratorClearance.objects.filter(employee=x).exists():
-            painters_needing_respirator.append({'employee': x.first_name + " " + x.last_name})
+            if not Certifications.objects.filter(employee=x, category__description="Respirator Clearance").exists():
+                painters_needing_respirator.append({'employee': x.first_name + " " + x.last_name})
     send_data['pending_respirators'] = painters_needing_respirator
     respirators_in_review = []
     for x in RespiratorClearance.objects.filter(date_approved__isnull=True):

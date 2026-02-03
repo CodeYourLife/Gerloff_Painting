@@ -274,7 +274,8 @@ def index(request):
     painters_needing_respirator=0
     for x in Employees.objects.filter(job_title__description="Painter"):
         if not RespiratorClearance.objects.filter(employee=x).exists():
-            painters_needing_respirator+=1
+            if not Certifications.objects.filter(employee=x,category__description="Respirator Clearance").exists():
+                painters_needing_respirator+=1
     send_data['painters_needing_respirator'] = painters_needing_respirator
     missing_toolbox_talks = 0
     today = date.today()
