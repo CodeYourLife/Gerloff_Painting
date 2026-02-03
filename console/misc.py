@@ -109,13 +109,13 @@ def send_safety_inspection_email(inspection, user):
     # =========================
     # RECIPIENTS
     # =========================
-    # recipients = {
-    #     "joe@gerloffpainting.com",
-    #     "victor@gerloffpainting.com", "bridgette@gerloffpainting.com"
-    # }
     recipients = {
         "joe@gerloffpainting.com",
+        "victor@gerloffpainting.com", "bridgette@gerloffpainting.com"
     }
+    # recipients = {
+    #     "joe@gerloffpainting.com",
+    # }
 
 
     # ✅ Add superintendent if assigned and has an email
