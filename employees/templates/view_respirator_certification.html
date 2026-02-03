@@ -162,8 +162,9 @@
   		</div>
 	</nav><br>
 
-
-
+{% if not_completed_yet %}
+    <b>Respirator Application Not Completed Yet</b>
+{% else %}
 <div class="demo-html" style="width:90%">
     <!--    	<div style="background-color: powderblue;">-->
 	<div class ="row"><div class ="col"><h3>Respirator Clearance for {{certification.employee}}</h3></div></div>
@@ -256,7 +257,7 @@
     </div>
     {% endif %}
 </div>
-
+{% endif %}
 </body>
 </html>
 

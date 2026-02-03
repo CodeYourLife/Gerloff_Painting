@@ -81,6 +81,14 @@
             {% else %}
             <input type="text" name = "phone" id = "phone" >
             {% endif %}
+            <br>
+            <label for="birth_date">Birth Date: </label>
+            {% if employee.birth_date %}
+            <input type="date" name = "birth_date" id = "birth_date" value = "{{employee.birth_date|date:'Y-m-d'}}">
+            {% else %}
+            <input type="date" name = "birth_date" id = "birth_date" >
+            {% endif %}
+
         </div>
         {% if started_at_base %}
         <input type="hidden" name="next_page" value="back_to_base">

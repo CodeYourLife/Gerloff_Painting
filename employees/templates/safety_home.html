@@ -98,7 +98,7 @@ $(document).ready(function () {
 
 <!--{{employee.}}-->
 <div id="accordion">
-<!--    # Master List of Toolbox Topics-->
+<!--    # Master List of Toolbox Topics 0-->
     <div class="card">
             <div class="card-header" id="headingZero">
                 <h5 class="mb-0">
@@ -116,7 +116,7 @@ $(document).ready(function () {
             </div>
         </div>
 
-<!--    Toolbox Talk Scheduler-->
+<!--    Toolbox Talk Scheduler 1-->
     <div class="card">
             <div class="card-header" id="headingOne">
                 <h5 class="mb-0">
@@ -132,7 +132,7 @@ $(document).ready(function () {
                 </div>
             </div>
         </div>
-<!--    Toolbox Talks By Employee-->
+<!--    Toolbox Talks By Employee 2-->
     <div class="card">
             <div class="card-header" id="headingTwo">
                 <h5 class="mb-0">
@@ -148,6 +148,73 @@ $(document).ready(function () {
                 </div>
             </div>
         </div>
+
+ <!--    Respirator Clearance Forms Needing to Complete 3-->
+    <div class="card">
+            <div class="card-header" id="headingThree">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false"
+                            aria-controls="collapseThree">
+                        Outstanding Respirator Clearance Forms
+                    </button>
+                </h5>
+            </div>
+            <div id="collapseThree" class="collapse hide" aria-labelledby="headingThree" data-parent="#accordion">
+                <div class="card-body">
+                   <div class="table-responsive">
+                    <table id="jobs_table" class="display table table-sm">
+                        <thead>
+                            <tr>
+                                <th scope="col">Employee</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for x in pending_respirators %}
+                            <tr><td>{{x.employee}}</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                   </div>
+                </div>
+            </div>
+        </div>
+
+ <!--    Respirator Clearance Forms Needing Approval 4-->
+    <div class="card">
+            <div class="card-header" id="headingFour">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false"
+                            aria-controls="collapseFour">
+                        Respirator Clearance Forms Needing Approval
+                    </button>
+                </h5>
+            </div>
+            <div id="collapseFour" class="collapse hide" aria-labelledby="headingFour" data-parent="#accordion">
+                <div class="card-body">
+                   <div class="table-responsive">
+                    <table id="jobs_table" class="display table table-sm">
+                        <thead>
+                            <tr>
+                                <th scope="col">Employee</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for x in respirators_in_review %}
+                            <tr><td>{{x.employee}}</td>
+                            <td>{{x.date}}</td>
+                                <td>{{x.status}}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                   </div>
+                </div>
+            </div>
+        </div>
+
+
 <!-- #just to collapse the commented code-->
     <div>
        <!-- <div class="card">
