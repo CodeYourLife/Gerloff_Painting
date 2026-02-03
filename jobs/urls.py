@@ -15,4 +15,6 @@ urlpatterns = [
     path('activate_sub_job/<jobnumber>', views.activate_sub_job, name='activate_sub_job'),
     path('audit_MC_open_jobs', views.audit_MC_open_jobs, name='audit_MC_open_jobs'),
     path("webhooks/clockshark/",clockshark_webhook, name="clockshark_webhook"),
+    path('new_jobsite_safety_inspection', views.new_jobsite_safety_inspection, name='new_jobsite_safety_inspection'),
+    path('jobsite_safety_inspection_detail<inspection_id>', views.jobsite_safety_inspection_detail, name='jobsite_safety_inspection_detail'),
 ]

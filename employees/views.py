@@ -5,7 +5,7 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date, timedelta, datetime
 from equipment.models import Inventory
-from jobs.models import Jobs, JobNotes, Email_Errors
+from jobs.models import Jobs, JobNotes, Email_Errors, JobsiteSafetyInspection
 from django.http import HttpResponse
 from console.misc import createfolder
 import json
@@ -698,6 +698,11 @@ def safety_home(request):
     for x in RespiratorClearance.objects.filter(date_approved__isnull=True):
         respirators_in_review.append({'employee': x.employee.first_name + " " + x.employee.last_name,'date': x.date_created, 'status': x.certification.action})
     send_data['respirators_in_review'] = respirators_in_review
+    send_data['safety_inspections'] = (
+        JobsiteSafetyInspection.objects
+        .select_related('job', 'inspector')
+        .order_by('-inspection_date')[:50]
+    )
     return render(request, 'safety_home.html', send_data)
 
 def toolbox_talks_master(request):

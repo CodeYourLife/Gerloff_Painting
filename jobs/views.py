@@ -1,6 +1,6 @@
 from changeorder.models import ClientJobRoles, ChangeOrders
 from console.models import *
-from console.misc import Email
+from console.misc import Email, send_safety_inspection_email
 
 from datetime import date
 from dateutil.parser import parse as parse_date
@@ -8,7 +8,7 @@ from dateutil.parser import parse as parse_date
 from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Q
 from django.http import JsonResponse
@@ -21,9 +21,11 @@ from django_tables2 import RequestConfig
 
 from employees.models import *
 from employees.models import Employees
+from employees.forms import JobsiteSafetyInspectionForm
 from equipment.models import Inventory
 from equipment.tables import JobsTable
 from equipment.filters import JobsFilter
+
 from jobs.models import *
 from jobs.models import ClockSharkTimeEntry, Jobs
 from jobs.JobMisc import start_date_change, gerloff_super_change
@@ -1120,6 +1122,12 @@ def job_page(request, jobnumber):
         send_data['selectedEmployees'] = selectedEmployees
         send_data['painters'] = Employees.objects.filter(job_title__description="Painter",active=True)
         send_data['competent_persons'] = Competent_Persons.objects.filter(job=selectedjob)
+        send_data['safety_inspections'] = (
+            JobsiteSafetyInspection.objects
+            .filter(job=selectedjob)
+            .select_related('job', 'inspector')
+            .order_by('-inspection_date')[:50]
+        )
         return render(request, 'job_page.html', send_data)
 
 
@@ -1432,3 +1440,54 @@ def clockshark_webhook(request):
             return JsonResponse({"status": "clock_out_updated", "hours": str(hours)})
 
     return JsonResponse({"status": "ignored"})
+
+@login_required
+def new_jobsite_safety_inspection(request):
+    inspector = Employees.objects.filter(user=request.user).first()
+
+    if request.method == "POST":
+        form = JobsiteSafetyInspectionForm(request.POST)
+        if form.is_valid():
+            print("PUMPKIN2")
+            inspection = form.save(commit=False)
+            inspection.inspector = inspector
+
+            # Enforce comments if any item is Unsatisfactory
+            if inspection.has_unsafe_conditions() and not form.cleaned_data.get("comments"):
+                form.add_error(
+                    "comments",
+                    "Comments are required when any item is marked Unsatisfactory."
+                )
+            else:
+                inspection.save()
+                # 🔔 SAFETY EMAIL
+                send_safety_inspection_email(inspection, request.user)
+                return redirect("safety_home")
+        else:
+            print("FORM ERRORS:", form.errors)
+    else:
+        form = JobsiteSafetyInspectionForm()
+
+    return render(
+        request,
+        "new_jobsite_safety_inspection.html",
+        {"form": form}
+    )
+
+
+@login_required
+def jobsite_safety_inspection_detail(request, inspection_id):
+    inspection = get_object_or_404(JobsiteSafetyInspection, id=inspection_id)
+
+    send_data = {
+        "inspection": inspection,
+        "unsatisfactory_items": inspection.get_unsatisfactory_items(),
+        "safety_score": inspection.safety_score(),
+        "inspection_items": inspection.inspection_items(),  # 👈 ADD THIS
+    }
+
+    return render(
+        request,
+        "jobsite_safety_inspection_detail.html",
+        send_data
+    )

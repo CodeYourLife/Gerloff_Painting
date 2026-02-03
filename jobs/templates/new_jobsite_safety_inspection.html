@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-3 mb-5">
+
+    <h3 class="mb-1">New Jobsite Safety Inspection</h3>
+    <p class="text-muted mb-4">
+        Select a job and complete all applicable items.
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- ========================= -->
+        <!-- JOB SELECT -->
+        <!-- ========================= -->
+        <div class="card mb-3 border-primary">
+            <div class="card-header bg-primary text-white font-weight-bold">
+                Select Job
+            </div>
+            <div class="card-body">
+                {{ form.job }}
+                {% if form.job.errors %}
+                    <div class="text-danger mt-1">
+                        {{ form.job.errors }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ========================= -->
+<!-- SAFETY SUMMARY -->
+<!-- ========================= -->
+<div class="card mb-4 border-info" id="safety-summary-card">
+    <div class="card-header bg-info text-white font-weight-bold">
+        Safety Summary
+    </div>
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col">
+                <h6>Total Items</h6>
+                <span id="total-items">0</span>
+            </div>
+            <div class="col text-success">
+                <h6>Satisfactory</h6>
+                <span id="count-satisfactory">0</span>
+            </div>
+            <div class="col text-danger">
+                <h6>Unsatisfactory</h6>
+                <span id="count-unsatisfactory">0</span>
+            </div>
+            <div class="col text-secondary">
+                <h6>Not Observed</h6>
+                <span id="count-not-observed">0</span>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="text-center">
+            <h4>
+                Safety Score:
+                <span id="safety-score" class="font-weight-bold">—%</span>
+            </h4>
+        </div>
+
+        <div id="unsafe-warning" class="alert alert-danger mt-3 d-none">
+            ⚠️ One or more items are marked <strong>Unsatisfactory</strong>.
+            Comments are required.
+        </div>
+    </div>
+</div>
+        <!-- ========================= -->
+        <!-- GENERAL SAFETY -->
+        <!-- ========================= -->
+        <h5 class="mt-4 mb-2">General Safety & Housekeeping</h5>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Housekeeping</strong><br>
+            {% for radio in form.housekeeping %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Walkways Clear</strong><br>
+            {% for radio in form.walkways_clear %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Wet Paint Signs Posted</strong><br>
+            {% for radio in form.wet_paint_signs %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Proper Uniforms</strong><br>
+            {% for radio in form.proper_uniforms %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Floor Protection</strong><br>
+            {% for radio in form.floor_protection %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+            <strong>Proper Lighting</strong><br>
+            {% for radio in form.proper_lighting %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <!-- ========================= -->
+        <!-- ACCESS EQUIPMENT -->
+        <!-- ========================= -->
+        <h5 class="mt-4 mb-2">Access Equipment</h5>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Ladders</strong><br>
+            {% for radio in form.ladders %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Scaffolding</strong><br>
+            {% for radio in form.scaffolding %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Aerial / Boom Lifts</strong><br>
+            {% for radio in form.aerial_lifts %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+            <strong>Fall Protection</strong><br>
+            {% for radio in form.fall_protection %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <!-- ========================= -->
+        <!-- PPE & HEALTH -->
+        <!-- ========================= -->
+        <h5 class="mt-4 mb-2">PPE & Health</h5>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>PPE Worn as Required</strong><br>
+            {% for radio in form.ppe %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Respirators</strong><br>
+            {% for radio in form.respirators %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Eye Protection</strong><br>
+            {% for radio in form.eye_protection %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Hand Protection</strong><br>
+            {% for radio in form.hand_protection %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Hard Hats</strong><br>
+            {% for radio in form.hard_hats %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Hearing Protection</strong><br>
+            {% for radio in form.hearing_protection %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Heat / Cold Stress</strong><br>
+            {% for radio in form.heat_cold_stress %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+            <strong>First Aid Kit</strong><br>
+            {% for radio in form.first_aid_kit %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <!-- ========================= -->
+        <!-- MATERIALS & ENVIRONMENT -->
+        <!-- ========================= -->
+        <h5 class="mt-4 mb-2">Paint, Materials & Environmental</h5>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Paint Storage</strong><br>
+            {% for radio in form.paint_storage %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Flammables Controlled</strong><br>
+            {% for radio in form.flammables %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>SDS Available</strong><br>
+            {% for radio in form.sds %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Ventilation</strong><br>
+            {% for radio in form.ventilation %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Lead Containment</strong><br>
+            {% for radio in form.lead_containment %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+            <strong>Silica Control</strong><br>
+            {% for radio in form.silica_control %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <!-- ========================= -->
+        <!-- TOOLS & SITE HAZARDS -->
+        <!-- ========================= -->
+        <h5 class="mt-4 mb-2">Tools, Electrical & Site Hazards</h5>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Power Tools</strong><br>
+            {% for radio in form.power_tools %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Extension Cords</strong><br>
+            {% for radio in form.extension_cords %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Electrical Safety</strong><br>
+            {% for radio in form.electrical_safety %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Overhead Work</strong><br>
+            {% for radio in form.overhead_work %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Traffic Control</strong><br>
+            {% for radio in form.traffic_control %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Safety Signage</strong><br>
+            {% for radio in form.signage %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+            <strong>Fire Extinguishers</strong><br>
+            {% for radio in form.fire_extinguishers %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+            <strong>Weather Conditions</strong><br>
+            {% for radio in form.weather_conditions %}
+                <div class="form-check form-check-inline">{{ radio.tag }} {{ radio.choice_label }}</div>
+            {% endfor %}
+        </div></div>
+
+        <!-- ========================= -->
+        <!-- COMMENTS -->
+        <!-- ========================= -->
+        <div class="card mt-4 mb-4 border-warning">
+            <div class="card-header font-weight-bold">
+                Comments / Corrective Actions
+            </div>
+            <div class="card-body">
+                {{ form.comments }}
+                {% if form.comments.errors %}
+                    <div class="text-danger mt-1">
+                        {{ form.comments.errors }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-success btn-lg btn-block">
+            Submit Safety Inspection
+        </button>
+
+    </form>
+</div>
+
+<style>
+    .form-check-input { transform: scale(1.3); }
+    .form-check-label { font-size: 1.05rem; }
+    .card-body { padding: .75rem 1rem; }
+    /* RADIO COLOR CODING */
+.form-check-input[value="S"]:checked {
+    accent-color: #28a745;
+}
+.form-check-input[value="U"]:checked {
+    accent-color: #dc3545;
+}
+.form-check-input[value="N"]:checked {
+    accent-color: #6c757d;
+}
+
+/* Highlight card when unsafe */
+.card.unsafe {
+    border-left: 6px solid #dc3545;
+    background-color: #fff5f5;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const radios = document.querySelectorAll("input[type=radio]");
+    const totalEl = document.getElementById("total-items");
+    const satEl = document.getElementById("count-satisfactory");
+    const unsatEl = document.getElementById("count-unsatisfactory");
+    const noEl = document.getElementById("count-not-observed");
+    const scoreEl = document.getElementById("safety-score");
+    const warningEl = document.getElementById("unsafe-warning");
+    const commentsField = document.getElementById("id_comments");
+
+    function updateSummary() {
+        let sat = 0;
+        let unsat = 0;
+        let no = 0;
+        let groups = {};
+
+        radios.forEach(radio => {
+            if (!radio.checked) return;
+
+            groups[radio.name] = radio.value;
+
+            const card = radio.closest(".card");
+            if (card) card.classList.remove("unsafe");
+
+            if (radio.value === "S") sat++;
+            if (radio.value === "U") {
+                unsat++;
+                if (card) card.classList.add("unsafe");
+            }
+            if (radio.value === "N") no++;
+        });
+
+        const total = Object.keys(groups).length;
+
+        if (totalEl) totalEl.textContent = total;
+        if (satEl) satEl.textContent = sat;
+        if (unsatEl) unsatEl.textContent = unsat;
+        if (noEl) noEl.textContent = no;
+
+        if (scoreEl) {
+            if (sat + unsat > 0) {
+                const score = Math.round((sat / (sat + unsat)) * 100);
+                scoreEl.textContent = score + "%";
+                scoreEl.className =
+                    score >= 90 ? "text-success" :
+                    score >= 75 ? "text-warning" :
+                    "text-danger";
+            } else {
+                scoreEl.textContent = "—%";
+                scoreEl.className = "";
+            }
+        }
+
+        const commentsValue = commentsField ? commentsField.value.trim() : "";
+
+        if (warningEl) {
+            if (unsat > 0 && commentsValue === "") {
+                warningEl.classList.remove("d-none");
+            } else {
+                warningEl.classList.add("d-none");
+            }
+        }
+    }
+
+    radios.forEach(radio => {
+        radio.addEventListener("change", updateSummary);
+    });
+
+    if (commentsField) {
+        commentsField.addEventListener("input", updateSummary);
+    }
+
+    updateSummary();
+});
+</script>
+{% endblock %}
