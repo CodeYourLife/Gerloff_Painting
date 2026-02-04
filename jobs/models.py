@@ -466,7 +466,7 @@ class ClockSharkErrors(models.Model):
     clockshark_id = models.CharField(max_length=255, null=True)
 
     def __str__(self):
-        return f"{self.employee_first_name} {self.employee_last_name} {self.error}"
+        return f"{self.employee_first_name} {self.employee_last_name} {self.error} {self.work_day}"
 
 
 class SiriusHours(models.Model):

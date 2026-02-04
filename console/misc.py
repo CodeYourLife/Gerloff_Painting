@@ -111,7 +111,7 @@ def send_safety_inspection_email(inspection, user):
     # =========================
     recipients = {
         "joe@gerloffpainting.com",
-        "victor@gerloffpainting.com", "bridgette@gerloffpainting.com"
+        "victor@gerloffpainting.com", "bridgette@gerloffpainting.com", "skip@gerloffpainting.com"
     }
     # recipients = {
     #     "joe@gerloffpainting.com",
