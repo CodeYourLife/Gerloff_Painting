@@ -135,14 +135,18 @@ def send_safety_inspection_email(inspection, user):
                             type="auto_misc_note", user=Employees.objects.get(user=user), date=date.today())
 
 def get_client_ip(request):
-    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(",")[0].strip()
-    else:
-        ip = request.META.get("REMOTE_ADDR")
-    return ip
+    # Try X-Forwarded-For first
+    xff = request.META.get("HTTP_X_FORWARDED_FOR")
+    if xff:
+        # Take the first IP and strip whitespace/newlines
+        ip = xff.split(",")[0].strip()
+        if ip:
+            return ip
+
+    # Fallback to REMOTE_ADDR
+    return request.META.get("REMOTE_ADDR")
 
 
 def is_internal_ip(ip):
-    internal_network = ipaddress.ip_network("192.168.168.0/24")
-    return ipaddress.ip_address(ip) in internal_network
+    internal_net = ipaddress.ip_network("192.168.168.0/24")
+    return ipaddress.ip_address(ip) in internal_net
