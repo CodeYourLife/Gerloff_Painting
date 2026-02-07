@@ -149,5 +149,14 @@ def get_client_ip(request):
 
 
 def is_internal_ip(ip):
-    internal_net = ipaddress.ip_network("192.168.168.0/24")
-    return ipaddress.ip_address(ip) in internal_net
+    ip_obj = ipaddress.ip_address(ip)
+
+    # IPv4 internal network
+    if ip_obj.version == 4:
+        return ip_obj in ipaddress.ip_network("192.168.168.0/24")
+
+    # IPv6 link-local addresses are always internal
+    if ip_obj.version == 6 and ip_obj.is_link_local:
+        return True
+
+    return False
