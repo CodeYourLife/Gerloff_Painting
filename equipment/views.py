@@ -18,7 +18,7 @@ from pathlib import Path
 from django.conf import settings
 from django.http import HttpResponse
 from media.utilities import MediaUtilities
-from console.misc import Email
+from console.misc import Email, get_client_ip, is_internal_ip
 from datetime import datetime
 from employees.models import *
 
@@ -591,6 +591,7 @@ def get_directory_contents(request, id, value, app):
 
 @login_required(login_url='/accounts/login')
 def equipment_page(request, id):
+    send_data={}
     inventory = Inventory.objects.get(id=id)
     table = InventoryNotes.objects.filter(inventory_item=inventory).order_by('date')
     employees = Employees.objects.filter(active=True)
@@ -603,6 +604,8 @@ def equipment_page(request, id):
             folder_count += 1
     jobs = Jobs.objects.filter(is_closed=False).order_by('job_name')
     if request.method == 'POST':
+        if 'windows_explorer' in request.POST:
+            os.startfile(path)
         if 'current_status' in request.POST:
             inventory.notes = request.POST['current_status']
             inventory.save()
@@ -729,9 +732,18 @@ def equipment_page(request, id):
             for x in os.listdir(path):
                 if os.path.isfile(os.path.join(path, x)):
                     folder_count += 1
-    return render(request, "equipment_page.html",
-                  {'employees': employees, 'jobs': jobs, 'inventories': inventory, "table": table, "vendors": vendors,
-                   "foldercontents": foldercontents,'folder_count':folder_count})
+    client_ip = get_client_ip(request)
+    can_open_folder = is_internal_ip(client_ip)
+
+    send_data['can_open_folder'] = can_open_folder
+    send_data['employees'] = employees
+    send_data['jobs'] = jobs
+    send_data['inventories'] = inventory
+    send_data['table'] = table
+    send_data['vendors'] = vendors
+    send_data['foldercontents'] = foldercontents
+    send_data['folder_count'] = folder_count
+    return render(request, "equipment_page.html",send_data)
 
 
 @login_required(login_url='/accounts/login')

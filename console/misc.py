@@ -11,7 +11,7 @@ from jobs.models import ClockSharkTimeEntry, JobsiteSafetyInspection, JobNotes
 from django.db.models import Sum
 from employees.models import Employees
 from datetime import date
-
+import ipaddress
 
 
 class Email:
@@ -133,3 +133,16 @@ def send_safety_inspection_email(inspection, user):
     JobNotes.objects.create(job_number=inspection.job,
                             note="Safety Inspection: " + email_body,
                             type="auto_misc_note", user=Employees.objects.get(user=user), date=date.today())
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(",")[0].strip()
+    else:
+        ip = request.META.get("REMOTE_ADDR")
+    return ip
+
+
+def is_internal_ip(ip):
+    internal_network = ipaddress.ip_network("192.168.168.0/24")
+    return ipaddress.ip_address(ip) in internal_network
