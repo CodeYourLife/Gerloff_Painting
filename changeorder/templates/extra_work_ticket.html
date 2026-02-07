@@ -611,6 +611,22 @@ select_recipient_form.change_recipient_form.value = "No"
                             {% endif %}
                         </div>
                     </div>
+                    {% if can_open_folder %}
+                    <div class="row">
+                        <div class="col-12">
+                            <font color="red">Open Equipment Folder</font>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <form action="{% url 'extra_work_ticket' changeorder.id %}" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="windows_explorer"/>
+                                <input type="submit" class="btn btn-warning btn-sm" value="  📁 Open Folder"/>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>

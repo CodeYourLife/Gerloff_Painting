@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 import employees.models
 
 def validate_tm_category(value):
-    if value == "Labor" or value == "Material" or value == "Equipment" or value == "Inventory" or value == "Misc" or value == "Bond":
+    if value == "Labor" or value == "Material" or value == "Equipment" or value == "Inventory" or value == "Misc" or value == "Bond" or value == "Sundries":
         return value
     else:
         raise ValidationError(

@@ -734,8 +734,6 @@ def equipment_page(request, id):
                     folder_count += 1
     client_ip = get_client_ip(request)
     can_open_folder = is_internal_ip(client_ip)
-    print(client_ip)
-    print(can_open_folder)
     send_data['can_open_folder'] = can_open_folder
     send_data['employees'] = employees
     send_data['jobs'] = jobs

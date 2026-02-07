@@ -116,11 +116,13 @@ input[type=number] {
 var laborcount = {{laborcount}}
 var glob_materialcount= {{materialcount}}
 var glob_equipmentcount= {{equipmentcount}}
+var glob_sundriescount= {{sundriescount}}
 var glob_extrascount = {{extrascount}}
 
 window.onload = function() {
 	var table = $('#labor_breakdown').DataTable({paging: false,info:false,ordering:false,searching:false })
 	var table = $('#material_breakdown').DataTable({paging: false,info:false,ordering:false,searching:false })
+	var table = $('#sundries_breakdown').DataTable({paging: false,info:false,ordering:false,searching:false })
 	var table = $('#equipment_breakdown').DataTable({paging: false,info:false,ordering:false,searching:false })
 	var table = $('#extras_breakdown').DataTable({paging: false,info:false,ordering:false,searching:false })
 	calculatetotal()
@@ -205,6 +207,7 @@ function calculatetotal(){
 	let change_order_total = 0
 	let material_total = 0
 	let equipment_total = 0
+	let sundries_total = 0
 	let other_total = 0
 	let inventory_total = 0
 	let bond_total = 0
@@ -214,6 +217,7 @@ function calculatetotal(){
 	let labor_total_summary = document.getElementById("labor_total_summary")
 	let material_total_summary = document.getElementById("material_total_summary")
 	let equipment_total_summary = document.getElementById("equipment_total_summary")
+	let sundries_total_summary = document.getElementById("sundries_total_summary")
 	let other_total_summary = document.getElementById("other_total_summary")
 	let final_cost_summary = document.getElementById("final_cost_display")
 	inventory_display = document.getElementById("inventory_cost_display")
@@ -259,6 +263,21 @@ function calculatetotal(){
 			change_order_total += line_total
 			document.getElementById("equipment_cost_desc" + item_number).innerHTML = "$" + String(parseInt(line_total))
 		}
+
+
+		if (input.name.substring(0,21) == "sundries_description"){
+			item_number = input.name.substring(21,input.name.length+1)
+			quantity = document.getElementById("sundries_quantity"+ item_number).value
+			rate = document.getElementById("sundries_rate"+ item_number).value
+			line_total_desc = document.getElementById("sundries_cost_desc"+ item_number)
+			line_total = quantity * rate
+			line_total_input = document.getElementById("sundries_cost"+ item_number)
+			line_total_input.value = line_total
+			sundries_total += line_total
+			change_order_total += line_total
+			document.getElementById("sundries_cost_desc" + item_number).innerHTML = "$" + String(parseInt(line_total))
+		}
+
 		if (input.name.substring(0,18) == "extras_description"){
 			item_number = input.name.substring(18,input.name.length+1)
 			quantity = document.getElementById("extras_quantity"+ item_number).value
@@ -287,6 +306,7 @@ function calculatetotal(){
 				labor_total_summary.innerHTML = "<b>Labor Cost: $</b>" + parseInt(labor_total)
 				final_cost_summary.innerHTML = "<b>Final Cost: $</b>" + parseInt(change_order_total)
 				equipment_total_summary.innerHTML = "<b>Equipment Cost: $</b>" + parseInt(equipment_total)
+				sundries_total_summary.innerHTML = "<b>Sundries Cost: $</b>" + parseInt(sundries_total)
 				other_total_summary.innerHTML = "<b>Other Cost: $</b>" + parseInt(other_total)
 }
 
@@ -314,6 +334,12 @@ function add_material_row(type) {
 		materialcount = glob_equipmentcount
 		hidden = document.getElementById("hidden_equipment");
 		var table = document.getElementById("equipment_breakdown");
+	}
+	if (type == "sundries"){
+		glob_sundriescount += 1
+		materialcount = glob_sundriescount
+		hidden = document.getElementById("hidden_sundries");
+		var table = document.getElementById("sundries_breakdown");
 	}
 	if (type == "extras"){
 		glob_extrascount += 1
@@ -358,6 +384,10 @@ function add_material_dropdown(type){
 		if (type == "equipment"){
 			select.addEventListener('change',function() {changeequipment(event);},false);
 			rolodex = JSON.parse("{{equipment_json|escapejs}}");
+		}
+		if (type == "sundries"){
+			select.addEventListener('change',function() {changesundries(event);},false);
+			rolodex = JSON.parse("{{sundries_json|escapejs}}");
 		}
 		if (type == "extras"){
 			select.addEventListener('change',function() {changeextras(event);},false);
@@ -434,6 +464,29 @@ function changeequipment(){
 	calculatetotal()
 }
 
+function changesundries(){
+	clicked_row = event.currentTarget.id.substring(17,event.currentTarget.id.length)
+	description = document.getElementById("sundries_description" + clicked_row)
+	rate = document.getElementById("sundries_rate" + clicked_row)
+	unit = document.getElementById("sundries_units" + clicked_row)
+	rolodex = JSON.parse("{{sundries_json|escapejs}}");
+	for(let i =0; i < rolodex.length; i++){
+		if (rolodex[i].id == event.currentTarget.value){
+			description.value = rolodex[i].item
+			rate.value = rolodex[i].rate
+			unit.value = rolodex[i].unit
+		}
+	}
+		if (event.currentTarget.value == "custom"){
+			description.value = ""
+			description.placeholder = "Sundries Description"
+			rate.value = 0
+			unit.value = ""
+			unit.placeholder = "Unit"
+	}
+	calculatetotal()
+}
+
 function changeextras(){
 	clicked_row = event.currentTarget.id.substring(15,event.currentTarget.id.length)
 	description = document.getElementById("extras_description" + clicked_row)
@@ -452,6 +505,7 @@ function changeextras(){
 function changequantity(){
 	if (event.currentTarget.id.substring(0,17) == "material_quantity") {type = "material"; clicked_row = event.currentTarget.id.substring(17,event.currentTarget.id.length)}
 	if (event.currentTarget.id.substring(0,18) == "equipment_quantity") {type = "equipment"; clicked_row = event.currentTarget.id.substring(18,event.currentTarget.id.length)}
+	if (event.currentTarget.id.substring(0,17) == "sundries_quantity") {type = "sundries"; clicked_row = event.currentTarget.id.substring(18,event.currentTarget.id.length)}
 	if (event.currentTarget.id.substring(0,15) == "extras_quantity") {type = "extras"; clicked_row = event.currentTarget.id.substring(15,event.currentTarget.id.length)}
 	rate = document.getElementById(type + "_rate" + clicked_row)
 	hours = document.getElementById(type + "_quantity" + clicked_row)
@@ -480,6 +534,9 @@ function calculate_final_cost(){
 	document.getElementById("inventory_cost_display").innerHTML = "$" + String(parseInt(materialcost *.15))
 	for(let i =1; i < glob_equipmentcount+1; i++){
 	finalcost = parseFloat(document.getElementById("equipment_cost" + i).value) + finalcost
+	}
+	for(let i =1; i < glob_sundriescount+1; i++){
+	finalcost = parseFloat(document.getElementById("sundries_cost" + i).value) + finalcost
 	}
 	for(let i =1; i < glob_extrascount+1; i++){
 	finalcost = parseFloat(document.getElementById("extras_cost" + i).value) + finalcost
@@ -603,7 +660,34 @@ function calculate_final_cost(){
 		{% endfor %}
 	  {% endif %}
 
-		<tr><input type = "hidden" name="hidden_equipment" id = "hidden_equipment" value = "{{equipmentcount}}" /><td><button type="button" onclick="add_material_row('equipment')">Add equipment Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+		<tr><input type = "hidden" name="hidden_equipment" id = "hidden_equipment" value = "{{equipmentcount}}" /><td><button type="button" onclick="add_material_row('equipment')">Add Equipment Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+
+	</tbody></table>
+	</div>
+	<br>
+	<div class ="container" style="background-color:hsla(135, 100%, 92%);">
+	<h4>Sundries Breakdown</h4>
+	<table id="sundries_breakdown" class="display compact nowrap" style="width:100%" >
+		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
+		<tbody>
+		{% if sundries %}
+		{% for x in sundries %}
+		<tr><td>
+			<select name="sundries_category{{x.counter}}" id="sundries_category{{x.counter}}" onchange="changesundries(event)">
+			<option value="{{x.category_id}}">{{x.category}}</option>
+			{% for y in sundries2 %}
+				<option value="{{y.id}}">{{y.item}}</option>
+			{% endfor %}
+				<option value="custom">Custom</option>
+			</select></td>
+
+			<td><input type= "text" name="sundries_description{{x.counter}}" id="sundries_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="sundries_quantity{{x.counter}}" id="sundries_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="sundries_units{{x.counter}}" id="sundries_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="sundries_rate{{x.counter}}" size="7" id="sundries_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="sundries_cost{{x.counter}}" id="sundries_cost{{x.counter}}" value="{{x.cost}}" /><div id="sundries_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+
+	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
+		{% endfor %}
+	  {% endif %}
+
+		<tr><input type = "hidden" name="hidden_sundries" id = "hidden_sundries" value = "{{sundriescount}}" /><td><button type="button" onclick="add_material_row('sundries')">Add Sundries Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
 
 	</tbody></table>
 	</div>
@@ -641,7 +725,7 @@ function calculate_final_cost(){
 		<div id="labor_total_summary">Labor Cost: ${{totallaborcost}}</div>
 	<div id="material_total_summary">Material Cost: ${{totalmaterialcost}}</div>
 	<div id="equipment_total_summary">Equipment Cost: ${{totalequipmentcost}}</div>
-
+	<div id="sundries_total_summary">Sundries Cost: ${{totalsundriescost}}</div>
 	<div id="other_total_summary">Other Cost:</div>
 {% if is_bonded == True %}
 	   <input type= "hidden" name="bond_cost" id="bond_cost" value="{{bond_cost}}" /> <input type= "hidden" name="bond_rate" id="bond_rate" value="{{bond_rate}}" /><div id="bond_total_summary" ><b>Bond Cost:</b> ${{bond_cost}}</div>

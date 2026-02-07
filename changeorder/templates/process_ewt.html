@@ -25,6 +25,7 @@
 var row_counter = 1;
 var material_row_counter = 1;
 var equipment_row_counter = 1;
+var sundries_row_counter = 1;
 
 window.onload = function() {
 
@@ -64,6 +65,39 @@ function changeequipment(){
 			units.value = rolodex[i].unit
 		}
 	}
+}
+
+function changesundries(){
+	clicked_row = event.currentTarget.id.substring(15,event.currentTarget.id.length)
+	description = document.getElementById("sundries_description" + clicked_row)
+	units = document.getElementById("sundries_units" + clicked_row)
+	rolodex = JSON.parse("{{sundriesjson|escapejs}}");
+	for(let i =0; i < rolodex.length; i++){
+		if (rolodex[i].id == event.currentTarget.value){
+			description.value = rolodex[i].item
+			units.value = rolodex[i].unit
+		}
+	}
+}
+
+function add_sundries_row() {
+	sundries_row_counter = sundries_row_counter + 1
+	hidden = document.getElementById("number_sundries");
+	hidden.value=sundries_row_counter
+	var table = document.getElementById("sundries_breakdown");
+	var rows = table.getElementsByTagName("tr").length;
+	var row = table.insertRow(rows);
+	var cell1 = row.insertCell(0);
+	var cell2 = row.insertCell(1);
+	var cell3 = row.insertCell(2);
+	var cell4 = row.insertCell(3);
+	var cell5 = row.insertCell(4);
+	cell1.innerHTML = "<div id='new_sundries" + sundries_row_counter + "'></div>";
+	add_sundries_dropdown();
+	cell2.innerHTML = "<td><input type='text' name='sundries_description" + sundries_row_counter +"' placeholder='description' size='30' id='sundries_description" + sundries_row_counter +"' required/></td>"
+	cell3.innerHTML ="<td><input type='number' id='sundries_quantity" + sundries_row_counter +"' name = 'sundries_quantity" + sundries_row_counter +"' size='5' required/></td>"
+	cell4.innerHTML ="<td><input type='text' name='sundries_units" + sundries_row_counter +"' placeholder='units' size='10' id='sundries_units" + sundries_row_counter +"' required/></td>"
+	cell5.innerHTML = "<button type='button' onclick='delete_row(this)'>Delete </button>"
 }
 
 function add_equipment_row() {
@@ -172,6 +206,28 @@ function add_day(daycolumn){
 		select.value = 0
 		document.getElementById(daycolumn + "_row" + row_counter).appendChild(select);
 	}
+
+function add_sundries_dropdown(){
+	var select = document.createElement("select");
+	select.name = "select_sundries" + sundries_row_counter;
+	select.id = "select_sundries" + sundries_row_counter;
+	select.addEventListener('change',function() {changesundries(event);},false);
+	let rolodex = JSON.parse("{{sundriesjson|escapejs}}");
+	var option = document.createElement("option");
+	option.value = "please_select";
+	option.text= "please select";
+	select.appendChild(option);
+			for (const x of rolodex)
+	{
+	var option = document.createElement( "option");
+	option.value = x.id;
+	option.text= x.item;
+	select.appendChild(option);
+	}
+	var label = document.createElement("label");
+	document.getElementById("new_sundries" + sundries_row_counter).appendChild(label).appendChild(select);
+
+}
 
 function add_equipment_dropdown(){
 		var select = document.createElement("select");
@@ -448,11 +504,51 @@ if (elementTypeSelector[i].value =='please_select'){
 		</tbody>
 	</table>
 <button type="button" class="btn btn-info btn-sm" onclick="add_equipment_row()">Add Equipment </button>
+<br><hr>
+	<h3>SUNDRIES BREAKDOWN</h3>
+	<table id="sundries_breakdown" class="display" style="width:90%" >
+		<thead>
+			<tr>
+				<th>Item</th>
+				<th>Description</th>
+				<th>Quantity</th>
+				<th>Units</th>
+				<th>Delete</th>
 
+			</tr>
+		</thead>
+		<tbody>
+				{% if sundriesitems %}
+		{% for x in sundriesitems %}
+
+			<tr>
+				<td>
+
+			<select id="existing_sundries" name="existing_sundries" >
+
+					{% for y in sundries %}  {% if y.id == x.master_id %}
+                	<option value={{y.id}}>{{y.item}}</option>
+                {% endif %}
+				{% endfor %}
+
+            		</select>
+				</td>
+				<td><input type="text" name="sundries_description" size="30" id="sundries_description" value = "{{x.description}}" /></td>
+				<td><input type="number" id="sundries_quantity" name = "sundries_quantity" size="5" value = {{x.quantity}} /></td>
+				<td><input type="text" name="sundries_units" placeholder="units" size="10" id="sundries_units" value = "{{x.units}}"  /></td>
+<td><button type="button" onclick="delete_row(this)">Delete </button></td>
+			</tr>
+
+				{% endfor %}
+		 {% endif %}
+		</tbody>
+	</table>
+<button type="button" class="btn btn-info btn-sm" onclick="add_sundries_row()">Add Sundries </button>
 <br><br>
 	<input type="hidden" name="number_painters" value="0" size="30" id="number_painters"/>
 	<input type="hidden" name="number_materials" value="0" size="30" id="number_materials"/>
 	<input type="hidden" name="number_equipment" value="0" size="30" id="number_equipment"/>
+	<input type="hidden" name="number_sundries" value="0" size="30" id="number_sundries"/>
     <input type="submit" class="btn btn-primary btn-sm" value="Submit Ticket" />
 	<br>
 	<br>

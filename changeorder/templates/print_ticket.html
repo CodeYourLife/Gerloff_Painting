@@ -115,6 +115,26 @@
     </table>
 </div>
 <hr style="width:100%">
+<div style="margin-top: 12px; margin-bottom: 12px;">
+    <div style="width:100%; font-weight: bold; margin-bottom: 12px;">Sundries</div>
+    <table>
+        <tr>
+            <th>Description</th>
+            <th>Quantity</th>
+            <th>Units</th>
+        </tr>
+        {% if sundries %}
+        {% for y in sundries %}
+        <tr>
+            <td>{{y.description}}</td>
+            <td>{{y.quantity}}</td>
+            <td>{{y.units}}</td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+    </table>
+</div>
+<hr style="width:100%">
 {% if status == 'NEW' %}
 <form action="{% url 'print_ticket' changeorder.id 'NEW' %}" method="post">
     <div>
