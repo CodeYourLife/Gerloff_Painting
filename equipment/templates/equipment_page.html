@@ -55,6 +55,7 @@ function myFunction(type){
         </ul>
     </div>
 </nav>
+<!--header information-->
 <div class="container">
     <div class="row">
         <div class="col-sm-4 list-items"><b>Number:&nbsp;</b>{{inventories.number}}</div>
@@ -119,8 +120,11 @@ function myFunction(type){
     </div>
 </div>
 <br>
+<!--    if equipment is checked out already-->
 <div class="container">
+
     <div class="row">
+
         {% if inventories.service_vendor != None or inventories.job_number != None or inventories.assigned_to != None %}
 
             <form name=return_to_home action="{% url 'equipment_page' inventories.id %}" method="post"
@@ -146,7 +150,9 @@ function myFunction(type){
     </div>
 </div>
     <br>
+
 <div id="accordion">
+    <!--assign to job-->
     <div class="card">
         <div class="card-header" id="headingZero" style="background-color:hsl(74, 0%, 85%);">
             <h5 class="mb-0">
@@ -235,7 +241,7 @@ function myFunction(type){
             </div>
         </div>
     </div>
-
+<!--notes-->
     <div class="card">
         <div class="card-header" id="headingOne" style="background-color:hsl(74, 0%, 85%);">
             <h5 class="mb-0">
@@ -313,12 +319,13 @@ function myFunction(type){
         </tbody>
     </table>
 </div>
-                    </div>
-            </div>
+</div>
+</div>
 
             </div>
         </div>
-        <div class="card">
+<!--    attachments    -->
+    <div class="card">
         <div class="card-header" id="heading2" style="background-color:hsl(74, 0%, 85%);" >
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapse2" aria-expanded="false"
@@ -329,53 +336,80 @@ function myFunction(type){
         </div>
         <div id="collapse2" class="collapse hide" aria-labelledby="heading2" data-parent="#accordion">
             <div class="card-body">
-<div class="container">
-
-    <hr>
-    <div class="row">
-        <div class="col-12">
-            <font color="red">Upload Documents (Pictures, Invoice, Etc.) For This Equipment</font>
-            <form name=add_file id="add_file_form" action="{% url 'equipment_page' inventories.id %}" method="post"
-                  enctype="multipart/form-data" onSubmit="return get_file_name()">
-                {% csrf_token %}
-                <!--Attachment: <input type= "file" name="upload_file" id="upload_file" onchange="addAttachment(this)" placeholder="" multiple/>-->
-                <div style="padding-bottom: 12px;">Attachment: <input type="file" name="upload_file" id="upload_file"/>
-                </div>
-                <input type="hidden" name="file_name" id="file_name">
-                <input type="submit" class="btn btn-primary btn-sm" value="Upload File"/>
-            </form>
-        </div>
-    </div>
-    <hr>
-    <div class="row">
-        <div class="col-12">
-            <font color="red">Here are the documents that have been uploaded for this equipment</font>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-12">
-            <ul>
-                <form action="{% url 'equipment_page' inventories.id %}" id="select_file_form" method="post" >
-                    {% csrf_token %}
-                    <input type="hidden" id="selected_file" name="selected_file" >
-                </form>
-                {% for x in foldercontents %}
-                <li>
-                    <div class="col-12">
-                        <a style="color: blue; cursor: pointer;" name="get_directory_contents" onclick = "populate_file_form('{{x}}')" >{{x}}</a>
-                        <br>
+<!--                show files container-->
+                <div class="container">
+                    <hr>
+<!--                    upload file button-->
+                    <div class="row">
+                        <div class="col-12">
+                            <font color="red">Upload Documents (Pictures, Invoice, Etc.) For This Equipment</font>
+                            <form name=add_file id="add_file_form" action="{% url 'equipment_page' inventories.id %}" method="post"
+                                  enctype="multipart/form-data" onSubmit="return get_file_name()">
+                                {% csrf_token %}
+                                <!--Attachment: <input type= "file" name="upload_file" id="upload_file" onchange="addAttachment(this)" placeholder="" multiple/>-->
+                                <div style="padding-bottom: 12px;">Attachment: <input type="file" name="upload_file" id="upload_file"/>
+                                </div>
+                                <input type="hidden" name="file_name" id="file_name">
+                                <input type="submit" class="btn btn-primary btn-sm" value="Upload File"/>
+                            </form>
+                        </div>
                     </div>
-                </li>
-                {% endfor %}
+                    <hr>
+<!--                    show documents-->
+                    <div>
+<!--                        title line-->
+                        {% if folder_count != 0 %}
+                    <div class="row">
+                        <div class="col-12">
+                            <font color="red">Here are the documents that have been uploaded for this equipment</font>
+                        </div>
+                    </div>
+<!--                    list of files-->
 
-            </ul>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <ul>
+                                <form action="{% url 'equipment_page' inventories.id %}" id="select_file_form" method="post" >
+                                    {% csrf_token %}
+                                    <input type="hidden" id="selected_file" name="selected_file" >
+                                </form>
+                                {% for x in foldercontents %}
+                                <li>
+                                    <div class="col-12">
+                                        <a style="color: blue; cursor: pointer;" name="get_directory_contents" onclick = "populate_file_form('{{x}}')" >{{x}}</a>
+                                        <br>
+                                    </div>
+                                </li>
+                                {% endfor %}
+
+                            </ul>
+                        </div>
+                    </div>
+                        {% endif %}
+                    <!--                       windows explorer button-->
+                    {% if can_open_folder %}
+                    <div class="row">
+                        <div class="col-12">
+                            <font color="red">Open Equipment Folder</font>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <form action="{% url 'equipment_page' inventories.id %}" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="windows_explorer"/>
+                                <input type="submit" class="btn btn-warning btn-sm" value="Open Folder"/>
+                            </form>
+                        </div>
+                    </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
-</div>
-                </div>
-
-            </div>
-        </div>
 </div>
 
 
