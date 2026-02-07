@@ -134,16 +134,17 @@ def send_safety_inspection_email(inspection, user):
                             note="Safety Inspection: " + email_body,
                             type="auto_misc_note", user=Employees.objects.get(user=user), date=date.today())
 
+
 def get_client_ip(request):
-    # Try X-Forwarded-For first
     xff = request.META.get("HTTP_X_FORWARDED_FOR")
     if xff:
-        # Take the first IP and strip whitespace/newlines
-        ip = xff.split(",")[0].strip()
-        if ip:
-            return ip
+        candidate = xff.split(",")[0].strip()
+        try:
+            ipaddress.ip_address(candidate)
+            return candidate
+        except ValueError:
+            pass  # not a real IP, ignore it
 
-    # Fallback to REMOTE_ADDR
     return request.META.get("REMOTE_ADDR")
 
 
