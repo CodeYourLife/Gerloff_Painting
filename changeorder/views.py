@@ -16,7 +16,7 @@ from xhtml2pdf import pisa
 from console.misc import createfolder, getFilesOrFolders
 from django.conf import settings
 from io import StringIO
-from console.misc import Email
+from console.misc import Email, get_client_ip, is_internal_ip
 from media.utilities import MediaUtilities
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -38,6 +38,7 @@ def emailed_ticket(request, id):
     laboritems = EWTicket.objects.filter(EWT=ewt).exclude(employee=None, custom_employee=None)
     materials = EWTicket.objects.filter(EWT=ewt, master__category="Material")
     equipment = EWTicket.objects.filter(EWT=ewt, master__category="Equipment")
+    sundries = EWTicket.objects.filter(EWT=ewt, master__category="Sundries")
     if request.method == 'POST':
         signatureValue = request.POST['signatureValue']
         nameValue = request.POST['signatureName']
@@ -59,7 +60,7 @@ def emailed_ticket(request, id):
         changeorder.digital_ticket_signed_date = date.today()
         changeorder.save()
         html = render_to_string("print_ticket2.html",
-                                {'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
+                                {'sundries':sundries,'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
                                  'changeorder': changeorder, 'signature': signature, 'status': status})
         pisa.CreatePDF(
             html,
@@ -177,6 +178,7 @@ def print_TMProposal(request, id):
     laboritems = TMList.objects.filter(change_order=changeorder, category="Labor")
     materialitems = TMList.objects.filter(change_order=changeorder, category="Material")
     equipmentitems = TMList.objects.filter(change_order=changeorder, category="Equipment")
+    sundriesitems = TMList.objects.filter(change_order=changeorder, category="Sundries")
     extraitems = TMList.objects.filter(change_order=changeorder, category="Extras")
     inventory_exists = False
     bond_exists = False
@@ -233,7 +235,7 @@ def print_TMProposal(request, id):
                     if x[0:5] == 'email':
                         recipients.append(request.POST[x])
                 html = render_to_string("print_TMProposal.html",
-                                        {'inventory_exists': inventory_exists, 'bond_exists': bond_exists,
+                                        {'sundriesitems':sundriesitems,'inventory_exists': inventory_exists, 'bond_exists': bond_exists,
                                          'laboritems': laboritems,
                                          'materialitems': materialitems, 'inventory': inventory, 'bond': bond,
                                          'equipmentitems': equipmentitems, 'extraitems': extraitems,
@@ -313,6 +315,7 @@ def print_TMProposal(request, id):
     send_data['inventory'] =inventory
     send_data['bond'] =bond
     send_data['equipmentitems'] =equipmentitems
+    send_data['sundriesitems'] = sundriesitems
     send_data['extraitems'] =extraitems
     send_data['newproposal'] =newproposal
     send_data['changeorder'] =changeorder
@@ -370,6 +373,16 @@ def revise_TM_COP(request, id):
                                       rate=request.POST['equipment_rate' + temp_number],
                                       total=request.POST['equipment_cost' + temp_number],
                                       category="Equipment", category2=request.POST['equipment_category' + temp_number],
+                                      proposal=newproposal)
+            if x[0:20] == 'sundries_description':
+                temp_number = x[20:len(x)]
+                TMList.objects.create(change_order=changeorder,
+                                      description=request.POST['equipment_description' + temp_number],
+                                      quantity=request.POST['equipment_quantity' + temp_number],
+                                      units=request.POST['equipment_units' + temp_number],
+                                      rate=request.POST['equipment_rate' + temp_number],
+                                      total=request.POST['equipment_cost' + temp_number],
+                                      category="Sundries", category2=request.POST['sundries_category' + temp_number],
                                       proposal=newproposal)
             if x[0:15] == 'extras_category':
                 temp_number = x[15:len(x)]
@@ -433,6 +446,17 @@ def revise_TM_COP(request, id):
              'description': x.description,
              'quantity': x.quantity, 'units': x.units,
              'cost': x.total})
+    sundries = []
+    counter = 0
+    totalsundriescost=0
+    for x in TMList.objects.filter(change_order=changeorder, category="Sundries").order_by('id'):
+        counter += 1
+        totalsundriescost += x.total
+        sundries.append(
+            {'rate': x.rate, 'counter': counter,
+             'description': x.description,
+             'quantity': x.quantity, 'units': x.units,
+             'cost': x.total})
     extras = []
     counter = 0
     totalextrascost=0
@@ -447,7 +471,7 @@ def revise_TM_COP(request, id):
     bond_rate = 0
     bond_cost = 0
     is_bonded = False
-    totalcost=totalmaterialcost+totallaborcost+totalequipmentcost+totalextrascost+inventory
+    totalcost=totalmaterialcost+totallaborcost+totalequipmentcost+totalsundriescost+totalextrascost+inventory
     if changeorder.job_number.is_bonded == True:
         bond_rate = TMPricesMaster.objects.get(category='Bond').rate
         bond_cost = bond_rate * totalcost
@@ -459,29 +483,35 @@ def revise_TM_COP(request, id):
     employees2 = TMPricesMaster.objects.filter(category="Labor").values()
     materials2 = TMPricesMaster.objects.filter(category="Material").values()
     equipment2 = TMPricesMaster.objects.filter(category="Equipment").values()
+    sundries2 = TMPricesMaster.objects.filter(category="Sundries").values()
     extras2 = TMPricesMaster.objects.filter(category="Misc").values()
     send_data['employees_json'] = json.dumps(list(employees2), cls=DjangoJSONEncoder)
     send_data['material_json'] = json.dumps(list(materials2), cls=DjangoJSONEncoder)
     send_data['equipment_json'] = json.dumps(list(equipment2), cls=DjangoJSONEncoder)
+    send_data['sundries_json'] = json.dumps(list(sundries2), cls=DjangoJSONEncoder)
     send_data['extras_json'] = json.dumps(list(extras2), cls=DjangoJSONEncoder)
     send_data['laborcount']=int(len(laboritems))
     send_data['materialcount'] =int(len(materials))
     send_data['equipmentcount']=int(len(equipment))
+    send_data['sundriescount'] = int(len(sundries))
     send_data['extrascount'] =int(len(extras))
     send_data['extras'] = extras
     send_data['totalcost'] =int(totalcost)
     send_data['inventory']=inventory
     send_data['equipment'] =equipment
+    send_data['sundries'] = sundries
     send_data['materials']=materials
     send_data['laboritems'] =laboritems
     send_data['changeorder'] = changeorder
     send_data['employees2']=employees2
     send_data['materials2'] =materials2
     send_data['equipment2']=equipment2
+    send_data['sundries2'] = sundries2
     send_data['extras2'] =extras2
     send_data['totalmaterialcost'] =int(totalmaterialcost)
     send_data['totallaborcost'] =int(totallaborcost)
     send_data['totalequipmentcost']=int(totalequipmentcost)
+    send_data['totalsundriescost'] = int(totalsundriescost)
     send_data['totalextrascost'] =int(totalextrascost)
     return render(request, "revise_TM_COP.html",send_data)
 
@@ -526,6 +556,14 @@ def price_ewt(request, id):
                                   total=request.POST['equipment_cost' + str(x)],
                                   category="Equipment", category2=request.POST['equipment_category' + str(x)],
                                   proposal=newproposal)
+        for x in range(1, int(request.POST['hidden_sundries']) + 1):
+            TMList.objects.create(change_order=changeorder, description=request.POST['sundries_description' + str(x)],
+                                  quantity=request.POST['sundries_quantity' + str(x)],
+                                  units=request.POST['sundries_units' + str(x)],
+                                  rate=request.POST['sundries_rate' + str(x)],
+                                  total=request.POST['sundries_cost' + str(x)],
+                                  category="Sundries", category2=request.POST['sundries_category' + str(x)],
+                                  proposal=newproposal)
         for x in range(1, int(request.POST['hidden_extras']) + 1):
             extras = TMList.objects.create(change_order=changeorder,
                                            description=request.POST['extras_category' + str(x)],
@@ -554,6 +592,7 @@ def price_ewt(request, id):
                                   proposal=newproposal)
         return redirect('preview_TMProposal', id=newproposal.id)
     equipment = []
+    sundries = []
     laboritems = []
     materials = []
     extras = []
@@ -561,6 +600,7 @@ def price_ewt(request, id):
     totalmaterialcost = 0
     totallaborcost = 0
     totalequipmentcost = 0
+    totalsundriescost = 0
     totalcost = 0
     counter = 0
     is_bonded = False
@@ -606,6 +646,18 @@ def price_ewt(request, id):
              'quantity': y.quantity, 'units': y.units,
              'cost': int(cost)})
     counter = 0
+    for y in EWTicket.objects.filter(EWT=ewt, master__category="Sundries").order_by('master'):
+        cost = y.quantity * y.master.rate
+        totalcost = totalcost + cost
+        totalsundriescost += cost
+        counter = counter + 1
+        rate = float(y.master.rate)
+        sundries.append(
+            {'rate': rate, 'counter': counter, 'category': y.master.item, 'category_id': y.master.id,
+             'description': y.description,
+             'quantity': y.quantity, 'units': y.units,
+             'cost': int(cost)})
+    counter = 0
     for x in JobCharges.objects.filter(job=changeorder.job_number):
         if x.master.unit == "Day":
             cost = days * x.master.rate
@@ -641,23 +693,25 @@ def price_ewt(request, id):
     employees2 = TMPricesMaster.objects.filter(category="Labor").values()
     materials2 = TMPricesMaster.objects.filter(category="Material").values()
     equipment2 = TMPricesMaster.objects.filter(category="Equipment").values()
+    sundries2 = TMPricesMaster.objects.filter(category="Sundries").values()
     extras2 = TMPricesMaster.objects.filter(category="Misc").values()
     employees_json = json.dumps(list(employees2), cls=DjangoJSONEncoder)
     material_json = json.dumps(list(materials2), cls=DjangoJSONEncoder)
     equipment_json = json.dumps(list(equipment2), cls=DjangoJSONEncoder)
+    sundries_json = json.dumps(list(sundries2), cls=DjangoJSONEncoder)
     extras_json = json.dumps(list(extras2), cls=DjangoJSONEncoder)
 
     return render(request, "price_ewt.html",
                   {'notes': ewt.notes, 'is_bonded': is_bonded, 'bond_cost': int(bond_cost), 'bond_rate': bond_rate,
                    'extras_json': extras_json, 'employees_json': employees_json, 'material_json': material_json,
-                   'equipment_json': equipment_json, 'laborcount': int(len(laboritems)),
-                   'materialcount': int(len(materials)), 'equipmentcount': int(len(equipment)),
+                   'equipment_json': equipment_json, 'sundries_json': sundries_json,'laborcount': int(len(laboritems)),
+                   'materialcount': int(len(materials)), 'equipmentcount': int(len(equipment)),'sundriescount': int(len(sundries)),
                    'extrascount': int(len(extras)), 'extras': extras, 'totalcost': int(totalcost),
-                   'inventory': int(inventory), 'equipment': equipment, 'materials': materials,
+                   'inventory': int(inventory), 'equipment': equipment, 'sundries': sundries, 'materials': materials,
                    'laboritems': laboritems, 'ewt': ewt,
                    'changeorder': changeorder, 'employees2': employees2, 'materials2': materials2,
-                   'equipment2': equipment2, 'extras2': extras2, 'totalmaterialcost': int(totalmaterialcost),
-                   'totallaborcost': int(totallaborcost), 'totalequipmentcost': int(totalequipmentcost)})
+                   'equipment2': equipment2, 'sundries2': sundries2,'extras2': extras2, 'totalmaterialcost': int(totalmaterialcost),
+                   'totallaborcost': int(totallaborcost), 'totalequipmentcost': int(totalequipmentcost),'totalsundriescost': int(totalsundriescost)})
 
 @login_required(login_url='/accounts/login')
 def price_old_ewt(request, id):
@@ -709,6 +763,16 @@ def price_old_ewt(request, id):
                                       total=request.POST['equipment_cost' + temp_number],
                                       category="Equipment", category2=request.POST['equipment_category' + temp_number],
                                       proposal=newproposal)
+            if x[0:20] == 'sundries_description':
+                temp_number = x[20:len(x)]
+                TMList.objects.create(change_order=changeorder,
+                                      description=request.POST['sundries_description' + temp_number],
+                                      quantity=request.POST['sundries_quantity' + temp_number],
+                                      units=request.POST['sundries_units' + temp_number],
+                                      rate=request.POST['sundries_rate' + temp_number],
+                                      total=request.POST['sundries_cost' + temp_number],
+                                      category="Sundries", category2=request.POST['sundries_category' + temp_number],
+                                      proposal=newproposal)
             if x[0:15] == 'extras_category':
                 temp_number = x[15:len(x)]
                 TMList.objects.create(change_order=changeorder,
@@ -735,6 +799,7 @@ def price_old_ewt(request, id):
                                   proposal=newproposal)
         return redirect('preview_TMProposal', id=newproposal.id)
     equipment = []
+    sundries = []
     laboritems = []
     materials = []
     extras = []
@@ -742,6 +807,7 @@ def price_old_ewt(request, id):
     totalmaterialcost = 0
     totallaborcost = 0
     totalequipmentcost = 0
+    totalsundriescost = 0
     totalcost = 0
     counter = 0
     is_bonded = False
@@ -781,10 +847,12 @@ def price_old_ewt(request, id):
     employees2 = TMPricesMaster.objects.filter(category="Labor").values()
     materials2 = TMPricesMaster.objects.filter(category="Material").values()
     equipment2 = TMPricesMaster.objects.filter(category="Equipment").values()
+    sundries2 = TMPricesMaster.objects.filter(category="Sundries").values()
     extras2 = TMPricesMaster.objects.filter(category="Misc").values()
     employees_json = json.dumps(list(employees2), cls=DjangoJSONEncoder)
     material_json = json.dumps(list(materials2), cls=DjangoJSONEncoder)
     equipment_json = json.dumps(list(equipment2), cls=DjangoJSONEncoder)
+    sundries_json = json.dumps(list(sundries2), cls=DjangoJSONEncoder)
     extras_json = json.dumps(list(extras2), cls=DjangoJSONEncoder)
     inventory = 0
     return render(request, "price_old_ewt.html",
@@ -795,7 +863,7 @@ def price_old_ewt(request, id):
                    'extrascount': int(len(extras)), 'extras': extras, 'totalcost': int(totalcost),
                    'inventory': int(inventory), 'equipment': equipment, 'materials': materials,
                    'laboritems': laboritems, 'changeorder': changeorder, 'totalmaterialcost': int(totalmaterialcost),
-                   'totallaborcost': int(totallaborcost), 'totalequipmentcost': int(totalequipmentcost)})
+                   'totallaborcost': int(totallaborcost), 'totalequipmentcost': int(totalequipmentcost),'sundries_json': sundries_json,'sundriescount': int(len(sundries)),'sundries': sundries,'totalsundriescost': int(totalsundriescost)})
 
 @login_required(login_url='/accounts/login')
 def print_ticket(request, id, status):
@@ -809,7 +877,7 @@ def print_ticket(request, id, status):
     laboritems = EWTicket.objects.filter(EWT=ewt).exclude(employee=None, custom_employee=None)
     materials = EWTicket.objects.filter(EWT=ewt, master__category="Material")
     equipment = EWTicket.objects.filter(EWT=ewt, master__category="Equipment")
-
+    sundries = EWTicket.objects.filter(EWT=ewt, master__category="Sundries")
     if status == 'OLD':
         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                         user=Employees.objects.get(user=request.user),
@@ -819,7 +887,7 @@ def print_ticket(request, id, status):
         path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
         result_file = open(f"{path}/Unsigned_Extra_Work_Ticket_{date.today()}.pdf", "w+b")
         html = render_to_string("print_ticket.html",
-                                {'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
+                                {'sundries':sundries, 'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
                                  'changeorder': changeorder, 'signature': signature, 'status': status})
         pisa.CreatePDF(
             html,
@@ -847,7 +915,7 @@ def print_ticket(request, id, status):
         changeorder.digital_ticket_signed_date = date.today()
         changeorder.save()
         html = render_to_string("print_ticket.html",
-                                {'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
+                                {'sundries':sundries,'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
                                  'changeorder': changeorder, 'signature': signature, 'status': status})
         pisa.CreatePDF(
             html,
@@ -857,7 +925,7 @@ def print_ticket(request, id, status):
         return redirect('email_signed_ticket', changeorder=changeorder.id)
 
     return render(request, "print_ticket.html",
-                  {'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
+                  {'sundries':sundries,'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
                    'changeorder': changeorder, 'signature': signature, 'status': status})
 
 
@@ -958,11 +1026,13 @@ def view_ewt(request, id):
     materials = TMPricesMaster.objects.filter(category="Material")
     materials2 = TMPricesMaster.objects.filter(category="Material").values()
     equipment = TMPricesMaster.objects.filter(category="Equipment").values()
+    sundries = TMPricesMaster.objects.filter(category="Sundries").values()
     employees_json = json.dumps(list(employees2), cls=DjangoJSONEncoder)
     materials_json = json.dumps(list(materials2), cls=DjangoJSONEncoder)
     equipment_json = json.dumps(list(equipment), cls=DjangoJSONEncoder)
+    sundries_json = json.dumps(list(sundries), cls=DjangoJSONEncoder)
     return render(request, "process_ewt.html",
-                  {'equipment': equipment, 'equipmentjson': equipment_json, 'materialsjson': materials_json,
+                  {'sundries':sundries,'sundriesjson':sundries_json,'equipment': equipment, 'equipmentjson': equipment_json, 'materialsjson': materials_json,
                    'materials': materials, 'changeorder': changeorder, 'employees': employees,
                    'employeesjson': employees_json})
 
@@ -1227,9 +1297,14 @@ def extra_work_ticket(request, id):
     if TMProposal.objects.filter(change_order=changeorder):
         tmproposal = TMProposal.objects.get(change_order=changeorder)
     send_data['tmproposal'] = tmproposal
+    client_ip = get_client_ip(request)
+    can_open_folder = is_internal_ip(client_ip)
+    send_data['can_open_folder'] = can_open_folder
     if request.method == 'GET':
         return render(request, "extra_work_ticket.html", send_data)
     if request.method == 'POST':
+        if 'windows_explorer' in request.POST:
+            os.startfile(path)
         if 'recipient' in request.POST:
             client = changeorder.job_number.client
             name=request.POST['recipient_name']
@@ -1485,6 +1560,16 @@ def process_ewt(request, id):
                 EWTicket.objects.create(master=master, EWT=ewt, description=description[x],
                                         quantity=quantity[x],
                                         units=units[x])
+        if 'existing_sundries' in request.POST:
+            answer = request.POST.getlist('existing_sundries')
+            description = request.POST.getlist('sundries_description')
+            quantity = request.POST.getlist('sundries_quantity')
+            units = request.POST.getlist('sundries_units')
+            for x in range(0, len(answer)):
+                master = TMPricesMaster.objects.get(id=answer[x])
+                EWTicket.objects.create(master=master, EWT=ewt, description=description[x],
+                                        quantity=quantity[x],
+                                        units=units[x])
         if request.POST['number_painters'] != 0:
             for x in range(1, int(request.POST['number_painters']) + 1):
                 if 'painter_dropdown' + str(x) in request.POST:
@@ -1546,18 +1631,35 @@ def process_ewt(request, id):
                                             description=request.POST['equipment_description' + str(x)],
                                             quantity=request.POST['equipment_quantity' + str(x)],
                                             units=request.POST['equipment_units' + str(x)])
+        if request.POST['number_sundries'] != 0:
+            for x in range(1, int(request.POST['number_sundries']) + 1):
+                if 'select_sundries' + str(x) in request.POST:
+                    master = TMPricesMaster.objects.get(id=request.POST['select_sundries' + str(x)])
+                    EWTicket.objects.create(master=master, EWT=ewt,
+                                            description=request.POST['sundries_description' + str(x)],
+                                            quantity=request.POST['sundries_quantity' + str(x)],
+                                            units=request.POST['sundries_units' + str(x)])
         return redirect('extra_work_ticket', id=id)
-    employees = Employees.objects.all()
-    employees2 = Employees.objects.values()
+    employees = Employees.objects.filter(active=True,job_title__description="Painter").all()
+    employees2 = Employees.objects.filter(active=True,job_title__description="Painter").values()
     materials = TMPricesMaster.objects.filter(category="Material")
     materials2 = TMPricesMaster.objects.filter(category="Material").values()
     equipment = TMPricesMaster.objects.filter(category="Equipment").values()
     employees_json = json.dumps(list(employees2), cls=DjangoJSONEncoder)
     materials_json = json.dumps(list(materials2), cls=DjangoJSONEncoder)
     equipment_json = json.dumps(list(equipment), cls=DjangoJSONEncoder)
-    send_data = {'equipment': equipment, 'equipmentjson': equipment_json, 'materialsjson': materials_json,
-                 'materials': materials, 'changeorder': changeorder, 'employees': employees,
-                 'employeesjson': employees_json}
+    sundries = TMPricesMaster.objects.filter(category="Sundries").values()
+    sundries_json = json.dumps(list(sundries), cls=DjangoJSONEncoder)
+    send_data = {}
+    send_data['equipment']=equipment
+    send_data['equipmentjson'] = equipment_json
+    send_data['materialsjson'] = materials_json
+    send_data['materials'] = materials
+    send_data['changeorder'] = changeorder
+    send_data['employees'] = employees
+    send_data['employeesjson'] = employees_json
+    send_data['sundries'] = sundries
+    send_data['sundriesjson'] = sundries_json
     if EWT.objects.filter(change_order=changeorder).exists():
         ewt = EWT.objects.get(change_order=changeorder)
         send_data['ewt'] = ewt
@@ -1585,6 +1687,10 @@ def process_ewt(request, id):
             send_data['equipment_row_counter'] = EWTicket.objects.filter(EWT=ewt, master__category="Equipment").count()
             # equipmentitems = json.dumps(list(equipmentitems1), cls=DjangoJSONEncoder)
             send_data['equipmentitems'] = equipmentitems
+        if EWTicket.objects.filter(EWT=ewt, master__category="Sundries").exists():
+            sundriesitems = EWTicket.objects.filter(EWT=ewt, master__category="Sundries").values()
+            send_data['sundries_row_counter'] = EWTicket.objects.filter(EWT=ewt, master__category="Sundries").count()
+            send_data['sundriesitems'] = sundriesitems
         if EWTicket.objects.filter(EWT=ewt, master__category="Bond").exists():
             bond = EWTicket.objects.filter(EWT=ewt, master__category="Bond").values
             # bond = json.dumps(list(bond1), cls=DjangoJSONEncoder)

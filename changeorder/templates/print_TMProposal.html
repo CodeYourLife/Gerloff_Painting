@@ -368,6 +368,25 @@
         {% endfor %}
     </table>
     {% endif %}
+    {% if sundriesitems %}
+    <hr>
+    <table style="width: 100%">
+        <tr>
+            <th>Sundries</th>
+            <th>Quantity</th>
+            <th>Units</th>
+            <th>Cost</th>
+        </tr>
+        {% for x in sundriesitems %}
+        <tr>
+            <td>{{x.description}}</td>
+            <td class="col-2">{{x.quantity}}</td>
+            <td class="col-2">{{x.units}}</td>
+            <td class="col-2">${{x.total}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
     {% if extraitems %}
     <hr>
     <table style="width: 100%">

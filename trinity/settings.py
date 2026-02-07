@@ -33,7 +33,9 @@ DEBUG = True
 
 #ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.168.120', '98.174.216.233', '184.183.68.156']
 ALLOWED_HOSTS = ["*"]
-# Application definition
+# Application definition - TRUE if in development
+
+FORCE_INTERNAL_REQUESTS = False
 
 INSTALLED_APPS = [
     'django.contrib.humanize',

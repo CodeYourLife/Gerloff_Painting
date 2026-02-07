@@ -149,6 +149,11 @@ def get_client_ip(request):
 
 
 def is_internal_ip(ip):
+
+    # 🔹 DEV / TEST OVERRIDE
+    if getattr(settings, "FORCE_INTERNAL_REQUESTS", False):
+        return True
+
     ip_obj = ipaddress.ip_address(ip)
 
     # IPv4 internal network
