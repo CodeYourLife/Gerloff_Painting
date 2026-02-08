@@ -396,11 +396,18 @@ function myFunction(type){
                     </div>
                     <div class="row">
                         <div class="col-12">
-                            <form action="{% url 'equipment_page' inventories.id %}" method="post">
-                                {% csrf_token %}
-                                <input type="hidden" name="windows_explorer"/>
-                                <input type="submit" class="btn btn-warning btn-sm" value="Open Folder"/>
-                            </form>
+
+                                                        <a
+                              href="file://{{ folder_path }}"
+                              class="btn btn-secondary btn-sm"
+                            >
+                              📂 Open Folder Test
+                            </a>
+<!--                            <form action="{% url 'equipment_page' inventories.id %}" method="post">-->
+<!--                                {% csrf_token %}-->
+<!--                                <input type="hidden" name="windows_explorer"/>-->
+<!--                                <input type="submit" class="btn btn-warning btn-sm" value="Open Folder"/>-->
+<!--                            </form>-->
                         </div>
                     </div>
                         {% endif %}

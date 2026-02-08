@@ -597,6 +597,7 @@ def equipment_page(request, id):
     employees = Employees.objects.filter(active=True)
     vendors = Vendors.objects.filter(category__category="Equipment Repair")
     path = os.path.join(settings.MEDIA_ROOT, "equipment", str(inventory.id))
+    send_data['folder_path'] = path
     foldercontents = os.listdir(path)
     folder_count=0
     for x in os.listdir(path):
