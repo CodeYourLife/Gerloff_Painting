@@ -397,12 +397,19 @@ function myFunction(type){
                     <div class="row">
                         <div class="col-12">
 
-                                                        <a
-                              href="file://{{ folder_path }}"
-                              class="btn btn-secondary btn-sm"
-                            >
-                              📂 Open Folder Test
-                            </a>
+<!--                                                        <a-->
+<!--                              href="file://{{ folder_path }}"-->
+<!--                              class="btn btn-secondary btn-sm"-->
+<!--                            >-->
+<!--                              📂 Open Folder Test-->
+<!--                            </a>-->
+<button
+  class="btn btn-secondary btn-sm"
+  onclick="navigator.clipboard.writeText('{{ folder_path|escapejs }}')"
+>
+  📂 Copy Folder Path
+(Paste into File Explorer)
+</button>
 <!--                            <form action="{% url 'equipment_page' inventories.id %}" method="post">-->
 <!--                                {% csrf_token %}-->
 <!--                                <input type="hidden" name="windows_explorer"/>-->

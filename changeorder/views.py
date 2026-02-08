@@ -1,26 +1,28 @@
-from django.contrib.auth.decorators import login_required
+
 from changeorder.models import *
-from jobs.models import Jobs, JobCharges, ClientEmployees, Email_Errors
-from employees.models import *
-from django.shortcuts import render, redirect
+from console.misc import createfolder, getFilesOrFolders
+from console.misc import Email, get_client_ip, is_internal_ip, create_excel_from_template, get_subfolders, find_post_bid_docs_shortcut, resolve_shortcut, create_folder_shortcut, create_changeorder_shortcut_in_plan_folder
 from datetime import date, datetime
-import json
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.core.serializers.json import DjangoJSONEncoder
+from django.http import HttpResponse
+from django.shortcuts import render, redirect
+from django.template.loader import get_template, render_to_string
+from django.views.decorators.csrf import csrf_exempt
 from django_tables2 import RequestConfig
-from wallcovering.tables import ChangeOrderTable
+from employees.models import *
+from io import StringIO
+from jobs.models import Jobs, JobCharges, ClientEmployees, Email_Errors
+from media.utilities import MediaUtilities
+from media.utilities import MediaUtilities
 from wallcovering.filters import ChangeOrderFilter
+from wallcovering.tables import ChangeOrderTable
+from xhtml2pdf import pisa
+import json
 import os
 import os.path
-from django.template.loader import get_template, render_to_string
-from xhtml2pdf import pisa
-from console.misc import createfolder, getFilesOrFolders
-from django.conf import settings
-from io import StringIO
-from console.misc import Email, get_client_ip, is_internal_ip
-from media.utilities import MediaUtilities
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from media.utilities import MediaUtilities
+
 
 
 def emailed_ticket(request, id):
@@ -1183,13 +1185,20 @@ def change_order_new(request, jobnumber):
             changeorder = ChangeOrders.objects.create(job_number=Jobs.objects.get(job_number=jobnumber),
                                                       is_t_and_m=t_and_m, description=request.POST['description'],
                                                       cop_number=next_cop, notes=request.POST['notes'])
-            # directory = changeorder.id
-            # parent_dir = "C:/Trinity/ChangeOrder"
-            # path = os.path.join(parent_dir, str(directory))
             try:
                 createfolder("changeorder/" + str(changeorder.id))
+                # new_file = create_excel_from_template(
+                #     template_name = "Change Order Takeoff.xlsm",
+                #     destination_subfolder = os.path.join("changeorder", str(changeorder.id)),
+                #     new_filename = f"Change Order {next_cop} Takeoff.xlsm",
+                # )
             except OSError as error:
                 print(error)
+            new_file = create_excel_from_template(
+                template_name="Change Order Takeoff.xlsm",
+                destination_subfolder=os.path.join("changeorder", str(changeorder.id)),
+                new_filename=f"Change Order {next_cop} Takeoff.xlsm",
+            )
             if changeorder.is_t_and_m == True:
                 note = ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                        user=Employees.objects.get(user=request.user),
@@ -1289,6 +1298,21 @@ def extra_work_ticket(request, id):
         send_data['foldercontents'] = foldercontents
     except Exception as e:
         send_data['no_folder_contents'] = True
+    send_data['folder_path'] = rf"\\gp-webserver\trinity\changeorder\{changeorder.id}"
+
+    #---send plan folders to select from, to create shortcuts to those folders --#
+    BASE_JOBS_PATH = r"\\gp2022\company\jobs\open jobs"
+    job_folder_name = f"{changeorder.job_number.job_number} {changeorder.job_number.job_name}"
+    plans_folder = os.path.join(BASE_JOBS_PATH, job_folder_name, "plans")
+    lnk_path = find_post_bid_docs_shortcut(plans_folder)
+    post_bid_docs_target = None
+    if lnk_path:
+        post_bid_docs_target = resolve_shortcut(lnk_path)
+    if post_bid_docs_target and os.path.isdir(post_bid_docs_target):
+        send_data['post_bid_doc_folders'] = get_subfolders(post_bid_docs_target)
+    else:
+        send_data['post_bid_doc_folders'] = []
+
     # if TMList.objects.filter(change_order=changeorder).exists():
     #     TMList.objects.filter(change_order=changeorder).delete()
     # if TMProposal.objects.filter(change_order=changeorder).exists():
@@ -1303,6 +1327,36 @@ def extra_work_ticket(request, id):
     if request.method == 'GET':
         return render(request, "extra_work_ticket.html", send_data)
     if request.method == 'POST':
+        if "create_post_bid_doc_shortcuts" in request.POST:
+            selected_folders = request.POST.getlist("folders")
+            changeorder_folder = os.path.join(
+                settings.MEDIA_ROOT,
+                "changeorder",
+                str(changeorder.id),
+            )
+            shortcut_base_dir = changeorder_folder
+            for folder_path in selected_folders:
+                folder_path = os.path.normpath(folder_path)
+                if not folder_path.startswith(post_bid_docs_target):
+                    send_data['error_message'] = "Cant Find Post Bid Docs"
+                else:
+                    # 1️⃣ Shortcut IN change order folder → plan folder
+                    try:
+                        create_folder_shortcut(
+                            target_folder=folder_path,
+                            shortcut_dir=shortcut_base_dir,
+                        )
+                        # 2️⃣ Shortcut IN plan folder → change order folder
+                        create_changeorder_shortcut_in_plan_folder(
+                            plan_folder=folder_path,
+                            changeorder_folder=changeorder_folder,
+                            changeorder_id=changeorder.id,
+                        )
+                        send_data['error_message'] = "Shortcuts to Change Order and Plans Succesfully Created"
+                    except:
+                        send_data['error_message'] = "Failed to Create Shortcuts"
+
+
         if 'windows_explorer' in request.POST:
             os.startfile(path)
         if 'recipient' in request.POST:

@@ -12,6 +12,10 @@ from django.db.models import Sum
 from employees.models import Employees
 from datetime import date
 import ipaddress
+import shutil
+import fnmatch
+import pythoncom
+import winshell
 
 
 class Email:
@@ -166,3 +170,106 @@ def is_internal_ip(ip):
 
     return False
 
+def create_excel_from_template(
+    template_name,
+    destination_subfolder,
+    new_filename
+):
+    # Base media directory
+    media_root = settings.MEDIA_ROOT
+
+    # Where templates live
+    template_folder = os.path.join(media_root, "excel_templates")
+    template_path = os.path.join(template_folder, template_name)
+
+    # Where the new file should go
+    destination_folder = os.path.join(media_root, destination_subfolder)
+    os.makedirs(destination_folder, exist_ok=True)
+
+    destination_path = os.path.join(destination_folder, new_filename)
+
+    # Copy template → new file
+    shutil.copy(template_path, destination_path)
+
+    return destination_path
+
+
+def get_subfolders(base_path):
+    if not os.path.isdir(base_path):
+        return []
+
+    return [
+        {
+            "name": folder,
+            "path": os.path.join(base_path, folder),
+        }
+        for folder in os.listdir(base_path)
+        if os.path.isdir(os.path.join(base_path, folder))
+    ]
+
+def find_post_bid_docs_shortcut(plans_folder):
+    """
+    Returns the full path to the first shortcut that matches '*Post Bid Docs*.lnk'
+    """
+    if not os.path.isdir(plans_folder):
+        return None
+
+    for name in os.listdir(plans_folder):
+        # case-insensitive match for Post Bid Docs shortcut
+        if fnmatch.fnmatch(name.lower(), "*post bid docs*.lnk"):
+            return os.path.join(plans_folder, name)
+
+    return None
+
+def resolve_shortcut(lnk_path):
+    """
+    Resolve a Windows .lnk file to its target path.
+    Safe for Django / Apache threads.
+    """
+    pythoncom.CoInitialize()
+    try:
+        return winshell.shortcut(lnk_path).path
+    finally:
+        pythoncom.CoUninitialize()
+
+def create_folder_shortcut(target_folder, shortcut_dir):
+    """
+    Creates a Windows shortcut (.lnk) to target_folder
+    inside shortcut_dir.
+    """
+    pythoncom.CoInitialize()
+    try:
+        # Ensure destination exists
+        os.makedirs(shortcut_dir, exist_ok=True)
+
+        folder_name = os.path.basename(os.path.normpath(target_folder))
+        shortcut_path = os.path.join(shortcut_dir, f"{folder_name}.lnk")
+
+        with winshell.shortcut(shortcut_path) as link:
+            link.path = target_folder
+            link.working_directory = target_folder
+            link.description = f"Shortcut to {folder_name}"
+
+        return shortcut_path
+    finally:
+        pythoncom.CoUninitialize()
+
+def create_changeorder_shortcut_in_plan_folder(
+    plan_folder,
+    changeorder_folder,
+    changeorder_id
+):
+    shortcut_name = f"Change Order {changeorder_id}.lnk"
+    shortcut_path = os.path.join(plan_folder, shortcut_name)
+
+    if os.path.exists(shortcut_path):
+        return  # already exists, skip
+
+    pythoncom.CoInitialize()
+    try:
+        with winshell.shortcut(shortcut_path) as link:
+            link.path = changeorder_folder
+            link.working_directory = changeorder_folder
+            link.description = f"Change Order {changeorder_id}"
+    finally:
+        pythoncom.CoUninitialize()
