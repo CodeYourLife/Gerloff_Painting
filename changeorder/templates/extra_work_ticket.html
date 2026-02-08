@@ -374,7 +374,7 @@ select_recipient_form.change_recipient_form.value = "No"
 <!--        </div>-->
 <!--    </div>-->
 <!--</div>-->
-<!-- Modal -->
+<!-- Modal for uploading files-->
 <div class="modal fade" id="changeOrderFolderModal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -536,6 +536,81 @@ select_recipient_form.change_recipient_form.value = "No"
         </div>
     </div>
 </div>
+<!-- Modal -select post bid docs -->
+<div
+  class="modal fade"
+  id="folderSelectModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="folderSelectModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="folderSelectModalLabel">
+            📁 Select Job Subfolders
+          </h5>
+          <button type="button" class="close" data-dismiss="modal">
+            <span>&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+
+          {% if post_bid_doc_folders %}
+            <p class="text-muted mb-2">
+              Job folder:
+              <code>{{ job_base_path }}</code>
+            </p>
+
+            {% for folder in post_bid_doc_folders %}
+              <div class="form-check mb-2">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  name="folders"
+                  id="folder_{{ forloop.counter }}"
+                  value="{{ folder.path }}"
+                >
+                <label
+                  class="form-check-label"
+                  for="folder_{{ forloop.counter }}"
+                >
+                  📁 {{ folder.name }}
+                </label>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="text-danger">
+              No subfolders found for this job.
+            </p>
+          {% endif %}
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary" name="create_post_bid_doc_shortcuts">
+            Continue
+          </button>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-dismiss="modal"
+          >
+            Cancel
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
 
 <!-- HEADER -->
 <div class="container" style="margin-bottom: 20px;">
@@ -586,6 +661,7 @@ select_recipient_form.change_recipient_form.value = "No"
                             </form>
                         </div>
                     </div>
+                <hr>
                     <div class="row">
                         <div class="col-12">
                             {% if no_folder_contents %}
@@ -611,23 +687,49 @@ select_recipient_form.change_recipient_form.value = "No"
                             {% endif %}
                         </div>
                     </div>
+                <hr>
                     {% if can_open_folder %}
                     <div class="row">
                         <div class="col-12">
-                            <font color="red">Open Equipment Folder</font>
+                            <font color="red">Open Change Order Folder</font>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-12">
-                            <form action="{% url 'extra_work_ticket' changeorder.id %}" method="post">
-                                {% csrf_token %}
-                                <input type="hidden" name="windows_explorer"/>
-                                <input type="submit" class="btn btn-warning btn-sm" value="  📁 Open Folder"/>
-                            </form>
+<!--                            <form action="{% url 'extra_work_ticket' changeorder.id %}" method="post">-->
+<!--                                {% csrf_token %}-->
+<!--                                <input type="hidden" name="windows_explorer"/>-->
+<!--                                <input type="submit" class="btn btn-warning btn-sm" value="  📁 Open Folder"/>-->
+<!--                            </form>-->
+                            <button
+                                  class="btn btn-secondary btn-sm"
+                                  onclick="navigator.clipboard.writeText('{{ folder_path|escapejs }}')"
+                                >
+                                  📂 Copy Folder Path
+                                (Paste into File Explorer)
+                            </button>
                         </div>
                     </div>
+                <hr>
                 {% endif %}
-            </div>
+                   <div class="row">
+                        <div class="col-12">
+                            <font color="red">Link Plans to Change Order</font>
+                        </div>
+                    </div>
+                <div class="row">
+                    <div class="col-12">
+                        <button
+                          type="button"
+                          class="btn btn-secondary btn-sm"
+                          data-toggle="modal"
+                          data-target="#folderSelectModal"
+                        >
+                          📂 Select Post Bid Docs
+                        </button>
+                    </div>
+
+                </div>
         </div>
     </div>
 
