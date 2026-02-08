@@ -35,7 +35,7 @@ DEBUG = True
 ALLOWED_HOSTS = ["*"]
 # Application definition - TRUE if in development
 
-FORCE_INTERNAL_REQUESTS = False
+FORCE_INTERNAL_REQUESTS = True
 
 INSTALLED_APPS = [
     'django.contrib.humanize',

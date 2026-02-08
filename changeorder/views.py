@@ -1187,18 +1187,16 @@ def change_order_new(request, jobnumber):
                                                       cop_number=next_cop, notes=request.POST['notes'])
             try:
                 createfolder("changeorder/" + str(changeorder.id))
-                # new_file = create_excel_from_template(
-                #     template_name = "Change Order Takeoff.xlsm",
-                #     destination_subfolder = os.path.join("changeorder", str(changeorder.id)),
-                #     new_filename = f"Change Order {next_cop} Takeoff.xlsm",
-                # )
             except OSError as error:
                 print(error)
-            new_file = create_excel_from_template(
-                template_name="Change Order Takeoff.xlsm",
-                destination_subfolder=os.path.join("changeorder", str(changeorder.id)),
-                new_filename=f"Change Order {next_cop} Takeoff.xlsm",
-            )
+            try:
+                new_file = create_excel_from_template(
+                    template_name="Change Order Takeoff.xlsm",
+                    destination_subfolder=os.path.join("changeorder", str(changeorder.id)),
+                    new_filename=f"Change Order {next_cop} Takeoff.xlsm",
+                )
+            except:
+                Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name, error="Change Order Takeoff Not Made",date = date.today())
             if changeorder.is_t_and_m == True:
                 note = ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                        user=Employees.objects.get(user=request.user),
