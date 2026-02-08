@@ -122,7 +122,28 @@ float: left !important;
         function Previous() {
         window.history.back()
         }
-        function check_booking_data1(){
+
+function copyChangeOrderPath() {
+    const input = document.getElementById("changeOrderPath");
+
+    input.focus();
+    input.select();
+    input.setSelectionRange(0, 99999); // mobile-safe
+
+    try {
+        const success = document.execCommand("copy");
+        if (success) {
+            alert("Folder path copied to clipboard");
+        } else {
+            alert("Copy failed");
+        }
+    } catch (err) {
+        alert("Copy not supported in this browser");
+    }
+}
+
+
+function check_booking_data1(){
             if (document.getElementById("is_approved_to_bill").checked){
                 if (document.getElementById("gc_number").value == ""){
                     if (document.getElementById("approval_note").value == ""){
@@ -696,17 +717,19 @@ select_recipient_form.change_recipient_form.value = "No"
                     </div>
                     <div class="row">
                         <div class="col-12">
-<!--                            <form action="{% url 'extra_work_ticket' changeorder.id %}" method="post">-->
-<!--                                {% csrf_token %}-->
-<!--                                <input type="hidden" name="windows_explorer"/>-->
-<!--                                <input type="submit" class="btn btn-warning btn-sm" value="  📁 Open Folder"/>-->
-<!--                            </form>-->
+                            <input
+                              type="text"
+                              id="changeOrderPath"
+                              value="{{ folder_path }}"
+                              style="position:absolute; left:-9999px;"
+                            >
+
                             <button
-                                  class="btn btn-secondary btn-sm"
-                                  onclick="navigator.clipboard.writeText('{{ folder_path|escapejs }}')"
-                                >
-                                  📂 Copy Folder Path
-                                (Paste into File Explorer)
+                              type="button"
+                              class="btn btn-secondary btn-sm"
+                              onclick="copyChangeOrderPath()"
+                            >
+                              📋 Copy Folder Path
                             </button>
                         </div>
                     </div>
