@@ -1187,11 +1187,6 @@ def change_order_new(request, jobnumber):
                                                       cop_number=next_cop, notes=request.POST['notes'])
             try:
                 createfolder("changeorder/" + str(changeorder.id))
-                # new_file = create_excel_from_template(
-                #     template_name = "Change Order Takeoff.xlsm",
-                #     destination_subfolder = os.path.join("changeorder", str(changeorder.id)),
-                #     new_filename = f"Change Order {next_cop} Takeoff.xlsm",
-                # )
             except OSError as error:
                 print(error)
             try:
