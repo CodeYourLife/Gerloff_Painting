@@ -140,23 +140,32 @@
     <div>
         <div style="margin-bottom: 12px;"><b>Signature:</b></div>
         {% if signature.signature %}
-        <img id="saveSignature" src={{signature.signature}} name="saveSignature" style="width: 300px; height: 100px"
+        <img id="saveSignature" src="{{signature.signature}}" name="saveSignature" style="width: 300px; height: 100px"
              alt="Saved image png"/>
         <div><b>Name:</b>&nbsp;{{signature.name}}</div>
         <div><b>Date:</b>&nbsp;{{signature.date}}</div>
         <div><b>Comments:</b>&nbsp;{{signature.notes}}</div>
         {% else %}
-        <div id="canvas">
-            <canvas class="roundCorners" id="newSignature"
-                    style="position: relative; margin: 0; padding: 0; border: 1px solid #c4caac;"></canvas>
-        </div>
-        <div>
+<!--        <div id="canvas">-->
+<!--            <canvas class="roundCorners" id="newSignature"-->
+<!--                    style="position: relative; margin: 0; padding: 0; border: 1px solid #c4caac;"></canvas>-->
+<!--        </div>-->
+<!--        <div>-->
+            <div id="canvas">
+            <canvas
+                id="newSignature"
+                class="roundCorners"
+                width="300"
+                height="100"
+                style="position: relative; margin: 0; padding: 0; border: 1px solid #c4caac;">
+            </canvas>
+            </div>
             <img id="saveSignature" name="saveSignature" style="display: none; width: 300px; height: 100px"
                  alt="Saved image png"/>
             <div style="display: flex; margin-top: 12px;">
                 <div>Print Name:&nbsp;</div>
-                <input style="width: 200px" id="signatureName" name="signatureName"></input>
-                <input hidden id="signatureValue" name="signatureValue"></input>
+                <input style="width: 200px" id="signatureName" name="signatureName"/>
+                <input hidden id="signatureValue" name="signatureValue"/>
             </div>
             <br>
             <label for="gc_notes">Comments:</label><br>
@@ -170,7 +179,7 @@
             {% if not signature %}
 <!--            <button type="button" id="saveSignatureBtn"  onclick="signatureSave()">Confirm signature</button>-->
 <!--            <button type="button" id="clearSignatureBtn" onclick="signatureClear()">Clear signature</button>-->
-            <input type="submit" id="final_button"  value="Email Signed Ticket Back To Gerloff (you will get a copy)"/>
+            <input type="submit" id="final_button" class="btn btn-danger btn-lg" value="Email Signed Ticket Back To Gerloff (you will get a copy)"/>
             <div id="hide_this"><h3>Processing. Please do not click anything.</h3></div>
             {% endif %}
         </div>
