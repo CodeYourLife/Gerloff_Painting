@@ -6,12 +6,19 @@ from pathlib import Path
 from django.conf import settings
 from django.http import HttpResponse
 
+from changeorder.models import ChangeOrders
+
+
 class MediaUtilities(object):
 
     def __init__(self):
         super(MediaUtilities, self).__init__()
     def getDirectoryContents(self, id, value,app):
-        file_path = os.path.join(settings.MEDIA_ROOT, app, str(id), os.path.basename(value))
+        if app=="changeorder":
+            changeorder=ChangeOrders.objects.get(id=id)
+            file_path = os.path.join(settings.MEDIA_ROOT, app, rf"{changeorder.job_number.job_number} COP #{changeorder.cop_number}", os.path.basename(value))
+        else:
+            file_path = os.path.join(settings.MEDIA_ROOT, app, str(id), os.path.basename(value))
         if os.path.exists(file_path):
             name = value.split('.')[0]
             mimetype = value.split('.')[1]
