@@ -7,6 +7,8 @@ import os
 import os.path
 from django.conf import settings
 import requests
+
+from changeorder.models import ChangeOrders
 from jobs.models import ClockSharkTimeEntry, JobsiteSafetyInspection, JobNotes
 from django.db.models import Sum
 from employees.models import Employees
@@ -259,7 +261,8 @@ def create_changeorder_shortcut_in_plan_folder(
     changeorder_folder,
     changeorder_id
 ):
-    shortcut_name = f"Change Order {changeorder_id}.lnk"
+    cop_number=ChangeOrders.objects.get(id=changeorder_id).cop_number
+    shortcut_name = f"Change Order {cop_number}.lnk"
     shortcut_path = os.path.join(plan_folder, shortcut_name)
 
     if os.path.exists(shortcut_path):
@@ -270,6 +273,6 @@ def create_changeorder_shortcut_in_plan_folder(
         with winshell.shortcut(shortcut_path) as link:
             link.path = changeorder_folder
             link.working_directory = changeorder_folder
-            link.description = f"Change Order {changeorder_id}"
+            link.description = f"Change Order {cop_number}"
     finally:
         pythoncom.CoUninitialize()

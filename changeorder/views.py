@@ -56,7 +56,7 @@ def emailed_ticket(request, id):
                                         note="Digital Signature Received. Signed by: " + request.POST[
                                             'signatureName'] + ". Comments: " + request.POST['gc_notes'])
         signature = Signature.objects.get(change_order_id=id)
-        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
+        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
         result_file = open(f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf", "w+b")
         changeorder.is_ticket_signed = True
         changeorder.digital_ticket_signed_date = date.today()
@@ -166,7 +166,7 @@ def batch_approve_co(request, id):
                 if 'upload_file' in request.FILES:
                     fileitem = request.FILES['upload_file']
                     fn = os.path.basename(fileitem.name)
-                    fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder", str(selected_cop.id), fn)
+                    fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder",str(selected_cop.job_number.job_number)+ " COP #" + str(selected_cop.cop_number), fn)
                     open(fn2, 'wb').write(fileitem.file.read())
         return redirect('extra_work_ticket', id=selected_cop.id)
     return render(request, 'batch_approve_co.html', send_data)
@@ -188,7 +188,7 @@ def print_TMProposal(request, id):
     bond = []
     foldercontents = []
     try:
-        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
+        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
         foldercontents = os.listdir(path)
         send_data['foldercontents'] = foldercontents
     except Exception as e:
@@ -203,8 +203,8 @@ def print_TMProposal(request, id):
         bond = TMList.objects.get(change_order=changeorder, category="Bond")
         bond_exists = True
     ewt = newproposal.ticket
-    path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
-    result_file = open(f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf", "w+b")
+    path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
+    result_file = open(f"{path}/GP COP {changeorder.cop_number} {changeorder.description} {date.today()}.pdf", "w+b")
     if request.method == 'POST':
         for x in request.POST:
             if x[0:11] == 'updateemail':
@@ -232,7 +232,8 @@ def print_TMProposal(request, id):
             if request.POST['status'] == 'Final' or x[0:8] == 'no_email':
                 recipients = ["bridgette@gerloffpainting.com"]
                 current_user = Employees.objects.get(user=request.user)
-                recipients.append(current_user.email)
+                if current_user.email:
+                    recipients.append(current_user.email)
                 for x in request.POST:
                     if x[0:5] == 'email':
                         recipients.append(request.POST[x])
@@ -253,8 +254,9 @@ def print_TMProposal(request, id):
                     Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
                     try:
                         files=[]
-                        files.append(f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
+                        files.append(f"{path}/GP COP {changeorder.cop_number} {changeorder.description} {date.today()}.pdf")
                         files.append(f"{path}/" + request.POST['filename'])
+                        print("IS THIS")
                         Email.sendEmail2("Change Order Proposal", "Please find the TM Proposal attached", recipients,files)
                         # Email.sendEmail("Change Order Proposal", "Please find the TM Proposal attached", recipients,
                         #                 f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
@@ -269,7 +271,7 @@ def print_TMProposal(request, id):
                                                         note="COP Email Failed to Send")
                         error = "COP FAILED to Email! Please try again later!"
                     Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name,
-                                                error=message, date=date.today())
+                                                error=error, date=date.today())
                 else:
                     ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                     user=Employees.objects.get(user=request.user),
@@ -886,7 +888,7 @@ def print_ticket(request, id, status):
                                         note="Ticket Printed for Wet Signature")
         changeorder.is_printed = True
         changeorder.save()
-        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
+        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
         result_file = open(f"{path}/Unsigned_Extra_Work_Ticket_{date.today()}.pdf", "w+b")
         html = render_to_string("print_ticket.html",
                                 {'sundries':sundries, 'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
@@ -911,7 +913,7 @@ def print_ticket(request, id, status):
                                         note="Digital Signature Received. Signed by: " + request.POST[
                                             'signatureName'] + ". Comments: " + request.POST['gc_notes'])
         signature = Signature.objects.get(change_order_id=id)
-        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
+        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
         result_file = open(f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf", "w+b")
         changeorder.is_ticket_signed = True
         changeorder.digital_ticket_signed_date = date.today()
@@ -976,7 +978,7 @@ def email_signed_ticket(request, changeorder):
                 ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                 user=current_user,
                                                 note="Signed Ticket emailed to " + str(recipients))
-                path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
+                path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
                 try:
                     Email.sendEmail("Signed Ticket", "Please find the Signed Extra Work Ticket attached", recipients,
                                     f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf")
@@ -1072,8 +1074,8 @@ def change_order_send(request, id):
                     ClientJobRoles.objects.create(role="Change Orders", job=changeorder.job_number, employee=person)
                     TempRecipients.objects.create(person=person, changeorder=changeorder)
             if x[0:5] == 'final' or x[0:6] == 'myself':
-                path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
-                result_file = open(f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf", "w+b")
+                path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
+                result_file = open(f"{path}/GP COP {changeorder.cop_number} {changeorder.description} {date.today()}.pdf", "w+b")
                 html = render_to_string("print_proposal.html",
                                         {'changeorder': changeorder,
                                          'full_description': request.POST['full_description'],
@@ -1186,13 +1188,13 @@ def change_order_new(request, jobnumber):
                                                       is_t_and_m=t_and_m, description=request.POST['description'],
                                                       cop_number=next_cop, notes=request.POST['notes'])
             try:
-                createfolder("changeorder/" + str(changeorder.id))
+                createfolder("changeorder/" + str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
             except OSError as error:
                 print(error)
             try:
                 new_file = create_excel_from_template(
                     template_name="Change Order Takeoff.xlsm",
-                    destination_subfolder=os.path.join("changeorder", str(changeorder.id)),
+                    destination_subfolder=os.path.join("changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number)),
                     new_filename=f"Change Order {next_cop} Takeoff.xlsm",
                 )
             except:
@@ -1291,12 +1293,12 @@ def extra_work_ticket(request, id):
     tmproposal = []
     foldercontents = []
     try:
-        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
+        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
         foldercontents = os.listdir(path)
         send_data['foldercontents'] = foldercontents
     except Exception as e:
         send_data['no_folder_contents'] = True
-    send_data['folder_path'] = rf"\\gp-webserver\trinity\changeorder\{changeorder.id}"
+    send_data['folder_path'] = rf"\\gp-webserver\trinity\changeorder\{changeorder.job_number.job_number} COP #{changeorder.cop_number}"
 
     #---send plan folders to select from, to create shortcuts to those folders --#
     BASE_JOBS_PATH = r"\\gp2022\company\jobs\open jobs"
@@ -1330,7 +1332,7 @@ def extra_work_ticket(request, id):
             changeorder_folder = os.path.join(
                 settings.MEDIA_ROOT,
                 "changeorder",
-                str(changeorder.id),
+                str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number),
             )
             shortcut_base_dir = changeorder_folder
             for folder_path in selected_folders:
@@ -1407,10 +1409,10 @@ def extra_work_ticket(request, id):
             short_date = short_year + "-" + short_mth + "-" + short_day
             extension = fileitem.name.split(".")[1]
             fn = os.path.basename(short_date + " Signed EWT." + extension)
-            fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id), fn)
+            fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number), fn)
             open(fn2, 'wb').write(fileitem.file.read())
             try:
-                path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
+                path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
                 foldercontents = os.listdir(path)
                 send_data['foldercontents'] = foldercontents
             except Exception as e:
@@ -1424,10 +1426,10 @@ def extra_work_ticket(request, id):
         if 'upload_file' in request.FILES:
             fileitem = request.FILES['upload_file']
             fn = os.path.basename(fileitem.name)
-            fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id), fn)
+            fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number), fn)
             open(fn2, 'wb').write(fileitem.file.read())
             try:
-                path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.id))
+                path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
                 foldercontents = os.listdir(path)
                 send_data['foldercontents'] = foldercontents
             except Exception as e:
@@ -1499,7 +1501,8 @@ def extra_work_ticket(request, id):
 
 
 def getChangeorderFolder(request):
-    filesOrFolders = getFilesOrFolders("changeorder", str(request.GET['id']))
+    changeorder = ChangeOrders.objects.get(id=request.GET['id'])
+    filesOrFolders = getFilesOrFolders("changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
     return HttpResponse(json.dumps(filesOrFolders))
 
 
@@ -1524,7 +1527,8 @@ def uploadFile(request):
     try:
         fn = os.path.basename(request.FILES['file'].name)
         name = request.FILES['file'].name
-        fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder", str(request.POST['id']), fn)
+        changeorder = ChangeOrders.objects.get(id=request.GET['id'])
+        fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number), fn)
         open(fn2, 'wb').write(request.FILES['file'].read())
     except Exception as e:
         print('cannot write to folder', e)
