@@ -1670,7 +1670,7 @@ def process_ewt(request, id):
                                                   7:len(request.POST['painter_dropdown' + str(x)])]
                     else:
                         if Employees.objects.filter(id=request.POST['painter_dropdown' + str(x)]).exists():
-                            new_ewt.employee = Employees.objects.get(id=request.POST['pa inter_dropdown' + str(x)])
+                            new_ewt.employee = Employees.objects.get(id=request.POST['painter_dropdown' + str(x)])
                     new_ewt.save()
         if request.POST['number_materials'] != 0:
             for x in range(1, int(request.POST['number_materials']) + 1):
