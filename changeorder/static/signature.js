@@ -1,147 +1,118 @@
-		function signatureCapture() {
-		  var canvas = document.getElementById("newSignature");
-		  var context = canvas.getContext("2d");
-		  canvas.width = 276;
-		  canvas.height = 90;
-		  context.fillStyle = "#fff";
-		  context.strokeStyle = "#444";
-		  context.lineWidth = 1.5;
-		  context.lineCap = "round";
-		  context.fillRect(0, 0, canvas.width, canvas.height);
-		  var disableSave = true;
-		  var pixels = [];
-		  var cpixels = [];
-		  var xyLast = {};
-		  var xyAddLast = {};
-		  var calculate = false;
-		  {   //functions
-			function remove_event_listeners() {
-			  canvas.removeEventListener('mousemove', on_mousemove, false);
-			  canvas.removeEventListener('mouseup', on_mouseup, false);
-			  canvas.removeEventListener('touchmove', on_mousemove, false);
-			  canvas.removeEventListener('touchend', on_mouseup, false);
+let canvas, ctx;
+let drawing = false;
 
-			  document.body.removeEventListener('mouseup', on_mouseup, false);
-			  document.body.removeEventListener('touchend', on_mouseup, false);
-			}
+/* =========================
+   INIT
+========================= */
+function signatureCapture() {
+    canvas = document.getElementById("newSignature");
+    if (!canvas) return;
 
-			function get_coords(e) {
-			  var x, y;
+    ctx = canvas.getContext("2d");
 
-			  if (e.changedTouches && e.changedTouches[0]) {
-				var offsety = canvas.offsetTop || 0;
-				var offsetx = canvas.offsetLeft || 0;
+    resizeCanvas();
 
-				x = e.changedTouches[0].pageX - offsetx;
-				y = e.changedTouches[0].pageY - offsety;
-			  } else if (e.layerX || 0 == e.layerX) {
-				x = e.layerX;
-				y = e.layerY;
-			  } else if (e.offsetX || 0 == e.offsetX) {
-				x = e.offsetX;
-				y = e.offsetY;
-			  }
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
 
-			  return {
-				x : x, y : y
-			  };
-			};
+    canvas.addEventListener("mousedown", startDraw);
+    canvas.addEventListener("mousemove", draw);
+    canvas.addEventListener("mouseup", endDraw);
+    canvas.addEventListener("mouseleave", endDraw);
 
-			function on_mousedown(e) {
-			  e.preventDefault();
-			  e.stopPropagation();
+    canvas.addEventListener("touchstart", startDraw, { passive: false });
+    canvas.addEventListener("touchmove", draw, { passive: false });
+    canvas.addEventListener("touchend", endDraw);
+}
 
-			  canvas.addEventListener('mouseup', on_mouseup, false);
-			  canvas.addEventListener('mousemove', on_mousemove, false);
-			  canvas.addEventListener('touchend', on_mouseup, false);
-			  canvas.addEventListener('touchmove', on_mousemove, false);
-			  document.body.addEventListener('mouseup', on_mouseup, false);
-			  document.body.addEventListener('touchend', on_mouseup, false);
+/* =========================
+   DRAWING
+========================= */
+function startDraw(e) {
+    e.preventDefault();
+    drawing = true;
+    ctx.beginPath();
 
-			  empty = false;
-			  var xy = get_coords(e);
-			  context.beginPath();
-			  pixels.push('moveStart');
-			  context.moveTo(xy.x, xy.y);
-			  pixels.push(xy.x, xy.y);
-			  xyLast = xy;
-			};
+    const pos = getPos(e);
+    ctx.moveTo(pos.x, pos.y);
+}
 
-			function on_mousemove(e, finish) {
-			  e.preventDefault();
-			  e.stopPropagation();
+function draw(e) {
+    if (!drawing) return;
+    e.preventDefault();
 
-			  var xy = get_coords(e);
-			  var xyAdd = {
-				x : (xyLast.x + xy.x) / 2,
-				y : (xyLast.y + xy.y) / 2
-			  };
+    const pos = getPos(e);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+}
 
-			  if (calculate) {
-				var xLast = (xyAddLast.x + xyLast.x + xyAdd.x) / 3;
-				var yLast = (xyAddLast.y + xyLast.y + xyAdd.y) / 3;
-				pixels.push(xLast, yLast);
-			  } else {
-				calculate = true;
-			  }
+function endDraw(e) {
+    if (!drawing) return;
+    drawing = false;
+    ctx.closePath();
+}
 
-			  context.quadraticCurveTo(xyLast.x, xyLast.y, xyAdd.x, xyAdd.y);
-			  pixels.push(xyAdd.x, xyAdd.y);
-			  context.stroke();
-			  context.beginPath();
-			  context.moveTo(xyAdd.x, xyAdd.y);
-			  xyAddLast = xyAdd;
-			  xyLast = xy;
+/* =========================
+   HELPERS
+========================= */
+function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
 
-			};
-
-			function on_mouseup(e) {
-			  remove_event_listeners();
-			  disableSave = false;
-			  context.stroke();
-			  pixels.push('e');
-			  calculate = false;
-			};
-		  }
-		  canvas.addEventListener('touchstart', on_mousedown, false);
-		  canvas.addEventListener('mousedown', on_mousedown, false);
-		}
-
-		function signatureSave() {
-		  document.getElementById("signatureName").readOnly = true;
-		  document.getElementById("saveSignature").style.display = "block";
-		  var canvas = document.getElementById("newSignature");// save canvas image as data url (png format by default)
-		  var dataURL = canvas.toDataURL("image/png");
-		  document.getElementById("signatureValue").value = dataURL;
-		  document.getElementById("saveSignature").src = dataURL;
-		  document.getElementById("newSignature").style.display = "none";
-		  document.getElementById("final_button").style.display = "none";
-		  document.getElementById("hide_this").style.display = "block";
-		};
-
-		function signatureSave2() {
-		  document.getElementById("signatureName").readOnly = true;
-		  document.getElementById("saveSignature").style.display = "block";
-		  var canvas = document.getElementById("newSignature");// save canvas image as data url (png format by default)
-		  var dataURL = canvas.toDataURL("image/png");
-		  document.getElementById("signatureValue").value = dataURL;
-		  document.getElementById("saveSignature").src = dataURL;
-		  document.getElementById("newSignature").style.display = "none";
-		  document.getElementById("saveSignatureBtn").style.display = "none";
-		  document.getElementById("clearSignatureBtn").style.display = "none";
-		};
-
-    window.onload = function() {
-    document.getElementById("hide_this").style.display = "none";
+    let x, y;
+    if (e.touches && e.touches[0]) {
+        x = (e.touches[0].clientX - rect.left) * scaleX;
+        y = (e.touches[0].clientY - rect.top) * scaleY;
+    } else {
+        x = (e.clientX - rect.left) * scaleX;
+        y = (e.clientY - rect.top) * scaleY;
     }
+    return { x, y };
+}
 
+function resizeCanvas() {
+    const ratio = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
 
-		function signatureClear() {
-		  document.getElementById("signatureName").readOnly = false;
-		  document.getElementById("signatureName").value = "";
-		  document.getElementById("saveSignature").style.display = "none";
-		  document.getElementById("newSignature").style.display = "block";
-		  var canvas = document.getElementById("newSignature");
-		  var context = canvas.getContext("2d");
-		  context.clearRect(0, 0, canvas.width, canvas.height);
-		}
+    canvas.width = rect.width * ratio;
+    canvas.height = rect.height * ratio;
+
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+}
+
+/* =========================
+   SAVE / CLEAR
+========================= */
+function signatureSave2() {
+    const dataURL = canvas.toDataURL("image/png");
+    document.getElementById("signatureValue").value = dataURL;
+    document.getElementById("saveSignature").src = dataURL;
+    document.getElementById("saveSignature").style.display = "block";
+
+    canvas.style.display = "none";
+    document.getElementById("saveSignatureBtn").style.display = "none";
+    document.getElementById("clearSignatureBtn").style.display = "none";
+	document.getElementById("hide_until_signed").style.display = "block";
+	document.getElementById("hide_until_signed2").style.display = "block";
+}
+
+function signatureClear() {
+    resizeCanvas();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+/* =========================
+   RESIZE
+========================= */
+window.addEventListener("resize", () => {
+    if (canvas) resizeCanvas();
+});
+/* =========================
+   RUN WHEN OPENING
+========================= */
+window.onload = function() {
+	document.getElementById("hide_until_signed").style.display = "none";
+	document.getElementById("hide_until_signed2").style.display = "none";
+};
