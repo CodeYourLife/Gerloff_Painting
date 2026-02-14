@@ -25,7 +25,7 @@ class Signature(models.Model):
     id = models.BigAutoField(primary_key=True)
     type = models.CharField(null=False, max_length=50)
     change_order_id = models.IntegerField(null=False)
-    signature = models.CharField(null=False, max_length=10000)
+    signature = models.TextField(null=False)
     name = models.CharField(null=False, max_length=50)
     notes = models.CharField(null=True, blank=True, max_length=1000)
     date = models.DateField(null=True, blank=True)
