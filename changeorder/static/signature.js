@@ -135,7 +135,6 @@ window.addEventListener("resize", () => {
    RUN WHEN OPENING
 ========================= */
 window.onload = function() {
-    alert("HI")
 	document.getElementById("hide_until_signed").style.display = "none";
 	document.getElementById("hide_until_signed2").style.display = "none";
 };

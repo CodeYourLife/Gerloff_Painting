@@ -71,8 +71,9 @@ def emailed_ticket(request, id):
         result_file.close()
         recipients = ["joe@gerloffpainting.com"]
         recipients.append(recipient)
+        job_name = changeorder.job_number.job_name
         try:
-            Email.sendEmail("Signed Gerloff Painting Ticket", "The signed ticket is attached", recipients,
+            Email.sendEmail("Signed Gerloff Painting Ticket", f"The signed ticket is attached for {changeorder.description} - {job_name}", recipients,
                             f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf")
             send_data['error_message'] = "The email with the signed ticket was successfully sent!"
         except:
@@ -82,7 +83,7 @@ def emailed_ticket(request, id):
 
     return render(request, "print_ticket2.html",
                   {'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
-                   'changeorder': changeorder, 'signature': signature, 'status': status})
+                   'changeorder': changeorder, 'signature': signature, 'status': status,'sundries':sundries})
 
 
 def email_for_signature(request, id):
@@ -979,8 +980,9 @@ def email_signed_ticket(request, changeorder):
                                                 user=current_user,
                                                 note="Signed Ticket emailed to " + str(recipients))
                 path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
+                job_name = changeorder.job_number.job_name
                 try:
-                    Email.sendEmail("Signed Ticket", "Please find the Signed Extra Work Ticket attached", recipients,
+                    Email.sendEmail(f"Signed Ticket {job_name}", f"Please find the Signed Extra Work Ticket attached for {job_name}", recipients,
                                     f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf")
                     success = True
                 except:
@@ -1378,7 +1380,8 @@ def extra_work_ticket(request, id):
                     recipient.phone=phone
                     recipient.email=email
                     recipient.save()
-            email_body = "You have received an extra work ticket from Gerloff Painting.  \nPlease click this link http://184.183.68.156/changeorder/emailed_ticket/" + str(changeorder.id)
+            job_name = changeorder.job_number.job_name
+            email_body = "You have received an extra work ticket from Gerloff Painting for " + changeorder.description + " at " + job_name + ".  \nPlease click this link http://184.183.68.156/changeorder/emailed_ticket/" + str(changeorder.id)
             recipients = ["joe@gerloffpainting.com"]
             recipients.append(email)
             try:
