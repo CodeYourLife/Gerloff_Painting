@@ -86,7 +86,28 @@ function resizeCanvas() {
    SAVE / CLEAR
 ========================= */
 function signatureSave2() {
-    const dataURL = canvas.toDataURL("image/png");
+
+    const canvas = document.getElementById("newSignature");
+
+    // Create a smaller temporary canvas
+    const tempCanvas = document.createElement("canvas");
+    const scale = 0.7;  // 70% of original size
+
+    tempCanvas.width = canvas.width * scale;
+    tempCanvas.height = canvas.height * scale;
+
+    const tempCtx = tempCanvas.getContext("2d");
+
+    // White background (important for JPEG)
+    tempCtx.fillStyle = "#ffffff";
+    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+    // Draw scaled signature
+    tempCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+
+    // Export compressed JPEG (0.6 quality)
+    const dataURL = tempCanvas.toDataURL("image/jpeg", 0.6);
+
     document.getElementById("signatureValue").value = dataURL;
     document.getElementById("saveSignature").src = dataURL;
     document.getElementById("saveSignature").style.display = "block";
@@ -94,8 +115,9 @@ function signatureSave2() {
     canvas.style.display = "none";
     document.getElementById("saveSignatureBtn").style.display = "none";
     document.getElementById("clearSignatureBtn").style.display = "none";
-	document.getElementById("hide_until_signed").style.display = "block";
-	document.getElementById("hide_until_signed2").style.display = "block";
+
+    document.getElementById("hide_until_signed").style.display = "block";
+    document.getElementById("hide_until_signed2").style.display = "block";
 }
 
 function signatureClear() {
@@ -113,6 +135,7 @@ window.addEventListener("resize", () => {
    RUN WHEN OPENING
 ========================= */
 window.onload = function() {
+    alert("HI")
 	document.getElementById("hide_until_signed").style.display = "none";
 	document.getElementById("hide_until_signed2").style.display = "none";
 };
