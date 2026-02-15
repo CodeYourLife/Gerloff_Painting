@@ -203,7 +203,7 @@ window.onload = function() {
             <tr>
             {% endif %}
 
-            <td><a href='{% url "job_page" changeorder.job_number %}'>{{changeorder.job_name}}</a></td>
+            <td><a href='{% url "extra_work_ticket" changeorder.id %}'>{{changeorder.job_name}}</a></td>
             <td><a href='{% url "extra_work_ticket" changeorder.id %}'>{{changeorder.cop_number}}</a></td>
             <td>{{changeorder.description}}</td>
             <td>{{changeorder.status}}</td>

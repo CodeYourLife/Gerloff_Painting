@@ -260,7 +260,11 @@ textarea {
 <!--    entire ticket collection area here-->
     <div class="section-card">
         {% if status == 'NEW' %}
-            <form action="{% url 'emailed_ticket' changeorder.id %}" method="post">
+            {% if is_emailed_link %}
+                <form action="{% url 'emailed_ticket' changeorder.id %}" method="post">
+            {% else %}
+                <form action="{% url 'emailed_ticket' changeorder.id %}" method="post">
+            {% endif %}
                 {% csrf_token %}
     <!--            entire signature collection area-->
 
