@@ -61,9 +61,9 @@ def emailed_ticket(request, id):
         changeorder.is_ticket_signed = True
         changeorder.digital_ticket_signed_date = date.today()
         changeorder.save()
-        html = render_to_string("print_ticket2.html",
+        html = render_to_string("print_ticket.html",
                                 {'sundries':sundries,'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
-                                 'changeorder': changeorder, 'signature': signature, 'status': status})
+                                 'changeorder': changeorder, 'signature': signature, 'status': status,'is_emailed_link':True})
         pisa.CreatePDF(
             html,
             dest=result_file
@@ -81,9 +81,9 @@ def emailed_ticket(request, id):
             send_data['email_failed'] = True
         return render(request, "print_ticket3.html", send_data)
 
-    return render(request, "print_ticket2.html",
+    return render(request, "print_ticket.html",
                   {'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
-                   'changeorder': changeorder, 'signature': signature, 'status': status,'sundries':sundries})
+                   'changeorder': changeorder, 'signature': signature, 'status': status,'sundries':sundries,'is_emailed_link':True})
 
 
 def email_for_signature(request, id):

@@ -10,11 +10,14 @@ function signatureCapture() {
 
     ctx = canvas.getContext("2d");
 
-    resizeCanvas();
+    setTimeout(function() {
+        resizeCanvas();
+    }, 50);
 
     ctx.strokeStyle = "#000";
     ctx.lineWidth = 2;
     ctx.lineCap = "round";
+    ctx.lineJoin = "round";
 
     canvas.addEventListener("mousedown", startDraw);
     canvas.addEventListener("mousemove", draw);
@@ -32,10 +35,14 @@ function signatureCapture() {
 function startDraw(e) {
     e.preventDefault();
     drawing = true;
-    ctx.beginPath();
 
     const pos = getPos(e);
-    ctx.moveTo(pos.x, pos.y);
+
+    lastX = pos.x;
+    lastY = pos.y;
+
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
 }
 
 function draw(e) {
@@ -43,9 +50,17 @@ function draw(e) {
     e.preventDefault();
 
     const pos = getPos(e);
+
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
     ctx.lineTo(pos.x, pos.y);
     ctx.stroke();
+
+    lastX = pos.x;
+    lastY = pos.y;
 }
+
+
 
 function endDraw(e) {
     if (!drawing) return;
@@ -58,28 +73,32 @@ function endDraw(e) {
 ========================= */
 function getPos(e) {
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
 
-    let x, y;
+    let clientX, clientY;
+
     if (e.touches && e.touches[0]) {
-        x = (e.touches[0].clientX - rect.left) * scaleX;
-        y = (e.touches[0].clientY - rect.top) * scaleY;
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
     } else {
-        x = (e.clientX - rect.left) * scaleX;
-        y = (e.clientY - rect.top) * scaleY;
+        clientX = e.clientX;
+        clientY = e.clientY;
     }
-    return { x, y };
+
+    return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+    };
 }
 
+
 function resizeCanvas() {
-    const ratio = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
 
-    canvas.width = rect.width * ratio;
-    canvas.height = rect.height * ratio;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
 
-    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
 /* =========================
