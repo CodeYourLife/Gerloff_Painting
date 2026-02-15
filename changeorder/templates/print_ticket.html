@@ -135,7 +135,29 @@ textarea {
         font-size: 13px;
     }
 }
+/* ===== Labor Table Specific Fixes ===== */
+.labor-table {
+    table-layout: fixed;
+}
 
+.labor-table th,
+.labor-table td {
+    text-align: center;
+    white-space: nowrap;
+}
+
+.labor-table th:first-child,
+.labor-table td:first-child {
+    text-align: left;
+    white-space: normal;
+    width: 35%;
+}
+
+.labor-table th:not(:first-child),
+.labor-table td:not(:first-child) {
+    width: 8%;
+    font-size: 13px;
+}
 </style>
 </head>
 <body style="margin: 22px; font-family: Helvetica">
@@ -151,48 +173,50 @@ textarea {
     <!--    work description-->
     <div style="width: 100%;"><p><b>Work Description:</b>&nbsp;{{ewt.notes}}</p></div>
     <!--    employee table-->
-    <div class="section-card">
-        <div class="section-title">LABOR</div>
-        <table style="width: 100%">
-        <tr>
-        <th>Employee</th>
-        <th>M</th>
-        <th>T</th>
-        <th>W</th>
-        <th>Th</th>
-        <th>F</th>
-        <th>Sat</th>
-        <th>Sun</th>
-        </tr>
-        {% if laboritems %}
-        {% for x in laboritems %}
-        <tr>
-        <td>
-        {% if x.ot == True %}
-        {% if x.employee %}
-        <b>OT-</b>{{x.employee}}
-        {% else %}
-        <b>OT-</b>Painter{{x.custom_employee}}
-        {% endif %}
-        {% else %}
-        {% if x.employee %}
-        {{x.employee}}
-        {% else %}
-        Painter{{x.custom_employee}}
-        {% endif %}
-        {% endif %}
-        </td>
-        <td>{{x.monday}}</td>
-        <td>{{x.tuesday}}</td>
-        <td>{{x.wednesday}}</td>
-        <td>{{x.thursday}}</td>
-        <td>{{x.friday}}</td>
-        <td>{{x.saturday}}</td>
-        <td>{{x.sunday}}</td>
-        </tr>
-        {% endfor %}
-        {% endif %}
-        </table>
+    <div class="card mb-4">
+    <div class="card-body">
+
+        <h5 class="card-title">Labor</h5>
+
+        <div class="table-responsive">
+            <table class="labor-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>M</th>
+                        <th>T</th>
+                        <th>W</th>
+                        <th>Th</th>
+                        <th>F</th>
+                        <th>Sat</th>
+                        <th>Sun</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for x in laboritems %}
+                    <tr>
+                    <td>
+                    {% if x.ot %}<strong>OT-</strong>{% endif %}
+                    {% if x.employee %}
+                    {{x.employee}}
+                    {% else %}
+                    Painter{{x.custom_employee}}
+                    {% endif %}
+                    </td>
+                    <td>{{ x.monday|floatformat:1 }}</td>
+                    <td>{{ x.tuesday|floatformat:1 }}</td>
+                    <td>{{ x.wednesday|floatformat:1 }}</td>
+                    <td>{{ x.thursday|floatformat:1 }}</td>
+                    <td>{{ x.friday|floatformat:1 }}</td>
+                    <td>{{ x.saturday|floatformat:1 }}</td>
+                    <td>{{ x.sunday|floatformat:1 }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+            </table>
+        </div>
+
+    </div>
     </div>
     <hr style="width:100%">
      <!--    materials  table-->
@@ -329,7 +353,7 @@ textarea {
         <!--                            print name-->
                     <div style="margin-top:15px;">
                         <label><strong>Print Name</strong></label>
-                        <input type="text" id="signatureName" name="signatureName">
+                        <input type="text" id="signatureName" name="signatureName" required>
                         <input hidden id="signatureValue" name="signatureValue">
                     </div>
                     <!--                        comments-->
