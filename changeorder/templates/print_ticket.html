@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="{% static 'signature.js' %}"></script>
+    <script src="{% static 'signature.js' %}?v=4" defer></script>
 <!--    <script src="/static/signature.js"></script>-->
 <!--<script src="/static/signature.js?v=999"></script>-->
 
@@ -140,6 +140,7 @@ textarea {
 </head>
 <body style="margin: 22px; font-family: Helvetica">
 <div class="container-ticket">
+<!--    header info-->
     <div class="ticket-header">
         <div class="ticket-title">Gerloff Painting Extra Work Ticket</div>
         <div><strong>Job:</strong> {{changeorder.job_number}}</div>
@@ -369,7 +370,7 @@ textarea {
             <div style="width: 400px">APPROVED BY - {{changeorder.job_number.client}}</div>
         {% endif %}
     </div>
-<script>signatureCapture();</script>
+
 </div>
 </body>
 </html>
