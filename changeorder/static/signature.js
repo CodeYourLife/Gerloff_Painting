@@ -1,6 +1,7 @@
 let canvas, ctx;
 let drawing = false;
-
+let lastX = 0;
+let lastY = 0;
 /* =========================
    INIT
 ========================= */
@@ -99,6 +100,11 @@ function resizeCanvas() {
     canvas.height = rect.height * dpr;
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
 }
 
 /* =========================
@@ -157,3 +163,9 @@ window.onload = function() {
 	document.getElementById("hide_until_signed").style.display = "none";
 	document.getElementById("hide_until_signed2").style.display = "none";
 };
+
+document.addEventListener("DOMContentLoaded", function () {
+    if (document.getElementById("newSignature")) {
+        signatureCapture();
+    }
+});
