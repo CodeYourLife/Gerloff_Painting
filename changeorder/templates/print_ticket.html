@@ -186,10 +186,10 @@ textarea {
                         <th>M</th>
                         <th>T</th>
                         <th>W</th>
-                        <th>Th</th>
+                        <th>T</th>
                         <th>F</th>
-                        <th>Sat</th>
-                        <th>Sun</th>
+                        <th>S</th>
+                        <th>S</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -203,13 +203,13 @@ textarea {
                     Painter{{x.custom_employee}}
                     {% endif %}
                     </td>
-                    <td>{{ x.monday|floatformat:1 }}</td>
-                    <td>{{ x.tuesday|floatformat:1 }}</td>
-                    <td>{{ x.wednesday|floatformat:1 }}</td>
-                    <td>{{ x.thursday|floatformat:1 }}</td>
-                    <td>{{ x.friday|floatformat:1 }}</td>
-                    <td>{{ x.saturday|floatformat:1 }}</td>
-                    <td>{{ x.sunday|floatformat:1 }}</td>
+                        <td>{{ x.monday|default:0|floatformat:-1 }}</td>
+                        <td>{{ x.tuesday|default:0|floatformat:-1 }}</td>
+                        <td>{{ x.wednesday|default:0|floatformat:-1 }}</td>
+                        <td>{{ x.thursday|default:0|floatformat:-1 }}</td>
+                        <td>{{ x.friday|default:0|floatformat:-1 }}</td>
+                        <td>{{ x.saturday|default:0|floatformat:-1 }}</td>
+                        <td>{{ x.sunday|default:0|floatformat:-1 }}</td>
                     </tr>
                     {% endfor %}
                     </tbody>
