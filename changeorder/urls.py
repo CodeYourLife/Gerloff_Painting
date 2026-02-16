@@ -24,5 +24,5 @@ urlpatterns = [
     path('emailed_ticket/<id>', views.emailed_ticket, name='emailed_ticket'),
     path('revise_TM_COP/<id>', views.revise_TM_COP, name='revise_TM_COP'),
     path('change_order_email/<jobnumber>', views.change_order_email, name='change_order_email'),
-
+    path("changeorder/upload/<int:changeorder_id>/",views.upload_changeorder_file,name="upload_changeorder_file"),
 ]

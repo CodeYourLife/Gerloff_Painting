@@ -991,8 +991,7 @@ def job_page(request, jobnumber):
     send_data['pending_co_amount'] = ('{:,}'.format(selectedjob.pending_co_amount()))
     send_data['approved_co_amount'] = ('{:,}'.format(selectedjob.approved_co_amount()))
     tickets_not_done = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
-                                                   is_ticket_signed=False,
-                                                   is_old_form_printed=False, ewt__isnull=True).order_by('cop_number')
+                                                   is_ticket_signed=False, ewt__isnull=True).order_by('cop_number')
     send_data['tickets_not_done'] = tickets_not_done
     send_data['tickets_not_done_count'] = tickets_not_done.count()
     # tickets_not_signed = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
@@ -1000,7 +999,7 @@ def job_page(request, jobnumber):
     #                                                               is_old_form_printed=True)
     tickets_not_signed = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
                                                      is_ticket_signed=False,
-                                                     is_old_form_printed=True) | ChangeOrders.objects.filter(
+                                                     ) | ChangeOrders.objects.filter(
         job_number=selectedjob, is_t_and_m=True, is_ticket_signed=False, ewt__isnull=False).order_by('cop_number')
     send_data['tickets_not_signed'] = tickets_not_signed
     send_data['tickets_not_signed_count'] = tickets_not_signed.count()
