@@ -1,6 +1,7 @@
 from console.models import *
 from django.shortcuts import render, redirect
 import json
+from datetime import datetime
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
 from wallcovering.models import Wallcovering
@@ -10,6 +11,7 @@ from equipment.filters import SubcontractsFilter
 from django.contrib.auth.decorators import login_required
 from employees.models import *
 import datetime
+from datetime import date
 from console.misc import Email
 
 
@@ -1018,7 +1020,7 @@ def subcontract(request, id):
              'total_billed': round(x.total_billed(), 2), 'total_cost': round(x.total_cost(), 2)})
     send_data['items'] = items
     send_data['number_items'] = number_items
-    send_data['notes'] = SubcontractNotes.objects.filter(subcontract=subcontract)
+    send_data['notes'] = SubcontractNotes.objects.filter(subcontract=subcontract).order_by('id')
     send_data['total_retainage'] = 0-subcontract.total_retainage_approved()
     send_data['retainage_to_release'] = subcontract.total_retainage_approved()
     send_data['total_pending'] = subcontract.total_pending_amount()
@@ -1107,40 +1109,100 @@ def subcontract(request, id):
                             if not InvoiceApprovals.objects.filter(invoice=invoice, employee=job_super).exists():
                                 InvoiceApprovals.objects.create(employee=job_super, invoice=invoice)
             return redirect('subcontract', id=id)
-        if 'change_header' in request.POST:
+
+        subcontract_notes=""
+        subcontract_changed = False
+
+        if 'change_header' in request.POST: #they changed info in the header
+            if subcontract.po_number != request.POST['po_number']:
+                subcontract_notes += f"PO Number changed from {subcontract.po_number} to {request.POST['po_number']}"
+                subcontract_changed = True
             subcontract.po_number = request.POST['po_number']
+            new_date = date.fromisoformat(request.POST['issued_date'])
+            if subcontract.date != new_date:
+                subcontract_notes += f"PO Date changed from {subcontract.date} to {request.POST['issued_date']}"
+                subcontract_changed = True
             subcontract.date = request.POST['issued_date']
             if 'is_retainage' in request.POST:
+                if not subcontract.is_retainage:
+                    subcontract_notes += f"Retainage now being held"
+                    subcontract_changed = True
                 subcontract.is_retainage = True
             else:
+                if subcontract.is_retainage:
+                    subcontract_notes += f"Retainage not being held anymore"
+                    subcontract_changed = True
                 subcontract.is_retainage = False
+            if subcontract.retainage_percentage != Decimal(request.POST['retainage_percentage']):
+                subcontract_notes += f"Retainage changed from {subcontract.retainage_percentage} to {request.POST['retainage_percentage']}"
+                subcontract_changed = True
             subcontract.retainage_percentage = request.POST['retainage_percentage']
             if 'is_closed' in request.POST:
+                if not subcontract.is_closed:
+                    subcontract_notes += f"Subcontract closed"
+                    subcontract_changed = True
                 subcontract.is_closed = True
             else:
+                if subcontract.is_closed:
+                    subcontract_notes += f"Subcontract Re-Opened"
+                    subcontract_changed = True
                 subcontract.is_closed = False
             subcontract.save()
+            if subcontract_changed:
+                SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
+                                                user=Employees.objects.get(user=request.user),
+                                                note=subcontract_notes)
             return redirect("subcontract", subcontract.id)
-        if 'edit_now' in request.POST:
+        if 'edit_now' in request.POST: #they want to edited a row
             send_data['edit_row'] = request.POST['edit_existing_item']
             if request.POST['edit_existing_item'] != 'None Selected':
                 item = SubcontractItems.objects.get(id=request.POST['edit_existing_item'])
                 if item.invoice_item2.exists():
                     send_data['invoiced_already'] = True
-        if 'save_now' in request.POST:
+        if 'save_now' in request.POST:#edited a row
             item = SubcontractItems.objects.get(id=request.POST['item_edited'])
+            if item.SOV_description != request.POST['SOV_description']:
+                subcontract_notes += f"SOV description changed from {item.SOV_description} to {request.POST['SOV_description']}. "
+                subcontract_changed = True
             item.SOV_description = request.POST['SOV_description']
-            if 'SOV_total_ordered' in request.POST: item.SOV_total_ordered = request.POST['SOV_total_ordered']
-            if 'SOV_rate' in request.POST: item.SOV_rate = request.POST['SOV_rate']
+            if 'SOV_total_ordered' in request.POST:
+                if item.SOV_total_ordered != Decimal(request.POST['SOV_total_ordered']):
+                    subcontract_notes += f"{request.POST['SOV_description']} order quantity changed from {item.SOV_total_ordered} to {request.POST['SOV_total_ordered']}. "
+                    subcontract_changed = True
+                item.SOV_total_ordered = request.POST['SOV_total_ordered']
+            if 'SOV_rate' in request.POST:
+                if item.SOV_rate != Decimal(request.POST['SOV_rate']):
+                    subcontract_notes += f"{request.POST['SOV_description']} rate changed from {item.SOV_rate} to {request.POST['SOV_rate']}. "
+                    subcontract_changed = True
+                item.SOV_rate = request.POST['SOV_rate']
+                if item.SOV_is_lump_sum:
+                    item.SOV_total_ordered = request.POST['SOV_rate']
             if 'is_approved' in request.POST:
+                if not item.is_approved:
+                    subcontract_notes += f"{request.POST['SOV_description']} Approved For Future Billing. "
+                    subcontract_changed = True
                 item.is_approved = True
             else:
+                if item.is_approved:
+                    subcontract_notes += f"{request.POST['SOV_description']} No Longer Approved For Future Billing. "
+                    subcontract_changed = True
                 item.is_approved = False
+            if item.notes != request.POST['notes']:
+                subcontract_notes += f"{request.POST['SOV_description']} - Changed Note from - {item.notes} to - {request.POST['notes']}. "
+                subcontract_changed = True
             item.notes = request.POST['notes']
             item.save()
+            if subcontract_changed:
+                SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
+                                                user=Employees.objects.get(user=request.user),
+                                                note=subcontract_notes)
             return redirect("subcontract", subcontract.id)
         if 'delete_now' in request.POST:
             item = SubcontractItems.objects.get(id=request.POST['delete_existing_item'])
+            subcontract_notes = f"{item.SOV_description} - ({item.SOV_total_ordered} {item.SOV_unit}) - (${item.SOV_rate} {item.SOV_unit}) - {item.notes}- deleted. "
+            SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
+                                            user=Employees.objects.get(user=request.user),
+                                            note=subcontract_notes)
             item.delete()
             return redirect("subcontract", subcontract.id)
         if 'added_row' in request.POST:
@@ -1178,6 +1240,10 @@ def subcontract(request, id):
                                 item.wallcovering_id = Wallcovering.objects.get(
                                     id=request.POST['wallcovering_number' + str(x)])
                                 item.save()
+                    subcontract_notes = f"Item {item.SOV_description} added. "
+                    SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
+                                                    user=Employees.objects.get(user=request.user),
+                                                    note=subcontract_notes)
             return redirect("subcontract", subcontract.id)
         if 'new_note' in request.POST:
             SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
