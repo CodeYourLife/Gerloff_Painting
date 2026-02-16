@@ -64,14 +64,11 @@ class ChangeOrders(models.Model):
 
     def need_ticket(self):
         if self.is_t_and_m == True:
-            if self.is_old_form_printed == False:
-                if self.is_ticket_signed == False:
-                    if EWT.objects.filter(change_order=self).exists():
-                        return False
-                    else:
-                        return True
-                else:
+            if self.is_ticket_signed == False:
+                if EWT.objects.filter(change_order=self).exists():
                     return False
+                else:
+                    return True
             else:
                 return False
         else:

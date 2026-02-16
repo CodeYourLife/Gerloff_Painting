@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+
+@page {
+    size: letter portrait;
+    margin: 0.35in;
+}
+
+body {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 8px;
+    line-height: 1.1;
+}
+
+h1 {
+    font-size: 12px;
+    margin-bottom: 3px;
+}
+
+.section-title {
+    font-size: 9px;
+    font-weight: bold;
+    margin-top: 6px;
+    margin-bottom: 3px;
+}
+
+.header-block {
+    margin-bottom: 5px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 5px;
+    font-size: 8px;
+}
+
+th, td {
+    border: 1px solid #555;
+    padding: 2px;
+}
+
+th {
+    background-color: #eeeeee;
+}
+
+.center {
+    text-align: center;
+}
+
+.signature-block {
+    margin-top: 10px;
+}
+
+.signature-block img {
+    width: 160px;
+    height: 50px;
+}
+
+</style>
+
+</head>
+<body>
+
+<h1>Gerloff Painting Extra Work Ticket</h1>
+
+<div class="header-block">
+    <strong>Job:</strong> {{ changeorder.job_number }} |
+    <strong>CO #:</strong> {{ changeorder.cop_number }} |
+    <strong>Week:</strong> {{ ewt.week_ending }} |
+    <strong>By:</strong> {{ ewt.completed_by }}
+</div>
+
+<div>
+<div class="section-title">Work Description</div>
+<div>{{ ewt.notes }}</div>
+</div>
+
+<div class="section-title">Labor</div>
+
+<table>
+    <tr>
+        <th>Employee</th>
+        <th>M</th>
+        <th>T</th>
+        <th>W</th>
+        <th>Th</th>
+        <th>F</th>
+        <th>Sat</th>
+        <th>Sun</th>
+    </tr>
+
+    {% for x in laboritems %}
+    <tr>
+        <td>
+            {% if x.ot %}OT- {% endif %}
+            {% if x.employee %}
+                {{ x.employee }}
+            {% else %}
+                Painter{{ x.custom_employee }}
+            {% endif %}
+        </td>
+        <td class="center">{{ x.monday|default:0|floatformat:-1 }}</td>
+        <td class="center">{{ x.tuesday|default:0|floatformat:-1 }}</td>
+        <td class="center">{{ x.wednesday|default:0|floatformat:-1 }}</td>
+        <td class="center">{{ x.thursday|default:0|floatformat:-1 }}</td>
+        <td class="center">{{ x.friday|default:0|floatformat:-1 }}</td>
+        <td class="center">{{ x.saturday|default:0|floatformat:-1 }}</td>
+        <td class="center">{{ x.sunday|default:0|floatformat:-1 }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<div class="section-title">Materials</div>
+
+<table>
+    <tr>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Qty</th>
+        <th>Units</th>
+    </tr>
+
+    {% for x in materials %}
+    <tr>
+        <td class="center">Material</td>
+        <td>{{ x.description }}</td>
+        <td class="center">{{ x.quantity }}</td>
+        <td class="center">{{ x.units }}</td>
+    </tr>
+    {% endfor %}
+
+    {% for y in equipment %}
+    <tr>
+        <td class="center">Equipment</td>
+        <td>{{ y.description }}</td>
+        <td class="center">{{ y.quantity }}</td>
+        <td class="center">{{ y.units }}</td>
+    </tr>
+    {% endfor %}
+
+    {% for z in sundries %}
+    <tr>
+        <td class="center">Sundry</td>
+        <td>{{ z.description }}</td>
+        <td class="center">{{ z.quantity }}</td>
+        <td class="center">{{ z.units }}</td>
+    </tr>
+    {% endfor %}
+
+</table>
+
+<div class="section-title">Client Approval</div>
+
+{% if signature.signature %}
+<div class="signature-block">
+    <img src="{{ signature.signature }}"><br>
+    <strong>{{ signature.name }}</strong> – {{ signature.date }}
+    {% if signature.notes %}
+        <br>{{ signature.notes }}
+    {% endif %}
+</div>
+{% else %}
+<div class="signature-block">
+    ________________________________
+    {{ changeorder.job_number.client }}
+</div>
+{% endif %}
+
+</body>
+</html>

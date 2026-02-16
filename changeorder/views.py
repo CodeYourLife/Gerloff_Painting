@@ -6,9 +6,10 @@ from datetime import date, datetime
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.serializers.json import DjangoJSONEncoder
-from django.http import HttpResponse
-from django.shortcuts import render, redirect
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import get_template, render_to_string
+from django.utils.text import get_valid_filename
 from django.views.decorators.csrf import csrf_exempt
 from django_tables2 import RequestConfig
 from employees.models import *
@@ -16,6 +17,7 @@ from io import StringIO
 from jobs.models import Jobs, JobCharges, ClientEmployees, Email_Errors
 from media.utilities import MediaUtilities
 from media.utilities import MediaUtilities
+from .models import ChangeOrders
 from wallcovering.filters import ChangeOrderFilter
 from wallcovering.tables import ChangeOrderTable
 from xhtml2pdf import pisa
@@ -55,20 +57,33 @@ def emailed_ticket(request, id):
                                         user=Employees.objects.get(user=request.user),
                                         note="Digital Signature Received. Signed by: " + request.POST[
                                             'signatureName'] + ". Comments: " + request.POST['gc_notes'])
-        signature = Signature.objects.get(change_order_id=id)
-        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
-        result_file = open(f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf", "w+b")
         changeorder.is_ticket_signed = True
         changeorder.digital_ticket_signed_date = date.today()
         changeorder.save()
-        html = render_to_string("print_ticket.html",
+        signature = Signature.objects.get(change_order_id=id)
+        # Build folder path
+        path = os.path.join(
+            settings.MEDIA_ROOT,
+            "changeorder",
+            f"{changeorder.job_number.job_number} COP #{changeorder.cop_number}"
+        )
+        # Create folder if it doesn't exist
+        os.makedirs(path, exist_ok=True)
+
+        # Build full PDF file path
+        file_path = os.path.join(
+            path,
+            f"Signed_Extra_Work_Ticket_{date.today()}.pdf"
+        )
+
+        html = render_to_string("signed_ticket_pdf.html",
                                 {'sundries':sundries,'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
                                  'changeorder': changeorder, 'signature': signature, 'status': status,'is_emailed_link':True})
-        pisa.CreatePDF(
-            html,
-            dest=result_file
-        )
-        result_file.close()
+        # Create PDF
+        with open(file_path, "w+b") as result_file:
+            pisa.CreatePDF(html, dest=result_file)
+
+        # result_file.close()
         recipients = ["joe@gerloffpainting.com"]
         recipients.append(recipient)
         job_name = changeorder.job_number.job_name
@@ -889,15 +904,38 @@ def print_ticket(request, id, status):
                                         note="Ticket Printed for Wet Signature")
         changeorder.is_printed = True
         changeorder.save()
-        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
-        result_file = open(f"{path}/Unsigned_Extra_Work_Ticket_{date.today()}.pdf", "w+b")
-        html = render_to_string("print_ticket.html",
-                                {'sundries':sundries, 'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
-                                 'changeorder': changeorder, 'signature': signature, 'status': status})
-        pisa.CreatePDF(
-            html,
-            dest=result_file
+        # path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
+        # result_file = open(f"{path}/Unsigned_Extra_Work_Ticket_{date.today()}.pdf", "w+b")
+        # html = render_to_string("print_ticket.html",
+        #                         {'sundries':sundries, 'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
+        #                          'changeorder': changeorder, 'signature': signature, 'status': status})
+        # pisa.CreatePDF(
+        #     html,
+        #     dest=result_file
+        # )
+        # Build folder path
+        path = os.path.join(
+            settings.MEDIA_ROOT,
+            "changeorder",
+            f"{changeorder.job_number.job_number} COP #{changeorder.cop_number}"
         )
+        # Create folder if it doesn't exist
+        os.makedirs(path, exist_ok=True)
+
+        # Build full PDF file path
+        file_path = os.path.join(
+            path,
+            f"Signed_Extra_Work_Ticket_{date.today()}.pdf"
+        )
+
+        html = render_to_string("signed_ticket_pdf.html",
+                                {'sundries':sundries,'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
+                                 'changeorder': changeorder, 'signature': signature, 'status': status,'is_emailed_link':True})
+        # Create PDF
+        with open(file_path, "w+b") as result_file:
+            pisa.CreatePDF(html, dest=result_file)
+
+
         return redirect('extra_work_ticket', id=id)
     if request.method == 'POST':
         signatureValue = request.POST['signatureValue']
@@ -913,20 +951,31 @@ def print_ticket(request, id, status):
                                         user=Employees.objects.get(user=request.user),
                                         note="Digital Signature Received. Signed by: " + request.POST[
                                             'signatureName'] + ". Comments: " + request.POST['gc_notes'])
-        signature = Signature.objects.get(change_order_id=id)
-        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
-        result_file = open(f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf", "w+b")
         changeorder.is_ticket_signed = True
         changeorder.digital_ticket_signed_date = date.today()
         changeorder.save()
-        html = render_to_string("print_ticket.html",
-                                {'sundries':sundries,'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
-                                 'changeorder': changeorder, 'signature': signature, 'status': status})
-        pisa.CreatePDF(
-            html,
-            dest=result_file
+        signature = Signature.objects.get(change_order_id=id)
+        # Build folder path
+        path = os.path.join(
+            settings.MEDIA_ROOT,
+            "changeorder",
+            f"{changeorder.job_number.job_number} COP #{changeorder.cop_number}"
         )
-        result_file.close()
+        # Create folder if it doesn't exist
+        os.makedirs(path, exist_ok=True)
+
+        # Build full PDF file path
+        file_path = os.path.join(
+            path,
+            f"Signed_Extra_Work_Ticket_{date.today()}.pdf"
+        )
+
+        html = render_to_string("signed_ticket_pdf.html",
+                                {'sundries':sundries,'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
+                                 'changeorder': changeorder, 'signature': signature, 'status': status,'is_emailed_link':True})
+        # Create PDF
+        with open(file_path, "w+b") as result_file:
+            pisa.CreatePDF(html, dest=result_file)
         return redirect('email_signed_ticket', changeorder=changeorder.id)
 
     return render(request, "print_ticket.html",
@@ -1280,54 +1329,12 @@ def extra_work_ticket(request, id):
     Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
     changeorder = ChangeOrders.objects.get(id=id)
     send_data['changeorder'] = changeorder
-    send_data['client_list']= ClientEmployees.objects.filter(id=changeorder.job_number.client)
-    send_data['client_list_json'] = json.dumps(list(ClientEmployees.objects.filter(id=changeorder.job_number.client).values()), cls=DjangoJSONEncoder)
-    ticket_needed = changeorder.need_ticket()
-    send_data['ticket_needed'] = ticket_needed
-    notes = ChangeOrderNotes.objects.filter(cop_number=id)
-    send_data['notes'] = notes
+
     job = changeorder.job_number
-    send_data['formals'] = job.formals()
-    send_data['approved'] = ChangeOrders.objects.filter(job_number=job, is_approved=True, is_closed=False)
-    send_data['pending'] = ChangeOrders.objects.filter(job_number=job, is_approved=False, is_closed=False)
-    if EWT.objects.filter(change_order=changeorder).exists():
-        send_data['EWT'] = EWT.objects.get(change_order=changeorder)
-    tmproposal = []
-    foldercontents = []
-    try:
-        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
-        foldercontents = os.listdir(path)
-        send_data['foldercontents'] = foldercontents
-    except Exception as e:
-        send_data['no_folder_contents'] = True
-    send_data['folder_path'] = rf"\\gp-webserver\trinity\changeorder\{changeorder.job_number.job_number} COP #{changeorder.cop_number}"
-
-    #---send plan folders to select from, to create shortcuts to those folders --#
-    BASE_JOBS_PATH = r"\\gp2022\company\jobs\open jobs"
-    job_folder_name = f"{changeorder.job_number.job_number} {changeorder.job_number.job_name}"
-    plans_folder = os.path.join(BASE_JOBS_PATH, job_folder_name, "plans")
-    lnk_path = find_post_bid_docs_shortcut(plans_folder)
-    post_bid_docs_target = None
-    if lnk_path:
-        post_bid_docs_target = resolve_shortcut(lnk_path)
-    if post_bid_docs_target and os.path.isdir(post_bid_docs_target):
-        send_data['post_bid_doc_folders'] = get_subfolders(post_bid_docs_target)
-    else:
-        send_data['post_bid_doc_folders'] = []
-
-    # if TMList.objects.filter(change_order=changeorder).exists():
-    #     TMList.objects.filter(change_order=changeorder).delete()
-    # if TMProposal.objects.filter(change_order=changeorder).exists():
-    #     TMProposal.objects.filter(change_order=changeorder).delete()
-
-    if TMProposal.objects.filter(change_order=changeorder):
-        tmproposal = TMProposal.objects.get(change_order=changeorder)
-    send_data['tmproposal'] = tmproposal
-    client_ip = get_client_ip(request)
-    can_open_folder = is_internal_ip(client_ip)
-    send_data['can_open_folder'] = can_open_folder
-    if request.method == 'GET':
-        return render(request, "extra_work_ticket.html", send_data)
+    # print("PUMPKIN")
+    # if request.method == 'GET':
+    #     print("THIS ONE")
+    #     return render(request, "extra_work_ticket.html", send_data)
     if request.method == 'POST':
         if "create_post_bid_doc_shortcuts" in request.POST:
             selected_folders = request.POST.getlist("folders")
@@ -1498,9 +1505,88 @@ def extra_work_ticket(request, id):
                     changeordernote = ChangeOrderNotes.objects.create(
                         note="No Longer T&M: " + request.POST['no_tm_notes'], cop_number=changeorder, date=date.today(),
                         user=Employees.objects.get(user=request.user))
-        notes = ChangeOrderNotes.objects.filter(cop_number=id)
-        send_data['notes'] = ChangeOrderNotes.objects.filter(cop_number=id)
-        return render(request, "extra_work_ticket.html", send_data)
+    send_data['client_list']= ClientEmployees.objects.filter(id=changeorder.job_number.client)
+    send_data['client_list_json'] = json.dumps(list(ClientEmployees.objects.filter(id=changeorder.job_number.client).values()), cls=DjangoJSONEncoder)
+    ticket_needed = changeorder.need_ticket()
+    send_data['ticket_needed'] = ticket_needed
+    client_ip = get_client_ip(request)
+    can_open_folder = is_internal_ip(client_ip)
+    send_data['can_open_folder'] = can_open_folder
+    send_data['formals'] = job.formals()
+    send_data['approved'] = ChangeOrders.objects.filter(job_number=job, is_approved=True, is_closed=False)
+    send_data['pending'] = ChangeOrders.objects.filter(job_number=job, is_approved=False, is_closed=False)
+    if EWT.objects.filter(change_order=changeorder).exists():
+        send_data['EWT'] = EWT.objects.get(change_order=changeorder)
+    tmproposal = []
+    foldercontents = []
+    try:
+        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
+        foldercontents = os.listdir(path)
+        send_data['foldercontents'] = foldercontents
+    except Exception as e:
+        send_data['no_folder_contents'] = True
+    send_data['folder_path'] = rf"\\gp-webserver\trinity\changeorder\{changeorder.job_number.job_number} COP #{changeorder.cop_number}"
+
+    #---send plan folders to select from, to create shortcuts to those folders --#
+    BASE_JOBS_PATH = r"\\gp2022\company\jobs\open jobs"
+    job_folder_name = f"{changeorder.job_number.job_number} {changeorder.job_number.job_name}"
+    plans_folder = os.path.join(BASE_JOBS_PATH, job_folder_name, "plans")
+    lnk_path = find_post_bid_docs_shortcut(plans_folder)
+    post_bid_docs_target = None
+    if lnk_path:
+        post_bid_docs_target = resolve_shortcut(lnk_path)
+    if post_bid_docs_target and os.path.isdir(post_bid_docs_target):
+        send_data['post_bid_doc_folders'] = get_subfolders(post_bid_docs_target)
+    else:
+        send_data['post_bid_doc_folders'] = []
+
+    if TMProposal.objects.filter(change_order=changeorder):
+        tmproposal = TMProposal.objects.get(change_order=changeorder)
+    send_data['tmproposal'] = tmproposal
+    send_data['notes'] = ChangeOrderNotes.objects.filter(cop_number=id)
+    status = ""
+    send_status = ""
+    send_data['ticket_status_class'] = "status-gray"
+    send_data['send_status_class'] = "status-gray"
+    if changeorder.is_approved:
+        if changeorder.is_approved_to_bill:
+            send_status = f"Approved For Billing- GC#{changeorder.gc_number}"
+            send_data['send_status_class'] = "status-success"
+        else:
+            send_status = "Informally Approved"
+            send_data['send_status_class'] = "status-success"
+    elif changeorder.date_sent:
+        send_status = f"Sent Price of ${changeorder.price} on {changeorder.date_sent}"
+        send_data['send_status_class'] = "status-info"
+    else:
+        send_status = "Change Order Not Sent Yet"
+        send_data['send_status_class'] = "status-danger"
+        if changeorder.is_t_and_m:
+            if changeorder.is_ticket_signed:
+                send_data['ticket_status_class'] = "status-gray"
+                if changeorder.digital_ticket_signed_date:
+                    status = f"Digital Ticket Signed on {changeorder.digital_ticket_signed_date}"
+                else:
+                    status = "Ticket Signed. "
+            else:
+                send_data['ticket_status_class'] = "status-warning"
+                if changeorder.is_old_form_printed:
+                    status = "Blank Ticket Printed. "
+                if EWT.objects.filter(change_order=changeorder).exists():
+                    ewt = EWT.objects.filter(change_order=changeorder).first()
+                    if ewt.recipient:
+                        status = status + f"Digital Ticket Emailed To {ewt.recipient}. "
+                    else:
+                        status = status + "Digital Ticket Entered. "
+                if changeorder.is_printed:
+                    status = status + "Printed Digital T&M Entries for Wet Signature. "
+                if not EWT.objects.filter(change_order=changeorder).exists():
+                    status = "No Ticket Has Been Completed Yet"
+                    send_data['ticket_status_class'] = "status-danger"
+
+    send_data['status'] = status
+    send_data['send_status'] = send_status
+    return render(request, "extra_work_ticket.html", send_data)
 
 
 def getChangeorderFolder(request):
@@ -1763,3 +1849,32 @@ def process_ewt(request, id):
 @login_required(login_url='/accounts/login')
 def get_directory_contents(request, id, value, app):
     return MediaUtilities().getDirectoryContents(id, value, app)
+
+
+def upload_changeorder_file(request, changeorder_id):
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request"}, status=400)
+
+    changeorder = get_object_or_404(ChangeOrders, id=changeorder_id)
+
+    if not request.FILES:
+        return JsonResponse({"error": "No files received"}, status=400)
+
+    # Build folder path
+    folder_path = os.path.join(
+        settings.MEDIA_ROOT,
+        "changeorder",
+        f"{changeorder.job_number.job_number} COP #{changeorder.cop_number}"
+    )
+
+    os.makedirs(folder_path, exist_ok=True)
+
+    for uploaded_file in request.FILES.getlist("upload_file"):
+        filename = get_valid_filename(uploaded_file.name)
+        file_path = os.path.join(folder_path, filename)
+
+        with open(file_path, "wb+") as destination:
+            for chunk in uploaded_file.chunks():
+                destination.write(chunk)
+
+    return JsonResponse({"success": True})
