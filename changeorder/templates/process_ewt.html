@@ -1,8 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-<!DOCTYPE html>
-<html>
-<head>
+<div class="container-fluid mt-4 mb-5">
 	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 	<title>Trinity GP</title>
@@ -343,28 +341,47 @@ if (elementTypeSelector[i].value =='please_select'){
 }
 }
 
-	</script>
-</head>
-<body>
-<h1>EXTRA WORK TICKET!</h1>
-<div id="co_number" ></div>
-<h2>{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} - {{changeorder.description}}</h2>
-<br>
+</script>
 
-<br>
+<!--header-->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h3 class="mb-2">Extra Work Ticket</h3>
+        <div class="text-muted">
+            {{changeorder.job_number.job_number}} -
+            {{changeorder.job_number.job_name}} -
+            {{changeorder.description}}
+        </div>
+    </div>
+</div>
+<br><br>
+
+
 <form name="ticket_input" action="{% url 'process_ewt' changeorder.id %}" method="post" onSubmit="return before_post()" >
-	{% csrf_token %}
-	<label for="date_week_ending">Week Ending Date</label>
-	<input type="date" id="date_week_ending" name="date_week_ending" value = {{ewtdate}} required>
+{% csrf_token %}
+<div class="row mb-3">
+    <div class="col-12 col-md-4">
+        <label>Week Ending Date</label>
+        <input type="date"
+               class="form-control"
+               name="date_week_ending"
+               value="{{ewtdate}}"
+               required>
+    </div>
+</div>
 
+<div class="form-group">
+    <label>Details of Work Completed</label>
+    <textarea class="form-control"
+              name="ticket_description"
+              rows="3">{% if ewt %}{{ewt.notes}}{% endif %}</textarea>
+</div>
+<hr>
+<br /> <hr>
 
-	<label for="ticket_description">Details of Work Completed </label> <br>
-        <textarea id="ticket_description" name="ticket_description" rows="4" cols="100" >{% if ewt %}{{ewt.notes}}{% endif %}</textarea>
-        <br /> <hr>
-
-	<h3>LABOR BREAKDOWN</h3>
+<h3>LABOR BREAKDOWN</h3>
 <div class="table-responsive">
-	<table id="labor_breakdown" class="display" style="width:90%" >
+	    <table id="labor_breakdown" class="table table-sm table-bordered table-striped">
 		<thead>
 			<tr>
 				<th>Employee Name</th>
@@ -380,30 +397,27 @@ if (elementTypeSelector[i].value =='please_select'){
 			</tr>
 		</thead>
 		<tbody>
-
 		{% if laboritems %}
-		{% for x in laboritems %}
-
+			{% for x in laboritems %}
 			<tr id="row1">
-
 				<td>
-					<select id="existing_painter" name="existing_painter" >
-						{% if x.employee %}
-{% for y in employees %} {% if y.id == x.employee_id %}
-                	<option value={{y.id}}>{{y.first_name}} {{y.last_name}}</option>
-{% endif %}{% endfor %}
-						{% else %}
+					<select class="form-control form-control-sm" id="existing_painter" name="existing_painter" >
+				{% if x.employee %}
+					{% for y in employees %} {% if y.id == x.employee_id %}
+                		<option value={{y.id}}>{{y.first_name}} {{y.last_name}}</option>
+					{% endif %}{% endfor %}
+				{% else %}
 						<option value='painter{{x.custom_employee}}'>Painter {{x.custom_employee}}</option>
-						{% endif %}
+				{% endif %}
             		</select>
 				</td>
-				<td><input type="number" id="monday" name="monday" size=2 value ={{x.monday}} ></td>
-				<td><input type="number" id="tuesday" name="tuesday" value ={{x.tuesday}} size=2 ></td>
-				<td><input type="number" id="wednesday" name="wednesday" value ={{x.wednesday}} size=2 ></td>
-				<td><input type="number" id="thursday" name="thursday" value ={{x.thursday}} size=2 ></td>
-				<td><input type="number" id="friday" name="friday" value ={{x.friday}} size=2 ></td>
-				<td><input type="number" id="saturday" name="saturday" value ={{x.saturday}} size=2 ></td>
-				<td><input type="number" id="sunday" name="sunday" value ={{x.sunday}} size=2 ></td>
+				<td><input type="number" id="monday" name="monday" class="form-control form-control-sm" value ={{x.monday}} ></td>
+				<td><input type="number" id="tuesday" name="tuesday" value ={{x.tuesday}} class="form-control form-control-sm" ></td>
+				<td><input type="number" id="wednesday" name="wednesday" value ={{x.wednesday}} class="form-control form-control-sm" ></td>
+				<td><input type="number" id="thursday" name="thursday" value ={{x.thursday}} class="form-control form-control-sm" ></td>
+				<td><input type="number" id="friday" name="friday" value ={{x.friday}} class="form-control form-control-sm" ></td>
+				<td><input type="number" id="saturday" name="saturday" value ={{x.saturday}} class="form-control form-control-sm" ></td>
+				<td><input type="number" id="sunday" name="sunday" value ={{x.sunday}} class="form-control form-control-sm" ></td>
 				{% if x.master_id == 8 %}
 				<td>OT?
 					<input type='hidden' value='notchecked' name="is_overtime" id="is_overtime" >
@@ -413,150 +427,132 @@ if (elementTypeSelector[i].value =='please_select'){
 					<input type='hidden' value='notchecked' name="is_overtime" id="is_overtime" >
 					<input type="checkbox" name="is_overtime" id="is_overtime" value="checked"  />
 				{% endif %}
-			</td>
+				</td>
 				<td><button type="button" onclick="delete_row(this)">Delete </button></td>
 			</tr>
-
 		{% endfor %}
-		{% endif %}
+	{% endif %}
 
 		</tbody>
 	</table>
 </div>
-	<button type="button" class="btn btn-info btn-sm" onclick="add_painter_row()">Add Painter Row </button>
+<button type="button" class="btn btn-outline-warning btn-sm mt-2 w-100 w-md-auto" onclick="add_painter_row()">Add Painter Row </button>
 <br><br><hr>
-	<h3>MATERIAL BREAKDOWN</h3>
-	<table id="material_breakdown" class="display" style="width:90%" >
-		<thead>
-			<tr>
-				<th>Item</th>
-				<th>Description</th>
-				<th>Quantity</th>
-				<th>Units</th>
-				<th>Delete</th>
-
-			</tr>
-		</thead>
-		<tbody>
-				{% if materialitems %}
-		{% for x in materialitems %}
-
-			<tr>
-				<td>
-
-			<select id="existing_material" name="existing_material" >
-
-					{% for y in materials %}  {% if y.id == x.master_id %}
-                	<option value={{y.id}}>{{y.item}}</option>
-                {% endif %}
-				{% endfor %}
-
-            		</select>
-				</td>
-				<td><input type="text" name="description" placeholder="description" size="30" id="description" value = "{{x.description}}" /></td>
-				<td><input type="number" id="quantity" name = "quantity" size="5" value = {{x.quantity}} /></td>
-				<td><input type="text" name="units" placeholder="units" size="10" id="units" value = "{{x.units}}"  /></td>
-<td><button type="button" onclick="delete_row(this)">Delete </button></td>
-			</tr>
-
-				{% endfor %}
-		 {% endif %}
-		</tbody>
-	</table>
-	<button type="button" class="btn btn-info btn-sm" onclick="add_material_row()">Add Material Row </button>
+<h3>MATERIAL BREAKDOWN</h3>
+<table id="material_breakdown" class="table table-sm table-bordered table-striped">
+	<thead>
+		<tr>
+			<th>Item</th>
+			<th>Description</th>
+			<th>Quantity</th>
+			<th>Units</th>
+			<th>Delete</th>
+		</tr>
+	</thead>
+	<tbody>
+{% if materialitems %}
+	{% for x in materialitems %}
+		<tr>
+			<td>
+				<select class="form-control form-control-sm" id="existing_material" name="existing_material" >
+		{% for y in materials %}  {% if y.id == x.master_id %}
+					<option value={{y.id}}>{{y.item}}</option>
+		{% endif %}
+		{% endfor %}
+				</select>
+			</td>
+			<td><input type="text" name="description" placeholder="description" class="form-control form-control-sm" id="description" value = "{{x.description}}" /></td>
+			<td><input type="number" id="quantity" name = "quantity" class="form-control form-control-sm" value = {{x.quantity}} /></td>
+			<td><input type="text" name="units" placeholder="units" size="10" id="units" value = "{{x.units}}"  /></td>
+			<td><button type="button" onclick="delete_row(this)">Delete </button></td>
+		</tr>
+	{% endfor %}
+ {% endif %}
+	</tbody>
+</table>
+<button type="button" class="btn btn-outline-warning btn-sm mt-2 w-100 w-md-auto" onclick="add_material_row()">Add Material Row </button>
 <br><hr>
-	<h3>EQUIPMENT BREAKDOWN</h3>
-	<table id="equipment_breakdown" class="display" style="width:90%" >
-		<thead>
-			<tr>
-				<th>Item</th>
-				<th>Description</th>
-				<th>Quantity</th>
-				<th>Units</th>
-				<th>Delete</th>
+<h3>EQUIPMENT BREAKDOWN</h3>
+<table id="equipment_breakdown" class="table table-sm table-bordered table-striped">
+	<thead>
+		<tr>
+			<th>Item</th>
+			<th>Description</th>
+			<th>Quantity</th>
+			<th>Units</th>
+			<th>Delete</th>
+		</tr>
+	</thead>
+	<tbody>
+{% if equipmentitems %}
+	{% for x in equipmentitems %}
+		<tr>
+			<td>
+				<select class="form-control form-control-sm" id="existing_equipment" name="existing_equipment" >
+		{% for y in equipment %}  {% if y.id == x.master_id %}
+						<option value={{y.id}}>{{y.item}}</option>
+		{% endif %}
+		{% endfor %}
+				</select>
+			</td>
+			<td><input type="text" name="equip_description" class="form-control form-control-sm" id="equip_description" value = "{{x.description}}" /></td>
+			<td><input type="number" id="equip_quantity" name = "equip_quantity" class="form-control form-control-sm" value = {{x.quantity}} /></td>
+			<td><input type="text" name="equip_units" placeholder="units" size="10" id="equip_units" value = "{{x.units}}"  /></td>
+			<td><button type="button" onclick="delete_row(this)">Delete </button></td>
+		</tr>
 
-			</tr>
-		</thead>
-		<tbody>
-				{% if equipmentitems %}
-		{% for x in equipmentitems %}
-
-			<tr>
-				<td>
-
-			<select id="existing_equipment" name="existing_equipment" >
-
-					{% for y in equipment %}  {% if y.id == x.master_id %}
-                	<option value={{y.id}}>{{y.item}}</option>
-                {% endif %}
-				{% endfor %}
-
-            		</select>
-				</td>
-				<td><input type="text" name="equip_description" size="30" id="equip_description" value = "{{x.description}}" /></td>
-				<td><input type="number" id="equip_quantity" name = "equip_quantity" size="5" value = {{x.quantity}} /></td>
-				<td><input type="text" name="equip_units" placeholder="units" size="10" id="equip_units" value = "{{x.units}}"  /></td>
-<td><button type="button" onclick="delete_row(this)">Delete </button></td>
-			</tr>
-
-				{% endfor %}
-		 {% endif %}
-		</tbody>
-	</table>
-<button type="button" class="btn btn-info btn-sm" onclick="add_equipment_row()">Add Equipment </button>
+	{% endfor %}
+ {% endif %}
+	</tbody>
+</table>
+<button type="button" class="btn btn-outline-warning btn-sm mt-2 w-100 w-md-auto" onclick="add_equipment_row()">Add Equipment </button>
 <br><hr>
-	<h3>SUNDRIES BREAKDOWN</h3>
-	<table id="sundries_breakdown" class="display" style="width:90%" >
-		<thead>
-			<tr>
-				<th>Item</th>
-				<th>Description</th>
-				<th>Quantity</th>
-				<th>Units</th>
-				<th>Delete</th>
-
-			</tr>
-		</thead>
-		<tbody>
-				{% if sundriesitems %}
-		{% for x in sundriesitems %}
-
-			<tr>
-				<td>
-
-			<select id="existing_sundries" name="existing_sundries" >
-
-					{% for y in sundries %}  {% if y.id == x.master_id %}
-                	<option value={{y.id}}>{{y.item}}</option>
-                {% endif %}
-				{% endfor %}
-
-            		</select>
-				</td>
-				<td><input type="text" name="sundries_description" size="30" id="sundries_description" value = "{{x.description}}" /></td>
-				<td><input type="number" id="sundries_quantity" name = "sundries_quantity" size="5" value = {{x.quantity}} /></td>
-				<td><input type="text" name="sundries_units" placeholder="units" size="10" id="sundries_units" value = "{{x.units}}"  /></td>
-<td><button type="button" onclick="delete_row(this)">Delete </button></td>
-			</tr>
-
-				{% endfor %}
-		 {% endif %}
-		</tbody>
-	</table>
-<button type="button" class="btn btn-info btn-sm" onclick="add_sundries_row()">Add Sundries </button>
+<h3>SUNDRIES BREAKDOWN</h3>
+<table id="sundries_breakdown" class="table table-sm table-bordered table-striped">
+	<thead>
+		<tr>
+			<th>Item</th>
+			<th>Description</th>
+			<th>Quantity</th>
+			<th>Units</th>
+			<th>Delete</th>
+		</tr>
+	</thead>
+	<tbody>
+{% if sundriesitems %}
+	{% for x in sundriesitems %}
+		<tr>
+			<td>
+				<select class="form-control form-control-sm" id="existing_sundries" name="existing_sundries" >
+		{% for y in sundries %}  {% if y.id == x.master_id %}
+					<option value={{y.id}}>{{y.item}}</option>
+					{% endif %}
+					{% endfor %}
+				</select>
+			</td>
+			<td><input type="text" name="sundries_description" class="form-control form-control-sm" id="sundries_description" value = "{{x.description}}" /></td>
+			<td><input type="number" id="sundries_quantity" name = "sundries_quantity" class="form-control form-control-sm" value = {{x.quantity}} /></td>
+			<td><input type="text" name="sundries_units" placeholder="units" size="10" id="sundries_units" value = "{{x.units}}"  /></td>
+			<td><button type="button" onclick="delete_row(this)">Delete </button></td>
+		</tr>
+	{% endfor %}
+{% endif %}
+	</tbody>
+</table>
+<button type="button" class="btn btn-outline-warning btn-sm mt-2 w-100 w-md-auto" onclick="add_sundries_row()">Add Sundries </button>
 <br><br>
-	<input type="hidden" name="number_painters" value="0" size="30" id="number_painters"/>
-	<input type="hidden" name="number_materials" value="0" size="30" id="number_materials"/>
-	<input type="hidden" name="number_equipment" value="0" size="30" id="number_equipment"/>
-	<input type="hidden" name="number_sundries" value="0" size="30" id="number_sundries"/>
-    <input type="submit" class="btn btn-primary btn-sm" value="Submit Ticket" />
-	<br>
-	<br>
+<input type="hidden" name="number_painters" value="0" id="number_painters"/>
+<input type="hidden" name="number_materials" value="0" id="number_materials"/>
+<input type="hidden" name="number_equipment" value="0" id="number_equipment"/>
+<input type="hidden" name="number_sundries" value="0" id="number_sundries"/>
+<input type="submit" class="btn btn-outline-primary btn-sm mt-2 w-100 w-md-auto" value="Submit Ticket" />
+<br>
+<br>
 </form>
 
 
 
-</body>
-</html>
 
+
+</div>
 {% endblock %}

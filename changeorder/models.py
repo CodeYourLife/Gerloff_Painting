@@ -150,7 +150,7 @@ class EWTicket(models.Model):
     description = models.CharField(null=True, max_length=2000)
     quantity = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     units = models.CharField(null=True, max_length=50)
-    custom_employee = models.DecimalField(max_digits=3, decimal_places=0, null=True)
+    custom_employee = models.CharField(max_length=150,null=True,blank=True)
 
     def __str__(self):
         return f"{self.EWT} {self.master}"

@@ -1,0 +1,1399 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid mt-4">
+    <!--header-->
+    <div class="card shadow-sm mb-4">
+    <div class="card-body">
+
+        <div class="row">
+            <div class="col-md-8">
+                <h4 class="mb-1">
+                    {{ change_order.job_number.job_name }}
+                </h4>
+                <div class="text-muted">
+                    Job #{{ change_order.job_number.job_number }}
+                </div>
+            </div>
+
+            <div class="col-md-4 text-md-right mt-3 mt-md-0">
+                <div class="font-weight-bold">
+                    Change Order
+                </div>
+                <div>
+                    #{{ change_order.cop_number }}
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <div>
+            <label class="font-weight-bold mb-1">Change Order Description:</label>
+            <div class="text-muted">
+                {{ change_order.description }}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <!-- Week Ending -->
+        <div class="form-group">
+            <label>Week Ending</label>
+            <input type="date"
+                   name="week_ending"
+                   class="form-control"
+                   required>
+        </div>
+        <!-- Work Description -->
+        <div class="form-group mt-3">
+            <label>Notes / Work Description</label>
+            <textarea name="notes"
+                      class="form-control"
+                      rows="3"></textarea>
+        </div>
+
+
+                <!-- Labor Section goes here -->
+        <div>
+        <h5 class="mt-4 mb-3">Labor Breakdown</h5>
+
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered text-center" id="labor_table">
+                <thead class="thead-dark">
+                    <tr>
+                        <th style="width:120px;"></th>
+                        <th>M</th>
+                        <th>T</th>
+                        <th>W</th>
+                        <th>TH</th>
+                        <th>F</th>
+                        <th>S</th>
+                        <th>S</th>
+                    </tr>
+                </thead>
+                <tbody id="labor_body">
+                </tbody>
+            </table>
+        </div>
+
+        <button type="button"
+                class="btn btn-primary mt-3"
+                data-toggle="modal"
+                data-target="#addPainterModal">
+            + Add Painter
+        </button>
+
+        <input type="hidden" name="painter_count" id="painter_count" value="0">
+        <div id="hidden_labor_inputs"></div>
+
+        <hr>
+        </div>
+        <!--    material breakdown-->
+        <div>
+        <h5 class="mt-5 mb-3">Material Breakdown</h5>
+
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered text-center">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Description</th>
+                        <th>Quantity</th>
+                        <th>Units</th>
+                        <th style="width:80px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="material_body">
+                </tbody>
+            </table>
+        </div>
+
+        <button type="button"
+                class="btn btn-primary mt-3"
+                data-toggle="modal"
+                data-target="#addMaterialModal">
+            + Add Material
+        </button>
+
+        <input type="hidden" name="material_count" id="material_count" value="0">
+        <div id="hidden_material_inputs"></div>
+
+        <hr>
+        </div>
+        <!--    equipment section-->
+        <div>
+        <h5 class="mt-5 mb-3">Equipment Breakdown</h5>
+
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered text-center">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Description</th>
+                    <th>Quantity</th>
+                    <th>Units</th>
+                    <th style="width:80px;"></th>
+                </tr>
+            </thead>
+            <tbody id="equipment_body">
+            </tbody>
+        </table>
+    </div>
+
+    <button type="button"
+            class="btn btn-primary mt-3"
+            data-toggle="modal"
+            data-target="#addEquipmentModal">
+        + Add Equipment
+    </button>
+
+    <input type="hidden" name="equipment_count" id="equipment_count" value="0">
+    <div id="hidden_equipment_inputs"></div>
+
+    <hr>
+    </div>
+        <!--sundries section-->
+        <div>
+        <h5 class="mt-5 mb-3">Sundries Breakdown</h5>
+
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered text-center">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Description</th>
+                    <th>Quantity</th>
+                    <th>Units</th>
+                    <th style="width:80px;"></th>
+                </tr>
+            </thead>
+            <tbody id="sundries_body">
+            </tbody>
+        </table>
+    </div>
+
+    <button type="button"
+            class="btn btn-primary mt-3"
+            data-toggle="modal"
+            data-target="#addSundriesModal">
+        + Add Sundries
+    </button>
+
+    <input type="hidden" name="sundries_count" id="sundries_count" value="0">
+    <div id="hidden_sundries_inputs"></div>
+
+    <hr>
+    </div>
+
+
+        <!--        PAINTER MODAL-->
+        <div class="modal fade" id="addPainterModal" tabindex="-1">
+          <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+
+              <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">Add Painter Hours</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+              </div>
+
+              <div class="modal-body">
+
+                <div class="form-group">
+                    <label>Select Employee</label>
+                    <select id="modal_employee" class="form-control"></select>
+                </div>
+
+                <hr>
+
+                <div id="regular_container"></div>
+
+                <div class="custom-control custom-switch mt-3">
+                    <input type="checkbox"
+                           class="custom-control-input"
+                           id="toggle_ot"
+                           onchange="toggleOT()">
+                    <label class="custom-control-label" for="toggle_ot">
+                        Add OT Hours
+                    </label>
+                </div>
+
+                <div id="ot_container" class="mt-3" style="display:none;"></div>
+
+              </div>
+
+              <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="savePainter()">Save Painter</button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- MATERIAL MODAL -->
+        <div class="modal fade" id="addMaterialModal" tabindex="-1" role="dialog">
+          <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+            <div class="modal-content">
+
+              <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title">Add Material</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                  <span>&times;</span>
+                </button>
+              </div>
+
+              <div class="modal-body">
+
+                <!-- Select From TMPricesMaster -->
+                <div class="form-group">
+                  <label>Select Material Item</label>
+                    <select id="material_master"
+                            class="form-control"
+                            onchange="populateMaterialDescription()">
+
+                        <option value="">Select item</option>
+
+                        {% for item in tm_materials %}
+                            <option value="{{ item.id }}"
+                                    data-item="{{ item.item }}"
+                                    data-units="{{ item.unit }}">
+                                {{ item.item }}
+                            </option>
+                        {% endfor %}
+
+                        <option value="new">➕ Add New Item</option>
+
+                    </select>
+                    <div class="invalid-feedback">
+                        Please select a material item.
+                    </div>
+                </div>
+
+                <!-- Editable Description -->
+                <div class="form-group">
+                  <label>Description</label>
+                  <input type="text"
+                         id="material_description"
+                         class="form-control"
+                         placeholder="Material description">
+                </div>
+
+                <!-- Quantity -->
+                <div class="form-group">
+                  <label>Quantity</label>
+                  <input type="number"
+                         min="0"
+                         step="0.01"
+                         id="material_quantity"
+                         class="form-control"
+                         placeholder="0.00">
+                </div>
+
+                <!-- Units (Auto-filled from Master) -->
+                <div class="form-group">
+                  <label>Units</label>
+                  <input type="text"
+                         id="material_units"
+                         class="form-control"
+                         readonly>
+                </div>
+
+              </div>
+
+              <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-dismiss="modal">
+                  Cancel
+                </button>
+                <button type="button"
+                        class="btn btn-success"
+                        onclick="saveMaterial()">
+                  Save Material
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+
+        <!--equipment modal-->
+        <div class="modal fade" id="addEquipmentModal" tabindex="-1">
+  <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header bg-secondary text-white">
+        <h5 class="modal-title">Add Equipment</h5>
+        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Select from TMPricesMaster -->
+        <div class="form-group">
+            <label>Select Equipment Item</label>
+            <select id="equipment_master"
+                    class="form-control"
+                    onchange="populateEquipmentDescription()">
+
+                <option value="">Select item</option>
+
+                {% for item in tm_equipment %}
+                    <option value="{{ item.id }}"
+                            data-item="{{ item.item }}"
+                            data-units="{{ item.unit }}">
+                        {{ item.item }}
+                    </option>
+                {% endfor %}
+
+                <option value="new">➕ Add New Item</option>
+
+            </select>
+            <div class="invalid-feedback">
+                Please select an equipment item.
+            </div>
+        </div>
+
+        <!-- Editable Description -->
+        <div class="form-group">
+            <label>Description</label>
+            <input type="text"
+                   id="equipment_description"
+                   class="form-control">
+        </div>
+
+        <!-- Quantity -->
+        <div class="form-group">
+            <label>Quantity</label>
+            <input type="number"
+                   min="0"
+                   step="0.01"
+                   id="equipment_quantity"
+                   class="form-control">
+        </div>
+
+        <!-- Units (Controlled by Master) -->
+        <div class="form-group">
+            <label>Units</label>
+            <input type="text"
+                   id="equipment_units"
+                   class="form-control"
+                   readonly>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button"
+                class="btn btn-success"
+                onclick="saveEquipment()">
+            Save Equipment
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+        <!--sundries modal-->
+        <div class="modal fade" id="addSundriesModal" tabindex="-1">
+  <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header bg-secondary text-white">
+        <h5 class="modal-title">Add Sundries</h5>
+        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Select from TMPricesMaster -->
+        <div class="form-group">
+            <label>Select Sundries Item</label>
+            <select id="sundries_master"
+                    class="form-control"
+                    onchange="populateSundriesDescription()">
+                <option value="">Select item</option>
+
+                <option value="new">+ Add New Sundries Item</option>
+
+                <option disabled>──────────</option>
+
+                {% for item in tm_sundries %}
+                    <option value="{{ item.id }}"
+                            data-item="{{ item.item }}"
+                            data-units="{{ item.unit }}">
+                        {{ item.item }}
+                    </option>
+                {% endfor %}
+            </select>
+            <div class="invalid-feedback">
+                Please select a sundries item.
+            </div>
+        </div>
+
+        <!-- Editable Description -->
+        <div class="form-group">
+            <label>Description</label>
+            <input type="text"
+                   id="sundries_description"
+                   class="form-control">
+        </div>
+
+        <!-- Quantity -->
+        <div class="form-group">
+            <label>Quantity</label>
+            <input type="number"
+                   min="0"
+                   step="0.01"
+                   id="sundries_quantity"
+                   class="form-control">
+        </div>
+
+        <!-- Units -->
+        <div class="form-group">
+            <label>Units</label>
+            <input type="text"
+                   id="sundries_units"
+                   class="form-control"
+                   readonly>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button"
+                class="btn btn-success"
+                onclick="saveSundries()">
+            Save Sundries
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+        <!--save ticket-->
+        <div class="mt-4">
+            <button type="submit" class="btn btn-lg btn-success">
+                Save Extra Work Ticket
+            </button>
+        </div>
+
+    </form>
+
+
+
+
+
+
+
+</div>
+
+<script>
+let painterCounter = 0;
+let usedCustomPainters = [];
+let paintersData = {};
+let editingPainterId = null;
+
+const days = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"];
+
+function getNextPainterNumber() {
+    let i = 1;
+    while (usedCustomPainters.includes(i)) {
+        i++;
+    }
+    return i;
+}
+
+$('#addPainterModal').on('shown.bs.modal', function () {
+
+    // 🔥 If editing, DO NOT rebuild here
+    if (editingPainterId !== null) {
+        return;
+    }
+
+    let select = document.getElementById("modal_employee");
+
+    // 🔥 Destroy Select2 if already initialized
+    if ($('#modal_employee').hasClass("select2-hidden-accessible")) {
+        $('#modal_employee').select2('destroy');
+    }
+
+    select.innerHTML = "";
+
+    // --- Custom Painter Option ---
+    let nextPainter = getNextPainterNumber();
+
+    let customOption = document.createElement("option");
+    customOption.value = "custom_" + nextPainter;
+    customOption.text = "Painter " + nextPainter;
+    select.appendChild(customOption);
+
+    // Divider
+    let divider = document.createElement("option");
+    divider.disabled = true;
+    divider.text = "──────────";
+    select.appendChild(divider);
+
+    // --- Real Employees ---
+    {% for e in employees %}
+        let opt{{e.id}} = document.createElement("option");
+        opt{{e.id}}.value = "{{e.id}}";
+        opt{{e.id}}.text = "{{e.first_name}} {{e.last_name}}";
+        opt{{e.id}}.dataset.real = "true";
+        select.appendChild(opt{{e.id}});
+    {% endfor %}
+
+    // 🔥 Reinitialize Select2
+    $('#modal_employee').select2({
+        dropdownParent: $('#addPainterModal'),
+        width: '100%',
+        placeholder: "Search or select painter",
+        tags: true
+    });
+
+    buildHourInputs();
+});
+
+
+function buildHourInputs() {
+
+    let regContainer = document.getElementById("regular_container");
+    let otContainer = document.getElementById("ot_container");
+
+    // 🔥 Completely clear containers
+    regContainer.innerHTML = "";
+    otContainer.innerHTML = "";
+
+    // -----------------------------
+    // Regular Hours Header
+    // -----------------------------
+    let regHeader = document.createElement("h6");
+    regHeader.textContent = "Regular Hours";
+    regContainer.appendChild(regHeader);
+
+    // -----------------------------
+    // OT Header
+    // -----------------------------
+    let otHeader = document.createElement("h6");
+    otHeader.textContent = "OT Hours";
+    otHeader.classList.add("text-danger");
+    otContainer.appendChild(otHeader);
+
+    // -----------------------------
+    // Build Day Inputs
+    // -----------------------------
+    days.forEach(day => {
+
+        // Regular Row
+        let regRow = document.createElement("div");
+        regRow.className = "form-group row";
+
+        let regLabel = document.createElement("label");
+        regLabel.className = "col-4 col-form-label text-capitalize";
+        regLabel.textContent = day;
+
+        let regCol = document.createElement("div");
+        regCol.className = "col-8";
+
+        let regInput = document.createElement("input");
+        regInput.type = "number";
+        regInput.min = "0";
+        regInput.step = "0.5";
+        regInput.className = "form-control form-control-sm regular";
+        regInput.dataset.day = day;
+        regInput.value = "";
+
+        // Auto-select value when clicked
+        regInput.addEventListener("focus", function() {
+            this.select();
+        });
+
+        regCol.appendChild(regInput);
+        regRow.appendChild(regLabel);
+        regRow.appendChild(regCol);
+        regContainer.appendChild(regRow);
+
+
+        // OT Row
+        let otRow = document.createElement("div");
+        otRow.className = "form-group row";
+
+        let otLabel = document.createElement("label");
+        otLabel.className = "col-4 col-form-label text-capitalize text-danger";
+        otLabel.textContent = day;
+
+        let otCol = document.createElement("div");
+        otCol.className = "col-8";
+
+        let otInput = document.createElement("input");
+        otInput.type = "number";
+        otInput.min = "0";
+        otInput.step = "0.5";
+        otInput.className = "form-control form-control-sm ot";
+        otInput.dataset.day = day;
+        otInput.value = "";
+
+        otInput.addEventListener("focus", function() {
+            this.select();
+        });
+
+        otCol.appendChild(otInput);
+        otRow.appendChild(otLabel);
+        otRow.appendChild(otCol);
+        otContainer.appendChild(otRow);
+
+    });
+
+    // Reset OT toggle
+    document.getElementById("toggle_ot").checked = false;
+    otContainer.style.display = "none";
+}
+
+
+function toggleOT() {
+    let container = document.getElementById("ot_container");
+    container.style.display =
+        document.getElementById("toggle_ot").checked
+        ? "block"
+        : "none";
+}
+
+function savePainter() {
+
+    let isEditing = editingPainterId !== null;
+    let id = isEditing ? editingPainterId : ++painterCounter;
+
+    // If editing, clean up previous custom number
+    if (isEditing) {
+        let previousData = paintersData[editingPainterId];
+
+        if (previousData && previousData.customEmployeeNumber) {
+            usedCustomPainters =
+                usedCustomPainters.filter(n => n !== previousData.customEmployeeNumber);
+        }
+
+        removePainter(editingPainterId, true);
+    }
+
+    let employeeSelect = document.getElementById("modal_employee");
+    let employeeValue = employeeSelect.value;
+
+    if (!employeeValue) {
+        alert("Select employee");
+        return;
+    }
+
+    let employeeText =
+        employeeSelect.options[employeeSelect.selectedIndex]?.text || employeeValue;
+
+    let employeeId = null;
+    let customPainterNumber = null;
+    let typedCustomName = null;
+
+    // ----------------------------
+    // Determine Selection Type
+    // ----------------------------
+
+    if (/^\d+$/.test(employeeValue)) {
+
+        // ✅ Real employee (numeric ID)
+        employeeId = employeeValue;
+
+    } else if (employeeValue.startsWith("custom_")) {
+
+        // ✅ Auto Painter 1, Painter 2
+        customPainterNumber = Number(employeeValue.replace("custom_", ""));
+
+        if (!isEditing) {
+            usedCustomPainters.push(customPainterNumber);
+        }
+
+    } else {
+
+        // ✅ Fully typed custom name
+        typedCustomName = employeeValue;
+        employeeText = employeeValue;
+
+    }
+
+    // ----------------------------
+    // Collect Hours
+    // ----------------------------
+
+    let modal = document.getElementById("addPainterModal");
+
+    let regularInputs = modal.querySelectorAll(".regular");
+    let otInputs = modal.querySelectorAll(".ot");
+
+    let hasRegular = false;
+    let hasOT = false;
+    let hiddenInputs = "";
+
+    // --- Regular Row ---
+    let regularRow = `<tr class="painter-group-${id}">
+                        <td class="font-weight-bold text-left">Regular</td>`;
+
+    regularInputs.forEach((input, index) => {
+
+        let val = Number(input.value || 0);
+
+        if (val > 0) hasRegular = true;
+
+        regularRow += `<td>${val > 0 ? val : ""}</td>`;
+
+        hiddenInputs += `
+            <input type="hidden"
+                   name="reg_${days[index]}_${id}"
+                   value="${val}">
+        `;
+    });
+
+    regularRow += `</tr>`;
+
+    // --- OT Row ---
+    let otRow = "";
+
+    if (document.getElementById("toggle_ot").checked) {
+
+        otRow = `<tr class="painter-group-${id}">
+                   <td class="font-weight-bold text-left text-danger">OT</td>`;
+
+        otInputs.forEach((input, index) => {
+
+            let val = Number(input.value || 0);
+
+            if (val > 0) hasOT = true;
+
+            otRow += `<td class="text-danger">${val > 0 ? val : ""}</td>`;
+
+            hiddenInputs += `
+                <input type="hidden"
+                       name="ot_${days[index]}_${id}"
+                       value="${val}">
+            `;
+        });
+
+        otRow += `</tr>`;
+    }
+
+    if (!hasRegular && !hasOT) {
+        alert("You must enter at least one hour.");
+        return;
+    }
+
+    // ----------------------------
+    // Hidden Employee Inputs
+    // ----------------------------
+
+    if (employeeId) {
+        hiddenInputs += `
+            <input type="hidden"
+                   name="employee_${id}"
+                   value="${employeeId}">
+        `;
+    }
+
+    if (customPainterNumber) {
+
+        hiddenInputs += `
+            <input type="hidden"
+                   name="custom_employee_${id}"
+                   value="Painter ${customPainterNumber}">
+        `;
+
+    }
+
+    if (typedCustomName) {
+
+        hiddenInputs += `
+            <input type="hidden"
+                   name="custom_employee_${id}"
+                   value="${typedCustomName}">
+        `;
+
+    }
+
+    hiddenInputs += `
+        <input type="hidden"
+               name="regular_exists_${id}"
+               value="${hasRegular ? 1 : 0}">
+        <input type="hidden"
+               name="ot_exists_${id}"
+               value="${hasOT ? 1 : 0}">
+    `;
+
+    // ----------------------------
+    // Store In Memory (for editing)
+    // ----------------------------
+
+    let regularData = {};
+    let otData = {};
+
+    regularInputs.forEach((input, index) => {
+        regularData[days[index]] = Number(input.value || 0);
+    });
+
+    if (hasOT) {
+        otInputs.forEach((input, index) => {
+            otData[days[index]] = Number(input.value || 0);
+        });
+    }
+
+    paintersData[id] = {
+        employeeId: employeeId,
+        customEmployeeNumber: customPainterNumber,
+        typedCustomName: typedCustomName,
+        employeeText: employeeText,
+        regular: regularData,
+        ot: otData
+    };
+
+    // ----------------------------
+    // Render Name Row
+    // ----------------------------
+
+    let nameRow = `
+        <tr class="painter-group-${id}">
+            <td colspan="8"
+                class="bg-secondary text-white font-weight-bold text-left">
+                ${employeeText}
+                <button type="button"
+                        class="btn btn-sm btn-outline-light mr-2 float-right"
+                        onclick="editPainter(${id})">
+                    Edit
+                </button>
+                <button type="button"
+                        class="btn btn-sm btn-outline-light float-right"
+                        onclick="removePainter(${id})">
+                    Remove
+                </button>
+            </td>
+        </tr>
+    `;
+
+
+    // ----------------------------
+    // Insert Into DOM
+    // ----------------------------
+
+    document.getElementById("hidden_labor_inputs")
+        .insertAdjacentHTML(
+            "beforeend",
+            `<div class="hidden-group-${id}">
+                ${hiddenInputs}
+            </div>`
+        );
+
+    document.getElementById("labor_body")
+        .insertAdjacentHTML(
+            "beforeend",
+            nameRow +
+            regularRow +
+            (hasOT ? otRow : "")
+        );
+
+    document.getElementById("painter_count").value = painterCounter;
+
+    $('#addPainterModal').modal('hide');
+
+    editingPainterId = null;
+}
+
+
+function removePainter(id, silent=false) {
+
+    // --- Get custom painter number BEFORE removing hidden inputs ---
+    let customInput = document.querySelector(
+        `input[name="custom_employee_${id}"]`
+    );
+
+    let customNumber = null;
+
+    if (customInput) {
+        customNumber = Number(customInput.value);
+    }
+
+    // --- Remove visible rows ---
+    document.querySelectorAll(`.painter-group-${id}`)
+        .forEach(row => row.remove());
+
+    // --- Remove hidden inputs ---
+    let hidden = document.querySelector(`.hidden-group-${id}`);
+    if (hidden) hidden.remove();
+
+    // --- Remove from memory if not silent ---
+    if (!silent) {
+        delete paintersData[id];
+    }
+
+    // --- Free custom painter number ---
+    if (!silent && customNumber !== null) {
+        usedCustomPainters = usedCustomPainters.filter(n => n !== customNumber);
+    }
+}
+
+
+let materialCounter = 0;
+
+function saveMaterial() {
+
+    let masterSelect = document.getElementById("material_master");
+    let masterId = document.getElementById("material_master").value;
+    let desc = document.getElementById("material_description").value.trim();
+    let qty = Number(document.getElementById("material_quantity").value || 0);
+    let units = document.getElementById("material_units").value;
+
+    masterSelect.classList.remove("is-invalid");
+
+    if (!masterId) {
+        masterSelect.classList.add("is-invalid");
+        return;
+    }
+
+    if (!desc) {
+        alert("Description required.");
+        return;
+    }
+
+    if (qty <= 0) {
+        alert("Quantity must be greater than 0.");
+        return;
+    }
+
+    materialCounter++;
+
+    let row = `
+        <tr class="material-group-${materialCounter}">
+            <td>${desc}</td>
+            <td>${qty}</td>
+            <td>${units}</td>
+            <td>
+                <button type="button"
+                        class="btn btn-sm btn-outline-danger"
+                        onclick="removeMaterial(${materialCounter})">
+                    Remove
+                </button>
+            </td>
+        </tr>
+    `;
+
+    document.getElementById("material_body")
+        .insertAdjacentHTML("beforeend", row);
+
+    let hidden = `
+        <div class="hidden-material-${materialCounter}">
+            <input type="hidden" name="material_master_${materialCounter}" value="${masterId}">
+            <input type="hidden" name="material_description_${materialCounter}" value="${desc}">
+            <input type="hidden" name="material_quantity_${materialCounter}" value="${qty}">
+            <input type="hidden" name="material_units_${materialCounter}" value="${units}">
+        </div>
+    `;
+
+    document.getElementById("hidden_material_inputs")
+        .insertAdjacentHTML("beforeend", hidden);
+
+    document.getElementById("material_count").value = materialCounter;
+
+    $('#addMaterialModal').modal('hide');
+}
+
+
+function removeMaterial(id) {
+
+    let rows = document.querySelectorAll(`.material-group-${id}`);
+    rows.forEach(row => row.remove());
+
+    let hidden = document.querySelector(`.hidden-material-${id}`);
+    if (hidden) hidden.remove();
+}
+
+function editPainter(id) {
+
+    let data = paintersData[id];
+    if (!data) return;
+
+    editingPainterId = id;
+
+    $('#addPainterModal').modal('show');
+
+    setTimeout(() => {
+
+        // 🔥 Rebuild the modal inputs fresh
+        buildHourInputs();
+
+        let select = document.getElementById("modal_employee");
+
+        // ----------------------------
+        // Restore Employee Selection
+        // ----------------------------
+
+        if (data.employeeId) {
+
+            select.value = data.employeeId;
+
+        } else if (data.customEmployeeNumber) {
+
+            select.value = "custom_" + data.customEmployeeNumber;
+
+        } else if (data.typedCustomName) {
+
+            let option = new Option(
+                data.typedCustomName,
+                data.typedCustomName,
+                true,
+                true
+            );
+
+            $('#modal_employee')
+                .append(option)
+                .trigger('change');
+        }
+
+        $('#modal_employee').trigger('change');
+
+        // ----------------------------
+        // Restore Regular Hours
+        // ----------------------------
+
+        let modal = document.getElementById("addPainterModal");
+        let regularInputs = modal.querySelectorAll(".regular");
+
+        days.forEach((day, index) => {
+            if (regularInputs[index]) {
+                regularInputs[index].value =
+                    data.regular[day] || "";
+            }
+        });
+
+        // ----------------------------
+        // Restore OT
+        // ----------------------------
+
+        let hasOT = Object.keys(data.ot).length > 0;
+
+        document.getElementById("toggle_ot").checked = hasOT;
+        toggleOT();
+
+        if (hasOT) {
+
+            let otInputs = modal.querySelectorAll(".ot");
+
+            days.forEach((day, index) => {
+                if (otInputs[index]) {
+                    otInputs[index].value =
+                        data.ot[day] || "";
+                }
+            });
+        }
+
+    }, 200);
+}
+
+let equipmentCounter = 0;
+
+function saveEquipment() {
+
+    let masterSelect = document.getElementById("equipment_master");
+    let masterId = document.getElementById("equipment_master").value;
+    let desc = document.getElementById("equipment_description").value.trim();
+    let qty = Number(document.getElementById("equipment_quantity").value || 0);
+    let units = document.getElementById("equipment_units").value;
+
+    // Reset validation styling
+    masterSelect.classList.remove("is-invalid");
+
+    if (!masterId) {
+    masterSelect.classList.add("is-invalid");
+    return;
+    }
+
+    if (!desc) {
+        alert("Description required.");
+        return;
+    }
+
+    if (qty <= 0) {
+        alert("Quantity must be greater than 0.");
+        return;
+    }
+
+    equipmentCounter++;
+
+    let row = `
+        <tr class="equipment-group-${equipmentCounter}">
+            <td>${desc}</td>
+            <td>${qty}</td>
+            <td>${units}</td>
+            <td>
+                <button type="button"
+                        class="btn btn-sm btn-outline-danger"
+                        onclick="removeEquipment(${equipmentCounter})">
+                    Remove
+                </button>
+            </td>
+        </tr>
+    `;
+
+    document.getElementById("equipment_body")
+        .insertAdjacentHTML("beforeend", row);
+
+    let hidden = `
+        <div class="hidden-equipment-${equipmentCounter}">
+            <input type="hidden" name="equipment_master_${equipmentCounter}" value="${masterId}">
+            <input type="hidden" name="equipment_description_${equipmentCounter}" value="${desc}">
+            <input type="hidden" name="equipment_quantity_${equipmentCounter}" value="${qty}">
+            <input type="hidden" name="equipment_units_${equipmentCounter}" value="${units}">
+        </div>
+    `;
+
+
+    document.getElementById("hidden_equipment_inputs")
+        .insertAdjacentHTML("beforeend", hidden);
+
+    document.getElementById("equipment_count").value = equipmentCounter;
+
+    $('#addEquipmentModal').modal('hide');
+
+    // Clear modal fields
+    document.getElementById("equipment_master").value = "";
+    document.getElementById("equipment_description").value = "";
+    document.getElementById("equipment_quantity").value = "";
+    document.getElementById("equipment_units").value = "";
+}
+
+
+function removeEquipment(id) {
+
+    document.querySelectorAll(`.equipment-group-${id}`)
+        .forEach(row => row.remove());
+
+    let hidden = document.querySelector(`.hidden-equipment-${id}`);
+    if (hidden) hidden.remove();
+}
+
+let sundriesCounter = 0;
+
+function saveSundries() {
+
+    let masterSelect = document.getElementById("sundries_master");
+    let masterId = document.getElementById("sundries_master").value;
+    let desc = document.getElementById("sundries_description").value.trim();
+    let qty = Number(document.getElementById("sundries_quantity").value || 0);
+    let units = document.getElementById("sundries_units").value;
+
+    // Reset validation styling
+    masterSelect.classList.remove("is-invalid");
+
+    if (!masterId) {
+        masterSelect.classList.add("is-invalid");
+        return;
+    }
+
+    if (!desc) {
+        alert("Description required.");
+        return;
+    }
+
+    if (qty <= 0) {
+        alert("Quantity must be greater than 0.");
+        return;
+    }
+
+    sundriesCounter++;
+
+    let row = `
+        <tr class="sundries-group-${sundriesCounter}">
+            <td>${desc}</td>
+            <td>${qty}</td>
+            <td>${units}</td>
+            <td>
+                <button type="button"
+                        class="btn btn-sm btn-outline-danger"
+                        onclick="removeSundries(${sundriesCounter})">
+                    Remove
+                </button>
+            </td>
+        </tr>
+    `;
+
+    document.getElementById("sundries_body")
+        .insertAdjacentHTML("beforeend", row);
+
+    let hidden = `
+    <div class="hidden-sundries-${sundriesCounter}">
+        <input type="hidden" name="sundries_master_${sundriesCounter}" value="${masterId}">
+        <input type="hidden" name="sundries_description_${sundriesCounter}" value="${desc}">
+        <input type="hidden" name="sundries_quantity_${sundriesCounter}" value="${qty}">
+        <input type="hidden" name="sundries_units_${sundriesCounter}" value="${units}">
+    </div>
+    `;
+
+
+    document.getElementById("hidden_sundries_inputs")
+        .insertAdjacentHTML("beforeend", hidden);
+
+    document.getElementById("sundries_count").value = sundriesCounter;
+
+    $('#addSundriesModal').modal('hide');
+
+    // Clear modal
+    document.getElementById("sundries_master").value = "";
+    document.getElementById("sundries_description").value = "";
+    document.getElementById("sundries_quantity").value = "";
+    document.getElementById("sundries_units").value = "";
+}
+
+
+function removeSundries(id) {
+
+    document.querySelectorAll(`.sundries-group-${id}`)
+        .forEach(row => row.remove());
+
+    let hidden = document.querySelector(`.hidden-sundries-${id}`);
+    if (hidden) hidden.remove();
+}
+
+function populateMaterialDescription() {
+
+    let select = document.getElementById("material_master");
+    let selected = select.options[select.selectedIndex];
+
+    let descInput = document.getElementById("material_description");
+    let unitsInput = document.getElementById("material_units");
+
+    if (!selected.value) return;
+
+    // 🔥 If Add New selected
+    if (selected.value === "new") {
+
+        descInput.value = "";
+        unitsInput.value = "";
+
+        descInput.readOnly = false;
+        unitsInput.readOnly = false;
+
+        return;
+    }
+
+    // 🔥 Normal TM item
+    descInput.value = selected.dataset.item;
+    unitsInput.value = selected.dataset.units;
+
+    descInput.readOnly = false;   // still editable
+    unitsInput.readOnly = true;   // units controlled by TM
+}
+
+function populateEquipmentDescription() {
+
+    let select = document.getElementById("equipment_master");
+    let selected = select.options[select.selectedIndex];
+
+    let descInput = document.getElementById("equipment_description");
+    let unitsInput = document.getElementById("equipment_units");
+
+    if (!selected.value) return;
+
+    // 🔥 If Add New selected
+    if (selected.value === "new") {
+
+        descInput.value = "";
+        unitsInput.value = "";
+
+        descInput.readOnly = false;
+        unitsInput.readOnly = false;
+
+        return;
+    }
+
+    // 🔥 Normal TM item selected
+    descInput.value = selected.dataset.item;
+    unitsInput.value = selected.dataset.units;
+
+    descInput.readOnly = false;   // allow override
+    unitsInput.readOnly = true;  // units controlled by TM
+}
+
+
+function populateSundriesDescription() {
+
+    let select = document.getElementById("sundries_master");
+    let selected = select.options[select.selectedIndex];
+
+    if (!selected.value) return;
+
+    if (selected.value === "new") {
+        // Clear everything for manual entry
+        document.getElementById("sundries_description").value = "";
+        document.getElementById("sundries_units").value = "";
+        document.getElementById("sundries_units").removeAttribute("readonly");
+    } else {
+        document.getElementById("sundries_description").value = selected.dataset.item;
+        document.getElementById("sundries_units").value = selected.dataset.units;
+        document.getElementById("sundries_units").setAttribute("readonly", true);
+    }
+}
+
+
+document.addEventListener("focusin", function (e) {
+    if (e.target.classList.contains("hour-input")) {
+        e.target.select();
+    }
+});
+
+$('#addMaterialModal').on('shown.bs.modal', function () {
+
+    // Reset dropdown
+    let select = document.getElementById("material_master");
+    select.value = "";
+
+    // Remove any previous validation styling
+    select.classList.remove("is-invalid");
+
+    // Clear other fields
+    document.getElementById("material_description").value = "";
+    document.getElementById("material_quantity").value = "";
+    document.getElementById("material_units").value = "";
+});
+
+$('#addEquipmentModal').on('shown.bs.modal', function () {
+
+    let select = document.getElementById("equipment_master");
+    select.value = "";
+    select.classList.remove("is-invalid");
+
+    document.getElementById("equipment_description").value = "";
+    document.getElementById("equipment_quantity").value = "";
+    document.getElementById("equipment_units").value = "";
+});
+
+document.getElementById("equipment_master").addEventListener("change", function() {
+    this.classList.remove("is-invalid");
+});
+
+document.getElementById("material_master").addEventListener("change", function() {
+    this.classList.remove("is-invalid");
+});
+
+$('#addSundriesModal').on('shown.bs.modal', function () {
+
+    let select = document.getElementById("sundries_master");
+    select.value = "";
+    select.classList.remove("is-invalid");
+
+    document.getElementById("sundries_description").value = "";
+    document.getElementById("sundries_quantity").value = "";
+    document.getElementById("sundries_units").value = "";
+});
+
+document.getElementById("sundries_master").addEventListener("change", function() {
+    this.classList.remove("is-invalid");
+});
+</script>
+{% endblock %}

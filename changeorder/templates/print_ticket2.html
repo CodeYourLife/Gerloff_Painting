@@ -171,13 +171,13 @@ textarea {
         {% if x.employee %}
         <b>OT-</b>{{x.employee}}
         {% else %}
-        <b>OT-</b>Painter{{x.custom_employee}}
+        <b>OT-</b>{{x.custom_employee}}
         {% endif %}
         {% else %}
         {% if x.employee %}
         {{x.employee}}
         {% else %}
-        Painter{{x.custom_employee}}
+        {{x.custom_employee}}
         {% endif %}
         {% endif %}
         </td>

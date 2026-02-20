@@ -1119,7 +1119,7 @@ function no_change() { toggleButtonPair('yes_change_button','no_change_button','
                         <h5>💻 Digital Ticket Entry</h5>
 
                         {% if changeorder.need_ticket %}
-                            <form action="{% url 'process_ewt' changeorder.id %}">
+                            <form action="{% url 'ewt_create' changeorder.id %}">
                                 <button type="submit" class="btn btn-primary btn-sm">
                                     Fill Out Ticket Now
                                 </button>
