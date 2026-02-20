@@ -100,7 +100,7 @@ th {
             {% if x.employee %}
                 {{ x.employee }}
             {% else %}
-                Painter{{ x.custom_employee }}
+                {{ x.custom_employee }}
             {% endif %}
         </td>
         <td class="center">{{ x.monday|default:0|floatformat:-1 }}</td>

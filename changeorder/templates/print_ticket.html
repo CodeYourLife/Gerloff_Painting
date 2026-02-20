@@ -200,7 +200,7 @@ textarea {
                     {% if x.employee %}
                     {{x.employee}}
                     {% else %}
-                    Painter{{x.custom_employee}}
+                    {{x.custom_employee}}
                     {% endif %}
                     </td>
                         <td>{{ x.monday|default:0|floatformat:-1 }}</td>

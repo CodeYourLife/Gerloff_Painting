@@ -1,11 +1,15 @@
 
 from changeorder.models import *
+from changeorder.models import ChangeOrders, EWT, EWTicket, TMPricesMaster
 from console.misc import createfolder, getFilesOrFolders
 from console.misc import Email, get_client_ip, is_internal_ip, create_excel_from_template, get_subfolders, find_post_bid_docs_shortcut, resolve_shortcut, create_folder_shortcut, create_changeorder_shortcut_in_plan_folder
 from datetime import date, datetime
+from decimal import Decimal, InvalidOperation
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.serializers.json import DjangoJSONEncoder
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import get_template, render_to_string
@@ -24,7 +28,6 @@ from xhtml2pdf import pisa
 import json
 import os
 import os.path
-
 
 
 def emailed_ticket(request, id):
@@ -639,14 +642,22 @@ def price_ewt(request, id):
     days = totalhours / 8
     counter = 0
     totallaborcost = totalcost
-    for y in EWTicket.objects.filter(EWT=ewt, master__category="Material").order_by('master'):
-        cost = y.quantity * y.master.rate
-        totalcost = totalcost + cost
-        totalmaterialcost = totalmaterialcost + cost
+    #for y in EWTicket.objects.filter(EWT=ewt, master__category="Material").order_by('master'):
+    for y in EWTicket.objects.filter(EWT=ewt, category="Material").order_by('master'):
+        cost=0
+        rate =0
         counter = counter + 1
-        rate = float(y.master.rate)
+        category = y.category
+        category_id = None
+        if y.master:
+            cost = y.quantity * y.master.rate
+            totalcost = totalcost + cost
+            totalmaterialcost = totalmaterialcost + cost
+            rate = float(y.master.rate)
+            #category = y.master.item
+            category_id = y.master.id
         materials.append(
-            {'rate': rate, 'counter': counter, 'category': y.master.item, 'category_id': y.master.id,
+            {'rate': rate, 'counter': counter, 'category': category, 'category_id': category_id,
              'description': y.description,
              'quantity': y.quantity, 'units': y.units,
              'cost': int(cost)})
@@ -654,26 +665,43 @@ def price_ewt(request, id):
     totalcost = totalcost + inventory
     totalmaterialcost = totalmaterialcost + inventory
     counter = 0
-    for y in EWTicket.objects.filter(EWT=ewt, master__category="Equipment").order_by('master'):
-        cost = y.quantity * y.master.rate
-        totalcost = totalcost + cost
-        totalequipmentcost += cost
+    #for y in EWTicket.objects.filter(EWT=ewt, master__category="Equipment").order_by('master'):
+    for y in EWTicket.objects.filter(EWT=ewt, category="Equipment").order_by('master'):
+        cost=0
+        rate =0
         counter = counter + 1
-        rate = float(y.master.rate)
+        category = y.category
+        category_id = None
+        if y.master:
+            cost = y.quantity * y.master.rate
+            totalcost = totalcost + cost
+            totalequipmentcost += cost
+            rate = float(y.master.rate)
+            #category = y.master.item
+            category_id = y.master.id
         equipment.append(
-            {'rate': rate, 'counter': counter, 'category': y.master.item, 'category_id': y.master.id,
+            {'rate': rate, 'counter': counter, 'category': category, 'category_id': category_id,
              'description': y.description,
              'quantity': y.quantity, 'units': y.units,
              'cost': int(cost)})
     counter = 0
-    for y in EWTicket.objects.filter(EWT=ewt, master__category="Sundries").order_by('master'):
-        cost = y.quantity * y.master.rate
-        totalcost = totalcost + cost
-        totalsundriescost += cost
+    #for y in EWTicket.objects.filter(EWT=ewt, master__category="Sundries").order_by('master'):
+    for y in EWTicket.objects.filter(EWT=ewt, category="Sundries").order_by('master'):
+        cost=0
+        rate =0
         counter = counter + 1
-        rate = float(y.master.rate)
+        category = y.category
+        category_id = None
+        if y.master:
+            cost = y.quantity * y.master.rate
+            totalcost = totalcost + cost
+            totalsundriescost += cost
+            counter = counter + 1
+            rate = float(y.master.rate)
+            #category = y.master.item
+            category_id = y.master.id
         sundries.append(
-            {'rate': rate, 'counter': counter, 'category': y.master.item, 'category_id': y.master.id,
+            {'rate': rate, 'counter': counter, 'category': category, 'category_id': category_id,
              'description': y.description,
              'quantity': y.quantity, 'units': y.units,
              'cost': int(cost)})
@@ -1625,7 +1653,7 @@ def uploadFile(request):
 
 
 @login_required(login_url='/accounts/login')
-def process_ewt(request, id):
+def process_ewt(request, id): #THIS IS GETTING REPLACED WITH EWT_CREATE
     changeorder = ChangeOrders.objects.get(id=id)
     if request.method == 'POST':
         if EWT.objects.filter(change_order=changeorder).exists():
@@ -1878,3 +1906,271 @@ def upload_changeorder_file(request, changeorder_id):
                 destination.write(chunk)
 
     return JsonResponse({"success": True})
+
+def safe_decimal(value):
+    try:
+        return Decimal(value)
+    except (InvalidOperation, TypeError):
+        return Decimal("0")
+
+@transaction.atomic
+def ewt_create(request, changeorder_id):
+
+    change_order = get_object_or_404(ChangeOrders, id=changeorder_id)
+
+    # --------------------------------------------------
+    # GET REQUEST
+    # --------------------------------------------------
+    if request.method == "GET":
+
+        context = {
+            "change_order": change_order,
+            "tm_materials": TMPricesMaster.objects.filter(category="Material"),
+            "tm_equipment": TMPricesMaster.objects.filter(category="Equipment"),
+            "tm_sundries": TMPricesMaster.objects.filter(category="Sundries"),
+            "employees": Employees.objects.filter(active=True,job_title__description="Painter").order_by("first_name"),
+        }
+
+        return render(request, "ewt_create.html", context)
+
+    # --------------------------------------------------
+    # POST REQUEST
+    # --------------------------------------------------
+    if request.method == "POST":
+
+        # --------------------------------------------------
+        # 1️⃣ Create EWT Header
+        # --------------------------------------------------
+        ewt = EWT.objects.create(
+            change_order=change_order,
+            week_ending=request.POST.get("week_ending"),
+            notes=request.POST.get("notes"),
+            completed_by=request.user.get_full_name()
+                if request.user.is_authenticated else "",
+        )
+
+        ChangeOrderNotes.objects.create(cop_number=change_order, date=date.today(),
+                                        user=Employees.objects.get(user=request.user),
+                                        note="Extra Work Ticket Added")
+
+        # --------------------------------------------------
+        # 2️⃣ LABOR
+        # --------------------------------------------------
+
+        painter_count = int(request.POST.get("painter_count", 0))
+
+        # Fetch masters safely once
+        try:
+            regular_master = TMPricesMaster.objects.get(item="Painter Hours")
+        except TMPricesMaster.DoesNotExist:
+            regular_master = None
+
+        try:
+            ot_master = TMPricesMaster.objects.get(item="Painter Hours OT")
+        except TMPricesMaster.DoesNotExist:
+            ot_master = None
+
+        for i in range(1, painter_count + 1):
+
+            employee_id = request.POST.get(f"employee_{i}")
+            custom_employee = request.POST.get(f"custom_employee_{i}")
+            regular_exists = request.POST.get(f"regular_exists_{i}") == "1"
+            ot_exists = request.POST.get(f"ot_exists_{i}") == "1"
+
+            # Collect daily hours safely
+            reg_days = {}
+            ot_days = {}
+
+            total_regular = Decimal("0")
+            total_ot = Decimal("0")
+
+            for day in ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]:
+                reg_val = safe_decimal(request.POST.get(f"reg_{day}_{i}"))
+                ot_val = safe_decimal(request.POST.get(f"ot_{day}_{i}"))
+
+                reg_days[day] = reg_val or Decimal("0")
+                ot_days[day] = ot_val or Decimal("0")
+
+                total_regular += reg_days[day]
+                total_ot += ot_days[day]
+
+            # Skip completely empty painter rows
+            if total_regular == 0 and total_ot == 0:
+                continue
+
+            # Safe employee lookup
+            employee_obj = None
+            if employee_id:
+                try:
+                    employee_obj = Employees.objects.get(id=employee_id)
+                except Employees.DoesNotExist:
+                    employee_obj = None
+
+            # ---------------------------
+            # Regular Hours Entry
+            # ---------------------------
+            if total_regular > 0 and regular_master:
+                EWTicket.objects.create(
+                    EWT=ewt,
+                    master=regular_master,
+                    category=regular_master.category,
+                    employee=employee_obj,
+                    custom_employee=custom_employee,
+                    monday=reg_days["monday"],
+                    tuesday=reg_days["tuesday"],
+                    wednesday=reg_days["wednesday"],
+                    thursday=reg_days["thursday"],
+                    friday=reg_days["friday"],
+                    saturday=reg_days["saturday"],
+                    sunday=reg_days["sunday"],
+                    ot=False,
+                    units=regular_master.unit,
+                    description=regular_master.item
+                )
+
+            # ---------------------------
+            # OT Hours Entry
+            # ---------------------------
+            if total_ot > 0 and ot_master:
+                EWTicket.objects.create(
+                    EWT=ewt,
+                    master=ot_master,
+                    category=ot_master.category,
+                    employee=employee_obj,
+                    custom_employee=custom_employee,
+                    monday=ot_days["monday"],
+                    tuesday=ot_days["tuesday"],
+                    wednesday=ot_days["wednesday"],
+                    thursday=ot_days["thursday"],
+                    friday=ot_days["friday"],
+                    saturday=ot_days["saturday"],
+                    sunday=ot_days["sunday"],
+                    ot=True,
+                    units=ot_master.unit,
+                    description=ot_master.item
+                )
+
+        # --------------------------------------------------
+        # 3️⃣ MATERIALS
+        # --------------------------------------------------
+
+        material_count = int(request.POST.get("material_count", 0))
+
+        for i in range(1, material_count + 1):
+
+            master_id = request.POST.get(f"material_master_{i}")
+            desc = (request.POST.get(f"material_description_{i}") or "").strip()
+            qty_raw = request.POST.get(f"material_quantity_{i}")
+            units_raw = request.POST.get(f"material_units_{i}")
+
+            qty = safe_decimal(qty_raw)
+
+            # Skip completely empty rows
+            if not qty or not desc:
+                continue
+
+            master = None
+            category = None
+            units = None
+
+            # 🔹 If linked to TMPricesMaster
+            if master_id and master_id != "new":
+
+                try:
+                    master = TMPricesMaster.objects.get(id=master_id)
+                    category = master.category
+                    units = master.unit
+                except TMPricesMaster.DoesNotExist:
+                    continue  # invalid master id — skip safely
+
+            # 🔹 If Add New selected
+            else:
+                units = (units_raw or "").strip()
+
+            EWTicket.objects.create(
+                EWT=ewt,
+                master=master,
+                category="Material",
+                description=desc,
+                quantity=qty,
+                units=units
+            )
+
+        # --------------------------------------------------
+        # 4️⃣ EQUIPMENT
+        # --------------------------------------------------
+
+        equipment_count = int(request.POST.get("equipment_count", 0))
+
+        for i in range(1, equipment_count + 1):
+
+            master_id = request.POST.get(f"equipment_master_{i}")
+            desc = (request.POST.get(f"equipment_description_{i}") or "").strip()
+            qty_raw = request.POST.get(f"equipment_quantity_{i}")
+            units_raw = request.POST.get(f"equipment_units_{i}")
+
+            qty = safe_decimal(qty_raw)
+
+            if not qty or not desc:
+                continue
+
+            master = None
+            units = None
+
+            if master_id and master_id != "new":
+
+                try:
+                    master = TMPricesMaster.objects.get(id=master_id)
+                    units = master.unit
+                except TMPricesMaster.DoesNotExist:
+                    continue
+            else:
+                units = (units_raw or "").strip()
+
+            EWTicket.objects.create(
+                EWT=ewt,
+                master=master,
+                category="Equipment",  # 🔥 ALWAYS set category
+                description=desc,
+                quantity=qty,
+                units=units
+            )
+        # --------------------------------
+        # 5️⃣ SUNDRIES
+        # --------------------------------
+        sundries_count = int(request.POST.get("sundries_count", 0))
+
+        for i in range(1, sundries_count + 1):
+
+            master_id = request.POST.get(f"sundries_master_{i}")
+            desc = (request.POST.get(f"sundries_description_{i}") or "").strip()
+            qty_raw = request.POST.get(f"sundries_quantity_{i}")
+            units_raw = request.POST.get(f"sundries_units_{i}")
+
+            qty = safe_decimal(qty_raw)
+
+            if not qty or not desc:
+                continue
+
+            master = None
+            units = None
+
+            if master_id and master_id != "new":
+                try:
+                    master = TMPricesMaster.objects.get(id=master_id)
+                    units = master.unit
+                except TMPricesMaster.DoesNotExist:
+                    continue
+            else:
+                units = (units_raw or "").strip()
+
+            EWTicket.objects.create(
+                EWT=ewt,
+                master=master,
+                category="Sundries",  # 🔥 always set manually
+                description=desc,
+                quantity=qty,
+                units=units
+            )
+
+        return redirect("extra_work_ticket", id=change_order.id)
