@@ -1,7 +1,7 @@
 
 from changeorder.models import *
 from changeorder.models import ChangeOrders, EWT, EWTicket, TMPricesMaster
-from console.misc import createfolder, getFilesOrFolders
+from console.misc import createfolder, getFilesOrFolders, create_shortcut
 from console.misc import Email, get_client_ip, is_internal_ip, create_excel_from_template, get_subfolders, find_post_bid_docs_shortcut, resolve_shortcut, create_folder_shortcut, create_changeorder_shortcut_in_plan_folder
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
@@ -190,6 +190,18 @@ def batch_approve_co(request, id):
         return redirect('extra_work_ticket', id=selected_cop.id)
     return render(request, 'batch_approve_co.html', send_data)
 
+
+def link_callback(uri, rel):
+
+    if uri.startswith(settings.MEDIA_URL):
+        path = os.path.join(settings.MEDIA_ROOT, uri.replace(settings.MEDIA_URL, ""))
+    elif uri.startswith(settings.STATIC_URL):
+        path = os.path.join(settings.STATIC_ROOT, uri.replace(settings.STATIC_URL, ""))
+    else:
+        return uri
+
+    return path
+
 @login_required(login_url='/accounts/login')
 def print_TMProposal(request, id):
     send_data={}
@@ -232,18 +244,30 @@ def print_TMProposal(request, id):
                 person.save()
             if x[0:6] == 'remove':
                 person = ClientEmployees.objects.get(person_pk=x[6:len(x)])
-                ClientJobRoles.objects.get(role="Change Orders", job=changeorder.job_number, employee=person).delete()
+                ClientJobRoles.objects.filter(role="Change Orders", job=changeorder.job_number, employee=person).delete()
             if x[0:10] == 'adddefault':
                 person = ClientEmployees.objects.get(person_pk=x[10:len(x)])
                 ClientJobRoles.objects.create(role="Change Orders", job=changeorder.job_number, employee=person)
             if x[0:10] == 'tempremove':
                 person = ClientEmployees.objects.get(person_pk=x[10:len(x)])
-                TempRecipients.objects.get(changeorder=changeorder, person=person).delete()
+                TempRecipients.objects.filter(changeorder=changeorder, person=person).delete()
             if x[0:7] == 'tempadd':
-                person = ClientEmployees.objects.get(person_pk=request.POST['addrecipient'])
+                if not request.POST.get("addrecipient").isdigit():#checks to see if they are adding a new person to database
+                    new_client_name = request.POST.get("addrecipient")  # typed name from dropdown
+                    new_client_email = request.POST.get("new_contact_email")
+                    person = ClientEmployees.objects.create(id=changeorder.job_number.client, name=new_client_name,
+                                                   email=new_client_email)
+                else:
+                    person = ClientEmployees.objects.get(person_pk=request.POST['addrecipient'])
                 TempRecipients.objects.create(person=person, changeorder=changeorder)
             if x[0:10] == 'defaultadd':
-                person = ClientEmployees.objects.get(person_pk=request.POST['addrecipient'])
+                if not request.POST.get("addrecipient").isdigit(): #checks to see if they are adding a new person to database
+                    new_client_name = request.POST.get("addrecipient")  # typed name from dropdown
+                    new_client_email = request.POST.get("new_contact_email")
+                    person = ClientEmployees.objects.create(id=changeorder.job_number.client, name=new_client_name,
+                                                   email=new_client_email)
+                else:
+                    person = ClientEmployees.objects.get(person_pk=request.POST['addrecipient'])
                 if not ClientJobRoles.objects.filter(role="Change Orders", job=changeorder.job_number,
                                                      employee=person).exists():
                     ClientJobRoles.objects.create(role="Change Orders", job=changeorder.job_number, employee=person)
@@ -256,16 +280,19 @@ def print_TMProposal(request, id):
                 for x in request.POST:
                     if x[0:5] == 'email':
                         recipients.append(request.POST[x])
+                logo_path = os.path.join(settings.MEDIA_ROOT, "images/logo.png")
+
                 html = render_to_string("print_TMProposal.html",
                                         {'sundriesitems':sundriesitems,'inventory_exists': inventory_exists, 'bond_exists': bond_exists,
                                          'laboritems': laboritems,
                                          'materialitems': materialitems, 'inventory': inventory, 'bond': bond,
                                          'equipmentitems': equipmentitems, 'extraitems': extraitems,
                                          'newproposal': newproposal,
-                                         'changeorder': changeorder, 'ewt': ewt})
+                                         'changeorder': changeorder, 'ewt': ewt, 'logo_path':logo_path})
                 pisa.CreatePDF(
                     html,
-                    dest=result_file
+                    dest=result_file,
+                    link_callback=link_callback
                 )
                 result_file.close()
 
@@ -275,13 +302,12 @@ def print_TMProposal(request, id):
                         files=[]
                         files.append(f"{path}/GP COP {changeorder.cop_number} {changeorder.description} {date.today()}.pdf")
                         files.append(f"{path}/" + request.POST['filename'])
-                        print("IS THIS")
                         Email.sendEmail2("Change Order Proposal", "Please find the TM Proposal attached", recipients,files)
                         # Email.sendEmail("Change Order Proposal", "Please find the TM Proposal attached", recipients,
                         #                 f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
                         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                         user=Employees.objects.get(user=request.user),
-                                                        note="COP Emails to " + str(recipients))
+                                                        note="COP Emailed to " + str(recipients))
                         error = "COP was succesfully emailed"
                     except:
                         email_send_error = "yes"
@@ -328,6 +354,7 @@ def print_TMProposal(request, id):
                 extra_contacts = True
                 client_list.append(
                     {'person_pk': x.person_pk, 'name': x.name, 'default': False, 'current': False, 'email': x.email})
+    client_list = sorted(client_list, key=lambda x: x['name'].lower())
     send_data['email_send_error']=email_send_error
     send_data['client_list'] =client_list
     send_data['extra_contacts'] =extra_contacts
@@ -932,16 +959,6 @@ def print_ticket(request, id, status):
                                         note="Ticket Printed for Wet Signature")
         changeorder.is_printed = True
         changeorder.save()
-        # path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
-        # result_file = open(f"{path}/Unsigned_Extra_Work_Ticket_{date.today()}.pdf", "w+b")
-        # html = render_to_string("print_ticket.html",
-        #                         {'sundries':sundries, 'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
-        #                          'changeorder': changeorder, 'signature': signature, 'status': status})
-        # pisa.CreatePDF(
-        #     html,
-        #     dest=result_file
-        # )
-        # Build folder path
         path = os.path.join(
             settings.MEDIA_ROOT,
             "changeorder",
@@ -1027,19 +1044,31 @@ def email_signed_ticket(request, changeorder):
                 person.save()
             if x[0:6] == 'remove':
                 person = ClientEmployees.objects.get(person_pk=x[6:len(x)])
-                ClientJobRoles.objects.get(role="Extra Work Tickets", job=changeorder.job_number,
+                ClientJobRoles.objects.filter(role="Extra Work Tickets", job=changeorder.job_number,
                                            employee=person).delete()
             if x[0:10] == 'adddefault':
                 person = ClientEmployees.objects.get(person_pk=x[10:len(x)])
                 ClientJobRoles.objects.create(role="Extra Work Tickets", job=changeorder.job_number, employee=person)
             if x[0:10] == 'tempremove':
                 person = ClientEmployees.objects.get(person_pk=x[10:len(x)])
-                TempRecipients.objects.get(changeorder=changeorder, person=person).delete()
+                TempRecipients.objects.filter(changeorder=changeorder, person=person).delete()
             if x[0:7] == 'tempadd':
-                person = ClientEmployees.objects.get(person_pk=request.POST['addrecipient'])
+                if not request.POST.get("addrecipient").isdigit():#checks to see if they are adding a new person to database
+                    new_client_name = request.POST.get("addrecipient")  # typed name from dropdown
+                    new_client_email = request.POST.get("new_contact_email")
+                    person = ClientEmployees.objects.create(id=changeorder.job_number.client, name=new_client_name,
+                                                   email=new_client_email)
+                else:
+                    person = ClientEmployees.objects.get(person_pk=request.POST['addrecipient'])
                 TempRecipients.objects.create(person=person, changeorder=changeorder)
             if x[0:10] == 'defaultadd':
-                person = ClientEmployees.objects.get(person_pk=request.POST['addrecipient'])
+                if not request.POST.get("addrecipient").isdigit(): #checks to see if they are adding a new person to database
+                    new_client_name = request.POST.get("addrecipient")  # typed name from dropdown
+                    new_client_email = request.POST.get("new_contact_email")
+                    person = ClientEmployees.objects.create(id=changeorder.job_number.client, name=new_client_name,
+                                                   email=new_client_email)
+                else:
+                    person = ClientEmployees.objects.get(person_pk=request.POST['addrecipient'])
                 if not ClientJobRoles.objects.filter(role="Extra Work Tickets", job=changeorder.job_number,
                                                      employee=person).exists():
                     ClientJobRoles.objects.create(role="Extra Work Tickets", job=changeorder.job_number,
@@ -1096,7 +1125,7 @@ def email_signed_ticket(request, changeorder):
                 extra_contacts = True
                 client_list.append(
                     {'person_pk': x.person_pk, 'name': x.name, 'default': False, 'current': False, 'email': x.email})
-
+    client_list = sorted(client_list, key=lambda x: x['name'].lower())
     return render(request, "signed_ticket_send.html", {'client_list': client_list,
                                                        'extra_contacts': extra_contacts, 'changeorder': changeorder})
 
@@ -1267,7 +1296,8 @@ def change_order_new(request, jobnumber):
                                                       is_t_and_m=t_and_m, description=request.POST['description'],
                                                       cop_number=next_cop, notes=request.POST['notes'])
             try:
-                createfolder("changeorder/" + str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
+                #createfolder("changeorder/" + str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
+                createfolder("changeorder/" + str(changeorder.job_number.job_number) + " COP #" + str(changeorder.cop_number))
             except OSError as error:
                 print(error)
             try:
@@ -1286,6 +1316,49 @@ def change_order_new(request, jobnumber):
                 note = ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                        user=Employees.objects.get(user=request.user),
                                                        note="COP Added. " + request.POST['notes'])
+            # CREATE LINK IN MANAGEMENT CONSOLE
+            parent_dir = settings.MEDIA_ROOT
+            trinity_folder = os.path.join(parent_dir, "changeorder/" + str(changeorder.job_number.job_number) + " COP #" + str(changeorder.cop_number))
+            os.makedirs(trinity_folder, exist_ok=True)
+
+            # 2️⃣ Build network folder path
+            BASE_JOBS_PATH = r"\\gp2022\company\jobs\open jobs"
+            if os.path.exists(BASE_JOBS_PATH):
+                job_folder_name = (
+                        f"{changeorder.job_number.job_number} "
+                        f"{changeorder.job_number.job_name}\\Contract & Billings\\Change Order Proposals"
+                    )
+                job_folder = os.path.join(BASE_JOBS_PATH, job_folder_name)
+            if os.path.exists(job_folder):
+                changeorder_folder_name = (
+                    f"GP COP {changeorder.cop_number} {changeorder.description}"
+                )
+
+                changeorder_folder = os.path.join(
+                    BASE_JOBS_PATH,
+                    job_folder_name,
+                    changeorder_folder_name
+                )
+
+                # 3️⃣ If network folder exists
+                if os.path.exists(changeorder_folder):
+                    shortcut_name = "Shortcut to MC.lnk"
+                    shortcut_path = os.path.join(trinity_folder, shortcut_name)
+                    create_shortcut(shortcut_path, changeorder_folder)
+                    shortcut_name = "Shortcut to Trinity.lnk"
+                    shortcut_path = os.path.join(changeorder_folder, shortcut_name)
+
+                else:
+                    # If network folder does NOT exist,
+                    # create shortcut inside Trinity folder instead
+                    shortcut_name = f"{changeorder_folder_name}.lnk"
+                    shortcut_path = os.path.join(job_folder, shortcut_name)
+
+                # 4️⃣ Create the shortcut from MC to Trinity
+                create_shortcut(shortcut_path, os.path.abspath(trinity_folder))
+            else:
+                print("GP2022 share not accessible")
+
             return redirect('extra_work_ticket', id=changeorder.id)
     else:
         if jobnumber == 'ALL':
@@ -1351,6 +1424,9 @@ def change_order_email(request, jobnumber):
 
 @login_required(login_url='/accounts/login')
 def extra_work_ticket(request, id):
+    print(os.path.exists(
+        os.path.join(settings.MEDIA_ROOT, "images/logo.png")
+    ))
     send_data = {}
     if Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).exists():
         send_data['error_message']= Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).last().error
@@ -1359,10 +1435,20 @@ def extra_work_ticket(request, id):
     send_data['changeorder'] = changeorder
 
     job = changeorder.job_number
-    # print("PUMPKIN")
-    # if request.method == 'GET':
-    #     print("THIS ONE")
-    #     return render(request, "extra_work_ticket.html", send_data)
+    #---send plan folders to select from, to create shortcuts to those folders --#
+    BASE_JOBS_PATH = r"\\gp2022\company\jobs\open jobs"
+    job_folder_name = f"{changeorder.job_number.job_number} {changeorder.job_number.job_name} "
+    plans_folder = os.path.join(BASE_JOBS_PATH, job_folder_name, "plans")
+    lnk_path = find_post_bid_docs_shortcut(plans_folder)
+    post_bid_docs_target = None
+    if lnk_path:
+        post_bid_docs_target = resolve_shortcut(lnk_path)
+    if post_bid_docs_target and os.path.isdir(post_bid_docs_target):
+        send_data['post_bid_doc_folders'] = get_subfolders(post_bid_docs_target)
+    else:
+        send_data['post_bid_doc_folders'] = []
+
+
     if request.method == 'POST':
         if "create_post_bid_doc_shortcuts" in request.POST:
             selected_folders = request.POST.getlist("folders")
@@ -1555,18 +1641,6 @@ def extra_work_ticket(request, id):
         send_data['no_folder_contents'] = True
     send_data['folder_path'] = rf"\\gp-webserver\trinity\changeorder\{changeorder.job_number.job_number} COP #{changeorder.cop_number}"
 
-    #---send plan folders to select from, to create shortcuts to those folders --#
-    BASE_JOBS_PATH = r"\\gp2022\company\jobs\open jobs"
-    job_folder_name = f"{changeorder.job_number.job_number} {changeorder.job_number.job_name}"
-    plans_folder = os.path.join(BASE_JOBS_PATH, job_folder_name, "plans")
-    lnk_path = find_post_bid_docs_shortcut(plans_folder)
-    post_bid_docs_target = None
-    if lnk_path:
-        post_bid_docs_target = resolve_shortcut(lnk_path)
-    if post_bid_docs_target and os.path.isdir(post_bid_docs_target):
-        send_data['post_bid_doc_folders'] = get_subfolders(post_bid_docs_target)
-    else:
-        send_data['post_bid_doc_folders'] = []
 
     if TMProposal.objects.filter(change_order=changeorder):
         tmproposal = TMProposal.objects.get(change_order=changeorder)

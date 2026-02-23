@@ -18,7 +18,7 @@ import shutil
 import fnmatch
 import pythoncom
 import winshell
-
+from win32com.client import Dispatch
 
 class Email:
     def sendEmail(title, body, to, filename):
@@ -276,3 +276,13 @@ def create_changeorder_shortcut_in_plan_folder(
             link.description = f"Change Order {cop_number}"
     finally:
         pythoncom.CoUninitialize()
+
+def create_shortcut(shortcut_path, target_path):
+    pythoncom.CoInitialize()
+    shell = Dispatch('WScript.Shell')
+    shortcut = shell.CreateShortCut(shortcut_path)
+    shortcut.Targetpath = target_path
+    shortcut.WorkingDirectory = target_path
+    shortcut.IconLocation = target_path
+    shortcut.save()
+    pythoncom.CoUninitialize()

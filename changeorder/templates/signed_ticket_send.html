@@ -1,107 +1,373 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
 {% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>Trinity GP</title>
-	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
+
+<style>
 .emailbutton {
- visibility:hidden;
+    display: none;
 }
-	</style>
-	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
+
+.recipient-card {
+    transition: all 0.2s ease;
+}
+
+.recipient-card:hover {
+    background-color: #f8f9fa;
+}
+
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+#page_overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    background-color: rgba(0, 0, 0, 0.85);
+    z-index: 9999;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    pointer-events: all;
+}
+
+.overlay-content {
+    text-align: center;
+}
+</style>
+
+<div class="container py-4">
+
+    <!-- Page Header -->
+    <div class="mb-4">
+        <h4 class="fw-bold">
+            {{changeorder.job_number.job_number}} –
+            {{changeorder.job_number.job_name}}
+        </h4>
+        <p class="text-muted mb-0">
+            Change Order #{{changeorder.cop_number}} – {{changeorder.description}}
+        </p>
+    </div>
+<!--Remainder of page-->
+    <div class="card shadow-sm border-0">
+<!--        Send Signed Ticket Header Text-->
+        <div class="card-header bg-dark text-white">
+            Send Signed Ticket
+        </div>
+<!--remainder of form-->
+        <div class="card-body">
+            <div id="page_overlay" style="display:none;">
+                <div class="overlay-content text-center">
+                    <div class="spinner-border text-light"
+                         role="status"
+                         style="width: 4rem; height: 4rem;">
+                    </div>
+
+                    <div class="mt-4 h4 text-light">
+                        Sending Ticket…
+                    </div>
+
+                    <div class="text-light">
+                        Please do not close this window.
+                    </div>
+                </div>
+            </div>
+            <form action="{% url 'email_signed_ticket' changeorder.id %}"
+                  method="post"
+                  onsubmit="hide_buttons()">
+
+                {% csrf_token %}
+
+                <h6 class="mb-3 fw-semibold">Current Recipients</h6>
+
+                {% for x in client_list %}
+                    {% if x.current %}
+                    <div class="card recipient-card mb-3 shadow-sm border-0">
+                        <div class="card-body">
+
+                            <div class="row align-items-center gy-3">
+
+                                <div class="col-md-3 col-12">
+                                    <strong>{{x.name}}</strong>
+                                    {% if x.default %}
+                                        <span class="badge bg-success ms-2">
+                                            Default
+                                        </span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-4 col-12">
+                                    <input type="email"
+                                           class="form-control"
+                                           value="{{x.email}}"
+                                           name="email{{x.person_pk}}"
+                                           onchange="add_button({{x.person_pk}})">
+                                </div>
+
+                                <div class="col-md-5 col-12 text-md-end">
+
+                                    {% if x.default %}
+                                    <button type="submit"
+                                            name="remove{{x.person_pk}}"
+                                            class="btn btn-sm btn-outline-warning mb-2">
+                                        Remove Default
+                                    </button>
+                                    {% else %}
+									<button type="submit"
+											name="adddefault{{x.person_pk}}"
+											class="btn btn-sm btn-outline-success mb-2"
+											title="Makes this person a default recipient for all future extra work tickets.">
+										Make Default (All Future Tickets)
+									</button>
+                                    {% endif %}
+
+                                    <button type="submit"
+                                            name="tempremove{{x.person_pk}}"
+                                            class="btn btn-sm btn-outline-danger mb-2">
+                                        Remove From This Ticket
+                                    </button>
+
+                                    <button type="submit"
+                                            id="button{{x.person_pk}}"
+                                            name="updateemail{{x.person_pk}}"
+                                            class="btn btn-sm btn-primary mb-2 emailbutton">
+                                        Update Email Permanently
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+
+                {% if extra_contacts %}
+                <hr>
+                <h6 class="fw-semibold">Add Additional Recipient</h6>
+
+                <div class="row gy-3 align-items-center mb-4">
+<!--select extra recipient-->
+                    <div class="col-md-4 col-12">
+						<select name="addrecipient"
+								id="addrecipient"
+								class="form-control">
+							<option></option>
+							{% for x in client_list %}
+								{% if not x.current %}
+								<option value="{{x.person_pk}}">
+									{{x.name}}
+								</option>
+								{% endif %}
+							{% endfor %}
+						</select>
+						<div id="new_contact_fields" class="mt-3" style="display:none;">
+                            <div id="new_contact_warning"
+                                 class="alert alert-warning small py-2"
+                                 style="display:none; font-size: 0.9rem;">
+
+                                <strong>Notice:</strong>
+                                This person will be added to the database for
+                                <strong>{{ changeorder.job_number.client }}</strong>.
+
+                            </div>
+
+
+                        <input type="email"
+                               id="new_contact_email"
+                               name="new_contact_email"
+                               class="form-control mb-2"
+                               placeholder="Enter contact email">
+
+                        <div id="email_error"
+                             class="text-danger small"
+                             style="display:none;">
+                            Please enter a valid email address.
+                        </div>
+
+<!--							<button type="submit"-->
+<!--									name="add_to_client_database"-->
+<!--									value="1"-->
+<!--									class="btn btn-sm btn-warning mt-2">-->
+<!--								Add to Client Database-->
+<!--							</button>-->
+
+						</div>
+                    </div>
+<!--submit buttons-->
+                    <div class="col-md-8 col-12">
+                        <button type="submit"
+                                name="defaultadd"
+                                class="btn btn-outline-success me-md-2 mb-2"
+								title="Makes this person a default recipient for all future extra work tickets.">
+                            Make Default (All Future Tickets)
+                        </button>
+
+                        <button type="submit"
+                                name="tempadd"
+                                class="btn btn-outline-primary mb-2">
+                            Add to This Ticket
+                        </button>
+                    </div>
+
+                </div>
+                {% endif %}
+
+                <hr>
+
+                <!-- Final Buttons -->
+                <div class="d-grid gap-3 d-md-flex justify-content-md-end">
+
+                    <button type="submit"
+                            class="btn btn-lg btn-success px-4"
+                            name="final1"
+                            id="final1">
+                        Email to GC
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-lg btn-secondary px-4"
+                            name="final2"
+                            id="final2">
+                        Email Only Bridgette
+                    </button>
+
+                </div>
+
+		<div id="processing_wrapper"
+			 class="mt-4 text-center"
+			 style="display:none;">
+
+			<div class="spinner-border text-primary"
+				 role="status"
+				 style="width: 3rem; height: 3rem;">
+				<span class="visually-hidden">Loading...</span>
+			</div>
+
+			<div class="mt-3 fw-semibold">
+				Sending email… please wait.
+			</div>
+
+		</div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+let lastClickedButton = null;
+
+// Track which submit button was clicked
+document.addEventListener('click', function(e) {
+    if (e.target.matches('button[type="submit"]')) {
+        lastClickedButton = e.target;
+    }
+});
+
 function add_button(pk){
-hidden = document.getElementById("button"+ pk);
-hidden.style.visibility= "visible"
+    document.getElementById("button" + pk).style.display = "inline-block";
 }
 
 function hide_buttons(){
-document.getElementById("final1").style.display = "none"
-document.getElementById("final2").style.display = "none"
-document.getElementById("hide_this").style.display = "block"
+
+    if (!lastClickedButton) return;
+
+    const buttonName = lastClickedButton.getAttribute("name");
+
+    if (buttonName === "final1" || buttonName === "final2") {
+
+        // Disable everything
+        document.body.style.pointerEvents = "none";
+
+        // Show overlay
+        const overlay = document.getElementById("page_overlay");
+        if (overlay){
+            overlay.style.display = "flex";
+        }
+    }
 }
 
-$(document).ready(function () {
-	document.getElementById("hide_this").style.display = "none"
-})
+$(document).ready(function() {
 
-	</script>
-</head>
-<body>
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Change Orders</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'change_order_home' %}">Home</a></li>
-		<li><a class="nav-item nav-link" href="#">Add New</a></li>
-		<li><a class="nav-item nav-link active" href="#">{{changeorder.job_number}} Change Order: #{{changeorder.cop_number}} - SEND NOW!</a></li>
-    </ul>
-  </div>
-</nav>
-<h2>{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} - Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</h2>
-<h4>Send Signed Ticket to the Following People: </h4>
-<table id="labor_breakdown" class="display" style="width:90%" ><thead><tr><th></th></tr></thead><tbody>
-<form action="{% url 'email_signed_ticket' changeorder.id %}" method="post" onSubmit="hide_buttons()"  >
-	{% csrf_token %}
-	{% for x in client_list %}
-	{% if x.current == True %}
-		<tr><td>
-	 <select id="recipient" name="recipient{{x.person_pk}}" >
-		 <option value={{x.person_pk}}>{{x.name}}</option></select>
-			{% if x.default == True %}
-			<input type="submit" value="Remove from Default EWT Recipients" name="remove{{x.person_pk}}" />
-						{% else %}
-			<input type="submit" value="Add to Default EWT Recipients" name="adddefault{{x.person_pk}}" />
-			{% endif %}
-			<input type="submit" value="Remove from this Ticket" name="tempremove{{x.person_pk}}"/>
-			<input type="email" class= "emails" value="{{x.email}}" name="email{{x.person_pk}}" size="30" onchange = "add_button({{x.person_pk}})"/>
-			<input type="submit" class="emailbutton" value="Update Now!" id="button{{x.person_pk}}" name="updateemail{{x.person_pk}}"/>
-			</td></tr>
-	{% endif %}
-	{% endfor %}
-	<tr height="25px"></tr>
-	{% if extra_contacts == True %}
-		<tr><td>Click Below To Add Additional Recipients </td></tr><tr><td>
-		<select id="recipient" name="addrecipient" >
-			{% for x in client_list %}
-			{% if x.current == False %}
-			<option value={{x.person_pk}}>{{x.name}}</option>
-		{% endif %}
-			{% endfor %}
-		</select>
-	<input type="submit" value="Add as a Default Ticket Recipient" name="defaultadd"/>
-		<input type="submit" value="Add to this Ticket" name="tempadd"/>
+    const spinner = document.getElementById("processing_wrapper");
+    if (spinner){
+        spinner.style.display = "none";
+    }
 
-</td></tr>
-	{% endif %}
-</tbody></table>
+    // Initialize Select2
+    $('#addrecipient').select2({
+        placeholder: "Search or type to add new contact",
+        allowClear: true,
+        tags: true,
+        width: '100%'
+    });
 
- <br>
+    $('#addrecipient').on('select2:select', function (e) {
 
+        let selectedValue = e.params.data.id;
 
-<br>
-<input type="submit" class="btn btn-primary btn-lg" value="Email To GC Above" name="final1" id="final1" />
-	<input type="submit" class="btn btn-primary btn-lg" value="Email Only to Bridgette" name="final2" id="final2" />
-	<div id="hide_this"><h3>Processing! Please do not click anything until complete!</h3></div>
-</form>
+        if ($.isNumeric(selectedValue)) {
 
-</body>
-</html>
+            $('#new_contact_fields').slideUp(150);
+            $('#new_contact_warning').hide();
+            $('#new_contact_email').val('');
+
+        } else {
+
+            $('#new_contact_fields').slideDown(150);
+            $('#new_contact_warning').fadeIn(150);
+            $('#new_contact_email').focus();
+        }
+    });
+
+    $('#addrecipient').on('select2:clear', function () {
+
+        $('#new_contact_fields').slideUp(150);
+        $('#new_contact_warning').hide();
+        $('#new_contact_email').val('');
+    });
+
+    // 🔥 FORM VALIDATION (NOW PROPERLY INSIDE READY)
+    $("form").on("submit", function(e) {
+
+        const newContactVisible = $("#new_contact_fields").is(":visible");
+
+        if (!newContactVisible) {
+            return; // existing contact selected
+        }
+
+        const emailInput = $("#new_contact_email");
+        const emailError = $("#email_error");
+
+        const email = emailInput.val().trim();
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!email || !emailPattern.test(email)) {
+
+            e.preventDefault();
+            emailError.show();
+            emailInput.addClass("is-invalid");
+            emailInput.focus();
+            return;
+        }
+
+        emailError.hide();
+        emailInput.removeClass("is-invalid");
+    });
+
+});
+</script>
 
 {% endblock %}
