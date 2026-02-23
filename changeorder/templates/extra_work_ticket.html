@@ -964,9 +964,23 @@ function no_change() { toggleButtonPair('yes_change_button','no_change_button','
      FILES & ATTACHMENTS
 ========================= -->
 <div class="clean-card">
-    <div class="clean-card-header">
-        📁 Files & Attachments
+
+    <div class="clean-card-header"
+         data-toggle="collapse"
+         data-target="#filesCollapse"
+         aria-expanded="false"
+         style="cursor:pointer;">
+        📁 {{ file_count }} Files & Attachments - Click to Upload/View
+        <span class="float-right">+</span>
     </div>
+
+    <div id="filesCollapse" class="collapse">
+
+
+<div class="clean-card">
+<!--    <div class="clean-card-header">
+        📁 Files & Attachments
+    </div>-->
 
     <div class="mb-3 small-note">
         Upload documents (pictures, invoices, etc.) for this change order
@@ -1062,7 +1076,8 @@ function no_change() { toggleButtonPair('yes_change_button','no_change_button','
     </button>
 
 </div>
-
+</div>
+    </div>
 <!-- =========================
      NOTES
 ========================= -->

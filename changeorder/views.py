@@ -1424,9 +1424,7 @@ def change_order_email(request, jobnumber):
 
 @login_required(login_url='/accounts/login')
 def extra_work_ticket(request, id):
-    print(os.path.exists(
-        os.path.join(settings.MEDIA_ROOT, "images/logo.png")
-    ))
+
     send_data = {}
     if Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).exists():
         send_data['error_message']= Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).last().error
@@ -1633,14 +1631,16 @@ def extra_work_ticket(request, id):
         send_data['EWT'] = EWT.objects.get(change_order=changeorder)
     tmproposal = []
     foldercontents = []
+    file_count = 0
     try:
         path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
         foldercontents = os.listdir(path)
         send_data['foldercontents'] = foldercontents
+        file_count = len(foldercontents)
     except Exception as e:
         send_data['no_folder_contents'] = True
     send_data['folder_path'] = rf"\\gp-webserver\trinity\changeorder\{changeorder.job_number.job_number} COP #{changeorder.cop_number}"
-
+    send_data['file_count'] = file_count
 
     if TMProposal.objects.filter(change_order=changeorder):
         tmproposal = TMProposal.objects.get(change_order=changeorder)
@@ -1663,28 +1663,28 @@ def extra_work_ticket(request, id):
     else:
         send_status = "Change Order Not Sent Yet"
         send_data['send_status_class'] = "status-danger"
-        if changeorder.is_t_and_m:
-            if changeorder.is_ticket_signed:
-                send_data['ticket_status_class'] = "status-gray"
-                if changeorder.digital_ticket_signed_date:
-                    status = f"Digital Ticket Signed on {changeorder.digital_ticket_signed_date}"
-                else:
-                    status = "Ticket Signed. "
+    if changeorder.is_t_and_m:
+        if changeorder.is_ticket_signed:
+            send_data['ticket_status_class'] = "status-gray"
+            if changeorder.digital_ticket_signed_date:
+                status = f"Digital Ticket Signed on {changeorder.digital_ticket_signed_date}"
             else:
-                send_data['ticket_status_class'] = "status-warning"
-                if changeorder.is_old_form_printed:
-                    status = "Blank Ticket Printed. "
-                if EWT.objects.filter(change_order=changeorder).exists():
-                    ewt = EWT.objects.filter(change_order=changeorder).first()
-                    if ewt.recipient:
-                        status = status + f"Digital Ticket Emailed To {ewt.recipient}. "
-                    else:
-                        status = status + "Digital Ticket Entered. "
-                if changeorder.is_printed:
-                    status = status + "Printed Digital T&M Entries for Wet Signature. "
-                if not EWT.objects.filter(change_order=changeorder).exists():
-                    status = "No Ticket Has Been Completed Yet"
-                    send_data['ticket_status_class'] = "status-danger"
+                status = "Ticket Signed. "
+        else:
+            send_data['ticket_status_class'] = "status-warning"
+            if changeorder.is_old_form_printed:
+                status = "Blank Ticket Printed. "
+            if EWT.objects.filter(change_order=changeorder).exists():
+                ewt = EWT.objects.filter(change_order=changeorder).first()
+                if ewt.recipient:
+                    status = status + f"Digital Ticket Emailed To {ewt.recipient}. "
+                else:
+                    status = status + "Digital Ticket Entered. "
+            if changeorder.is_printed:
+                status = status + "Printed Digital T&M Entries for Wet Signature. "
+            if not EWT.objects.filter(change_order=changeorder).exists():
+                status = "No Ticket Has Been Completed Yet"
+                send_data['ticket_status_class'] = "status-danger"
 
     send_data['status'] = status
     send_data['send_status'] = send_status
