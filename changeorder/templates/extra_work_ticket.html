@@ -4,6 +4,39 @@
 
 <style>
 
+/* ==========================================
+   FILE ATTACHMENT STYLE
+========================================== */
+
+.file-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background-color: #f1f3f5;
+    border: 1px solid #d6d8db;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    font-size: 13px;
+}
+
+.file-pill:hover {
+    background-color: #e2e6ea;
+    border-color: #adb5bd;
+    transform: translateY(-1px);
+}
+
+.file-icon {
+    font-size: 14px;
+}
+
+.file-name {
+    font-weight: 500;
+    color: #212529;
+}
+
+
 /* ==========================================================
    GLOBAL TABLE + DATATABLES
 ========================================================== */
@@ -450,6 +483,7 @@ function check_paper_ticket() {
 ========================================================== */
 
 function populate_file_form(fileName) {
+
     if (document.select_file_form) {
         document.select_file_form.selected_file.value = fileName;
         document.select_file_form.submit();
@@ -957,21 +991,47 @@ function no_change() { toggleButtonPair('yes_change_button','no_change_button','
     {% else %}
         <div class="small-note mb-2">Uploaded Documents:</div>
 
-        <form action="{% url 'extra_work_ticket' changeorder.id %}" id="select_file_form" method="post">
+        <form action="{% url 'extra_work_ticket' changeorder.id %}" id="select_file_form" name ="select_file_form" method="post">
             {% csrf_token %}
             <input type="hidden" id="selected_file" name="selected_file">
         </form>
 
-        <ul class="list-unstyled">
-            {% for x in foldercontents %}
-                <li>
-                    <a style="cursor:pointer;"
-                       onclick="populate_file_form('{{x}}')">
-                        {{ x }}
-                    </a>
-                </li>
-            {% endfor %}
-        </ul>
+<ul class="list-unstyled">
+    {% for x in foldercontents %}
+    <li class="mb-2">
+
+        {% with x|lower as filename %}
+
+        <div class="file-pill"
+             onclick="populate_file_form('{{x}}')">
+
+            <span class="file-icon">
+                {% if ".pdf" in filename %}
+                    📕
+                {% elif ".jpg" in filename or ".jpeg" in filename or ".png" in filename %}
+                    🖼️
+                {% elif ".xls" in filename or ".xlsx" in filename %}
+                    📊
+                {% elif ".doc" in filename or ".docx" in filename %}
+                    📘
+                {% elif ".zip" in filename %}
+                    🗜️
+                {% else %}
+                    📄
+                {% endif %}
+            </span>
+
+            <span class="file-name">
+                {{ x }}
+            </span>
+
+        </div>
+
+        {% endwith %}
+
+    </li>
+    {% endfor %}
+</ul>
     {% endif %}
 
     {% if can_open_folder %}
@@ -1006,18 +1066,42 @@ function no_change() { toggleButtonPair('yes_change_button','no_change_button','
 <!-- =========================
      NOTES
 ========================= -->
+
 <div class="clean-card">
-    <div class="clean-card-header">
-        📝 Notes
+    <div class="clean-card-header d-flex justify-content-between align-items-center">
+        <span>📝 Notes</span>
+        {% if notes|length > 4 %}
+        <button class="btn btn-sm btn-outline-secondary"
+                type="button"
+                data-toggle="collapse"
+                data-target="#olderNotes">
+            Show Older
+        </button>
+        {% endif %}
     </div>
 
     {% if notes %}
-        {% for note in notes %}
-            <div class="small-note mb-2">
-                <strong>[{{note.date}} – {{note.user}}]</strong>
-                {{note.note}}
+
+        <!-- SHOW 4 MOST RECENT -->
+        {% for note in notes|slice:":4" %}
+            <div class="small-note mb-2 p-2 border rounded bg-light">
+                <strong>{{ note.date }} – {{ note.user }}</strong><br>
+                {{ note.note }}
             </div>
         {% endfor %}
+
+        <!-- COLLAPSIBLE OLDER NOTES -->
+        {% if notes|length > 4 %}
+        <div class="collapse mt-2" id="olderNotes">
+            {% for note in notes|slice:"4:" %}
+                <div class="small-note mb-2 p-2 border rounded">
+                    <strong>{{ note.date }} – {{ note.user }}</strong><br>
+                    {{ note.note }}
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
     {% else %}
         <div class="small-note mb-2">
             No notes yet.
@@ -1026,18 +1110,18 @@ function no_change() { toggleButtonPair('yes_change_button','no_change_button','
 
     <form name="note_input"
           action="{% url 'extra_work_ticket' changeorder.id %}"
-          method="post">
+          method="post"
+          class="mt-2">
         {% csrf_token %}
         <input type="hidden" name="new_note" id="new_note">
         <button type="button"
-                class="btn btn-primary btn-sm"
+                class="btn btn-warning btn-sm"
                 onclick="prompt_note()">
             Add Note
         </button>
     </form>
 
 </div>
-
 </div>
 </div>
 <!--ticket status-->
@@ -1195,7 +1279,7 @@ function no_change() { toggleButtonPair('yes_change_button','no_change_button','
         {% if changeorder.date_sent == None %}
             {% if changeorder.is_t_and_m == True %}
                 {% if changeorder.digital_ticket_completed %}
-                    <form action="{% url 'price_ewt' changeorder.id %}"><input class="btn btn-primary btn-sm" type="submit"
+                    <form action="{% url 'price_ewt' changeorder.id %}"><input class="btn btn-primary btn-lg" type="submit"
                                                                value="Send TM Price Now"/></form>
                 {% else %}
                     <form action="{% url 'price_old_ewt' changeorder.id %}"><input class="btn btn-primary btn-sm" type="submit"
@@ -1230,7 +1314,7 @@ function no_change() { toggleButtonPair('yes_change_button','no_change_button','
                     <div class="row h-100 w-100 d-flex justify-content-left">
                     <div style="padding: 5px" class="form-group">
                     <form action="{% url 'preview_TMProposal' tmproposal.id %}">
-                        <input type="submit" class="btn btn-secondary btn-sm" style="margin-bottom: 5px" name="view_proposal" value="View Proposal"/></form>
+                        <input type="submit" class="btn btn-secondary btn-sm" style="margin-bottom: 5px" name="view_proposal" value="Re-Send Proposal"/></form>
                     </div>
                     <div style="padding: 5px" class="form-group">
                     <form action="{% url 'revise_TM_COP' changeorder.id %}">
@@ -1315,5 +1399,5 @@ function no_change() { toggleButtonPair('yes_change_button','no_change_button','
 </div>
 
 
-
+</div>
 {% endblock %}

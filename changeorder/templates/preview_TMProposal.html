@@ -1,149 +1,33 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
 {% block content %}
-{% load static %}
-<!DOCTYPE html>
-<html>
-<head>
-<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Trinity GP</title>
-<style type="text/css" class="init">
-#notes_table thead {
+
+
+<style>
+.recipient-row {
+    border-bottom: 1px solid #eee;
+    padding: 12px 0;
+}
+
+#new_contact_fields {
     display: none;
 }
 
-.colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
-
-.dataTables_wrapper {
-font-family: tahoma;
-font-size: 13px;
+.table-responsive {
+    overflow-x: auto;
 }
 
-    nav .active, .collapsible:hover {
-      background-color: Salmon;
-    }
-    .nav-pills a {
-        color: black;
-    }
-    .nav-pills li {
-        padding: 2px;
-    }
-    .nav-pills .active {
-        background-color: #6c757d !important;
-        padding: 5px;
-    }
-    label {
-        margin-left: 10px;
-        margin-right: 10px;
-    }
-    input {
-        margin-left: 10px;
-        margin-right: 10px;
-        padding: 0.375rem 0.75rem;
-        font-size: 1rem;
-        line-height: 1.5;
-        color: #495057;
-        background-color: #fff;
-        background-clip: padding-box;
-        border: 1px solid #ced4da;
-        border-radius: 0.25rem;
-        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
-    }
-    tr th {
-        width: fit-content !important;
-    }
-    .tab-content * {
-      color : black;
-      background-color: white !important;
-    }
-    .active * {
-        background-color: white !important;
-    }
-            .list-items {
-    border-bottom: 1px solid black; display: flex; justify-content: space-between;
-    }
-    .text-wrap{
-white-space:normal;
-}
-.width-200{
-width:200px;
-}
-.dataTables_filter {
-float: left !important;
-}
-.tb { border-collapse: collapse; width:300px; }
-
-.tb th, .tb td { padding: 5px; border: solid 1px #777; }
-.tb th { background-color: lightblue; }
-
-.table td {
-
-    }
-
-        .modal-content {
-            width: fit-content;
-        }
-
-#add-remove-button-container .btn {
-    padding: 5px 5px;
+.is-invalid {
+    border-color: #dc3545 !important;
 }
 
-        .list-items {
-        border-bottom: 1px solid black; display: flex; justify-content: space-between;
-        }
-        #folderList {
-            max-height: 250px;
-            overflow-y: auto;
-            border: 1px solid #3f50b5;
-            border-radius: 2px;
-        }
+#sending_overlay {
+    backdrop-filter: blur(4px);
+}
 </style>
 
-<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-<link href="https://www.jqueryscript.net/css/jquerysctipttop.css" rel="stylesheet" type="text/css">
-<script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
-<script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-<script src="https://www.jqueryscript.net/demo/Two-side-Multi-Select-Plugin-with-jQuery-multiselect-js/js/multiselect.js"></script>
-<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" language="javascript" src="../resources/demo.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
-<script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
-<script type="text/javascript" class="init">
-window.onload = function() {
-document.getElementById("hide_this").style.display="none"
-    if ("{{email_send_error}}"=="yes"){alert("Error Sending Email")}
-    var all = document.getElementsByTagName("*");
-    for (var i=0, max=all.length; i < max; i++) {
-        if (all[i].id.substring(0,6) == "button"){
-            all[i].style.display="none"
-        }
-    }
-}
-function add_button(id){
-document.getElementById("button" + id).style.display="block"
-}
 
-function selected_file(){
-TMProposal_Form.filename.value = document.getElementById("selected_file").value
-TMProposal_Form.status.value = "Final"
-document.getElementById("final").style.display="none"
-document.getElementById("no_email").style.display="none"
-document.getElementById("hide_this").style.display="block"
-TMProposal_Form.submit()
-}
-
-    </script>
-</head>
-<body>
 <!--start date modal-->
 <div class="modal fade" id="startdate-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
@@ -176,209 +60,444 @@ TMProposal_Form.submit()
     </div>
 </div>
 
-<!--<div class="container">-->
-<h2>{{changeorder.job_number.job_number}} - {{changeorder.job_number.job_name}} - Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</h2>
-<h4>Send Change Order to the Following People: </h4>
-<table id="labor_breakdown" class="display" style="width:90%" ><thead><tr><th></th></tr></thead><tbody>
-<form id="TMProposal_Form" action="{% url 'preview_TMProposal' newproposal.id %}" method="post"   >
-	{% csrf_token %}
-    <input type="hidden" id="status" name="status">
-    <input type="hidden" id="filename" name="filename">
-	{% for x in client_list %}
-	{% if x.current == True %}
-		<tr><td>
-	 <select id="recipient" name="recipient{{x.person_pk}}" >
-		 <option value={{x.person_pk}}>{{x.name}}</option></select>
-			{% if x.default == True %}
-			<input type="submit" class="btn btn-secondary btn-sm" value="Remove from Default CO Recipients" name="remove{{x.person_pk}}" />
-						{% else %}
-			<input type="submit" class="btn btn-secondary btn-sm" value="Add to Default CO Recipients" name="adddefault{{x.person_pk}}" />
-			{% endif %}
-			<input type="submit" class="btn btn-secondary btn-sm" value="Remove from this change order" name="tempremove{{x.person_pk}}"/>
-			<input type="email"  value="{{x.email}}" name="email{{x.person_pk}}" size="30" onchange = "add_button({{x.person_pk}})"/>
-			<input type="submit" class="btn btn-danger btn-sm" value="Click Here Permanently Change Email Address for {{x.name}}" id="button{{x.person_pk}}" name="updateemail{{x.person_pk}}"/>
-			</td></tr>
-	{% endif %}
-	{% endfor %}
-	<tr height="25px"></tr>
-	{% if extra_contacts == True %}
-		<tr><td>Click Below To Add Additional Recipients </td></tr><tr><td>
-		<select id="recipient" name="addrecipient" >
-			{% for x in client_list %}
-			{% if x.current == False %}
-			<option value={{x.person_pk}}>{{x.name}}</option>
-		{% endif %}
-			{% endfor %}
-		</select>
-	<input type="submit" class="btn btn-secondary btn-sm" value="Add as a Default Recipient" name="defaultadd"/>
-		<input type="submit" class="btn btn-secondary btn-sm"  value="Add to this change order" name="tempadd"/>
 
-</td></tr>
-	{% endif %}
-</tbody></table>
+<div class="container py-4">
+<!--header-->
+    <h4 class="mb-2">
+        {{changeorder.job_number.job_number}} –
+        {{changeorder.job_number.job_name}}
+    </h4>
+<!--header 2-->
+    <p class="text-muted">
+        Change Order #{{changeorder.cop_number}} –
+        {{changeorder.description}}
+    </p>
+<!--recipients-->
+    <div class="card shadow-sm mb-4">
+<!--        send change order header text-->
+        <div class="card-header bg-dark text-white">
+            Send Change Order
+        </div>
 
+        <div class="card-body">
 
+            <form id="TMProposal_Form"
+                  action="{% url 'preview_TMProposal' newproposal.id %}"
+                  method="post">
 
-
-
-<div style="padding: 40px; width: 100%">
-    <div style="display: flex; width: 100%">
-        <div style="flex-grow: 1;"></div>
-        <div style="text-align: left">
                 {% csrf_token %}
-            <button type="button" id="final" name="final" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#startdate-modal" onclick="tester()">SEND EMAIL WITH PROPOSAL</button>
-            <input type="submit" name="no_email" id="no_email" class="btn btn-sm btn-primary" value="DONT EMAIL (I will send myself)"/>
+                <input type="hidden" id="status" name="status">
+                <input type="hidden" id="filename" name="filename">
 
-<!--            <input type="submit" name="cancel" class="btn btn-sm btn-primary" value="Cancel"/>-->
+                <!-- CURRENT RECIPIENTS -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-success text-white">
+                        Selected Recipients
+                    </div>
+
+                    <div class="card-body">
+
+                        <p class="text-muted small mb-3">
+                            These people will receive this change order.
+                        </p>
+
+                        {% for x in client_list %}
+                        {% if x.current %}
+                        <div class="recipient-row row align-items-center">
+
+                            <div class="col-md-3 col-12 mb-2 mb-md-0">
+                                <strong>{{x.name}}</strong>
+                                {% if x.default %}
+                                    <span class="badge badge-light ml-2">
+                                        Default
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                        <div class="col-md-4 col-12 mb-2 mb-md-0">
+
+                            <input type="email"
+                                   class="form-control existing-email"
+                                   value="{{x.email}}"
+                                   name="email{{x.person_pk}}"
+                                   id="email{{x.person_pk}}">
+
+                            <div class="text-danger small email-error"
+                                 style="display:none;">
+                                Valid email required.
+                            </div>
+
+                            <button type="submit"
+                                    name="updateemail{{x.person_pk}}"
+                                    id="updatebtn{{x.person_pk}}"
+                                    class="btn btn-sm btn-warning mt-2"
+                                    style="display:none;">
+                                Permanently Update Email
+                            </button>
+
+                        </div>
+
+                            <div class="col-md-5 col-12 text-md-right">
+                                {% if x.default %}
+                                <button type="submit"
+                                        name="remove{{x.person_pk}}"
+                                        class="btn btn-sm btn-outline-secondary mb-1">
+                                    Remove Default
+                                </button>
+                                {% else %}
+                                    <button type="submit"
+                                            name="adddefault{{x.person_pk}}"
+                                            class="btn btn-sm btn-outline-success mb-1 make-default-existing"
+                                            data-toggle="tooltip"
+                                            title="This person will automatically receive all future change orders for this project.">
+                                        Make Project Default (All Future COs)
+                                    </button>
+                                {% endif %}
+
+                                <button type="submit"
+                                        name="tempremove{{x.person_pk}}"
+                                        class="btn btn-sm btn-outline-danger mb-1">
+                                    Remove
+                                </button>
+                            </div>
+
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+
+                    </div>
+                </div>
+                <!-- ADD RECIPIENT SECTION -->
+
+                <!--                header text-->
+                <div class="text-center my-4">
+                    <hr>
+                    <h6 class="text-muted">Add Additional Recipients</h6>
+                </div>
+                <!--add new recipient-->
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-light">
+                        Add Recipient
+                    </div>
+
+                    <div class="card-body">
+
+                        <p class="text-muted small mb-3">
+                            Search for an existing contact or type a new name to add someone.
+                        </p>
+
+                        <div class="row align-items-end">
+
+                            <div class="col-md-5 col-12 mb-3 mb-md-0">
+                                <label class="small text-muted">
+                                    Search or Type New Name
+                                </label>
+
+                                <select name="addrecipient"
+                                        id="addrecipient"
+                                        class="form-control">
+                                    <option></option>
+                                    {% for x in client_list %}
+                                        {% if not x.current %}
+                                        <option value="{{x.person_pk}}">
+                                            {{x.name}}
+                                        </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                                <div id="addrecipient_error"
+                                     class="text-danger small mt-1"
+                                     style="display:none;">
+                                    Please select or type a recipient.
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 col-12"
+                                 id="new_contact_fields"
+                                 style="display:none;">
+
+                                <label class="small text-muted">
+                                    Email for New Contact
+                                </label>
+
+                                <input type="email"
+                                       id="new_contact_email"
+                                       name="new_contact_email"
+                                       class="form-control">
+
+                                <div id="new_contact_email_error"
+                                     class="text-danger small mt-1"
+                                     style="display:none;">
+                                    Valid email required.
+                                </div>
+
+                                <div class="alert alert-warning small mt-2 py-2"
+                                     id="new_contact_warning"
+                                     style="display:none;">
+                                    This person will be added to
+                                    <strong>{{changeorder.job_number.client}}</strong>.
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-3 col-12 text-md-right mt-3 mt-md-0">
+                                <button type="submit"
+                                        name="defaultadd{{x.person_pk}}"
+                                        class="btn btn-sm btn-outline-success mb-1 make-default-new"
+                                        data-toggle="tooltip"
+                                        title="This person will automatically receive all future change orders for this project.">
+                                    Make Project Default (All Future COs)
+                                </button>
+
+                                <button type="submit"
+                                        name="tempadd"
+                                        class="btn btn-outline-primary btn-block">
+                                    Add to Ticket
+                                </button>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- FINAL ACTION -->
+                <div class="text-right mt-3">
+                    <button type="submit"
+                            name="no_email"
+                            class="btn btn-secondary">
+                        Don’t Email
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-primary"
+                            data-toggle="modal"
+                            data-target="#startdate-modal">
+                        Send Email With Proposal
+                    </button>
+                </div>
+
+            </form>
+    <!-- Sending Proposal Overlay -->
+<div id="sending_overlay"
+     style="
+        display:none;
+        position:fixed;
+        top:0;
+        left:0;
+        width:100%;
+        height:100%;
+        background:rgba(0,0,0,0.75);
+        color:white;
+        z-index:9999;
+        text-align:center;
+        padding-top:20%;
+     ">
+
+    <div class="spinner-border text-light"
+         role="status"
+         style="width:4rem;height:4rem;">
+    </div>
+
+    <h3 class="mt-4 font-weight-bold">
+        Sending Proposal…
+    </h3>
+
+    <p class="mt-3" style="font-size:1.1rem; font-weight:500;">
+        Please do not click anything.
+    </p>
+
+</div>
         </div>
     </div>
-    <div id="hide_this" style="color:red;"><H1>PLEASE WAIT - DO NOT CLICK ANYTHING - EMAILING PROPOSAL NOW!!</H1></div>
-    <div style="width: 100%; text-align:center;">
-        <div class="col"><H2>Gerloff Painting T&M Price Breakdown</H2></div>
-    </div>
-    <div style="width: 100%; display:flex; justify-content: space-between;">
-        <div class="col">Job: {{changeorder.job_number}}</div>
-        <div class="col">Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</div>
-    </div>
-    <div style="width: 100%; display:flex; justify-content: space-between;">
-        <div class="col">Week Ending Date: {{ewt.week_ending}}</div>
-        <div class="col">Ticket Completed By: {{ewt.completed_by}}</div>
-    </div>
-    <div style="width: 100%; display:flex; justify-content: space-between;">
-        <div class="col"><p>Work Description: {{ewt.notes}}</p></div>
-    </div>
+
 </div>
-<hr>
-<div style="padding-left: 10px; padding-right: 10px; padding-bottom: 10px">
-    <div style="width: 100%; display:flex; justify-content: space-between;">
-        <div class="col">Description: {{newproposal.notes}}</div>
-    </div>
-    {% if laboritems %}
-    <hr>
-    <table style="width: 100%">
-        <tr>
-            <td><b>Labor Breakdown</b></td>
-            <td><b>Quantity</b></td>
-            <td><b>Units</b></td>
-            <td><b>Cost</b></td>
-        </tr>
-        {% for x in laboritems %}
-        <tr>
-            <td>{{x.description}}</td>
-            <td>{{x.quantity}}</td>
-            <td class="col-2">Hours</td>
-            <td class="col-2">${{x.total}}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% endif %}
-    {% if materialitems %}
-    <hr>
-    <table style="width: 100%; margin-bottom: 12px;">
-        <tr>
-            <th>Material</th>
-            <th>Quantity</th>
-            <th>Units</th>
-            <th>Cost</th>
-        </tr>
-        {% for x in materialitems %}
-        <tr>
-            <td>{{x.description}}</td>
-            <td>{{x.quantity}}</td>
-            <td>{{x.units}}</td>
-            <td>${{x.total}}</td>
-        </tr>
-        {% endfor %}
-        {% if inventory_exists == True %}
-        <tr>
-            <td>Inventory</td>
-            <td>1</td>
-            <td>LS</td>
-            <td>${{inventory.total}}</td>
-        </tr>
-        {% endif %}
-    </table>
-    {% endif %}
-    {% if equipmentitems %}
-    <hr>
-    <table style="width: 100%">
-        <tr>
-            <th>Equipment</th>
-            <th>Quantity</th>
-            <th>Units</th>
-            <th>Cost</th>
-        </tr>
-        {% for x in equipmentitems %}
-        <tr>
-            <td>{{x.description}}</td>
-            <td class="col-2">{{x.quantity}}</td>
-            <td class="col-2">{{x.units}}</td>
-            <td class="col-2">${{x.total}}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% endif %}
-        {% if sundriesitems %}
-    <hr>
-    <table style="width: 100%">
-        <tr>
-            <th>Sundries</th>
-            <th>Quantity</th>
-            <th>Units</th>
-            <th>Cost</th>
-        </tr>
-        {% for x in sundriesitems %}
-        <tr>
-            <td>{{x.description}}</td>
-            <td class="col-2">{{x.quantity}}</td>
-            <td class="col-2">{{x.units}}</td>
-            <td class="col-2">${{x.total}}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% endif %}
-    {% if extraitems %}
-    <hr>
-    <table style="width: 100%">
-        <tr>
-            <th>Extra Item</th>
-            <th><b>Quantity</b></th>
-            <th>Units</th>
-            <th>Cost</th>
-        </tr>
-        {% for x in extraitems %}
-        <tr>
-            <td>{{x.description}}</td>
-            <td>{{x.quantity}}</td>
-            <td>{{x.units}}</td>
-            <td>${{x.total}}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% endif %}
-    <hr style="height:2px;border:none;color:#333;background-color:#333;">
-    <div>
-                {% if bond_exists == True %}
 
-           <h5><b>BOND: </b>${{bond.total}}</h5>
+<script>
 
-        {% endif %}
-        <h4><b>TOTAL:&nbsp;&nbsp;</b>${{newproposal.total}}</h4>
+    $(function () {
 
-    </div>
-</div>
-<script src=”https://code.jquery.com/jquery-3.2.1.slim.min.js”
-        integrity=”sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN”
-        crossorigin=”anonymous”></script>
+        // --------------------------------------------------
+    // Show "Permanently Update Email" when changed
+    // --------------------------------------------------
+    $(".existing-email").on("input", function () {
 
-<script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js
-        integrity=”sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q”
-        crossorigin=”anonymous”></script>
-<script src=”https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js”
-        integrity=”sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl”
-        crossorigin=”anonymous”></script>
-<!--    </div>-->
-</body>
-</html>
+        const $input = $(this);
+        const original = $input.data("original");
+        const current = $input.val();
 
+        const pk = this.id.replace("email", "");
+        const $button = $("#updatebtn" + pk);
+
+        if (current !== original) {
+            $button.show();
+        } else {
+            $button.hide();
+        }
+
+    });
+
+    // --------------------------------------------------
+    // Tooltips
+    // --------------------------------------------------
+    $('[data-toggle="tooltip"]').tooltip({
+        container: 'body'
+    });
+
+    // --------------------------------------------------
+    // Track clicked submit button
+    // --------------------------------------------------
+    let clickedButton = null;
+
+    $("#TMProposal_Form button[type='submit']").on("click", function () {
+        clickedButton = this;
+    });
+
+    // --------------------------------------------------
+    // Select2 Setup
+    // --------------------------------------------------
+    $('#addrecipient').select2({
+        placeholder: "Search or type new contact",
+        allowClear: true,
+        tags: true,
+        width: '100%'
+    });
+
+    $('#addrecipient').on('select2:select', function (e) {
+        let val = e.params.data.id;
+
+        if ($.isNumeric(val)) {
+            $('#new_contact_fields').hide();
+            $('#new_contact_warning').hide();
+            $('#new_contact_email').val('');
+        } else {
+            $('#new_contact_fields').show();
+            $('#new_contact_warning').show();
+            $('#new_contact_email').focus();
+        }
+    });
+
+    $('#addrecipient').on('select2:clear', function () {
+        $('#new_contact_fields').hide();
+        $('#new_contact_warning').hide();
+        $('#new_contact_email').val('');
+    });
+
+    // --------------------------------------------------
+    // Main Form Submit Logic
+    // --------------------------------------------------
+    $("#TMProposal_Form").on("submit", function (e) {
+
+        if (!clickedButton) return;
+
+        const name = clickedButton.name || "";
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        // =============================================
+        // 1️⃣ UPDATE EMAIL BUTTON
+        // =============================================
+        if (name.startsWith("updateemail")) {
+
+            const pk = name.replace("updateemail", "");
+            const $input = $("#email" + pk);
+            const email = $input.val().trim();
+
+            if (!email || !emailPattern.test(email)) {
+                e.preventDefault();
+                $input.addClass("is-invalid");
+                $input.next(".email-error").show();
+                return false;
+            }
+
+            return; // allow submission
+        }
+
+        // =============================================
+        // 2️⃣ REMOVE BUTTONS → skip validation
+        // =============================================
+        if (name.startsWith("tempremove") || name.startsWith("remove")) {
+            return;
+        }
+
+        // =============================================
+        // 3️⃣ Bottom Add Buttons
+        // =============================================
+        if ($(clickedButton).hasClass("make-default-new") || name === "tempadd") {
+
+            const selected = $("#addrecipient").val();
+
+            if (!selected) {
+                e.preventDefault();
+                $("#addrecipient_error").show();
+                return false;
+            }
+
+            $("#addrecipient_error").hide();
+
+            if ($("#new_contact_fields").is(":visible")) {
+
+                const newEmail = $("#new_contact_email").val().trim();
+
+                if (!newEmail || !emailPattern.test(newEmail)) {
+                    e.preventDefault();
+                    $("#new_contact_email").addClass("is-invalid");
+                    $("#new_contact_email_error").show();
+                    return false;
+                }
+            }
+
+            return;
+        }
+
+        // =============================================
+        // 4️⃣ Everything Else → Allow
+        // =============================================
+        return;
+
+    });
+
+});
+
+
+// --------------------------------------------------
+// Proposal Send (Modal Button)
+// --------------------------------------------------
+function showSendingOverlay() {
+    $("#sending_overlay").fadeIn(200);
+}
+
+function selected_file() {
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    let isValid = true;
+
+    $(".existing-email").each(function () {
+
+        let $input = $(this);
+        let email = $input.val().trim();
+
+        if (!email || !emailPattern.test(email)) {
+            isValid = false;
+            $input.addClass("is-invalid");
+            $input.next(".email-error").show();
+        } else {
+            $input.removeClass("is-invalid");
+            $input.next(".email-error").hide();
+        }
+    });
+
+    if (!isValid) return;
+
+    showSendingOverlay();
+
+    const form = document.getElementById("TMProposal_Form");
+
+    form.filename.value =
+        document.getElementById("selected_file").value;
+
+    form.status.value = "Final";
+
+    form.requestSubmit();   // 🔥 use this instead
+}
+</script>
 {% endblock %}
