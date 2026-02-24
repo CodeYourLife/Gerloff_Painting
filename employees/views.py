@@ -3,6 +3,7 @@ from employees.models import *
 from django.shortcuts import render, redirect
 import json
 from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.timezone import now
 from datetime import date, timedelta, datetime
 from equipment.models import Inventory
 from jobs.models import Jobs, JobNotes, Email_Errors, JobsiteSafetyInspection
@@ -430,27 +431,70 @@ def training(request):
     send_data = {}
     return render(request, "training.html", send_data)
 
+def toolbox_file(request, scheduled_id, language):
+
+    employee = Employees.objects.get(user=request.user)
+    scheduled = ScheduledToolboxTalks.objects.get(id=scheduled_id)
+
+    # ✅ Prevent duplicate entries for same day + language
+    ViewedToolboxTalks.objects.get_or_create(
+        employee=employee,
+        master=scheduled,
+        language=language,
+        defaults={"date": now().date()}
+    )
+
+    folder_path = os.path.join(
+        settings.MEDIA_ROOT,
+        "toolbox_talks",
+        str(scheduled.master.id),
+        language
+    )
+
+    files = [
+        f for f in os.listdir(folder_path)
+        if os.path.isfile(os.path.join(folder_path, f))
+    ]
+
+    if not files:
+        return HttpResponse("File not found", status=404)
+
+    file_name = files[0]
+
+    return MediaUtilities().getDirectoryContents(
+        f"{scheduled.master.id}/{language}",
+        file_name,
+        "toolbox_talks"
+    )
 
 @login_required(login_url='/accounts/login')
 def my_page(request):
+
     employee = Employees.objects.get(user=request.user)
     send_data = {}
+
     if request.method == 'POST':
+
         if 'nickname' in request.POST:
             employee.nickname = request.POST['nickname']
             employee.phone = request.POST['phone']
             employee.email = request.POST['email']
             employee.save()
-        if 'selected_file' in request.POST:
-            selected_talk = ScheduledToolboxTalks.objects.get(id=request.POST['scheduledtalk_id'])
-            if request.POST['selected_file'] == "pumpkin":
-                if selected_talk.link_has_been_viewed(employee):
-                    CompletedToolboxTalks.objects.create(employee=employee, date=date.today(), master=selected_talk)
-            else:
-                ViewedToolboxTalks.objects.create(employee=employee, date=date.today(), master=selected_talk, language = request.POST['selected_language'])
-                id = str(request.POST['selected_id'] + "/" + request.POST['selected_language'])
-                print("SELECTED FILE:", request.POST['selected_file'])
-                return MediaUtilities().getDirectoryContents(id, request.POST['selected_file'], 'toolbox_talks')
+
+        if request.POST.get('selected_file') == "pumpkin":
+
+            selected_talk = ScheduledToolboxTalks.objects.get(
+                id=request.POST['scheduledtalk_id']
+            )
+
+            if selected_talk.link_has_been_viewed(employee):
+                CompletedToolboxTalks.objects.create(
+                    employee=employee,
+                    date=date.today(),
+                    master=selected_talk
+                )
+            return redirect('my_page')
+    # Everything else is just data preparation
 
     if not RespiratorClearance.objects.filter(employee=employee, date_completed__isnull=False).exists():
         send_data['respirator_clearance_required'] = "Yes"
@@ -475,33 +519,88 @@ def my_page(request):
     send_data['mentorship_apprentice'] = Mentorship.objects.filter(apprentice=employee)
     send_data['certifications'] = Certifications.objects.filter(employee=employee)
     send_data['actions'] = Certifications.objects.filter(employee=employee, action_required=True)
+    from django.utils.timezone import now
+
     if employee.job_title.description == "Painter":
+
         toolbox_talks_required = []
-        toolbox_talks_required_count = 0
-        folder_name = settings.MEDIA_ROOT
-        for x in ScheduledToolboxTalks.objects.filter(date__lte = date.today(), date__gte = employee.date_added):
-            spanish = "File Not Found"
-            english = "File Not Found"
-            if not CompletedToolboxTalks.objects.filter(employee=employee,master=x).exists():
-                toolbox_talks_required_count += 1
-                toolbox_talk=x.master
-                path = folder_name + "/toolbox_talks/" + str(toolbox_talk.id) + "/Spanish"
-                for entry in os.listdir(path):
-                    full_path = os.path.join(path, entry)
+        folder_root = settings.MEDIA_ROOT
+
+        for x in ScheduledToolboxTalks.objects.filter(
+                date__lte=date.today(),
+                date__gte=employee.date_added
+        ).order_by('date'):
+
+            if CompletedToolboxTalks.objects.filter(employee=employee, master=x).exists():
+                continue
+
+            toolbox_talk = x.master
+
+            spanish = None
+            english = None
+
+            # -------------------
+            # SPANISH FILE
+            # -------------------
+            spanish_path = os.path.join(
+                folder_root, "toolbox_talks", str(toolbox_talk.id), "Spanish"
+            )
+
+            if os.path.exists(spanish_path):
+                for entry in os.listdir(spanish_path):
+                    full_path = os.path.join(spanish_path, entry)
                     if os.path.isfile(full_path):
                         spanish = entry
-                path = folder_name + "/toolbox_talks/" + str(toolbox_talk.id) + "/English"
-                for entry in os.listdir(path):
-                    full_path = os.path.join(path, entry)
+                        break
+
+            # -------------------
+            # ENGLISH FILE
+            # -------------------
+            english_path = os.path.join(
+                folder_root, "toolbox_talks", str(toolbox_talk.id), "English"
+            )
+
+            if os.path.exists(english_path):
+                for entry in os.listdir(english_path):
+                    full_path = os.path.join(english_path, entry)
                     if os.path.isfile(full_path):
                         english = entry
-                toolbox_talks_required.append(
-                    {'id': x.master.id, 'item': x.id, 'description': x.master.description,
-                     'date': x.date, 'english': english, 'spanish': spanish,
-                     'link_viewed': x.link_has_been_viewed(employee)})
-                # toolbox_talks_required.append({'id':x.master.id, 'item':x.id,'description': str(x.master.id) + "- " + x.master.description,'date':x.date, 'english': english, 'spanish': spanish,'link_viewed':x.link_has_been_viewed(employee)})
+                        break
+
+            # -------------------
+            # VIEWED STATUS
+            # -------------------
+            spanish_view = ViewedToolboxTalks.objects.filter(
+                employee=employee,
+                master=x,
+                language="Spanish"
+            ).order_by('-date').first()
+
+            english_view = ViewedToolboxTalks.objects.filter(
+                employee=employee,
+                master=x,
+                language="English"
+            ).order_by('-date').first()
+
+            toolbox_talks_required.append({
+                'id': toolbox_talk.id,
+                'item': x.id,
+                'description': toolbox_talk.description,
+                'date': x.date,
+                'english': english,
+                'spanish': spanish,
+
+                'spanish_viewed': bool(spanish_view),
+                'spanish_date': spanish_view.date if spanish_view else None,
+
+                'english_viewed': bool(english_view),
+                'english_date': english_view.date if english_view else None,
+
+                'can_complete': bool(spanish_view or english_view),
+            })
+
         send_data['toolbox_talks_required'] = toolbox_talks_required
-        send_data['toolbox_talks_required_count'] = toolbox_talks_required_count
+        send_data['toolbox_talks_required_count'] = len(toolbox_talks_required)
     return render(request, "my_page.html", send_data)
 
 
