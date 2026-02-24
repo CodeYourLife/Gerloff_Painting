@@ -2,117 +2,117 @@
 {% load static %}
 {% block nav_item_employees %}active{% endblock nav_item_employees %}
 {% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
-    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-    <style type="text/css" class="init">
-        nav .active, .collapsible:hover {
-          background-color: Salmon;
-        }
-        .nav-pills a {
-            color: black;
-        }
-        .nav-pills li {
-            padding: 2px;
-        }
-        .nav-pills .active {
-            background-color: #6c757d !important;
-            padding: 5px;
-        }
-        .table td {
-            overflow-x: hidden;
-            text-wrap: nowrap !important;
-            word-wrap: normal !important;
-        }
-        label {
-            margin-left: 10px;
-            margin-right: 10px;
-        }
-        input {
-            margin-left: 10px;
-            margin-right: 10px;
-            padding: 0.375rem 0.75rem;
-            font-size: 1rem;
-            line-height: 1.5;
-            color: #495057;
-            background-color: #fff;
-            background-clip: padding-box;
-            border: 1px solid #ced4da;
-            border-radius: 0.25rem;
-            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
-        }
-        tr th {
-            width: fit-content !important;
-        }
-        .tab-content * {
-          color : black;
-          background-color: white !important;
-        }
 
-        .active * {
-            background-color: white !important;
-        }
+<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Trinity GP</title>
+<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
+<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+<style type="text/css" class="init">
+    nav .active, .collapsible:hover {
+      background-color: Salmon;
+    }
+    .nav-pills a {
+        color: black;
+    }
+    .nav-pills li {
+        padding: 2px;
+    }
+    .nav-pills .active {
+        background-color: #6c757d !important;
+        padding: 5px;
+    }
+    .table td {
+        overflow-x: hidden;
+        text-wrap: nowrap !important;
+        word-wrap: normal !important;
+    }
+    label {
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+    input {
+        margin-left: 10px;
+        margin-right: 10px;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #495057;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    }
+    tr th {
+        width: fit-content !important;
+    }
+    .tab-content * {
+      color : black;
+      background-color: white !important;
+    }
 
-    </style>
-    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
-            data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-    <script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html"
-            async></script>
-    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html"
-            async></script>
-    <script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-    <script type="text/javascript" language="javascript"
-            src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-    <script type="text/javascript" class="init">
-        $(document).ready(function () {
-            var table = $('#employees2_table').DataTable({});
-        })
-        function populate_file_form(id, file_name,language,scheduled_id){
-        select_file.selected_file.value= file_name
-        select_file.selected_id.value= id
-        select_file.selected_language.value= language
-        select_file.scheduledtalk_id.value = scheduled_id
-        select_file.submit()
+    .active * {
+        background-color: white !important;
+    }
+
+</style>
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+
+
+<script type="text/javascript" language="javascript"
+        src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+
+<script type="text/javascript" class="init">
+function complete_toolbox(scheduled_id){
+let form = document.getElementById("select_file");
+document.getElementById("selected_file").value = "pumpkin";
+document.getElementById("scheduledtalk_id").value = scheduled_id;
+form.submit();
+}
+</script>
+
+<script>
+function restoreAccordion() {
+    let openId = localStorage.getItem("openAccordion");
+    if (openId) {
+        let collapseElement = document.getElementById(openId);
+        if (collapseElement && !collapseElement.classList.contains("show")) {
+            $(collapseElement).collapse('show');
         }
-        function class_completed(id,item){
-        // class_completed = "False"
-        // $.ajax({
-        //         method: 'GET',
-        //         url: '/superintendent/super_ajax',
-        //         data: {'check_scheduled_toolbox_talk_id':id},
-        //         success: function (data) {
-        //             parsedData = JSON.parse(data);
-        //             if (parsedData.link_clicked == "Yes") {
-        //                 class_completed = "True"
-        //             }
-        //         }
-        // })
-        // if (class_completed == "True") {
-        //     select_file.selected_file.value = "pumpkin"
-        //     select_file.selected_id.value = id
-        //     select_file.selected_language.value = item
-        //     select_file.submit()
-        // }
-        // else {alert("You must click a link first and actually read the toolbox talk")}
-            select_file.selected_file.value = "pumpkin"
-            select_file.selected_id.value = id
-            select_file.selected_language.value = item
-            select_file.scheduledtalk_id.value = item
-            select_file.submit()
-        }
-    </script>
-</head>
-<body>
+    }
+}
+document.addEventListener("DOMContentLoaded", function () {
+
+    restoreAccordion();
+
+    $('.collapse').on('shown.bs.collapse', function () {
+        localStorage.setItem("openAccordion", this.id);
+    });
+
+    $('.collapse').on('hidden.bs.collapse', function () {
+        localStorage.removeItem("openAccordion");
+    });
+
+});
+
+/* 🔥 THIS is the key for back button */
+window.addEventListener("pageshow", function (event) {
+
+    restoreAccordion();
+
+    if (event.persisted) {
+        // Force browser to revalidate without resubmitting form
+        window.location.href = window.location.href;
+    }
+
+});
+</script>
+
+
+
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
     <a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
     <div id="navbarNavDropdown2">
@@ -148,7 +148,7 @@
                     </button>
                 </h5>
             </div>
-            <div id="collapseZero" class="collapse hide" aria-labelledby="headingZero" data-parent="#accordion">
+            <div id="collapseZero" class="collapse" aria-labelledby="headingZero" data-parent="#accordion">
                 <div class="card-body">
                     <form style="margin-bottom: 5px;" action="{% url 'my_page' %}" method="post"
                           onSubmit="return check_booking_data()">
@@ -205,7 +205,7 @@
                 </button>
             </h5>
         </div>
-        <div id="collapseNegativeOne" class="collapse hide" aria-labelledby="headingNegativeOne"
+        <div id="collapseNegativeOne" class="collapse" aria-labelledby="headingNegativeOne"
              data-parent="#accordion">
             <div class="card-body">
                 <div class="table-responsive">
@@ -265,7 +265,7 @@
                     </button>
                 </h5>
             </div>
-            <div id="collapseOne" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">
+            <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
                 <div class="card-body">
                     {% if inventory %}
                     <div class="table-responsive">
@@ -303,7 +303,7 @@
                     </button>
                 </h5>
             </div>
-            <div id="collapseTwo" class="collapse hide" aria-labelledby="headingTwo" data-parent="#accordion">
+            <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
                 <div class="card-body">
                     {% if assessments_performed %}
                     <div class="table-responsive">
@@ -341,7 +341,7 @@
                     </button>
                 </h5>
             </div>
-            <div id="collapseThree" class="collapse hide" aria-labelledby="headingThree" data-parent="#accordion">
+            <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
                 <div class="card-body">
                     {% if assessments_received %}
                     <div class="table-responsive">
@@ -381,7 +381,7 @@
                     </button>
                 </h5>
             </div>
-            <div id="collapseFour" class="collapse hide" aria-labelledby="headingFour" data-parent="#accordion">
+            <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#accordion">
                 <div class="card-body">
                     {% if writeups_written %}
                     <div class="table-responsive">
@@ -422,7 +422,7 @@
                     </button>
                 </h5>
             </div>
-            <div id="collapseFive" class="collapse hide" aria-labelledby="headingFive" data-parent="#accordion">
+            <div id="collapseFive" class="collapse" aria-labelledby="headingFive" data-parent="#accordion">
                 <div class="card-body">
                     {% if writeups_received %}
                     <div class="table-responsive">
@@ -462,7 +462,7 @@
                     </button>
                 </h5>
             </div>
-            <div id="collapseSix" class="collapse hide" aria-labelledby="headingSix" data-parent="#accordion">
+            <div id="collapseSix" class="collapse" aria-labelledby="headingSix" data-parent="#accordion">
                 <div class="card-body">
                     {% if vacation_requests %}
                     <div class="table-responsive">
@@ -507,7 +507,7 @@
                     </button>
                 </h5>
             </div>
-            <div id="collapseSeven" class="collapse hide" aria-labelledby="headingSeven" data-parent="#accordion">
+            <div id="collapseSeven" class="collapse" aria-labelledby="headingSeven" data-parent="#accordion">
                 <div class="card-body">
                     {% if production_reports_written %}
                     <div class="table-responsive">
@@ -545,7 +545,7 @@
                     </button>
                 </h5>
             </div>
-            <div id="collapseEight" class="collapse hide" aria-labelledby="headingEight" data-parent="#accordion">
+            <div id="collapseEight" class="collapse" aria-labelledby="headingEight" data-parent="#accordion">
                 <div class="card-body">
                     {% if production_reports_received %}
                     <div class="table-responsive">
@@ -594,7 +594,7 @@
                     </button>
                 </h5>
             </div>
-            <div id="collapseNine" class="collapse hide" aria-labelledby="headingNine" data-parent="#accordion">
+            <div id="collapseNine" class="collapse" aria-labelledby="headingNine" data-parent="#accordion">
                 <div class="card-body">
                     {% if classes_taught %}
                     <div class="table-responsive">
@@ -633,7 +633,7 @@
                     </button>
                 </h5>
             </div>
-            <div id="collapseTen" class="collapse hide" aria-labelledby="headingTen" data-parent="#accordion">
+            <div id="collapseTen" class="collapse" aria-labelledby="headingTen" data-parent="#accordion">
                 <div class="card-body">
                     {% if classes_attended %}
                     <div class="table-responsive">
@@ -673,7 +673,7 @@
                     </button>
                 </h5>
             </div>
-            <div id="collapseEleven" class="collapse hide" aria-labelledby="headingEleven" data-parent="#accordion">
+            <div id="collapseEleven" class="collapse" aria-labelledby="headingEleven" data-parent="#accordion">
                 <div class="card-body">
                     {% if exams %}
                     <div class="table-responsive">
@@ -722,7 +722,7 @@
                     </button>
                 </h5>
             </div>
-            <div id="collapseTwelve" class="collapse hide" aria-labelledby="headingTwelve" data-parent="#accordion">
+            <div id="collapseTwelve" class="collapse" aria-labelledby="headingTwelve" data-parent="#accordion">
                 <div class="card-body">
                     {% if mentorship_mentor %}
                     <div class="table-responsive">
@@ -763,7 +763,7 @@
                     </button>
                 </h5>
             </div>
-            <div id="collapseThirteen" class="collapse hide" aria-labelledby="headingThirteen" data-parent="#accordion">
+            <div id="collapseThirteen" class="collapse" aria-labelledby="headingThirteen" data-parent="#accordion">
                 <div class="card-body">
                     {% if mentorship_apprentice %}
                     <div class="table-responsive">
@@ -805,7 +805,7 @@
                 </button>
             </h5>
         </div>
-        <div id="collapseFourteen" class="collapse hide" aria-labelledby="headingFourteen" data-parent="#accordion">
+        <div id="collapseFourteen" class="collapse" aria-labelledby="headingFourteen" data-parent="#accordion">
             <div class="card-body">
                 {% if certifications %}
                 <div class="table-responsive">
@@ -858,7 +858,7 @@
             </h5>
         </div>
 
-        <div id="collapseTwo" class="collapse hide" aria-labelledby="headingTwo" data-parent="#accordion">
+        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
             <div class="card-body">
                 {% if actions %}
                 <div class="table-responsive">
@@ -899,7 +899,7 @@
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSixteen"
                         aria-expanded="false"
-                        aria-controls="collapseFourteen">
+                        aria-controls="collapseSixteen">
                     {% if toolbox_talks_required %}
                     {{toolbox_talks_required_count}} Toolbox Talks Required
                     {% else %}
@@ -908,7 +908,7 @@
                 </button>
             </h5>
         </div>
-        <div id="collapseSixteen" class="collapse hide" aria-labelledby="headingSixteen" data-parent="#accordion">
+        <div id="collapseSixteen" class="collapse" aria-labelledby="headingSixteen" data-parent="#accordion">
             <div class="card-body">
                 <form name = "select_file" id = "select_file" action="{% url 'my_page' %}" method="post">
                      {% csrf_token %}
@@ -917,27 +917,90 @@
                     <input type="hidden" id="selected_language" name="selected_language" >
                     <input type="hidden" id="scheduledtalk_id" name="scheduledtalk_id" >
                 {% if toolbox_talks_required %}
-                <div class="table-responsive">
-                    <table class="table display">
-                        <tr>
-                            <th>Description</th>
-                            <th>Date</th>
-                            <th>English</th>
-                            <th>Spanish</th>
-                            <th>Completed</th>
-                        </tr>
-                        <tbody>
-                        {% for x in toolbox_talks_required %}
-                        <tr>
-                            <td>{{x.description}}</td>
-                            <td>{{x.date}}</td>
-                            <td><a style="color: blue; cursor: pointer;" onclick = "populate_file_form('{{x.id}}','{{x.spanish}}', 'Spanish','{{x.item}}')" >Spanish</a></td>
-                            <td><a style="color: blue; cursor: pointer;" onclick = "populate_file_form('{{x.id}}','{{x.english}}', 'English','{{x.item}}')" >English</a></td>
-                            <td>{% if x.link_viewed %}<button type="button" class="btn btn-danger" onclick="class_completed('{{x.id}}','{{x.item}}')" value="Pumpklin" />Course Completed</button>{% else %}Please Click a Link {% endif %}</td>
-                        </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="container-fluid p-2">
+
+                {% for x in toolbox_talks_required %}
+                <div class="card mb-3 shadow-sm toolbox-card" id="card-{{x.id}}">
+                    <div class="card-body">
+
+                        <h6 class="mb-1 font-weight-bold">
+                            {{x.description}}
+                        </h6>
+
+                        <div class="text-muted small mb-2">
+                            {{x.date}}
+                        </div>
+
+<div class="mt-2">
+
+<!-- Spanish -->
+{% if x.spanish %}
+    <a href="{% url 'toolbox_file' x.item 'Spanish' %}"
+       class="btn btn-block mb-2
+              {% if x.spanish_viewed %}
+                  btn-success
+              {% else %}
+                  btn-outline-primary
+              {% endif %}">
+        {% if x.spanish_viewed %}
+            ✅ Spanish (Viewed {{ x.spanish_date|date:"m/d/Y" }})
+        {% else %}
+            📄 View Spanish
+        {% endif %}
+    </a>
+{% else %}
+    <button type="button"
+            class="btn btn-block btn-outline-secondary mb-2"
+            onclick="alert('Tell your supervisor that no file has been uploaded for this talk.')">
+        📄 View Spanish
+    </button>
+{% endif %}
+
+
+<!-- English -->
+{% if x.english %}
+    <a href="{% url 'toolbox_file' x.item 'English' %}"
+       class="btn btn-block mb-2
+              {% if x.english_viewed %}
+                  btn-success
+              {% else %}
+                  btn-outline-primary
+              {% endif %}">
+        {% if x.english_viewed %}
+            ✅ English (Viewed {{ x.english_date|date:"m/d/Y" }})
+        {% else %}
+            📄 View English
+        {% endif %}
+    </a>
+{% else %}
+    <button type="button"
+            class="btn btn-block btn-outline-secondary mb-2"
+            onclick="alert('Tell your supervisor that no file has been uploaded for this talk.')">
+        📄 View English
+    </button>
+{% endif %}
+
+<button type="button"
+        class="btn btn-block
+               {% if x.can_complete %}
+                   btn-danger
+               {% else %}
+                   btn-secondary
+               {% endif %}"
+        {% if not x.can_complete %}
+            onclick="alert('You need to read the toolbox talk first before marking the course complete.')"
+        {% else %}
+            onclick="complete_toolbox('{{ x.item }}')"
+        {% endif %}>
+    I have read and understand this safety topic
+</button>
+
+</div>
+
+                    </div>
+                </div>
+                {% endfor %}
+
                 </div>
                 {% else %}
                 <div>No Certifications To Show</div>
@@ -963,7 +1026,7 @@
                 </button>
             </h5>
         </div>
-        <div id="collapseFifteen" class="collapse hide" aria-labelledby="headingFifteen" data-parent="#accordion">
+        <div id="collapseFifteen" class="collapse" aria-labelledby="headingFifteen" data-parent="#accordion">
             <div class="card-body">
                 {% if respirator_clearance_required %}
                         <form name="add_new" action="{% url 'respirator_clearance_section0' %}" >
@@ -982,24 +1045,6 @@
     </div>
 
 
-    <script>
-        var coll = document.getElementsByClassName("collapsible");
-        var i;
 
-        for (i = 0; i < coll.length; i++) {
-          coll[i].addEventListener("click", function() {
-            this.classList.toggle("active");
-            var content = this.nextElementSibling;
-            if (content.style.display === "block") {
-              content.style.display = "none";
-            } else {
-              content.style.display = "block";
-            }
-          });
-        }
-    </script>
-</body>
-
-</html>
 
 {% endblock %}

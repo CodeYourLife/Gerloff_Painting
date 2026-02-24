@@ -41,4 +41,7 @@ path('toolbox_talks_by_employee', views.toolbox_talks_by_employee, name='toolbox
 path("view_respirator_certification/<id>", views.view_respirator_certification, name='view_respirator_certification'),
 path("delete_employee/<id>", views.delete_employee, name='delete_employee'),
 path("upload_employees", views.upload_employees, name="upload_employees"),
+path("toolbox_file/<int:scheduled_id>/<str:language>/",
+     views.toolbox_file,
+     name="toolbox_file"),
 ]
