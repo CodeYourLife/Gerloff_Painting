@@ -77,17 +77,38 @@
         $(document).ready(function () {
             var table = $('#employees2_table').DataTable({});
         })
-        function populate_file_form(id, file_name,language){
+        function populate_file_form(id, file_name,language,scheduled_id){
         select_file.selected_file.value= file_name
         select_file.selected_id.value= id
         select_file.selected_language.value= language
+        select_file.scheduledtalk_id.value = scheduled_id
         select_file.submit()
         }
         function class_completed(id,item){
-        select_file.selected_file.value= "pumpkin"
-        select_file.selected_id.value= id
-        select_file.selected_language.value= item
-        select_file.submit()
+        // class_completed = "False"
+        // $.ajax({
+        //         method: 'GET',
+        //         url: '/superintendent/super_ajax',
+        //         data: {'check_scheduled_toolbox_talk_id':id},
+        //         success: function (data) {
+        //             parsedData = JSON.parse(data);
+        //             if (parsedData.link_clicked == "Yes") {
+        //                 class_completed = "True"
+        //             }
+        //         }
+        // })
+        // if (class_completed == "True") {
+        //     select_file.selected_file.value = "pumpkin"
+        //     select_file.selected_id.value = id
+        //     select_file.selected_language.value = item
+        //     select_file.submit()
+        // }
+        // else {alert("You must click a link first and actually read the toolbox talk")}
+            select_file.selected_file.value = "pumpkin"
+            select_file.selected_id.value = id
+            select_file.selected_language.value = item
+            select_file.scheduledtalk_id.value = item
+            select_file.submit()
         }
     </script>
 </head>
@@ -894,11 +915,11 @@
                     <input type="hidden" id="selected_file" name="selected_file" value="pumpkin">
                     <input type="hidden" id="selected_id" name="selected_id" >
                     <input type="hidden" id="selected_language" name="selected_language" >
+                    <input type="hidden" id="scheduledtalk_id" name="scheduledtalk_id" >
                 {% if toolbox_talks_required %}
                 <div class="table-responsive">
                     <table class="table display">
                         <tr>
-                            <th>Item</th>
                             <th>Description</th>
                             <th>Date</th>
                             <th>English</th>
@@ -908,12 +929,11 @@
                         <tbody>
                         {% for x in toolbox_talks_required %}
                         <tr>
-                            <td>{{x.item}}</td>
                             <td>{{x.description}}</td>
                             <td>{{x.date}}</td>
-                            <td><a style="color: blue; cursor: pointer;" onclick = "populate_file_form('{{x.id}}','{{x.spanish}}', 'Spanish')" >Spanish</a></td>
-                            <td><a style="color: blue; cursor: pointer;" onclick = "populate_file_form('{{x.id}}','{{x.english}}', 'English')" >English</a></td>
-                            <td><button type="button" class="btn btn-danger" onclick="class_completed('{{x.id}}','{{x.item}}')" value="Pumpklin" />Course Completed</button></td>
+                            <td><a style="color: blue; cursor: pointer;" onclick = "populate_file_form('{{x.id}}','{{x.spanish}}', 'Spanish','{{x.item}}')" >Spanish</a></td>
+                            <td><a style="color: blue; cursor: pointer;" onclick = "populate_file_form('{{x.id}}','{{x.english}}', 'English','{{x.item}}')" >English</a></td>
+                            <td>{% if x.link_viewed %}<button type="button" class="btn btn-danger" onclick="class_completed('{{x.id}}','{{x.item}}')" value="Pumpklin" />Course Completed</button>{% else %}Please Click a Link {% endif %}</td>
                         </tr>
                         {% endfor %}
                         </tbody>
