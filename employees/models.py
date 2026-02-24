@@ -427,17 +427,31 @@ class ToolboxTalks(models.Model):
 
     def __str__(self):
         return f"{self.id} {self.description}"
+
 class ScheduledToolboxTalks(models.Model):
     id = models.BigAutoField(primary_key=True)
     master = models.ForeignKey(ToolboxTalks, on_delete=models.PROTECT, null=True)
     date = models.DateField(null=True, blank=True)
     description = models.CharField(max_length=2000, blank=True, null=True) #use this only for a custom one
 
+    def link_has_been_viewed(self,employee):
+        if ViewedToolboxTalks.objects.filter(employee=employee, master=self).exists():
+            return True
+        else:
+            return False
+
 class CompletedToolboxTalks(models.Model):
     id = models.BigAutoField(primary_key=True)
     date = models.DateField(null=True, blank=True)
     employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
     master = models.ForeignKey(ScheduledToolboxTalks, on_delete=models.PROTECT)
+
+class ViewedToolboxTalks(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    date = models.DateField(null=True, blank=True)
+    employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
+    master = models.ForeignKey(ScheduledToolboxTalks, on_delete=models.PROTECT)
+    language = models.CharField(max_length=50, blank=True, null=True)  # This will say English or Spanish
 
 class RespiratorClearance(models.Model):
     id = models.BigAutoField(primary_key=True)

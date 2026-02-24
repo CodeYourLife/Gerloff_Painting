@@ -434,6 +434,7 @@ def training(request):
 @login_required(login_url='/accounts/login')
 def my_page(request):
     employee = Employees.objects.get(user=request.user)
+    send_data = {}
     if request.method == 'POST':
         if 'nickname' in request.POST:
             employee.nickname = request.POST['nickname']
@@ -441,13 +442,16 @@ def my_page(request):
             employee.email = request.POST['email']
             employee.save()
         if 'selected_file' in request.POST:
+            selected_talk = ScheduledToolboxTalks.objects.get(id=request.POST['scheduledtalk_id'])
             if request.POST['selected_file'] == "pumpkin":
-                selected_talk = ScheduledToolboxTalks.objects.get(id=request.POST['selected_language'])
-                CompletedToolboxTalks.objects.create(employee=employee, date=date.today(), master=selected_talk)
+                if selected_talk.link_has_been_viewed(employee):
+                    CompletedToolboxTalks.objects.create(employee=employee, date=date.today(), master=selected_talk)
             else:
+                ViewedToolboxTalks.objects.create(employee=employee, date=date.today(), master=selected_talk, language = request.POST['selected_language'])
                 id = str(request.POST['selected_id'] + "/" + request.POST['selected_language'])
+                print("SELECTED FILE:", request.POST['selected_file'])
                 return MediaUtilities().getDirectoryContents(id, request.POST['selected_file'], 'toolbox_talks')
-    send_data = {}
+
     if not RespiratorClearance.objects.filter(employee=employee, date_completed__isnull=False).exists():
         send_data['respirator_clearance_required'] = "Yes"
     else:
@@ -491,7 +495,11 @@ def my_page(request):
                     full_path = os.path.join(path, entry)
                     if os.path.isfile(full_path):
                         english = entry
-                toolbox_talks_required.append({'id':x.master.id, 'item':x.id,'description': str(x.master.id) + "- " + x.master.description,'date':x.date, 'english': english, 'spanish': spanish})
+                toolbox_talks_required.append(
+                    {'id': x.master.id, 'item': x.id, 'description': x.master.description,
+                     'date': x.date, 'english': english, 'spanish': spanish,
+                     'link_viewed': x.link_has_been_viewed(employee)})
+                # toolbox_talks_required.append({'id':x.master.id, 'item':x.id,'description': str(x.master.id) + "- " + x.master.description,'date':x.date, 'english': english, 'spanish': spanish,'link_viewed':x.link_has_been_viewed(employee)})
         send_data['toolbox_talks_required'] = toolbox_talks_required
         send_data['toolbox_talks_required_count'] = toolbox_talks_required_count
     return render(request, "my_page.html", send_data)
