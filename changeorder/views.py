@@ -2312,11 +2312,25 @@ def ewt_edit(request, changeorder_id):
                 ticket.save()
 
         # ---------------- MATERIAL ----------------
+        # ---------------- MATERIAL ----------------
         material_count = int(request.POST.get("material_count", 0))
 
         for i in range(1, material_count + 1):
 
+            desc = (request.POST.get(f"material_description_{i}") or "").strip()
+            qty_raw = request.POST.get(f"material_quantity_{i}")
+            units = request.POST.get(f"material_units_{i}")
             master_id = request.POST.get(f"material_master_{i}")
+
+            try:
+                qty = Decimal(qty_raw or "0")
+            except:
+                qty = Decimal("0")
+
+            # 🔥 SKIP EMPTY ROWS
+            if not desc or qty <= 0:
+                continue
+
             master_obj = None
             if master_id and master_id != "new":
                 master_obj = TMPricesMaster.objects.filter(id=master_id).first()
@@ -2325,17 +2339,31 @@ def ewt_edit(request, changeorder_id):
                 EWT=ewt,
                 master=master_obj,
                 category="Material",
-                description=request.POST.get(f"material_description_{i}"),
-                quantity=Decimal(request.POST.get(f"material_quantity_{i}", 0)),
-                units=request.POST.get(f"material_units_{i}")
+                description=desc,
+                quantity=qty,
+                units=units
             )
 
+        # ---------------- EQUIPMENT ----------------
         # ---------------- EQUIPMENT ----------------
         equipment_count = int(request.POST.get("equipment_count", 0))
 
         for i in range(1, equipment_count + 1):
 
+            desc = (request.POST.get(f"equipment_description_{i}") or "").strip()
+            qty_raw = request.POST.get(f"equipment_quantity_{i}")
+            units = request.POST.get(f"equipment_units_{i}")
             master_id = request.POST.get(f"equipment_master_{i}")
+
+            try:
+                qty = Decimal(qty_raw or "0")
+            except:
+                qty = Decimal("0")
+
+            # 🔥 SKIP EMPTY ROWS
+            if not desc or qty <= 0:
+                continue
+
             master_obj = None
             if master_id and master_id != "new":
                 master_obj = TMPricesMaster.objects.filter(id=master_id).first()
@@ -2344,17 +2372,31 @@ def ewt_edit(request, changeorder_id):
                 EWT=ewt,
                 master=master_obj,
                 category="Equipment",
-                description=request.POST.get(f"equipment_description_{i}"),
-                quantity=Decimal(request.POST.get(f"equipment_quantity_{i}", 0)),
-                units=request.POST.get(f"equipment_units_{i}")
+                description=desc,
+                quantity=qty,
+                units=units
             )
 
+        # ---------------- SUNDRIES ----------------
         # ---------------- SUNDRIES ----------------
         sundries_count = int(request.POST.get("sundries_count", 0))
 
         for i in range(1, sundries_count + 1):
 
+            desc = (request.POST.get(f"sundries_description_{i}") or "").strip()
+            qty_raw = request.POST.get(f"sundries_quantity_{i}")
+            units = request.POST.get(f"sundries_units_{i}")
             master_id = request.POST.get(f"sundries_master_{i}")
+
+            try:
+                qty = Decimal(qty_raw or "0")
+            except:
+                qty = Decimal("0")
+
+            # 🔥 SKIP EMPTY ROWS
+            if not desc or qty <= 0:
+                continue
+
             master_obj = None
             if master_id and master_id != "new":
                 master_obj = TMPricesMaster.objects.filter(id=master_id).first()
@@ -2363,12 +2405,12 @@ def ewt_edit(request, changeorder_id):
                 EWT=ewt,
                 master=master_obj,
                 category="Sundries",
-                description=request.POST.get(f"sundries_description_{i}"),
-                quantity=Decimal(request.POST.get(f"sundries_quantity_{i}", 0)),
-                units=request.POST.get(f"sundries_units_{i}")
+                description=desc,
+                quantity=qty,
+                units=units
             )
 
-        return redirect("change_order_detail", change_order.id)
+        return redirect("extra_work_ticket", change_order.id)
 
     # =====================================================
     # GET — BUILD DATA FOR TEMPLATE
