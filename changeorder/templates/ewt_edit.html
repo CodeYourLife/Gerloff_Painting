@@ -179,7 +179,7 @@
         {% if group.custom_employee %}
             <input type="hidden"
                    name="custom_employee_{{ forloop.counter }}"
-                   value="{{ group.custom_employee }}">
+                   value="{{ group.custom_employee|escape }}">
         {% endif %}
 
         {% if group.regular %}
@@ -275,7 +275,7 @@
     <input type="hidden" name="material_master_{{ forloop.counter }}"
            value="{{ t.master.id|default:'new' }}">
     <input type="hidden" name="material_description_{{ forloop.counter }}"
-           value="{{ t.description }}">
+           value="{{ t.description|escape }}">
     <input type="hidden" name="material_quantity_{{ forloop.counter }}"
            value="{{ t.quantity }}">
     <input type="hidden" name="material_units_{{ forloop.counter }}"
@@ -344,7 +344,7 @@
     <input type="hidden" name="equipment_master_{{ forloop.counter }}"
            value="{{ t.master.id|default:'new' }}">
     <input type="hidden" name="equipment_description_{{ forloop.counter }}"
-           value="{{ t.description }}">
+           value="{{ t.description|escape }}">
     <input type="hidden" name="equipment_quantity_{{ forloop.counter }}"
            value="{{ t.quantity }}">
     <input type="hidden" name="equipment_units_{{ forloop.counter }}"
@@ -414,7 +414,7 @@
     <input type="hidden" name="sundries_master_{{ forloop.counter }}"
            value="{{ t.master.id|default:'new' }}">
     <input type="hidden" name="sundries_description_{{ forloop.counter }}"
-           value="{{ t.description }}">
+           value="{{ t.description|escape }}">
     <input type="hidden" name="sundries_quantity_{{ forloop.counter }}"
            value="{{ t.quantity }}">
     <input type="hidden" name="sundries_units_{{ forloop.counter }}"
@@ -1187,20 +1187,10 @@ let materialCounter = {{ material_count }};
 function saveMaterial() {
 
     let masterSelect = document.getElementById("material_master");
-    let masterId = document.getElementById("material_master").value;
+    let masterId = masterSelect.value;
     let desc = document.getElementById("material_description").value.trim();
     let qty = Number(document.getElementById("material_quantity").value || 0);
     let units = document.getElementById("material_units").value;
-
-
-    let id;
-
-    if (editingMaterialId !== null) {
-        id = editingMaterialId;
-        removeMaterial(id);   // now remove only at save time
-    } else {
-        id = ++materialCounter;
-    }
 
     masterSelect.classList.remove("is-invalid");
 
@@ -1219,38 +1209,72 @@ function saveMaterial() {
         return;
     }
 
-    materialCounter++;
+    // -------------------------
+    // Determine ID (Edit vs New)
+    // -------------------------
 
-let row = `
-    <tr class="material-group-${id}">
-        <td>${desc}</td>
-        <td>${qty}</td>
-        <td>${units}</td>
-        <td>
-            <button type="button"
-                    class="btn btn-sm btn-outline-primary"
-                    onclick="editMaterial(${id})">
-                Edit
-            </button>
+    let id;
 
-            <button type="button"
-                    class="btn btn-sm btn-outline-danger"
-                    onclick="removeMaterial(${id})">
-                Remove
-            </button>
-        </td>
-    </tr>
-`;
+    if (editingMaterialId !== null) {
+        id = editingMaterialId;
+        removeMaterial(id);   // remove only at save time
+    } else {
+        id = ++materialCounter;
+    }
+
+    // -------------------------
+    // Escape description safely
+    // -------------------------
+
+    function escapeHTML(str) {
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    let safeDesc = escapeHTML(desc);
+
+    // -------------------------
+    // Build Row
+    // -------------------------
+
+    let row = `
+        <tr class="material-group-${id}">
+            <td>${safeDesc}</td>
+            <td>${qty}</td>
+            <td>${units}</td>
+            <td>
+                <button type="button"
+                        class="btn btn-sm btn-outline-primary"
+                        onclick="editMaterial(${id})">
+                    Edit
+                </button>
+
+                <button type="button"
+                        class="btn btn-sm btn-outline-danger"
+                        onclick="removeMaterial(${id})">
+                    Remove
+                </button>
+            </td>
+        </tr>
+    `;
 
     document.getElementById("material_body")
         .insertAdjacentHTML("beforeend", row);
 
+    // -------------------------
+    // Hidden Inputs
+    // -------------------------
+
     let hidden = `
-        <div class="hidden-material-${materialCounter}">
-            <input type="hidden" name="material_master_${materialCounter}" value="${masterId}">
-            <input type="hidden" name="material_description_${materialCounter}" value="${desc}">
-            <input type="hidden" name="material_quantity_${materialCounter}" value="${qty}">
-            <input type="hidden" name="material_units_${materialCounter}" value="${units}">
+        <div class="hidden-material-${id}">
+            <input type="hidden" name="material_master_${id}" value="${masterId}">
+            <input type="hidden" name="material_description_${id}" value="${safeDesc}">
+            <input type="hidden" name="material_quantity_${id}" value="${qty}">
+            <input type="hidden" name="material_units_${id}" value="${units}">
         </div>
     `;
 
@@ -1259,7 +1283,17 @@ let row = `
 
     document.getElementById("material_count").value = materialCounter;
 
+    // -------------------------
+    // Reset modal + state
+    // -------------------------
+
     $('#addMaterialModal').modal('hide');
+
+    document.getElementById("material_master").value = "";
+    document.getElementById("material_description").value = "";
+    document.getElementById("material_quantity").value = "";
+    document.getElementById("material_units").value = "";
+
     editingMaterialId = null;
 }
 
@@ -1334,100 +1368,11 @@ let equipmentCounter = {{ equipment_count }};
 function saveEquipment() {
 
     let masterSelect = document.getElementById("equipment_master");
-    let masterId = document.getElementById("equipment_master").value;
+    let masterId = masterSelect.value;
     let desc = document.getElementById("equipment_description").value.trim();
     let qty = Number(document.getElementById("equipment_quantity").value || 0);
     let units = document.getElementById("equipment_units").value;
 
-    // Reset validation styling
-    masterSelect.classList.remove("is-invalid");
-
-    if (!masterId) {
-    masterSelect.classList.add("is-invalid");
-    return;
-    }
-
-    if (!desc) {
-        alert("Description required.");
-        return;
-    }
-
-    if (qty <= 0) {
-        alert("Quantity must be greater than 0.");
-        return;
-    }
-
-    equipmentCounter++;
-
-    let row = `
-    <tr class="equipment-group-${equipmentCounter}">
-        <td>${desc}</td>
-        <td>${qty}</td>
-        <td>${units}</td>
-        <td>
-            <button type="button"
-                    class="btn btn-sm btn-outline-primary"
-                    onclick="editEquipment(${equipmentCounter})">
-                Edit
-            </button>
-
-            <button type="button"
-                    class="btn btn-sm btn-outline-danger"
-                    onclick="removeEquipment(${equipmentCounter})">
-                Remove
-            </button>
-        </td>
-    </tr>
-`;
-
-    document.getElementById("equipment_body")
-        .insertAdjacentHTML("beforeend", row);
-
-    let hidden = `
-        <div class="hidden-equipment-${equipmentCounter}">
-            <input type="hidden" name="equipment_master_${equipmentCounter}" value="${masterId}">
-            <input type="hidden" name="equipment_description_${equipmentCounter}" value="${desc}">
-            <input type="hidden" name="equipment_quantity_${equipmentCounter}" value="${qty}">
-            <input type="hidden" name="equipment_units_${equipmentCounter}" value="${units}">
-        </div>
-    `;
-
-
-    document.getElementById("hidden_equipment_inputs")
-        .insertAdjacentHTML("beforeend", hidden);
-
-    document.getElementById("equipment_count").value = equipmentCounter;
-
-    $('#addEquipmentModal').modal('hide');
-
-    // Clear modal fields
-    document.getElementById("equipment_master").value = "";
-    document.getElementById("equipment_description").value = "";
-    document.getElementById("equipment_quantity").value = "";
-    document.getElementById("equipment_units").value = "";
-}
-
-
-function removeEquipment(id) {
-
-    document.querySelectorAll(`.equipment-group-${id}`)
-        .forEach(row => row.remove());
-
-    let hidden = document.querySelector(`.hidden-equipment-${id}`);
-    if (hidden) hidden.remove();
-}
-
-let sundriesCounter = {{ sundries_count }};
-
-function saveSundries() {
-
-    let masterSelect = document.getElementById("sundries_master");
-    let masterId = document.getElementById("sundries_master").value;
-    let desc = document.getElementById("sundries_description").value.trim();
-    let qty = Number(document.getElementById("sundries_quantity").value || 0);
-    let units = document.getElementById("sundries_units").value;
-
-    // Reset validation styling
     masterSelect.classList.remove("is-invalid");
 
     if (!masterId) {
@@ -1445,54 +1390,217 @@ function saveSundries() {
         return;
     }
 
-    sundriesCounter++;
+    // -------------------------
+    // Determine ID (Edit vs New)
+    // -------------------------
+
+    let id;
+
+    if (editingEquipmentId !== null) {
+        id = editingEquipmentId;
+        removeEquipment(id);  // remove existing row only at save time
+    } else {
+        id = ++equipmentCounter;
+    }
+
+    // -------------------------
+    // Escape description safely
+    // -------------------------
+
+    function escapeHTML(str) {
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    let safeDesc = escapeHTML(desc);
+
+    // -------------------------
+    // Build Row
+    // -------------------------
 
     let row = `
-    <tr class="sundries-group-${sundriesCounter}">
-        <td>${desc}</td>
-        <td>${qty}</td>
-        <td>${units}</td>
-        <td>
-            <button type="button"
-                    class="btn btn-sm btn-outline-primary"
-                    onclick="editSundries(${sundriesCounter})">
-                Edit
-            </button>
+        <tr class="equipment-group-${id}">
+            <td>${safeDesc}</td>
+            <td>${qty}</td>
+            <td>${units}</td>
+            <td>
+                <button type="button"
+                        class="btn btn-sm btn-outline-primary"
+                        onclick="editEquipment(${id})">
+                    Edit
+                </button>
 
-            <button type="button"
-                    class="btn btn-sm btn-outline-danger"
-                    onclick="removeSundries(${sundriesCounter})">
-                Remove
-            </button>
-        </td>
-    </tr>
-`;
+                <button type="button"
+                        class="btn btn-sm btn-outline-danger"
+                        onclick="removeEquipment(${id})">
+                    Remove
+                </button>
+            </td>
+        </tr>
+    `;
+
+    document.getElementById("equipment_body")
+        .insertAdjacentHTML("beforeend", row);
+
+    // -------------------------
+    // Build Hidden Inputs
+    // -------------------------
+
+    let hidden = `
+        <div class="hidden-equipment-${id}">
+            <input type="hidden" name="equipment_master_${id}" value="${masterId}">
+            <input type="hidden" name="equipment_description_${id}" value="${safeDesc}">
+            <input type="hidden" name="equipment_quantity_${id}" value="${qty}">
+            <input type="hidden" name="equipment_units_${id}" value="${units}">
+        </div>
+    `;
+
+    document.getElementById("hidden_equipment_inputs")
+        .insertAdjacentHTML("beforeend", hidden);
+
+    document.getElementById("equipment_count").value = equipmentCounter;
+
+    // -------------------------
+    // Reset modal + state
+    // -------------------------
+
+    $('#addEquipmentModal').modal('hide');
+
+    document.getElementById("equipment_master").value = "";
+    document.getElementById("equipment_description").value = "";
+    document.getElementById("equipment_quantity").value = "";
+    document.getElementById("equipment_units").value = "";
+
+    editingEquipmentId = null;
+}
+
+
+function removeEquipment(id) {
+
+    document.querySelectorAll(`.equipment-group-${id}`)
+        .forEach(row => row.remove());
+
+    let hidden = document.querySelector(`.hidden-equipment-${id}`);
+    if (hidden) hidden.remove();
+}
+
+let sundriesCounter = {{ sundries_count }};
+
+function saveSundries() {
+
+    let masterSelect = document.getElementById("sundries_master");
+    let masterId = masterSelect.value;
+    let desc = document.getElementById("sundries_description").value.trim();
+    let qty = Number(document.getElementById("sundries_quantity").value || 0);
+    let units = document.getElementById("sundries_units").value;
+
+    masterSelect.classList.remove("is-invalid");
+
+    if (!masterId) {
+        masterSelect.classList.add("is-invalid");
+        return;
+    }
+
+    if (!desc) {
+        alert("Description required.");
+        return;
+    }
+
+    if (qty <= 0) {
+        alert("Quantity must be greater than 0.");
+        return;
+    }
+
+    // -------------------------
+    // Determine ID (Edit vs New)
+    // -------------------------
+
+    let id;
+
+    if (editingSundriesId !== null) {
+        id = editingSundriesId;
+        removeSundries(id);  // remove only at save time
+    } else {
+        id = ++sundriesCounter;
+    }
+
+    // -------------------------
+    // Escape description safely
+    // -------------------------
+
+    function escapeHTML(str) {
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    let safeDesc = escapeHTML(desc);
+
+    // -------------------------
+    // Build Row
+    // -------------------------
+
+    let row = `
+        <tr class="sundries-group-${id}">
+            <td>${safeDesc}</td>
+            <td>${qty}</td>
+            <td>${units}</td>
+            <td>
+                <button type="button"
+                        class="btn btn-sm btn-outline-primary"
+                        onclick="editSundries(${id})">
+                    Edit
+                </button>
+
+                <button type="button"
+                        class="btn btn-sm btn-outline-danger"
+                        onclick="removeSundries(${id})">
+                    Remove
+                </button>
+            </td>
+        </tr>
+    `;
 
     document.getElementById("sundries_body")
         .insertAdjacentHTML("beforeend", row);
 
-    let hidden = `
-    <div class="hidden-sundries-${sundriesCounter}">
-        <input type="hidden" name="sundries_master_${sundriesCounter}" value="${masterId}">
-        <input type="hidden" name="sundries_description_${sundriesCounter}" value="${desc}">
-        <input type="hidden" name="sundries_quantity_${sundriesCounter}" value="${qty}">
-        <input type="hidden" name="sundries_units_${sundriesCounter}" value="${units}">
-    </div>
-    `;
+    // -------------------------
+    // Hidden Inputs
+    // -------------------------
 
+    let hidden = `
+        <div class="hidden-sundries-${id}">
+            <input type="hidden" name="sundries_master_${id}" value="${masterId}">
+            <input type="hidden" name="sundries_description_${id}" value="${safeDesc}">
+            <input type="hidden" name="sundries_quantity_${id}" value="${qty}">
+            <input type="hidden" name="sundries_units_${id}" value="${units}">
+        </div>
+    `;
 
     document.getElementById("hidden_sundries_inputs")
         .insertAdjacentHTML("beforeend", hidden);
 
     document.getElementById("sundries_count").value = sundriesCounter;
 
+    // -------------------------
+    // Reset Modal + State
+    // -------------------------
+
     $('#addSundriesModal').modal('hide');
 
-    // Clear modal
     document.getElementById("sundries_master").value = "";
     document.getElementById("sundries_description").value = "";
     document.getElementById("sundries_quantity").value = "";
     document.getElementById("sundries_units").value = "";
+
+    editingSundriesId = null;
 }
 
 
@@ -1638,6 +1746,8 @@ $('#addMaterialModal').on('shown.bs.modal', function () {
 
 $('#addEquipmentModal').on('shown.bs.modal', function () {
 
+    if (editingEquipmentId !== null) return;
+
     let select = document.getElementById("equipment_master");
     select.value = "";
     select.classList.remove("is-invalid");
@@ -1656,6 +1766,8 @@ document.getElementById("material_master").addEventListener("change", function()
 });
 
 $('#addSundriesModal').on('shown.bs.modal', function () {
+
+    if (editingSundriesId !== null) return;
 
     let select = document.getElementById("sundries_master");
     select.value = "";
@@ -1706,6 +1818,8 @@ function editMaterial(id) {
 
 function editEquipment(id) {
 
+    editingEquipmentId = id;
+
     let masterInput = document.querySelector(`input[name="equipment_master_${id}"]`);
     let descInput = document.querySelector(`input[name="equipment_description_${id}"]`);
     let qtyInput = document.querySelector(`input[name="equipment_quantity_${id}"]`);
@@ -1713,10 +1827,14 @@ function editEquipment(id) {
 
     if (!descInput) return;
 
-    removeEquipment(id);
-
     let select = document.getElementById("equipment_master");
-    select.value = masterInput ? masterInput.value : "new";
+
+    let masterValue = masterInput ? String(masterInput.value) : "new";
+
+    let optionExists = Array.from(select.options)
+        .some(opt => opt.value === masterValue);
+
+    select.value = optionExists ? masterValue : "new";
 
     populateEquipmentDescription();
 
@@ -1729,6 +1847,8 @@ function editEquipment(id) {
 
 function editSundries(id) {
 
+    editingSundriesId = id;
+
     let masterInput = document.querySelector(`input[name="sundries_master_${id}"]`);
     let descInput = document.querySelector(`input[name="sundries_description_${id}"]`);
     let qtyInput = document.querySelector(`input[name="sundries_quantity_${id}"]`);
@@ -1736,10 +1856,14 @@ function editSundries(id) {
 
     if (!descInput) return;
 
-    removeSundries(id);
-
     let select = document.getElementById("sundries_master");
-    select.value = masterInput ? masterInput.value : "new";
+
+    let masterValue = masterInput ? String(masterInput.value) : "new";
+
+    let optionExists = Array.from(select.options)
+        .some(opt => opt.value === masterValue);
+
+    select.value = optionExists ? masterValue : "new";
 
     populateSundriesDescription();
 
