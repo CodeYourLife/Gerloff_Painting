@@ -424,6 +424,7 @@ function changematerial(){
 	rate = document.getElementById("material_rate" + clicked_row)
 	unit = document.getElementById("material_units" + clicked_row)
 	rolodex = JSON.parse("{{material_json|escapejs}}");
+	if (description.value) {return}
 	for(let i =0; i < rolodex.length; i++){
 		if (rolodex[i].id == event.currentTarget.value){
 			description.value = rolodex[i].item
@@ -447,6 +448,7 @@ function changeequipment(){
 	rate = document.getElementById("equipment_rate" + clicked_row)
 	unit = document.getElementById("equipment_units" + clicked_row)
 	rolodex = JSON.parse("{{equipment_json|escapejs}}");
+	if (description.value) {return}
 	for(let i =0; i < rolodex.length; i++){
 		if (rolodex[i].id == event.currentTarget.value){
 			description.value = rolodex[i].item
@@ -470,6 +472,7 @@ function changesundries(){
 	rate = document.getElementById("sundries_rate" + clicked_row)
 	unit = document.getElementById("sundries_units" + clicked_row)
 	rolodex = JSON.parse("{{sundries_json|escapejs}}");
+	if (description.value) {return}
 	for(let i =0; i < rolodex.length; i++){
 		if (rolodex[i].id == event.currentTarget.value){
 			description.value = rolodex[i].item

@@ -26,4 +26,6 @@ urlpatterns = [
     path('change_order_email/<jobnumber>', views.change_order_email, name='change_order_email'),
     path("changeorder/upload/<int:changeorder_id>/",views.upload_changeorder_file,name="upload_changeorder_file"),
     path('ewt_create/<changeorder_id>', views.ewt_create, name='ewt_create'),
+    path('ewt_edit/<changeorder_id>', views.ewt_edit, name='ewt_edit'),
+
 ]

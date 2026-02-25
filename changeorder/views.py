@@ -1,6 +1,7 @@
 
 from changeorder.models import *
 from changeorder.models import ChangeOrders, EWT, EWTicket, TMPricesMaster
+from collections import defaultdict
 from console.misc import createfolder, getFilesOrFolders, create_shortcut
 from console.misc import Email, get_client_ip, is_internal_ip, create_excel_from_template, get_subfolders, find_post_bid_docs_shortcut, resolve_shortcut, create_folder_shortcut, create_changeorder_shortcut_in_plan_folder
 from datetime import date, datetime
@@ -2248,3 +2249,189 @@ def ewt_create(request, changeorder_id):
             )
 
         return redirect("extra_work_ticket", id=change_order.id)
+
+
+def ewt_edit(request, changeorder_id):
+
+    change_order = get_object_or_404(ChangeOrders, id=changeorder_id)
+    ewt = get_object_or_404(EWT, change_order=change_order)
+
+    # =====================================================
+    # POST — UPDATE + REBUILD
+    # =====================================================
+    if request.method == "POST":
+
+        ewt.week_ending = request.POST.get("week_ending")
+        ewt.notes = request.POST.get("notes")
+        ewt.save()
+
+        EWTicket.objects.filter(EWT=ewt).delete()
+
+        days = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]
+
+        # ---------------- LABOR ----------------
+        painter_count = int(request.POST.get("painter_count", 0))
+
+        for i in range(1, painter_count + 1):
+
+            employee_id = request.POST.get(f"employee_{i}")
+            custom_employee = request.POST.get(f"custom_employee_{i}")
+
+            employee_obj = None
+            if employee_id:
+                employee_obj = Employees.objects.filter(id=employee_id).first()
+
+            # Regular
+            if request.POST.get(f"regular_exists_{i}") == "1":
+                ticket = EWTicket.objects.create(
+                    EWT=ewt,
+                    category="Labor",
+                    employee=employee_obj,
+                    custom_employee=custom_employee,
+                    ot=False
+                )
+
+                for day in days:
+                    setattr(ticket, day, Decimal(request.POST.get(f"reg_{day}_{i}", 0)))
+
+                ticket.save()
+
+            # OT
+            if request.POST.get(f"ot_exists_{i}") == "1":
+                ticket = EWTicket.objects.create(
+                    EWT=ewt,
+                    category="Labor",
+                    employee=employee_obj,
+                    custom_employee=custom_employee,
+                    ot=True
+                )
+
+                for day in days:
+                    setattr(ticket, day, Decimal(request.POST.get(f"ot_{day}_{i}", 0)))
+
+                ticket.save()
+
+        # ---------------- MATERIAL ----------------
+        material_count = int(request.POST.get("material_count", 0))
+
+        for i in range(1, material_count + 1):
+
+            master_id = request.POST.get(f"material_master_{i}")
+            master_obj = None
+            if master_id and master_id != "new":
+                master_obj = TMPricesMaster.objects.filter(id=master_id).first()
+
+            EWTicket.objects.create(
+                EWT=ewt,
+                master=master_obj,
+                category="Material",
+                description=request.POST.get(f"material_description_{i}"),
+                quantity=Decimal(request.POST.get(f"material_quantity_{i}", 0)),
+                units=request.POST.get(f"material_units_{i}")
+            )
+
+        # ---------------- EQUIPMENT ----------------
+        equipment_count = int(request.POST.get("equipment_count", 0))
+
+        for i in range(1, equipment_count + 1):
+
+            master_id = request.POST.get(f"equipment_master_{i}")
+            master_obj = None
+            if master_id and master_id != "new":
+                master_obj = TMPricesMaster.objects.filter(id=master_id).first()
+
+            EWTicket.objects.create(
+                EWT=ewt,
+                master=master_obj,
+                category="Equipment",
+                description=request.POST.get(f"equipment_description_{i}"),
+                quantity=Decimal(request.POST.get(f"equipment_quantity_{i}", 0)),
+                units=request.POST.get(f"equipment_units_{i}")
+            )
+
+        # ---------------- SUNDRIES ----------------
+        sundries_count = int(request.POST.get("sundries_count", 0))
+
+        for i in range(1, sundries_count + 1):
+
+            master_id = request.POST.get(f"sundries_master_{i}")
+            master_obj = None
+            if master_id and master_id != "new":
+                master_obj = TMPricesMaster.objects.filter(id=master_id).first()
+
+            EWTicket.objects.create(
+                EWT=ewt,
+                master=master_obj,
+                category="Sundries",
+                description=request.POST.get(f"sundries_description_{i}"),
+                quantity=Decimal(request.POST.get(f"sundries_quantity_{i}", 0)),
+                units=request.POST.get(f"sundries_units_{i}")
+            )
+
+        return redirect("change_order_detail", change_order.id)
+
+    # =====================================================
+    # GET — BUILD DATA FOR TEMPLATE
+    # =====================================================
+
+    tickets = EWTicket.objects.filter(EWT=ewt)
+
+    # ---------------- GROUP LABOR ----------------
+    labor_map = {}
+
+    for t in tickets.filter(category="Labor"):
+
+        key = (t.employee.id if t.employee else None, t.custom_employee)
+
+        if key not in labor_map:
+            labor_map[key] = {
+                "employee": t.employee,
+                "custom_employee": t.custom_employee,
+                "regular": None,
+                "ot": None
+            }
+
+        day_data = {
+            "monday": t.monday,
+            "tuesday": t.tuesday,
+            "wednesday": t.wednesday,
+            "thursday": t.thursday,
+            "friday": t.friday,
+            "saturday": t.saturday,
+            "sunday": t.sunday,
+        }
+
+        if t.ot:
+            labor_map[key]["ot"] = day_data
+        else:
+            labor_map[key]["regular"] = day_data
+
+    labor_list = list(labor_map.values())
+    labor_count = len(labor_list)
+
+    # ---------------- SIMPLE LISTS ----------------
+    materials = tickets.filter(category="Material")
+    equipment = tickets.filter(category="Equipment")
+    sundries = tickets.filter(category="Sundries")
+
+    # ---------------- COUNTS ----------------
+    material_count = materials.count()
+    equipment_count = equipment.count()
+    sundries_count = sundries.count()
+
+    return render(request, "ewt_edit.html", {
+        "ewt": ewt,
+        "change_order": change_order,
+        "labor_list": labor_list,
+        "labor_count": labor_count,
+        "materials": materials,
+        "equipment": equipment,
+        "sundries": sundries,
+        "material_count": material_count,
+        "equipment_count": equipment_count,
+        "sundries_count": sundries_count,
+        "tm_materials": TMPricesMaster.objects.filter(category="Material"),
+        "tm_equipment": TMPricesMaster.objects.filter(category="Equipment"),
+        "tm_sundries": TMPricesMaster.objects.filter(category="Sundries"),
+        "employees": Employees.objects.filter(active=True),
+    })
