@@ -235,21 +235,33 @@ function add_cop_row(){
 }
 
 function calculatetotal(){
-	form = batch_form
-	let current_total = 0
-	let final_total = 0
-	let current_total_display = document.getElementById("this_change_order")
-	let final_total_display = document.getElementById("total_contract_amount")
-	Array.from(form.elements).forEach((input) => {
-			if (input.name.substring(0,5) == "price"){
-				current_total += Number(input.value)
-			}
-		})
-	final_total = current_total + Number(global_current_contract)
-	current_total_display.innerHTML="$" + current_total.toFixed(2)
-	final_total_display.innerHTML="$" + final_total.toFixed(2)
+    const form = document.getElementById("batch_form");
+    let current_total = 0;
+
+    form.querySelectorAll("input[name^='price']").forEach(input => {
+        current_total += parseFloat(input.value) || 0;
+    });
+
+    const final_total = current_total + Number(global_current_contract);
+
+    document.getElementById("this_change_order").innerHTML =
+        "$" + current_total.toFixed(2);
+
+    document.getElementById("total_contract_amount").innerHTML =
+        "$" + final_total.toFixed(2);
 }
 
+document.addEventListener("DOMContentLoaded", function () {
+
+    const form = document.getElementById("batch_form");
+
+    form.addEventListener("input", function(e) {
+        if (e.target.name && e.target.name.startsWith("price")) {
+            calculatetotal();
+        }
+    });
+
+});
 	</script>
 </head>
 <body>
@@ -258,7 +270,7 @@ function calculatetotal(){
     <div id="navbarNavDropdown2">
         <ul class="sub-nav-list navbar-nav ">
             <li><a class="nav-item nav-link" href="{% url 'change_order_home' %}">Home</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'change_order_new' 'ALL' %}">Add New</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'change_order_new_select' %}">Add New</a></li>
 			<li><a class="nav-item nav-link active" href="#">Batch Approve</a></li>
         </ul>
     </div>
@@ -315,7 +327,7 @@ function calculatetotal(){
 			{% endfor %}
 			</select>
 		</td>
-		<td><input type="number" name="price1" id="price1" {% if changeorder %}value="{{changeorder.price}}"{% endif %} required step='.01' onchange="calculatetotal()"></td>
+		<td><input type="number" name="price1" id="price1" {% if changeorder %}value="{{changeorder.price}}"{% endif %} required step='.01' ></td>
 		<td><button type="button" onclick="delete_row(this)">Delete</button></td>
 		</tr>
 	  	<tr><td><button type="button" onclick="add_cop_row()">Add Another COP </button></td><td></td><td></td></tr>

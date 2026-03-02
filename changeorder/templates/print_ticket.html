@@ -366,7 +366,7 @@ textarea {
 
         {% endif %}
         <div>___________________________________________</div>
-        <div style="width: 400px">{{changeorder.job_number.client}}</div>
+        <div style="width: 400px">{{changeorder.job_number.client.company}}</div>
         {% if not signature %}
 <!--            final approval button-->
 
@@ -391,11 +391,53 @@ textarea {
             <br>
             <div style="height: 150px"></div>
             <div>_______________________________________________________________</div>
-            <div style="width: 400px">APPROVED BY - {{changeorder.job_number.client}}</div>
+            <div style="width: 400px">APPROVED BY - {{changeorder.job_number.client.company}}</div>
         {% endif %}
     </div>
 
 </div>
+<div id="emailSendingOverlay" style="
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.6);
+    z-index:9999;
+    justify-content:center;
+    align-items:center;
+    color:white;
+    font-size:22px;
+    font-weight:600;
+    text-align:center;
+">
+    <div>
+        <div class="spinner-border text-light mb-3" role="status"></div>
+        <div>Email Sending – Do Not Click Anything</div>
+    </div>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    const form = document.querySelector("form");
+    const overlay = document.getElementById("emailSendingOverlay");
+
+    if (form) {
+
+        form.addEventListener("submit", function() {
+
+            // Show overlay
+            overlay.style.display = "flex";
+
+            // Disable all submit buttons
+            const buttons = form.querySelectorAll("button, input[type='submit']");
+            buttons.forEach(btn => btn.disabled = true);
+        });
+    }
+
+});
+</script>
 </body>
 </html>
 

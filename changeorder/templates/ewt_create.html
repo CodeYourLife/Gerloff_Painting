@@ -1349,28 +1349,52 @@ document.addEventListener("focusin", function (e) {
 
 $('#addMaterialModal').on('shown.bs.modal', function () {
 
-    // Reset dropdown
-    let select = document.getElementById("material_master");
-    select.value = "";
+    let $select = $('#material_master');
 
-    // Remove any previous validation styling
-    select.classList.remove("is-invalid");
+    // Destroy if already initialized
+    if ($select.hasClass("select2-hidden-accessible")) {
+        $select.select2('destroy');
+    }
+
+    // Initialize Select2
+    $select.select2({
+        dropdownParent: $('#addMaterialModal'),
+        width: '100%',
+        placeholder: "Search or select material",
+        allowClear: true
+    });
+
+    // Reset dropdown + validation
+    $select.val('').trigger('change');
+    $select.removeClass("is-invalid");
 
     // Clear other fields
-    document.getElementById("material_description").value = "";
-    document.getElementById("material_quantity").value = "";
-    document.getElementById("material_units").value = "";
+    $('#material_description').val('');
+    $('#material_quantity').val('');
+    $('#material_units').val('');
 });
 
 $('#addEquipmentModal').on('shown.bs.modal', function () {
 
-    let select = document.getElementById("equipment_master");
-    select.value = "";
-    select.classList.remove("is-invalid");
+    let $select = $('#equipment_master');
 
-    document.getElementById("equipment_description").value = "";
-    document.getElementById("equipment_quantity").value = "";
-    document.getElementById("equipment_units").value = "";
+    if ($select.hasClass("select2-hidden-accessible")) {
+        $select.select2('destroy');
+    }
+
+    $select.select2({
+        dropdownParent: $('#addEquipmentModal'),
+        width: '100%',
+        placeholder: "Search or select equipment",
+        allowClear: true
+    });
+
+    $select.val('').trigger('change');
+    $select.removeClass("is-invalid");
+
+    $('#equipment_description').val('');
+    $('#equipment_quantity').val('');
+    $('#equipment_units').val('');
 });
 
 document.getElementById("equipment_master").addEventListener("change", function() {
@@ -1383,13 +1407,25 @@ document.getElementById("material_master").addEventListener("change", function()
 
 $('#addSundriesModal').on('shown.bs.modal', function () {
 
-    let select = document.getElementById("sundries_master");
-    select.value = "";
-    select.classList.remove("is-invalid");
+    let $select = $('#sundries_master');
 
-    document.getElementById("sundries_description").value = "";
-    document.getElementById("sundries_quantity").value = "";
-    document.getElementById("sundries_units").value = "";
+    if ($select.hasClass("select2-hidden-accessible")) {
+        $select.select2('destroy');
+    }
+
+    $select.select2({
+        dropdownParent: $('#addSundriesModal'),
+        width: '100%',
+        placeholder: "Search or select sundries",
+        allowClear: true
+    });
+
+    $select.val('').trigger('change');
+    $select.removeClass("is-invalid");
+
+    $('#sundries_description').val('');
+    $('#sundries_quantity').val('');
+    $('#sundries_units').val('');
 });
 
 document.getElementById("sundries_master").addEventListener("change", function() {

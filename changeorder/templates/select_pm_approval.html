@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+    <h3>Select PM for Internal Approval</h3>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+
+            <label>Select Approver:</label>
+
+          <select name="approver"
+        id="approver"
+        class="form-control"
+        required>
+
+    {% for emp in employees %}
+        <option value="{{ emp.id }}"
+            {% if emp.id == selected_approver_id %}
+                selected
+            {% endif %}
+        >
+            {{ emp.first_name }} {{ emp.last_name }}
+            {% if default_approver and emp.id == default_approver.id %}
+                - Default
+            {% endif %}
+        </option>
+    {% endfor %}
+
+</select>
+        </div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const dropdown = document.getElementById("approver");
+        const selectedId = "{{ selected_approver_id }}";
+
+        if (selectedId) {
+            dropdown.value = selectedId;
+        }
+    });
+</script>
+        <!-- Dynamic Default Button -->
+        <div class="mb-3">
+
+    {% if default_approver %}
+
+        <button type="submit"
+                name="change_default"
+                value="1"
+                id="changeDefaultBtn"
+                class="btn btn-outline-warning btn-sm"
+                style="display:none;">
+            Change Default Approver?
+        </button>
+
+    {% else %}
+
+        <button type="submit"
+                name="make_default"
+                value="1"
+                id="makeDefaultBtn"
+                class="btn btn-outline-primary btn-sm">
+            Make Default Approver For This Job
+        </button>
+
+    {% endif %}
+
+</div>
+
+        <button type="submit" class="btn btn-warning">
+            Send For Approval
+        </button>
+
+    </form>
+</div>
+
+{% if default_approver %}
+<script>
+    const dropdown = document.getElementById("approver");
+    const changeBtn = document.getElementById("changeDefaultBtn");
+    const defaultId = "{{ default_approver.id }}";
+
+    dropdown.addEventListener("change", function() {
+        if (this.value !== defaultId) {
+            changeBtn.style.display = "inline-block";
+        } else {
+            changeBtn.style.display = "none";
+        }
+    });
+</script>
+{% endif %}
+
+{% endblock %}

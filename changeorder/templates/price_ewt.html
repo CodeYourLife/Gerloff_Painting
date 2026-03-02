@@ -1,16 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
-{% block content %}
-
-
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
-        <style type="text/css" class="init">
+{% block extra_head %}
+<style type="text/css" class="init">
 
 .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
 
@@ -97,27 +89,16 @@ input[type=number] {
 
     </style>
 
-    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-        <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
-    <script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
-    <script type="text/javascript" class="init">
+
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+<script type="text/javascript" class="init">
 
 var laborcount = {{laborcount}}
 var glob_materialcount= {{materialcount}}
 var glob_equipmentcount= {{equipmentcount}}
 var glob_sundriescount= {{sundriescount}}
 var glob_extrascount = {{extrascount}}
+let force_inventory = false;
 
 window.onload = function() {
 	var table = $('#labor_breakdown').DataTable({paging: false,info:false,ordering:false,searching:false })
@@ -127,6 +108,46 @@ window.onload = function() {
 	var table = $('#extras_breakdown').DataTable({paging: false,info:false,ordering:false,searching:false })
 	calculatetotal()
 };
+
+function check_booking_data() {
+	calculatetotal();
+    let form = document.getElementById("pricing_form");
+    let inputs = form.querySelectorAll("input");
+
+    for (let input of inputs) {
+
+        if (!input.name) continue;
+
+        // Check all quantity fields
+        if (input.name.includes("_quantity")) {
+            if (parseFloat(input.value) <= 0) {
+                alert("Quantity cannot be zero.");
+                input.focus();
+                return false;
+            }
+        }
+
+        // Check all rate fields
+        if (input.name.includes("_rate")) {
+            if (parseFloat(input.value) <= 0) {
+                alert("Rate cannot be zero.");
+                input.focus();
+                return false;
+            }
+        }
+
+        // Check labor hours
+        if (input.name.includes("labor_hours")) {
+            if (parseFloat(input.value) <= 0) {
+                alert("Labor hours cannot be zero.");
+                input.focus();
+                return false;
+            }
+        }
+    }
+
+    return true; // allow submit
+}
 
 function add_labor_row() {
 	laborcount = laborcount + 1
@@ -200,125 +221,168 @@ function changelabor(){
 	}
 	calculatetotal()
 }
+function setForceInventory() {
+    force_inventory = true;
 
-function calculatetotal(){
-	form = pricing_form
-	let labor_total = 0
-	let change_order_total = 0
-	let material_total = 0
-	let equipment_total = 0
-	let sundries_total = 0
-	let other_total = 0
-	let inventory_total = 0
-	let bond_total = 0
-	let hours = 0
-	let rate = 0
-	let line_total = 0
-	let labor_total_summary = document.getElementById("labor_total_summary")
-	let material_total_summary = document.getElementById("material_total_summary")
-	let equipment_total_summary = document.getElementById("equipment_total_summary")
-	let sundries_total_summary = document.getElementById("sundries_total_summary")
-	let other_total_summary = document.getElementById("other_total_summary")
-	let final_cost_summary = document.getElementById("final_cost_display")
-	inventory_display = document.getElementById("inventory_cost_display")
-	inventory_input = document.getElementById("inventory_cost")
-	Array.from(form.elements).forEach((input) => {
-			if (input.name.substring(0,10) == "labor_item"){
-				item_number = input.name.substring(10,input.name.length+1)
-				hours = document.getElementById("labor_hours"+ item_number).value
-				rate = document.getElementById("labor_rate"+ item_number).value
-				line_total_desc = document.getElementById("labor_cost_desc"+ item_number)
-				line_total = hours * rate
-				line_total_input = document.getElementById("labor_cost"+ item_number)
-				line_total_input.value = line_total
-				labor_total += line_total
-				change_order_total += line_total
-				document.getElementById("labor_cost_desc" + item_number).innerHTML = "$" + String(parseInt(line_total))
-			}
+    const cell = document.getElementById("inventory_units_cell");
 
+    cell.innerHTML = `
+        <button type="button"
+                class="btn btn-sm btn-outline-secondary"
+                onclick="resetInventoryAuto()">
+            Auto Calculate
+        </button>
+    `;
 
-		if (input.name.substring(0,20) == "material_description"){
-			item_number = input.name.substring(20,input.name.length+1)
-			quantity = document.getElementById("material_quantity"+ item_number).value
-			rate = document.getElementById("material_rate"+ item_number).value
-			line_total_desc = document.getElementById("material_cost_desc"+ item_number)
-			line_total = quantity * rate
-			line_total_input = document.getElementById("material_cost"+ item_number)
-			line_total_input.value = line_total
-			material_total += line_total
-			change_order_total += line_total
-			document.getElementById("material_cost_desc" + item_number).innerHTML = "$" + String(parseInt(line_total))
-		}
+    calculatetotal();
+}
 
+function resetInventoryAuto() {
+    force_inventory = false;
 
-		if (input.name.substring(0,21) == "equipment_description"){
-			item_number = input.name.substring(21,input.name.length+1)
-			quantity = document.getElementById("equipment_quantity"+ item_number).value
-			rate = document.getElementById("equipment_rate"+ item_number).value
-			line_total_desc = document.getElementById("equipment_cost_desc"+ item_number)
-			line_total = quantity * rate
-			line_total_input = document.getElementById("equipment_cost"+ item_number)
-			line_total_input.value = line_total
-			equipment_total += line_total
-			change_order_total += line_total
-			document.getElementById("equipment_cost_desc" + item_number).innerHTML = "$" + String(parseInt(line_total))
-		}
+    const cell = document.getElementById("inventory_units_cell");
+    cell.innerHTML = "Lump Sum";
 
+    calculatetotal();
+}
+function calculatetotal() {
 
-		if (input.name.substring(0,21) == "sundries_description"){
-			item_number = input.name.substring(21,input.name.length+1)
-			quantity = document.getElementById("sundries_quantity"+ item_number).value
-			rate = document.getElementById("sundries_rate"+ item_number).value
-			line_total_desc = document.getElementById("sundries_cost_desc"+ item_number)
-			line_total = quantity * rate
-			line_total_input = document.getElementById("sundries_cost"+ item_number)
-			line_total_input.value = line_total
-			sundries_total += line_total
-			change_order_total += line_total
-			document.getElementById("sundries_cost_desc" + item_number).innerHTML = "$" + String(parseInt(line_total))
-		}
+    const form = document.getElementById("pricing_form");
 
-		if (input.name.substring(0,18) == "extras_description"){
-			item_number = input.name.substring(18,input.name.length+1)
-			quantity = document.getElementById("extras_quantity"+ item_number).value
-			rate = document.getElementById("extras_rate"+ item_number).value
-			line_total_desc = document.getElementById("extras_cost_desc"+ item_number)
-			line_total = quantity * rate
-			line_total_input = document.getElementById("extras_cost"+ item_number)
-			line_total_input.value = line_total
-			other_total += line_total
-			change_order_total += line_total
-			document.getElementById("extras_cost_desc" + item_number).innerHTML = "$" + String(parseInt(line_total))
-		}
-		})
-				inventory_total = material_total * 0.15
-				change_order_total += inventory_total
-				inventory_display.innerHTML = "$" + String(parseInt(inventory_total))
-				inventory_input.value = inventory_total
-				material_total += inventory_total
-				bondrate={{bond_rate}}
-				if (bondrate != 0){
-					document.getElementById("bond_cost").value = change_order_total * parseFloat({{bond_rate}})
-					document.getElementById("bond_total_summary").innerHTML ="<b>Bond Cost:</b> $" + String(parseInt(document.getElementById("bond_cost").value))
-					change_order_total = change_order_total + parseFloat(document.getElementById("bond_cost").value)
-				}
-				material_total_summary.innerHTML = "<b>Material Cost: $</b>" + parseInt(material_total)
-				labor_total_summary.innerHTML = "<b>Labor Cost: $</b>" + parseInt(labor_total)
-				final_cost_summary.innerHTML = "<b>Final Cost: $</b>" + parseInt(change_order_total)
-				equipment_total_summary.innerHTML = "<b>Equipment Cost: $</b>" + parseInt(equipment_total)
-				sundries_total_summary.innerHTML = "<b>Sundries Cost: $</b>" + parseInt(sundries_total)
-				other_total_summary.innerHTML = "<b>Other Cost: $</b>" + parseInt(other_total)
+    let totals = {
+        labor: 0,
+        material: 0,
+        equipment: 0,
+        sundries: 0,
+        extras: 0
+    };
+
+    // -----------------------------------------
+    // Generic Category Processor
+    // -----------------------------------------
+    function processCategory(prefix, quantityField, rateField) {
+
+        let categoryTotal = 0;
+
+        const rows = form.querySelectorAll(`input[name^="${prefix}_description"]`);
+
+        rows.forEach(input => {
+
+            const index = input.name.replace(`${prefix}_description`, "");
+
+            const qty = parseFloat(document.getElementById(`${prefix}_${quantityField}${index}`)?.value || 0);
+            const rate = parseFloat(document.getElementById(`${prefix}_${rateField}${index}`)?.value || 0);
+
+            const lineTotal = qty * rate;
+
+            const hiddenInput = document.getElementById(`${prefix}_cost${index}`);
+            const displayDiv = document.getElementById(`${prefix}_cost_desc${index}`);
+
+            if (hiddenInput) hiddenInput.value = lineTotal.toFixed(2);
+            if (displayDiv) displayDiv.innerHTML = "$" + lineTotal.toFixed(2);
+
+            categoryTotal += lineTotal;
+        });
+
+        return categoryTotal;
+    }
+
+    // -----------------------------------------
+    // Labor
+    // -----------------------------------------
+    const laborRows = form.querySelectorAll(`input[name^="labor_item"]`);
+    laborRows.forEach(input => {
+
+        const index = input.name.replace("labor_item", "");
+
+        const hours = parseFloat(document.getElementById(`labor_hours${index}`)?.value || 0);
+        const rate = parseFloat(document.getElementById(`labor_rate${index}`)?.value || 0);
+
+        const lineTotal = hours * rate;
+
+        document.getElementById(`labor_cost${index}`).value = lineTotal.toFixed(2);
+        document.getElementById(`labor_cost_desc${index}`).innerHTML = "$" + lineTotal.toFixed(2);
+
+        totals.labor += lineTotal;
+    });
+
+    // -----------------------------------------
+    // Other Categories
+    // -----------------------------------------
+    totals.material  = processCategory("material",  "quantity", "rate");
+    totals.equipment = processCategory("equipment", "quantity", "rate");
+    totals.sundries  = processCategory("sundries",  "quantity", "rate");
+    totals.extras    = processCategory("extras",    "quantity", "rate");
+
+    // -----------------------------------------
+    // Inventory (15% of material only)
+    // -----------------------------------------
+	let inventory = 0;
+
+	if (force_inventory) {
+		inventory = parseFloat(document.getElementById("inventory_cost").value || 0);
+	} else {
+		inventory = totals.material * 0.15;
+		document.getElementById("inventory_cost").value = inventory.toFixed(2);
+	}
+
+	totals.material += inventory;
+    // -----------------------------------------
+    // Subtotal Before Bond
+    // -----------------------------------------
+    let subtotal = totals.labor
+                 + totals.material
+                 + totals.equipment
+                 + totals.sundries
+                 + totals.extras;
+
+    // -----------------------------------------
+    // Bond
+    // -----------------------------------------
+    const bondRate = parseFloat(document.getElementById("bond_rate")?.value || 0);
+    let bondCost = 0;
+
+    if (bondRate > 0) {
+        bondCost = subtotal * bondRate;
+        document.getElementById("bond_cost").value = bondCost.toFixed(2);
+        document.getElementById("bond_total_summary").innerHTML =
+            "<b>Bond Cost:</b> $" + bondCost.toFixed(2);
+        subtotal += bondCost;
+    }
+
+    // -----------------------------------------
+    // Update Summary Display
+    // -----------------------------------------
+    document.getElementById("labor_total_summary").innerHTML =
+        "<b>Labor Cost: $</b>" + totals.labor.toFixed(2);
+
+    document.getElementById("material_total_summary").innerHTML =
+        "<b>Material Cost: $</b>" + totals.material.toFixed(2);
+
+    document.getElementById("equipment_total_summary").innerHTML =
+        "<b>Equipment Cost: $</b>" + totals.equipment.toFixed(2);
+
+    document.getElementById("sundries_total_summary").innerHTML =
+        "<b>Sundries Cost: $</b>" + totals.sundries.toFixed(2);
+
+    document.getElementById("other_total_summary").innerHTML =
+        "<b>Other Cost: $</b>" + totals.extras.toFixed(2);
+
+    document.getElementById("final_cost").value = subtotal.toFixed(2);
+
+    document.getElementById("final_cost_display").innerHTML =
+        "<b>Final Cost: $" + subtotal.toFixed(2) + "</b>";
 }
 
 
-function changehours(){
-	clicked_row = event.currentTarget.id.substring(11,event.currentTarget.id.length)
-	rate = document.getElementById("labor_rate" + clicked_row)
-	hours = document.getElementById("labor_hours" + clicked_row)
-	total = document.getElementById("labor_cost" + clicked_row)
-	total.value = hours.value * rate.value
-	calculate_final_cost()
-}
+// function changehours(){
+// 	clicked_row = event.currentTarget.id.substring(11,event.currentTarget.id.length)
+// 	rate = document.getElementById("labor_rate" + clicked_row)
+// 	hours = document.getElementById("labor_hours" + clicked_row)
+// 	total = document.getElementById("labor_cost" + clicked_row)
+// 	total.value = hours.value * rate.value
+// 	calculate_final_cost()
+// }
 
 
 function add_material_row(type) {
@@ -418,76 +482,133 @@ function add_material_dropdown(type){
 <!--		document.getElementById("new_"  + type + String(materialcount)).appendChild(hidden_input);-->
 }
 
-function changematerial(){
-	clicked_row = event.currentTarget.id.substring(17,event.currentTarget.id.length)
-	description = document.getElementById("material_description" + clicked_row)
-	rate = document.getElementById("material_rate" + clicked_row)
-	unit = document.getElementById("material_units" + clicked_row)
-	rolodex = JSON.parse("{{material_json|escapejs}}");
-	if (description.value) {return}
-	for(let i =0; i < rolodex.length; i++){
-		if (rolodex[i].id == event.currentTarget.value){
-			description.value = rolodex[i].item
-			rate.value = rolodex[i].rate
-			unit.value = rolodex[i].unit
-		}
-	}
-	if (event.currentTarget.value == "custom"){
-			description.value = ""
-			description.placeholder = "Material Description"
-			rate.value = 0
-			unit.value = ""
-			unit.placeholder = "Unit"
-	}
-	calculatetotal()
+function changematerial(event) {
+
+    const clicked_row = event.currentTarget.id.replace("material_category", "");
+
+    const description = document.getElementById("material_description" + clicked_row);
+    const rateInput = document.getElementById("material_rate" + clicked_row);
+    const unitInput = document.getElementById("material_units" + clicked_row);
+
+    const selectedValue = event.currentTarget.value;
+
+    if (selectedValue === "please_select") return;
+
+    if (selectedValue === "custom") {
+        if (!description.value) {
+            description.placeholder = "Material Description";
+        }
+        rateInput.value = 0;
+        unitInput.value = "";
+        calculatetotal();
+        return;
+    }
+
+    const rolodex = JSON.parse("{{material_json|escapejs}}");
+
+    for (let i = 0; i < rolodex.length; i++) {
+        if (rolodex[i].id == selectedValue) {
+
+            // NEW ROW → populate everything
+            if (!description.value.trim()) {
+                description.value = rolodex[i].item;
+                unitInput.value = rolodex[i].unit;
+            }
+
+            // ALWAYS update rate
+            rateInput.value = rolodex[i].rate;
+
+            break;
+        }
+    }
+
+    calculatetotal();
 }
 
-function changeequipment(){
-	clicked_row = event.currentTarget.id.substring(18,event.currentTarget.id.length)
-	description = document.getElementById("equipment_description" + clicked_row)
-	rate = document.getElementById("equipment_rate" + clicked_row)
-	unit = document.getElementById("equipment_units" + clicked_row)
-	rolodex = JSON.parse("{{equipment_json|escapejs}}");
-	if (description.value) {return}
-	for(let i =0; i < rolodex.length; i++){
-		if (rolodex[i].id == event.currentTarget.value){
-			description.value = rolodex[i].item
-			rate.value = rolodex[i].rate
-			unit.value = rolodex[i].unit
-		}
-	}
-		if (event.currentTarget.value == "custom"){
-			description.value = ""
-			description.placeholder = "Equipment Description"
-			rate.value = 0
-			unit.value = ""
-			unit.placeholder = "Unit"
-	}
-	calculatetotal()
+function changeequipment(event){
+
+    const clicked_row = event.currentTarget.id.replace("equipment_category", "");
+
+    const description = document.getElementById("equipment_description" + clicked_row);
+    const rate = document.getElementById("equipment_rate" + clicked_row);
+    const unit = document.getElementById("equipment_units" + clicked_row);
+
+    const selectedValue = event.currentTarget.value;
+
+    if (selectedValue === "please_select") return;
+
+    if (selectedValue === "custom") {
+        if (!description.value.trim()) {
+            description.placeholder = "Equipment Description";
+        }
+        rate.value = 0;
+        unit.value = "";
+        calculatetotal();
+        return;
+    }
+
+    const rolodex = JSON.parse("{{equipment_json|escapejs}}");
+
+    for (let i = 0; i < rolodex.length; i++){
+        if (rolodex[i].id == selectedValue){
+
+            // If new row → populate everything
+            if (!description.value.trim()) {
+                description.value = rolodex[i].item;
+                unit.value = rolodex[i].unit;
+            }
+
+            // Always update rate
+            rate.value = rolodex[i].rate;
+
+            break;
+        }
+    }
+
+    calculatetotal();
 }
 
-function changesundries(){
-	clicked_row = event.currentTarget.id.substring(17,event.currentTarget.id.length)
-	description = document.getElementById("sundries_description" + clicked_row)
-	rate = document.getElementById("sundries_rate" + clicked_row)
-	unit = document.getElementById("sundries_units" + clicked_row)
-	rolodex = JSON.parse("{{sundries_json|escapejs}}");
-	if (description.value) {return}
-	for(let i =0; i < rolodex.length; i++){
-		if (rolodex[i].id == event.currentTarget.value){
-			description.value = rolodex[i].item
-			rate.value = rolodex[i].rate
-			unit.value = rolodex[i].unit
-		}
-	}
-		if (event.currentTarget.value == "custom"){
-			description.value = ""
-			description.placeholder = "Sundries Description"
-			rate.value = 0
-			unit.value = ""
-			unit.placeholder = "Unit"
-	}
-	calculatetotal()
+function changesundries(event){
+
+    const clicked_row = event.currentTarget.id.replace("sundries_category", "");
+
+    const description = document.getElementById("sundries_description" + clicked_row);
+    const rate = document.getElementById("sundries_rate" + clicked_row);
+    const unit = document.getElementById("sundries_units" + clicked_row);
+
+    const selectedValue = event.currentTarget.value;
+
+    if (selectedValue === "please_select") return;
+
+    if (selectedValue === "custom") {
+        if (!description.value.trim()) {
+            description.placeholder = "Sundries Description";
+        }
+        rate.value = 0;
+        unit.value = "";
+        calculatetotal();
+        return;
+    }
+
+    const rolodex = JSON.parse("{{sundries_json|escapejs}}");
+
+    for (let i = 0; i < rolodex.length; i++){
+        if (rolodex[i].id == selectedValue){
+
+            // If new row → populate everything
+            if (!description.value.trim()) {
+                description.value = rolodex[i].item;
+                unit.value = rolodex[i].unit;
+            }
+
+            // Always update rate
+            rate.value = rolodex[i].rate;
+
+            break;
+        }
+    }
+
+    calculatetotal();
 }
 
 function changeextras(){
@@ -505,17 +626,17 @@ function changeextras(){
 	}
 }
 
-function changequantity(){
-	if (event.currentTarget.id.substring(0,17) == "material_quantity") {type = "material"; clicked_row = event.currentTarget.id.substring(17,event.currentTarget.id.length)}
-	if (event.currentTarget.id.substring(0,18) == "equipment_quantity") {type = "equipment"; clicked_row = event.currentTarget.id.substring(18,event.currentTarget.id.length)}
-	if (event.currentTarget.id.substring(0,17) == "sundries_quantity") {type = "sundries"; clicked_row = event.currentTarget.id.substring(18,event.currentTarget.id.length)}
-	if (event.currentTarget.id.substring(0,15) == "extras_quantity") {type = "extras"; clicked_row = event.currentTarget.id.substring(15,event.currentTarget.id.length)}
-	rate = document.getElementById(type + "_rate" + clicked_row)
-	hours = document.getElementById(type + "_quantity" + clicked_row)
-	total = document.getElementById(type + "_cost" + clicked_row)
-	total.value = hours.value * rate.value
-	calculate_final_cost()
-}
+// function changequantity(){
+// 	if (event.currentTarget.id.substring(0,17) == "material_quantity") {type = "material"; clicked_row = event.currentTarget.id.substring(17,event.currentTarget.id.length)}
+// 	if (event.currentTarget.id.substring(0,18) == "equipment_quantity") {type = "equipment"; clicked_row = event.currentTarget.id.substring(18,event.currentTarget.id.length)}
+// 	if (event.currentTarget.id.substring(0,17) == "sundries_quantity") {type = "sundries"; clicked_row = event.currentTarget.id.substring(17,event.currentTarget.id.length)}
+// 	if (event.currentTarget.id.substring(0,15) == "extras_quantity") {type = "extras"; clicked_row = event.currentTarget.id.substring(15,event.currentTarget.id.length)}
+// 	rate = document.getElementById(type + "_rate" + clicked_row)
+// 	hours = document.getElementById(type + "_quantity" + clicked_row)
+// 	total = document.getElementById(type + "_cost" + clicked_row)
+// 	total.value = hours.value * rate.value
+// 	calculate_final_cost()
+// }
 
 function delete_row(btn){
 var row = btn.parentNode.parentNode;
@@ -523,46 +644,52 @@ row.parentNode.removeChild(row);
 calculatetotal()
 }
 
-function calculate_final_cost(){
-	var finalcost = 0
-	var materialcost = 0
-	for(let i =1; i < laborcount+1; i++){
-	finalcost = parseFloat(document.getElementById("labor_cost" + i).value) + finalcost
-	}
-	for(let i =1; i < glob_materialcount+1; i++){
-	materialcost = parseFloat(document.getElementById("material_cost" + i).value) + materialcost
-	finalcost = parseFloat(document.getElementById("material_cost" + i).value) + finalcost
-	}
-	document.getElementById("inventory_cost").value = materialcost *.15
-	document.getElementById("inventory_cost_display").innerHTML = "$" + String(parseInt(materialcost *.15))
-	for(let i =1; i < glob_equipmentcount+1; i++){
-	finalcost = parseFloat(document.getElementById("equipment_cost" + i).value) + finalcost
-	}
-	for(let i =1; i < glob_sundriescount+1; i++){
-	finalcost = parseFloat(document.getElementById("sundries_cost" + i).value) + finalcost
-	}
-	for(let i =1; i < glob_extrascount+1; i++){
-	finalcost = parseFloat(document.getElementById("extras_cost" + i).value) + finalcost
-	}
-	finalcost = finalcost + parseFloat(document.getElementById("inventory_cost").value)
-	document.getElementById("bond_cost").value = finalcost * parseFloat({{bond_rate}})
-	document.getElementById("bond_total_summary").innerHTML ="<b>Bond Cost:</b> $" + String(parseInt(document.getElementById("bond_cost").value))
-	finalcost = finalcost + parseFloat(document.getElementById("bond_cost").value)
-	document.getElementById("final_cost").value = parseInt(finalcost)
-	document.getElementById("final_cost_display").innerHTML = "<b>Final Cost: $" + parseInt(finalcost) + "</b>"
-
-}
+// function calculate_final_cost(){
+// 	var finalcost = 0
+// 	var materialcost = 0
+// 	for(let i =1; i < laborcount+1; i++){
+// 	finalcost = parseFloat(document.getElementById("labor_cost" + i).value) + finalcost
+// 	}
+// 	for(let i =1; i < glob_materialcount+1; i++){
+// 	materialcost = parseFloat(document.getElementById("material_cost" + i).value) + materialcost
+// 	finalcost = parseFloat(document.getElementById("material_cost" + i).value) + finalcost
+// 	}
+// 	document.getElementById("inventory_cost").value = materialcost *.15
+// 	// document.getElementById("inventory_cost_display").innerHTML = "$" + String(parseInt(materialcost *.15))
+// 	for(let i =1; i < glob_equipmentcount+1; i++){
+// 	finalcost = parseFloat(document.getElementById("equipment_cost" + i).value) + finalcost
+// 	}
+// 	for(let i =1; i < glob_sundriescount+1; i++){
+// 	finalcost = parseFloat(document.getElementById("sundries_cost" + i).value) + finalcost
+// 	}
+// 	for(let i =1; i < glob_extrascount+1; i++){
+// 	finalcost = parseFloat(document.getElementById("extras_cost" + i).value) + finalcost
+// 	}
+// 	finalcost = finalcost + parseFloat(document.getElementById("inventory_cost").value)
+// 	document.getElementById("bond_cost").value = finalcost * parseFloat({{bond_rate}})
+// 	document.getElementById("bond_total_summary").innerHTML ="<b>Bond Cost:</b> $" + String(parseInt(document.getElementById("bond_cost").value))
+// 	finalcost = finalcost + parseFloat(document.getElementById("bond_cost").value)
+// 	document.getElementById("final_cost").value = parseInt(finalcost)
+// 	document.getElementById("final_cost_display").innerHTML = "<b>Final Cost: $" + parseInt(finalcost) + "</b>"
+//
+// }
 
 
 	</script>
-</head>
-<body>
+{% endblock %}
+{% block content %}
+
+
+
+
+<form id="pricing_form" action="{% url 'price_ewt' changeorder.id %}" method="post"  onSubmit = "return check_booking_data()">
+	{% csrf_token %}
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
     <a class="navbar-brand sub-navbar-brand" href="{% url 'change_order_home' %}">Change Orders</a>
     <div id="navbarNavDropdown2">
         <ul class="sub-nav-list navbar-nav ">
             <li><a class="nav-item nav-link" href="{% url 'change_order_home' %}">Home</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'change_order_new' 'ALL' %}">Add New</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'change_order_new_select' %}">Add New</a></li>
 			<li><a class="nav-item nav-link active" href="#">Calculating Price</a></li>
         </ul>
     </div>
@@ -576,21 +703,36 @@ function calculate_final_cost(){
 		<div class ="col">Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</div>
 	</div>
 	<div class ="row">
-		<div class ="col">Week Ending Date: {{ewt.week_ending}} </div>
-		<div class ="col">Ticket Completed By: {{ewt.completed_by}}</div>
+		{% if week_ending %}
+		<input type= "hidden" name="week_ending" id="week_ending" value="{{week_ending}}" />
+		<input type= "hidden" name="completed_by" id="completed_by" value="{{completed_by}}" />
+		<div class ="col">Week Ending Date: {{week_ending}} </div>
+		<div class ="col">Ticket Completed By: {{completed_by}}</div>
+		{% else %}
+		<div class ="col">            <label>Week Ending</label>
+            <input type="date"
+                   name="week_ending"
+                   class="form-control"
+                   required></div>
+		<div class ="col"><label>Ticket Completed By:</label>
+            <input type="text"
+                   name="completed_by"
+                   class="form-control"
+                   required></div>
+		{% endif %}
 	</div>
-	<div class ="row">
-		<div class ="col"><p>Work Description: {{ewt.notes}}</p></div>
-	</div>
+<!--	<div class ="row">-->
+<!--		<div class ="col"><p>Work Description: {{notes}}</p></div>-->
+<!--	</div>-->
   </div>
 <hr>
 
-<form id="pricing_form" action="{% url 'price_ewt' changeorder.id %}" method="post"  onSubmit = "return check_booking_data()">
-	{% csrf_token %}
+
 <div class ="container">
-	<label for="notes">Description: </label> <br>
+	<label for="notes">Work Description: </label> <br>
 	<textarea id="notes" name="notes" rows="2" cols="100" >{{notes}}</textarea>
 </div>
+	<br>
 	<div class ="container" style="background-color:hsla(5, 100%, 92%);">
 	<h4>Labor Breakdown</h4>
 	<table id="labor_breakdown" class="display compact nowrap" style="width:100%" >
@@ -634,9 +776,28 @@ function calculate_final_cost(){
 			<td><input type= "text" name="material_description{{x.counter}}" id="material_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="material_quantity{{x.counter}}" id="material_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="material_units{{x.counter}}" id="material_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="material_rate{{x.counter}}" size="7" id="material_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="material_cost{{x.counter}}" id="material_cost{{x.counter}}" value="{{x.cost}}" /><div id="material_cost_desc{{x.counter}}">${{x.cost}}</div></td>
 	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
 		{% endfor %}
-		<tr><td>Inventory</td><td></td><td>Lump Sum</td><td></td><td></td><td></td><td><input type= "hidden" name="inventory_cost" id="inventory_cost" value="{{inventory}}" size="7" required /><div id="inventory_cost_display">${{inventory}}</div></td></tr>
-	  {% endif %}
 
+	  {% endif %}
+<!--		<tr><td>Inventory (Originally ${{inventory}})</td><td></td><td>Lump Sum</td><td></td><td></td><td></td><td><input type= "hidden" name="inventory_cost" id="inventory_cost" value="{{inventory}}" size="7" required /><div id="inventory_cost_display">${{inventory}}</div></td></tr>-->
+		<tr>
+    <td>Inventory (Originally ${{inventory}})</td>
+    <td></td>
+    <td id="inventory_units_cell">
+        Lump Sum
+    </td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>
+        <input type="number"
+               name="inventory_cost"
+               id="inventory_cost"
+               value="{{inventory}}"
+               step=".01"
+               size="7"
+               required
+               oninput="setForceInventory()" />
+	</td>
 		<tr><input type = "hidden" name="hidden_material" id = "hidden_material" value = "{{materialcount}}" /><td><button type="button" onclick="add_material_row('material')">Add Material Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
 	</tbody></table>
 	</div>
@@ -725,20 +886,229 @@ function calculate_final_cost(){
 	<div class ="container" style="background-color:hsla(275, 100%, 92%);">
 		<h4>TOTAL PRICE</h4>
 
-		<div id="labor_total_summary">Labor Cost: ${{totallaborcost}}</div>
+	<div id="labor_total_summary">Labor Cost: ${{totallaborcost}}</div>
 	<div id="material_total_summary">Material Cost: ${{totalmaterialcost}}</div>
 	<div id="equipment_total_summary">Equipment Cost: ${{totalequipmentcost}}</div>
 	<div id="sundries_total_summary">Sundries Cost: ${{totalsundriescost}}</div>
-	<div id="other_total_summary">Other Cost:</div>
+	<div id="other_total_summary">Other Cost: ${{totalextrascost}}</div>
 {% if is_bonded == True %}
 	   <input type= "hidden" name="bond_cost" id="bond_cost" value="{{bond_cost}}" /> <input type= "hidden" name="bond_rate" id="bond_rate" value="{{bond_rate}}" /><div id="bond_total_summary" ><b>Bond Cost:</b> ${{bond_cost}}</div>
 {% endif %}
 	 <input type = "hidden" name="final_cost" id = "final_cost" value = "{{totalcost}}" /><div id = "final_cost_display" ><b>Final Cost: ${{totalcost}}</b></div>
 	</div>
 	<hr>
-	<div class ="container" >
-		<input type="submit" class="btn btn-primary btn-lg" name="Form3" value="Send Price Now" />
-	</div>
+<!--PROPOSAL STATUS-->
+{% if proposal %}
+<div class="container mt-4 p-3 border rounded bg-light">
+
+    <div class="d-flex justify-content-between align-items-start flex-wrap">
+
+        <!-- LEFT SIDE: Status + Badge -->
+        <div>
+            <strong>Proposal Status:</strong>
+
+            <span class="badge ml-2
+                {% if proposal.status == "Draft" %}
+                    badge-secondary
+                {% elif proposal.status == "Pending Approval" %}
+                    badge-warning
+                {% elif proposal.status == "Approved" %}
+                    badge-success
+                {% elif proposal.status == "Sent" %}
+                    badge-primary
+                {% else %}
+                    badge-dark
+                {% endif %}
+            ">
+                {{ proposal.status }}
+            </span>
+        </div>
+
+        <!-- RIGHT SIDE: Dates / Approval Info -->
+        <div class="text-right small text-muted mt-2 mt-md-0">
+
+            {% if proposal.date_sent_for_approval %}
+                <div>
+                    Sent for approval:
+                    {{ proposal.date_sent_for_approval }}
+                </div>
+            {% endif %}
+
+            {% if proposal.date_approved_internally %}
+                <div>
+                    Approved:
+                    {{ proposal.date_approved_internally }}
+                    {% if proposal.approved_by %}
+                        by {{ proposal.approved_by }}
+                    {% endif %}
+                </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% else %}
+
+<!-- No Proposal Yet -->
+<div class="container mt-4 p-3 border rounded bg-light">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <strong>Proposal Status:</strong>
+            <span class="badge badge-secondary ml-2">Draft</span>
+        </div>
+        <div class="small text-muted">
+            No proposal created yet
+        </div>
+    </div>
+</div>
+
+{% endif %}
+
+	<!--BUTTONS-->
+<div class="container mt-3">
+
+    <!-- Always show Cancel -->
+    <button type="submit"
+            name="cancel"
+            value="1"
+            class="btn btn-secondary">
+        Cancel
+    </button>
+
+    {% if proposal %}
+
+        {% if proposal.status == "Draft" %}
+			<button type="submit"
+					name="save_draft"
+					value="1"
+					class="btn btn-info">
+				Save and Send Later
+			</button>
+            <button type="submit"
+                    name="send_for_approval"
+                    value="1"
+                    class="btn btn-warning">
+                Send to PM for Approval
+            </button>
+
+            <button type="submit"
+                    name="send_to_gc"
+                    value="1"
+                    class="btn btn-primary">
+                Send to GC without Approval
+            </button>
+
+        {% elif proposal.status == "Pending Approval" %}
+			<button type="submit"
+					name="save_draft"
+					value="1"
+					class="btn btn-info">
+				Save and Send Later
+			</button>
+				<button type="submit"
+					name="approve"
+					value="1"
+					class="btn btn-success">
+				Approve
+			</button>
+            <button class="btn btn-warning" disabled>
+                Waiting on PM Approval
+            </button>
+
+            <button type="submit"
+                    name="send_to_gc"
+                    value="1"
+                    class="btn btn-primary">
+                Send to GC without Approval
+            </button>
+
+        {% elif proposal.status == "Approved" %}
+
+            <button type="submit"
+                    name="send_for_approval"
+                    value="1"
+                    class="btn btn-warning">
+                Send to PM Again for Approval
+            </button>
+
+            <button type="submit"
+                    name="send_to_gc"
+                    value="1"
+                    class="btn btn-success">
+                Send to GC Now
+            </button>
+
+        {% elif proposal.status == "Sent" %}
+
+            <button type="submit"
+                    name="send_to_gc"
+                    value="1"
+                    class="btn btn-success">
+                Re-Send to GC Now
+            </button>
+			<button type="submit"
+                name="send_for_approval"
+                value="1"
+                class="btn btn-warning">
+            Re-Send to PM for Approval
+        </button>
+        {% endif %}
+
+    {% else %}
+
+        <!-- No proposal exists yet (first time opening page) -->
+        <button type="submit"
+                name="send_for_approval"
+                value="1"
+                class="btn btn-warning">
+            Send to PM for Approval
+        </button>
+
+        <button type="submit"
+                name="send_to_gc"
+                value="1"
+                class="btn btn-primary">
+            Send to GC without Approval
+        </button>
+				<button type="submit"
+					name="save_draft"
+					value="1"
+					class="btn btn-info">
+				Save and Send Later
+			</button>
+
+    {% endif %}
+
+</div>
+<!--<div class="container mt-3">-->
+
+<!--    <button type="submit"-->
+<!--            name="cancel"-->
+<!--            value="1"-->
+<!--            class="btn btn-secondary">-->
+<!--        Cancel-->
+<!--    </button>-->
+
+<!--    {% if proposal.status == "Pending Approval" %}-->
+<!--        <button type="submit"-->
+<!--                name="approve"-->
+<!--                value="1"-->
+<!--                class="btn btn-success">-->
+<!--            Approve-->
+<!--        </button>-->
+<!--    {% endif %}-->
+
+<!--    <button type="submit"-->
+<!--            name="send_now"-->
+<!--            value="1"-->
+<!--            class="btn btn-primary">-->
+<!--        Send Now-->
+<!--    </button>-->
+
+<!--</div>-->
     </form>
 
 
@@ -748,7 +1118,5 @@ function calculate_final_cost(){
 <script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js integrity=”sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q” crossorigin=”anonymous”></script>
 
 <script src=”https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js” integrity=”sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl” crossorigin=”anonymous”></script>
-</body>
-</html>
 
 {% endblock %}

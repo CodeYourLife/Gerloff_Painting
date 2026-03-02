@@ -36,7 +36,7 @@ class ChangeOrderFilter(django_filters.FilterSet):
 
     def search_filter3(self, queryset, name, value):#awaiting approval
         if value == True:
-            return queryset.filter(is_approved=False).exclude(date_sent=None)
+            return queryset.filter(is_approved_to_bill=False).exclude(date_sent=None)
         else:
             return queryset.all()
     def search_filter4(self, queryset, name, value):#approved

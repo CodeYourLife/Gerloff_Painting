@@ -1134,14 +1134,19 @@ function show_submit_button(){
 <!--Header info-->
 <div style="margin-left: 12px; margin-right: 12px;">
     <div style=" padding-top: 12px;" class="d-flex flex-row">
-        <div  class="col-sm-6" >
+        <div  class="col-sm-4" >
             <form action="{% url 'update_job_info' job.job_number %}"><input type="submit" class="btn btn-info btn-sm"
                                                                              value="Update Job Information"/></form>
         </div>
-                <div  class="col-sm-6" >
+                <div  class="col-sm-4" >
             <form action="{% url 'client_job_info' job.job_number %}"><input type="submit" class="btn btn-info btn-sm"
                                                                              value="View/Change Client Contacts"/></form>
         </div>
+        <div  class="col-sm-4" >
+            <form action="{% url 'change_order_new' job.job_number %}"><input type="submit" class="btn btn-info btn-sm"
+                                                                             value="Add/View Change Orders"/></form>
+        </div>
+
     </div>
     <div class="row">
         <div class="col-sm-4 list-items"><b>Job Name:</b> {{job.job_name}}</div>
@@ -1179,10 +1184,7 @@ function show_submit_button(){
             <input class="btn btn-primary btn-sm"  data-toggle="modal" data-target="#off_rent-modal" value="Call Equipment Off-Rent"/>
         </div>
         {% endif %}
-        <div style="margin: 5px;" class="col-sm-3">
-            <form action="{% url 'change_order_new' job.job_number %}"><input type="submit" class="btn btn-primary btn-sm" value="New Change Order"/>
-            </form>
-        </div>
+
         {% if has_equipment %}
         <div style="margin: 5px;" class="col-sm-4">
             <form action="{% url 'request_pickup' jobnumber=job.job_number item='ALL' pickup='ALL' status='ALL' %}">{% if pickup_exists %}<input type="submit" class="btn btn-primary btn-sm" value="Change Equipment Pickup"/>{% else %}<input type="submit" class="btn btn-primary btn-sm" value="Request Equipment Pickup"/> {% endif %}
@@ -1342,7 +1344,7 @@ function show_submit_button(){
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false"
                         aria-controls="collapseTwo">
-                   {{tickets_not_done_count}}- Tickets Not Completed Yet (Work not done)
+                   {{tickets_not_done_count}}- Open T&M Tickets
                 </button>
             </h5>
         </div>
@@ -1355,22 +1357,22 @@ function show_submit_button(){
                         <tr>
                             <th>CO#</th>
                             <th>Description</th>
-                            <th>Notes</th>
+                            <th>Status</th>
                         </tr>
                         </thead>
                         <tbody>
 
                         {% for ticket in tickets_not_done %}
 
-                                {% if ticket.is_t_and_m %}
-        <tr style="background-color:hsla(69, 100%, 92%);">
-            {% else %}
+<!--                                {% if ticket.is_t_and_m %}-->
+<!--        <tr style="background-color:hsla(69, 100%, 92%);">-->
+<!--            {% else %}-->
             <tr>
-            {% endif %}
+<!--            {% endif %}-->
 
                             <td><a href="{% url 'extra_work_ticket' ticket.id %}">{{ticket.cop_number}}</a></td>
                             <td>{{ticket.description}}</td>
-                            <td>{{ticket.notes}}</td>
+                            <td>{{ticket.status}}</td>
                         </tr>
                         {% endfor %}
                         </tbody>
@@ -1381,13 +1383,13 @@ function show_submit_button(){
     </div>
 {% endif %}
 <!--tickets not signed 3-->
-{% if tickets_not_signed %}
+{% if open_changeorders %}
     <div class="card">
         <div class="card-header" id="headingThree">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false"
                         aria-controls="collapseThree">
-                    {{tickets_not_signed_count}}- Tickets Completed But Not Signed
+                    {{open_changeorders_count}}- Change Orders Not Approved
                 </button>
             </h5>
         </div>
@@ -1400,12 +1402,12 @@ function show_submit_button(){
                         <tr>
                             <th>CO#</th>
                             <th>Description</th>
-                            <th>Notes</th>
+                            <th>Status</th>
                         </tr>
                         </thead>
                         <tbody>
 
-                        {% for open_co in tickets_not_signed %}
+                        {% for open_co in open_changeorders %}
 
                                 {% if open_co.is_t_and_m %}
         <tr style="background-color:hsla(69, 100%, 92%);">
@@ -1414,7 +1416,7 @@ function show_submit_button(){
             {% endif %}
                             <td><a href="{% url 'extra_work_ticket' open_co.id %}">{{open_co.cop_number}}</a></td>
                             <td>{{open_co.description}}</td>
-                            <td>{{open_co.notes}}</td>
+                            <td>{{open_co.status}}</td>
                         </tr>
                         {% endfor %}
                         </tbody>
@@ -1425,181 +1427,181 @@ function show_submit_button(){
     </div>
 {% endif %}
 <!--tickets not sent 4-->
-{% if tickets_not_sent %}
-    <div class="card">
-        <div class="card-header" id="headingFour">
-            <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false"
-                        aria-controls="headingFour">
-                   {{tickets_not_sent_count}} - Tickets Signed, But Not Sent Yet
-                </button>
-            </h5>
-        </div>
-        <div id="collapseFour" class="collapse hide" aria-labelledby="headingFour" data-parent="#accordion">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table id="tickets_table2" class="display table">
-                        <thead class="colored-header">
+<!--{% if tickets_not_sent %}-->
+<!--    <div class="card">-->
+<!--        <div class="card-header" id="headingFour">-->
+<!--            <h5 class="mb-0">-->
+<!--                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false"-->
+<!--                        aria-controls="headingFour">-->
+<!--                   {{tickets_not_sent_count}} - Tickets Signed, But Not Sent Yet-->
+<!--                </button>-->
+<!--            </h5>-->
+<!--        </div>-->
+<!--        <div id="collapseFour" class="collapse hide" aria-labelledby="headingFour" data-parent="#accordion">-->
+<!--            <div class="card-body">-->
+<!--                <div class="table-responsive">-->
+<!--                    <table id="tickets_table2" class="display table">-->
+<!--                        <thead class="colored-header">-->
 
-                        <tr>
-                            <th>CO#</th>
-                            <th>Description</th>
-                            <th>Notes</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for open_co in tickets_not_sent %}
+<!--                        <tr>-->
+<!--                            <th>CO#</th>-->
+<!--                            <th>Description</th>-->
+<!--                            <th>Notes</th>-->
+<!--                        </tr>-->
+<!--                        </thead>-->
+<!--                        <tbody>-->
+<!--                        {% for open_co in tickets_not_sent %}-->
 
-                                {% if open_co.is_t_and_m %}
-        <tr style="background-color:hsla(69, 100%, 92%);">
-            {% else %}
-            <tr>
-            {% endif %}
-                            <td><a href="{% url 'extra_work_ticket' open_co.id %}">{{open_co.cop_number}}</a></td>
-                            <td>{{open_co.description}}</td>
-                            <td>{{open_co.notes}}</td>
-                        </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-{% endif %}
-<!--open cos 5-->
-{% if open_cos %}
-    <div class="card">
-        <div class="card-header" id="headingFive">
-            <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFive" aria-expanded="false"
-                        aria-controls="collapseFive">
-                    {{open_cos_count}}- Change Orders Sent, Not Approved
-                </button>
-            </h5>
-        </div>
-        <div id="collapseFive" class="collapse hide" aria-labelledby="headingFive" data-parent="#accordion">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table id="tickets_table9" class="display table">
-                        <thead class="colored-header">
+<!--                                {% if open_co.is_t_and_m %}-->
+<!--        <tr style="background-color:hsla(69, 100%, 92%);">-->
+<!--            {% else %}-->
+<!--            <tr>-->
+<!--            {% endif %}-->
+<!--                            <td><a href="{% url 'extra_work_ticket' open_co.id %}">{{open_co.cop_number}}</a></td>-->
+<!--                            <td>{{open_co.description}}</td>-->
+<!--                            <td>{{open_co.notes}}</td>-->
+<!--                        </tr>-->
+<!--                        {% endfor %}-->
+<!--                        </tbody>-->
+<!--                    </table>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--{% endif %}-->
+<!--&lt;!&ndash;open cos 5&ndash;&gt;-->
+<!--{% if open_cos %}-->
+<!--    <div class="card">-->
+<!--        <div class="card-header" id="headingFive">-->
+<!--            <h5 class="mb-0">-->
+<!--                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFive" aria-expanded="false"-->
+<!--                        aria-controls="collapseFive">-->
+<!--                    {{open_cos_count}}- Change Orders Sent, Not Approved-->
+<!--                </button>-->
+<!--            </h5>-->
+<!--        </div>-->
+<!--        <div id="collapseFive" class="collapse hide" aria-labelledby="headingFive" data-parent="#accordion">-->
+<!--            <div class="card-body">-->
+<!--                <div class="table-responsive">-->
+<!--                    <table id="tickets_table9" class="display table">-->
+<!--                        <thead class="colored-header">-->
 
-                        <tr>
-                            <th>CO#</th>
-                            <th>Description</th>
-                            <th>Notes</th>
-                        </tr>
-                        </thead>
-                        <tbody>
+<!--                        <tr>-->
+<!--                            <th>CO#</th>-->
+<!--                            <th>Description</th>-->
+<!--                            <th>Notes</th>-->
+<!--                        </tr>-->
+<!--                        </thead>-->
+<!--                        <tbody>-->
 
-                        {% for open_co in open_cos %}
+<!--                        {% for open_co in open_cos %}-->
 
-                                {% if open_co.is_t_and_m %}
-        <tr style="background-color:hsla(69, 100%, 92%);">
-            {% else %}
-            <tr>
-            {% endif %}
-                            <td><a href="{% url 'extra_work_ticket' open_co.id %}">{{open_co.cop_number}}</a></td>
-                            <td>{{open_co.description}}</td>
-                            <td>{{open_co.notes}}</td>
-                        </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-{% endif %}
+<!--                                {% if open_co.is_t_and_m %}-->
+<!--        <tr style="background-color:hsla(69, 100%, 92%);">-->
+<!--            {% else %}-->
+<!--            <tr>-->
+<!--            {% endif %}-->
+<!--                            <td><a href="{% url 'extra_work_ticket' open_co.id %}">{{open_co.cop_number}}</a></td>-->
+<!--                            <td>{{open_co.description}}</td>-->
+<!--                            <td>{{open_co.notes}}</td>-->
+<!--                        </tr>-->
+<!--                        {% endfor %}-->
+<!--                        </tbody>-->
+<!--                    </table>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--{% endif %}-->
 
-<!--informal cos 99-->
-{% if informal_cos %}
-    <div class="card">
-        <div class="card-header" id="heading99">
-            <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapse99" aria-expanded="false"
-                        aria-controls="collapse99">
-                    {{informal_cos_count}}- Change Orders Informally Approved
-                </button>
-            </h5>
-        </div>
-        <div id="collapse99" class="collapse hide" aria-labelledby="heading99" data-parent="#accordion">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table id="tickets_table10" class="display table">
-                        <thead class="colored-header">
+<!--&lt;!&ndash;informal cos 99&ndash;&gt;-->
+<!--{% if informal_cos %}-->
+<!--    <div class="card">-->
+<!--        <div class="card-header" id="heading99">-->
+<!--            <h5 class="mb-0">-->
+<!--                <button class="btn btn-link" data-toggle="collapse" data-target="#collapse99" aria-expanded="false"-->
+<!--                        aria-controls="collapse99">-->
+<!--                    {{informal_cos_count}}- Change Orders Informally Approved-->
+<!--                </button>-->
+<!--            </h5>-->
+<!--        </div>-->
+<!--        <div id="collapse99" class="collapse hide" aria-labelledby="heading99" data-parent="#accordion">-->
+<!--            <div class="card-body">-->
+<!--                <div class="table-responsive">-->
+<!--                    <table id="tickets_table10" class="display table">-->
+<!--                        <thead class="colored-header">-->
 
-                        <tr>
-                            <th>CO#</th>
-                            <th>Description</th>
-                            <th>Notes</th>
-                        </tr>
-                        </thead>
-                        <tbody>
+<!--                        <tr>-->
+<!--                            <th>CO#</th>-->
+<!--                            <th>Description</th>-->
+<!--                            <th>Notes</th>-->
+<!--                        </tr>-->
+<!--                        </thead>-->
+<!--                        <tbody>-->
 
-                        {% for open_co in informal_cos %}
+<!--                        {% for open_co in informal_cos %}-->
 
-                                {% if open_co.is_t_and_m %}
-        <tr style="background-color:hsla(69, 100%, 92%);">
-            {% else %}
-            <tr>
-            {% endif %}
-                            <td><a href="{% url 'extra_work_ticket' open_co.id %}">{{open_co.cop_number}}</a></td>
-                            <td>{{open_co.description}}</td>
-                            <td>{{open_co.notes}}</td>
-                        </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-{% endif %}
-<!--approved cos 6-->
-{% if approved_cos %}
-    <div class="card">
-        <div class="card-header" id="headingSix">
-            <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSix" aria-expanded="false"
-                        aria-controls="collapseSix">
-                  {{approved_cos_count}}-  Approved Change Orders
-                </button>
-            </h5>
-        </div>
-        <div id="collapseSix" class="collapse hide" aria-labelledby="headingSix" data-parent="#accordion">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table id="approved_changes_table" class="display table">
-                        <thead class="colored-header">
+<!--                                {% if open_co.is_t_and_m %}-->
+<!--        <tr style="background-color:hsla(69, 100%, 92%);">-->
+<!--            {% else %}-->
+<!--            <tr>-->
+<!--            {% endif %}-->
+<!--                            <td><a href="{% url 'extra_work_ticket' open_co.id %}">{{open_co.cop_number}}</a></td>-->
+<!--                            <td>{{open_co.description}}</td>-->
+<!--                            <td>{{open_co.notes}}</td>-->
+<!--                        </tr>-->
+<!--                        {% endfor %}-->
+<!--                        </tbody>-->
+<!--                    </table>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--{% endif %}-->
+<!--&lt;!&ndash;approved cos 6&ndash;&gt;-->
+<!--{% if approved_cos %}-->
+<!--    <div class="card">-->
+<!--        <div class="card-header" id="headingSix">-->
+<!--            <h5 class="mb-0">-->
+<!--                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSix" aria-expanded="false"-->
+<!--                        aria-controls="collapseSix">-->
+<!--                  {{approved_cos_count}}-  Approved Change Orders-->
+<!--                </button>-->
+<!--            </h5>-->
+<!--        </div>-->
+<!--        <div id="collapseSix" class="collapse hide" aria-labelledby="headingSix" data-parent="#accordion">-->
+<!--            <div class="card-body">-->
+<!--                <div class="table-responsive">-->
+<!--                    <table id="approved_changes_table" class="display table">-->
+<!--                        <thead class="colored-header">-->
 
-                        <tr>
-                            <th>CO#</th>
-                            <th>Description</th>
-                            <th>Notes</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for approved_co in approved_cos %}
-                                {% if approved_co.is_t_and_m %}
-        <tr style="background-color:hsla(69, 100%, 92%);">
-            {% else %}
-            <tr>
-            {% endif %}
+<!--                        <tr>-->
+<!--                            <th>CO#</th>-->
+<!--                            <th>Description</th>-->
+<!--                            <th>Notes</th>-->
+<!--                        </tr>-->
+<!--                        </thead>-->
+<!--                        <tbody>-->
+<!--                        {% for approved_co in approved_cos %}-->
+<!--                                {% if approved_co.is_t_and_m %}-->
+<!--        <tr style="background-color:hsla(69, 100%, 92%);">-->
+<!--            {% else %}-->
+<!--            <tr>-->
+<!--            {% endif %}-->
 
-                            <td><a href="{% url 'extra_work_ticket' approved_co.id %}">{{approved_co.cop_number}}</a></td>
+<!--                            <td><a href="{% url 'extra_work_ticket' approved_co.id %}">{{approved_co.cop_number}}</a></td>-->
 
-                            <td>{{approved_co.description}}</td>
-                            <td>{{approved_co.notes}}</td>
-                        </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-{% endif %}
+<!--                            <td>{{approved_co.description}}</td>-->
+<!--                            <td>{{approved_co.notes}}</td>-->
+<!--                        </tr>-->
+<!--                        {% endfor %}-->
+<!--                        </tbody>-->
+<!--                    </table>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--{% endif %}-->
 <!--equipment 7-->
 {% if equipments %}
     <div class="card">
