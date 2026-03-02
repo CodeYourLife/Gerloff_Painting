@@ -1,338 +1,393 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
-{% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Trinity GP</title>
-<style type="text/css" class="init">
-#notes_table thead {
-    display: none;
+
+{% block extra_head %}
+<style>
+/* ===============================
+   Page polish (Bootstrap 4-friendly)
+================================= */
+.page-title {
+    font-weight: 600;
+    margin: 18px 0 8px;
+}
+.page-subtitle {
+    color: #6c757d;
+    margin-bottom: 16px;
 }
 
-.colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
-
-.dataTables_wrapper {
-font-family: tahoma;
-font-size: 13px;
+.card {
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 10px;
+}
+.card-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid rgba(0,0,0,.08);
+    font-weight: 600;
 }
 
-    nav .active, .collapsible:hover {
-      background-color: Salmon;
-    }
-    .nav-pills a {
-        color: black;
-    }
-    .nav-pills li {
-        padding: 2px;
-    }
-    .nav-pills .active {
-        background-color: #6c757d !important;
-        padding: 5px;
-    }
-    label {
-        margin-left: 10px;
-        margin-right: 10px;
-    }
-    input {
-        margin-left: 10px;
-        margin-right: 10px;
-        padding: 0.375rem 0.75rem;
-        font-size: 1rem;
-        line-height: 1.5;
-        color: #495057;
-        background-color: #fff;
-        background-clip: padding-box;
-        border: 1px solid #ced4da;
-        border-radius: 0.25rem;
-        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
-    }
-    tr th {
-        width: fit-content !important;
-    }
-    .tab-content * {
-      color : black;
-      background-color: white !important;
-    }
-    .active * {
-        background-color: white !important;
-    }
-            .list-items {
-    border-bottom: 1px solid black; display: flex; justify-content: space-between;
-    }
-    .text-wrap{
-white-space:normal;
+.form-control {
+    border-radius: 8px;
 }
-.width-200{
-width:200px;
+
+.btn {
+    border-radius: 8px;
 }
+
+.filter-bar .custom-control {
+    margin-right: 18px;
+    margin-bottom: 6px;
+}
+
+.table thead th {
+    border-top: 0;
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #343a40;
+}
+
+.table td, .table th {
+    vertical-align: middle !important;
+}
+
+/* DataTables filter: left align */
 .dataTables_filter {
-float: left !important;
+    float: left !important;
 }
-.tb { border-collapse: collapse; width:300px; }
-
-.tb th, .tb td { padding: 5px; border: solid 1px #777; }
-.tb th { background-color: lightblue; }
-
-.table td {
-
-    }
-
-        .modal-content {
-            width: fit-content;
-        }
-
-#add-remove-button-container .btn {
-    padding: 5px 5px;
+.dataTables_info, .dataTables_paginate {
+    display: none !important; /* you already disabled paging/info but just in case */
 }
+
+/* Status badge sizing */
+.badge-status {
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 999px;
+}
+
+/* Row highlighting (softer than inline colors) */
+.row-attn { background: #fff9db; }       /* needs work / not sent */
+.row-ticket { background: #f3d9fa; }     /* ticket not done/signed */
+.row-sent { background: #d3f9d8; }       /* sent / informal approval */
+.row-muted { opacity: .75; }            /* voided-ish vibe */
+
+/* Make the COP link pop */
+.cop-link {
+    font-weight: 700;
+    text-decoration: none;
+}
+.cop-link:hover {
+    text-decoration: underline;
+}
+
+/* tighten sub-nav active state without nuking Bootstrap */
+.sub-nav .nav-link.active {
+    background: rgba(255,255,255,.15);
+    border-radius: 6px;
+}
+
+.clickable-row {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.clickable-row:hover {
+    filter: brightness(95%);
+}
+
 </style>
 
-<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-<link href="https://www.jqueryscript.net/css/jquerysctipttop.css" rel="stylesheet" type="text/css">
-<script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
-<script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-<script src="https://www.jqueryscript.net/demo/Two-side-Multi-Select-Plugin-with-jQuery-multiselect-js/js/multiselect.js"></script>
-<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" language="javascript" src="../resources/demo.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
-<script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
-<script type="text/javascript" class="init">
+<script type="text/javascript">
+function new_filter_now(){
+    document.getElementById('filter_form').submit();
+}
 
+window.onload = function() {
+    // If you have moment integration loaded elsewhere, keep this
+    if ($.fn.dataTable && $.fn.dataTable.moment) {
+        $.fn.dataTable.moment('MMM-DD-YYYY');
+    }
+    $('#changeorder_table').DataTable({
+        paging: false,
+        info: false,
+        searching: true,
+        order: [[0, 'asc']]
+    });
+};
 
-	</script>
-</head>
-<body>
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Change Orders</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'change_order_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link active" href="#">Add New</a></li>
-    </ul>
-  </div>
+document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll(".clickable-row").forEach(function(row) {
+        row.addEventListener("click", function(e) {
+            window.location = this.dataset.href;
+        });
+    });
+});
+
+</script>
+{% endblock %}
+
+{% block content %}
+
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="#">Change Orders</a>
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav">
+            <li><a class="nav-item nav-link" href="{% url 'change_order_home' %}">Home</a></li>
+            <li><a class="nav-item nav-link active" href="#">Add New</a></li>
+        </ul>
+    </div>
 </nav>
+<div class="card mb-3">
+  <div class="card-header d-flex justify-content-between align-items-center"
+       data-toggle="collapse"
+       data-target="#newCOCollapse"
+       aria-expanded="true"
+       aria-controls="newCOCollapse"
+       style="cursor:pointer;">
+    <span>➕ New Change Order</span>
+    <span class="text-muted small">click to expand/collapse</span>
+  </div>
 
-{% if selected_job %}
-<h4>Add New Change Order To Job: {{ selected_job.job_name }} </h4>
-<form name = booking_input2 action="{% url 'change_order_new' selected_job.job_number %}" method="post"  onSubmit = "return check_booking_data()">
-	{% csrf_token %}
-	<input type= "text" name="description" id="description" placeholder="Type Description of Change" size="75" required />
-<br><br>
-	<input type="checkbox" name ="is_t_and_m" id="is_t_and_m"   /> <label for="is_t_and_m">"Is this change order T&M?" </label>
-<br><br>
-        <label for="notes">Add any notes about this change order: </label> <br>
-        <textarea id="notes" name="notes" rows="4" cols="100" ></textarea>
+<div id="newCOCollapse" class="collapse">
+    <div class="card-body">
 
-<br><br>
-	<input type="submit" class="btn btn-primary" value="Add Change Order to This Job" />
-</form>
-<br>
+      <form action="{% url 'change_order_new' selected_job.job_number %}"
+            method="post"
+            onsubmit="return check_booking_data()">
+        {% csrf_token %}
 
-{% if all_cos %}
-    <div class="card">
-        <div class="card-header" id="headingTwo">
-            <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSeven" aria-expanded="false"
-                        aria-controls="collapseTwo">
-                    All Change Orders
-                </button>
-            </h5>
+        <div class="form-group">
+          <label for="description" class="mb-1">Description</label>
+          <input type="text"
+                 class="form-control"
+                 name="description"
+                 id="description"
+                 placeholder="Type description of change"
+                 required>
         </div>
-        <div id="collapseSeven" class="collapse hide" aria-labelledby="headingTwo" data-parent="#accordion">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table id="all_cos_table" class="display table">
-                        <thead class="colored-header">
 
-                        <tr>
-                            <th>CO#</th>
-                            <th>Description</th>
-                            <th>Notes</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for ticket in all_cos %}
-                                {% if ticket.is_t_and_m %}
-        <tr style="background-color:hsla(69, 100%, 92%);">
-            {% else %}
-            <tr>
-            {% endif %}
+        <div class="custom-control custom-checkbox mb-3">
+          <input type="checkbox" class="custom-control-input"
+                 name="is_t_and_m"
+                 id="is_t_and_m">
+          <label class="custom-control-label" for="is_t_and_m">
+            This change order is T&amp;M
+          </label>
+        </div>
 
-                            <td><a href="{% url 'extra_work_ticket' ticket.id %}">{{ticket.cop_number}}</a></td>
-                            <td>{{ticket.description}}</td>
-                            <td>{{ticket.notes}}</td>
-                        </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
+        <div class="form-group">
+          <label for="notes" class="mb-1">Notes (optional)</label>
+          <textarea id="notes"
+                    name="notes"
+                    class="form-control"
+                    rows="4"
+                    placeholder="Add any notes about this change order..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+          Add Change Order
+        </button>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+    <!-- Filters Card -->
+    <div class="card mb-3">
+        <div class="card-header">
+            🔎 Filters
+        </div>
+        <div class="card-body">
+            <form id="filter_form" method="get">
+                <div class="filter-bar d-flex flex-wrap align-items-center">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="search1" name="search1"
+                               {% if search1_exists %}checked{% endif %}
+                               onchange="new_filter_now()">
+                        <label class="custom-control-label" for="search1">Needs Ticket</label>
+                    </div>
+
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="search7" name="search7"
+                               {% if search7_exists %}checked{% endif %}
+                               onchange="new_filter_now()">
+                        <label class="custom-control-label" for="search7">Needs to be Sent</label>
+                    </div>
+
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="search3" name="search3"
+                               {% if search3_exists %}checked{% endif %}
+                               onchange="new_filter_now()">
+                        <label class="custom-control-label" for="search3">Awaiting Approval</label>
+                    </div>
+
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="search4" name="search4"
+                               {% if search4_exists %}checked{% endif %}
+                               onchange="new_filter_now()">
+                        <label class="custom-control-label" for="search4">Approved</label>
+                    </div>
+
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="search5" name="search5"
+                               {% if search5_exists %}checked{% endif %}
+                               onchange="new_filter_now()">
+                        <label class="custom-control-label" for="search5">T&amp;M Only</label>
+                    </div>
+
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="search6" name="search6"
+                               {% if search6_exists %}checked{% endif %}
+                               onchange="new_filter_now()">
+                        <label class="custom-control-label" for="search6">Include Voided</label>
+                    </div>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
-{% endif %}
+<!--key-->
+    <div class="card mb-3">
+  <div class="card-header">
+    🎨 Status Key
+  </div>
+  <div class="card-body py-2">
 
-{% if tickets %}
+    <div class="d-flex flex-wrap align-items-center">
+
+      <div class="mr-4 mb-2">
+        <span class="badge badge-warning badge-status">
+          Needs Action
+        </span>
+        <small class="ml-2 text-muted">
+          Waiting on GP
+        </small>
+      </div>
+
+      <div class="mr-4 mb-2">
+        <span class="badge badge-danger badge-status">
+          Ticket Issue
+        </span>
+        <small class="ml-2 text-muted">
+          Ticket Not Complete
+        </small>
+      </div>
+
+      <div class="mr-4 mb-2">
+        <span class="badge badge-success badge-status">
+          Sent
+        </span>
+        <small class="ml-2 text-muted">
+          Not Approved
+        </small>
+      </div>
+
+      <div class="mr-4 mb-2">
+        <span class="badge badge-primary badge-status">
+          Approved
+        </span>
+      </div>
+
+      <div class="mr-4 mb-2">
+        <span class="badge badge-dark badge-status">
+          Voided
+        </span>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+    <!-- Table Card -->
     <div class="card">
-        <div class="card-header" id="headingTwo">
-            <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false"
-                        aria-controls="collapseTwo">
-                    Outstanding Extra Work Tickets
-                </button>
-            </h5>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>📋 Change Orders</span>
+            <span class="text-muted small">Tip: use the search box on the left</span>
         </div>
-        <div id="collapseTwo" class="collapse hide" aria-labelledby="headingTwo" data-parent="#accordion">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table id="tickets_table" class="display table">
-                        <thead class="colored-header">
+        <div class="card-body">
 
-                        <tr>
-                            <th>CO#</th>
-                            <th>Description</th>
-                            <th>Notes</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for ticket in tickets %}
-                                {% if ticket.is_t_and_m %}
-        <tr style="background-color:hsla(69, 100%, 92%);">
-            {% else %}
-            <tr>
-            {% endif %}
+            <div class="table-responsive">
+                <table id="changeorder_table" class="table table-sm table-hover">
+                    <thead>
+                    <tr>
+                        <th style="white-space:nowrap;">#</th>
+                        <th>Description</th>
+                        <th style="white-space:nowrap;">Status</th>
+                        <th style="white-space:nowrap;">Date Sent</th>
+                        <th style="white-space:nowrap;">Approved</th>
+                        <th style="white-space:nowrap;">GC #</th>
+                        <th style="white-space:nowrap;">Price</th>
+                    </tr>
+                    </thead>
+                    <tbody>
 
-                            <td><a href="{% url 'extra_work_ticket' ticket.id %}">{{ticket.cop_number}}</a></td>
-                            <td>{{ticket.description}}</td>
-                            <td>{{ticket.notes}}</td>
-                        </tr>
+                    {% if changeorders %}
+                        {% for changeorder in changeorders %}
+
+                            <tr class="row-attn clickable-row"
+                                data-href="{% url 'extra_work_ticket' changeorder.id %}">
+
+                                <td class="font-weight-bold">
+                                    {{ changeorder.cop_number }}
+                                </td>
+
+                                <td class="text-wrap">{{ changeorder.description }}</td>
+
+                                <td>
+                                  {% if changeorder.status == "PM Review" or changeorder.status == "Proposal in Progress" or changeorder.status == "Ticket Signed" or changeorder.status == "Not Sent" %}
+                                      <span class="badge badge-warning badge-status">{{ changeorder.status }}</span>
+
+                                  {% elif changeorder.status == "Ticket Not Completed" or changeorder.status == "Ticket Not Signed" %}
+                                      <span class="badge badge-danger badge-status">{{ changeorder.status }}</span>
+
+                                  {% elif changeorder.status == "Informal Approval" or changeorder.status == "Sent to GC" %}
+                                      <span class="badge badge-success badge-status">{{ changeorder.status }}</span>
+
+                                  {% elif changeorder.status == "Approved" %}
+                                      <span class="badge badge-primary badge-status">{{ changeorder.status }}</span>
+
+                                  {% elif changeorder.status == "Voided" %}
+                                      <span class="badge badge-dark badge-status">{{ changeorder.status }}</span>
+
+                                  {% else %}
+                                      <span class="badge badge-secondary badge-status">{{ changeorder.status }}</span>
+                                  {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if changeorder.date_sent %}
+                                        {{ changeorder.date_sent|date:"M d, Y" }}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if changeorder.is_approved %}
+                                        <span class="badge badge-success badge-status">Yes</span>
+                                    {% else %}
+                                        <span class="badge badge-light badge-status">No</span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if changeorder.gc_number %}{{ changeorder.gc_number }}{% else %}<span class="text-muted">—</span>{% endif %}
+                                </td>
+
+                                <td>
+                                    {% if changeorder.price %}{{ changeorder.price }}{% else %}<span class="text-muted">—</span>{% endif %}
+                                </td>
+
+                            </tr>
                         {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                    {% endif %}
+
+                    </tbody>
+                </table>
             </div>
+
         </div>
     </div>
-{% endif %}
 
-{% if open_cos %}
-    <div class="card">
-        <div class="card-header" id="headingThree">
-            <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false"
-                        aria-controls="collapseThree">
-                    Pending Change Orders Not Approved Yet
-                </button>
-            </h5>
-        </div>
-        <div id="collapseThree" class="collapse hide" aria-labelledby="headingThree" data-parent="#accordion">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table id="tickets_table1" class="display table">
-                        <thead class="colored-header">
-
-                        <tr>
-                            <th>CO#</th>
-                            <th>Description</th>
-                            <th>Notes</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for open_co in open_cos %}
-
-                                {% if open_co.is_t_and_m %}
-        <tr style="background-color:hsla(69, 100%, 92%);">
-            {% else %}
-            <tr>
-            {% endif %}
-                            <td><a href="{% url 'extra_work_ticket' open_co.id %}">{{open_co.cop_number}}</a></td>
-                            <td>{{open_co.description}}</td>
-                            <td>{{open_co.notes}}</td>
-                        </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-{% endif %}
-
-{% if approved_cos %}
-    <div class="card">
-        <div class="card-header" id="headingFour">
-            <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false"
-                        aria-controls="collapseFour">
-                    Approved Change Orders
-                </button>
-            </h5>
-        </div>
-        <div id="collapseFour" class="collapse hide" aria-labelledby="headingFour" data-parent="#accordion">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table id="approved_changes_table" class="display table">
-                        <thead class="colored-header">
-
-                        <tr>
-                            <th>CO#</th>
-                            <th>Description</th>
-                            <th>Notes</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for approved_co in approved_cos %}
-                                {% if approved_co.is_t_and_m %}
-        <tr style="background-color:hsla(69, 100%, 92%);">
-            {% else %}
-            <tr>
-            {% endif %}
-                            <td>{{approved_co.cop_number}}</td>
-                            <td>{{approved_co.description}}</td>
-                            <td>{{approved_co.notes}}</td>
-                        </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-{% endif %}
-
-
-{% else %}
-<h4>Add New Change Order</h4>
-	<form id="search_job_form" action="{% url 'change_order_new' 'ALL' %}" method="get" >
-    <input type="text" name="search_job" id="search_job" placeholder="Search Jobs">
-    <input type="submit" name="form1" value="Search Now" />
-    </form>
-
-<form name = booking_input action="{% url 'change_order_new' 'ALL' %}" method="post"  onSubmit = "return check_booking_data()">
-{% csrf_token %}
-	            <label for="select_job">please select job</label>
-            <select id="select_job" name="select_job" >
-                {% if jobs %}
-                {% for job in jobs %}
-                <option value={{job.job_number}}>{{job.job_name}}</option>
-                {% endfor %}
-                {% endif %}
-            </select>
-<input type="submit" class="btn btn-primary" value="Add Change Order to This Job" />
-</form>
-{% endif %}
-
-</body>
-</html>
-
+</div>
 {% endblock %}

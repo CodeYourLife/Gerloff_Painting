@@ -560,7 +560,7 @@ function check_for_new() {
 
 function send_ticket_email() {
 
-    const form = document.select_recipient_form;
+    const form = document.getElementById("select_recipient_form");
     if (!form) return false;
 
     if (form.recipient.value === "please_select") {
@@ -568,7 +568,15 @@ function send_ticket_email() {
         return false;
     }
 
-    alert("Please wait until the email notification appears.");
+    // Show overlay
+    const overlay = document.getElementById("emailSendingOverlay");
+    overlay.style.display = "flex";
+
+    // Disable all buttons to prevent double submit
+    const buttons = form.querySelectorAll("button, input[type='submit']");
+    buttons.forEach(btn => btn.disabled = true);
+
+    return true;  // allow submit
 }
 
 /* ==========================================================
@@ -593,6 +601,9 @@ function no_add() { toggleButtonPair('yes_add_button','no_add_button','add_recip
 function yes_change() { toggleButtonPair('yes_change_button','no_change_button','change_recipient_form','Yes'); }
 function no_change() { toggleButtonPair('yes_change_button','no_change_button','change_recipient_form','No'); }
 
+function not_coded_yet() {
+    alert("TELL JOE TO CODE THIS")
+}
 </script>
 
 
@@ -607,7 +618,7 @@ function no_change() { toggleButtonPair('yes_change_button','no_change_button','
     <div id="navbarNavDropdown2">
         <ul class="sub-nav-list navbar-nav ">
             <li><a class="nav-item nav-link" href="{% url 'change_order_home' %}">Home</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'change_order_new' 'ALL' %}">Add New</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'change_order_new_select' %}">Add New</a></li>
             <li><a class="nav-item nav-link active" href="#">{{changeorder.job_number}} Change Order:
                 #{{changeorder.cop_number}}</a></li>
 
@@ -627,7 +638,7 @@ function no_change() { toggleButtonPair('yes_change_button','no_change_button','
                 </button>
             </div>
             <div class="modal-body">
-                <form id="select_recipient_form" action="{% url 'extra_work_ticket' changeorder.id %}" method="post" onSubmit = "return send_ticket_email()" >
+                <form id="select_recipient_form" name="select_recipient_form" action="{% url 'extra_work_ticket' changeorder.id %}" method="post" onSubmit = "return send_ticket_email()" >
                     {% csrf_token %}
                     <b>Who do you want to email the ticket to?</b>
                     <br>
@@ -1066,14 +1077,14 @@ function no_change() { toggleButtonPair('yes_change_button','no_change_button','
 
     <div class="section-divider"></div>
 
-    <div class="small-note mb-2">Link Plans to Change Order</div>
+<!--    <div class="small-note mb-2">Link Plans to Change Order</div>-->
 
-    <button type="button"
-            class="btn btn-secondary btn-sm"
-            data-toggle="modal"
-            data-target="#folderSelectModal">
-        📂 Select Post Bid Docs
-    </button>
+<!--    <button type="button"-->
+<!--            class="btn btn-secondary btn-sm"-->
+<!--            data-toggle="modal"-->
+<!--            data-target="#folderSelectModal">-->
+<!--        📂 Select Post Bid Docs-->
+<!--    </button>-->
 
 </div>
 </div>
@@ -1095,27 +1106,31 @@ function no_change() { toggleButtonPair('yes_change_button','no_change_button','
         {% endif %}
     </div>
 
-    {% if notes %}
+    {% if latest_notes  %}
 
-        <!-- SHOW 4 MOST RECENT -->
-        {% for note in notes|slice:":4" %}
+        {% if older_notes %}
+            <button class="btn btn-sm btn-outline-secondary mt-2"
+                    data-toggle="collapse"
+                    data-target="#olderNotes">
+                Show {{ older_notes|length }} Older Notes
+            </button>
+
+            <div class="collapse mt-2" id="olderNotes">
+                {% for note in older_notes %}
+                    <div class="small-note mb-2 p-2 border rounded">
+                        <strong>{{ note.date }} – {{ note.user }}</strong><br>
+                        {{ note.note }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% for note in latest_notes %}
             <div class="small-note mb-2 p-2 border rounded bg-light">
                 <strong>{{ note.date }} – {{ note.user }}</strong><br>
                 {{ note.note }}
             </div>
         {% endfor %}
-
-        <!-- COLLAPSIBLE OLDER NOTES -->
-        {% if notes|length > 4 %}
-        <div class="collapse mt-2" id="olderNotes">
-            {% for note in notes|slice:"4:" %}
-                <div class="small-note mb-2 p-2 border rounded">
-                    <strong>{{ note.date }} – {{ note.user }}</strong><br>
-                    {{ note.note }}
-                </div>
-            {% endfor %}
-        </div>
-        {% endif %}
 
     {% else %}
         <div class="small-note mb-2">
@@ -1189,9 +1204,10 @@ function no_change() { toggleButtonPair('yes_change_button','no_change_button','
                         <div>
                             <form action="{% url 'extra_work_ticket' changeorder.id %}" method="post">
                                     {% csrf_token %}
-                                    <button type="submit"
+                                    <button type="button"
                                             name="oldform"
-                                            class="btn btn-outline-secondary btn-sm">
+                                            class="btn btn-outline-secondary btn-sm"
+                                            onclick="not_coded_yet()">
                                         Print Blank T&M Ticket
                                     </button>
                             </form>
@@ -1292,18 +1308,71 @@ function no_change() { toggleButtonPair('yes_change_button','no_change_button','
         </div>
     </div>
         {% if changeorder.date_sent == None %}
-            {% if changeorder.is_t_and_m == True %}
-                {% if changeorder.digital_ticket_completed %}
-                    <form action="{% url 'price_ewt' changeorder.id %}"><input class="btn btn-primary btn-lg" type="submit"
-                                                               value="Send TM Price Now"/></form>
-                {% else %}
-                    <form action="{% url 'price_old_ewt' changeorder.id %}"><input class="btn btn-primary btn-sm" type="submit"
-                                                               value="Send TM Price Now"/></form>
-                {% endif %}
+            <div class="container mt-3">
+
+    <div class="d-flex flex-wrap gap-2">
+
+        {% if changeorder.is_t_and_m %}
+
+            {% if changeorder.digital_ticket_completed %}
+                <form action="{% url 'price_ewt' changeorder.id %}" class="mb-0">
+                    <button type="submit"
+                            class="btn btn-primary">
+                        Send T&M Price Now
+                    </button>
+                </form>
             {% else %}
-                <form action="{% url 'change_order_send' changeorder.id %}">
-                <input class="btn btn-primary btn-sm" type="submit" style="margin-bottom: 5px" value="Send Now"/></form>
+                <form action="{% url 'price_ewt' changeorder.id %}" class="mb-0">
+                    <button type="submit"
+                            class="btn btn-primary">
+                        Send T&M Price Now
+                    </button>
+                </form>
             {% endif %}
+
+        {% else %}
+
+            <form action="{% url 'change_order_send' changeorder.id %}" class="mb-0">
+                <button type="submit"
+                        class="btn btn-primary">
+                    Send Now
+                </button>
+            </form>
+
+        {% endif %}
+
+        {% if tmproposal %}
+            {% if tmproposal.status == "Pending Approval" %}
+                <a href="{% url 'price_ewt' changeorder.id %}"
+                   class="btn btn-success">
+                    Approve T&M Proposal
+                </a>
+            {% endif %}
+        {% endif %}
+
+    </div>
+
+</div>
+<!--            {% if changeorder.is_t_and_m == True %}-->
+<!--                {% if changeorder.digital_ticket_completed %}-->
+<!--                    <form action="{% url 'price_ewt' changeorder.id %}"><input class="btn btn-primary btn-lg" type="submit"-->
+<!--                                                               value="Send TM Price Now"/></form>-->
+<!--                {% else %}-->
+<!--                    <form action="{% url 'price_old_ewt' changeorder.id %}"><input class="btn btn-primary btn-sm" type="submit"-->
+<!--                                                               value="Send TM Price Now"/></form>-->
+<!--                {% endif %}-->
+<!--            {% else %}-->
+<!--                <form action="{% url 'change_order_send' changeorder.id %}">-->
+<!--                <input class="btn btn-primary btn-sm" type="submit" style="margin-bottom: 5px" value="Send Now"/></form>-->
+<!--            {% endif %}-->
+<!--            {% if tmproposal %}-->
+<!--            {% if tmproposal.status == "Pending Approval" %}-->
+<!--                <a href="{% url 'price_ewt' changeorder.id %}"-->
+<!--                   class="btn btn-success btn-lg">-->
+<!--                    Approve T&M Proposal-->
+<!--                </a>-->
+<!--            {% endif %}-->
+<!--            {% endif %}-->
 
         {% else %} <!--change order sent-->
 
@@ -1332,7 +1401,8 @@ function no_change() { toggleButtonPair('yes_change_button','no_change_button','
                         <input type="submit" class="btn btn-secondary btn-sm" style="margin-bottom: 5px" name="view_proposal" value="Re-Send Proposal"/></form>
                     </div>
                     <div style="padding: 5px" class="form-group">
-                    <form action="{% url 'revise_TM_COP' changeorder.id %}">
+                    <form action="{% url 'price_ewt' changeorder.id %}">
+<!--                    <form action="{% url 'revise_TM_COP' changeorder.id %}">-->
                         <input type="submit" class="btn btn-secondary btn-sm" style="margin-bottom: 5px" name="view_proposal" value="Revise Proposal"/></form>
                     </div>
                     </div>
@@ -1414,5 +1484,26 @@ function no_change() { toggleButtonPair('yes_change_button','no_change_button','
 </div>
 
 
+</div>
+<div id="emailSendingOverlay" style="
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.6);
+    z-index:9999;
+    justify-content:center;
+    align-items:center;
+    color:white;
+    font-size:24px;
+    font-weight:600;
+    text-align:center;
+">
+    <div>
+        <div class="spinner-border text-light mb-3" role="status"></div>
+        <div>Email Sending – Do Not Click Anything</div>
+    </div>
 </div>
 {% endblock %}

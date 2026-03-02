@@ -2,6 +2,8 @@ from django.db import models
 from django.core.exceptions import ValidationError
 import employees.models
 
+
+
 def validate_tm_category(value):
     if value == "Labor" or value == "Material" or value == "Equipment" or value == "Inventory" or value == "Misc" or value == "Bond" or value == "Sundries":
         return value
@@ -58,9 +60,37 @@ class ChangeOrders(models.Model):
     is_printed = models.BooleanField(default=False)
     is_old_form_printed = models.BooleanField(default=False)
     digital_ticket_signed_date = models.DateField(null=True, blank=True)
+    approval_explanation = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.job_number} {self.description}"
+        return f"{self.job_number} {self.cop_number}"
+
+    def status(self):
+        status = "Not Sent"
+        if self.is_approved:
+            if self.is_approved_to_bill:
+                status = "Approved"
+            else:
+                status = "Informal Approval"
+        elif self.date_sent:
+            status = "Sent to GC"
+        else:
+            if self.is_t_and_m:
+                if self.is_ticket_signed:
+                    tmproposal = TMProposal.objects.filter(change_order=self).first()
+                    if tmproposal:
+                        if tmproposal.date_sent_for_approval:
+                            status="PM Review"
+                        else:
+                            status="Proposal in Progress"
+                    else:
+                        status = "Ticket Signed"
+                else:
+                    if self.need_ticket() == True and self.is_printed == False:
+                        status = "Ticket Not Completed"
+                    else:
+                        status = "Ticket Not Signed"
+        return status
 
     def need_ticket(self):
         if self.is_t_and_m == True:
@@ -162,6 +192,24 @@ class TMProposal(models.Model):
         max_digits=8, decimal_places=2, blank=True, null=True)
     notes = models.CharField(null=True, max_length=2000)
     ticket = models.ForeignKey(EWT, on_delete=models.PROTECT, null=True, blank=True)
+    date_sent_for_approval = models.DateField(null=True, blank=True)
+    date_approved_internally = models.DateField(null=True, blank=True)
+    approved_by = models.ForeignKey(
+        employees.models.Employees,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approved_tm_proposals"
+    )
+    status = models.CharField(
+        max_length=50,
+        default="Draft"
+    )
+    week_ending = models.DateField(null=True)
+    completed_by = models.CharField(null=True, max_length=150)
+
+    def __str__(self):
+        return f"{self.change_order}"
 
 class TMList(models.Model):  # one entry for each line item of t&m bill
     id = models.BigAutoField(primary_key=True)
@@ -182,4 +230,21 @@ class TMList(models.Model):  # one entry for each line item of t&m bill
     proposal = models.ForeignKey(TMProposal, on_delete=models.PROTECT)
 
     def __str__(self):
-        return f"{self.change_order} {self.item}"
+        return f"{self.change_order} {self.description}"
+
+class ChangeOrderApprovers(models.Model):
+    id = models.BigAutoField(primary_key=True)
+
+    job = models.ForeignKey(
+        'jobs.Jobs',
+        on_delete=models.CASCADE,
+        related_name="changeorder_approvers"
+    )
+
+    approver = models.ForeignKey(
+        employees.models.Employees,
+        on_delete=models.CASCADE
+    )
+
+    def __str__(self):
+        return f"{self.job.job_number} - {self.approver}"

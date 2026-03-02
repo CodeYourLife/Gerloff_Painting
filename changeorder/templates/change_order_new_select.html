@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
+{% block extra_head %}
+<style type="text/css" class="init">
+#notes_table thead {
+    display: none;
+}
+
+.colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
+
+.dataTables_wrapper {
+font-family: tahoma;
+font-size: 13px;
+}
+
+    nav .active, .collapsible:hover {
+      background-color: Salmon;
+    }
+    .nav-pills a {
+        color: black;
+    }
+    .nav-pills li {
+        padding: 2px;
+    }
+    .nav-pills .active {
+        background-color: #6c757d !important;
+        padding: 5px;
+    }
+    label {
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+    input {
+        margin-left: 10px;
+        margin-right: 10px;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #495057;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    }
+    tr th {
+        width: fit-content !important;
+    }
+    .tab-content * {
+      color : black;
+      background-color: white !important;
+    }
+    .active * {
+        background-color: white !important;
+    }
+            .list-items {
+    border-bottom: 1px solid black; display: flex; justify-content: space-between;
+    }
+    .text-wrap{
+white-space:normal;
+}
+.width-200{
+width:200px;
+}
+.dataTables_filter {
+float: left !important;
+}
+.tb { border-collapse: collapse; width:300px; }
+
+.tb th, .tb td { padding: 5px; border: solid 1px #777; }
+.tb th { background-color: lightblue; }
+
+.table td {
+
+    }
+
+        .modal-content {
+            width: fit-content;
+        }
+
+#add-remove-button-container .btn {
+    padding: 5px 5px;
+}
+</style>
+{% endblock %}
+{% block content %}
+
+	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+		<a class="navbar-brand sub-navbar-brand" href="#">Change Orders</a>
+		<div id="navbarNavDropdown2">
+		  <ul class="sub-nav-list navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'change_order_home' %}">Home</a></li>
+        <li><a class="nav-item nav-link active" href="#">Add New</a></li>
+    </ul>
+  </div>
+</nav>
+
+<h4>Add New Change Order</h4>
+
+<form name = booking_input action="{% url 'change_order_new_select' %}" method="post"  onSubmit = "return check_booking_data()">
+{% csrf_token %}
+	            <label for="select_job">Please select job. Type job name to search.</label>
+           <select id="select_job" name="select_job" class="form-control">
+                {% if jobs %}
+                {% for job in jobs %}
+                <option value={{job.job_number}}>{{job.job_name}}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+<input type="submit" class="btn btn-primary" value="Add Change Order to This Job" />
+</form>
+
+
+<script>
+$(document).ready(function() {
+
+    let $select = $('#select_job');
+
+    if ($select.hasClass("select2-hidden-accessible")) {
+        $select.select2('destroy');
+    }
+
+    $select.select2({
+        width: '100%',
+        placeholder: "Select or type to search job",
+        allowClear: true
+    });
+
+});
+</script>
+{% endblock %}

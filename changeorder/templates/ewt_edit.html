@@ -1732,9 +1732,24 @@ document.addEventListener("focusin", function (e) {
 
 $('#addMaterialModal').on('shown.bs.modal', function () {
 
+    // Initialize Select2 every time modal opens
+    let $select = $('#material_master');
+
+    if ($select.hasClass("select2-hidden-accessible")) {
+        $select.select2('destroy');
+    }
+
+    $select.select2({
+        dropdownParent: $('#addMaterialModal'),
+        width: '100%',
+        placeholder: "Search or select material",
+        allowClear: true
+    });
+
     // If editing, do NOT reset modal
     if (editingMaterialId !== null) return;
 
+    // Reset values
     let select = document.getElementById("material_master");
     select.value = "";
     select.classList.remove("is-invalid");
@@ -1746,15 +1761,31 @@ $('#addMaterialModal').on('shown.bs.modal', function () {
 
 $('#addEquipmentModal').on('shown.bs.modal', function () {
 
+    let $select = $('#equipment_master');
+
+    // Destroy Select2 if already initialized
+    if ($select.hasClass("select2-hidden-accessible")) {
+        $select.select2('destroy');
+    }
+
+    // Initialize Select2
+    $select.select2({
+        dropdownParent: $('#addEquipmentModal'),
+        width: '100%',
+        placeholder: "Search or select equipment",
+        allowClear: true
+    });
+
+    // If editing, do NOT reset fields
     if (editingEquipmentId !== null) return;
 
-    let select = document.getElementById("equipment_master");
-    select.value = "";
-    select.classList.remove("is-invalid");
+    // Reset values
+    $select.val('').trigger('change');
+    $select.removeClass("is-invalid");
 
-    document.getElementById("equipment_description").value = "";
-    document.getElementById("equipment_quantity").value = "";
-    document.getElementById("equipment_units").value = "";
+    $('#equipment_description').val('');
+    $('#equipment_quantity').val('');
+    $('#equipment_units').val('');
 });
 
 document.getElementById("equipment_master").addEventListener("change", function() {
@@ -1767,15 +1798,31 @@ document.getElementById("material_master").addEventListener("change", function()
 
 $('#addSundriesModal').on('shown.bs.modal', function () {
 
+    let $select = $('#sundries_master');
+
+    // Destroy Select2 if already initialized
+    if ($select.hasClass("select2-hidden-accessible")) {
+        $select.select2('destroy');
+    }
+
+    // Initialize Select2
+    $select.select2({
+        dropdownParent: $('#addSundriesModal'),
+        width: '100%',
+        placeholder: "Search or select sundries",
+        allowClear: true
+    });
+
+    // If editing, do NOT reset fields
     if (editingSundriesId !== null) return;
 
-    let select = document.getElementById("sundries_master");
-    select.value = "";
-    select.classList.remove("is-invalid");
+    // Reset values
+    $select.val('').trigger('change');
+    $select.removeClass("is-invalid");
 
-    document.getElementById("sundries_description").value = "";
-    document.getElementById("sundries_quantity").value = "";
-    document.getElementById("sundries_units").value = "";
+    $('#sundries_description').val('');
+    $('#sundries_quantity').val('');
+    $('#sundries_units').val('');
 });
 
 document.getElementById("sundries_master").addEventListener("change", function() {

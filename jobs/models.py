@@ -199,9 +199,7 @@ class Jobs(models.Model):
             return True
 
     def count_approved_changes(self):
-        total_amount =0
-        if ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=True).exists():
-            total_amount = ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=True).count()
+        total_amount = ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=True).count()
         return total_amount
 
     def pending_co_amount(self):
@@ -211,9 +209,7 @@ class Jobs(models.Model):
         return total_amount
 
     def count_pending_changes(self):
-        total_amount = 0
-        if ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=False).exists():
-            total_amount = ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=True).count()
+        total_amount = ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=False).count()
         return total_amount
 
     def current_contract_amount(self):

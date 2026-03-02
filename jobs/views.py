@@ -986,39 +986,44 @@ def job_page(request, jobnumber):
         send_data['orig_contract_amount'] = ('{:,}'.format(selectedjob.contract_amount))
     else:
         send_data['orig_contract_amount'] = None
-    send_data['pending_count'] = selectedjob.count_pending_changes()
-    send_data['count_approved_changes'] = selectedjob.count_approved_changes()
-    send_data['pending_co_amount'] = ('{:,}'.format(selectedjob.pending_co_amount()))
-    send_data['approved_co_amount'] = ('{:,}'.format(selectedjob.approved_co_amount()))
+    send_data['pending_count'] = selectedjob.count_pending_changes() #used in header
+    send_data['count_approved_changes'] = selectedjob.count_approved_changes() #used in header
+    send_data['pending_co_amount'] = ('{:,}'.format(selectedjob.pending_co_amount()))#used in header
+    send_data['approved_co_amount'] = ('{:,}'.format(selectedjob.approved_co_amount()))#used in header
+    #reorganize this into two sections, pending tickets and change orders not approved
+
     tickets_not_done = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
-                                                   is_ticket_signed=False, ewt__isnull=True).order_by('cop_number')
+                                                   is_ticket_signed=False).order_by('id')
     send_data['tickets_not_done'] = tickets_not_done
     send_data['tickets_not_done_count'] = tickets_not_done.count()
+    open_changeorders = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,is_approved_to_bill = False).order_by('id')
+    send_data['open_changeorders'] = open_changeorders
+    send_data['open_changeorders_count'] = open_changeorders.count()
     # tickets_not_signed = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
-    #                                                               is_ticket_signed=False,
-    #                                                               is_old_form_printed=True)
-    tickets_not_signed = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
-                                                     is_ticket_signed=False,
-                                                     ) | ChangeOrders.objects.filter(
-        job_number=selectedjob, is_t_and_m=True, is_ticket_signed=False, ewt__isnull=False).order_by('cop_number')
-    send_data['tickets_not_signed'] = tickets_not_signed
-    send_data['tickets_not_signed_count'] = tickets_not_signed.count()
-    tickets_not_sent = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
-                                                   is_ticket_signed=True, date_sent__isnull=True).order_by('cop_number')
-    send_data['tickets_not_sent'] = tickets_not_sent
-    send_data['tickets_not_sent_count'] = tickets_not_sent.count()
-    open_cos = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
-                                           is_approved=False, date_sent__isnull=False).order_by('cop_number')
-    send_data['open_cos'] = open_cos
-    send_data['open_cos_count'] = open_cos.count()
-    informal_cos = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
-                                               is_approved_to_bill=False, is_approved=True).order_by('cop_number')
-    send_data['informal_cos'] = informal_cos
-    send_data['informal_cos_count'] = informal_cos.count()
-    approved_cos = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
-                                               is_approved_to_bill=True).order_by('cop_number')
-    send_data['approved_cos'] = approved_cos
-    send_data['approved_cos_count'] = approved_cos.count()
+    #                                                  is_ticket_signed=False,
+    #                                                  ) | ChangeOrders.objects.filter(
+    #     job_number=selectedjob, is_t_and_m=True, is_ticket_signed=False, ewt__isnull=False).order_by('cop_number')
+    # send_data['tickets_not_signed'] = tickets_not_signed
+    # send_data['tickets_not_signed_count'] = tickets_not_signed.count()
+    # tickets_not_sent = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
+    #                                                is_ticket_signed=True, date_sent__isnull=True).order_by('cop_number')
+    # send_data['tickets_not_sent'] = tickets_not_sent
+    # send_data['tickets_not_sent_count'] = tickets_not_sent.count()
+    # open_cos = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
+    #                                        is_approved_to_bill=False, date_sent__isnull=False).order_by('cop_number')
+    # send_data['open_cos'] = open_cos
+    # send_data['open_cos_count'] = open_cos.count()
+    # informal_cos = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
+    #                                            is_approved_to_bill=False, is_approved=True).order_by('cop_number')
+    # send_data['informal_cos'] = informal_cos
+    # send_data['informal_cos_count'] = informal_cos.count()
+    # approved_cos = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
+    #                                            is_approved_to_bill=True).order_by('cop_number')
+    # send_data['approved_cos'] = approved_cos
+    # send_data['approved_cos_count'] = approved_cos.count()
+    # changeorders_not_sent = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,date_sent__isnull=False,is_t_and_m=False).order_by('cop_number')
+    # send_data['changeorders_not_sent'] = changeorders_not_sent
+    # send_data['changeorders_not_sent_count'] = changeorders_not_sent.count()
     send_data['equipments'] = Inventory.objects.filter(job_number=selectedjob, is_closed=False).order_by(
         'inventory_type')
     send_data['rentals'] = Rentals.objects.filter(job_number=selectedjob, off_rent_number__isnull=True, is_closed=False)
