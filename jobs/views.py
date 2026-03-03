@@ -1112,7 +1112,7 @@ def job_page(request, jobnumber):
     if go_to_pickup:
         return redirect('request_pickup', jobnumber=selectedjob.job_number, item='ALL', pickup='ALL', status='ALL')
     else:
-        employees = Employees.objects.filter(job_title_description="Painter", active=True)
+        employees = Employees.objects.filter(job_title__description="Painter", active=True)
         filteredEmployees = []
         selectedEmployees = EmployeeJob.objects.filter(job=selectedjob.job_number)
         for employee in employees:
