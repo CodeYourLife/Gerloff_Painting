@@ -796,7 +796,7 @@ def daily_reports(request, id):
 def safety_home(request):
     send_data = {}
     painters_needing_respirator = []
-    for x in Employees.objects.filter(job_title__description="Painter"):
+    for x in Employees.objects.filter(active=True, job_title__description="Painter"):
         if not RespiratorClearance.objects.filter(employee=x).exists():
             if not Certifications.objects.filter(employee=x, category__description="Respirator Clearance").exists():
                 painters_needing_respirator.append({'employee': x.first_name + " " + x.last_name})
@@ -863,9 +863,9 @@ def scheduled_toolbox_talks(request):
         if x.date >= next_monday_date:
             ratio = "Not Issued Yet"
         else:
-            total_painters = Employees.objects.filter(date_added__lte=x.date, job_title__description = "Painter").count()
+            total_painters = Employees.objects.filter(active=True, date_added__lte=x.date, job_title__description = "Painter").count()
             painters_completed = 0
-            for y in Employees.objects.filter(date_added__lte=x.date, job_title__description = "Painter"):
+            for y in Employees.objects.filter(active=True,date_added__lte=x.date, job_title__description = "Painter"):
                 if CompletedToolboxTalks.objects.filter(master=x, employee=y).exists():
                     painters_completed += 1
             ratio = str(painters_completed) + " of " + str(total_painters)
@@ -1105,7 +1105,7 @@ def toolbox_talks_by_employee(request):
     next_monday_date = today + timedelta(days=days_until_monday)
     toolbox_talks = []
     for toolbox_talk in ScheduledToolboxTalks.objects.filter(date__lt = next_monday_date).order_by('-date'):
-        for employee in Employees.objects.filter(date_added__lte=toolbox_talk.date, job_title__description="Painter"):
+        for employee in Employees.objects.filter(active=True,date_added__lte=toolbox_talk.date, job_title__description="Painter"):
             topic = toolbox_talk.master.description
             scheduled_date = toolbox_talk.date.strftime('%Y/%m/%d')
             name = employee.first_name + " " + employee.last_name

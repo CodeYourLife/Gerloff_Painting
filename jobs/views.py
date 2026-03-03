@@ -130,7 +130,7 @@ def update_job_info(request, jobnumber):
     prices_json = json.dumps(list(pms), cls=DjangoJSONEncoder)
     send_data['data'] = prices_json
     selectedclient = Clients.objects.get(id=selectedjob.client.id)
-    pms_filter = ClientEmployees.objects.filter(id=selectedclient.id)
+    pms_filter = ClientEmployees.objects.filter(id=selectedclient.id,is_active=True)
     send_data['pms_filter'] = pms_filter
     startdate = selectedjob.start_date.strftime("%Y") + "-" + selectedjob.start_date.strftime(
         "%m") + "-" + selectedjob.start_date.strftime("%d")
@@ -568,11 +568,11 @@ def upload_new_job(request):
             send_data['new_super_email'] = sheet_obj.cell(row=24, column=2).value
             if Clients.objects.filter(company=client_name).exists():
                 send_data['client'] = Clients.objects.get(company=client_name)
-                send_data['pms_filter'] = ClientEmployees.objects.filter(id=Clients.objects.get(company=client_name))
-                if ClientEmployees.objects.filter(name=pm_name, id__company=client_name).exists():
+                send_data['pms_filter'] = ClientEmployees.objects.filter(id=Clients.objects.get(company=client_name),is_active=True)
+                if ClientEmployees.objects.filter(name=pm_name, id__company=client_name,is_active=True).exists():
                     send_data['pm'] = ClientEmployees.objects.get(name=pm_name, id__company=client_name)
                 super_name = sheet_obj.cell(row=22, column=2).value
-                if ClientEmployees.objects.filter(name=super_name, id__company=client_name).exists():
+                if ClientEmployees.objects.filter(name=super_name, id__company=client_name,is_active=True).exists():
                     send_data['super'] = ClientEmployees.objects.get(name=super_name, id__company=client_name)
             if Employees.objects.filter(first_name=sheet_obj.cell(row=39, column=2).value).exists():
                 send_data['estimator'] = Employees.objects.get(first_name=sheet_obj.cell(row=39, column=2).value)
@@ -969,7 +969,7 @@ def job_page(request, jobnumber):
             selectedjob.client.bid_email = request.POST['client_bid_email']
             selectedjob.client.phone = request.POST['client_phone']
             selectedjob.save()
-    send_data['client_employees'] = ClientEmployees.objects.filter(id=selectedjob.client)
+    send_data['client_employees'] = ClientEmployees.objects.filter(id=selectedjob.client,is_active=True)
     send_data['job'] = selectedjob
     if selectedjob.labor_done_Date:
         short_year = selectedjob.labor_done_Date.strftime("%y")
@@ -1112,7 +1112,7 @@ def job_page(request, jobnumber):
     if go_to_pickup:
         return redirect('request_pickup', jobnumber=selectedjob.job_number, item='ALL', pickup='ALL', status='ALL')
     else:
-        employees = Employees.objects.filter(job_title=1)
+        employees = Employees.objects.filter(job_title_description="Painter", active=True)
         filteredEmployees = []
         selectedEmployees = EmployeeJob.objects.filter(job=selectedjob.job_number)
         for employee in employees:
@@ -1139,7 +1139,7 @@ def job_page(request, jobnumber):
 def book_new_job(request):
     allclients = Clients.objects.order_by('company')
     estimators = Employees.objects.exclude(job_title__description='Painter')
-    superintendents = Employees.objects.filter(job_title__description='Superintendent')
+    superintendents = Employees.objects.filter(job_title__description='Superintendent',active=True)
     pms = ClientEmployees.objects.values('name', 'id', 'person_pk')
     prices_json = json.dumps(list(pms), cls=DjangoJSONEncoder)
 

@@ -954,13 +954,22 @@ function not_coded_yet() {
             Batch Upload Files
         </button>
 
-        <button
-            data-toggle="modal"
-            data-target="#changes-modal"
-            class="btn btn-info btn-sm m-2 px-4">
-            View All Change Orders
-        </button>
-
+<!--        <button-->
+<!--            data-toggle="modal"-->
+<!--            data-target="#changes-modal"-->
+<!--            class="btn btn-info btn-sm m-2 px-4">-->
+<!--            View All Change Orders-->
+<!--        </button>-->
+<!--        <button-->
+<!--            data-toggle="modal"-->
+<!--            data-target="#changes-modal"-->
+<!--            class="btn btn-info btn-sm m-2 px-4">-->
+<!--            View All Change Orders-->
+<!--        </button>-->
+            <a href="{% url 'change_order_new' changeorder.job_number.job_number %}"
+       class="btn btn-info btn-sm m-2 px-4">
+       View / Add Change Orders
+            </a>
     </div>
 
 </div>

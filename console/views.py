@@ -50,9 +50,9 @@ def seperate_test(request):
 @login_required(login_url='/accounts/login')
 def client_info_job(request, jobnumber):
     send_data = {}
-    job = Jobs.objects.get(job_number=job_number)
+    job = Jobs.objects.get(job_number=jobnumber)
     client = job.client
-    employees = ClientEmployees.objects.filter(id=client)
+    employees = ClientEmployees.objects.filter(id=client,is_active=True)
     send_data['job'] =job
     send_data['client'] =client
     send_data['employees'] =employees
@@ -107,7 +107,7 @@ def client_job_info(request, id):
             ClientJobRoles.objects.filter(job=selected_job, employee=selected_employee,
                                               role="Extra Work Tickets").delete()
     people=[]
-    for x in ClientEmployees.objects.filter(id=selected_client):
+    for x in ClientEmployees.objects.filter(id=selected_client,is_active=True):
         changeorder='No'
         ewt='No'
         super ='No'
@@ -128,13 +128,13 @@ def client_info(request, id):
     if id != 'ALL':
         selected_client = Clients.objects.get(id=id)
         send_data['selected_client'] = selected_client
-        send_data['client_employees'] = ClientEmployees.objects.filter(id=selected_client).order_by('name')
+        send_data['client_employees'] = ClientEmployees.objects.filter(id=selected_client,is_active=True).order_by('name')
         send_data['jobs']=Jobs.objects.filter(client=selected_client)
     if request.method == "POST":
         if 'combine_companies_now' in request.POST:
             company1 = Clients.objects.get(id=request.POST['select_client1'])
             company2 = Clients.objects.get(id=request.POST['select_client2'])
-            for x in ClientEmployees.objects.filter(id=company1):
+            for x in ClientEmployees.objects.filter(id=company1,is_active=True):
                 x.id=company2
                 x.save()
             for x in Jobs.objects.filter(client=company1):
@@ -204,7 +204,7 @@ def client_info(request, id):
                     current_person.save()
             if 'add_new_person' in request.POST:
                 ClientEmployees.objects.create(id=selected_client, name=request.POST['add_name'], phone=request.POST['add_phone'], email = request.POST['add_email'])
-            send_data['client_employees'] = ClientEmployees.objects.filter(id=selected_client).order_by('name')
+            send_data['client_employees'] = ClientEmployees.objects.filter(id=selected_client,is_active=True).order_by('name')
 
     return render(request, 'client_info.html', send_data)
 
@@ -272,7 +272,7 @@ def index(request):
     clearance_forms_needing_review = RespiratorClearance.objects.filter(approved_for_use=False).count()
     send_data['clearance_forms_needing_review']=clearance_forms_needing_review
     painters_needing_respirator=0
-    for x in Employees.objects.filter(job_title__description="Painter"):
+    for x in Employees.objects.filter(job_title__description="Painter",active=True):
         if not RespiratorClearance.objects.filter(employee=x).exists():
             if not Certifications.objects.filter(employee=x,category__description="Respirator Clearance").exists():
                 painters_needing_respirator+=1
@@ -284,7 +284,7 @@ def index(request):
         days_until_monday = 7
     next_monday_date = today + timedelta(days=days_until_monday)
     for toolbox_talk in ScheduledToolboxTalks.objects.filter(date__lt = next_monday_date).order_by('-date'):
-        for employee in Employees.objects.filter(date_added__lte=toolbox_talk.date, job_title__description="Painter"):
+        for employee in Employees.objects.filter(active=True, date_added__lte=toolbox_talk.date, job_title__description="Painter"):
             if not CompletedToolboxTalks.objects.filter(master=toolbox_talk, employee=employee).exists():
                 missing_toolbox_talks +=1
     send_data['missing_toolbox_talks'] = missing_toolbox_talks
@@ -352,14 +352,14 @@ def base(request):
 @login_required(login_url='/accounts/login')
 def grant_web_access(request):
     send_data = {}
-    send_data['employees'] = Employees.objects.filter(user__isnull=True, pin__isnull=True)
+    send_data['employees'] = Employees.objects.filter(user__isnull=True, pin__isnull=True,active=True)
     if request.method == 'POST':
         selected_employee = Employees.objects.get(id=request.POST['select_employee'])
         tester = False
         while tester == False:
             randomPin = random.randint(1000, 9999)
             tester = True
-            for x in Employees.objects.filter(user__isnull=True, pin__isnull=False):
+            for x in Employees.objects.filter(user__isnull=True, pin__isnull=False,active=True):
                 if x.pin == randomPin:
                     tester = False
                     randomPin = random.randint(1000, 9999)
