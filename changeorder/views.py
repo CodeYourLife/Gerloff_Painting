@@ -5,7 +5,7 @@ from collections import defaultdict
 from console.misc import createfolder, getFilesOrFolders, create_shortcut
 from console.misc import Email, get_client_ip, is_internal_ip, create_excel_from_template, get_subfolders, find_post_bid_docs_shortcut, resolve_shortcut, create_folder_shortcut, create_changeorder_shortcut_in_plan_folder
 from datetime import date, datetime
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -280,6 +280,11 @@ def print_TMProposal(request, id):
                     ClientJobRoles.objects.create(role="Change Orders", job=changeorder.job_number, employee=person)
                     TempRecipients.objects.create(person=person, changeorder=changeorder)
             if request.POST['status'] == 'Final' or x[0:8] == 'no_email':
+                newproposal.status = "Sent"
+                newproposal.save()
+                changeorder.date_sent = date.today()
+                changeorder.save()
+
                 recipients = ["bridgette@gerloffpainting.com"]
                 bridgette = Employees.objects.get(first_name="Bridgette", last_name="Clause")
                 current_user = Employees.objects.get(user=request.user)
@@ -317,20 +322,20 @@ def print_TMProposal(request, id):
                         #                 f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
                         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                         user=Employees.objects.get(user=request.user),
-                                                        note="COP Emailed to " + str(recipients))
+                                                        note=f"COP Sent for ${changeorder.price}. Emailed to {recipients}" )
                         error = "COP was succesfully emailed"
                     except:
                         email_send_error = "yes"
                         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                         user=Employees.objects.get(user=request.user),
-                                                        note="COP Email Failed to Send")
+                                                        note=f"COP Sent for ${changeorder.price}. Attempted to email to {recipients} but failed.")
                         error = "COP FAILED to Email! Please try again later!"
                     Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name,
                                                 error=error, date=date.today())
                 else:
                     ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                     user=Employees.objects.get(user=request.user),
-                                                    note="User decided to send email themself")
+                                                    note=f"COP Sent for ${changeorder.price}. User decided to send email themself",)
                 return redirect('extra_work_ticket', id=changeorder.id)
 
     extra_contacts = False
@@ -347,7 +352,7 @@ def print_TMProposal(request, id):
                 changeorder=changeorder):  # this will add all default as temp recipients if there are no temp recipients
             for x in ClientJobRoles.objects.filter(role="Change Orders", job=changeorder.job_number):
                 TempRecipients.objects.create(person=x.employee, changeorder=changeorder)
-    for x in ClientEmployees.objects.filter(id=changeorder.job_number.client):
+    for x in ClientEmployees.objects.filter(id=changeorder.job_number.client,is_active=True):
         if ClientJobRoles.objects.filter(role="Change Orders", job=changeorder.job_number, employee=x).exists():
             if TempRecipients.objects.filter(changeorder=changeorder, person=x).exists():
                 client_list.append(
@@ -633,20 +638,19 @@ def price_ewt(request, id):
             ).order_by("-id").first()
 
             if not proposal:
-                date_string = request.POST.get("week_ending", "")
-                for fmt in ("%Y-%m-%d", "%B %d, %Y"):
-                    try:
-                        converted_date = datetime.strptime(date_string, fmt).date()
-                    except:
-                        print("ERROR")
                 proposal = TMProposal.objects.create(
                     change_order=changeorder,
                     ticket=ewt,
                     status="Draft",
-                    week_ending = converted_date,
-                    completed_by = request.POST.get("completed_by", ""),
                 )
-
+            date_string = request.POST.get("week_ending", "")
+            for fmt in ("%Y-%m-%d", "%B %d, %Y"):
+                try:
+                    converted_date = datetime.strptime(date_string, fmt).date()
+                    proposal.week_ending = converted_date
+                except:
+                    print("ERROR")
+            proposal.completed_by = request.POST.get("completed_by", "")
             proposal.total = request.POST.get("final_cost", 0)
             proposal.notes = request.POST.get("notes", "")
             proposal.save()
@@ -789,19 +793,19 @@ def price_ewt(request, id):
                 return redirect("select_pm_approval", id=changeorder.id)
 
             elif action == "send_to_gc":
-                proposal.status = "Sent"
-                proposal.save()
-
-                changeorder.date_sent = date.today()
-                changeorder.save()
-
-                ChangeOrderNotes.objects.create(
-                    cop_number=changeorder,
-                    date=date.today(),
-                    user=Employees.objects.get(user=request.user),
-                    note=f"COP Sent to GC. Price: ${proposal.total}"
-                )
-
+                # moved this code to print_TMProposal
+                # proposal.status = "Sent"
+                # proposal.save()
+                #
+                # changeorder.date_sent = date.today()
+                # changeorder.save()
+                #
+                # ChangeOrderNotes.objects.create(
+                #     cop_number=changeorder,
+                #     date=date.today(),
+                #     user=Employees.objects.get(user=request.user),
+                #     note=f"COP Sent to GC. Price: ${proposal.total}"
+                # )
                 return redirect("preview_TMProposal", id=proposal.id)
 
             elif action == "approve":
@@ -1385,7 +1389,7 @@ def email_signed_ticket(request, changeorder):
                 changeorder=changeorder):  # this will add all default as temp recipients if there are no temp recipients
             for x in ClientJobRoles.objects.filter(role="Extra Work Tickets", job=changeorder.job_number):
                 TempRecipients.objects.create(person=x.employee, changeorder=changeorder)
-    for x in ClientEmployees.objects.filter(id=changeorder.job_number.client):
+    for x in ClientEmployees.objects.filter(id=changeorder.job_number.client,is_active=True):
         if ClientJobRoles.objects.filter(role="Extra Work Tickets", job=changeorder.job_number, employee=x).exists():
             if TempRecipients.objects.filter(changeorder=changeorder, person=x).exists():
                 client_list.append(
@@ -1425,119 +1429,346 @@ def view_ewt(request, id):
                    'materials': materials, 'changeorder': changeorder, 'employees': employees,
                    'employeesjson': employees_json})
 
+def get_or_create_contact(add_value,email, client):
+    print("HERE")
+    if not add_value:
+        return None
+
+    # EXISTING CONTACT
+    if add_value.isdigit():
+        return ClientEmployees.objects.get(person_pk=add_value)
+
+    # NEW CONTACT (typed name)
+    name = add_value.strip()
+    email = email
+
+    if not email:
+        return None  # JS should prevent this anyway
+
+    # # Prevent duplicate by email
+    # existing = ClientEmployees.objects.filter(email=email).first()
+    # if existing:
+    #     return existing
+
+    # Create new contact
+    new_person = ClientEmployees.objects.create(
+        name=name,
+        email=email,
+        id=client
+    )
+
+    return new_person
 
 @login_required(login_url='/accounts/login')
 def change_order_send(request, id):
+
     changeorder = ChangeOrders.objects.get(id=id)
+
+    # --------------------------------------------------
+    # Reset temp recipients if not POST
+    # --------------------------------------------------
     if request.method != 'POST':
-        for x in TempRecipients.objects.filter(changeorder=changeorder):
-            x.delete()
+        TempRecipients.objects.filter(changeorder=changeorder).delete()
+
+    # ==================================================
+    # POST HANDLING
+    # ==================================================
     if request.method == 'POST':
-        changeorder.full_description = request.POST['full_description']
+        # -----------------------------
+        # Always update description
+        # -----------------------------
+        changeorder.full_description = request.POST.get('full_description', '')
+        raw_price = request.POST.get('price', '').replace(',', '').strip()
+
+        price = None  # default
+
+        try:
+            parsed_price = Decimal(raw_price)
+
+            if parsed_price > 0:
+                changeorder.price_before_bond = parsed_price.quantize(
+                    Decimal("0.01"),
+                    rounding=ROUND_HALF_UP)
+                if changeorder.job_number.is_bonded:
+                    bond_amount = parsed_price * Decimal("0.02")
+                    parsed_price = parsed_price + bond_amount
+                price = parsed_price.quantize(Decimal("0.01"),rounding=ROUND_HALF_UP)
+                changeorder.price = price
+        except (InvalidOperation, TypeError):
+            pass  # ignore invalid price for now
+
         changeorder.save()
-        for x in request.POST:
-            if x[0:11] == 'updateemail':
-                person = ClientEmployees.objects.get(person_pk=x[11:len(x)])
-                person.email = request.POST['email' + str(person.person_pk)]
+        # -----------------------------
+        # Button Flags
+        # -----------------------------
+        is_final = 'final' in request.POST
+        is_myself = 'myself' in request.POST
+
+        # ==================================================
+        # 1️⃣ UPDATE EMAILS
+        # ==================================================
+        for key in request.POST:
+            if key.startswith('updateemail'):
+                person_pk = key.replace('updateemail', '')
+                person = ClientEmployees.objects.get(person_pk=person_pk)
+                person.email = request.POST.get(f'email{person_pk}')
                 person.save()
-            if x[0:6] == 'remove':
-                person = ClientEmployees.objects.get(person_pk=x[6:len(x)])
-                ClientJobRoles.objects.get(role="Change Orders", job=changeorder.job_number, employee=person).delete()
-            if x[0:10] == 'adddefault':
-                person = ClientEmployees.objects.get(person_pk=x[10:len(x)])
-                ClientJobRoles.objects.create(role="Change Orders", job=changeorder.job_number, employee=person)
-            if x[0:10] == 'tempremove':
-                person = ClientEmployees.objects.get(person_pk=x[10:len(x)])
-                TempRecipients.objects.get(changeorder=changeorder, person=person).delete()
-            if x[0:7] == 'tempadd':
-                person = ClientEmployees.objects.get(person_pk=request.POST['addrecipient'])
-                TempRecipients.objects.create(person=person, changeorder=changeorder)
-            if x[0:10] == 'defaultadd':
-                person = ClientEmployees.objects.get(person_pk=request.POST['addrecipient'])
-                if not ClientJobRoles.objects.filter(role="Change Orders", job=changeorder.job_number,
-                                                     employee=person).exists():
-                    ClientJobRoles.objects.create(role="Change Orders", job=changeorder.job_number, employee=person)
-                    TempRecipients.objects.create(person=person, changeorder=changeorder)
-            if x[0:5] == 'final' or x[0:6] == 'myself':
-                path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
-                result_file = open(f"{path}/GP COP {changeorder.cop_number} {changeorder.description} {date.today()}.pdf", "w+b")
-                html = render_to_string("print_proposal.html",
-                                        {'changeorder': changeorder,
-                                         'full_description': request.POST['full_description'],
-                                         'price': request.POST['price'], 'date': date.today()})
-                pisa.CreatePDF(
-                    html,
-                    dest=result_file
+
+        # ==================================================
+        # 2️⃣ REMOVE DEFAULT ROLE
+        # ==================================================
+        for key in request.POST:
+            if key.startswith('remove'):
+                person_pk = key.replace('remove', '')
+                person = ClientEmployees.objects.get(person_pk=person_pk)
+                ClientJobRoles.objects.filter(
+                    role="Change Orders",
+                    job=changeorder.job_number,
+                    employee=person
+                ).delete()
+
+        # ==================================================
+        # 3️⃣ ADD DEFAULT ROLE
+        # ==================================================
+        add_value = request.POST.get("addrecipient", "").strip()
+        new_email = request.POST.get("new_contact_email", "").strip()
+        client = changeorder.job_number.client
+        for key in request.POST:
+            if key.startswith('adddefault'):
+                #add new or grab existing
+                person_pk = key.replace("adddefault", "")
+                person = ClientEmployees.objects.get(person_pk=person_pk)
+                ClientJobRoles.objects.get_or_create(
+                    role="Change Orders",
+                    job=changeorder.job_number,
+                    employee=person
                 )
-                result_file.close()
-                changeorder.full_description = request.POST['full_description']
-                changeorder.price = request.POST['price']
-                changeorder.date_sent = date.today()
+
+        # ==================================================
+        # 4️⃣ TEMP REMOVE
+        # ==================================================
+        for key in request.POST:
+            if key.startswith('tempremove'):
+                person_pk = key.replace('tempremove', '')
+                person = ClientEmployees.objects.get(person_pk=person_pk)
+                TempRecipients.objects.filter(
+                    changeorder=changeorder,
+                    person=person
+                ).delete()
+
+        # ==================================================
+        # 5️⃣ TEMP ADD
+        # ==================================================
+        if 'tempadd' in request.POST:
+            # add new or grab existing
+            person = get_or_create_contact(add_value, new_email, client)
+            TempRecipients.objects.get_or_create(
+                person=person,
+                changeorder=changeorder
+            )
+
+        # ==================================================
+        # 6️⃣ DEFAULT ADD
+        # ==================================================
+        if any(key.startswith('defaultadd') for key in request.POST):
+            # add new or grab existing
+            person = get_or_create_contact(add_value, new_email, client)
+            ClientJobRoles.objects.get_or_create(
+                role="Change Orders",
+                job=changeorder.job_number,
+                employee=person
+            )
+
+            TempRecipients.objects.get_or_create(
+                person=person,
+                changeorder=changeorder
+            )
+
+        # ==================================================
+        # 7️⃣ FINAL / MYSELF (Generate Proposal)
+        # ==================================================
+        if is_final or is_myself:
+            if price is None:
+                messages.error(request, "Please enter a valid price before creating or sending the proposal.")
+                return redirect('change_order_send', id=id)
+            # -----------------------------
+            # Build PDF
+            # -----------------------------
+            path = os.path.join(
+                settings.MEDIA_ROOT,
+                "changeorder",
+                f"{changeorder.job_number.job_number} COP #{changeorder.cop_number}"
+            )
+
+            os.makedirs(path, exist_ok=True)
+
+            filename = f"GP COP {changeorder.cop_number} {changeorder.description} {date.today()}.pdf"
+            filepath = os.path.join(path, filename)
+
+            with open(filepath, "w+b") as result_file:
+
+                html = render_to_string(
+                    "print_proposal.html",
+                    {
+                        'changeorder': changeorder,
+                        'full_description': request.POST.get('full_description'),
+                        'price': request.POST.get('price'),
+                        'date': date.today()
+                    }
+                )
+
+                pisa.CreatePDF(html, dest=result_file)
+
+            # -----------------------------
+            # Save pricing + sent date
+            # -----------------------------
+
+            changeorder.date_sent = date.today()
+            changeorder.save()
+
+            current_user = Employees.objects.get(user=request.user)
+
+            # ==================================================
+            # FINAL → SEND EMAIL
+            # ==================================================
+            if is_final:
+
+                recipients = {
+                    "bridgette@gerloffpainting.com",
+                    "joe@gerloffpainting.com"
+                }
+
+                if current_user.email:
+                    recipients.add(current_user.email.lower())
+
+                for key, value in request.POST.items():
+                    if key.startswith('email') and value:
+                        recipients.add(value.lower())
+
+                recipients = list(recipients)
+
+                changeorder.sent_to = recipients
                 changeorder.save()
-                current_user = Employees.objects.get(user=request.user)
-                if x[0:5] == 'final':
-                    recipients = ["bridgette@gerloffpainting.com", 'joe@gerloffpainting.com']
-                    recipients.append(current_user.email)
-                    for x in request.POST:
-                        if x[0:5] == 'email':
-                            if recipients == "":
-                                recipients = request.POST[x]
-                            else:
-                                recipients.append(request.POST[x])
-                    changeorder.sent_to = recipients
-                    changeorder.save()
-                    ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
-                                                    user=current_user,
-                                                    note="COP Sent. Price: $" + request.POST['price'])
-                    Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
-                    try:
-                        Email.sendEmail("COP Proposal", "Please find the Change Order Proposal attached", recipients,
-                                        f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
-                        message = "Change Order Proposal was succesfully emailed"
-                    except:
-                        message = "Error! Change Order Proposal failed to email. Please retry later!"
-                    Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name,
-                                                error=message, date=date.today())
-                else:
-                    ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
-                                                    user=current_user,
-                                                    note="COP Created. User will email themself.  Price: $" + request.POST['price'])
-                return redirect('extra_work_ticket', id=id)
+                body = f"Please see the attached change order for {changeorder.job_number}. Gerloff Painting COP #{changeorder.cop_number} - {changeorder.description}"
+                Email_Errors.objects.filter(
+                    user=f"{request.user.first_name} {request.user.last_name}"
+                ).delete()
+
+                try:
+                    Email.sendEmail(
+                        "COP Proposal",
+                        body,
+                        recipients,
+                        filepath
+                    )
+
+                    ChangeOrderNotes.objects.create(
+                        cop_number=changeorder,
+                        date=date.today(),
+                        user=current_user,
+                        note=f"COP Sent. Price: ${price}. Sent to {recipients}"
+                    )
+
+                    message = "Change Order Proposal was successfully emailed"
+
+                except Exception:
+                    message = "Error! Change Order Proposal failed to email."
+
+                    ChangeOrderNotes.objects.create(
+                        cop_number=changeorder,
+                        date=date.today(),
+                        user=current_user,
+                        note=f"COP Sent. Price: ${price}. Sent to {recipients}. EMAIL FAILED."
+                    )
+
+                Email_Errors.objects.create(
+                    user=f"{request.user.first_name} {request.user.last_name}",
+                    error=message,
+                    date=date.today()
+                )
+
+            # ==================================================
+            # MYSELF → JUST CREATE
+            # ==================================================
+            else:
+                ChangeOrderNotes.objects.create(
+                    cop_number=changeorder,
+                    date=date.today(),
+                    user=current_user,
+                    note=f"COP Created. User will email manually. Price: ${price}"
+                )
+
+            return redirect('extra_work_ticket', id=id)
+
+    # ==================================================
+    # EXISTING CLIENT LIST LOGIC (UNCHANGED)
+    # ==================================================
+
     extra_contacts = False
-    project_pm = ClientEmployees.objects.get(person_pk=changeorder.job_number.client_Pm.person_pk)
+    project_pm = ClientEmployees.objects.get(
+        person_pk=changeorder.job_number.client_Pm.person_pk
+    )
+
     client_list = []
+
     if TempRecipients.objects.filter(changeorder=changeorder, default=False).exists():
         if TempRecipients.objects.filter(changeorder=changeorder, default=True).exists():
             TempRecipients.objects.filter(changeorder=changeorder, default=True).delete()
-    if not ClientJobRoles.objects.filter(role="Change Orders", job=changeorder.job_number):
-        if not TempRecipients.objects.filter(changeorder=changeorder):
-            TempRecipients.objects.create(person=project_pm, changeorder=changeorder, default=True)
-    else:  # means there is a default person
-        if not TempRecipients.objects.filter(
-                changeorder=changeorder):  # this will add all default as temp recipients if there are no temp recipients
-            for x in ClientJobRoles.objects.filter(role="Change Orders", job=changeorder.job_number):
-                TempRecipients.objects.create(person=x.employee, changeorder=changeorder)
-    for x in ClientEmployees.objects.filter(id=changeorder.job_number.client):
-        if ClientJobRoles.objects.filter(role="Change Orders", job=changeorder.job_number, employee=x).exists():
-            if TempRecipients.objects.filter(changeorder=changeorder, person=x).exists():
-                client_list.append(
-                    {'person_pk': x.person_pk, 'name': x.name, 'default': True, 'current': True, 'email': x.email})
-            else:
-                extra_contacts = True
-                client_list.append(
-                    {'person_pk': x.person_pk, 'name': x.name, 'default': True, 'current': False, 'email': x.email})
-        else:
-            if TempRecipients.objects.filter(person=x, changeorder=changeorder).exists():
-                client_list.append(
-                    {'person_pk': x.person_pk, 'name': x.name, 'default': False, 'current': True, 'email': x.email})
-            else:
-                extra_contacts = True
-                client_list.append(
-                    {'person_pk': x.person_pk, 'name': x.name, 'default': False, 'current': False, 'email': x.email})
 
-    return render(request, "change_order_send.html",
-                  {'client_list': client_list,
-                   'extra_contacts': extra_contacts, 'changeorder': changeorder})
+    if not ClientJobRoles.objects.filter(
+        role="Change Orders",
+        job=changeorder.job_number
+    ):
+        if not TempRecipients.objects.filter(changeorder=changeorder):
+            TempRecipients.objects.create(
+                person=project_pm,
+                changeorder=changeorder,
+                default=True
+            )
+    else:
+        if not TempRecipients.objects.filter(changeorder=changeorder):
+            for role in ClientJobRoles.objects.filter(
+                role="Change Orders",
+                job=changeorder.job_number
+            ):
+                TempRecipients.objects.create(
+                    person=role.employee,
+                    changeorder=changeorder
+                )
+
+    for employee in ClientEmployees.objects.filter(id=changeorder.job_number.client,is_active=True):
+
+        has_default = ClientJobRoles.objects.filter(
+            role="Change Orders",
+            job=changeorder.job_number,
+            employee=employee
+        ).exists()
+
+        is_temp = TempRecipients.objects.filter(
+            changeorder=changeorder,
+            person=employee
+        ).exists()
+
+        if has_default and is_temp:
+            client_list.append({'person_pk': employee.person_pk, 'name': employee.name, 'default': True, 'current': True, 'email': employee.email})
+        elif has_default:
+            extra_contacts = True
+            client_list.append({'person_pk': employee.person_pk, 'name': employee.name, 'default': True, 'current': False, 'email': employee.email})
+        elif is_temp:
+            client_list.append({'person_pk': employee.person_pk, 'name': employee.name, 'default': False, 'current': True, 'email': employee.email})
+        else:
+            extra_contacts = True
+            client_list.append({'person_pk': employee.person_pk, 'name': employee.name, 'default': False, 'current': False, 'email': employee.email})
+
+    return render(
+        request,
+        "change_order_send.html",
+        {
+            'client_list': client_list,
+            'extra_contacts': extra_contacts,
+            'changeorder': changeorder
+        }
+    )
 
 @login_required(login_url='/accounts/login')
 def change_order_new_select(request):
@@ -1942,8 +2173,8 @@ def extra_work_ticket(request, id):
                         note="No Longer T&M: " + request.POST['no_tm_notes'], cop_number=changeorder, date=date.today(),
                         user=Employees.objects.get(user=request.user))
         return redirect('extra_work_ticket', id=id)
-    send_data['client_list']= ClientEmployees.objects.filter(id=changeorder.job_number.client)
-    send_data['client_list_json'] = json.dumps(list(ClientEmployees.objects.filter(id=changeorder.job_number.client).values()), cls=DjangoJSONEncoder)
+    send_data['client_list']= ClientEmployees.objects.filter(id=changeorder.job_number.client,is_active=True)
+    send_data['client_list_json'] = json.dumps(list(ClientEmployees.objects.filter(id=changeorder.job_number.client,is_active=True).values()), cls=DjangoJSONEncoder)
     ticket_needed = changeorder.need_ticket()
     send_data['ticket_needed'] = ticket_needed
     client_ip = get_client_ip(request)

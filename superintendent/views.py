@@ -22,7 +22,7 @@ def super_ajax(request):
             send_data = {}
             x = ScheduledToolboxTalks.objects.get(id=request.GET['scheduled_toolbox_talk_id'])
             painters_incomplete = []
-            for y in Employees.objects.filter(date_added__lte=x.date, job_title__description="Painter"):
+            for y in Employees.objects.filter(active=True,date_added__lte=x.date, job_title__description="Painter"):
                 if not CompletedToolboxTalks.objects.filter(master=x, employee=y).exists():
                     painters_incomplete.append({'name':y.first_name + " " + y.last_name})
             send_data['painters'] = painters_incomplete

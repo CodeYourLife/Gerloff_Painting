@@ -61,7 +61,8 @@ class ChangeOrders(models.Model):
     is_old_form_printed = models.BooleanField(default=False)
     digital_ticket_signed_date = models.DateField(null=True, blank=True)
     approval_explanation = models.TextField(null=True, blank=True)
-
+    price_before_bond = models.DecimalField(
+        max_digits=9, decimal_places=2, null=True, blank=True)
     def __str__(self):
         return f"{self.job_number} {self.cop_number}"
 
