@@ -64,20 +64,43 @@ th {
 
 </head>
 <body>
+<div class="header">
+  <table style="width:100%; border:none; border-collapse:collapse;">
+    <tr>
+      <td width="75%" style="border:none; vertical-align:top;">
 
-<h1>Gerloff Painting Extra Work Ticket</h1>
+        <div style="font-size:20px; font-weight:bold; letter-spacing:0.5px;">
+            Gerloff Painting Extra Work Ticket
+        </div>
 
-<div class="header-block">
-    <strong>Job:</strong> {{ changeorder.job_number }} |
-    <strong>CO #:</strong> {{ changeorder.cop_number }} |
-    <strong>Week:</strong> {{ ewt.week_ending }} |
-    <strong>By:</strong> {{ ewt.completed_by }}
+        <div class="meta" style="margin-top:4px;">
+          <strong>Job:</strong> {{ changeorder.job_number }} |
+          <strong>COP #:</strong> {{ changeorder.cop_number }} |
+          <strong>Week Ending:</strong> {{ ewt.week_ending }} |
+          <strong>By:</strong> {{ ewt.completed_by }}
+        </div>
+      <div>
+            <div class="section-title">COP#{{changeorder.cop_number}} | {{changeorder.description}}</div>
+        </div>
+      <div>
+            <div class="section-title">Work Completed In This Ticket:</div>
+            <div>{{ ewt.notes }}</div>
+        </div>
+
+      </td>
+
+      <td width="25%" align="right" style="border:none; vertical-align:top;">
+          <img src="/media/images/logo.png" style="width:90px;">
+      </td>
+
+    </tr>
+  </table>
 </div>
 
-<div>
-<div class="section-title">Work Description</div>
-<div>{{ ewt.notes }}</div>
-</div>
+<!--<div>-->
+<!--<div class="section-title">Work Description</div>-->
+<!--<div>{{ ewt.notes }}</div>-->
+<!--</div>-->
 
 <div class="section-title">Labor</div>
 
@@ -95,7 +118,7 @@ th {
 
     {% for x in laboritems %}
     <tr>
-        <td>
+        <td class="center">
             {% if x.ot %}OT- {% endif %}
             {% if x.employee %}
                 {{ x.employee }}
@@ -127,7 +150,7 @@ th {
     {% for x in materials %}
     <tr>
         <td class="center">Material</td>
-        <td>{{ x.description }}</td>
+        <td class="center">{{ x.description }}</td>
         <td class="center">{{ x.quantity }}</td>
         <td class="center">{{ x.units }}</td>
     </tr>
@@ -136,7 +159,7 @@ th {
     {% for y in equipment %}
     <tr>
         <td class="center">Equipment</td>
-        <td>{{ y.description }}</td>
+        <td class="center">{{ y.description }}</td>
         <td class="center">{{ y.quantity }}</td>
         <td class="center">{{ y.units }}</td>
     </tr>
@@ -145,7 +168,7 @@ th {
     {% for z in sundries %}
     <tr>
         <td class="center">Sundry</td>
-        <td>{{ z.description }}</td>
+        <td class="center">{{ z.description }}</td>
         <td class="center">{{ z.quantity }}</td>
         <td class="center">{{ z.units }}</td>
     </tr>

@@ -105,7 +105,7 @@ td {
     <table>
         <tr>
             <td width="65%">
-                <div class="header-title">Change Order Proposal {{changeorder.cop_number}}</div>
+                <div class="header-title">T&M Change Order Proposal {{changeorder.cop_number}}</div>
                 <div style="font-weight:bold; font-size:9px;">
                     {{changeorder.description}} T&M Breakdown
                 </div>
@@ -147,6 +147,7 @@ td {
         <th>Description</th>
         <th>Qty</th>
         <th>Units</th>
+        <th>Rate</th>
         <th class="right">Cost</th>
     </tr>
 
@@ -155,6 +156,7 @@ td {
         <td>{{x.description}}</td>
         <td>{{x.quantity}}</td>
         <td>Hours</td>
+        <td>${{x.rate}}</td>
         <td class="right">${{x.total}}</td>
     </tr>
     {% endfor %}
@@ -178,6 +180,7 @@ td {
         <th>Description</th>
         <th>Qty</th>
         <th>Units</th>
+        <th>Rate</th>
         <th class="right">Cost</th>
     </tr>
 
@@ -186,6 +189,7 @@ td {
         <td>{{x.description}}</td>
         <td>{{x.quantity}}</td>
         <td>{{x.units}}</td>
+        <td>${{x.rate}}</td>
         <td class="right">${{x.total}}</td>
     </tr>
     {% endfor %}
@@ -195,6 +199,7 @@ td {
         <td>Inventory</td>
         <td>1</td>
         <td>LS</td>
+        <td>${{inventory.total}}</td>
         <td class="right">${{inventory.total}}</td>
     </tr>
     {% endif %}
@@ -218,6 +223,7 @@ td {
         <th>Description</th>
         <th>Qty</th>
         <th>Units</th>
+        <th>Rate</th>
         <th class="right">Cost</th>
     </tr>
 
@@ -226,6 +232,7 @@ td {
         <td>{{x.description}}</td>
         <td>{{x.quantity}}</td>
         <td>{{x.units}}</td>
+        <td>${{x.rate}}</td>
         <td class="right">${{x.total}}</td>
     </tr>
     {% endfor %}
@@ -249,6 +256,7 @@ td {
         <th>Description</th>
         <th>Qty</th>
         <th>Units</th>
+        <th>Rate</th>
         <th class="right">Cost</th>
     </tr>
 
@@ -257,6 +265,7 @@ td {
         <td>{{x.description}}</td>
         <td>{{x.quantity}}</td>
         <td>{{x.units}}</td>
+        <td>${{x.rate}}</td>
         <td class="right">${{x.total}}</td>
     </tr>
     {% endfor %}
@@ -280,6 +289,7 @@ td {
         <th>Description</th>
         <th>Qty</th>
         <th>Units</th>
+        <th>Rate</th>
         <th class="right">Cost</th>
     </tr>
 
@@ -288,6 +298,7 @@ td {
         <td>{{x.description}}</td>
         <td>{{x.quantity}}</td>
         <td>{{x.units}}</td>
+        <td>${{x.rate}}</td>
         <td class="right">${{x.total}}</td>
     </tr>
     {% endfor %}

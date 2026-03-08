@@ -144,12 +144,22 @@ document.addEventListener("DOMContentLoaded", function() {
     Change Orders for {{ selected_job.job_number }} - {{ selected_job.job_name }}
   </div>
 
-  <div class="mt-2">
-    <a href="{% url 'job_page' selected_job.job_number %}"
-       class="btn btn-primary btn-sm">
-       🏗️ Go to Job
-    </a>
-  </div>
+<div class="mt-2 d-flex gap-2">
+
+<a href="{% url 'job_page' selected_job.job_number %}"
+   class="btn btn-primary btn-sm">
+   🏗️ Go to Job
+</a>
+
+<form action="{% url 'send_cop_report' selected_job.job_number %}" method="post">
+    {% csrf_token %}
+    <button type="submit"
+            class="btn btn-success btn-sm">
+        📧 Send COP Report to GC
+    </button>
+</form>
+
+</div>
 
 </div>
 

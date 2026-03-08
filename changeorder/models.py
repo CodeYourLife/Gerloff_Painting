@@ -68,29 +68,32 @@ class ChangeOrders(models.Model):
 
     def status(self):
         status = "Not Sent"
-        if self.is_approved:
-            if self.is_approved_to_bill:
-                status = "Approved"
-            else:
-                status = "Informal Approval"
-        elif self.date_sent:
-            status = "Sent to GC"
+        if self.is_closed:
+            status = "Voided"
         else:
-            if self.is_t_and_m:
-                if self.is_ticket_signed:
-                    tmproposal = TMProposal.objects.filter(change_order=self).first()
-                    if tmproposal:
-                        if tmproposal.date_sent_for_approval:
-                            status="PM Review"
-                        else:
-                            status="Proposal in Progress"
-                    else:
-                        status = "Ticket Signed"
+            if self.is_approved:
+                if self.is_approved_to_bill:
+                    status = "Approved"
                 else:
-                    if self.need_ticket() == True and self.is_printed == False:
-                        status = "Ticket Not Completed"
+                    status = "Informal Approval"
+            elif self.date_sent:
+                status = "Sent to GC"
+            else:
+                if self.is_t_and_m:
+                    if self.is_ticket_signed:
+                        tmproposal = TMProposal.objects.filter(change_order=self).first()
+                        if tmproposal:
+                            if tmproposal.date_sent_for_approval:
+                                status="PM Review"
+                            else:
+                                status="Proposal in Progress"
+                        else:
+                            status = "Ticket Signed"
                     else:
-                        status = "Ticket Not Signed"
+                        if self.need_ticket() == True and self.is_printed == False:
+                            status = "Ticket Not Completed"
+                        else:
+                            status = "Ticket Not Signed"
         return status
 
     def need_ticket(self):
@@ -150,6 +153,14 @@ class TempRecipients(models.Model):
     def __str__(self):
         return f"{self.person} {self.changeorder}"
 
+class TempRecipientsCOPList(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    person = models.ForeignKey('jobs.ClientEmployees', on_delete=models.PROTECT)
+    job = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT)
+    default = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.person} {self.job}"
 
 class EWT(models.Model):
     id = models.BigAutoField(primary_key=True)

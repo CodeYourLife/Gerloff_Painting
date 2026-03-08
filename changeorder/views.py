@@ -21,8 +21,8 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django_tables2 import RequestConfig
 from employees.models import *
-from io import StringIO
-from jobs.models import Jobs, JobCharges, ClientEmployees, Email_Errors
+from io import StringIO, BytesIO
+from jobs.models import Jobs, JobCharges, ClientEmployees, Email_Errors,JobNotes
 from media.utilities import MediaUtilities
 from media.utilities import MediaUtilities
 from .models import ChangeOrders
@@ -32,6 +32,8 @@ from xhtml2pdf import pisa
 import json
 import os
 import os.path
+
+
 
 def emailed_ticket(request, id):
     send_data = {}
@@ -81,15 +83,16 @@ def emailed_ticket(request, id):
             path,
             f"Signed_Extra_Work_Ticket_{date.today()}.pdf"
         )
-
-        html = render_to_string("signed_ticket_pdf.html",
+        with open(file_path, "w+b") as result_file:
+            html = render_to_string("signed_ticket_pdf.html",
                                 {'sundries':sundries,'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
                                  'changeorder': changeorder, 'signature': signature, 'status': status,'is_emailed_link':True})
-        # Create PDF
-        with open(file_path, "w+b") as result_file:
-            pisa.CreatePDF(html, dest=result_file)
-
-        # result_file.close()
+            pisa.CreatePDF(
+                html,
+                dest=result_file,
+                link_callback=link_callback
+            )
+            result_file.close()
         recipients = ["joe@gerloffpainting.com"]
         recipients.append(recipient)
         job_name = changeorder.job_number.job_name
@@ -352,7 +355,7 @@ def print_TMProposal(request, id):
                 changeorder=changeorder):  # this will add all default as temp recipients if there are no temp recipients
             for x in ClientJobRoles.objects.filter(role="Change Orders", job=changeorder.job_number):
                 TempRecipients.objects.create(person=x.employee, changeorder=changeorder)
-    for x in ClientEmployees.objects.filter(id=changeorder.job_number.client,is_active=True):
+    for x in ClientEmployees.objects.filter(id=changeorder.job_number.client,is_active=True).order_by('name'):
         if ClientJobRoles.objects.filter(role="Change Orders", job=changeorder.job_number, employee=x).exists():
             if TempRecipients.objects.filter(changeorder=changeorder, person=x).exists():
                 client_list.append(
@@ -1243,18 +1246,21 @@ def print_ticket(request, id, status):
         os.makedirs(path, exist_ok=True)
 
         # Build full PDF file path
-        file_path = os.path.join(
+        filepath = os.path.join(
             path,
             f"Unsigned Extra_Work Ticket {date.today()}.pdf"
         )
+        with open(filepath, "w+b") as result_file:
+            html = render_to_string("signed_ticket_pdf.html",
+                                    {'sundries':sundries,'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
+                                     'changeorder': changeorder, 'signature': signature, 'status': status,'is_emailed_link':True})
 
-        html = render_to_string("signed_ticket_pdf.html",
-                                {'sundries':sundries,'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
-                                 'changeorder': changeorder, 'signature': signature, 'status': status,'is_emailed_link':True})
-        # Create PDF
-        with open(file_path, "w+b") as result_file:
-            pisa.CreatePDF(html, dest=result_file)
-
+            pisa.CreatePDF(
+                html,
+                dest=result_file,
+                link_callback=link_callback
+            )
+            result_file.close()
 
         return redirect('extra_work_ticket', id=id)
     if request.method == 'POST':
@@ -1289,13 +1295,19 @@ def print_ticket(request, id, status):
             path,
             f"Signed_Extra_Work_Ticket_{date.today()}.pdf"
         )
-
-        html = render_to_string("signed_ticket_pdf.html",
+        with open(file_path, "w+b") as result_file:
+            html = render_to_string("signed_ticket_pdf.html",
                                 {'sundries':sundries,'equipment': equipment, 'materials': materials, 'laboritems': laboritems, 'ewt': ewt,
                                  'changeorder': changeorder, 'signature': signature, 'status': status,'is_emailed_link':True})
         # Create PDF
-        with open(file_path, "w+b") as result_file:
-            pisa.CreatePDF(html, dest=result_file)
+            pisa.CreatePDF(
+                html,
+                dest=result_file,
+                link_callback=link_callback
+            )
+            result_file.close()
+        # with open(file_path, "w+b") as result_file:
+        #     pisa.CreatePDF(html, dest=result_file)
         return redirect('email_signed_ticket', changeorder=changeorder.id)
 
     return render(request, "print_ticket.html",
@@ -1389,7 +1401,7 @@ def email_signed_ticket(request, changeorder):
                 changeorder=changeorder):  # this will add all default as temp recipients if there are no temp recipients
             for x in ClientJobRoles.objects.filter(role="Extra Work Tickets", job=changeorder.job_number):
                 TempRecipients.objects.create(person=x.employee, changeorder=changeorder)
-    for x in ClientEmployees.objects.filter(id=changeorder.job_number.client,is_active=True):
+    for x in ClientEmployees.objects.filter(id=changeorder.job_number.client,is_active=True).order_by('name'):
         if ClientJobRoles.objects.filter(role="Extra Work Tickets", job=changeorder.job_number, employee=x).exists():
             if TempRecipients.objects.filter(changeorder=changeorder, person=x).exists():
                 client_list.append(
@@ -1479,7 +1491,7 @@ def change_order_send(request, id):
         # -----------------------------
         changeorder.full_description = request.POST.get('full_description', '')
         raw_price = request.POST.get('price', '').replace(',', '').strip()
-
+        bond_amount = None
         price = None  # default
 
         try:
@@ -1594,6 +1606,7 @@ def change_order_send(request, id):
             # -----------------------------
             # Build PDF
             # -----------------------------
+            logo_path = os.path.join(settings.MEDIA_ROOT, "images/logo.png")
             path = os.path.join(
                 settings.MEDIA_ROOT,
                 "changeorder",
@@ -1610,15 +1623,20 @@ def change_order_send(request, id):
                 html = render_to_string(
                     "print_proposal.html",
                     {
-                        'changeorder': changeorder,
+                        'bond_amount':bond_amount,'changeorder': changeorder,
                         'full_description': request.POST.get('full_description'),
                         'price': request.POST.get('price'),
-                        'date': date.today()
+                        'date': date.today(), 'logo_path':logo_path
                     }
                 )
 
-                pisa.CreatePDF(html, dest=result_file)
-
+                # pisa.CreatePDF(html, dest=result_file)
+                pisa.CreatePDF(
+                    html,
+                    dest=result_file,
+                    link_callback=link_callback
+                )
+                result_file.close()
             # -----------------------------
             # Save pricing + sent date
             # -----------------------------
@@ -1736,7 +1754,7 @@ def change_order_send(request, id):
                     changeorder=changeorder
                 )
 
-    for employee in ClientEmployees.objects.filter(id=changeorder.job_number.client,is_active=True):
+    for employee in ClientEmployees.objects.filter(id=changeorder.job_number.client,is_active=True).order_by('name'):
 
         has_default = ClientJobRoles.objects.filter(
             role="Change Orders",
@@ -1987,6 +2005,19 @@ def extra_work_ticket(request, id):
     if request.method == 'POST':
         if "create_post_bid_doc_shortcuts" in request.POST:
             return redirect('extra_work_ticket', id=id)
+        if 'price_already_sent' in request.POST:
+            changeorder.date_sent = date.today()
+            changeorder.price = request.POST['price_already_sent']
+            changeorder.save()
+            note_text = request.POST.get('price_note')
+            if note_text:
+                ChangeOrderNotes.objects.create(
+                    cop_number=changeorder,
+                    date=date.today(),
+                    user=Employees.objects.get(user=request.user),
+                    note=f"Manual Price Sent Outside of Trinity. ${changeorder.price}. {note_text}"
+                )
+
         # Shortcut creation removed 2/26/26
         #     selected_folders = request.POST.getlist("folders")
         #     changeorder_folder = os.path.join(
@@ -2120,7 +2151,7 @@ def extra_work_ticket(request, id):
             ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                             user=Employees.objects.get(user=request.user),
                                             note="Ticket Signed - " + request.POST['signed_notes'])
-        if 'submit_form4' in request.POST:
+        if 'void_notes' in request.POST:
             if changeorder.is_closed == True:
                 changeorder.is_closed = False
                 note = "RE-OPENED - " + request.POST['void_notes']
@@ -2154,27 +2185,26 @@ def extra_work_ticket(request, id):
             except:
                 success = False
             return redirect('extra_work_ticket', id=id)
-        if 'submit_form3' in request.POST:
-            if 'no_tm' in request.POST:
-                if changeorder.is_t_and_m == True:
-                    changeorder.is_t_and_m = False
-                else:
-                    changeorder.is_t_and_m = True
-                    changeorder.price = 0
-                    changeorder.date_sent = None
-                    changeorder.is_ticket_signed = False
-                changeorder.save()
-                if changeorder.is_t_and_m == True:
-                    changeordernote = ChangeOrderNotes.objects.create(
-                        note="Changed to T&M: " + request.POST['no_tm_notes'], cop_number=changeorder,
-                        date=date.today(), user=Employees.objects.get(user=request.user))
-                else:
-                    changeordernote = ChangeOrderNotes.objects.create(
-                        note="No Longer T&M: " + request.POST['no_tm_notes'], cop_number=changeorder, date=date.today(),
-                        user=Employees.objects.get(user=request.user))
+        if 'no_tm_notes' in request.POST:
+            if changeorder.is_t_and_m == True:
+                changeorder.is_t_and_m = False
+            else:
+                changeorder.is_t_and_m = True
+                changeorder.price = 0
+                changeorder.date_sent = None
+                changeorder.is_ticket_signed = False
+            changeorder.save()
+            if changeorder.is_t_and_m == True:
+                changeordernote = ChangeOrderNotes.objects.create(
+                    note="Changed to T&M: " + request.POST['no_tm_notes'], cop_number=changeorder,
+                    date=date.today(), user=Employees.objects.get(user=request.user))
+            else:
+                changeordernote = ChangeOrderNotes.objects.create(
+                    note="No Longer T&M: " + request.POST['no_tm_notes'], cop_number=changeorder, date=date.today(),
+                    user=Employees.objects.get(user=request.user))
         return redirect('extra_work_ticket', id=id)
-    send_data['client_list']= ClientEmployees.objects.filter(id=changeorder.job_number.client,is_active=True)
-    send_data['client_list_json'] = json.dumps(list(ClientEmployees.objects.filter(id=changeorder.job_number.client,is_active=True).values()), cls=DjangoJSONEncoder)
+    send_data['client_list']= ClientEmployees.objects.filter(id=changeorder.job_number.client,is_active=True).order_by('name')
+    send_data['client_list_json'] = json.dumps(list(ClientEmployees.objects.filter(id=changeorder.job_number.client,is_active=True).order_by('name').values()), cls=DjangoJSONEncoder)
     ticket_needed = changeorder.need_ticket()
     send_data['ticket_needed'] = ticket_needed
     client_ip = get_client_ip(request)
@@ -3249,3 +3279,261 @@ Click below to review and approve:
         "default_approver": default_approver,
         "selected_approver_id": selected_approver_id,
     })
+
+def send_cop_report(request,job_number):
+    job = Jobs.objects.filter(job_number=job_number).first()
+    changeorders = ChangeOrders.objects.filter(job_number=job,is_closed=False).order_by("id")
+
+    # --------------------------------------------------
+    # Reset temp recipients if not POST
+    # --------------------------------------------------
+    if request.method != 'POST':
+        TempRecipientsCOPList.objects.filter(job=job).delete()
+
+    # ==================================================
+    # POST HANDLING
+    # ==================================================
+    if request.method == 'POST':
+
+        # -----------------------------
+        # Button Flags
+        # -----------------------------
+        is_final = 'final' in request.POST
+        is_myself = 'myself' in request.POST
+
+        # ==================================================
+        # 1️⃣ UPDATE EMAILS
+        # ==================================================
+        for key in request.POST:
+            if key.startswith('updateemail'):
+                person_pk = key.replace('updateemail', '')
+                person = ClientEmployees.objects.get(person_pk=person_pk)
+                person.email = request.POST.get(f'email{person_pk}')
+                person.save()
+
+        # ==================================================
+        # 2️⃣ REMOVE DEFAULT ROLE
+        # ==================================================
+        for key in request.POST:
+            if key.startswith('remove'):
+                person_pk = key.replace('remove', '')
+                person = ClientEmployees.objects.get(person_pk=person_pk)
+                ClientJobRoles.objects.filter(
+                    role="Change Orders",
+                    job=job,
+                    employee=person
+                ).delete()
+
+        # ==================================================
+        # 3️⃣ ADD DEFAULT ROLE
+        # ==================================================
+        add_value = request.POST.get("addrecipient", "").strip()
+        new_email = request.POST.get("new_contact_email", "").strip()
+        client = job.client
+        for key in request.POST:
+            if key.startswith('adddefault'):
+                # add new or grab existing
+                person_pk = key.replace("adddefault", "")
+                person = ClientEmployees.objects.get(person_pk=person_pk)
+                ClientJobRoles.objects.get_or_create(
+                    role="Change Orders",
+                    job=job,
+                    employee=person
+                )
+
+        # ==================================================
+        # 4️⃣ TEMP REMOVE
+        # ==================================================
+        for key in request.POST:
+            if key.startswith('tempremove'):
+                person_pk = key.replace('tempremove', '')
+                person = ClientEmployees.objects.get(person_pk=person_pk)
+                TempRecipientsCOPList.objects.filter(
+                    job=job,
+                    person=person
+                ).delete()
+
+        # ==================================================
+        # 5️⃣ TEMP ADD
+        # ==================================================
+        if 'tempadd' in request.POST:
+            # add new or grab existing
+            person = get_or_create_contact(add_value, new_email, client)
+            TempRecipientsCOPList.objects.get_or_create(
+                person=person,
+                job=job
+            )
+
+        # ==================================================
+        # 6️⃣ DEFAULT ADD
+        # ==================================================
+        if any(key.startswith('defaultadd') for key in request.POST):
+            # add new or grab existing
+            person = get_or_create_contact(add_value, new_email, client)
+            ClientJobRoles.objects.get_or_create(
+                role="Change Orders",
+                job=job,
+                employee=person
+            )
+
+            TempRecipientsCOPList.objects.get_or_create(
+                person=person,
+                job=job
+            )
+
+        # ==================================================
+        # 7️⃣ FINAL / MYSELF (Generate Proposal)
+        # ==================================================
+        if is_final or is_myself:
+            # -----------------------------
+            # Build PDF
+            # -----------------------------
+
+            logo_path = os.path.join(settings.MEDIA_ROOT, "images/logo.png")
+            filepath = os.path.join(
+                settings.MEDIA_ROOT,
+                "temp",
+                f"Gerloff Painting COP Report {job.job_name}.pdf"
+            )
+            with open(filepath, "w+b") as result_file:
+
+                html = render_to_string(
+                    "cop_report_pdf.html",
+                    {
+                        "job": job,
+                        "changeorders": changeorders,
+                        "today": date.today(),
+                        "logo_path": logo_path
+                    }
+                )
+
+                # pisa.CreatePDF(html, dest=result_file)
+                pisa.CreatePDF(
+                    html,
+                    dest=result_file,
+                    link_callback=link_callback
+                )
+                result_file.close()
+            # -----------------------------
+            # Save pricing + sent date
+            # -----------------------------
+            current_user = Employees.objects.get(user=request.user)
+
+            # ==================================================
+            # FINAL → SEND EMAIL
+            # ==================================================
+
+            recipients = {}
+            if current_user.email:
+                recipients ={current_user.email.lower()}
+            else:
+                recipients = {"bridgette@gerloffpainting.com"}
+            if is_final:
+                recipients.add("bridgette@gerloffpainting.com")
+                recipients.add("joe@gerloffpainting.com")
+                for key, value in request.POST.items():
+                    if key.startswith('email') and value:
+                        recipients.add(value.lower())
+            recipients = list(recipients)
+            subject = f"Change Orders - {job.job_name}"
+            body = f"Attached is the current Change Order report for {job.job_number}. Please advise on approval status."
+
+            try:
+                Email.sendEmail(
+                    subject,
+                    body,
+                    recipients,
+                    filepath
+                )
+                JobNotes.objects.create(
+                    job_number=job,
+                    note=f"Change Order Log sent to was sent to {recipients}",
+                    type = "auto_co_note",
+                    user = current_user,
+                    date = date.today()
+                )
+                messages.success(request, "COP Report sent")
+
+            except Exception:
+                messages.error(request,"Email Not Sent.  Please Try Again Later")
+
+            return redirect('change_order_new', job.job_number)
+
+    # ==================================================
+    # EXISTING CLIENT LIST LOGIC (UNCHANGED)
+    # ==================================================
+
+    extra_contacts = False
+    project_pm = ClientEmployees.objects.get(
+        person_pk=job.client_Pm.person_pk
+    )
+
+    client_list = []
+
+    if TempRecipientsCOPList.objects.filter(job=job, default=False).exists():
+        if TempRecipientsCOPList.objects.filter(job=job, default=True).exists():
+            TempRecipientsCOPList.objects.filter(job=job, default=True).delete()
+
+    if not ClientJobRoles.objects.filter(
+            role="Change Orders",
+            job=job
+    ):
+        if not TempRecipientsCOPList.objects.filter(job=job):
+            TempRecipientsCOPList.objects.create(
+                person=project_pm,
+                job=job,
+                default=True
+            )
+    else:
+        if not TempRecipientsCOPList.objects.filter(job=job):
+            for role in ClientJobRoles.objects.filter(
+                    role="Change Orders",
+                    job=job
+            ):
+                TempRecipientsCOPList.objects.create(
+                    person=role.employee,
+                    job=job
+                )
+
+    for employee in ClientEmployees.objects.filter(id=job.client, is_active=True).order_by('name'):
+
+        has_default = ClientJobRoles.objects.filter(
+            role="Change Orders",
+            job=job,
+            employee=employee
+        ).exists()
+
+        is_temp = TempRecipientsCOPList.objects.filter(
+            job=job,
+            person=employee
+        ).exists()
+
+        if has_default and is_temp:
+            client_list.append(
+                {'person_pk': employee.person_pk, 'name': employee.name, 'default': True, 'current': True,
+                 'email': employee.email})
+        elif has_default:
+            extra_contacts = True
+            client_list.append(
+                {'person_pk': employee.person_pk, 'name': employee.name, 'default': True, 'current': False,
+                 'email': employee.email})
+        elif is_temp:
+            client_list.append(
+                {'person_pk': employee.person_pk, 'name': employee.name, 'default': False, 'current': True,
+                 'email': employee.email})
+        else:
+            extra_contacts = True
+            client_list.append(
+                {'person_pk': employee.person_pk, 'name': employee.name, 'default': False, 'current': False,
+                 'email': employee.email})
+
+    return render(
+        request,
+        "send_cop_report.html",
+        {
+            'client_list': client_list,
+            'extra_contacts': extra_contacts,
+            'job': job,
+            'changeorders':changeorders,
+        }
+    )

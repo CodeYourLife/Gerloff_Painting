@@ -52,7 +52,7 @@ def client_info_job(request, jobnumber):
     send_data = {}
     job = Jobs.objects.get(job_number=jobnumber)
     client = job.client
-    employees = ClientEmployees.objects.filter(id=client,is_active=True)
+    employees = ClientEmployees.objects.filter(id=client,is_active=True).order_by('name')
     send_data['job'] =job
     send_data['client'] =client
     send_data['employees'] =employees
@@ -107,7 +107,7 @@ def client_job_info(request, id):
             ClientJobRoles.objects.filter(job=selected_job, employee=selected_employee,
                                               role="Extra Work Tickets").delete()
     people=[]
-    for x in ClientEmployees.objects.filter(id=selected_client,is_active=True):
+    for x in ClientEmployees.objects.filter(id=selected_client,is_active=True).order_by('name'):
         changeorder='No'
         ewt='No'
         super ='No'
@@ -129,12 +129,12 @@ def client_info(request, id):
         selected_client = Clients.objects.get(id=id)
         send_data['selected_client'] = selected_client
         send_data['client_employees'] = ClientEmployees.objects.filter(id=selected_client,is_active=True).order_by('name')
-        send_data['jobs']=Jobs.objects.filter(client=selected_client)
+        send_data['jobs']=Jobs.objects.filter(client=selected_client, is_closed=False)
     if request.method == "POST":
         if 'combine_companies_now' in request.POST:
             company1 = Clients.objects.get(id=request.POST['select_client1'])
             company2 = Clients.objects.get(id=request.POST['select_client2'])
-            for x in ClientEmployees.objects.filter(id=company1,is_active=True):
+            for x in ClientEmployees.objects.filter(id=company1,is_active=True).order_by('name'):
                 x.id=company2
                 x.save()
             for x in Jobs.objects.filter(client=company1):
@@ -143,7 +143,7 @@ def client_info(request, id):
             company1.delete()
             return redirect('client_info',id=company2.id)
         if 'search_client' in request.POST:
-            send_data['clients'] = Clients.objects.filter(company__icontains=request.POST['search_client'], is_active=True)
+            send_data['clients'] = Clients.objects.filter(company__icontains=request.POST['search_client'], is_active=True).order_by('company')
             send_data['search_client_word'] = request.POST['search_client']
         if 'search_job' in request.POST:
             send_data['jobs'] = Jobs.objects.filter(client=selected_client, job_name__icontains=request.POST['search_job'])
@@ -197,8 +197,32 @@ def client_info(request, id):
                     current_person.name = request.POST[x]
                     current_person.email = request.POST['email' + current_person_pk]
                     current_person.phone = request.POST['phone' + current_person_pk]
+                    current_person.save()
                     if 'closed' + current_person_pk in request.POST:
-                        current_person.is_active=False
+                        if current_person.is_active:
+                            job_pm = Jobs.objects.filter(client_Pm=current_person,is_closed=False).values_list('job_name', flat=True)
+                            jobrole = ClientJobRoles.objects.filter(employee=current_person,job__is_closed=True).values_list('job__job_name', flat=True)
+                            job_super = Jobs.objects.filter(client_Super=current_person,is_closed=False).values_list('job_name', flat=True)
+                            job_pm_list = ",".join(job_pm)
+                            jobrole_list = ",".join(jobrole)
+                            job_super_list = ",".join(job_super)
+                            if job_pm:
+                                messages.error(request, f"This person is assigned as PM to {job_pm_list}. You must change the PM before marking inactive")
+                            if jobrole_list:
+                                messages.error(request,f"This person is the default CO recipient for {jobrole_list}. You must change this first before marking inactive")
+                            if job_super:
+                                messages.error(request,
+                                               f"This person is assigned as Super to {job_super_list}. You must change the Super before marking inactive")
+                        # try:
+                        #     Email.sendEmail("Respirator Clearance Completed", message,
+                        #                     recipients, False)
+                        #     message = "Your email about the respirator clearance was sent successfully"
+                        #     messages.error(request,
+                        #                    "There was a problem sending the email to Bridgette. Please tell her it is approved.")
+                        # except:
+                        #     message = "Error! Your email about the respirator clearance failed to send. Please call them and let them know it was completed."
+                            if not job_pm and not job_super and not jobrole:
+                                current_person.is_active=False
                     else:
                         current_person.is_active = True
                     current_person.save()

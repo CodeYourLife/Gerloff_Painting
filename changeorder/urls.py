@@ -29,5 +29,6 @@ urlpatterns = [
     path('ewt_edit/<changeorder_id>', views.ewt_edit, name='ewt_edit'),
     path('select_pm_approval/<int:id>/', views.select_pm_approval, name='select_pm_approval'),
     path('change_order_new_select', views.change_order_new_select, name='change_order_new_select'),
+    path('send_cop_report/<job_number>', views.send_cop_report, name='send_cop_report'),
 
 ]
