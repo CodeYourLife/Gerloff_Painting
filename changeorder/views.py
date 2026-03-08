@@ -1479,7 +1479,7 @@ def change_order_send(request, id):
         # -----------------------------
         changeorder.full_description = request.POST.get('full_description', '')
         raw_price = request.POST.get('price', '').replace(',', '').strip()
-
+        bond_amount = None
         price = None  # default
 
         try:
@@ -1594,6 +1594,7 @@ def change_order_send(request, id):
             # -----------------------------
             # Build PDF
             # -----------------------------
+
             path = os.path.join(
                 settings.MEDIA_ROOT,
                 "changeorder",
@@ -1610,7 +1611,7 @@ def change_order_send(request, id):
                 html = render_to_string(
                     "print_proposal.html",
                     {
-                        'changeorder': changeorder,
+                        'bond_amount':bond_amount,'changeorder': changeorder,
                         'full_description': request.POST.get('full_description'),
                         'price': request.POST.get('price'),
                         'date': date.today()
