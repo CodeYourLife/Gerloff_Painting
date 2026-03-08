@@ -130,7 +130,7 @@ def update_job_info(request, jobnumber):
     prices_json = json.dumps(list(pms), cls=DjangoJSONEncoder)
     send_data['data'] = prices_json
     selectedclient = Clients.objects.get(id=selectedjob.client.id)
-    pms_filter = ClientEmployees.objects.filter(id=selectedclient.id,is_active=True)
+    pms_filter = ClientEmployees.objects.filter(id=selectedclient.id,is_active=True).order_by('name')
     send_data['pms_filter'] = pms_filter
     startdate = selectedjob.start_date.strftime("%Y") + "-" + selectedjob.start_date.strftime(
         "%m") + "-" + selectedjob.start_date.strftime("%d")
@@ -568,7 +568,7 @@ def upload_new_job(request):
             send_data['new_super_email'] = sheet_obj.cell(row=24, column=2).value
             if Clients.objects.filter(company=client_name).exists():
                 send_data['client'] = Clients.objects.get(company=client_name)
-                send_data['pms_filter'] = ClientEmployees.objects.filter(id=Clients.objects.get(company=client_name),is_active=True)
+                send_data['pms_filter'] = ClientEmployees.objects.filter(id=Clients.objects.get(company=client_name),is_active=True).order_by('name')
                 if ClientEmployees.objects.filter(name=pm_name, id__company=client_name,is_active=True).exists():
                     send_data['pm'] = ClientEmployees.objects.get(name=pm_name, id__company=client_name)
                 super_name = sheet_obj.cell(row=22, column=2).value
@@ -969,7 +969,7 @@ def job_page(request, jobnumber):
             selectedjob.client.bid_email = request.POST['client_bid_email']
             selectedjob.client.phone = request.POST['client_phone']
             selectedjob.save()
-    send_data['client_employees'] = ClientEmployees.objects.filter(id=selectedjob.client,is_active=True)
+    send_data['client_employees'] = ClientEmployees.objects.filter(id=selectedjob.client,is_active=True).order_by('name')
     send_data['job'] = selectedjob
     if selectedjob.labor_done_Date:
         short_year = selectedjob.labor_done_Date.strftime("%y")

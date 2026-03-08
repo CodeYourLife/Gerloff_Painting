@@ -1,0 +1,492 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
+{% block content %}
+{% load humanize %}
+
+<style>
+.recipient-row {
+    border-bottom: 1px solid #eee;
+    padding: 12px 0;
+}
+
+#new_contact_fields {
+    display: none;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+#sending_overlay {
+    backdrop-filter: blur(4px);
+}
+</style>
+
+
+
+<div class="container py-4">
+<!--header-->
+    <h4 class="mb-2">
+        {{job.job_number}} –
+        {{job.job_name}}
+    </h4>
+
+<!--recipients-->
+    <div class="card shadow-sm mb-4">
+<!--        send change order header text-->
+        <div class="card-header bg-dark text-white">
+            Send Change Order Log
+        </div>
+            <form id="TMProposal_Form"
+                  action="{% url 'send_cop_report' job.job_number %}"
+                  method="post">
+
+                {% csrf_token %}
+        <div class="card-body">
+
+
+<!--              populate recipients-->
+              <div>
+                <!-- CURRENT RECIPIENTS -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-success text-white">
+                        Selected Recipients
+                    </div>
+
+                    <div class="card-body">
+
+                        <p class="text-muted small mb-3">
+                            These people will receive this change order log.
+                        </p>
+
+                        {% for x in client_list %}
+                        {% if x.current %}
+                        <div class="recipient-row row align-items-center">
+
+                            <div class="col-md-3 col-12 mb-2 mb-md-0">
+                                <strong>{{x.name}}</strong>
+                                {% if x.default %}
+                                    <span class="badge badge-light ml-2">
+                                        Default
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                        <div class="col-md-4 col-12 mb-2 mb-md-0">
+
+                            <input type="email"
+                                   class="form-control existing-email"
+                                   value="{{x.email}}"
+                                   data-original="{{x.email}}"
+                                   name="email{{x.person_pk}}"
+                                   id="email{{x.person_pk}}">
+
+                            <div class="text-danger small email-error"
+                                 style="display:none;">
+                                Valid email required.
+                            </div>
+
+                            <button type="submit"
+                                    name="updateemail{{x.person_pk}}"
+                                    id="updatebtn{{x.person_pk}}"
+                                    class="btn btn-sm btn-warning mt-2"
+                                    style="display:none;"
+                                    onclick="return validateSingleEmail('email{{x.person_pk}}')">
+                                Permanently Update Email
+                            </button>
+
+                        </div>
+
+                            <div class="col-md-5 col-12 text-md-right">
+                                {% if x.default %}
+                                <button type="submit"
+                                        name="remove{{x.person_pk}}"
+                                        class="btn btn-sm btn-outline-secondary mb-1">
+                                    Remove Default
+                                </button>
+                                {% else %}
+                                    <button type="submit"
+                                            name="adddefault{{x.person_pk}}"
+                                            class="btn btn-sm btn-outline-success mb-1 make-default-existing"
+                                            data-toggle="tooltip"
+                                            title="This person will automatically receive all future change orders for this project.">
+                                        Make Project Default (All Future COs)
+                                    </button>
+                                {% endif %}
+
+                                <button type="submit"
+                                        name="tempremove{{x.person_pk}}"
+                                        class="btn btn-sm btn-outline-danger mb-1">
+                                    Remove
+                                </button>
+                            </div>
+
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+
+                    </div>
+                </div>
+                <!-- ADD RECIPIENT SECTION -->
+
+                <!--                header text-->
+                <div class="text-center my-4">
+                    <hr>
+                    <h6 class="text-muted"
+                        data-toggle="collapse"
+                        data-target="#addRecipientCollapse"
+                        style="cursor:pointer;">
+                        ➕ Add Additional Recipients
+                    </h6>
+                </div>
+                <!--add new recipient-->
+                <div id="addRecipientCollapse" class="collapse">
+                  <div class="card shadow-sm border-0">
+                    <div class="card-header bg-light">
+                        Add Recipient
+                    </div>
+
+                    <div class="card-body">
+
+                        <p class="text-muted small mb-3">
+                            Search for an existing contact or type a new name to add someone.
+                        </p>
+
+                        <div class="row align-items-end">
+
+                            <div class="col-md-5 col-12 mb-3 mb-md-0">
+                                <label class="small text-muted">
+                                    Search or Type New Name
+                                </label>
+
+                                <select name="addrecipient"
+                                        id="addrecipient"
+                                        class="form-control">
+                                    <option></option>
+                                    {% for x in client_list %}
+                                        {% if not x.current %}
+                                        <option value="{{x.person_pk}}">
+                                            {{x.name}}
+                                        </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                                <div id="addrecipient_error"
+                                     class="text-danger small mt-1"
+                                     style="display:none;">
+                                    Please select or type a recipient.
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 col-12"
+                                 id="new_contact_fields"
+                                 style="display:none;">
+
+                                <label class="small text-muted">
+                                    Email for New Contact
+                                </label>
+
+                                <input type="email"
+                                       id="new_contact_email"
+                                       name="new_contact_email"
+                                       class="form-control">
+
+                                <div id="new_contact_email_error"
+                                     class="text-danger small mt-1"
+                                     style="display:none;">
+                                    Valid email required.
+                                </div>
+
+                                <div class="alert alert-warning small mt-2 py-2"
+                                     id="new_contact_warning"
+                                     style="display:none;">
+                                    This person will be added to
+                                    <strong>{{job.client}}</strong>.
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-3 col-12 text-md-right mt-3 mt-md-0">
+                                <button type="submit"
+                                        name="defaultadd{{x.person_pk}}"
+                                        class="btn btn-sm btn-outline-success mb-1 make-default-new"
+                                        onclick="return validateAddRecipient()"
+                                        data-toggle="tooltip"
+                                        title="This person will automatically receive all future change orders for this project.">
+                                    Make Project Default (All Future COs)
+                                </button>
+
+                                <button type="submit"
+                                        name="tempadd"
+                                        class="btn btn-outline-primary btn-block"
+                                        onclick="return validateAddRecipient()">
+                                    Add to This Email
+                                </button>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+                </div>
+</div>
+
+            <!-- FINAL ACTION -->
+<button type="submit"
+        name="myself"
+        onsubmit="return submitProposal('draft')"
+        class="btn btn-secondary">
+    Send Email to Just Me
+</button>
+
+<button type="submit"
+        name="final"
+        onsubmit="return submitProposal('final')"
+        class="btn btn-primary">
+    Send Email To GC
+</button>
+
+
+<hr class="my-4">
+
+<h5 class="mb-3 font-weight-bold">
+    Preview
+</h5>
+<table style="width:100%; border-collapse:collapse;">
+
+<tr style="background:#f2f2f2; font-weight:bold;">
+<th style="width:8%; text-align:left;">COP</th>
+<th style="width:57%; text-align:left;">Description</th>
+<th style="width:20%; text-align:left; white-space:nowrap;">Status</th>
+<th style="width:15%; text-align:left;">Price</th>
+</tr>
+
+{% for x in changeorders %}
+
+<tr
+{% if x.status == "Informal Approval" or x.status == "Sent to GC" or x.status == "Ticket Not Signed" %}
+style="background:#fff3cd;"
+{% endif %}
+>
+
+<td>{{ x.cop_number }}</td>
+
+<td>{{ x.description }}</td>
+
+<td style="white-space:nowrap;">{{ x.status }}</td>
+
+<td>
+{% if x.price %}
+${{ x.price|intcomma }}
+{% else %}
+Pending
+{% endif %}
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+    <!-- Sending Proposal Overlay -->
+<div id="sending_overlay"
+     style="
+        display:none;
+        position:fixed;
+        top:0;
+        left:0;
+        width:100%;
+        height:100%;
+        background:rgba(0,0,0,0.75);
+        color:white;
+        z-index:9999;
+        text-align:center;
+        padding-top:20%;
+     ">
+
+    <div class="spinner-border text-light"
+         role="status"
+         style="width:4rem;height:4rem;">
+    </div>
+
+    <h3 class="mt-4 font-weight-bold">
+        Sending Log…
+    </h3>
+
+    <p class="mt-3" style="font-size:1.1rem; font-weight:500;">
+        Please do not click anything.
+    </p>
+
+</div>
+        </div>
+      </form>
+    </div>
+
+</div>
+
+<script>
+
+$(function () {
+
+    // --------------------------------------------------
+    // Select2 Setup
+    // --------------------------------------------------
+    $('#addrecipient').select2({
+        placeholder: "Search or type new contact",
+        allowClear: true,
+        tags: true,
+        width: '100%'
+    });
+
+    $('#addrecipient').on('select2:select', function (e) {
+
+    let val = e.params.data.id;
+
+    if ($.isNumeric(val)) {
+        // Existing contact
+        $('#new_contact_fields').hide();
+        $('#new_contact_warning').hide();
+        $('#new_contact_email').val('');
+    } else {
+        // New contact typed
+        $('#new_contact_fields').show();
+        $('#new_contact_warning').show();
+        $('#new_contact_email').focus();
+    }
+
+    // Clear any prior error styling
+    $("#addrecipient_error").hide();
+    $("#addrecipient").removeClass("is-invalid");
+});
+
+    $('#addrecipient').on('select2:clear', function () {
+        $('#new_contact_fields').hide();
+        $('#new_contact_email').val('');
+    });
+
+    $(".existing-email").on("input", function () {
+
+    const $input = $(this);
+    const original = $input.data("original");
+    const current = $input.val();
+
+    const pk = this.id.replace("email", "");
+    const $button = $("#updatebtn" + pk);
+
+    if (current !== original) {
+        $button.show();
+    } else {
+        $button.hide();
+    }
+});
+});
+
+
+// ======================================================
+// Shared Email Validation
+// ======================================================
+
+function validateEmails() {
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    let isValid = true;
+
+    $(".existing-email").each(function () {
+
+        let $input = $(this);
+        let email = $input.val().trim();
+
+        if (!email || !emailPattern.test(email)) {
+            isValid = false;
+            $input.addClass("is-invalid");
+            $input.next(".email-error").show();
+        } else {
+            $input.removeClass("is-invalid");
+            $input.next(".email-error").hide();
+        }
+    });
+
+    return isValid;
+}
+
+
+// ======================================================
+// Main Proposal Buttons
+// ======================================================
+
+function submitProposal(mode) {
+
+    if (!validateEmails()) {
+        return false;
+    }
+
+    if (mode === "final") {
+        $("#sending_overlay").fadeIn(200);
+        $("button[name='final']").prop("disabled", true);
+    }
+
+    return true;  // allow normal submit
+}
+
+
+// ======================================================
+// Update Email Button Validation
+// ======================================================
+
+
+function validateSingleEmail(inputId) {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const $input = $("#" + inputId);
+    const email = $input.val().trim();
+
+    if (!email || !emailPattern.test(email)) {
+        $input.addClass("is-invalid");
+        $input.next(".email-error").show();
+        return false; // block submit
+    }
+
+    $input.removeClass("is-invalid");
+    $input.next(".email-error").hide();
+    return true; // allow submit
+}
+
+function validateAddRecipient() {
+
+    const selected = $("#addrecipient").val();
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    // Nothing selected
+    if (!selected) {
+        $("#addrecipient_error").show();
+        $("#addrecipient").addClass("is-invalid");
+        return false;
+    }
+
+    $("#addrecipient_error").hide();
+    $("#addrecipient").removeClass("is-invalid");
+
+    // If new contact field is visible, validate email
+    if ($("#new_contact_fields").is(":visible")) {
+
+        const newEmail = $("#new_contact_email").val().trim();
+
+        if (!newEmail || !emailPattern.test(newEmail)) {
+            $("#new_contact_email").addClass("is-invalid");
+            $("#new_contact_email_error").show();
+            return false;
+        }
+
+        $("#new_contact_email").removeClass("is-invalid");
+        $("#new_contact_email_error").hide();
+    }
+
+    return true;
+}
+
+</script>
+{% endblock %}

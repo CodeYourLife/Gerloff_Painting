@@ -1,0 +1,128 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+
+@page {
+    size: letter portrait;
+    margin: 0.35in;
+}
+
+body {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 8px;
+    line-height: 1.1;
+}
+
+h1 {
+    font-size: 12px;
+    margin-bottom: 3px;
+}
+
+.section-title {
+    font-size: 9px;
+    font-weight: bold;
+    margin-top: 6px;
+    margin-bottom: 3px;
+}
+
+.header-block {
+    margin-bottom: 5px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 5px;
+    font-size: 8px;
+}
+
+th, td {
+    border: 1px solid #555;
+    padding: 2px;
+}
+
+th {
+    background-color: #eeeeee;
+}
+
+.center {
+    text-align: center;
+}
+
+.signature-block {
+    margin-top: 10px;
+}
+
+.signature-block img {
+    width: 160px;
+    height: 50px;
+}
+
+</style>
+
+</head>
+<body>
+<div style="border-bottom:2px solid #000; padding-bottom:6px; margin-bottom:10px;">
+<table style="width:100%; border-collapse:collapse;">
+<tr>
+
+<td style="width:70%;">
+    <div style="font-size:16px; font-weight:bold;">
+        Gerloff Painting Change Order Report
+    </div>
+
+    <div style="font-size:10px;">
+        <strong>Job:</strong> {{ job.job_number }} – {{ job.job_name }}<br>
+        <strong>Date:</strong> {{ today }}
+    </div>
+</td>
+
+<td style="width:30%;" align="right">
+    <img src="{{ logo_path }}" width="75">
+</td>
+
+</tr>
+</table>
+</div>
+<table style="width:100%; border-collapse:collapse;">
+
+<tr style="background:#f2f2f2; font-weight:bold;">
+<th style="width:8%; text-align:left;">COP</th>
+<th style="width:57%; text-align:left;">Description</th>
+<th style="width:20%; text-align:left; white-space:nowrap;">Status</th>
+<th style="width:15%; text-align:left;">Price</th>
+</tr>
+
+{% for x in changeorders %}
+
+<tr
+{% if x.status == "Informal Approval" or x.status == "Sent to GC" or x.status == "Ticket Not Signed" %}
+style="background:#fff3cd;"
+{% endif %}
+>
+
+<td>{{ x.cop_number }}</td>
+
+<td>{{ x.description }}</td>
+
+<td style="white-space:nowrap;">{{ x.status }}</td>
+
+<td>
+{% if x.price %}
+${{ x.price|intcomma }}
+{% else %}
+Pending
+{% endif %}
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</body>
+</html>
