@@ -62,13 +62,13 @@ def emailed_ticket(request, id):
             Signature.objects.update(change_order_id=id, type="changeorder", name=nameValue, signature=signatureValue,
                                      date=date.today(), notes=comments)
         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
-                                        user=Employees.objects.get(user=request.user),
+                                        user=Employees.objects.get(id=42),
                                         note="Digital Signature Received. Signed by: " + request.POST[
                                             'signatureName'] + ". Comments: " + request.POST['gc_notes'])
         changeorder.is_ticket_signed = True
         changeorder.digital_ticket_signed_date = date.today()
         changeorder.save()
-        signature = Signature.objects.get(change_order_id=id)
+        signature = Signature.objects.filter(change_order_id=id).first()
         # Build folder path
         path = os.path.join(
             settings.MEDIA_ROOT,
@@ -93,7 +93,7 @@ def emailed_ticket(request, id):
                 link_callback=link_callback
             )
             result_file.close()
-        recipients = ["joe@gerloffpainting.com"]
+        recipients = ["joe@gerloffpainting.com","bridgette@gerloffpainting.com"]
         recipients.append(recipient)
         job_name = changeorder.job_number.job_name
         try:
@@ -2057,9 +2057,6 @@ def extra_work_ticket(request, id):
             phone = request.POST['recipient_phone']
             email = request.POST['recipient_email']
             recipient_id = request.POST['recipient']
-            ewt = EWT.objects.get(change_order=changeorder)
-            ewt.recipient = email
-            ewt.save()
             if recipient_id == 'add_new':
                 if request.POST['add_recipient_form'] == "Yes":
                     ClientEmployees.objects.create(id=client, name=name, phone=phone, email=email)
@@ -2086,6 +2083,9 @@ def extra_work_ticket(request, id):
             try:
                 Email.sendEmail("Extra Work Ticket", email_body, recipients, False)
                 send_data['error_message'] = "The email with the link to the extra work ticket was successfully sent!"
+                ewt = EWT.objects.get(change_order=changeorder)
+                ewt.recipient = email
+                ewt.save()
                 ChangeOrderNotes.objects.create(note="Ticket Emailed To: " + str(email),
                                                 cop_number=changeorder, date=date.today(),
                                                 user=Employees.objects.get(user=request.user))

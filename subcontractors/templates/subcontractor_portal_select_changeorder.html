@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_item_subs %}active{% endblock nav_item_subs %}
+{% block content %}
+
+<div class="container py-3">
+
+<h4 class="mb-4">
+    {{ job.job_number }} – {{ job.job_name }}
+</h4>
+
+{% for co in changeorders %}
+{% if co.status == "Ticket Not Completed" %}
+<a href="{% url 'subcontractor_portal_create_ticket' co.id subcontractor.id %}"
+   class="card mb-3 shadow-sm text-decoration-none text-dark">
+{% else %}
+ <a href="{% url 'subcontractor_portal_ewt_edit' co.id subcontractor.id %}"
+   class="card mb-3 shadow-sm text-decoration-none text-dark">
+{% endif %}
+    <div class="card-body">
+
+        <!-- Header Row -->
+    <div class="d-flex justify-content-between align-items-center mb-2">
+
+        <div style="font-weight:600;font-size:1.1rem;">
+            COP {{ co.cop_number }}
+        </div>
+
+        {% if co.status == "Ticket Not Completed" %}
+            <span class="badge badge-danger">{{ co.status }}</span>
+
+        {% elif co.status == "Ticket Not Signed" %}
+            <span class="badge badge-warning">{{ co.status }}</span>
+
+        {% else %}
+            <span class="badge badge-secondary">{{ co.status }}</span>
+        {% endif %}
+
+    </div>
+
+        <!-- Description -->
+        <div class="mb-2">
+            {{ co.description }}
+        </div>
+
+        <!-- Notes -->
+        {% if co.notes %}
+        <div class="small text-muted">
+            {{ co.notes }}
+        </div>
+        {% endif %}
+
+    </div>
+
+</a>
+
+{% empty %}
+
+<div class="alert alert-info">
+    No tickets currently available.
+</div>
+
+{% endfor %}
+
+</div>
+
+{% endblock %}

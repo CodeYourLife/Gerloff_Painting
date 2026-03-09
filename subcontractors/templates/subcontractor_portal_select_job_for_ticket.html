@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_item_subs %}active{% endblock nav_item_subs %}
+{% block content %}
+
+<div class="container py-4">
+{% if jobs %}
+<h4 class="mb-3">
+    Select a Job
+</h4>
+{% else %}
+<h4 class="mb-3">
+    No Tickets Are Currently Entered
+</h4>
+{% endif %}
+<div class="list-group">
+
+{% for item in jobs %}
+
+<a href="{% url 'subcontractor_portal_select_changeorder' item.job.job_number subcontractor.id %}"
+   class="list-group-item list-group-item-action">
+
+    <div class="d-flex justify-content-between align-items-center">
+
+        <div>
+            <div style="font-weight:600;">
+                {{ item.job.job_number }}
+            </div>
+
+            <div class="text-muted small">
+                {{ item.job.job_name }}
+            </div>
+        </div>
+
+        <div>
+
+            {% if item.not_completed > 0 %}
+                <span class="badge badge-danger mr-1">
+                    {{ item.not_completed }} incomplete
+                </span>
+            {% endif %}
+
+            {% if item.not_signed > 0 %}
+                <span class="badge badge-warning">
+                    {{ item.not_signed }} unsigned
+                </span>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</a>
+
+{% endfor %}
+
+</div>
+
+</div>
+
+{% endblock %}

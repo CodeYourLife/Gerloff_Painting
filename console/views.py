@@ -1233,3 +1233,52 @@ def upload_toolbox_talk(form, excel_file,notes):
             createfolder("toolbox_talks/" + str(newitem.id) + "/Spanish")
 
 
+def tm_prices_master(request):
+
+    if request.method == "POST":
+
+        action = request.POST.get("action")
+
+        if action == "update":
+
+            item_id = request.POST.get("id")
+            item = TMPricesMaster.objects.get(id=item_id)
+
+            item.item = request.POST.get("item")
+            item.unit = request.POST.get("unit")
+            item.rate = request.POST.get("rate")
+
+            item.save()
+
+        elif action == "delete":
+
+            item_id = request.POST.get("id")
+            TMPricesMaster.objects.filter(id=item_id).delete()
+
+        elif action == "add":
+
+            TMPricesMaster.objects.create(
+                category=request.POST.get("category"),
+                item=request.POST.get("item"),
+                unit=request.POST.get("unit"),
+                rate=request.POST.get("rate")
+            )
+
+        return redirect("tm_prices_master")
+
+    categories = [
+        "Labor",
+        "Material",
+        "Equipment",
+        "Inventory",
+        "Misc",
+        "Bond",
+        "Sundries"
+    ]
+
+    data = {}
+
+    for c in categories:
+        data[c] = TMPricesMaster.objects.filter(category=c).order_by("item")
+
+    return render(request, "tm_prices_master.html", {"data": data})

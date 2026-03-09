@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_item_subs %}active{% endblock nav_item_subs %}
+{% block content %}
+
+
+<div class="container py-4">
+
+<div class="list-group">
+
+{% for co in changeorders %}
+
+<a href="{% url 'subcontractor_portal_get_signature' co.id subcontractor.id %}"
+   class="list-group-item list-group-item-action">
+
+    <div style="font-weight:600;">
+        COP {{ co.cop_number }}
+    </div>
+
+    <div class="text-muted small">
+        {{ co.description }}
+    </div>
+
+</a>
+
+{% empty %}
+
+<div class="alert alert-info">
+    No tickets currently available.
+</div>
+
+{% endfor %}
+
+</div>
+
+</div>
+
+{% endblock %}
