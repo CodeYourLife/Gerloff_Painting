@@ -21,4 +21,12 @@ path("portal_invoice_new/<subcontract_id>", views.portal_invoice_new, name='port
 path("sub_change_orders", views.sub_change_orders, name='sub_change_orders'),
 path("build_subcontractor_approvers", views.build_subcontractor_approvers, name='build_subcontractor_approvers'),
 path("subcontractor_approvers/<subcontractor_id>", views.subcontractor_approvers, name='subcontractor_approvers'),
+path("subcontractor_portal_select_changeorder/<job_number> <subcontractor_id>", views.subcontractor_portal_select_changeorder, name='subcontractor_portal_select_changeorder'),
+path("subcontractor_portal_select_job_for_ticket/<subcontractor_id>", views.subcontractor_portal_select_job_for_ticket, name='subcontractor_portal_select_job_for_ticket'),
+path("subcontractor_portal_create_ticket/<changeorder_id> <subcontractor_id>", views.subcontractor_portal_create_ticket, name='subcontractor_portal_create_ticket'),
+path("subcontractor_portal_select_ticket_for_signature/<subcontractor_id>", views.subcontractor_portal_select_ticket_for_signature, name='subcontractor_portal_select_ticket_for_signature'),
+path("subcontractor_portal_get_signature/<changeorder_id> <subcontractor_id>", views.subcontractor_portal_get_signature, name='subcontractor_portal_get_signature'),
+path("subcontractor_portal_email_for_signature/<changeorder_id> <subcontractor_id>", views.subcontractor_portal_email_for_signature, name='subcontractor_portal_email_for_signature'),
+path("subcontractor_portal_ewt_edit/<changeorder_id> <subcontractor_id>", views.subcontractor_portal_ewt_edit, name='subcontractor_portal_ewt_edit'),
+path("subcontractor_portal_email_signed_ticket/<changeorder_id> <subcontractor_id>", views.subcontractor_portal_email_signed_ticket, name='subcontractor_portal_email_signed_ticket'),
 ]

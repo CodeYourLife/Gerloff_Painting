@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_item_subs %}active{% endblock nav_item_subs %}
+{% block content %}
+
+<style>
+#email_overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.9);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+#email_overlay .spinner-border {
+    width: 4rem;
+    height: 4rem;
+}
+</style>
+
+
+<div class="container mt-4">
+
+<h4 class="mb-4">Email Ticket For Signature</h4>
+
+<form method="POST" id="emailForm">
+{% csrf_token %}
+
+<div class="form-group">
+
+<label>Select Client Employee</label>
+
+<select class="form-control" id="employee_select">
+    <option value="">-- Select Employee --</option>
+
+    {% for emp in client_employees %}
+        <option value="{{ emp.email }}">
+            {{ emp.name }}
+        </option>
+    {% endfor %}
+
+</select>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Email Address</label>
+
+<input type="email"
+       name="email"
+       id="email_input"
+       class="form-control"
+       placeholder="Enter email address"
+       required>
+
+<div class="invalid-feedback">
+Please enter a valid email address.
+</div>
+
+</div>
+
+
+<button type="submit" class="btn btn-warning">
+📧 Send Ticket For Signature
+</button>
+
+</form>
+
+</div>
+
+
+<!-- EMAIL SENDING OVERLAY -->
+<div id="email_overlay">
+
+    <div>
+
+        <div class="spinner-border text-warning mb-4" role="status"></div>
+
+        <h4>Sending Email</h4>
+
+        <div class="text-muted">
+            Do Not Click Anything
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+document.getElementById("employee_select").addEventListener("change", function(){
+
+    let email = this.value;
+    let emailField = document.getElementById("email_input");
+
+    if(email){
+        emailField.value = email;
+    }
+
+});
+
+
+document.getElementById("emailForm").addEventListener("submit", function(e){
+
+    let emailField = document.getElementById("email_input");
+
+    if(!emailField.checkValidity()){
+        emailField.classList.add("is-invalid");
+        e.preventDefault();
+        return;
+    }
+
+    // Show overlay if validation passes
+    document.getElementById("email_overlay").style.display = "flex";
+
+});
+
+</script>
+
+{% endblock %}

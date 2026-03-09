@@ -286,6 +286,20 @@ Showing Invoice Information for {{last_saturday}} - {{this_friday}}
         {% endfor %}
         </tbody>
     </table>
+<hr>
+<div class="mt-3">
+    <a href="{% url 'subcontractor_portal_select_job_for_ticket' selected_sub.id %}"
+       class="btn btn-primary btn-lg d-block d-md-inline-block">
+        🧾 T&M TICKETS
+    </a>
+</div>
+<!--<div class="mt-3">-->
+<!--    <a href="{% url 'subcontractor_portal_select_ticket_for_signature' selected_sub.id %}"-->
+<!--       class="btn btn-primary btn-lg d-block d-md-inline-block">-->
+<!--        🧾 Get Ticket Signed-->
+<!--    </a>-->
+<!--</div>-->
+
 </div>
 {% endif %}
 {% if selected_contract %}
@@ -343,6 +357,8 @@ Showing Invoice Information for {{last_saturday}} - {{this_friday}}
 			</tbody>
 		</table>
 </div>
+
+
 {% endif %}
 </body>
 </html>

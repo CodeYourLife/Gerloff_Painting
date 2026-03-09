@@ -1,6 +1,7 @@
 from console.models import *
 from django.shortcuts import render, redirect
 import json
+from changeorder.views import link_callback
 from datetime import datetime
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
@@ -8,12 +9,19 @@ from wallcovering.models import Wallcovering
 from subcontractors.models import *
 from jobs.models import *
 from equipment.filters import SubcontractsFilter
+from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.shortcuts import render, redirect, get_object_or_404
+from django.template.loader import get_template, render_to_string
+from django.urls import reverse
 from employees.models import *
 import datetime
+import os
 from datetime import date
 from console.misc import Email
-
+from xhtml2pdf import pisa
 
 
 def sub_change_orders(request):
@@ -1650,3 +1658,897 @@ def subcontractor_approvers(request,subcontractor_id):
     send_data['employees']= Employees.objects.all()
     send_data['approvers']=Subcontractor_Approvers.objects.filter(subcontractor=subcontractor)
     return render(request, "subcontractor_approvers.html", send_data)
+
+def subcontractor_portal_select_job_for_ticket(request,subcontractor_id):
+    subcontractor = Subcontractors.objects.get(id=subcontractor_id)
+
+    jobs = Jobs.objects.filter(
+        subcontracts__subcontractor=subcontractor
+    ).distinct().order_by('job_name')
+
+    job_list = []
+
+    for job in jobs:
+
+        changeorders = ChangeOrders.objects.filter(job_number=job)
+
+        not_completed = 0
+        not_signed = 0
+
+        for co in changeorders:
+            status = co.status()
+
+            if status == "Ticket Not Completed":
+                not_completed += 1
+
+            elif status == "Ticket Not Signed" and co.created_by_subcontractor == subcontractor:
+                not_signed += 1
+
+        # only show job if there is work
+        if not_completed > 0 or not_signed > 0:
+            job_list.append({
+                "job": job,
+                "not_completed": not_completed,
+                "not_signed": not_signed
+            })
+
+    send_data = {
+        "jobs": job_list,
+        "subcontractor": subcontractor
+    }
+
+    return render(request, "subcontractor_portal_select_job_for_ticket.html", send_data)
+
+def subcontractor_portal_select_changeorder(request,job_number, subcontractor_id):
+    send_data = {}
+    subcontractor = Subcontractors.objects.get(id=subcontractor_id)
+    job = Jobs.objects.get(job_number=job_number)
+
+    all_changeorders = ChangeOrders.objects.filter(
+        job_number=job,
+        is_closed=False
+    ).order_by("cop_number")
+
+    changeorders = []
+
+    for co in all_changeorders:
+
+        status = co.status()
+
+        if status == "Ticket Not Completed":
+            changeorders.append(co)
+
+        elif status == "Ticket Not Signed" and co.created_by_subcontractor == subcontractor:
+            changeorders.append(co)
+    send_data['changeorders'] = changeorders
+    send_data['subcontractor']= subcontractor
+    send_data['job']= job
+    return render(request, "subcontractor_portal_select_changeorder.html", send_data)
+
+def safe_decimal(val):
+    try:
+        return Decimal(val or "0")
+    except:
+        return Decimal("0")
+
+def subcontractor_portal_create_ticket(request,changeorder_id,subcontractor_id):
+    send_data = {}
+    subcontractor = Subcontractors.objects.get(id=subcontractor_id)
+    change_order = ChangeOrders.objects.get(id=changeorder_id)
+
+    # --------------------------------------------------
+    # GET REQUEST
+    # --------------------------------------------------
+    if request.method == "GET":
+        context = {
+            "change_order": change_order,
+            "tm_materials": TMPricesMaster.objects.filter(category="Material"),
+            "tm_equipment": TMPricesMaster.objects.filter(category="Equipment"),
+            "tm_sundries": TMPricesMaster.objects.filter(category="Sundries"),
+            "employees": None,
+        }
+
+        return render(request, "subcontractor_portal_create_ticket.html", context)
+    # --------------------------------------------------
+    # POST REQUEST
+    # --------------------------------------------------
+    if request.method == "POST":
+
+        # --------------------------------------------------
+        # 1️⃣ Create EWT Header
+        # --------------------------------------------------
+        ewt = EWT.objects.create(
+            change_order=change_order,
+            week_ending=request.POST.get("week_ending"),
+            notes=request.POST.get("notes"),
+            completed_by=subcontractor.contact,
+        )
+        change_order.created_by_subcontractor=subcontractor
+        change_order.save()
+        ChangeOrderNotes.objects.create(cop_number=change_order, date=date.today(),
+                                        user=Employees.objects.get(id=42),
+                                        note="Extra Work Ticket Added")
+
+        # --------------------------------------------------
+        # 2️⃣ LABOR
+        # --------------------------------------------------
+
+        painter_count = int(request.POST.get("painter_count", 0))
+
+        # Fetch masters safely once
+        try:
+            regular_master = TMPricesMaster.objects.get(item="Painter Hours")
+        except TMPricesMaster.DoesNotExist:
+            regular_master = None
+
+        try:
+            ot_master = TMPricesMaster.objects.get(item="Painter Hours OT")
+        except TMPricesMaster.DoesNotExist:
+            ot_master = None
+
+        for i in range(1, painter_count + 1):
+
+            employee_id = request.POST.get(f"employee_{i}")
+            custom_employee = request.POST.get(f"custom_employee_{i}")
+            regular_exists = request.POST.get(f"regular_exists_{i}") == "1"
+            ot_exists = request.POST.get(f"ot_exists_{i}") == "1"
+
+            # Collect daily hours safely
+            reg_days = {}
+            ot_days = {}
+
+            total_regular = Decimal("0")
+            total_ot = Decimal("0")
+
+            for day in ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]:
+                reg_val = safe_decimal(request.POST.get(f"reg_{day}_{i}"))
+                ot_val = safe_decimal(request.POST.get(f"ot_{day}_{i}"))
+
+                reg_days[day] = reg_val or Decimal("0")
+                ot_days[day] = ot_val or Decimal("0")
+
+                total_regular += reg_days[day]
+                total_ot += ot_days[day]
+
+            # Skip completely empty painter rows
+            if total_regular == 0 and total_ot == 0:
+                continue
+
+            # Safe employee lookup
+            employee_obj = None
+            if employee_id:
+                try:
+                    employee_obj = Employees.objects.get(id=employee_id)
+                except Employees.DoesNotExist:
+                    employee_obj = None
+
+            # ---------------------------
+            # Regular Hours Entry
+            # ---------------------------
+            if total_regular > 0 and regular_master:
+                EWTicket.objects.create(
+                    EWT=ewt,
+                    master=regular_master,
+                    category=regular_master.category,
+                    employee=employee_obj,
+                    custom_employee=custom_employee,
+                    monday=reg_days["monday"],
+                    tuesday=reg_days["tuesday"],
+                    wednesday=reg_days["wednesday"],
+                    thursday=reg_days["thursday"],
+                    friday=reg_days["friday"],
+                    saturday=reg_days["saturday"],
+                    sunday=reg_days["sunday"],
+                    ot=False,
+                    units=regular_master.unit,
+                    description=regular_master.item
+                )
+
+            # ---------------------------
+            # OT Hours Entry
+            # ---------------------------
+            if total_ot > 0 and ot_master:
+                EWTicket.objects.create(
+                    EWT=ewt,
+                    master=ot_master,
+                    category=ot_master.category,
+                    employee=employee_obj,
+                    custom_employee=custom_employee,
+                    monday=ot_days["monday"],
+                    tuesday=ot_days["tuesday"],
+                    wednesday=ot_days["wednesday"],
+                    thursday=ot_days["thursday"],
+                    friday=ot_days["friday"],
+                    saturday=ot_days["saturday"],
+                    sunday=ot_days["sunday"],
+                    ot=True,
+                    units=ot_master.unit,
+                    description=ot_master.item
+                )
+
+        # --------------------------------------------------
+        # 3️⃣ MATERIALS
+        # --------------------------------------------------
+
+        material_count = int(request.POST.get("material_count", 0))
+
+        for i in range(1, material_count + 1):
+
+            master_id = request.POST.get(f"material_master_{i}")
+            desc = (request.POST.get(f"material_description_{i}") or "").strip()
+            qty_raw = request.POST.get(f"material_quantity_{i}")
+            units_raw = request.POST.get(f"material_units_{i}")
+
+            qty = safe_decimal(qty_raw)
+
+            # Skip completely empty rows
+            if not qty or not desc:
+                continue
+
+            master = None
+            category = None
+            units = None
+
+            # 🔹 If linked to TMPricesMaster
+            if master_id and master_id != "new":
+
+                try:
+                    master = TMPricesMaster.objects.get(id=master_id)
+                    category = master.category
+                    units = master.unit
+                except TMPricesMaster.DoesNotExist:
+                    continue  # invalid master id — skip safely
+
+            # 🔹 If Add New selected
+            else:
+                units = (units_raw or "").strip()
+
+            EWTicket.objects.create(
+                EWT=ewt,
+                master=master,
+                category="Material",
+                description=desc,
+                quantity=qty,
+                units=units
+            )
+
+        # --------------------------------------------------
+        # 4️⃣ EQUIPMENT
+        # --------------------------------------------------
+
+        equipment_count = int(request.POST.get("equipment_count", 0))
+
+        for i in range(1, equipment_count + 1):
+
+            master_id = request.POST.get(f"equipment_master_{i}")
+            desc = (request.POST.get(f"equipment_description_{i}") or "").strip()
+            qty_raw = request.POST.get(f"equipment_quantity_{i}")
+            units_raw = request.POST.get(f"equipment_units_{i}")
+
+            qty = safe_decimal(qty_raw)
+
+            if not qty or not desc:
+                continue
+
+            master = None
+            units = None
+
+            if master_id and master_id != "new":
+
+                try:
+                    master = TMPricesMaster.objects.get(id=master_id)
+                    units = master.unit
+                except TMPricesMaster.DoesNotExist:
+                    continue
+            else:
+                units = (units_raw or "").strip()
+
+            EWTicket.objects.create(
+                EWT=ewt,
+                master=master,
+                category="Equipment",  # 🔥 ALWAYS set category
+                description=desc,
+                quantity=qty,
+                units=units
+            )
+        # --------------------------------
+        # 5️⃣ SUNDRIES
+        # --------------------------------
+        sundries_count = int(request.POST.get("sundries_count", 0))
+
+        for i in range(1, sundries_count + 1):
+
+            master_id = request.POST.get(f"sundries_master_{i}")
+            desc = (request.POST.get(f"sundries_description_{i}") or "").strip()
+            qty_raw = request.POST.get(f"sundries_quantity_{i}")
+            units_raw = request.POST.get(f"sundries_units_{i}")
+
+            qty = safe_decimal(qty_raw)
+
+            if not qty or not desc:
+                continue
+
+            master = None
+            units = None
+
+            if master_id and master_id != "new":
+                try:
+                    master = TMPricesMaster.objects.get(id=master_id)
+                    units = master.unit
+                except TMPricesMaster.DoesNotExist:
+                    continue
+            else:
+                units = (units_raw or "").strip()
+
+            EWTicket.objects.create(
+                EWT=ewt,
+                master=master,
+                category="Sundries",  # 🔥 always set manually
+                description=desc,
+                quantity=qty,
+                units=units
+            )
+        if "get_signature_now" in request.POST:
+            return redirect("subcontractor_portal_get_signature", change_order.id, subcontractor_id)
+
+        elif "email_signature" in request.POST:
+            return redirect("subcontractor_portal_email_for_signature", change_order.id, subcontractor_id)
+
+        else:
+            return redirect("portal",subcontractor.id, 'ALL')
+        # return redirect("extra_work_ticket", id=change_order.id)
+
+
+def subcontractor_portal_select_ticket_for_signature(request, subcontractor_id):
+    send_data = {}
+    subcontractor = Subcontractors.objects.get(id=subcontractor_id)
+    all_changeorders = ChangeOrders.objects.filter(
+        created_by_subcontractor=subcontractor,
+        is_closed=False
+    ).order_by("cop_number")
+
+    changeorders = []
+
+    for co in all_changeorders:
+
+        status = co.status()
+
+        if status == "Ticket Not Signed":
+            changeorders.append(co)
+    send_data['changeorders'] = changeorders
+    send_data['subcontractor']= subcontractor
+    return render(request, "subcontractor_portal_select_ticket_for_signature.html", send_data)
+
+def subcontractor_portal_get_signature(request, changeorder_id, subcontractor_id):
+    send_data = {}
+    status = "NEW"
+    subcontractor = Subcontractors.objects.get(id=subcontractor_id)
+    changeorder = ChangeOrders.objects.get(id=changeorder_id)
+    ewt = EWT.objects.get(change_order=changeorder)
+    try:
+        signature = Signature.objects.get(change_order_id=id)
+    except:
+        signature = None
+    laboritems = EWTicket.objects.filter(EWT=ewt).exclude(employee=None, custom_employee=None)
+    # materials = EWTicket.objects.filter(EWT=ewt, master__category="Material")
+    # equipment = EWTicket.objects.filter(EWT=ewt, master__category="Equipment")
+    # sundries = EWTicket.objects.filter(EWT=ewt, master__category="Sundries")
+    materials = EWTicket.objects.filter(EWT=ewt, category="Material")
+    equipment = EWTicket.objects.filter(EWT=ewt, category="Equipment")
+    sundries = EWTicket.objects.filter(EWT=ewt, category="Sundries")
+    if request.method == 'POST':
+        signatureValue = request.POST['signatureValue']
+        nameValue = request.POST['signatureName']
+        comments = request.POST['gc_notes']
+        if signature is None:
+            Signature.objects.create(change_order_id=changeorder.id, type="changeorder", name=nameValue, signature=signatureValue,
+                                     date=date.today(), notes=comments)
+        else:
+            Signature.objects.update(change_order_id=id, type="changeorder", name=nameValue, signature=signatureValue,
+                                     date=date.today(), notes=comments)
+        ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                        user=Employees.objects.get(id=42),
+                                        note="Digital Signature Received. Signed by: " + request.POST[
+                                            'signatureName'] + ". Comments: " + request.POST['gc_notes'])
+        changeorder.is_ticket_signed = True
+        changeorder.digital_ticket_signed_date = date.today()
+        changeorder.save()
+        signature = Signature.objects.filter(change_order_id=changeorder.id).first()
+        # Build folder path
+        path = os.path.join(
+            settings.MEDIA_ROOT,
+            "changeorder",
+            f"{changeorder.job_number.job_number} COP #{changeorder.cop_number}"
+        )
+        # Create folder if it doesn't exist
+        os.makedirs(path, exist_ok=True)
+
+        # Build full PDF file path
+        file_path = os.path.join(
+            path,
+            f"Signed_Extra_Work_Ticket_{date.today()}.pdf"
+        )
+        with open(file_path, "w+b") as result_file:
+            html = render_to_string("signed_ticket_pdf.html",
+                                    {'sundries': sundries, 'equipment': equipment, 'materials': materials,
+                                     'laboritems': laboritems, 'ewt': ewt,
+                                     'changeorder': changeorder, 'signature': signature, 'status': status,
+                                     'is_emailed_link': True})
+            # Create PDF
+            pisa.CreatePDF(
+                html,
+                dest=result_file,
+                link_callback=link_callback
+            )
+            result_file.close()
+        # with open(file_path, "w+b") as result_file:
+        #     pisa.CreatePDF(html, dest=result_file)
+        return redirect('subcontractor_portal_email_signed_ticket', changeorder_id=changeorder.id,subcontractor_id=subcontractor_id)
+
+    return render(request, "subcontractor_portal_get_signature.html",
+                  {'sundries': sundries, 'equipment': equipment, 'materials': materials, 'laboritems': laboritems,
+                   'ewt': ewt,
+                   'changeorder': changeorder, 'signature': signature, 'status': status,'subcontractor':subcontractor})
+
+
+
+def subcontractor_portal_email_for_signature(request, changeorder_id, subcontractor_id):
+    send_data={}
+    changeorder = ChangeOrders.objects.get(id=changeorder_id)
+    subcontractor = Subcontractors.objects.get(id=subcontractor_id)
+    job = changeorder.job_number
+    client = job.client
+    if request.method == 'POST':
+        # name = request.POST['recipient_name']
+        # phone = request.POST['recipient_phone']
+        email = request.POST['email']
+        # recipient_id = request.POST['recipient']
+        ewt = EWT.objects.get(change_order=changeorder)
+        ewt.recipient = email
+        ewt.save()
+        job_name = job.job_name
+        approval_link = request.build_absolute_uri(
+            reverse('emailed_ticket', args=[changeorder.id])
+        )
+
+        email_body = (
+            f"You have received an extra work ticket from Gerloff Painting "
+            f"for {changeorder.description} at {job_name}.\n\n"
+            f"Please click this link to view the ticket:\n"
+            f"{approval_link}"
+        )
+        recipients = ["joe@gerloffpainting.com"]
+        recipients.append(email)
+        gp_super = job.superintendent.email
+        if gp_super:
+            recipients.append(gp_super)
+        try:
+            Email.sendEmail("Extra Work Ticket", email_body, recipients, False)
+            messages.success(request, "The email with the link to the extra work ticket was successfully sent!")
+            ewt = EWT.objects.get(change_order=changeorder)
+            ewt.recipient = email
+            ewt.save()
+            ChangeOrderNotes.objects.create(note="Ticket Emailed To: " + str(email),
+                                            cop_number=changeorder, date=date.today(),
+                                            user=Employees.objects.get(id=42))
+        except Exception as e:
+            messages.error(request,"ERROR! The email with the extra work ticket failed to send. Please try again later. ")
+            ChangeOrderNotes.objects.create(note="Attempted to Email Ticket For Signature, But Email Failed. Tried to send to: " + str(email),
+                                            cop_number=changeorder, date=date.today(),
+                                            user=Employees.objects.get(id=42))
+        return redirect('portal', sub_id=subcontractor.id, contract_id='ALL')
+    client_employees = ClientEmployees.objects.filter(id=client,is_active=True).order_by('name')
+    send_data['client_employees'] = client_employees
+    return render(request, 'subcontractor_portal_email_for_signature.html',send_data)
+
+def subcontractor_portal_ewt_edit(request, changeorder_id, subcontractor_id):
+    send_data = {}
+    subcontractor = Subcontractors.objects.get(id=subcontractor_id)
+    change_order = ChangeOrders.objects.get(id=changeorder_id)
+    send_data['changeorder'] = change_order
+    send_data['subcontractor'] = subcontractor
+    ewt = get_object_or_404(EWT, change_order=change_order)
+
+    # =====================================================
+    # POST — UPDATE + REBUILD
+    # =====================================================
+    def safe_decimal(value):
+        try:
+            return Decimal(value or "0")
+        except:
+            return Decimal("0")
+
+    if request.method == "POST":
+        with transaction.atomic():
+
+            # --------------------------------------------------
+            # 1️⃣ Update EWT Header (do NOT recreate header)
+            # --------------------------------------------------
+            ewt.week_ending = request.POST.get("week_ending")
+            ewt.notes = request.POST.get("notes")
+            ewt.completed_by = subcontractor.company
+            ewt.save()
+
+            # Optional: add a note that it was edited
+            try:
+                ChangeOrderNotes.objects.create(
+                    cop_number=change_order,
+                    date=date.today(),
+                    user=Employees.objects.get(id=42),
+                    note="Extra Work Ticket Updated",
+                )
+            except:
+                pass
+
+            # --------------------------------------------------
+            # 2️⃣ Delete existing ticket rows and rebuild
+            # --------------------------------------------------
+            EWTicket.objects.filter(EWT=ewt).delete()
+
+            days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+
+            # --------------------------------------------------
+            # 3️⃣ LABOR (match create behavior: use masters + totals)
+            # --------------------------------------------------
+            painter_count = int(request.POST.get("painter_count", 0))
+
+            # Fetch masters once
+            regular_master = TMPricesMaster.objects.filter(item="Painter Hours").first()
+            ot_master = TMPricesMaster.objects.filter(item="Painter Hours OT").first()
+
+            for i in range(1, painter_count + 1):
+
+                employee_id = request.POST.get(f"employee_{i}")
+                custom_employee = request.POST.get(f"custom_employee_{i}")
+
+                # Collect daily hours + totals
+                reg_days = {}
+                ot_days = {}
+                total_regular = Decimal("0")
+                total_ot = Decimal("0")
+
+                for day in days:
+                    reg_val = safe_decimal(request.POST.get(f"reg_{day}_{i}"))
+                    ot_val = safe_decimal(request.POST.get(f"ot_{day}_{i}"))
+
+                    reg_days[day] = reg_val
+                    ot_days[day] = ot_val
+
+                    total_regular += reg_val
+                    total_ot += ot_val
+
+                # Skip fully empty painter row
+                if total_regular == 0 and total_ot == 0:
+                    continue
+
+                # Safe employee lookup
+                employee_obj = None
+                if employee_id:
+                    employee_obj = Employees.objects.filter(id=employee_id).first()
+
+                # Regular entry
+                if total_regular > 0 and regular_master:
+                    EWTicket.objects.create(
+                        EWT=ewt,
+                        master=regular_master,
+                        category=regular_master.category or "Labor",
+                        employee=employee_obj,
+                        custom_employee=custom_employee,
+                        monday=reg_days["monday"],
+                        tuesday=reg_days["tuesday"],
+                        wednesday=reg_days["wednesday"],
+                        thursday=reg_days["thursday"],
+                        friday=reg_days["friday"],
+                        saturday=reg_days["saturday"],
+                        sunday=reg_days["sunday"],
+                        ot=False,
+                        units=regular_master.unit,
+                        description=regular_master.item,
+                    )
+
+                # OT entry
+                if total_ot > 0 and ot_master:
+                    EWTicket.objects.create(
+                        EWT=ewt,
+                        master=ot_master,
+                        category=ot_master.category or "Labor",
+                        employee=employee_obj,
+                        custom_employee=custom_employee,
+                        monday=ot_days["monday"],
+                        tuesday=ot_days["tuesday"],
+                        wednesday=ot_days["wednesday"],
+                        thursday=ot_days["thursday"],
+                        friday=ot_days["friday"],
+                        saturday=ot_days["saturday"],
+                        sunday=ot_days["sunday"],
+                        ot=True,
+                        units=ot_master.unit,
+                        description=ot_master.item,
+                    )
+
+            # --------------------------------------------------
+            # 4️⃣ MATERIALS (match create behavior: master vs new)
+            # --------------------------------------------------
+            material_count = int(request.POST.get("material_count", 0))
+
+            for i in range(1, material_count + 1):
+                master_id = request.POST.get(f"material_master_{i}")
+                desc = (request.POST.get(f"material_description_{i}") or "").strip()
+                qty = safe_decimal(request.POST.get(f"material_quantity_{i}"))
+                units_raw = (request.POST.get(f"material_units_{i}") or "").strip()
+
+                # Skip empty rows
+                if qty <= 0 or not desc:
+                    continue
+
+                master = None
+                units = None
+
+                if master_id and master_id != "new":
+                    master = TMPricesMaster.objects.filter(id=master_id).first()
+                    if not master:
+                        continue
+                    units = master.unit
+                else:
+                    units = units_raw  # allow custom units
+
+                EWTicket.objects.create(
+                    EWT=ewt,
+                    master=master,
+                    category="Material",
+                    description=desc,
+                    quantity=qty,
+                    units=units,
+                )
+
+            # --------------------------------------------------
+            # 5️⃣ EQUIPMENT
+            # --------------------------------------------------
+            equipment_count = int(request.POST.get("equipment_count", 0))
+
+            for i in range(1, equipment_count + 1):
+                master_id = request.POST.get(f"equipment_master_{i}")
+                desc = (request.POST.get(f"equipment_description_{i}") or "").strip()
+                qty = safe_decimal(request.POST.get(f"equipment_quantity_{i}"))
+                units_raw = (request.POST.get(f"equipment_units_{i}") or "").strip()
+
+                if qty <= 0 or not desc:
+                    continue
+
+                master = None
+                units = None
+
+                if master_id and master_id != "new":
+                    master = TMPricesMaster.objects.filter(id=master_id).first()
+                    if not master:
+                        continue
+                    units = master.unit
+                else:
+                    units = units_raw
+
+                EWTicket.objects.create(
+                    EWT=ewt,
+                    master=master,
+                    category="Equipment",
+                    description=desc,
+                    quantity=qty,
+                    units=units,
+                )
+
+            # --------------------------------------------------
+            # 6️⃣ SUNDRIES
+            # --------------------------------------------------
+            sundries_count = int(request.POST.get("sundries_count", 0))
+
+            for i in range(1, sundries_count + 1):
+                master_id = request.POST.get(f"sundries_master_{i}")
+                desc = (request.POST.get(f"sundries_description_{i}") or "").strip()
+                qty = safe_decimal(request.POST.get(f"sundries_quantity_{i}"))
+                units_raw = (request.POST.get(f"sundries_units_{i}") or "").strip()
+
+                if qty <= 0 or not desc:
+                    continue
+
+                master = None
+                units = None
+
+                if master_id and master_id != "new":
+                    master = TMPricesMaster.objects.filter(id=master_id).first()
+                    if not master:
+                        continue
+                    units = master.unit
+                else:
+                    units = units_raw
+
+                EWTicket.objects.create(
+                    EWT=ewt,
+                    master=master,
+                    category="Sundries",
+                    description=desc,
+                    quantity=qty,
+                    units=units,
+                )
+        if "get_signature_now" in request.POST:
+            return redirect("subcontractor_portal_get_signature", change_order.id, subcontractor_id)
+
+        elif "email_signature" in request.POST:
+            return redirect("subcontractor_portal_email_for_signature", change_order.id, subcontractor_id)
+
+        else:
+            return redirect("portal",subcontractor.id, 'ALL')
+
+
+    # =====================================================
+    # GET — BUILD DATA FOR TEMPLATE
+    # =====================================================
+
+    tickets = EWTicket.objects.filter(EWT=ewt)
+
+    # ---------------- GROUP LABOR ----------------
+    labor_map = {}
+
+    for t in tickets.filter(category="Labor"):
+
+        key = (t.employee.id if t.employee else None, t.custom_employee)
+
+        if key not in labor_map:
+            labor_map[key] = {
+                "employee": t.employee,
+                "custom_employee": t.custom_employee,
+                "regular": None,
+                "ot": None
+            }
+
+        day_data = {
+            "monday": t.monday,
+            "tuesday": t.tuesday,
+            "wednesday": t.wednesday,
+            "thursday": t.thursday,
+            "friday": t.friday,
+            "saturday": t.saturday,
+            "sunday": t.sunday,
+        }
+
+        if t.ot:
+            labor_map[key]["ot"] = day_data
+        else:
+            labor_map[key]["regular"] = day_data
+
+    labor_list = list(labor_map.values())
+    labor_count = len(labor_list)
+
+    # ---------------- SIMPLE LISTS ----------------
+    materials = tickets.filter(category="Material")
+    equipment = tickets.filter(category="Equipment")
+    sundries = tickets.filter(category="Sundries")
+
+    # ---------------- COUNTS ----------------
+    material_count = materials.count()
+    equipment_count = equipment.count()
+    sundries_count = sundries.count()
+
+    return render(request, "subcontractor_portal_ewt_edit.html", {
+        "ewt": ewt,
+        "change_order": change_order,
+        "labor_list": labor_list,
+        "labor_count": labor_count,
+        "materials": materials,
+        "equipment": equipment,
+        "sundries": sundries,
+        "material_count": material_count,
+        "equipment_count": equipment_count,
+        "sundries_count": sundries_count,
+        "tm_materials": TMPricesMaster.objects.filter(category="Material"),
+        "tm_equipment": TMPricesMaster.objects.filter(category="Equipment"),
+        "tm_sundries": TMPricesMaster.objects.filter(category="Sundries"),
+        "employees": Employees.objects.filter(active=True),
+    })
+
+def subcontractor_portal_email_signed_ticket(request,changeorder_id,subcontractor_id):
+    send_data={}
+    changeorder = ChangeOrders.objects.get(id=changeorder_id)
+    subcontractor = Subcontractors.objects.get(id=subcontractor_id)
+    send_data = {}
+    send_data['changeorder'] = changeorder
+    if request.method != 'POST':
+        for x in TempRecipients.objects.filter(changeorder=changeorder):
+            x.delete()
+    if request.method == 'POST':
+        for x in request.POST:
+            if x[0:11] == 'updateemail':
+                person = ClientEmployees.objects.get(person_pk=x[11:len(x)])
+                person.email = request.POST['email' + str(person.person_pk)]
+                person.save()
+            if x[0:6] == 'remove':
+                person = ClientEmployees.objects.get(person_pk=x[6:len(x)])
+                ClientJobRoles.objects.filter(role="Extra Work Tickets", job=changeorder.job_number,
+                                              employee=person).delete()
+            if x[0:10] == 'adddefault':
+                person = ClientEmployees.objects.get(person_pk=x[10:len(x)])
+                ClientJobRoles.objects.create(role="Extra Work Tickets", job=changeorder.job_number, employee=person)
+            if x[0:10] == 'tempremove':
+                person = ClientEmployees.objects.get(person_pk=x[10:len(x)])
+                TempRecipients.objects.filter(changeorder=changeorder, person=person).delete()
+            if x[0:7] == 'tempadd':
+                if not request.POST.get(
+                        "addrecipient").isdigit():  # checks to see if they are adding a new person to database
+                    new_client_name = request.POST.get("addrecipient")  # typed name from dropdown
+                    new_client_email = request.POST.get("new_contact_email")
+                    person = ClientEmployees.objects.create(id=changeorder.job_number.client, name=new_client_name,
+                                                            email=new_client_email)
+                else:
+                    person = ClientEmployees.objects.get(person_pk=request.POST['addrecipient'])
+                TempRecipients.objects.create(person=person, changeorder=changeorder)
+            if x[0:10] == 'defaultadd':
+                if not request.POST.get(
+                        "addrecipient").isdigit():  # checks to see if they are adding a new person to database
+                    new_client_name = request.POST.get("addrecipient")  # typed name from dropdown
+                    new_client_email = request.POST.get("new_contact_email")
+                    person = ClientEmployees.objects.create(id=changeorder.job_number.client, name=new_client_name,
+                                                            email=new_client_email)
+                else:
+                    person = ClientEmployees.objects.get(person_pk=request.POST['addrecipient'])
+                if not ClientJobRoles.objects.filter(role="Extra Work Tickets", job=changeorder.job_number,
+                                                     employee=person).exists():
+                    ClientJobRoles.objects.create(role="Extra Work Tickets", job=changeorder.job_number,
+                                                  employee=person)
+                    TempRecipients.objects.create(person=person, changeorder=changeorder)
+            if x[0:5] == 'final':
+                recipients = ["bridgette@gerloffpainting.com"]
+                bridgette = Employees.objects.get(first_name="Bridgette", last_name="Clause")
+                current_user = Employees.objects.get(id=42)
+                subcontractor_email = subcontractor.email
+                if subcontractor_email:
+                    recipients.append(subcontractor.email)
+                if x == 'final1':
+                    for y in request.POST:
+                        if y[0:5] == 'email':
+                            recipients.append(request.POST[y])
+                ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                                user=current_user,
+                                                note="Signed Ticket emailed to " + str(recipients))
+                path = os.path.join(settings.MEDIA_ROOT, "changeorder",
+                                    str(changeorder.job_number.job_number) + " COP #" + str(changeorder.cop_number))
+                job_name = changeorder.job_number.job_name
+                try:
+                    Email.sendEmail(f"Signed Ticket {job_name}",
+                                    f"Please find the Signed Extra Work Ticket attached for {job_name}", recipients,
+                                    f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf")
+                    messages.success(request, "Email was successfully sent")
+                except:
+                    messages.error(request, "Email Failed to Send!")
+                return redirect('portal', sub_id=subcontractor.id, contract_id='ALL')
+    extra_contacts = False
+    project_pm = ClientEmployees.objects.get(person_pk=changeorder.job_number.client_Pm.person_pk)
+    client_list = []
+    if TempRecipients.objects.filter(changeorder=changeorder, default=False).exists():
+        if TempRecipients.objects.filter(changeorder=changeorder, default=True).exists():
+            TempRecipients.objects.filter(changeorder=changeorder, default=True).delete()
+    if not ClientJobRoles.objects.filter(role="Extra Work Tickets", job=changeorder.job_number):
+        if not TempRecipients.objects.filter(changeorder=changeorder):
+            TempRecipients.objects.create(person=project_pm, changeorder=changeorder, default=True)
+    else:  # means there is a default person
+        if not TempRecipients.objects.filter(
+                changeorder=changeorder):  # this will add all default as temp recipients if there are no temp recipients
+            for x in ClientJobRoles.objects.filter(role="Extra Work Tickets", job=changeorder.job_number):
+                TempRecipients.objects.create(person=x.employee, changeorder=changeorder)
+    for x in ClientEmployees.objects.filter(id=changeorder.job_number.client, is_active=True).order_by('name'):
+        if ClientJobRoles.objects.filter(role="Extra Work Tickets", job=changeorder.job_number, employee=x).exists():
+            if TempRecipients.objects.filter(changeorder=changeorder, person=x).exists():
+                client_list.append(
+                    {'person_pk': x.person_pk, 'name': x.name, 'default': True, 'current': True, 'email': x.email})
+            else:
+                extra_contacts = True
+                client_list.append(
+                    {'person_pk': x.person_pk, 'name': x.name, 'default': True, 'current': False, 'email': x.email})
+        else:
+            if TempRecipients.objects.filter(person=x, changeorder=changeorder).exists():
+                client_list.append(
+                    {'person_pk': x.person_pk, 'name': x.name, 'default': False, 'current': True, 'email': x.email})
+            else:
+                extra_contacts = True
+                client_list.append(
+                    {'person_pk': x.person_pk, 'name': x.name, 'default': False, 'current': False, 'email': x.email})
+    client_list = sorted(client_list, key=lambda x: x['name'].lower())
+    return render(request, "subcontractor_portal_email_signed_ticket.html", {'client_list': client_list,
+                                                       'extra_contacts': extra_contacts, 'changeorder': changeorder,'subcontractor':subcontractor})
