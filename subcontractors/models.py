@@ -199,7 +199,8 @@ class Subcontracts(models.Model):
     def total_pending_amount(self):
         total = 0
         for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=False):
-            total = total + x.final_amount
+            if x.final_amount:
+                total = total + x.final_amount
         return total
 
     def total_billed(self):
@@ -207,7 +208,8 @@ class Subcontracts(models.Model):
         total = 0
         # for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=True):
         for x in SubcontractorInvoice.objects.filter(subcontract=self):
-            total = total + x.final_amount
+            if x.final_amount:
+                total = total + x.final_amount
         return total
 
     def total_approved(self):
@@ -215,20 +217,29 @@ class Subcontracts(models.Model):
         total = 0
         # for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=True):
         for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=True):
-            total = total + x.final_amount
+            if x.final_amount:
+                total = total + x.final_amount
         return total
 
 
     def total_paid(self):
         total = 0
         for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=True):
-            total += x.final_amount - x.retainage
+            if x.final_amount:
+                if x.retainage:
+                    total += x.final_amount - x.retainage
+                else:
+                    total += x.final_amount
         return total
 
     def total_actually_paid(self):
         total = 0
         for x in SubcontractorInvoice.objects.filter(subcontract=self, processed=True):
-            total += x.final_amount - x.retainage
+            if x.final_amount:
+                if x.retainage:
+                    total += x.final_amount - x.retainage
+                else:
+                    total += x.final_amount
         return total
 
     def total_billed_prior(self):
@@ -241,14 +252,16 @@ class Subcontracts(models.Model):
             last_friday += datetime.timedelta(days=7)
         total = 0
         for x in SubcontractorInvoice.objects.filter(subcontract=self, processed=True, date__lte=last_friday):
-            total = total + x.final_amount
+            if x.final_amount:
+                total = total + x.final_amount
         return total
 
     def total_retainage(self):
         #portal invoice new - used if you do a retainage release
         total = 0
         for x in SubcontractorInvoice.objects.filter(subcontract=self):
-            total = total + x.retainage
+            if x.retainage:
+                total = total + x.retainage
         return total
 
 
@@ -256,7 +269,8 @@ class Subcontracts(models.Model):
         #portal invoice new - used if you do a retainage release
         total = 0
         for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=True):
-            total = total + x.retainage
+            if x.retainage:
+                total = total + x.retainage
         return total
 
 
@@ -270,19 +284,22 @@ class Subcontracts(models.Model):
             last_friday += datetime.timedelta(days=7)
         total = 0
         for x in SubcontractorInvoice.objects.filter(subcontract=self, processed=True, date__lte=last_friday):
-            total = total + x.retainage
+            if x.retainage:
+                total = total + x.retainage
         return total
 
     def total_retainage_pending(self):
         total = 0
         for x in SubcontractorInvoice.objects.filter(subcontract=self, is_sent=False):
-            total = total + x.retainage
+            if x.retainage:
+                total = total + x.retainage
         return total
 
     def total_contract_amount(self):
         total = 0
         for x in SubcontractItems.objects.filter(subcontract=self, is_approved=True):
-            total += x.total_cost()
+            if x.total_cost():
+                total += x.total_cost()
         return total
 
     def percent_complete(self):
