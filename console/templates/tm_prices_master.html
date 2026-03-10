@@ -26,18 +26,15 @@
 <th style="width:200px;"></th>
 </tr>
 </thead>
-
 <tbody>
 
 {% for row in items %}
 
-<tr>
-
 <form method="POST">
 {% csrf_token %}
-
 <input type="hidden" name="id" value="{{ row.id }}">
-<input type="hidden" name="action" value="update">
+
+<tr>
 
 <td>
 <input type="text" name="item" value="{{ row.item }}" class="form-control form-control-sm">
@@ -53,12 +50,14 @@
 
 <td>
 
-<button class="btn btn-sm btn-success">
+<button type="submit"
+        name="action"
+        value="update"
+        class="btn btn-sm btn-success">
 Save
 </button>
 
 <button type="submit"
-        formaction=""
         name="action"
         value="delete"
         class="btn btn-sm btn-danger">
@@ -67,9 +66,9 @@ Delete
 
 </td>
 
-</form>
-
 </tr>
+
+</form>
 
 {% endfor %}
 
@@ -146,7 +145,7 @@ Add Item
 </div>
 
 </div>
-{% endblock %}
+
 <script>
 
 function showAddRow(category){
@@ -158,3 +157,5 @@ $('#addItemModal').modal('show');
 }
 
 </script>
+
+{% endblock %}
