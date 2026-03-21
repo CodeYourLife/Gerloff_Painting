@@ -733,25 +733,42 @@ def upload_new_job(request):
 @login_required(login_url='/accounts/login')
 def jobs_home(request):
     send_data = {}
+    request_get = request.GET.copy()
+
+    # Default view: Active + Punchlist
+    if not any(k in request_get for k in ['search2', 'search3', 'search4', 'search5', 'search7']):
+        request_get['search4'] = 'on'
+        request_get['search5'] = 'on'
+
     if request.method == 'GET':
-        if 'search' in request.GET: send_data['search_exists'] = request.GET['search']  # jobname
-        if 'search2' in request.GET:
-            send_data['search2_exists'] = request.GET['search2']  # super name
-            if request.GET['search2'] != 'ALL' and request.GET['search2'] != 'UNASSIGNED':
-                send_data['selected_supername'] = Employees.objects.get(
-                    id=request.GET['search2']).first_name + " " + Employees.objects.get(
-                    id=request.GET['search2']).last_name
-        if 'search3' in request.GET: send_data['search3_exists'] = request.GET['search3']  # open only
-        if 'search4' in request.GET: send_data['search4_exists'] = request.GET['search4']  # gc name
-        if 'search5' in request.GET: send_data['search5_exists'] = request.GET['search5']  # upcoming only
-        if 'search6' in request.GET: send_data['search6_exists'] = request.GET['search6']  # unassigned
-        if 'search7' in request.GET: send_data['search7_exists'] = request.GET['search7']  # labor done
-    search_jobs = JobsFilter(request.GET, queryset=Jobs.objects.filter())
-    send_data['search_jobs'] = JobsFilter(request.GET, queryset=Jobs.objects.filter())
+        # if 'search' in request_get:
+        #     send_data['search_exists'] = request_get['search']
+
+        if 'search2' in request_get:
+            send_data['search2_exists'] = request_get['search2']
+            if request_get['search2'] != 'ALL' and request_get['search2'] != 'UNASSIGNED':
+                employee = Employees.objects.get(id=request_get['search2'])
+                send_data['selected_supername'] = employee.first_name + " " + employee.last_name
+
+        if 'search3' in request_get:
+            send_data['search3_exists'] = request_get['search3']
+
+        if 'search4' in request_get:
+            send_data['search4_exists'] = request_get['search4']
+
+        if 'search5' in request_get:
+            send_data['search5_exists'] = request_get['search5']
+
+        if 'search7' in request_get:
+            send_data['search7_exists'] = request_get['search7']
+
+    search_jobs = JobsFilter(request_get, queryset=Jobs.objects.all())
+    send_data['search_jobs'] = search_jobs
     send_data['jobstable'] = search_jobs.qs.order_by('start_date')
-    # RequestConfig(request).configure(jobstable)
-    # RequestConfig(request, paginate=False).configure(jobstable)
-    send_data['has_filter'] = any(field in request.GET for field in set(search_jobs.get_fields()))
+
+    send_data['has_filter'] = any(
+        field in request_get for field in set(search_jobs.get_fields())
+    )
     send_data['supers'] = Employees.objects.filter(job_title__description="Superintendent", active=True)
     send_data['tickets'] = ChangeOrders.objects.filter(job_number__is_closed=False, is_t_and_m=True,
                                                        is_ticket_signed=False)

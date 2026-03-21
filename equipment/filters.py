@@ -79,49 +79,121 @@ class JobsFilter2(django_filters.FilterSet):
 
 
 class JobsFilter(django_filters.FilterSet):
+#     search = django_filters.CharFilter(label='Job Name =', method='search_filter')
+#     search2 = django_filters.CharFilter(label='Superintendent =', method='search_filter2')
+#     search3 = django_filters.filters.BooleanFilter(label='Open Jobs', widget=forms.CheckboxInput,
+#                                                    method='search_filter3')
+#     search4 = django_filters.CharFilter(label='GC =', method='search_filter4')
+#     search5 = django_filters.filters.BooleanFilter(label='Upcoming Only', widget=forms.CheckboxInput,
+#                                                    method='search_filter5')
+#     # search6 = django_filters.filters.BooleanFilter(label='Unassigned',widget=forms.CheckboxInput,method='search_filter6')
+#     search7 = django_filters.filters.BooleanFilter(label='Labor Done', widget=forms.CheckboxInput,
+#                                                    method='search_filter7')
+# # THIS IS NOT USED
+#     def search_filter(self, queryset, name, value):
+#         return queryset.filter(job_name__icontains=value)
+# #QUERY BY SUPERINTENDENT
+#     def search_filter2(self, queryset, name, value):
+#         if value == 'ALL':
+#             return queryset.all()
+#         elif value == 'UNASSIGNED':
+#             return queryset.filter(superintendent=None)
+#         else:
+#             return queryset.filter(superintendent__id=value)
+# #INCLUDE CLOSED JOBS
+#     def search_filter3(self, queryset, name, value):
+#         if value == True:
+#             return queryset.all()
+#         else:
+#             return queryset.filter(is_closed=False)
+# #if checked, show jobs waiting on punchlist
+#     def search_filter4(self, queryset, name, value):
+#         if value == True:
+#             return queryset.all()
+#         else:
+#             return queryset.filter(is_waiting_for_punchlist=False)
+#
+#
+#     #if checked, show upcoming & active jobs
+#     def search_filter5(self, queryset, name, value):
+#         if value == True:
+#             return queryset.all()
+#         else:
+#             return queryset.filter(Q(is_labor_done=True) | Q(is_waiting_for_punchlist=True))
+#
+# #if checked, shows jobs being closed out
+#     def search_filter7(self, queryset, name, value):
+#         if value == True:
+#             return queryset.all()
+#         else:
+#             return queryset.filter(is_labor_done=False)
+#
+#     class Meta:
+#         model = Jobs
+#         fields = ['search']
+
+
+
+
     search = django_filters.CharFilter(label='Job Name =', method='search_filter')
     search2 = django_filters.CharFilter(label='Superintendent =', method='search_filter2')
-    search3 = django_filters.filters.BooleanFilter(label='Open Jobs', widget=forms.CheckboxInput,
-                                                   method='search_filter3')
-    search4 = django_filters.CharFilter(label='GC =', method='search_filter4')
-    search5 = django_filters.filters.BooleanFilter(label='Upcoming Only', widget=forms.CheckboxInput,
-                                                   method='search_filter5')
-    # search6 = django_filters.filters.BooleanFilter(label='Unassigned',widget=forms.CheckboxInput,method='search_filter6')
-    search7 = django_filters.filters.BooleanFilter(label='Labor Done', widget=forms.CheckboxInput,
-                                                   method='search_filter7')
+    search3 = django_filters.BooleanFilter(
+        label='Include Closed Jobs',
+        widget=forms.CheckboxInput,
+        method='search_filter3'
+    )
+    search4 = django_filters.BooleanFilter(
+        label='Punch',
+        widget=forms.CheckboxInput,
+        method='search_filter_status'
+    )
+    search5 = django_filters.BooleanFilter(
+        label='Active',
+        widget=forms.CheckboxInput,
+        method='search_filter_status'
+    )
+    search7 = django_filters.BooleanFilter(
+        label='Being Closed',
+        widget=forms.CheckboxInput,
+        method='search_filter_status'
+    )
 
     def search_filter(self, queryset, name, value):
         return queryset.filter(job_name__icontains=value)
 
     def search_filter2(self, queryset, name, value):
         if value == 'ALL':
-            return queryset.all()
+            return queryset
         elif value == 'UNASSIGNED':
             return queryset.filter(superintendent=None)
         else:
             return queryset.filter(superintendent__id=value)
 
     def search_filter3(self, queryset, name, value):
-        if value == True:
-            return queryset.all()
-        else:
-            return queryset.filter(is_closed=False)
+        if value:
+            return queryset
+        return queryset.filter(is_closed=False)
 
-    def search_filter4(self, queryset, name, value):
-        return queryset.filter(client__company__icontains=value)
+    def search_filter_status(self, queryset, name, value):
+        punch_checked = self.data.get('search4') in ['True', 'true', 'on', '1']
+        active_checked = self.data.get('search5') in ['True', 'true', 'on', '1']
+        closing_checked = self.data.get('search7') in ['True', 'true', 'on', '1']
 
-    #
-    def search_filter5(self, queryset, name, value):
-        if value == True:
-            return queryset.filter(is_active=False)
-        else:
-            return queryset.all()
+        status_q = Q()
 
-    def search_filter7(self, queryset, name, value):
-        if value == True:
-            return queryset.filter(Q(is_labor_done=True) | Q(is_waiting_for_punchlist=True))
-        else:
-            return queryset.all()
+        if punch_checked:
+            status_q |= Q(is_waiting_for_punchlist=True, is_labor_done=False)
+
+        if active_checked:
+            status_q |= Q(is_waiting_for_punchlist=False, is_labor_done=False)
+
+        if closing_checked:
+            status_q |= Q(is_labor_done=True)
+
+        if status_q == Q():
+            return queryset.none()
+
+        return queryset.filter(status_q)
 
     class Meta:
         model = Jobs
