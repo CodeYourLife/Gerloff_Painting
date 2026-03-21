@@ -11,6 +11,27 @@
     <title>Trinity GP</title>
         <style type="text/css" class="init">
 
+.badge {
+    font-size: 11px;
+    padding: 4px 6px;
+    border-radius: 4px;
+}
+
+.badge-dark {
+    background-color: #343a40;
+    color: white;
+}
+
+.badge-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.badge-light {
+    background-color: #e9ecef;
+    color: #333;
+}
+
 .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
 
 .dataTables_wrapper {
@@ -424,7 +445,15 @@ window.onload = function() {
         </div>
         <div class="form-check">
             <input type="checkbox" class="form-check-input" id="search7" name="search7" {% if search7_exists %} checked {% endif %} onchange="new_filter_now()">
-            <label class="form-check-label" for="search7">Show Only Jobs That Are Done</label>
+            <label class="form-check-label" for="search7">Show Jobs Being Closed Out </label>
+        </div>
+                <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="search4" name="search4" {% if search4_exists %} checked {% endif %} onchange="new_filter_now()">
+            <label class="form-check-label" for="search4">Show Jobs Waiting For Punchlist </label>
+        </div>
+                        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="search5" name="search5" {% if search5_exists %} checked {% endif %} onchange="new_filter_now()">
+            <label class="form-check-label" for="search5">Show Active & Upcoming Jobs </label>
         </div>
         </div>
     </form>
@@ -434,8 +463,9 @@ window.onload = function() {
     <table id="jobs_table" class="display table table-sm">
         <thead>
         <tr>
-            <th scope="col">Job #</th>
-            <th scope="col">Job Name</th>
+            <th scope="col">Job </th>
+            <!--<th scope="col">Job Name</th>-->
+            <th scope="col">Status</th>
             <th id="test_header" scope="col">Start Date</th>
             <th scope="col">Client</th>
             <th scope="col">Super</th>
@@ -444,18 +474,28 @@ window.onload = function() {
         </thead>
         <tbody>
         {% for x in jobstable %}
-        {% if x.is_labor_done == True %}
+        <tr onclick="populate_start_date_modal('{{x.job_number}}','{{x.start_date}}','{{x.is_active}}',this,1)">
+<!--        {% if x.is_labor_done == True %}
 
         <tr style="background-color:hsla(0,0%, 32%);" onclick="populate_start_date_modal('{{x.job_number}}','{{x.start_date}}','{{x.is_active}}',this,1)">
  {% elif x.is_waiting_for_punchlist == True %}
                 <tr style="background-color:hsla(0,0%, 65%);" onclick="populate_start_date_modal('{{x.job_number}}','{{x.start_date}}','{{x.is_active}}',this,1)">
                 {% else %}
             <tr onclick="populate_start_date_modal('{{x.job_number}}','{{x.start_date}}','{{x.is_active}}',this,1)">
-            {% endif %}
-                <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_number}}{% if x.is_active %}[A]{% endif %}</a></td>
+            {% endif %}-->
+                <!--<td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_number}}{% if x.is_active %}[A]{% endif %}</a></td>-->
 
-            <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_job('{{x.job_number}}')"><a href="#">{% if x.is_labor_done == True %}<b>[DONE]</b>{% elif x.is_waiting_for_punchlist == True %}<b>[PUNCH]</b>{% endif %}{{x.job_name}}{% if x.is_painting_subbed == True %}<b>[SUB]</b>{% endif %}</a></td>
-
+           <!--<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_job('{{x.job_number}}')"><a href="#">{% if x.is_labor_done == True %}<b>[DONE]</b>{% elif x.is_waiting_for_punchlist == True %}<b>[PUNCH]</b>{% endif %}{{x.job_name}}{% if x.is_painting_subbed == True %}<b>[SUB]</b>{% endif %}</a></td>-->
+            <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_number}} {{x.job_name}}{% if x.is_painting_subbed == True %}<b>[SUB]</b>{% endif %}</a></td>
+<td>
+    {% if x.is_labor_done %}
+        <span class="badge badge-dark">Closing</span>
+    {% elif x.is_waiting_for_punchlist %}
+        <span class="badge badge-secondary">Punch</span>
+    {% elif x.is_active %}
+        <span class="badge badge-success">Active</span>
+    {% endif %}
+</td>
             <td style="white-space:nowrap" data-toggle="modal" data-target="#startdate-modal" ><a href="#">{{x.start_date|date:'M-d-Y'}}</a></td>
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px" >{{x.client}}</td>
                 <td data-toggle="modal" data-target="#super-modal" onclick="populate_super_modal('{{x.job_name}}','{{x.superintendent.id}}','{{x.job_number}}','{{x.superintendent.first_name}}',this,1)"><a href="#">{{x.superintendent.first_name}}</a></td>
