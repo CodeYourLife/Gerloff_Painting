@@ -567,15 +567,15 @@ def upload_new_job(request):
             send_data['new_super_phone'] = sheet_obj.cell(row=23, column=2).value
             send_data['new_super_email'] = sheet_obj.cell(row=24, column=2).value
             if Clients.objects.filter(company=client_name).exists():
-                send_data['client'] = Clients.objects.get(company=client_name)
+                send_data['client'] = Clients.objects.filter(company=client_name).first()
                 send_data['pms_filter'] = ClientEmployees.objects.filter(id=Clients.objects.get(company=client_name),is_active=True).order_by('name')
                 if ClientEmployees.objects.filter(name=pm_name, id__company=client_name,is_active=True).exists():
-                    send_data['pm'] = ClientEmployees.objects.get(name=pm_name, id__company=client_name)
+                    send_data['pm'] = ClientEmployees.objects.filter(name=pm_name, id__company=client_name).first()
                 super_name = sheet_obj.cell(row=22, column=2).value
                 if ClientEmployees.objects.filter(name=super_name, id__company=client_name,is_active=True).exists():
-                    send_data['super'] = ClientEmployees.objects.get(name=super_name, id__company=client_name)
+                    send_data['super'] = ClientEmployees.objects.filter(name=super_name, id__company=client_name).first()
             if Employees.objects.filter(first_name=sheet_obj.cell(row=39, column=2).value).exists():
-                send_data['estimator'] = Employees.objects.get(first_name=sheet_obj.cell(row=39, column=2).value)
+                send_data['estimator'] = Employees.objects.filter(first_name=sheet_obj.cell(row=39, column=2).value).first()
             else:
                 send_data['estimator_name'] = sheet_obj.cell(row=39, column=2).value
             send_data['all_clients'] = Clients.objects.all()
@@ -604,7 +604,7 @@ def upload_new_job(request):
                                                            email=request.POST['new_pm_email'])
 
             else:
-                client_pm = ClientEmployees.objects.get(person_pk=request.POST['select_pm'])
+                client_pm = ClientEmployees.objects.filter(person_pk=request.POST['select_pm']).first()
                 client_pm.name = request.POST['new_pm']
                 client_pm.phone = request.POST['new_pm_phone']
                 client_pm.email = request.POST['new_pm_email']
