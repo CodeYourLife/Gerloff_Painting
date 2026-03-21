@@ -124,7 +124,7 @@ def client_job_info(request, id):
 @login_required(login_url='/accounts/login')
 def client_info(request, id):
     send_data = {}
-    send_data['clients']=Clients.objects.all()
+    send_data['clients']=Clients.objects.filter(is_active=True).order_by('company')
     if id != 'ALL':
         selected_client = Clients.objects.get(id=id)
         send_data['selected_client'] = selected_client
