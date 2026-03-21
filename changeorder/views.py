@@ -1667,6 +1667,7 @@ def change_order_send(request, id):
 
                 changeorder.sent_to = recipients
                 changeorder.save()
+                subject = f"GP COP{changeorder.cop_number}- {changeorder.job_number.job_name}"
                 body = f"Please see the attached change order for {changeorder.job_number}. Gerloff Painting COP #{changeorder.cop_number} - {changeorder.description}"
                 Email_Errors.objects.filter(
                     user=f"{request.user.first_name} {request.user.last_name}"
@@ -1674,7 +1675,7 @@ def change_order_send(request, id):
 
                 try:
                     Email.sendEmail(
-                        "COP Proposal",
+                        subject,
                         body,
                         recipients,
                         filepath
