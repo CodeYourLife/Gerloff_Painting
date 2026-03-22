@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect
 import json
 from changeorder.views import link_callback
 from datetime import datetime
+from decimal import Decimal
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
 from wallcovering.models import Wallcovering
@@ -22,6 +23,7 @@ import os
 from datetime import date
 from console.misc import Email
 from xhtml2pdf import pisa
+
 
 
 def sub_change_orders(request):
@@ -1204,6 +1206,18 @@ def subcontract(request, id):
                 SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
                                                 user=Employees.objects.get(user=request.user),
                                                 note=subcontract_notes)
+                subject = f"Job {subcontract.job_number.job_number} -PO#{subcontract.po_number} - Changed"
+                body = subcontract_notes
+                recipients = ["admin2@gerloffpainting.com", "bridgette@gerloffpainting.com"]
+                try:
+                    Email.sendEmail(subject,body, recipients, False)
+                    messages.success(
+                        request,
+                        f"Email Successfully Sent"
+                    )
+                except:
+                    messages.error(request,
+                                   f"There was an error sending email. Please tell Viktoria that you {subcontract_notes}")
             return redirect("subcontract", subcontract.id)
         if 'delete_now' in request.POST:
             item = SubcontractItems.objects.get(id=request.POST['delete_existing_item'])
@@ -1212,6 +1226,18 @@ def subcontract(request, id):
                                             user=Employees.objects.get(user=request.user),
                                             note=subcontract_notes)
             item.delete()
+            subject = f"Job {subcontract.job_number.job_number} -PO#{subcontract.po_number} - Changed"
+            body = subcontract_notes
+            recipients = ["admin2@gerloffpainting.com", "bridgette@gerloffpainting.com"]
+            try:
+                Email.sendEmail(subject, body, recipients, False)
+                messages.success(
+                    request,
+                    f"Email Successfully Sent"
+                )
+            except:
+                messages.error(request,
+                               f"There was an error sending email. Please tell Viktoria that you {subcontract_notes}")
             return redirect("subcontract", subcontract.id)
         if 'added_row' in request.POST:
             subcontract.is_closed = False
@@ -1252,6 +1278,18 @@ def subcontract(request, id):
                     SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
                                                     user=Employees.objects.get(user=request.user),
                                                     note=subcontract_notes)
+                    subject = f"Job {subcontract.job_number.job_number} -PO#{subcontract.po_number} - Changed"
+                    body = subcontract_notes
+                    recipients = ["admin2@gerloffpainting.com", "bridgette@gerloffpainting.com"]
+                    try:
+                        Email.sendEmail(subject, body, recipients, False)
+                        messages.success(
+                            request,
+                            f"Email Successfully Sent"
+                        )
+                    except:
+                        messages.error(request,
+                                       f"There was an error sending email. Please tell Viktoria that you {subcontract_notes}")
             return redirect("subcontract", subcontract.id)
         if 'new_note' in request.POST:
             SubcontractNotes.objects.create(subcontract=subcontract, date=date.today(),
@@ -2552,3 +2590,104 @@ def subcontractor_portal_email_signed_ticket(request,changeorder_id,subcontracto
     client_list = sorted(client_list, key=lambda x: x['name'].lower())
     return render(request, "subcontractor_portal_email_signed_ticket.html", {'client_list': client_list,
                                                        'extra_contacts': extra_contacts, 'changeorder': changeorder,'subcontractor':subcontractor})
+
+
+
+def subcontractor_payment_print(request, id):
+    payment = get_object_or_404(SubcontractorPayments, id=id)
+
+    invoices = (
+        SubcontractorInvoice.objects
+        .filter(payment=payment)
+        .select_related('subcontract', 'subcontract__subcontractor')
+        .prefetch_related('invoice_item__sov_item')
+        .order_by('subcontract__po_number', 'pay_app_number')
+    )
+
+    subcontract_ids = invoices.values_list('subcontract_id', flat=True).distinct()
+    subcontracts = (
+        Subcontracts.objects
+        .filter(id__in=subcontract_ids)
+        .select_related('subcontractor')
+        .order_by('po_number')
+    )
+
+    subcontract_sections = []
+
+    for subcontract in subcontracts:
+
+        subcontract_invoices_for_payment = invoices.filter(subcontract=subcontract)
+
+        total_retainage_to_date = subcontract.total_retainage()
+
+        retainage_this_check = sum(
+            [inv.retainage for inv in subcontract_invoices_for_payment if inv.retainage],
+            Decimal("0.00")
+        )
+
+        release_retainage_amount = sum(
+            [
+                inv.release_retainage
+                for inv in subcontract_invoices_for_payment
+                if inv.is_release_retainage and inv.release_retainage
+            ],
+            Decimal("0.00")
+        )
+
+        subcontract_items = (
+            SubcontractItems.objects
+            .filter(subcontract=subcontract, is_closed=False)
+            .order_by('id')
+        )
+
+        item_rows = []
+
+        for item in subcontract_items:
+            matching_invoice_items = (
+                SubcontractorInvoiceItem.objects
+                .filter(
+                    invoice__payment=payment,
+                    invoice__subcontract=subcontract,
+                    sov_item=item
+                )
+                .select_related('invoice')
+                .order_by('invoice__pay_app_number')
+            )
+
+            invoice_rows = []
+            for invoice_item in matching_invoice_items:
+                lump_sum_percent = None
+
+                if item.SOV_is_lump_sum and item.SOV_total_ordered not in [None, 0]:
+                    try:
+                        lump_sum_percent = (invoice_item.quantity / item.SOV_total_ordered) * Decimal("100")
+                    except Exception:
+                        lump_sum_percent = None
+
+                invoice_rows.append({
+                    'pay_app_number': invoice_item.invoice.pay_app_number,
+                    'quantity': invoice_item.quantity,
+                    'lump_sum_percent': lump_sum_percent,
+                })
+
+            item_rows.append({
+                'item': item,
+                'invoice_rows': invoice_rows,
+            })
+
+        pay_apps = invoices.filter(subcontract=subcontract).values_list('pay_app_number', flat=True).distinct()
+
+        subcontract_sections.append({
+            'subcontract': subcontract,
+            'item_rows': item_rows,
+            'pay_apps': pay_apps,
+            'total_retainage_to_date': total_retainage_to_date,
+            'retainage_this_check': retainage_this_check,
+            'release_retainage_amount': release_retainage_amount,
+        })
+
+    context = {
+        'payment': payment,
+        'subcontract_sections': subcontract_sections,
+    }
+    return render(request, 'subcontractor_payment_print.html', context)

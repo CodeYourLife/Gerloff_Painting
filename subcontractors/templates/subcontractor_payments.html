@@ -103,7 +103,9 @@ $(document).ready(function () {
 
 
 function populate_super_modal(payment_id){
-
+    var print_url = "{% url 'subcontractor_payment_print' 999999 %}";
+    print_url = print_url.replace('999999', payment_id);
+    document.getElementById("payment_print_button").href = print_url;
     $.ajax({
         method: 'GET',
         url: '/superintendent/super_ajax',
@@ -145,6 +147,7 @@ function populate_super_modal(payment_id){
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="title3"></h5>
+
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -156,6 +159,12 @@ function populate_super_modal(payment_id){
 
 
             <div class="modal-footer">
+                                <a id="payment_print_button"
+                   href="#"
+                   class="btn btn-primary"
+                   target="_blank">
+                    Print Payment Detail
+                </a>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
             </div>
         </div>

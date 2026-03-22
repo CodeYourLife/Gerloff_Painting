@@ -427,7 +427,7 @@ function check_form(){
 	<br>
 	<b>Vendor: </b>{{subcontract.subcontractor}}
 	<br>
-	<b>Job: </b> <a href = "{% url 'job_page' subcontract.job_number.job_number %}">{{subcontract.job_number}}</a>
+	<b>Job: </b> <a href = "{% url 'job_page' subcontract.job_number.job_number %}">{{subcontract.job_number.job_number}} {{subcontract.job_number.job_name}}</a>
 	<br><hr>
 
 	{% if notes %}

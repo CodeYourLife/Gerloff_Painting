@@ -29,4 +29,5 @@ path("subcontractor_portal_get_signature/<changeorder_id> <subcontractor_id>", v
 path("subcontractor_portal_email_for_signature/<changeorder_id> <subcontractor_id>", views.subcontractor_portal_email_for_signature, name='subcontractor_portal_email_for_signature'),
 path("subcontractor_portal_ewt_edit/<changeorder_id> <subcontractor_id>", views.subcontractor_portal_ewt_edit, name='subcontractor_portal_ewt_edit'),
 path("subcontractor_portal_email_signed_ticket/<changeorder_id> <subcontractor_id>", views.subcontractor_portal_email_signed_ticket, name='subcontractor_portal_email_signed_ticket'),
+path("subcontractor_payment_print/<id>", views.subcontractor_payment_print, name='subcontractor_payment_print'),
 ]
