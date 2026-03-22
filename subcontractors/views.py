@@ -2618,12 +2618,19 @@ def subcontractor_payment_print(request, id):
 
         subcontract_invoices_for_payment = invoices.filter(subcontract=subcontract)
 
+        invoice_total_this_check = sum(
+            [inv.final_amount for inv in subcontract_invoices_for_payment if inv.final_amount],
+            Decimal("0.00")
+        )
+
         total_retainage_to_date = subcontract.total_retainage()
 
-        retainage_this_check = sum(
+        retainage_this_check = 0-sum(
             [inv.retainage for inv in subcontract_invoices_for_payment if inv.retainage],
             Decimal("0.00")
         )
+
+        final_pay_amount = invoice_total_this_check + retainage_this_check
 
         release_retainage_amount = sum(
             [
@@ -2684,6 +2691,8 @@ def subcontractor_payment_print(request, id):
             'total_retainage_to_date': total_retainage_to_date,
             'retainage_this_check': retainage_this_check,
             'release_retainage_amount': release_retainage_amount,
+            'invoice_total_this_check': invoice_total_this_check,
+            'final_pay_amount': final_pay_amount,
         })
 
     context = {
