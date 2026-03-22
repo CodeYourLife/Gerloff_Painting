@@ -2623,7 +2623,7 @@ def subcontractor_payment_print(request, id):
             Decimal("0.00")
         )
 
-        total_retainage_to_date = subcontract.total_retainage()
+        total_retainage_to_date = subcontract.total_retainage_paid()
 
         retainage_this_check = 0-sum(
             [inv.retainage for inv in subcontract_invoices_for_payment if inv.retainage],
@@ -2683,17 +2683,17 @@ def subcontractor_payment_print(request, id):
             })
 
         pay_apps = invoices.filter(subcontract=subcontract).values_list('pay_app_number', flat=True).distinct()
-
-        subcontract_sections.append({
-            'subcontract': subcontract,
-            'item_rows': item_rows,
-            'pay_apps': pay_apps,
-            'total_retainage_to_date': total_retainage_to_date,
-            'retainage_this_check': retainage_this_check,
-            'release_retainage_amount': release_retainage_amount,
-            'invoice_total_this_check': invoice_total_this_check,
-            'final_pay_amount': final_pay_amount,
-        })
+        if invoice_total_this_check or retainage_this_check or final_pay_amount:
+            subcontract_sections.append({
+                'subcontract': subcontract,
+                'item_rows': item_rows,
+                'pay_apps': pay_apps,
+                'total_retainage_to_date': total_retainage_to_date,
+                'retainage_this_check': retainage_this_check,
+                'release_retainage_amount': release_retainage_amount,
+                'invoice_total_this_check': invoice_total_this_check,
+                'final_pay_amount': final_pay_amount,
+            })
 
     context = {
         'payment': payment,
