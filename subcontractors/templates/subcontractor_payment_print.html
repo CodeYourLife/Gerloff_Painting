@@ -95,6 +95,60 @@ th {
     border-bottom: 2px solid #28a745;
 }
 
+/* General summary rows */
+.summary-row td {
+    background: #fafafa;
+    border-top: 1px solid #ccc;
+    font-size: 12px;
+}
+
+/* Align labels and values nicely */
+.summary-label {
+    padding-right: 12px;
+    color: #444;
+}
+
+.summary-value {
+    font-weight: 500;
+}
+
+/* Subtotal slightly emphasized */
+.subtotal-row td {
+    border-top: 2px solid #bbb;
+}
+
+/* Retainage slightly muted */
+.retainage-row td {
+    color: #555;
+}
+
+/* FINAL PAY — main highlight */
+.final-pay-row td {
+    background: #fff3cd;   /* soft yellow */
+    font-weight: bold;
+    border-top: 2px solid #000;
+    border-bottom: 3px double #000;
+    font-size: 13px;
+}
+
+.final-label {
+    letter-spacing: 0.5px;
+}
+
+.final-value {
+    font-size: 14px;
+}
+
+/* Retainage release (keep your green but refine it) */
+.retainage-release-row td {
+    background-color: #e6f4ea;   /* softer green */
+    border-top: 2px solid #28a745;
+    border-bottom: 2px solid #28a745;
+    font-weight: 600;
+    color: #1e7e34;
+}
+
+
 </style>
 
 <div class="print-container">
@@ -124,19 +178,16 @@ th {
     <div class="subcontract-block">
 
 <div class="subcontract-title">
-    <div><strong>PO #:</strong> {{ section.subcontract.po_number }}</div>
+    <div><strong>PO #:</strong> {{ section.subcontract.po_number }} ({{ section.subcontract.job_number.job_number }} -
+        {{ section.subcontract.job_number.job_name }})</div>
+
 
     <div>
-        <strong>Job:</strong>
-        {{ section.subcontract.job_number.job_number }} -
-        {{ section.subcontract.job_number.job_name }}
-    </div>
-
-    <div>
-        <strong>Pay Apps:</strong>
+        <strong>Pay App:</strong>
         {% for p in section.pay_apps %}
             {{ p }}{% if not forloop.last %}, {% endif %}
         {% endfor %}
+        ------- Total Retainage To Date:  ${{ section.total_retainage_to_date|floatformat:2 }}
     </div>
 </div>
 
@@ -208,32 +259,51 @@ th {
                 {% endif %}
 
             {% endfor %}
+                <!-- 🔽 Financial Summary Block -->
 
-            <!-- ✅ ADD RETAINAGE ROWS RIGHT HERE -->
+                {% if section.release_retainage_amount and section.release_retainage_amount > 0 %}
+                <tr class="retainage-release-row">
+                    <td colspan="4" class="right summary-label">
+                        Retainage Released This Check
+                    </td>
+                    <td colspan="3" class="right summary-value">
+                        ${{ section.release_retainage_amount|floatformat:2 }}
+                    </td>
+                </tr>
+                {% endif %}
 
-            <tr class="table-total-row">
-                <td colspan="4" class="right"><strong>Total Retainage To Date</strong></td>
-                <td colspan="3" class="right">
-                    ${{ section.total_retainage_to_date|floatformat:2 }}
-                </td>
-            </tr>
+                <tr class="summary-row subtotal-row">
+                    <td colspan="4" class="right summary-label">
+                        Subtotal
+                    </td>
+                    <td colspan="3" class="right summary-value">
+                        ${{ section.invoice_total_this_check|floatformat:2 }}
+                    </td>
+                </tr>
 
-            <tr class="table-total-row">
-                <td colspan="4" class="right"><strong>Retainage In This Check</strong></td>
-                <td colspan="3" class="right">
-                    ${{ section.retainage_this_check|floatformat:2 }}
-                </td>
-            </tr>
-            {% if section.release_retainage_amount and section.release_retainage_amount > 0 %}
-            <tr class="retainage-release-row">
-                <td colspan="4" class="right">
-                    <strong>Retainage Released This Check</strong>
-                </td>
-                <td colspan="3" class="right">
-                    <strong>${{ section.release_retainage_amount|floatformat:2 }}</strong>
-                </td>
-            </tr>
-            {% endif %}
+                <tr class="summary-row retainage-row">
+                    <td colspan="4" class="right summary-label">
+                        Retainage
+                    </td>
+                    <td colspan="3" class="right summary-value">
+                        {% if section.retainage_this_check < 0 %}
+                            (${{ section.retainage_this_check|floatformat:2|cut:"-" }})
+                        {% else %}
+                            ${{ section.retainage_this_check|floatformat:2 }}
+                        {% endif %}
+<!--                        ${{ section.retainage_this_check|floatformat:2 }}-->
+                    </td>
+                </tr>
+
+                <tr class="final-pay-row">
+                    <td colspan="4" class="right final-label">
+                        Final Pay This Check
+                    </td>
+                    <td colspan="3" class="right final-value">
+                        ${{ section.final_pay_amount|floatformat:2 }}
+                    </td>
+                </tr>
+
             </tbody>
         </table>
 
