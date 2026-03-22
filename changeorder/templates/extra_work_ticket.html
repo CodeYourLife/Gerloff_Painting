@@ -429,6 +429,21 @@ function copyChangeOrderPath() {
     }
 }
 
+function copyMCPath() {
+    const input = document.getElementById("MCPath");
+    if (!input) return;
+
+    input.select();
+    input.setSelectionRange(0, 99999);
+
+    try {
+        document.execCommand("copy");
+        alert("Folder path copied to clipboard");
+    } catch {
+        alert("Copy not supported in this browser");
+    }
+}
+
 function check_booking_data1() {
 
     const approved = document.getElementById("is_approved_to_bill");
@@ -1139,11 +1154,22 @@ function not_coded_yet() {
            value="{{ folder_path }}"
            style="position:absolute; left:-9999px;">
 
+        <input type="text" id="MCPath"
+           value="{{ mc_folder_path }}"
+           style="position:absolute; left:-9999px;">
+
     <button type="button"
             class="btn btn-secondary btn-sm"
             onclick="copyChangeOrderPath()">
-        📋 Copy Folder Path
+        📋 Copy Trinity Folder Path
     </button>
+    {% if mc_folder_path %}
+        <button type="button"
+            class="btn btn-secondary btn-sm"
+            onclick="copyMCPath()">
+        📋 Copy MC Folder Path
+    </button>
+    {% endif %}
     {% endif %}
 
     <div class="section-divider"></div>
@@ -1430,26 +1456,6 @@ function not_coded_yet() {
     </div>
 
 </div>
-<!--            {% if changeorder.is_t_and_m == True %}-->
-<!--                {% if changeorder.digital_ticket_completed %}-->
-<!--                    <form action="{% url 'price_ewt' changeorder.id %}"><input class="btn btn-primary btn-lg" type="submit"-->
-<!--                                                               value="Send TM Price Now"/></form>-->
-<!--                {% else %}-->
-<!--                    <form action="{% url 'price_old_ewt' changeorder.id %}"><input class="btn btn-primary btn-sm" type="submit"-->
-<!--                                                               value="Send TM Price Now"/></form>-->
-<!--                {% endif %}-->
-<!--            {% else %}-->
-<!--                <form action="{% url 'change_order_send' changeorder.id %}">-->
-<!--                <input class="btn btn-primary btn-sm" type="submit" style="margin-bottom: 5px" value="Send Now"/></form>-->
-<!--            {% endif %}-->
-<!--            {% if tmproposal %}-->
-<!--            {% if tmproposal.status == "Pending Approval" %}-->
-<!--                <a href="{% url 'price_ewt' changeorder.id %}"-->
-<!--                   class="btn btn-success btn-lg">-->
-<!--                    Approve T&M Proposal-->
-<!--                </a>-->
-<!--            {% endif %}-->
-<!--            {% endif %}-->
 
         {% else %} <!--change order sent-->
 
@@ -1473,10 +1479,12 @@ function not_coded_yet() {
                 {% if changeorder.is_t_and_m == True %}<!-- 2321 t&m -->
                     <div class="container" style="margin-bottom: 20px;">
                     <div class="row h-100 w-100 d-flex justify-content-left">
+                    {% if tmproposal %}
                     <div style="padding: 5px" class="form-group">
                     <form action="{% url 'preview_TMProposal' tmproposal.id %}">
                         <input type="submit" class="btn btn-secondary btn-sm" style="margin-bottom: 5px" name="view_proposal" value="Re-Send Proposal"/></form>
                     </div>
+                    {% endif %}
                     <div style="padding: 5px" class="form-group">
                     <form action="{% url 'price_ewt' changeorder.id %}">
 <!--                    <form action="{% url 'revise_TM_COP' changeorder.id %}">-->

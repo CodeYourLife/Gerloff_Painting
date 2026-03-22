@@ -1010,10 +1010,10 @@ def job_page(request, jobnumber):
     #reorganize this into two sections, pending tickets and change orders not approved
 
     tickets_not_done = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
-                                                   is_ticket_signed=False).order_by('id')
+                                                   is_ticket_signed=False,is_closed=False).order_by('id')
     send_data['tickets_not_done'] = tickets_not_done
     send_data['tickets_not_done_count'] = tickets_not_done.count()
-    open_changeorders = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,is_approved_to_bill = False).order_by('id')
+    open_changeorders = ChangeOrders.objects.filter(job_number=selectedjob, is_approved_to_bill = False,is_closed=False).order_by('id')
     send_data['open_changeorders'] = open_changeorders
     send_data['open_changeorders_count'] = open_changeorders.count()
     # tickets_not_signed = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
@@ -1512,3 +1512,75 @@ def jobsite_safety_inspection_detail(request, inspection_id):
         "jobsite_safety_inspection_detail.html",
         send_data
     )
+
+from decimal import Decimal, InvalidOperation
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+
+from jobs.models import Jobs
+from changeorder.models import ChangeOrders
+
+
+@login_required
+def close_job(request, job_number):
+    job = get_object_or_404(Jobs, job_number=job_number)
+
+    if request.method != "POST":
+        return redirect('job_page', jobnumber=job.job_number)
+
+    open_change_orders = ChangeOrders.objects.filter(
+        job_number=job,
+        is_closed=False,
+        is_approved=False
+    ).exists()
+
+    if open_change_orders:
+        messages.error(request, "This job cannot be closed because there are open change orders.")
+        return redirect('job_page', jobnumber=job.job_number)
+
+    raw_cost = request.POST.get("cumulative_costs_at_closing", "").strip()
+
+    try:
+        cumulative_costs = Decimal(raw_cost)
+    except (InvalidOperation, TypeError):
+        messages.error(request, "Please enter a valid total job cost.")
+        return redirect('job_page', jobnumber=job.job_number)
+
+    job.is_closed = True
+    job.ar_closed_date = date.today()
+    job.cumulative_costs_at_closing = cumulative_costs
+    job.save()
+    if job.current_contract_amount() != 0:
+        final_contract_amount = int(job.current_contract_amount())
+        profit = final_contract_amount - cumulative_costs
+        profit_percent = round((profit / final_contract_amount) * 100,2)
+    else:
+        final_contract_amount = 0
+        profit_percent = 0
+    subject = f"Job Closed - {job.job_number} {job.job_name}"
+    body = (
+        "Job Closed in Trinity.\n\n"
+        f"{job.job_number} {job.job_name}\n"
+        f"\n"
+        f"Final Contract Amount: ${final_contract_amount}\n"
+        f"\n"
+        f"Final Job Costs: ${cumulative_costs}\n"
+        f"\n"
+        f"Profit: {profit_percent}%\n"
+        f"\n"
+        f"Please close job in Sirius and MC"
+    )
+    recipients = ["admin2@gerloffpainting.com", "bridgette@gerloffpainting.com","gene@gerloffpainting.com","victor@gerloffpainting.com","joe@gerlofpainting.com"]
+
+    try:
+        Email.sendEmail(subject, body, recipients, False)
+        messages.success(
+            request,
+            f"Email Successfully Sent and Job Closed."
+        )
+    except:
+        messages.error(request,
+                       f"There was an error sending email. Please manually send email. Final Contract Amount: {final_contract_amount}.Profit: {profit_percent}% ")
+
+    return redirect('job_page', jobnumber=job.job_number)

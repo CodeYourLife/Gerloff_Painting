@@ -63,7 +63,8 @@ class ChangeOrders(models.Model):
     approval_explanation = models.TextField(null=True, blank=True)
     price_before_bond = models.DecimalField(
         max_digits=9, decimal_places=2, null=True, blank=True)
-    created_by_subcontractor = models.ForeignKey('subcontractors.Subcontractors', on_delete=models.PROTECT,null=True)
+    created_by_subcontractor = models.ForeignKey('subcontractors.Subcontractors', on_delete=models.PROTECT,null=True,blank=True)
+    originated_in_management_console = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.job_number} {self.cop_number}"

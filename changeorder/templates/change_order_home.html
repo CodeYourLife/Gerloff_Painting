@@ -212,57 +212,57 @@ function new_filter_now(){
     </form>
   </div>
 </div>
-<div class="card mb-3">
-  <div class="card-header">
-    🎨 Status Key
-  </div>
-  <div class="card-body py-2">
+<!--<div class="card mb-3">-->
+<!--  <div class="card-header">-->
+<!--    🎨 Status Key-->
+<!--  </div>-->
+<!--  <div class="card-body py-2">-->
 
-    <div class="d-flex flex-wrap align-items-center">
+<!--    <div class="d-flex flex-wrap align-items-center">-->
 
-      <div class="mr-4 mb-2">
-        <span class="badge badge-warning badge-status">
-          Needs Action
-        </span>
-        <small class="ml-2 text-muted">
-          Waiting on GP
-        </small>
-      </div>
+<!--      <div class="mr-4 mb-2">-->
+<!--        <span class="badge badge-warning badge-status">-->
+<!--          Needs Action-->
+<!--        </span>-->
+<!--        <small class="ml-2 text-muted">-->
+<!--          Waiting on GP-->
+<!--        </small>-->
+<!--      </div>-->
 
-      <div class="mr-4 mb-2">
-        <span class="badge badge-danger badge-status">
-          Ticket Issue
-        </span>
-        <small class="ml-2 text-muted">
-          Ticket Not Complete
-        </small>
-      </div>
+<!--      <div class="mr-4 mb-2">-->
+<!--        <span class="badge badge-danger badge-status">-->
+<!--          Ticket Issue-->
+<!--        </span>-->
+<!--        <small class="ml-2 text-muted">-->
+<!--          Ticket Not Complete-->
+<!--        </small>-->
+<!--      </div>-->
 
-      <div class="mr-4 mb-2">
-        <span class="badge badge-success badge-status">
-          Sent
-        </span>
-        <small class="ml-2 text-muted">
-          Not Approved
-        </small>
-      </div>
+<!--      <div class="mr-4 mb-2">-->
+<!--        <span class="badge badge-success badge-status">-->
+<!--          Sent-->
+<!--        </span>-->
+<!--        <small class="ml-2 text-muted">-->
+<!--          Not Approved-->
+<!--        </small>-->
+<!--      </div>-->
 
-      <div class="mr-4 mb-2">
-        <span class="badge badge-primary badge-status">
-          Approved
-        </span>
-      </div>
+<!--      <div class="mr-4 mb-2">-->
+<!--        <span class="badge badge-primary badge-status">-->
+<!--          Approved-->
+<!--        </span>-->
+<!--      </div>-->
 
-      <div class="mr-4 mb-2">
-        <span class="badge badge-dark badge-status">
-          Voided
-        </span>
-      </div>
+<!--      <div class="mr-4 mb-2">-->
+<!--        <span class="badge badge-dark badge-status">-->
+<!--          Voided-->
+<!--        </span>-->
+<!--      </div>-->
 
-    </div>
+<!--    </div>-->
 
-  </div>
-</div>
+<!--  </div>-->
+<!--</div>-->
     <div class="card">
         <div class="card-header">📋 Change Orders</div>
         <div class="card-body">
@@ -278,7 +278,7 @@ function new_filter_now(){
                         <th>Description</th>
                         <th>Status</th>
                         <th>Date Sent</th>
-                        <th>Approved</th>
+<!--                        <th>Approved</th>-->
                         <th>GC #</th>
                         <th>Price</th>
                     </tr>
@@ -339,13 +339,13 @@ function new_filter_now(){
                                     {% endif %}
                                 </td>
 
-                                <td>
-                                    {% if changeorder.is_approved %}
-                                        <span class="badge badge-success badge-status">Yes</span>
-                                    {% else %}
-                                        <span class="badge badge-light badge-status">No</span>
-                                    {% endif %}
-                                </td>
+<!--                                <td>-->
+<!--                                    {% if changeorder.is_approved %}-->
+<!--                                        <span class="badge badge-success badge-status">Yes</span>-->
+<!--                                    {% else %}-->
+<!--                                        <span class="badge badge-light badge-status">No</span>-->
+<!--                                    {% endif %}-->
+<!--                                </td>-->
 
                                 <td>
                                     {% if changeorder.gc_number %}

@@ -158,6 +158,7 @@ def batch_approve_co(request, id):
     changeordersjson = allchangeorders.values()
     send_data['changeordersjson'] = json.dumps(list(changeordersjson), cls=DjangoJSONEncoder)
     if request.method == 'POST':
+        send_email = False
         gc_number_exists = False
         approved_for_billing = False
         approval_explanation = request.POST['notes']
@@ -168,13 +169,14 @@ def batch_approve_co(request, id):
         else:
             if 'approved_for_billing' in request.POST:
                 approved_for_billing = True
-
+        email_message = "The following COPs have been approved for billing. "
         for x in request.POST:
             if x[0:10] == 'select_cop':
                 item_number = x[10:len(x)]
                 selected_cop = ChangeOrders.objects.get(id=request.POST['select_cop' + item_number])
                 selected_cop.is_approved = True
                 selected_cop.date_approved = date.today()
+                selected_cop.price = request.POST['price' + item_number]
                 if gc_number_exists:
                     selected_cop.gc_number = gc_number
                     selected_cop.is_approved_to_bill = True
@@ -183,6 +185,7 @@ def batch_approve_co(request, id):
                 elif approved_for_billing:
                     selected_cop.is_approved_to_bill = True
                     selected_cop.approval_explanation = approval_explanation
+                    selected_cop.gc_number = "None"
                     note = "Approved for billing, but no GC Number! " + request.POST[
                         'notes'] + ". Approved price: " + str(request.POST['price' + item_number])
                 else:
@@ -190,6 +193,9 @@ def batch_approve_co(request, id):
                         'notes'] + ". Approved price: " + str(request.POST['price' + item_number])
                     selected_cop.approval_explanation = approval_explanation
                 selected_cop.save()
+                if selected_cop.is_approved_to_bill:
+                    send_email = True
+                    email_message += f"COP {selected_cop.cop_number}-{selected_cop.description}-${selected_cop.price}. "
                 ChangeOrderNotes.objects.create(cop_number=selected_cop, date=date.today(),
                                                 user=Employees.objects.get(user=request.user), note=note)
                 if 'upload_file' in request.FILES:
@@ -197,6 +203,18 @@ def batch_approve_co(request, id):
                     fn = os.path.basename(fileitem.name)
                     fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder",str(selected_cop.job_number.job_number)+ " COP #" + str(selected_cop.cop_number), fn)
                     open(fn2, 'wb').write(fileitem.file.read())
+        if send_email:
+            if not gc_number_exists:
+                gc_number="None"
+            subject = "COP APPROVED FOR BILLING"
+            email_message += f" GC# {gc_number}. {request.POST['notes']}"
+            recipients= ["bridgette@gerloffpainting.com"]
+            try:
+                Email.sendEmail(subject, email_message, recipients, False)
+                messages.success(request, "Email Sent to Bridgette")
+            except:
+                messages.error(request,
+                    "There was a problem sending the email to Bridgette. Please tell her it is approved.")
         return redirect('extra_work_ticket', id=selected_cop.id)
     return render(request, 'batch_approve_co.html', send_data)
 
@@ -320,9 +338,9 @@ def print_TMProposal(request, id):
                         files=[]
                         files.append(f"{path}/GP COP {changeorder.cop_number} {changeorder.description} {date.today()}.pdf")
                         files.append(f"{path}/" + request.POST['filename'])
-                        Email.sendEmail2("Change Order Proposal", "Please find the TM Proposal attached", recipients,files)
-                        # Email.sendEmail("Change Order Proposal", "Please find the TM Proposal attached", recipients,
-                        #                 f"{path}/COP_{changeorder.cop_number}_{date.today()}.pdf")
+                        email_subject = f"GP COP{changeorder.cop_number}- {changeorder.job_number.job_name}"
+                        email_body = f"Please find the T&M Proposal attached for job {changeorder.job_number.job_name}"
+                        Email.sendEmail2(email_subject, email_body, recipients,files)
                         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                         user=Employees.objects.get(user=request.user),
                                                         note=f"COP Sent for ${changeorder.price}. Emailed to {recipients}" )
@@ -2228,6 +2246,8 @@ def extra_work_ticket(request, id):
     except Exception as e:
         send_data['no_folder_contents'] = True
     send_data['folder_path'] = rf"\\gp-webserver\trinity\changeorder\{changeorder.job_number.job_number} COP #{changeorder.cop_number}"
+    if changeorder.originated_in_management_console:
+        send_data['mc_folder_path'] = rf"\\gp2022\company\jobs\open jobs\{job.job_number} {job.job_name}\Contract & Billings\Change Order Proposals\GP COP {changeorder.cop_number} {changeorder.description}"
     send_data['file_count'] = file_count
     tmproposal = TMProposal.objects.filter(change_order=changeorder).first()
     if tmproposal:

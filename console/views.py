@@ -1,42 +1,42 @@
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.decorators import login_required
-import changeorder.models
-import employees.models
-import equipment.models
-import jobs.models
-import openpyxl
-
-from employees.models import *
 from .models import *
-from dateutil.parser import parse as parse_date
-from django.contrib.auth.models import User, auth
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.db import transaction
-from django.utils import timezone
-import os
-import os.path
-import csv
-from pathlib import Path
-from console.misc import createfolder
-from jobs.models import *
 from accounts.models import *
 from changeorder.models import *
+from console.misc import createfolder, Email
 from console.models import *
-from console.misc import createfolder
-from employees.models import *
+from datetime import datetime,date
+from dateutil.parser import parse as parse_date
+from decimal import Decimal, InvalidOperation
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User, auth
+from django.db import transaction
+from django.http import HttpResponse
+from django.shortcuts import render, redirect
+from django.utils import timezone
 from employees.forms import SiriusUploadForm,ClockSharkUploadForm, ToolboxTalksUploadForm
-from equipment.models import *
+from employees.models import *
+from jobs.models import *
+from jobs.models import Jobs
+from openpyxl import load_workbook
+from pathlib import Path
 from rentals.models import *
 from subcontractors.models import *
 from submittals.models import *
 from superintendent.models import *
 from wallcovering.models import *
-import random
-from django.http import HttpResponse
+import changeorder.models
+import csv
+import datetime
+import employees.models
+import equipment.models
+import jobs.models
 import json
-from datetime import datetime,date
-from console.misc import Email
+import openpyxl
+import os
+import os.path
+import random
+
+
 
 @login_required(login_url='/accounts/login')
 def seperate_test(request):
@@ -1282,3 +1282,144 @@ def tm_prices_master(request):
         data[c] = TMPricesMaster.objects.filter(category=c).order_by("item")
 
     return render(request, "tm_prices_master.html", {"data": data})
+
+
+def parse_decimal(value):
+    if value in [None, ""]:
+        return None
+    try:
+        return Decimal(str(value).replace(",", "").strip())
+    except (InvalidOperation, AttributeError, TypeError, ValueError):
+        return None
+
+
+def parse_date(value):
+    if value in [None, ""]:
+        return None
+
+    if isinstance(value, datetime.datetime):
+        return value.date()
+
+    if isinstance(value, datetime.date):
+        return value
+
+    for fmt in ["%Y-%m-%d", "%m/%d/%Y", "%m/%d/%y"]:
+        try:
+            return datetime.datetime.strptime(str(value).strip(), fmt).date()
+        except ValueError:
+            continue
+
+    return None
+
+
+def parse_bool(value):
+    if isinstance(value, bool):
+        return value
+
+    if value in [None, ""]:
+        return False
+
+    return str(value).strip().lower() in ["true", "1", "yes", "y"]
+
+
+@transaction.atomic
+def import_change_orders(request):
+    if request.method == "POST":
+        if "file" not in request.FILES:
+            messages.error(request, "No file was uploaded.")
+            return redirect("admin_home")
+
+        excel_file = request.FILES["file"]
+
+        try:
+            wb = load_workbook(excel_file, data_only=True)
+            ws = wb.active
+
+            created_count = 0
+            updated_count = 0
+            skipped_rows = []
+
+            headers = [cell.value for cell in ws[1]]
+
+            for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                row_data = dict(zip(headers, row))
+
+                excel_job_number = row_data.get("job_number")
+                cop_number = row_data.get("cop_number")
+
+                if not excel_job_number:
+                    skipped_rows.append(f"Row {row_num}: missing job_number")
+                    continue
+
+                if cop_number in [None, ""]:
+                    skipped_rows.append(f"Row {row_num}: missing cop_number")
+                    continue
+
+                job = Jobs.objects.filter(job_number=str(excel_job_number).strip()).first()
+                if not job:
+                    skipped_rows.append(f"Row {row_num}: job not found ({excel_job_number})")
+                    continue
+
+                defaults = {
+                    "description": row_data.get("description") or "",
+                    "price": parse_decimal(row_data.get("price")),
+                    "date_sent": parse_date(row_data.get("date_sent")),
+                    "date_approved": parse_date(row_data.get("date_approved")),
+                    "gc_number": str(row_data.get("gc_number")).strip() if row_data.get("gc_number") not in [None, ""] else "",
+                    "is_closed": parse_bool(row_data.get("is_closed")),
+                    "notes": "Imported from Management Console",
+                    "is_work_complete": parse_bool(row_data.get("is_work_complete")),
+                    "is_t_and_m": parse_bool(row_data.get("is_t_and_m")),
+                    "is_ticket_signed": parse_bool(row_data.get("is_ticket_signed")),
+                    "date_signed": parse_date(row_data.get("date_signed")),
+                    "date_week_ending": parse_date(row_data.get("date_week_ending")),
+                    "is_approved_to_bill": parse_bool(row_data.get("is_approved_to_bill")),
+                    "originated_in_management_console": parse_bool(row_data.get("originated_in_management_console")),
+                    "is_approved": parse_bool(row_data.get("is_approved")),
+                }
+
+                obj, created = ChangeOrders.objects.update_or_create(
+                    job_number=job,
+                    cop_number=int(cop_number),
+                    defaults=defaults
+                )
+                createfolder(
+                    "changeorder/" + str(obj.job_number.job_number) + " COP #" + str(obj.cop_number))
+
+                excel_note = row_data.get("Notes")
+
+                if excel_note:
+                    ChangeOrderNotes.objects.create(
+                        cop_number=obj,  # THIS is the ChangeOrder instance
+                        date=date.today(),
+                        user=Employees.objects.get(user=request.user),
+                        note="Imported from Management Console"
+                    )
+                    ChangeOrderNotes.objects.create(
+                        cop_number=obj,  # THIS is the ChangeOrder instance
+                        date=date.today(),
+                        user=Employees.objects.get(user=request.user),
+                        note=str(excel_note)
+                    )
+                if created:
+                    created_count += 1
+                else:
+                    updated_count += 1
+
+            messages.success(
+                request,
+                f"Import complete. Created: {created_count}, Updated: {updated_count}, Skipped: {len(skipped_rows)}"
+            )
+
+            for msg in skipped_rows[:20]:
+                messages.warning(request, msg)
+
+        except Exception as e:
+            messages.error(request, f"Import failed: {str(e)}")
+
+        return redirect("admin_home")
+
+    return render(request, "import_change_orders.html")
+
+
+
