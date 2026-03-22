@@ -287,6 +287,14 @@ class Subcontracts(models.Model):
                 total = total + x.retainage
         return total
 
+    def total_retainage_paid(self):
+        #used when showing total retainage in the payments section
+        total = 0
+        for x in SubcontractorInvoice.objects.filter(subcontract=self, payment__isnull=False):
+            if x.retainage:
+                total = total + x.retainage
+        return total
+
 
     def total_retainage_prior(self):
         #saturday thru friday
