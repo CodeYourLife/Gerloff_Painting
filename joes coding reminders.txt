@@ -1,0 +1,3 @@
+python manage.py cleanup_tools delete_cos
+
+
