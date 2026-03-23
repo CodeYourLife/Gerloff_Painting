@@ -40,7 +40,7 @@ def start_date_change(job, newdate, status, note, author, did_date_change, notif
                 recipients.append("victor@gerloffpainting.com")
             email_body = "Start Date For " + job.job_number + " - " + job.job_name + " changed to " + newdate + ". " + note + ". " + statusnote + ". By " + str(author)
             try:
-                Email.sendEmail("Job Info Changed", email_body, recipients, False)
+                Email.sendEmail("Job Info Changed", email_body, recipients, False,"operations@gerloffpainting.com")
                 success=True
             except:
                 success=False
@@ -58,7 +58,7 @@ def start_date_change(job, newdate, status, note, author, did_date_change, notif
                 recipients.append("victor@gerloffpainting.com")
             email_body = "Status changed for " + job.job_number + " - " + job.job_name + ". " + statusnote + ". " + note + ". By " + author
             try:
-                Email.sendEmail("Job Info Changed", email_body, recipients, False)
+                Email.sendEmail("Job Info Changed", email_body, recipients, False,"operations@gerloffpainting.com")
                 success=True
             except:
                 success=False
@@ -75,7 +75,7 @@ def gerloff_super_change(job, superintendent, author):
         job) + "\n" + str(job.client.company)
     success=False
     try:
-        Email.sendEmail("New Job - " + job.job_name, email_body, ['joe@gerloffpainting.com'], False)
+        Email.sendEmail("New Job - " + job.job_name, email_body, ['joe@gerloffpainting.com'], False,"operations@gerloffpainting.com")
         success=True
     except:
         success=False

@@ -141,8 +141,10 @@ def rental_page(request, id, reverse):
             message = "Please call off this rental. " + rental.item + ". From Job -" + rental.job_number.job_name + "\n " + \
                       request.POST['off_rent_note']
             Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
+            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
             try:
-                Email.sendEmail("Call Off Rent", message, ["warehouse@gerloffpainting.com"], False)
+                Email.sendEmail("Call Off Rent", message, ["warehouse@gerloffpainting.com"], False,sender)
                 error_message = "Your email to call off rent was sent successfully!"
             except:
                 error_message = "ERROR! Your email was not sent.  Please call the warehouse and let them know to call it off rent."

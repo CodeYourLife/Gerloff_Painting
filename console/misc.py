@@ -21,11 +21,12 @@ import winshell
 from win32com.client import Dispatch
 
 class Email:
-    def sendEmail(title, body, to, filename):
+    def sendEmail(title, body, to, filename,sender2):
         msg = MIMEMultipart()
         # sender = to
         sender = 'joe@gerloffpainting.com'
-        msg['From'] = 'operations@gerloffpainting.com'
+        msg['From'] = sender2
+        # msg['From'] = 'operations@gerloffpainting.com'
         msg['To'] = ", ".join(to)
         msg['Subject'] = title
         msg.attach(MIMEText(body, 'plain'))
@@ -41,11 +42,12 @@ class Email:
         s.sendmail(sender, to, text)
         s.quit()
 
-    def sendEmail2(title, body, to, filename):
+    def sendEmail2(title, body, to, filename,sender2):
         msg = MIMEMultipart()
         # sender = to
         sender = 'joe@gerloffpainting.com'
-        msg['From'] = 'operations@gerloffpainting.com'
+        # msg['From'] = 'operations@gerloffpainting.com'
+        msg['From'] = sender2
         msg['To'] = ", ".join(to)
         msg['Subject'] = title
         msg.attach(MIMEText(body, 'plain'))
@@ -133,7 +135,8 @@ def send_safety_inspection_email(inspection, user):
         subject,
         email_body,
         list(recipients),  # convert set → list
-        False
+        False,
+        "operations@gerloffpainting.com"
     )
 
     JobNotes.objects.create(job_number=inspection.job,

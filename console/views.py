@@ -354,7 +354,7 @@ def admin_home(request):
             send_data['emailconfirmation'] = True
             Email.sendEmail("Trinity Email Test",
                             "Trinity Test Email sent on " + datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-                            ['joe@gerloffpainting.com', 'doug@hrdata.com'], False)
+                            ['joe@gerloffpainting.com', 'doug@hrdata.com'], False,"operations@gerloffpainting.com")
 
     send_data['employees'] = Employees.objects.filter(user__isnull=True, active=True)
     send_data['subs'] = Subcontractors.objects.filter(is_inactive=False)

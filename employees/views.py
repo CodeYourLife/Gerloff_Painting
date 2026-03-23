@@ -1059,9 +1059,11 @@ def respirator_clearance_section6(request):
         message = "Respirator Clearance Completed. \n Employee: " + employee.first_name + employee.last_name
         recipients = ["skip@gerloffpainting.com","bridgette@gerloffpainting.com"]
         Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
+        check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+        sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
         try:
             Email.sendEmail("Respirator Clearance Completed", message,
-                            recipients, False)
+                            recipients, False,sender)
             message = "Your email about the respirator clearance was sent successfully"
         except:
             message = "Error! Your email about the respirator clearance failed to send. Please call them and let them know it was completed."

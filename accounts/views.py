@@ -87,7 +87,7 @@ def login(request):
                 TemporaryPassword.objects.filter(user=forgottenUser.id).update(is_active=False)
                 #create a new temporary password
                 TemporaryPassword.objects.create(user=forgottenUser, expiration= expiration, password=randomPassword)
-                Email.sendEmail("Forgot Password Alert", f"Someone requested their password. If this is not you, please contact your admin. Go to this page http://184.183.68.156/accounts/forgot_password and use this temporary passcode to reset your password {randomPassword} that will expire after one hour from this email's receipt.", [employee.email], False)
+                Email.sendEmail("Forgot Password Alert", f"Someone requested their password. If this is not you, please contact your admin. Go to this page http://184.183.68.156/accounts/forgot_password and use this temporary passcode to reset your password {randomPassword} that will expire after one hour from this email's receipt.", [employee.email], False,"operations@gerloffpainting.com")
                 send_data['message'] = "Email sent to user with their password"
             except Exception as e:
                 send_data['message'] = "Unable to send email, check username and try again or contact your admin"

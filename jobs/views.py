@@ -187,9 +187,11 @@ def update_job_info(request, jobnumber):
                             message = message + "\n -" + x.item + " GP Number #" + x.number
                         else:
                             message = message + "\n -" + x.item + " -No GP Number! "
+                    check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                    sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                     try:
                         Email.sendEmail("Closed Job - " + selectedjob.job_name, message,
-                                        recipients, False)
+                                        recipients, False,sender)
                         success = True
                     except:
                         send_data['error_message'] = "Email Failed to send. Please let warehouse know. " + message
@@ -202,9 +204,11 @@ def update_job_info(request, jobnumber):
                             message += "\n -" + x.subcontractor.company + " - PO# " + x.po_number + "! "
                         else:
                             message += "\n -" + x.subcontractor.company + " - PO# N/A!"
+                    check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                    sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                     try:
                         Email.sendEmail("Closed Job Error- " + selectedjob.job_name, message,
-                                        recipients, False)
+                                        recipients, False,sender)
                         success = True
                     except:
                         send_data['error_message'] = "Email Failed to send. Please note that the job can't be closed because there are open subcontractors"
@@ -504,9 +508,11 @@ def audit_MC_open_jobs(request):
                                 message = message + "\n -" + y.item + " GP Number #" + y.number
                             else:
                                 message = message + "\n -" + y.item + " -No GP Number! "
+                        check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                        sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                         try:
                             Email.sendEmail("Closed Job - " + x.job_name, message,
-                                            recipients, False)
+                                            recipients, False,sender)
                         except:
                             error_message += message
                     if Subcontracts.objects.filter(is_closed=False, job_number=x).exists():
@@ -519,9 +525,11 @@ def audit_MC_open_jobs(request):
                                 message += "\n -" + y.subcontractor.company + " - PO# " + y.po_number + "! "
                             else:
                                 message += "\n -" + y.subcontractor.company + " - PO# N/A!"
+                        check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                        sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                         try:
                             Email.sendEmail("Closed Job Error- " + x.job_name, message,
-                                            recipients, False)
+                                            recipients, False,sender)
                         except:
                             error_message += message
 
@@ -693,10 +701,12 @@ def upload_new_job(request):
                                     type="auto_booking_note", date=date.today(),
                                     user=Employees.objects.get(user=request.user))
             email_body = "New Job Booked \n" + job.job_number + "\n" + job.job_name + "\n" + job.client.company
+            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
             try:
                 Email.sendEmail("New Job - " + job.job_name, email_body,
                                 ['admin1@gerloffpainting.com', 'admin2@gerloffpainting.com', 'joe@gerloffpainting.com'],
-                                False)
+                                False,sender)
                 success = True
             except:
                 success = False
@@ -858,8 +868,10 @@ def job_page(request, jobnumber):
                         recipients.append("victor@gerloffpainting.com")
                 else:
                     recipients.append("victor@gerloffpainting.com")
+                check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                 try:
-                    Email.sendEmail("Competent Person Assigned", message, recipients, False)
+                    Email.sendEmail("Competent Person Assigned", message, recipients, False,sender)
                     send_data['error_message'] = "Email announcing competent person was successfully sent. "
                 except:
                     send_data['error_message'] = "ERROR! Your Email announcing competent person was NOT sent. Please tell the super. "
@@ -887,8 +899,10 @@ def job_page(request, jobnumber):
                                        note="Please call off-rent. " + request.POST['off_rent_note'])
             message = "Please call off this rental. " + selected_rental.item + ". From Job -" + selected_rental.job_number.job_name + "\n " + \
                       request.POST['off_rent_note']
+            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
             try:
-                Email.sendEmail("Call Off Rent", message, ["warehouse@gerloffpainting.com"], False)
+                Email.sendEmail("Call Off Rent", message, ["warehouse@gerloffpainting.com"], False,sender)
                 send_data['error_message'] = "Email requesting off rent was successfully sent. "
             except:
                 send_data['error_message'] = "ERROR! Your Email requesting off rent was NOT sent. Please call the warehouse. "
@@ -896,12 +910,14 @@ def job_page(request, jobnumber):
             if request.POST['select_status'] == 'nothing_done':
                 message = "Labor is not done."
                 if selectedjob.is_labor_done == True:
+                    check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                    sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                     try:
                         Email.sendEmail("Labor not done - " + selectedjob.job_name,
                                         "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is not done. Please make sure to Un-Click the LABOR DONE box in management console. " +
                                         request.POST['closed_note'],
                                         ['bridgette@gerloffpainting.com',
-                                         'victor@gerloffpainting.com'], False)
+                                         'victor@gerloffpainting.com'], False,sender)
                         send_data['error_message'] = "Email about labor not done was successfully sent. "
                     except:
                         send_data['error_message'] = "ERROR! Email about labor not done was NOT sent. Please call the office."
@@ -923,12 +939,14 @@ def job_page(request, jobnumber):
             if request.POST['select_status'] == 'done_done':
                 message = "Labor is 100% done."
                 try:
+                    check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                    sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                     Email.sendEmail("Labor Done - " + selectedjob.job_name,
                                     "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is 100% Done. Please make sure to Click the Labor Done button in Management Console. " +
                                     request.POST['closed_note'],
                                     ['admin2@gerloffpainting.com',
                                      'bridgette@gerloffpainting.com',
-                                     'victor@gerloffpainting.com'], False)
+                                     'victor@gerloffpainting.com'], False,sender)
                     send_data['error_message'] = "Labor Complete Email was successfully sent. "
                 except:
                     send_data['error_message'] = "ERROR! Your email about job being complete was NOT sent.  Please call the office. "
@@ -1256,7 +1274,9 @@ def register(request):
                                 user=Employees.objects.get(user=request.user))
         email_body = "New Job Booked \n" + job.job_number + "\n" + job.job_name + "\n" + job.client.company
         try:
-            Email.sendEmail("New Job - " + job.job_name, email_body, ['joe@gerloffpainting.com'], False)
+            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+            Email.sendEmail("New Job - " + job.job_name, email_body, ['joe@gerloffpainting.com'], False,sender)
             success = True
         except:
             success = False
@@ -1571,10 +1591,12 @@ def close_job(request, job_number):
         f"\n"
         f"Please close job in Sirius and MC"
     )
-    recipients = ["admin2@gerloffpainting.com", "bridgette@gerloffpainting.com","gene@gerloffpainting.com","victor@gerloffpainting.com","joe@gerlofpainting.com"]
+    recipients = ["admin2@gerloffpainting.com", "bridgette@gerloffpainting.com","gene@gerloffpainting.com","victor@gerloffpainting.com","joe@gerloffpainting.com"]
 
     try:
-        Email.sendEmail(subject, body, recipients, False)
+        check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+        sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+        Email.sendEmail(subject, body, recipients, False,sender)
         messages.success(
             request,
             f"Email Successfully Sent and Job Closed."
