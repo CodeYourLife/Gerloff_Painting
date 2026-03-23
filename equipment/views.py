@@ -137,9 +137,11 @@ def complete_pickup(request, pickup):
                     if selected_request.requested_by.email is not None:
                         recipients.append(selected_request.requested_by.email)
                 Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
+                check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                 try:
                     Email.sendEmail("Pickup Complete! " + selected_job.job_name, message,
-                                    recipients, False)
+                                    recipients, False,sender)
                     message = "Your email about the pickup being complete was sent succesfully"
                 except:
                     message = "Error! Your email about the pickup being complete failed to send. Please call them and let them know it was completed."
@@ -190,8 +192,10 @@ def request_trash_pickup(request, jobnumber):
                 recipients = ["warehouse@gerloffpainting.com"]
                 current_user = Employees.objects.get(user=request.user)
                 if current_user.email: recipients.append(current_user.email)
+                check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                 try:
-                    Email.sendEmail("Trash Pickup", message, recipients, False)
+                    Email.sendEmail("Trash Pickup", message, recipients, False,sender)
                     message2 = "Trash Pickup Request was succesfully emailed"
                 except:
                     message2 = "Error! Trash Pickup Request failed to email. Please retry later!"
@@ -238,8 +242,10 @@ def request_trash_pickup(request, jobnumber):
                 recipients = ["warehouse@gerloffpainting.com"]
                 current_user = Employees.objects.get(user=request.user)
                 if current_user.email: recipients.append(current_user.email)
+                check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                 try:
-                    Email.sendEmail("Trash Pickup", message, recipients, False)
+                    Email.sendEmail("Trash Pickup", message, recipients, False,sender)
                     message2 = "Trash Pickup Request was succesfully emailed"
                 except:
                     message2 = "Error! Trash Pickup Request failed to email. Please retry later!"
@@ -386,9 +392,11 @@ def request_pickup(request, jobnumber, item, pickup, status):
                     if selected_request.requested_by.email is not None:
                         recipients.append(selected_request.requested_by.email)
             Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
+            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
             try:
                 Email.sendEmail("Pickup Request! " + selected_job.job_name, message,
-                                recipients, False)
+                                recipients, False,sender)
 
                 message2 = "Your email requesting a pickup was sent succesfully!"
             except:

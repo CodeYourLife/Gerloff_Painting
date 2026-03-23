@@ -96,9 +96,11 @@ def emailed_ticket(request, id):
         recipients = ["joe@gerloffpainting.com","bridgette@gerloffpainting.com"]
         recipients.append(recipient)
         job_name = changeorder.job_number.job_name
+        check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+        sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
         try:
             Email.sendEmail("Signed Gerloff Painting Ticket", f"The signed ticket is attached for {changeorder.description} - {job_name}", recipients,
-                            f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf")
+                            f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf",sender)
             send_data['error_message'] = "The email with the signed ticket was successfully sent!"
         except:
             send_data['error_message'] = "ERROR! The email with the signed ticket was not sent!"
@@ -133,8 +135,10 @@ def email_for_signature(request, id):
             recipients = ["joe@gerloffpainting.com"]
             recipients.append(email)
             Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
+            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
             try:
-                Email.sendEmail("Extra Work Ticket", email_body, recipients, False)
+                Email.sendEmail("Extra Work Ticket", email_body, recipients, False,sender)
                 message = "The email with the link to the extra work ticket was successfully sent!"
             except:
                 message = "ERROR! The email with the extra work ticket failed to send. You will need to try again later."
@@ -169,7 +173,7 @@ def batch_approve_co(request, id):
         else:
             if 'approved_for_billing' in request.POST:
                 approved_for_billing = True
-        email_message = "The following COPs have been approved for billing. "
+        email_message = "The following COPs have been approved for billing on {selectedjob.job_number.job_number} {selectedjob.job_number.job_name}. "
         for x in request.POST:
             if x[0:10] == 'select_cop':
                 item_number = x[10:len(x)]
@@ -209,8 +213,10 @@ def batch_approve_co(request, id):
             subject = "COP APPROVED FOR BILLING"
             email_message += f" GC# {gc_number}. {request.POST['notes']}"
             recipients= ["bridgette@gerloffpainting.com"]
+            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
             try:
-                Email.sendEmail(subject, email_message, recipients, False)
+                Email.sendEmail(subject, email_message, recipients, False, sender)
                 messages.success(request, "Email Sent to Bridgette")
             except:
                 messages.error(request,
@@ -340,7 +346,9 @@ def print_TMProposal(request, id):
                         files.append(f"{path}/" + request.POST['filename'])
                         email_subject = f"GP COP{changeorder.cop_number}- {changeorder.job_number.job_name}"
                         email_body = f"Please find the T&M Proposal attached for job {changeorder.job_number.job_name}"
-                        Email.sendEmail2(email_subject, email_body, recipients,files)
+                        check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                        sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+                        Email.sendEmail2(email_subject, email_body, recipients,files,sender)
                         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                         user=Employees.objects.get(user=request.user),
                                                         note=f"COP Sent for ${changeorder.price}. Emailed to {recipients}" )
@@ -855,9 +863,10 @@ Click below to send:
 
                 recipient_list = ['bridgette@gerloffpainting.com']
                 subject = "T&M Proposal Approved"
-
+                check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                 try:
-                    Email.sendEmail(subject, message, recipient_list, False)
+                    Email.sendEmail(subject, message, recipient_list, False,sender)
                     messages.success(request, "Email Sent to Bridgette")
                 except:
                     messages.error(request,
@@ -1398,9 +1407,11 @@ def email_signed_ticket(request, changeorder):
                                                 note="Signed Ticket emailed to " + str(recipients))
                 path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
                 job_name = changeorder.job_number.job_name
+                check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                 try:
                     Email.sendEmail(f"Signed Ticket {job_name}", f"Please find the Signed Extra Work Ticket attached for {job_name}", recipients,
-                                    f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf")
+                                    f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf",sender)
                     success = True
                 except:
                     success = False
@@ -1690,13 +1701,15 @@ def change_order_send(request, id):
                 Email_Errors.objects.filter(
                     user=f"{request.user.first_name} {request.user.last_name}"
                 ).delete()
-
+                check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                 try:
                     Email.sendEmail(
                         subject,
                         body,
                         recipients,
-                        filepath
+                        filepath,
+                        sender
                     )
 
                     ChangeOrderNotes.objects.create(
@@ -2099,8 +2112,10 @@ def extra_work_ticket(request, id):
             )
             recipients = ["joe@gerloffpainting.com"]
             recipients.append(email)
+            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
             try:
-                Email.sendEmail("Extra Work Ticket", email_body, recipients, False)
+                Email.sendEmail("Extra Work Ticket", email_body, recipients, False,sender)
                 send_data['error_message'] = "The email with the link to the extra work ticket was successfully sent!"
                 ewt = EWT.objects.get(change_order=changeorder)
                 ewt.recipient = email
@@ -2198,8 +2213,10 @@ def extra_work_ticket(request, id):
             message = "Change Order " + str(changeorder.cop_number) + " Approved!\n"
             message += str(changeorder.job_number.job_number) + " - " + str(changeorder.job_number.job_name) + "\n"
             message += "GC# " + str(changeorder.gc_number)
+            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
             try:
-                Email.sendEmail("Change Order Approved", message, recipients, False)
+                Email.sendEmail("Change Order Approved", message, recipients, False,sender)
                 success = True
             except:
                 success = False
@@ -3282,9 +3299,10 @@ Click below to review and approve:
 
             recipient_list = [pm.email]
             subject = "T&M Proposal Ready for Review"
-
+            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
             try:
-                Email.sendEmail(subject, message, recipient_list, False)
+                Email.sendEmail(subject, message, recipient_list, False,sender)
                 messages.success(request, "Email Sent to Approver")
             except:
                 messages.error(
@@ -3458,13 +3476,15 @@ def send_cop_report(request,job_number):
             recipients = list(recipients)
             subject = f"Change Orders - {job.job_name}"
             body = f"Attached is the current Change Order report for {job.job_number}. Please advise on approval status."
-
+            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
             try:
                 Email.sendEmail(
                     subject,
                     body,
                     recipients,
-                    filepath
+                    filepath,
+                    sender
                 )
                 JobNotes.objects.create(
                     job_number=job,

@@ -233,10 +233,12 @@ def subcontractor_invoice_new(request, subcontract_id):
                     email_body = "New Subcontractor Invoice on a Certified Payroll Job! " + str(
                         subcontract.subcontractor.company) + "\n Job: " + str(
                         subcontract.job_number.job_name)
+                    check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                    sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                     try:
                         Email.sendEmail("New Sub Invoice on Certified Payroll Job", email_body,
                                         ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com', 'joe@gerloffpainting.com'],
-                                        False)
+                                        False,sender)
                         success = True
                         subcontract.is_certified_payroll_email_sent = True
                         subcontract.save()
@@ -319,10 +321,12 @@ def portal_invoice_new(request, subcontract_id):
                     email_body = "New Subcontractor Invoice on a Certified Payroll Job! " + str(
                         subcontract.subcontractor.company) + "\n Job: " + str(
                         subcontract.job_number.job_name)
+                    check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                    sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                     try:
                         Email.sendEmail("New Sub Invoice on Certified Payroll Job", email_body,
                                         ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com', 'joe@gerloffpainting.com'],
-                                        False)
+                                        False,sender)
                         success = True
                         subcontract.is_certified_payroll_email_sent = True
                         subcontract.save()
@@ -348,10 +352,12 @@ def portal_invoice_new(request, subcontract_id):
 
             email_body = "Retainage Request Entered For " + str(subcontract.subcontractor.company) + "\n Job: " + str(
                 subcontract.job_number.job_name)
+            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
             try:
                 Email.sendEmail("New Retainage Request", email_body,
                                 ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com'],
-                                False)
+                                False,sender)
                 success = True
             except:
                 success = False
@@ -389,10 +395,12 @@ def portal_invoice_new(request, subcontract_id):
                     email_body = "New Subcontractor Invoice on a Certified Payroll Job! " + str(
                         subcontract.subcontractor.company) + "\n Job: " + str(
                         subcontract.job_number.job_name)
+                    check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                    sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                     try:
                         Email.sendEmail("New Sub Invoice on Certified Payroll Job", email_body,
                                         ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com', 'joe@gerloffpainting.com'],
-                                        False)
+                                        False,sender)
                         success = True
                         subcontract.is_certified_payroll_email_sent = True
                         subcontract.save()
@@ -454,10 +462,12 @@ def portal_invoice_new(request, subcontract_id):
                                 InvoiceApprovals.objects.create(employee=job_super, invoice=invoice)
             email_body = "New Invoice Entered For " + str(subcontract.subcontractor.company) + "\n Job: " + str(
                 subcontract.job_number.job_name)
+            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
             try:
                 Email.sendEmail("New invoice", email_body,
                                 ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com'],
-                                False)
+                                False,sender)
                 success = True
             except:
                 success = False
@@ -550,9 +560,11 @@ def subcontract_invoices(request, subcontract_id, item_id):
             if approved == True:
                 selected_invoice.is_sent = True
                 email_body = selected_invoice.subcontract.subcontractor.company + " invoice for " + selected_invoice.subcontract.job_number.job_name + " has been approved."
+                check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                 try:
                     Email.sendEmail("Invoice Approved", email_body,
-                                    ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com'], False)
+                                    ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com'], False,sender)
                     success = True
                 except:
                     success = False
@@ -700,9 +712,11 @@ def subcontract_invoices(request, subcontract_id, item_id):
                 email_body = selected_invoice.subcontract.subcontractor.company + " invoice for " + selected_invoice.subcontract.job_number.job_name + " has been rejected by " + current_employee.first_name + ". " + \
                              request.POST['reject_notes']
 
+                check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                 try:
                     Email.sendEmail("Invoice Rejected", email_body,
-                                    ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com'], False)
+                                    ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com'], False,sender)
                     send_data['error_message'] = "Rejection Email Successfully Sent!"
                 except:
                     send_data['error_message'] = "ERROR! Email not sent.  Please tell the office this was rejected."
@@ -726,9 +740,11 @@ def subcontract_invoices(request, subcontract_id, item_id):
                                             note=note,
                                             invoice=selected_invoice)
             if 'approved_with_changes' in request.POST:
+                check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                 try:
                     Email.sendEmail("Invoice Changed", str(selected_invoice) + ". " + note + ". Changed by " + str(Employees.objects.get(user=request.user)),
-                                    ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com'], False)
+                                    ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com'], False,sender)
                     send_data['error_message'] = "Invoiced Changed Email Successfully Sent!"
                 except:
                     send_data['error_message'] = "ERROR! Email not sent.  Please tell the office that you made changes to this invoice."
@@ -869,8 +885,10 @@ def subcontractor_home(request):
                 email_body = "Victor, the Subcontractor Invoices are Ready for Your Approval!"
                 recipients = ["victor@gerloffpainting.com", "joe@gerloffpainting.com",
                               "bridgette@gerloffpainting.com", "admin2@gerloffpainting.com"]
+            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
             try:
-                Email.sendEmail("Invoice Approval Required", email_body, recipients, False)
+                Email.sendEmail("Invoice Approval Required", email_body, recipients, False,sender)
                 send_data['success'] = True
             except:
                 send_data['failed'] = True
@@ -886,8 +904,10 @@ def subcontractor_home(request):
                         else:
                             email_body = x.first_name + " Has " + str(approval_counts_two[
                                                                           x]) + " Invoices to Approve in Trinity, However There is No Email Address on File!"
+                        check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                        sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                         try:
-                            Email.sendEmail("Invoice Approval Required", email_body, recipients, False)
+                            Email.sendEmail("Invoice Approval Required", email_body, recipients, False,sender)
                             send_data['success'] = True
                         except:
                             send_data['failed'] = True
@@ -1090,10 +1110,12 @@ def subcontract(request, id):
                     email_body = "New Subcontractor Invoice on a Certified Payroll Job! " + str(
                         subcontract.subcontractor.company) + "\n Job: " + str(
                         subcontract.job_number.job_name)
+                    check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                    sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                     try:
                         Email.sendEmail("New Sub Invoice on Certified Payroll Job", email_body,
                                         ['admin2@gerloffpainting.com', 'bridgette@gerloffpainting.com', 'joe@gerloffpainting.com'],
-                                        False)
+                                        False,sender)
                         success = True
                         subcontract.is_certified_payroll_email_sent = True
                         subcontract.save()
@@ -1209,8 +1231,10 @@ def subcontract(request, id):
                 subject = f"Job {subcontract.job_number.job_number} -PO#{subcontract.po_number} - Changed"
                 body = subcontract_notes
                 recipients = ["admin2@gerloffpainting.com", "bridgette@gerloffpainting.com"]
+                check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                 try:
-                    Email.sendEmail(subject,body, recipients, False)
+                    Email.sendEmail(subject,body, recipients, False,sender)
                     messages.success(
                         request,
                         f"Email Successfully Sent"
@@ -1229,8 +1253,10 @@ def subcontract(request, id):
             subject = f"Job {subcontract.job_number.job_number} -PO#{subcontract.po_number} - Changed"
             body = subcontract_notes
             recipients = ["admin2@gerloffpainting.com", "bridgette@gerloffpainting.com"]
+            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
             try:
-                Email.sendEmail(subject, body, recipients, False)
+                Email.sendEmail(subject, body, recipients, False,sender)
                 messages.success(
                     request,
                     f"Email Successfully Sent"
@@ -1281,8 +1307,10 @@ def subcontract(request, id):
                     subject = f"Job {subcontract.job_number.job_number} -PO#{subcontract.po_number} - Changed"
                     body = subcontract_notes
                     recipients = ["admin2@gerloffpainting.com", "bridgette@gerloffpainting.com"]
+                    check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                    sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                     try:
-                        Email.sendEmail(subject, body, recipients, False)
+                        Email.sendEmail(subject, body, recipients, False,sender)
                         messages.success(
                             request,
                             f"Email Successfully Sent"
@@ -1373,11 +1401,13 @@ def subcontracts_new(request):
                 if y.job_description:
                     Subcontract_Approvers.objects.create(subcontract=subcontract1, job_description=y.job_description)
             message = "New Subcontract for " + subcontract1.subcontractor.company + "\n Job: " + subcontract1.job_number.job_name + "\n PO #: " + subcontract1.po_number
+            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
             try:
                 Email.sendEmail("New Subcontract", message,
                                 ['joe@gerloffpainting.com', 'admin2@gerloffpainting.com',
                                  'bridgette@gerloffpainting.com'],
-                                False)
+                                False,sender)
                 success = True
             except:
                 success = False
@@ -1613,8 +1643,10 @@ def new_subcontractor_payment(request):
                         Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name,
                                                     error="Email Not Sent-No Email on File for Sub",
                                                     date=date.today())
+                    check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                    sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                     try:
-                        Email.sendEmail("New Payment " + selected_sub.company, new_email_message, recipients, False)
+                        Email.sendEmail("New Payment " + selected_sub.company, new_email_message, recipients, False,sender)
                     except:
                         Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name,
                                                     error="Email Not Sent",
@@ -2160,8 +2192,10 @@ def subcontractor_portal_email_for_signature(request, changeorder_id, subcontrac
         gp_super = job.superintendent.email
         if gp_super:
             recipients.append(gp_super)
+        check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+        sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
         try:
-            Email.sendEmail("Extra Work Ticket", email_body, recipients, False)
+            Email.sendEmail("Extra Work Ticket", email_body, recipients, False,sender)
             messages.success(request, "The email with the link to the extra work ticket was successfully sent!")
             ewt = EWT.objects.get(change_order=changeorder)
             ewt.recipient = email
@@ -2548,10 +2582,12 @@ def subcontractor_portal_email_signed_ticket(request,changeorder_id,subcontracto
                 path = os.path.join(settings.MEDIA_ROOT, "changeorder",
                                     str(changeorder.job_number.job_number) + " COP #" + str(changeorder.cop_number))
                 job_name = changeorder.job_number.job_name
+                check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+                sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                 try:
                     Email.sendEmail(f"Signed Ticket {job_name}",
                                     f"Please find the Signed Extra Work Ticket attached for {job_name}", recipients,
-                                    f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf")
+                                    f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf",sender)
                     messages.success(request, "Email was successfully sent")
                 except:
                     messages.error(request, "Email Failed to Send!")
