@@ -3321,7 +3321,33 @@ Click below to review and approve:
 
 def send_cop_report(request,job_number):
     job = Jobs.objects.filter(job_number=job_number).first()
-    changeorders = ChangeOrders.objects.filter(job_number=job,is_closed=False).order_by("id")
+    raw_changeorders = ChangeOrders.objects.filter(
+        job_number=job,
+        is_closed=False
+    ).order_by("id")
+
+    changeorders = []
+
+    for co in raw_changeorders:
+        status = co.status()
+
+        is_approved = status == "Approved"
+        is_sent = status in ["Sent to GC", "Informal Approval", "Approved"]
+        is_not_sent = not is_sent
+
+        default_checked = is_sent and not is_approved
+
+        changeorders.append({
+            "id": co.id,
+            "cop_number": co.cop_number,
+            "description": co.description,
+            "status": status,
+            "price": co.price,
+            "is_approved": is_approved,
+            "is_sent": is_sent,
+            "is_not_sent": is_not_sent,
+            "default_checked": default_checked,
+        })
 
     # --------------------------------------------------
     # Reset temp recipients if not POST
@@ -3424,6 +3450,18 @@ def send_cop_report(request,job_number):
         # 7️⃣ FINAL / MYSELF (Generate Proposal)
         # ==================================================
         if is_final or is_myself:
+            selected_ids = request.POST.getlist("selected_changeorders")
+
+            if selected_ids:
+                changeorders = ChangeOrders.objects.filter(
+                    id__in=selected_ids,
+                    job_number=job,
+                    is_closed=False
+                ).order_by("id")
+            else:
+                changeorders = ChangeOrders.objects.none()
+
+
             # -----------------------------
             # Build PDF
             # -----------------------------
