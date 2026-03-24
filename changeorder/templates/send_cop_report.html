@@ -25,6 +25,23 @@
 #sending_overlay {
     backdrop-filter: blur(4px);
 }
+
+.co-row.row-sent {
+    background: #fff3cd;
+}
+
+.co-row.row-approved {
+    background: #d4edda;
+}
+
+.co-row.row-not-sent {
+    background: #f8f9fa;
+}
+
+.co-checkbox {
+    transform: scale(1.15);
+}
+
 </style>
 
 
@@ -213,7 +230,7 @@
 
                             <div class="col-md-3 col-12 text-md-right mt-3 mt-md-0">
                                 <button type="submit"
-                                        name="defaultadd{{x.person_pk}}"
+                                        name="defaultadd"
                                         class="btn btn-sm btn-outline-success mb-1 make-default-new"
                                         onclick="return validateAddRecipient()"
                                         data-toggle="tooltip"
@@ -239,59 +256,69 @@
             <!-- FINAL ACTION -->
 <button type="submit"
         name="myself"
-        onsubmit="return submitProposal('draft')"
+        onclick="return submitProposal('draft')"
         class="btn btn-secondary">
     Send Email to Just Me
 </button>
 
 <button type="submit"
         name="final"
-        onsubmit="return submitProposal('final')"
+        onclick="return submitProposal('final')"
         class="btn btn-primary">
     Send Email To GC
 </button>
-
 
 <hr class="my-4">
 
 <h5 class="mb-3 font-weight-bold">
     Preview
 </h5>
-<table style="width:100%; border-collapse:collapse;">
 
-<tr style="background:#f2f2f2; font-weight:bold;">
-<th style="width:8%; text-align:left;">COP</th>
-<th style="width:57%; text-align:left;">Description</th>
-<th style="width:20%; text-align:left; white-space:nowrap;">Status</th>
-<th style="width:15%; text-align:left;">Price</th>
-</tr>
+<!-- FILTERS -->
+<div class="mb-2">
+    <label><input type="checkbox" id="filter_approved"> Include Approved</label>
+    <label class="ml-3"><input type="checkbox" id="filter_sent" checked> Include Sent</label>
+    <label class="ml-3"><input type="checkbox" id="filter_not_sent"> Include Not Sent</label>
+</div>
+<table class="table table-sm table-bordered">
+    <thead>
+        <tr>
+            <th style="width:5%;">PDF</th>
+            <th>COP</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Price</th>
+        </tr>
+    </thead>
 
-{% for x in changeorders %}
+    <tbody>
+    {% for x in changeorders %}
+        <tr class="co-row
+    {% if x.is_approved %}row-approved{% elif x.is_sent %}row-sent{% else %}row-not-sent{% endif %}">
+            <td class="text-center">
+                <input type="checkbox"
+                       name="selected_changeorders"
+                       value="{{ x.id }}"
+                       class="co-checkbox"
+                       data-approved="{% if x.is_approved %}1{% else %}0{% endif %}"
+                       data-sent="{% if x.is_sent %}1{% else %}0{% endif %}"
+                       data-not-sent="{% if x.is_not_sent %}1{% else %}0{% endif %}"
+                       {% if x.default_checked %}checked{% endif %}>
+            </td>
 
-<tr
-{% if x.status == "Informal Approval" or x.status == "Sent to GC" or x.status == "Ticket Not Signed" %}
-style="background:#fff3cd;"
-{% endif %}
->
-
-<td>{{ x.cop_number }}</td>
-
-<td>{{ x.description }}</td>
-
-<td style="white-space:nowrap;">{{ x.status }}</td>
-
-<td>
-{% if x.price %}
-${{ x.price|intcomma }}
-{% else %}
-Pending
-{% endif %}
-</td>
-
-</tr>
-
-{% endfor %}
-
+            <td>{{ x.cop_number }}</td>
+            <td>{{ x.description }}</td>
+            <td>{{ x.status }}</td>
+            <td>
+                {% if x.price %}
+                    ${{ x.price|floatformat:2|intcomma }}
+                {% else %}
+                    Pending
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
 </table>
     <!-- Sending Proposal Overlay -->
 <div id="sending_overlay"
@@ -488,5 +515,28 @@ function validateAddRecipient() {
     return true;
 }
 
+function applyFilters() {
+    const includeApproved = $("#filter_approved").is(":checked");
+    const includeSent = $("#filter_sent").is(":checked");
+    const includeNotSent = $("#filter_not_sent").is(":checked");
+
+    $(".co-checkbox").each(function () {
+        const isApproved = $(this).data("approved") == 1;
+        const isSent = $(this).data("sent") == 1;
+        const isNotSent = $(this).data("not-sent") == 1;
+
+        let check = false;
+
+        if (isApproved && includeApproved) check = true;
+        if (isSent && !isApproved && includeSent) check = true;
+        if (isNotSent && includeNotSent) check = true;
+
+        $(this).prop("checked", check);
+    });
+}
+
+$(function () {
+    $("#filter_approved, #filter_sent, #filter_not_sent").on("change", applyFilters);
+});
 </script>
 {% endblock %}
