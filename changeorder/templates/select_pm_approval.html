@@ -8,6 +8,16 @@
         {% csrf_token %}
 
         <div class="form-group">
+                    <label for="selected_file">Select the Extra Work Ticket</label>
+                    <select id="selected_file" required class="form-control" name="selected_file" >
+                        <option value="please_select">Select The Extra Work Ticket</option>
+                        {% if foldercontents %}
+                        {% for x in foldercontents %}
+                        <option value="{{x}}" class="dropdown-item" >{{x}}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+
 
             <label>Select Approver:</label>
 

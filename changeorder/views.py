@@ -212,7 +212,7 @@ def batch_approve_co(request, id):
                 gc_number="None"
             subject = "COP APPROVED FOR BILLING"
             email_message += f" GC# {gc_number}. {request.POST['notes']}"
-            recipients= ["bridgette@gerloffpainting.com"]
+            recipients= ["bridgette@gerloffpainting.com","victor@gerloffpainting.com"]
             check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
             sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
             try:
@@ -649,7 +649,7 @@ def price_ewt(request, id):
         # ---------------------------
         # Begin Atomic Transaction
         # ---------------------------
-        print(action)
+
         with transaction.atomic():
 
             # --------------------------------------------------
@@ -850,16 +850,23 @@ def price_ewt(request, id):
                     note=f"COP Approved. Price: ${proposal.total}"
                 )
 
-                approval_link = request.build_absolute_uri(
-                    reverse('price_ewt', args=[changeorder.id])
+                path = reverse('price_ewt', args=[changeorder.id])
+
+                internal_link = f"http://gp-webserver{path}"
+                external_link = f"http://184.183.68.156{path}"
+
+                # approval_link = request.build_absolute_uri(
+                #     reverse('price_ewt', args=[changeorder.id])
+                # )
+
+                message = (f"T&M Proposal #{changeorder.cop_number} for {changeorder.job_number} is approved."
+                            f"\n\n"
+                            f"Click below link to send:"
+                            f"\n\n"
+                            f"If you are on your office computer: {internal_link}"
+                            f"\n\n"
+                            f"If you are not on your office computer: {external_link}"
                 )
-
-                message = f"""
-T&M Proposal #{changeorder.cop_number} for {changeorder.job_number} is approved.
-
-Click below to send:
-{approval_link}
-"""
 
                 recipient_list = ['bridgette@gerloffpainting.com']
                 subject = "T&M Proposal Approved"
@@ -1471,7 +1478,6 @@ def view_ewt(request, id):
                    'employeesjson': employees_json})
 
 def get_or_create_contact(add_value,email, client):
-    print("HERE")
     if not add_value:
         return None
 
@@ -3199,7 +3205,7 @@ def set_default_approver_for_job(job, employee):
     return obj
 
 def select_pm_approval(request, id):
-
+    send_data = {}
     changeorder = get_object_or_404(ChangeOrders, id=id)
     job = changeorder.job_number
 
@@ -3208,6 +3214,14 @@ def select_pm_approval(request, id):
     ).exclude(
         job_title__description__icontains="Painter"
     )
+    #build folder to select EWT
+    foldercontents = []
+    try:
+        path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
+        foldercontents = os.listdir(path)
+        send_data['foldercontents'] = foldercontents
+    except Exception as e:
+        send_data['no_folder_contents'] = True
 
     # -------------------------------------
     # Determine Default Approver
@@ -3284,25 +3298,54 @@ def select_pm_approval(request, id):
 
             pm = Employees.objects.get(id=approver_id)
 
-            approval_link = request.build_absolute_uri(
-                reverse("price_ewt", args=[changeorder.id])
-            )
+            path = reverse('price_ewt', args=[changeorder.id])
 
-            message = f"""
-A T&M Proposal is ready for your review.
+            internal_link = f"http://gp-webserver{path}"
+            external_link = f"http://184.183.68.156{path}"
 
-Change Order #{changeorder.cop_number}
+            # approval_link = request.build_absolute_uri(
+            #     reverse("price_ewt", args=[changeorder.id])
+            # )
+            message = (f"A T&M Proposal is ready for your review."
+                       f"\n\n"
+                       f"Job {changeorder.job_number} -Change Order #{changeorder.cop_number}"
+                       f"\n\n"
+                       f"Click below link to send:"
+                       f"\n\n"
+                       f"If you are on your office computer: {internal_link}"
+                       f"\n\n"
+                       f"If you are not on your office computer: {external_link}"
+                       )
 
-Click below to review and approve:
-{approval_link}
-"""
 
-            recipient_list = [pm.email]
+
+#             message = f"""
+# A T&M Proposal is ready for your review.
+#
+# Change Order #{changeorder.cop_number}
+#
+# Click below to review and approve:
+# {approval_link}
+# """
+
+            if pm.email:
+                recipient_list = [pm.email]
+            else:
+                recipient_list = ["victor@gerloffpainting.com"]
             subject = "T&M Proposal Ready for Review"
             check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
             sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
             try:
-                Email.sendEmail(subject, message, recipient_list, False,sender)
+                if request.POST['selected_file'] == "please_select":
+                    Email.sendEmail(subject, message, recipient_list, False, sender)
+                else:
+                    print(f"{path}/" + request.POST['selected_file'])
+                    path = os.path.join(settings.MEDIA_ROOT, "changeorder",
+                                        str(changeorder.job_number.job_number) + " COP #" + str(changeorder.cop_number))
+                    files = []
+                    files.append(f"{path}/" + request.POST['selected_file'])
+                    print(files)
+                    Email.sendEmail2(subject, message, recipient_list, files,sender)
                 messages.success(request, "Email Sent to Approver")
             except:
                 messages.error(
@@ -3311,13 +3354,11 @@ Click below to review and approve:
                 )
 
         return redirect("extra_work_ticket", id=changeorder.id)
-
-    return render(request, "select_pm_approval.html", {
-        "changeorder": changeorder,
-        "employees": non_painters,
-        "default_approver": default_approver,
-        "selected_approver_id": selected_approver_id,
-    })
+    send_data['changeorder']=changeorder
+    send_data['employees'] =non_painters
+    send_data['default_approver'] =default_approver
+    send_data['selected_approver_id'] =selected_approver_id
+    return render(request, "select_pm_approval.html",send_data)
 
 def send_cop_report(request,job_number):
     job = Jobs.objects.filter(job_number=job_number).first()
