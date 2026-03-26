@@ -335,7 +335,7 @@ function updateBondTotal() {
     const rawPrice = $("#price").val().trim().replace(/,/g, "");
     const price = parseFloat(rawPrice);
 
-    if (!price || price <= 0) {
+    if (isNaN(price)) {
         $("#bond_amount").text("0.00");
         $("#bond_total").text("0.00");
         return;
@@ -455,17 +455,17 @@ function submitProposal(mode) {
     }
 
     // Strict decimal validation
-    if (!/^\d+(\.\d{1,2})?$/.test(cleanedPrice)) {
+    if (!/^-?\d+(\.\d{1,2})?$/.test(cleanedPrice)) {
         alert("Please enter a valid dollar amount (example: 500 or 500.00)");
         return false;
     }
 
     const price = parseFloat(cleanedPrice);
 
-    if (price <= 0) {
-        alert("Price must be greater than 0");
-        return false;
-    }
+    // if (price <= 0) {
+    //     alert("Price must be greater than 0");
+    //     return false;
+    // }
 
     if (!description) {
         alert("Description cannot be blank");

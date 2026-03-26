@@ -1534,7 +1534,7 @@ def change_order_send(request, id):
         try:
             parsed_price = Decimal(raw_price)
 
-            if parsed_price > 0:
+            if parsed_price !=0:
                 changeorder.price_before_bond = parsed_price.quantize(
                     Decimal("0.01"),
                     rounding=ROUND_HALF_UP)
