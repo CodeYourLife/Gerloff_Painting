@@ -10,7 +10,7 @@ from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import Q
+from django.db.models import Q, Max
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_datetime
@@ -913,7 +913,7 @@ def job_page(request, jobnumber):
                     check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
                     sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                     try:
-                        Email.sendEmail("Labor not done - " + selectedjob.job_name,
+                        Email.sendEmail("Labor not done - " + selectedjob.job_number + " " + selectedjob.job_name,
                                         "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is not done. Please make sure to Un-Click the LABOR DONE box in management console. " +
                                         request.POST['closed_note'],
                                         ['bridgette@gerloffpainting.com',
@@ -941,7 +941,7 @@ def job_page(request, jobnumber):
                 try:
                     check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
                     sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
-                    Email.sendEmail("Labor Done - " + selectedjob.job_name,
+                    Email.sendEmail("Labor Done - " + selectedjob.job_number + " " + selectedjob.job_name,
                                     "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is 100% Done. Please make sure to Click the Labor Done button in Management Console. " +
                                     request.POST['closed_note'],
                                     ['admin2@gerloffpainting.com',
@@ -1566,8 +1566,13 @@ def close_job(request, job_number):
     except (InvalidOperation, TypeError):
         messages.error(request, "Please enter a valid total job cost.")
         return redirect('job_page', jobnumber=job.job_number)
+    last_number = Jobs.objects.aggregate(
+        max_num=Max('closed_job_number')
+    )['max_num']
 
+    next_number = (last_number or 0) + 1
     job.is_closed = True
+    job.closed_job_number = next_number
     job.ar_closed_date = date.today()
     job.cumulative_costs_at_closing = cumulative_costs
     job.save()
@@ -1588,6 +1593,8 @@ def close_job(request, job_number):
         f"Final Job Costs: ${cumulative_costs}\n"
         f"\n"
         f"Profit: {profit_percent}%\n"
+        f"\n"
+        f"Closed Job Number: {next_number}\n"
         f"\n"
         f"Please close job in Sirius and MC"
     )
