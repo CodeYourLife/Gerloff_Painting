@@ -173,7 +173,7 @@ def batch_approve_co(request, id):
         else:
             if 'approved_for_billing' in request.POST:
                 approved_for_billing = True
-        email_message = f"The following COPs have been approved for billing on {selectedjob.job_number.job_number} {selectedjob.job_number.job_name}. "
+        email_message = f"The following COPs have been approved for billing on {selectedjob.job_number} {selectedjob.job_name}. "
         email_message += f"\n\n"
         for x in request.POST:
             if x[0:10] == 'select_cop':
