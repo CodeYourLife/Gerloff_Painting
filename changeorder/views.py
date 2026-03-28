@@ -98,8 +98,30 @@ def emailed_ticket(request, id):
         job_name = changeorder.job_number.job_name
         check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
         sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+        if check_sender:
+            email_body = (f"Please find the Signed Extra Work Ticket attached for {job_name}"
+                          f"\n\n"
+                          f"Sincerely,"
+                          f"\n"
+                          f"{request.user.first_name} {request.user.last_name}"
+                          f"\n"
+                          f"Gerloff Painting, Inc."
+                          f"\n"
+                          f"(757) 857-4880"
+                          )
+        else:
+            email_body = (f"Please find the Signed Extra Work Ticket attached for {job_name}"
+                          f"\n\n"
+                          f"Sincerely,"
+                          f"\n"
+                          f"Bridgette Clause"
+                          f"\n"
+                          f"Gerloff Painting, Inc."
+                          f"\n"
+                          f"(757) 857-4880"
+                          )
         try:
-            Email.sendEmail("Signed Gerloff Painting Ticket", f"The signed ticket is attached for {changeorder.description} - {job_name}", recipients,
+            Email.sendEmail("Signed Gerloff Painting Ticket", email_body, recipients,
                             f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf",sender)
             send_data['error_message'] = "The email with the signed ticket was successfully sent!"
         except:
@@ -347,7 +369,16 @@ def print_TMProposal(request, id):
                         files.append(f"{path}/GP COP {changeorder.cop_number} {changeorder.description} {date.today()}.pdf")
                         files.append(f"{path}/" + request.POST['filename'])
                         email_subject = f"GP COP{changeorder.cop_number}- {changeorder.job_number.job_name}"
-                        email_body = f"Please find the T&M Proposal attached for job {changeorder.job_number.job_name}"
+                        email_body = (f"Please find the T&M Proposal attached for job {changeorder.job_number.job_name}"
+                                    f"\n\n"
+                                      f"Sincerely,"
+                                      f"\n"
+                                      f"{request.user.first_name} {request.user.last_name}"
+                                      f"\n"
+                                      f"Gerloff Painting, Inc."
+                                      f"\n"
+                                      f"(757) 857-4880"
+                                      )
                         check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
                         sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                         Email.sendEmail2(email_subject, email_body, recipients,files,sender)
@@ -1417,9 +1448,31 @@ def email_signed_ticket(request, changeorder):
                 path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
                 job_name = changeorder.job_number.job_name
                 check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
-                sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+                sender = check_sender.email if check_sender else "bridgette@gerloffpainting.com"
+                if check_sender:
+                    email_body = (f"Please find the Signed Extra Work Ticket attached for {job_name}"
+                                  f"\n\n"
+                                  f"Sincerely,"
+                                  f"\n"
+                                  f"{request.user.first_name} {request.user.last_name}"
+                                  f"\n"
+                                  f"Gerloff Painting, Inc."
+                                  f"\n"
+                                  f"(757) 857-4880"
+                                  )
+                else:
+                    email_body = (f"Please find the Signed Extra Work Ticket attached for {job_name}"
+                                  f"\n\n"
+                                  f"Sincerely,"
+                                  f"\n"
+                                  f"Bridgette Clause"
+                                  f"\n"
+                                  f"Gerloff Painting, Inc."
+                                  f"\n"
+                                  f"(757) 857-4880"
+                                  )
                 try:
-                    Email.sendEmail(f"Signed Ticket {job_name}", f"Please find the Signed Extra Work Ticket attached for {job_name}", recipients,
+                    Email.sendEmail(f"Signed Ticket {job_name}", email_body, recipients,
                                     f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf",sender)
                     success = True
                 except:
@@ -1701,16 +1754,36 @@ def change_order_send(request, id):
                         recipients.add(value.lower())
 
                 recipients = list(recipients)
-
                 changeorder.sent_to = recipients
                 changeorder.save()
                 subject = f"GP COP{changeorder.cop_number}- {changeorder.job_number.job_name}"
-                body = f"Please see the attached change order for {changeorder.job_number}. Gerloff Painting COP #{changeorder.cop_number} - {changeorder.description}"
                 Email_Errors.objects.filter(
                     user=f"{request.user.first_name} {request.user.last_name}"
                 ).delete()
                 check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
                 sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+                if check_sender:
+                    body = (f"Please see the attached change order for {changeorder.job_number}. Gerloff Painting COP #{changeorder.cop_number} - {changeorder.description}"
+                                   f"\n\n"
+                                   f"Sincerely,"
+                                   f"\n"
+                                   f"{request.user.first_name} {request.user.last_name}"
+                                   f"\n"
+                                   f"Gerloff Painting, Inc."
+                                   f"\n"
+                                   f"(757) 857-4880"
+                                   )
+                else:
+                    body = (f"Please see the attached change order for {changeorder.job_number}. Gerloff Painting COP #{changeorder.cop_number} - {changeorder.description}"
+                                   f"\n\n"
+                                   f"Sincerely,"
+                                   f"\n"
+                                   f"Bridgette Clause"
+                                   f"\n"
+                                   f"Gerloff Painting, Inc."
+                                   f"\n"
+                                   f"(757) 857-4880"
+                                   )
                 try:
                     Email.sendEmail(
                         subject,
@@ -2111,17 +2184,36 @@ def extra_work_ticket(request, id):
             approval_link = request.build_absolute_uri(
                 reverse('emailed_ticket', args=[changeorder.id])
             )
-
+            recipients = ["joe@gerloffpainting.com","bridgette@gerloffpainting.com"]
+            recipients.append(email)
+            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
             email_body = (
                 f"You have received an extra work ticket from Gerloff Painting "
                 f"for {changeorder.description} at {job_name}.\n\n"
                 f"Please click this link to view the ticket:\n"
                 f"{approval_link}"
             )
-            recipients = ["joe@gerloffpainting.com"]
-            recipients.append(email)
-            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
-            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+            if check_sender:
+                email_body += (f"\n\n"
+                              f"Sincerely,"
+                              f"\n"
+                              f"{request.user.first_name} {request.user.last_name}"
+                              f"\n"
+                              f"Gerloff Painting, Inc."
+                              f"\n"
+                              f"(757) 857-4880"
+                              )
+            else:
+                email_body += (f"\n\n"
+                              f"Sincerely,"
+                              f"\n"
+                              f"Bridgette Clause"
+                              f"\n"
+                              f"Gerloff Painting, Inc."
+                              f"\n"
+                              f"(757) 857-4880"
+                              )
             try:
                 Email.sendEmail("Extra Work Ticket", email_body, recipients, False,sender)
                 send_data['error_message'] = "The email with the link to the extra work ticket was successfully sent!"
