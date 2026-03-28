@@ -97,7 +97,7 @@ def emailed_ticket(request, id):
         recipients.append(recipient)
         job_name = changeorder.job_number.job_name
         check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
-        sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+        sender = check_sender.email if check_sender else "bridgette@gerloffpainting.com"
         if check_sender:
             email_body = (f"Please find the Signed Extra Work Ticket attached for {job_name}"
                           f"\n\n"
@@ -158,7 +158,7 @@ def email_for_signature(request, id):
             recipients.append(email)
             Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
             check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
-            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+            sender = check_sender.email if check_sender else "bridgettegerloffpainting.com"
             try:
                 Email.sendEmail("Extra Work Ticket", email_body, recipients, False,sender)
                 message = "The email with the link to the extra work ticket was successfully sent!"
@@ -238,7 +238,7 @@ def batch_approve_co(request, id):
             email_message += f" GC# {gc_number}. {request.POST['notes']}"
             recipients= ["bridgette@gerloffpainting.com","victor@gerloffpainting.com"]
             check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
-            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+            sender = check_sender.email if check_sender else "bridgette@gerloffpainting.com"
             try:
                 Email.sendEmail(subject, email_message, recipients, False, sender)
                 messages.success(request, "Email Sent to Bridgette")
@@ -380,7 +380,7 @@ def print_TMProposal(request, id):
                                       f"(757) 857-4880"
                                       )
                         check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
-                        sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+                        sender = check_sender.email if check_sender else "bridgette@gerloffpainting.com"
                         Email.sendEmail2(email_subject, email_body, recipients,files,sender)
                         ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                         user=Employees.objects.get(user=request.user),
@@ -904,7 +904,7 @@ def price_ewt(request, id):
                 recipient_list = ['bridgette@gerloffpainting.com']
                 subject = "T&M Proposal Approved"
                 check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
-                sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+                sender = check_sender.email if check_sender else "bridgette@gerloffpainting.com"
                 try:
                     Email.sendEmail(subject, message, recipient_list, False,sender)
                     messages.success(request, "Email Sent to Bridgette")
@@ -1761,7 +1761,7 @@ def change_order_send(request, id):
                     user=f"{request.user.first_name} {request.user.last_name}"
                 ).delete()
                 check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
-                sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+                sender = check_sender.email if check_sender else "bridgette@gerloffpainting.com"
                 if check_sender:
                     body = (f"Please see the attached change order for {changeorder.job_number}. Gerloff Painting COP #{changeorder.cop_number} - {changeorder.description}"
                                    f"\n\n"
@@ -2187,7 +2187,7 @@ def extra_work_ticket(request, id):
             recipients = ["joe@gerloffpainting.com","bridgette@gerloffpainting.com"]
             recipients.append(email)
             check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
-            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+            sender = check_sender.email if check_sender else "bridgette@gerloffpainting.com"
             email_body = (
                 f"You have received an extra work ticket from Gerloff Painting "
                 f"for {changeorder.description} at {job_name}.\n\n"
@@ -3428,7 +3428,7 @@ def select_pm_approval(request, id):
                 recipient_list = ["victor@gerloffpainting.com"]
             subject = "T&M Proposal Ready for Review"
             check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
-            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+            sender = check_sender.email if check_sender else "bridgette@gerloffpainting.com"
             try:
                 if request.POST['selected_file'] == "please_select":
                     Email.sendEmail(subject, message, recipient_list, False, sender)
@@ -3650,7 +3650,7 @@ def send_cop_report(request,job_number):
             subject = f"Change Orders - {job.job_name}"
             body = f"Attached is the current Change Order report for {job.job_number}. Please advise on approval status."
             check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
-            sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+            sender = check_sender.email if check_sender else "bridgette@gerloffpainting.com"
             try:
                 Email.sendEmail(
                     subject,

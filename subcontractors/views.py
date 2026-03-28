@@ -2193,7 +2193,27 @@ def subcontractor_portal_email_for_signature(request, changeorder_id, subcontrac
         if gp_super:
             recipients.append(gp_super)
         check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
-        sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+        sender = check_sender.email if check_sender else "bridgette@gerloffpainting.com"
+        if check_sender:
+            email_body += (f"\n\n"
+                          f"Sincerely,"
+                          f"\n"
+                          f"{request.user.first_name} {request.user.last_name}"
+                          f"\n"
+                          f"Gerloff Painting, Inc."
+                          f"\n"
+                          f"(757) 857-4880"
+                          )
+        else:
+            email_body += (f"\n\n"
+                          f"Sincerely,"
+                          f"\n"
+                          f"Bridgette Clause"
+                          f"\n"
+                          f"Gerloff Painting, Inc."
+                          f"\n"
+                          f"(757) 857-4880"
+                          )
         try:
             Email.sendEmail("Extra Work Ticket", email_body, recipients, False,sender)
             messages.success(request, "The email with the link to the extra work ticket was successfully sent!")
@@ -2583,10 +2603,32 @@ def subcontractor_portal_email_signed_ticket(request,changeorder_id,subcontracto
                                     str(changeorder.job_number.job_number) + " COP #" + str(changeorder.cop_number))
                 job_name = changeorder.job_number.job_name
                 check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
-                sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+                sender = check_sender.email if check_sender else "bridgette@gerloffpainting.com"
+                if check_sender:
+                    email_body = (f"Please find the Signed Extra Work Ticket attached for {job_name}"
+                                  f"\n\n"
+                                  f"Sincerely,"
+                                  f"\n"
+                                  f"{request.user.first_name} {request.user.last_name}"
+                                  f"\n"
+                                  f"Gerloff Painting, Inc."
+                                  f"\n"
+                                  f"(757) 857-4880"
+                                  )
+                else:
+                    email_body = (f"Please find the Signed Extra Work Ticket attached for {job_name}"
+                                  f"\n\n"
+                                  f"Sincerely,"
+                                  f"\n"
+                                  f"Bridgette Clause"
+                                  f"\n"
+                                  f"Gerloff Painting, Inc."
+                                  f"\n"
+                                  f"(757) 857-4880"
+                                  )
                 try:
                     Email.sendEmail(f"Signed Ticket {job_name}",
-                                    f"Please find the Signed Extra Work Ticket attached for {job_name}", recipients,
+                                    email_body, recipients,
                                     f"{path}/Signed_Extra_Work_Ticket_{date.today()}.pdf",sender)
                     messages.success(request, "Email was successfully sent")
                 except:
