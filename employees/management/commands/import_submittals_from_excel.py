@@ -14,7 +14,7 @@ from submittals.models import (
     SubmittalNotes,
 )
 from console.misc import createfolder
-
+from console.misc import createfolder
 
 class Command(BaseCommand):
     help = "Import Submittals, SubmittalItems, SubmittalApprovals, and SubmittalNotes from Excel"
