@@ -48,7 +48,7 @@ location1.innerHTML = "<input type='submit' name='note" + tester + "' value='Cha
 		<div id="navbarNavDropdown2">
 		  <ul class="sub-nav-list navbar-nav ">
         <li><a class="nav-item nav-link" href="{% url 'submittals_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'submittals_new' %}">New Submittal</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'submittals_new_selectjob' %}">New Submittal</a></li>
         <li><a class="nav-item nav-link active" >{{selected_job}} - Submittal {{selected_submittal.submittal_number}}</a></li>
     </ul>
   </div>

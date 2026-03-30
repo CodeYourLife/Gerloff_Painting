@@ -1,0 +1,24 @@
+
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="#">Submittals</a>
+
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav">
+
+            <li>
+                <a class="nav-item nav-link {% if active_tab == 'home' %}active{% endif %}"
+                   href="{% url 'submittals_home' %}">
+                    Home
+                </a>
+            </li>
+
+            <li>
+                <a class="nav-item nav-link {% if active_tab == 'new' %}active{% endif %}"
+                   href="{% url 'submittals_new_selectjob' %}">
+                    New Submittal
+                </a>
+            </li>
+
+        </ul>
+    </div>
+</nav>

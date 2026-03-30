@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block nav_item_submittals %}active{% endblock %}
+
+{% block sub_nav %}
+    {% include 'includes/submittals_subnav.html' with active_tab='home' %}
+{% endblock sub_nav %}
+
+{% block extra_head %}
+<style>
+    .clickable-row {
+        cursor: pointer;
+    }
+
+    .clickable-row:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-dark text-white">
+            Submittal Item Detail
+        </div>
+        <div class="card-body">
+            <p class="mb-2">
+                <strong>Job:</strong>
+                {{ item.job_number.job_number }} - {{ item.job_number.job_name }}
+            </p>
+
+            <p class="mb-2">
+                <strong>Description:</strong>
+                {{ item.description }}
+            </p>
+
+            <p class="mb-2">
+                <strong>Notes:</strong>
+                {{ item.notes|default:"" }}
+            </p>
+
+            <p class="mb-0">
+                <strong>No Longer Used:</strong>
+                {% if item.is_no_longer_used %}
+                    <span class="badge badge-secondary">YES</span>
+                {% else %}
+                    <span class="badge badge-success">NO</span>
+                {% endif %}
+            </p>
+        <div class="mt-3 d-flex gap-2">
+
+            <a href="{% url 'submittals_new' item.job_number.job_number %}"
+               class="btn btn-primary btn-sm mr-2">
+                SUBMIT NOW
+            </a>
+
+            {% if not item.is_no_longer_used %}
+            <form method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit"
+                        name="mark_no_longer_used"
+                        class="btn btn-danger btn-sm"
+                        onclick="return confirm('Mark this item as no longer used?');">
+                    No Longer Used
+                </button>
+            </form>
+            {% endif %}
+
+        </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+            <span>Approval Notes</span>
+            <button type="button"
+                    class="btn btn-sm btn-light"
+                    onclick="promptNote()">
+                Add Note
+            </button>
+        </div>
+        <div class="card-body">
+            {% if approval_notes %}
+                {% for note in approval_notes %}
+                    <div class="border rounded p-2 mb-2 bg-light">
+                        <strong>{{ note.date }} - {{ note.user }}</strong><br>
+                        {{ note.note }}
+                        {% if note.submittal %}
+                        - Submittal {{note.submittal.submittal_number}}
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="mb-0">No notes found for this item.</p>
+            {% endif %}
+
+            <form method="post" id="note_input" class="d-none">
+                {% csrf_token %}
+                <input type="hidden" name="new_note" id="new_note">
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+            Approval History
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-sm table-striped mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th style="width:360px; white-space:nowrap;">Job</th>
+                        <th style="width:120px;">Submittal #</th>
+                        <th style="width:120px;">Status</th>
+                        <th>Approval Notes</th>
+                        <th style="width:140px;">Date Reviewed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for approval in approvals %}
+                    <tr {% if approval.submittal %}class="clickable-row"{% endif %}
+                        {% if approval.submittal %}
+                        onclick="window.location='{% url 'submittal_send' approval.submittal.id %}';"
+                        {% endif %}>
+                        <td style="white-space:nowrap;">
+                            {{ item.job_number.job_number }} - {{ item.job_number.job_name }}
+                        </td>
+
+                        <td>
+                            {% if approval.submittal %}
+                                {{ approval.submittal.submittal_number }}
+                            {% else %}
+                                Unlinked
+                            {% endif %}
+                        </td>
+
+
+                        <td>
+                            {% if approval.is_approved == True %}
+                                <span class="badge badge-success">Approved</span>
+                            {% elif approval.is_approved == False %}
+                                <span class="badge badge-danger">Rejected</span>
+                            {% else %}
+                                <span class="badge badge-warning">Pending</span>
+                            {% endif %}
+                        </td>
+
+                        <td>{{ approval.notes|default:"" }}</td>
+
+                        <td>{{ approval.date_reviewed|default:"" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">No approval history found for this item.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function promptNote() {
+    const msg = prompt("Note:");
+    if (msg) {
+        document.getElementById("new_note").value = msg;
+        document.getElementById("note_input").submit();
+    }
+}
+</script>
+{% endblock %}

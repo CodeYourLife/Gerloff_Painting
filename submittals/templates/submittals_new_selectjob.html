@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block nav_item_submittals %}active{% endblock nav_item_submittals %}
+
+{% block extra_head %}
+<style>
+    /* Page-specific CSS goes here */
+</style>
+{% endblock extra_head %}
+{% block sub_nav %}
+    {% include 'includes/submittals_subnav.html' with active_tab='new' %}
+{% endblock sub_nav %}
+{% block content %}
+
+
+
+<div class="container-fluid mt-4">
+   <form action="{% url 'submittals_new_selectjob' %}" method="post">
+       {% csrf_token %}
+    <label for="select_job">Please select Job</label>
+    <select id="select_job" name="select_job" class="form-control select2">
+        {% for job in jobs %}
+            <option value="{{ job.job_number }}">{{ job.job_name }}</option>
+        {% endfor %}
+    </select>
+
+    <input type="submit" name="job_select" value="Select Job" class="btn btn-primary mt-2"/>
+   </form>
+</div>
+{% endblock content %}
+
+{% block extra_scripts %}
+<script>
+    $(document).ready(function () {
+        $('.select2').select2({
+            placeholder: "Search for a job...",
+            allowClear: true,
+            width: '100%'
+        });
+    });
+</script>
+{% endblock extra_scripts %}

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Submittal Transmittal</title>
+    <style>
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10px;
+            color: #000;
+        }
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+
+        .header-table td {
+            vertical-align: top;
+            border: none;
+        }
+
+        .logo-cell {
+            width: 160px;
+            text-align: right;
+        }
+
+        .logo-cell img {
+            width: 120px;
+        }
+
+        h2 {
+            margin: 0 0 4px 0;
+            font-size: 16px;
+        }
+
+        .info-block {
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+  .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 6px;
+        table-layout: fixed;
+    }
+
+    .items-table th,
+    .items-table td {
+        border: 1px solid #777;
+        text-align: left;
+        vertical-align: top;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .items-table td {
+        padding: 3px 4px;
+        line-height: 1.1;
+        font-size: 9px;
+    }
+
+    .items-table th {
+        background-color: #eeeeee;
+        padding: 5px 4px;
+        font-size: 11px;
+        font-weight: bold;
+        line-height: 1.2;
+    }
+
+    .col-description {
+        width: 45%;
+    }
+
+    .col-notes {
+        width: 45%;
+    }
+
+    .col-qty {
+        width: 10%;
+        text-align: center;
+    }
+    </style>
+</head>
+<body>
+
+    <table class="header-table">
+        <tr>
+            <td>
+                <h2>Submittal Transmittal</h2>
+
+                <div class="info-block">
+                    <strong>Job:</strong> {{ submittal.job_number.job_number }} - {{ submittal.job_number.job_name }}<br>
+                    <strong>Submittal #:</strong> {{ submittal.submittal_number }}<br>
+                    <strong>Description:</strong> {{ submittal.description }}<br>
+                    <strong>Date:</strong> {{ today }}
+                </div>
+            </td>
+            <td class="logo-cell">
+                <img src="{{ logo_path }}">
+            </td>
+        </tr>
+    </table>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th class="col-description">Description</th>
+                <th class="col-notes">Notes</th>
+                <th class="col-qty">Qty</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in item_rows %}
+            <tr>
+                <td class="col-description">
+                    {{ row.item.description }}
+                </td>
+                <td class="col-notes">
+                    {{ row.item.notes|default:"" }}
+                </td>
+                <td class="col-qty">
+                    {% if row.approval %}{{ row.approval.quantity }}{% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">No submittal items found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>
