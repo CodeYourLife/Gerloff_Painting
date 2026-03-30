@@ -45,7 +45,7 @@
         </div>
 
         <div class="table-responsive">
-            <table class="table table-sm table-striped mb-0">
+            <table class="table table-sm table-striped mb-0" id="submittals_table">
                 <thead class="thead-light">
                     <tr>
                         <th style="width:320px; white-space:nowrap;">Job</th>
@@ -95,7 +95,7 @@
     </div>
 
         <div class="table-responsive">
-            <table class="table table-sm table-striped mb-0">
+            <table class="table table-sm table-striped mb-0" id="pending_table">
                 <thead class="thead-light">
                     <tr>
                         <th style="width:320px; white-space:nowrap;">Job</th>
@@ -204,6 +204,19 @@
         width: '100%',
         dropdownParent: $('#addPendingItemModal')
     });
-});
+
+
+        $('#pending_table').DataTable({
+            paging: false,
+            ordering: false,
+            info: false
+        });
+                $('#submittals_table').DataTable({
+            paging: false,
+            ordering: false,
+            info: false
+        });
+    });
+
 </script>
 {% endblock %}

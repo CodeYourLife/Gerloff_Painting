@@ -57,7 +57,7 @@ class SubmittalNotes(models.Model):
     user = models.ForeignKey(employees.models.Employees, on_delete=models.PROTECT)
     note = models.CharField(null=True, max_length=2000)
 
-class SubmittalApprovalNotes(models.Model):
+class SubmittalApprovalNotes(models.Model):#NOT USED
     id = models.BigAutoField(primary_key=True)
     submittal = models.ForeignKey(Submittals, on_delete=models.PROTECT,null=True,blank=True)
     submittalapproval = models.ForeignKey(SubmittalApprovals, on_delete=models.PROTECT,null=True,blank=True)
