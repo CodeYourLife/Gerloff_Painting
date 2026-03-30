@@ -1,0 +1,968 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_item_submittals %}active{% endblock nav_item_submittals %}
+
+{% block extra_head %}
+<style>
+.file-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background-color: #f1f3f5;
+    border: 1px solid #d6d8db;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    font-size: 13px;
+}
+.file-pill:hover {
+    background-color: #e2e6ea;
+    border-color: #adb5bd;
+    transform: translateY(-1px);
+}
+.file-icon {
+    font-size: 14px;
+}
+.file-name {
+    font-weight: 500;
+    color: #212529;
+}
+
+nav .active,
+.collapsible:hover {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+    border-radius: 4px;
+}
+
+.nav-pills li {
+    padding: 2px;
+}
+.nav-pills a {
+    color: #000;
+}
+.nav-pills .active {
+    background-color: #6c757d !important;
+    padding: 5px;
+}
+
+label {
+    margin: 0 10px;
+}
+input,
+textarea,
+select {
+    margin: 0 10px;
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+}
+
+.small-note {
+    font-size: 13px;
+    color: #666;
+}
+
+.modal-content {
+    border-radius: 8px;
+}
+
+.drop-area {
+    border: 2px dashed #aaa;
+    padding: 25px;
+    text-align: center;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    background: #fafafa;
+}
+.drop-area.drag-active {
+    background: #eef6ff;
+    border-color: #007bff;
+}
+
+.clean-card {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+.clean-card-header {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 12px;
+}
+.section-divider {
+    margin: 20px 0;
+}
+.container-ticket {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.ticket-title {
+    font-size: 28px;
+    font-weight: 600;
+}
+.gap-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.list-items {
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+}
+.textarea-compact {
+    min-height: 28px;
+    resize: none;
+    overflow: hidden;
+    line-height: 1.2;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+</style>
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
+
+{% block sub_nav %}
+    {% include 'includes/submittals_subnav.html' %}
+{% endblock sub_nav %}
+{% block content %}
+
+
+
+<div class="modal fade" id="mainFolderModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Batch Upload Files - Main Submittal Folder</h5>
+                <button onclick="location.reload();" type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="drop-area-main" class="drop-area">
+                    <form class="my-form">
+                        <p>Upload multiple files by dragging them here</p>
+                        <input type="file" id="fileElemMain" multiple>
+                        <label class="btn btn-primary btn-sm mt-2" for="fileElemMain">Select Files</label>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="location.reload();" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="sentToGCFolderModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Batch Upload Files - Sent to GC</h5>
+                <button onclick="location.reload();" type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="drop-area-sent-to-gc" class="drop-area">
+                    <form class="my-form">
+                        <p>Upload multiple files by dragging them here</p>
+                        <input type="file" id="fileElemSentToGC" multiple>
+                        <label class="btn btn-primary btn-sm mt-2" for="fileElemSentToGC">Select Files</label>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="location.reload();" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="approvalDocsFolderModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Batch Upload Files - Approval Documents</h5>
+                <button onclick="location.reload();" type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="drop-area-approval-docs" class="drop-area">
+                    <form class="my-form">
+                        <p>Upload multiple files by dragging them here</p>
+                        <input type="file" id="fileElemApprovalDocs" multiple>
+                        <label class="btn btn-primary btn-sm mt-2" for="fileElemApprovalDocs">Select Files</label>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="location.reload();" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="rejectChoiceModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Rejected Item</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <p>Please choose what should happen for this rejected item:</p>
+            </div>
+
+            <div class="modal-footer d-flex flex-wrap justify-content-center">
+                <button type="button" id="rejectAdditionalBtn" class="btn btn-warning">
+                    Additional submittal required
+                </button>
+
+                <button type="button" id="rejectNoLongerNeededBtn" class="btn btn-danger">
+                    This Item No Longer Needed On This Job
+                </button>
+
+                <button type="button" id="rejectNABtn" class="btn btn-secondary" data-dismiss="modal">
+                    N/A
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="container-ticket section-card text-center">
+
+    <div class="mb-3">
+        <div class="ticket-title">
+            {{ submittal.job_number.job_number }} – {{ submittal.job_number.job_name }}
+        </div>
+
+        <div class="h5 font-weight-semibold mt-2">
+            Submittal #{{ submittal.submittal_number }}
+        </div>
+
+        <div class="text-muted mt-1">
+            {{ submittal.description }}
+        </div>
+
+        <div class="mt-2">
+            <strong>Date Sent:</strong> {{ submittal.date_sent|default:"Not Sent" }}
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-center gap-buttons">
+
+        <form action="{% url 'job_page' submittal.job_number.job_number %}" class="m-2">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-info btn-sm px-4">
+                Go To Job Page
+            </button>
+        </form>
+
+        <button data-toggle="modal" data-target="#mainFolderModal" class="btn btn-info btn-sm m-2 px-4">
+            Batch Upload To Main Folder
+        </button>
+
+        <button data-toggle="modal" data-target="#sentToGCFolderModal" class="btn btn-info btn-sm m-2 px-4">
+            Batch Upload To Sent to GC
+        </button>
+
+        <button data-toggle="modal" data-target="#approvalDocsFolderModal" class="btn btn-info btn-sm m-2 px-4">
+            Batch Upload To Approval Documents
+        </button>
+
+        <form method="post" class="m-2">
+            {% csrf_token %}
+            <button type="submit"
+                    name="create_transmittal"
+                    class="btn btn-sm px-4 {% if transmittal_exists %}btn-warning{% else %}btn-primary{% endif %}">
+                {% if transmittal_exists %}Revise Transmittal{% else %}Create Transmittal{% endif %}
+            </button>
+        </form>
+
+        <form method="post" class="m-2">
+            {% csrf_token %}
+            <button type="submit"
+                    name="mark_sent"
+                    class="btn btn-success btn-sm px-4"
+                    {% if submittal.date_sent %}disabled{% endif %}>
+                Send Now
+            </button>
+        </form>
+
+    </div>
+
+</div>
+
+<form id="select_main_file_form" name="select_main_file_form" method="post">
+    {% csrf_token %}
+    <input type="hidden" id="selected_main_file" name="selected_main_file">
+</form>
+
+<form id="select_sent_to_gc_file_form" name="select_sent_to_gc_file_form" method="post">
+    {% csrf_token %}
+    <input type="hidden" id="selected_sent_to_gc_file" name="selected_sent_to_gc_file">
+</form>
+
+<form id="select_approval_file_form" name="select_approval_file_form" method="post">
+    {% csrf_token %}
+    <input type="hidden" id="selected_approval_file" name="selected_approval_file">
+</form>
+
+<div class="container-fluid px-4">
+<div class="container-ticket">
+<div id="accordion">
+
+    <div class="clean-card">
+        <div class="clean-card-header" data-toggle="collapse" data-target="#mainFolderCollapse" aria-expanded="false" style="cursor:pointer;">
+            📁 {{ main_file_count }} Files in Main Submittal Folder - Click to Upload/View
+            <span class="float-right">+</span>
+        </div>
+
+        <div id="mainFolderCollapse" class="collapse">
+            <div class="clean-card">
+
+                <div class="mb-3 small-note">
+                    Upload general documents for this submittal
+                </div>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input type="file" class="form-control" name="upload_main_file">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary btn-sm" type="submit">Upload</button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="mt-3">
+                    <button data-toggle="modal" data-target="#mainFolderModal" class="btn btn-info btn-sm">
+                        Batch Upload Files
+                    </button>
+                </div>
+
+                <div class="section-divider"></div>
+
+                {% if no_main_files %}
+                    <div class="small-note">No documents uploaded yet.</div>
+                {% else %}
+                    <div class="small-note mb-2">Uploaded Documents:</div>
+                    <ul class="list-unstyled">
+                        {% for x in main_files %}
+                        <li class="mb-2">
+                            <div class="file-pill" onclick="openMainFile('{{ x|escapejs }}')">
+                                <span class="file-icon">
+                                    {% with x|lower as filename %}
+                                        {% if ".pdf" in filename %}📕
+                                        {% elif ".jpg" in filename or ".jpeg" in filename or ".png" in filename %}🖼️
+                                        {% elif ".xls" in filename or ".xlsx" in filename %}📊
+                                        {% elif ".doc" in filename or ".docx" in filename %}📘
+                                        {% elif ".zip" in filename %}🗜️
+                                        {% else %}📄
+                                        {% endif %}
+                                    {% endwith %}
+                                </span>
+                                <span class="file-name">{{ x }}</span>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                {% if can_open_folder %}
+                <div class="section-divider"></div>
+
+                <div class="small-note mb-2">Open Main Submittal Folder</div>
+
+                <input type="text" id="mainFolderPath" value="{{ main_folder_path }}" style="position:absolute; left:-9999px;">
+
+                {% if mc_folder_path %}
+                <input type="text" id="MCPath" value="{{ mc_folder_path }}" style="position:absolute; left:-9999px;">
+                {% endif %}
+
+                <button type="button" class="btn btn-secondary btn-sm" onclick="copyMainFolderPath()">
+                    📋 Copy Trinity Folder Path
+                </button>
+
+                {% if mc_folder_path %}
+                <button type="button" class="btn btn-secondary btn-sm" onclick="copyMCPath()">
+                    📋 Copy MC Folder Path
+                </button>
+                {% endif %}
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+    <div class="clean-card">
+        <div class="clean-card-header" data-toggle="collapse" data-target="#sentToGCCollapse" aria-expanded="false" style="cursor:pointer;">
+            📁 {{ sent_to_gc_file_count }} Files in "Sent to GC" - Click to Upload/View
+            <span class="float-right">+</span>
+        </div>
+
+        <div id="sentToGCCollapse" class="collapse">
+            <div class="clean-card">
+
+                <div class="mb-3 small-note">
+                    Upload documents sent to the GC for this submittal
+                </div>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input type="file" class="form-control" name="upload_sent_to_gc_file">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary btn-sm" type="submit">Upload</button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="mt-3">
+                    <button data-toggle="modal" data-target="#sentToGCFolderModal" class="btn btn-info btn-sm">
+                        Batch Upload Files
+                    </button>
+                </div>
+
+                <div class="section-divider"></div>
+
+                {% if no_sent_to_gc_files %}
+                    <div class="small-note">No documents uploaded yet.</div>
+                {% else %}
+                    <div class="small-note mb-2">Uploaded Documents:</div>
+                    <ul class="list-unstyled">
+                        {% for x in sent_to_gc_files %}
+                        <li class="mb-2">
+                            <div class="file-pill" onclick="openSentToGCFile('{{ x|escapejs }}')">
+                                <span class="file-icon">
+                                    {% with x|lower as filename %}
+                                        {% if ".pdf" in filename %}📕
+                                        {% elif ".jpg" in filename or ".jpeg" in filename or ".png" in filename %}🖼️
+                                        {% elif ".xls" in filename or ".xlsx" in filename %}📊
+                                        {% elif ".doc" in filename or ".docx" in filename %}📘
+                                        {% elif ".zip" in filename %}🗜️
+                                        {% else %}📄
+                                        {% endif %}
+                                    {% endwith %}
+                                </span>
+                                <span class="file-name">{{ x }}</span>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                {% if can_open_folder %}
+                <div class="section-divider"></div>
+
+                <div class="small-note mb-2">Open "Sent to GC" Folder</div>
+
+                <input type="text" id="sentToGCPath" value="{{ sent_to_gc_path }}" style="position:absolute; left:-9999px;">
+
+                <button type="button" class="btn btn-secondary btn-sm" onclick="copySentToGCPath()">
+                    📋 Copy Sent to GC Folder Path
+                </button>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+    <div class="clean-card">
+        <div class="clean-card-header" data-toggle="collapse" data-target="#approvalDocsCollapse" aria-expanded="false" style="cursor:pointer;">
+            📁 {{ approval_docs_file_count }} Files in "Approval Documents" - Click to Upload/View
+            <span class="float-right">+</span>
+        </div>
+
+        <div id="approvalDocsCollapse" class="collapse">
+            <div class="clean-card">
+
+                <div class="mb-3 small-note">
+                    Upload approval and return documents for this submittal
+                </div>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input type="file" class="form-control" name="upload_approval_file">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary btn-sm" type="submit">Upload</button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="mt-3">
+                    <button data-toggle="modal" data-target="#approvalDocsFolderModal" class="btn btn-info btn-sm">
+                        Batch Upload Files
+                    </button>
+                </div>
+
+                <div class="section-divider"></div>
+
+                {% if no_approval_docs_files %}
+                    <div class="small-note">No documents uploaded yet.</div>
+                {% else %}
+                    <div class="small-note mb-2">Uploaded Documents:</div>
+                    <ul class="list-unstyled">
+                        {% for x in approval_docs_files %}
+                        <li class="mb-2">
+                            <div class="file-pill" onclick="openApprovalFile('{{ x|escapejs }}')">
+                                <span class="file-icon">
+                                    {% with x|lower as filename %}
+                                        {% if ".pdf" in filename %}📕
+                                        {% elif ".jpg" in filename or ".jpeg" in filename or ".png" in filename %}🖼️
+                                        {% elif ".xls" in filename or ".xlsx" in filename %}📊
+                                        {% elif ".doc" in filename or ".docx" in filename %}📘
+                                        {% elif ".zip" in filename %}🗜️
+                                        {% else %}📄
+                                        {% endif %}
+                                    {% endwith %}
+                                </span>
+                                <span class="file-name">{{ x }}</span>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                {% if can_open_folder %}
+                <div class="section-divider"></div>
+
+                <div class="small-note mb-2">Open "Approval Documents" Folder</div>
+
+                <input type="text" id="approvalDocsPath" value="{{ approval_docs_path }}" style="position:absolute; left:-9999px;">
+
+                <button type="button" class="btn btn-secondary btn-sm" onclick="copyApprovalDocsPath()">
+                    📋 Copy Approval Documents Folder Path
+                </button>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+    <div class="clean-card">
+        <div class="clean-card-header d-flex justify-content-between align-items-center">
+            <span>📝 Notes</span>
+            {% if notes|length > 4 %}
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-toggle="collapse" data-target="#olderNotes">
+                Show Older
+            </button>
+            {% endif %}
+        </div>
+
+        {% if latest_notes %}
+            {% if older_notes %}
+                <button class="btn btn-sm btn-outline-secondary mt-2" data-toggle="collapse" data-target="#olderNotes">
+                    Show {{ older_notes|length }} Older Notes
+                </button>
+
+                <div class="collapse mt-2" id="olderNotes">
+                    {% for note in older_notes %}
+                        <div class="small-note mb-2 p-2 border rounded">
+                            <strong>{{ note.date }} – {{ note.user }}</strong><br>
+                            {{ note.note }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% for note in latest_notes %}
+                <div class="small-note mb-2 p-2 border rounded bg-light">
+                    <strong>{{ note.date }} – {{ note.user }}</strong><br>
+                    {{ note.note }}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="small-note mb-2">
+                No notes yet.
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+</div>
+</div>
+
+<div class="container-fluid px-4">
+    <div class="clean-card">
+        <div class="clean-card-header d-flex justify-content-between align-items-center">
+            <span>Submittal Items</span>
+
+            <form method="post" class="mb-0">
+                {% csrf_token %}
+                <button type="submit" name="add_submittal_row" class="btn btn-primary btn-sm">
+                    Add Row
+                </button>
+            </form>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-sm table-striped mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th style="min-width:220px;">Description</th>
+                        <th style="min-width:220px;">Item Notes</th>
+                        <th style="width:100px;">Qty</th>
+                        <th style="min-width:220px;">Approval Notes</th>
+                        <th style="width:90px;">Approved</th>
+                        <th style="width:90px;">Rejected</th>
+                        <th style="width:260px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in item_rows %}
+                    <tr {% if row.item.is_no_longer_used %}class="table-secondary"{% endif %}>
+                        <td colspan="7" class="p-0 border-0">
+                            <form method="post"
+                              class="row-edit-form mb-0"
+                              data-approval-id="{{ row.approval.id }}">
+                                {% csrf_token %}
+                                <input type="hidden" name="item_id" value="{{ row.item.id }}">
+                                <input type="hidden" name="approval_id" value="{{ row.approval.id }}">
+                                <input type="hidden" name="reject_action" class="reject-action" value="">
+
+                                <table class="table table-sm table-striped mb-0">
+                                    <tr {% if row.item.is_no_longer_used %}class="table-secondary"{% endif %}>
+                                        <td style="min-width:220px;">
+                                            <input type="text"
+                                                   name="item_description"
+                                                   class="form-control form-control-sm"
+                                                   value="{{ row.item.description|default:'' }}">
+                                        </td>
+
+                                        <td style="min-width:220px;">
+                                            <textarea name="item_notes"
+                                                      class="form-control form-control-sm textarea-compact"
+                                                      rows="1">{{ row.item.notes|default:'' }}</textarea>
+                                        </td>
+
+                                        <td style="width:100px;">
+                                            <input type="number"
+                                                   name="approval_quantity"
+                                                   class="form-control form-control-sm"
+                                                   value="{{ row.approval.quantity|default:0 }}">
+                                        </td>
+
+                                        <td style="min-width:220px;">
+                                            <textarea name="approval_notes"
+                                                      class="form-control form-control-sm textarea-compact"
+                                                      rows="1">{{ row.approval.notes|default:'' }}</textarea>
+                                        </td>
+
+                                        <td class="text-center align-middle" style="width:90px;">
+                                            <input type="checkbox"
+                                               name="is_approved"
+                                               value="true"
+                                               class="approve-checkbox"
+                                               {% if row.approval.is_approved %}checked{% endif %}
+                                               {% if not submittal.date_sent %}disabled{% endif %}>
+                                        </td>
+
+                                        <td class="text-center align-middle" style="width:90px;">
+                                            <input type="checkbox"
+                                               name="is_rejected"
+                                               value="true"
+                                               class="reject-checkbox"
+                                               {% if row.approval.is_approved == False %}checked{% endif %}
+                                               {% if not submittal.date_sent %}disabled{% endif %}>
+                                        </td>
+
+                                        <td class="text-center align-middle" style="width:260px; white-space:nowrap;">
+                                            <button type="submit" name="save_row" class="btn btn-secondary btn-sm row-save-btn">
+                                                Save
+                                            </button>
+
+                                            {% if row.has_history %}
+                                                <a href="{% url 'submittal_item_detail' row.item.id %}"
+                                                   class="btn btn-info btn-sm">
+                                                    HISTORY
+                                                </a>
+                                            {% endif %}
+
+                                            <button type="submit"
+                                                    name="delete_row"
+                                                    class="btn btn-danger btn-sm"
+                                                    onclick="return confirm('Delete this row?');">
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">No items found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    setupDropArea("drop-area-main", "fileElemMain", "upload_main_batch");
+    setupDropArea("drop-area-sent-to-gc", "fileElemSentToGC", "upload_sent_to_gc_batch");
+    setupDropArea("drop-area-approval-docs", "fileElemApprovalDocs", "upload_approval_batch");
+});
+
+function setupDropArea(dropAreaId, fileInputId, fieldName) {
+    const dropArea = document.getElementById(dropAreaId);
+    const fileInput = document.getElementById(fileInputId);
+
+    if (dropArea) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(event => {
+            dropArea.addEventListener(event, preventDefaults, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(event => {
+            dropArea.addEventListener(event, () => dropArea.classList.add("drag-active"), false);
+        });
+
+        ['dragleave', 'drop'].forEach(event => {
+            dropArea.addEventListener(event, () => dropArea.classList.remove("drag-active"), false);
+        });
+
+        dropArea.addEventListener("drop", function (e) {
+            const files = e.dataTransfer.files;
+            if (files.length) uploadFiles(files, fieldName);
+        });
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener("change", function () {
+            if (this.files.length) uploadFiles(this.files, fieldName);
+        });
+    }
+}
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+function uploadFiles(files, fieldName) {
+    const formData = new FormData();
+
+    for (let i = 0; i < files.length; i++) {
+        formData.append(fieldName, files[i]);
+    }
+
+    fetch("{% url 'submittal_send' submittal.id %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert("Upload failed.");
+        }
+    })
+    .catch(() => alert("Upload error."));
+}
+
+function copyMainFolderPath() {
+    const input = document.getElementById("mainFolderPath");
+    if (!input) return;
+    input.select();
+    input.setSelectionRange(0, 99999);
+    try {
+        document.execCommand("copy");
+        alert("Folder path copied to clipboard");
+    } catch {
+        alert("Copy not supported in this browser");
+    }
+}
+
+function copySentToGCPath() {
+    const input = document.getElementById("sentToGCPath");
+    if (!input) return;
+    input.select();
+    input.setSelectionRange(0, 99999);
+    try {
+        document.execCommand("copy");
+        alert("Folder path copied to clipboard");
+    } catch {
+        alert("Copy not supported in this browser");
+    }
+}
+
+function copyApprovalDocsPath() {
+    const input = document.getElementById("approvalDocsPath");
+    if (!input) return;
+    input.select();
+    input.setSelectionRange(0, 99999);
+    try {
+        document.execCommand("copy");
+        alert("Folder path copied to clipboard");
+    } catch {
+        alert("Copy not supported in this browser");
+    }
+}
+
+function copyMCPath() {
+    const input = document.getElementById("MCPath");
+    if (!input) return;
+    input.select();
+    input.setSelectionRange(0, 99999);
+    try {
+        document.execCommand("copy");
+        alert("Folder path copied to clipboard");
+    } catch {
+        alert("Copy not supported in this browser");
+    }
+}
+
+function openMainFile(fileName) {
+    const field = document.getElementById("selected_main_file");
+    const form = document.getElementById("select_main_file_form");
+    if (!field || !form) return;
+    field.value = fileName;
+    form.submit();
+}
+
+function openSentToGCFile(fileName) {
+    const field = document.getElementById("selected_sent_to_gc_file");
+    const form = document.getElementById("select_sent_to_gc_file_form");
+    if (!field || !form) return;
+    field.value = fileName;
+    form.submit();
+}
+
+function openApprovalFile(fileName) {
+    const field = document.getElementById("selected_approval_file");
+    const form = document.getElementById("select_approval_file_form");
+    if (!field || !form) return;
+    field.value = fileName;
+    form.submit();
+}
+
+let currentRejectForm = null;
+
+function resizeTextarea(el) {
+    el.style.height = '28px';
+    el.style.height = el.scrollHeight + 'px';
+}
+
+$(document).ready(function () {
+    $('.textarea-compact').each(function () {
+        resizeTextarea(this);
+    });
+
+    $('.approve-checkbox').on('change', function () {
+        const form = $(this).closest('form');
+        if (this.checked) {
+            form.find('.reject-checkbox').prop('checked', false);
+            form.find('.reject-action').val('');
+        }
+    });
+
+    $('.reject-checkbox').on('change', function () {
+        const form = $(this).closest('form');
+
+        if (this.checked) {
+            form.find('.approve-checkbox').prop('checked', false);
+            currentRejectForm = form;
+            $('#rejectChoiceModal').modal('show');
+        } else {
+            form.find('.reject-action').val('');
+        }
+
+    });
+
+    $('#rejectAdditionalBtn').on('click', function () {
+        if (currentRejectForm) {
+            currentRejectForm.find('.reject-action').val('additional_required');
+
+            if (currentRejectForm.find('input[name="save_row"]').length === 0) {
+                currentRejectForm.append('<input type="hidden" name="save_row" value="1">');
+            }
+
+            $('#rejectChoiceModal').modal('hide');
+            currentRejectForm.submit();
+        }
+    });
+
+    $('#rejectNoLongerNeededBtn').on('click', function () {
+        if (currentRejectForm) {
+            currentRejectForm.find('.reject-action').val('no_longer_needed');
+
+            if (currentRejectForm.find('input[name="save_row"]').length === 0) {
+                currentRejectForm.append('<input type="hidden" name="save_row" value="1">');
+            }
+
+            $('#rejectChoiceModal').modal('hide');
+            currentRejectForm.submit();
+        }
+    });
+
+    $('#rejectChoiceModal').on('hidden.bs.modal', function () {
+        if (currentRejectForm) {
+            const action = currentRejectForm.find('.reject-action').val();
+            if (!action) {
+                currentRejectForm.find('.reject-checkbox').prop('checked', false);
+            }
+        }
+        currentRejectForm = null;
+    });
+
+    $(document).on('input change', '.row-edit-form input:not([type="submit"]), .row-edit-form textarea, .row-edit-form select', function () {
+    const form = $(this).closest('.row-edit-form');
+    markRowDirty(form);
+});
+
+{% if new_row_id %}
+$('.row-edit-form[data-approval-id="{{ new_row_id }}"]').each(function () {
+    markRowDirty($(this));
+});
+{% endif %}
+$('#rejectNABtn').on('click', function () {
+    if (currentRejectForm) {
+        currentRejectForm.find('.reject-action').val('na');
+    }
+});
+});
+
+$(document).on('input', '.textarea-compact', function () {
+    resizeTextarea(this);
+});
+
+function markRowDirty(form) {
+    const saveBtn = form.find('.row-save-btn');
+    if (!saveBtn.length) return;
+
+    saveBtn.removeClass('btn-secondary');
+    saveBtn.addClass('btn-success');
+    saveBtn.text('Save *');
+}
+
+</script>
+{% endblock %}

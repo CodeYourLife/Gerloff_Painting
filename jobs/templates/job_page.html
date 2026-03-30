@@ -16,6 +16,14 @@
     display: none;
 }
 
+.clickable-row {
+    cursor: pointer;
+}
+
+.clickable-row:hover {
+    background-color: #f8f9fa;
+}
+
 .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
 
 .dataTables_wrapper {
@@ -1971,47 +1979,106 @@ function show_submit_button(){
         </div>
     </div>
 {% endif %}
-<!--submittals 12-->
-{% if submittals %}
-    <div class="card">
-        <div class="card-header" id="headingTwelve" >
-            <h5 class="mb-0" >
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwelve" aria-expanded="false"
-                        aria-controls="collapseTwelve">
-                    Submittals
-                </button>
-            </h5>
-        </div>
-        <div id="collapseTwelve" class="collapse hide" aria-labelledby="headingTwelve" data-parent="#accordion">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table id="tickets_table8" class="display table">
-                        <thead class="colored-header">
+<!--submittals un approved-->
+{% if unapproved_items %}
+<div class="card">
+    <div class="card-header" id="headingUnapproved">
+        <h5 class="mb-0">
+            <button class="btn btn-link" data-toggle="collapse" data-target="#collapseUnapproved" aria-expanded="false"
+                        aria-controls="collapseUnapproved">
+                Un-Approved Submittal Items
+            </button>
+        </h5>
+    </div>
 
+    <div id="collapseUnapproved"
+         class="collapse hide"
+         aria-labelledby="headingUnapproved"
+        data-parent="#accordian">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-striped mb-0">
+                    <thead class="thead-light">
                         <tr>
-                            <th>#</th>
                             <th>Description</th>
-                            <th>Date Sent</th>
-                            <th>Date Returned</th>
                             <th>Notes</th>
+                            <th>Status</th>
                         </tr>
-                        </thead>
-                        <tbody>
-                        {% for submittal in submittals %}
+                    </thead>
+                    <tbody>
+                        {% for row in unapproved_items %}
+                        <tr class="clickable-row"
+                            onclick="window.location='{% url 'submittal_item_detail' row.item.id %}';">
+                            <td>{{ row.item.description }}</td>
+                            <td>{{ row.notes|default:"" }}</td>
+                            <td>
+                                {% if not row.approval %}
+                                    Not Submitted
+                                {% elif row.approval.is_approved == False %}
+                                    Rejected
+                                {% else %}
+                                    Pending
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
                         <tr>
-                            <td>{{submittal.submittal_number}}</td>
-                            <td>{{submittal.description}}</td>
-                            <td>{{submittal.date_sent}}</td>
-                            <td>{{submittal.date_returned}}</td>
-                            <td>{{submittal.notes}}</td>
+                            <td colspan="4">No un-approved items</td>
                         </tr>
                         {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
+</div>
+{% endif %}
+<!--submittals approved-->
+{% if approved_items %}
+ <div class="card">
+    <div class="card-header bg-light" id="headingApproved">
+        <h5 class="mb-0">
+            <button class="btn btn-link"
+                    data-toggle="collapse"
+                    data-target="#collapseApproved"
+                    aria-expanded="false"
+                    aria-controls="collapseApproved">
+                Approved Submittal Items
+            </button>
+        </h5>
+    </div>
+
+    <div id="collapseApproved"
+         class="collapse hide"
+         aria-labelledby="headingApproved"
+        data-parent="#accordian">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-striped mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Description</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in approved_items %}
+                        <tr class="clickable-row"
+                            onclick="window.location='{% url 'submittal_send' row.approval.submittal.id %}';">
+                            <td>{{ row.item.description }}</td>
+                            <td>{{ row.notes|default:"" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4">No approved items</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 {% endif %}
 <!--subcontracts 13-->
 {% if subcontracts %}

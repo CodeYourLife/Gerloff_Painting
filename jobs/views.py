@@ -25,7 +25,7 @@ from employees.forms import JobsiteSafetyInspectionForm
 from equipment.models import Inventory
 from equipment.tables import JobsTable
 from equipment.filters import JobsFilter
-
+from submittals.models import *
 from jobs.models import *
 from jobs.models import ClockSharkTimeEntry, Jobs
 from jobs.JobMisc import start_date_change, gerloff_super_change
@@ -41,7 +41,13 @@ import os
 import os.path
 import openpyxl
 import requests
+from decimal import Decimal, InvalidOperation
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
 
+from jobs.models import Jobs
+from changeorder.models import ChangeOrders
 
 
 
@@ -735,6 +741,18 @@ def upload_new_job(request):
             except requests.RequestException:
                 print("PUMPKIN ERROR")
                 pass
+            if job.submittals_needed:
+                SubmittalItems.objects.create(
+                    job_number=job,
+                    description="Paint Submittal",
+                    notes="Created at Booking",
+                )
+            if job.has_wallcovering:
+                SubmittalItems.objects.create(
+                    job_number=job,
+                    description="Wallcovering Submittal",
+                    notes="Created at Booking",
+                )
 
             return render(request, "upload_new_job.html")
     return render(request, "upload_new_job.html")
@@ -1073,7 +1091,32 @@ def job_page(request, jobnumber):
     send_data['wc_ordereds'] = OrderItems.objects.filter(order__job_number=selectedjob, is_satisfied=False)
     send_data['packages'] = Packages.objects.filter(delivery__order__job_number=selectedjob)
     send_data['deliveries'] = OutgoingItem.objects.filter(outgoing_event__job_number=selectedjob)
-    send_data['submittals'] = Submittals.objects.filter(job_number=selectedjob)
+    approved_items = []
+    unapproved_items = []
+    for item in SubmittalItems.objects.filter(job_number=selectedjob,is_no_longer_used=False):
+        approvals = SubmittalApprovals.objects.filter(submittalitem=item).order_by('id')
+        if approvals.exists():
+            approval = approvals.filter(is_approved=True).first()
+            if approval:
+                approved_items.append({
+                    'item': item,
+                    'approval': approval,
+                    'notes':item.notes + ". " + approval.notes,
+                })
+            else:
+                unapproved_items.append({
+                    'item': item,
+                    'approval': approvals.last(),
+                    'notes': item.notes + ". " + approvals.last().notes,
+                })
+        else:
+            unapproved_items.append({
+                'item': item,
+                'approval': None,
+                'notes': item.notes,
+            })
+    send_data['approved_items'] = approved_items
+    send_data['unapproved_items'] = unapproved_items
     subcontracts = []
     for x in Subcontracts.objects.filter(job_number=selectedjob):
         total_contract = "{:,}".format(int(x.total_contract_amount()))
@@ -1533,13 +1576,7 @@ def jobsite_safety_inspection_detail(request, inspection_id):
         send_data
     )
 
-from decimal import Decimal, InvalidOperation
-from django.contrib import messages
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
 
-from jobs.models import Jobs
-from changeorder.models import ChangeOrders
 
 
 @login_required

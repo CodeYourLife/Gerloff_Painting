@@ -1,169 +1,232 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_submittals %}active{% endblock nav_item_submittals %}
-{% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>Trinity GP</title>
-<!--	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
-.active, .collapsible:hover {
-  background-color: Salmon;
-}
 
-	</style>
-	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
-var number_rows = 0;
+{% block sub_nav %}
+    {% include 'includes/submittals_subnav.html' with active_tab='new' %}
+{% endblock sub_nav %}
 
-function delete_row(btn){
-var row = btn.parentNode.parentNode;
-row.parentNode.removeChild(row);
-}
+{% block extra_head %}
+<style>
+    .existing-items-table td,
+    .existing-items-table th,
+    .new-items-table td,
+    .new-items-table th {
+        vertical-align: middle;
+    }
 
-function SelectWC(btn){
-	var table = document.getElementById("wc_items_table");
-	cell = btn.parentNode
-	row = btn.parentNode.parentNode.parentNode.parentNode
-	cell1 = row.insertCell(1);
-	var sel = document.getElementById(btn.id);
-	cell1.innerHTML = "<td><input type='text' name = 'wc_item' value = '" +  sel.options[sel.selectedIndex].text + "' size = '70' /></td>"
-	cell3 = row.insertCell(2);
-	cell3.innerHTML = "<td>Quantity: <input type='number' name = 'wc_quantity' value = '1' size = '8' /></td>"
-	cell2 = row.insertCell(3);
-	cell2.innerHTML = "<td><button type='button' onclick='delete_row(this)'>Delete Item</button> </td>"
-}
+    .clickable-row {
+        cursor: pointer;
+    }
 
-function addWCRow(){
-		number_rows=number_rows+1
-		var table = document.getElementById("wc_items_table");
-		var rows = table.getElementsByTagName("tr").length;
-		var row = table.insertRow(rows-1);
-		var cell1 = row.insertCell(0);
-		cell1.innerHTML = "<div id='new_item" + number_rows + "'></div>";
-		add_wc_dropdown();
-		var row2 = table.insertRow(rows);
-		var cell2 = row2.insertCell(0);
-		cell2.innerHTML = "Note: <input type='text' name = 'wc_note' placeholder = 'Type Note Here' size = '70' />"
-}
-function add_wc_dropdown(){
-		var select = document.createElement("select");
-		select.name = "select_wc"
-		select.id = "select_wc" + number_rows
-		select.addEventListener('change',function() {SelectWC(this);},false);
-		let rolodex = JSON.parse("{{wallcovering|escapejs}}");
-				var option = document.createElement("option");
-		option.value = "please_select";
-		option.text= "please select";
-		select.appendChild(option);
-				for (const x of rolodex)
-		{
-		var option = document.createElement("option");
-		option.value = x.id;
-
-		option.text= x.code + " " + x.vendor__company_name + " " + x.pattern;
-		select.appendChild(option);
-		}
-		var label = document.createElement("label");
-		document.getElementById("new_item" + number_rows).appendChild(label).appendChild(select);
-}
-function addRow(){
-		number_rows=number_rows+1
-		var table = document.getElementById("items_table");
-		var rows = table.getElementsByTagName("tr").length;
-		var row = table.insertRow(rows-1);
-		var cell1 = row.insertCell(0);
-		cell1.innerHTML = "<td><input type='text' name = 'other_item' placeholder = 'PT1 Drawdown' size = '70' /></td>"
-	cell2 = row.insertCell(1);
-	cell2.innerHTML = "<td>Quantity: <input type='number' name = 'other_quantity' value = '1' size = '8' /></td>"
-	cell3 = row.insertCell(2);
-	cell3.innerHTML = "<td><button type='button' onclick='delete_row(this)'>Delete Item</button> </td>"
-		row = table.insertRow(rows);
-		cell2 = row.insertCell(0);
-		cell2.innerHTML = "Note: <input type='text' name = 'other_note' placeholder = 'Type Note Here' size = '70' />"
-
-}
-
-
-	</script>
-</head>
-<body>
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Submittals</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'submittals_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link active" href="{% url 'submittals_new' %}">New Submittal</a></li>
-    </ul>
-  </div>
-</nav>
- <form action="{% url 'submittals_new' %}" method="post"  onSubmit = "return check_booking_data()">
-	 {% csrf_token %}
-	 {% if job_selected %}
-	 <h3>Submittal # {{next_submittal_number}} for Job: {{job_selected.job_name}}</h3> <br>
-<input type ="hidden" name ="select_job" value="{{job_selected.job_number}}" />
-	 <input type ="hidden" name ="submittal_number" value="{{next_submittal_number}}" />
-Description:<input type ="text" name ="description" placeholder="Paint and Wallcovering Samples" size = "70" required /><br>
-	         <textarea id="new_note" name="new_note" placeholder = "Type Any Notes Here" rows="1" cols="100" ></textarea><br>
-	 {% else %}
-            <label for="select_job">please select Job</label>
-            <select id="select_job" name="select_job" >
-{% for job in jobs %}
-                <option value={{job.job_number}}>{{job.job_name}}</option>
-                {% endfor %}
-            </select>
- <input type="submit" name="job_select" value="Select Job" />
-
-	 {% endif %}
-	{% if job_selected %}
-	{% if wallcovering %}
-
-<div class="demo-html" style="width:90%">
-		<table id="wc_items_table" class="display" style="width:90%">
-			<tbody>
-			<tr><td>If you are submitting any wallcovering items, please add them here:</td></tr>
-
-			<tr><td><button type="button" onclick="addWCRow()">Add Wallcovering Item</button> </td></tr>
-			</tbody>
-		</table>
-</div>
-
-
-
-	 {% endif %}
-
-<br>
-<div class="demo-html" style="width:90%">
-		<table id="items_table" class="display" style="width:90%">
-			<tbody>
-			<tr><td>Add non-wallcovering items here:</td></tr>
-
-			<tr><td><button type="button" onclick="addRow()">Add Item</button> </td></tr>
-			</tbody>
-		</table>
-</div>
-
-<br><hr>
-<input type="submit" name="add_submittal" value="Send Now" />
-
-{% endif %}
-
-
-    </form>
-</body>
-</html>
-
+    .clickable-row:hover {
+        background-color: #f8f9fa;
+    }
+</style>
 {% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h4 class="mb-0">Create New Submittal</h4>
+        </div>
+        <div class="card-body">
+            <p class="mb-1"><strong>Job:</strong> {{ job.job_number }} - {{ job.job_name }}</p>
+            <p class="mb-0"><strong>Submittal Number:</strong> {{ next_submittal_number }}</p>
+        </div>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Submittal Information</h5>
+            </div>
+            <div class="card-body">
+
+                <div class="form-group">
+                    <label for="description">Submittal Description</label>
+                    <input type="text"
+                           class="form-control"
+                           id="description"
+                           name="description"
+                           maxlength="2000"
+                           required>
+                </div>
+
+                <div class="form-group mb-0">
+                    <label for="note">Initial Note</label>
+                    <textarea class="form-control"
+                              id="note"
+                              name="note"
+                              rows="3"
+                              maxlength="2000"></textarea>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Available Existing Items</h5>
+            </div>
+            <div class="card-body p-0">
+
+                {% if available_items_without_approvals or available_unlinked_approvals %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0 existing-items-table">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width: 12%;">Add to this submittal</th>
+                                <th style="width: 38%;">Description</th>
+                                <th style="width: 25%;">Item Notes</th>
+                                <th style="width: 25%;">Current Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            {% for item in available_items_without_approvals %}
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" class="existing-item-checkbox" name="existing_item_ids" value="{{ item.id }}">
+                                </td>
+                                <td>{{ item.description }}</td>
+                                <td>{{ item.notes|default:"" }}</td>
+                                <td>No approval history yet</td>
+                            </tr>
+                            {% endfor %}
+
+                            {% for approval in available_unlinked_approvals %}
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" class="existing-item-checkbox" name="existing_unlinked_approval_ids" value="{{ approval.id }}">
+                                </td>
+                                <td>{{ approval.submittalitem.description }}</td>
+                                <td>{{ approval.submittalitem.notes|default:"" }}</td>
+                                <td>
+                                    {% if approval.notes %}
+                                        {{ approval.notes }}
+                                    {% else %}
+                                        Pending item not yet assigned to a submittal
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-3">
+                    No existing items are available to add to this submittal.
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+        <div id="manual-items-disabled-message" class="alert alert-info d-none">
+            Additional Items can be added later
+        </div>
+        <div id="manual-items-section">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Add New Items Manually</h5>
+                <button type="button" class="btn btn-sm btn-secondary" id="add-row-btn">Add Item</button>
+            </div>
+            <div class="card-body p-0">
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0 new-items-table" id="items-table">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width: 45%;">Description</th>
+                                <th style="width: 20%;">Quantity</th>
+                                <th style="width: 25%;">Notes</th>
+                                <th style="width: 10%;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <input type="text" name="item_description" class="form-control form-control-sm">
+                                </td>
+                                <td>
+                                    <input type="number" name="item_quantity" class="form-control form-control-sm" min="0" value="0">
+                                </td>
+                                <td>
+                                    <input type="text" name="item_notes" class="form-control form-control-sm">
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-sm btn-danger remove-row-btn">X</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Submittal</button>
+    </form>
+</div>
+{% endblock content %}
+
+{% block extra_scripts %}
+<script>
+    $(document).ready(function () {
+        $('#add-row-btn').on('click', function () {
+            const newRow = `
+                <tr>
+                    <td>
+                        <input type="text" name="item_description" class="form-control form-control-sm">
+                    </td>
+                    <td>
+                        <input type="number" name="item_quantity" class="form-control form-control-sm" min="0" value="0">
+                    </td>
+                    <td>
+                        <input type="text" name="item_notes" class="form-control form-control-sm">
+                    </td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-danger remove-row-btn">X</button>
+                    </td>
+                </tr>
+            `;
+
+            $('#items-table tbody').append(newRow);
+        });
+
+        $(document).on('click', '.remove-row-btn', function () {
+            if ($('#items-table tbody tr').length > 1) {
+                $(this).closest('tr').remove();
+            } else {
+                $(this).closest('tr').find('input').val('');
+            }
+        });
+    });
+
+function toggleManualSection() {
+    const anyChecked = $('.existing-item-checkbox:checked').length > 0;
+
+    if (anyChecked) {
+        $('#manual-items-section').hide();
+        $('#manual-items-disabled-message').removeClass('d-none');
+    } else {
+        $('#manual-items-section').show();
+        $('#manual-items-disabled-message').addClass('d-none');
+    }
+}
+
+$(document).on('change', '.existing-item-checkbox', function () {
+    toggleManualSection();
+});
+
+// Run on page load (in case of back button / form reload)
+$(document).ready(function () {
+    toggleManualSection();
+});
+</script>
+{% endblock extra_scripts %}
