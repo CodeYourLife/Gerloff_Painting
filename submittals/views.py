@@ -204,7 +204,6 @@ def submittals_new(request, job_number):
             return render(request, 'submittals/submittals_new.html', {
                 'job': job,
                 'next_submittal_number': next_submittal_number,
-                'wallcoverings': wallcoverings,
             })
 
         submittal = Submittals.objects.create(
@@ -280,14 +279,14 @@ def submittals_new(request, job_number):
                 item_description = item_descriptions[i].strip() if i < len(item_descriptions) else ''
                 item_note = item_notes[i].strip() if i < len(item_notes) else ''
                 item_quantity_raw = item_quantities[i].strip() if i < len(item_quantities) else ''
-                item_wallcovering_id = item_wallcoverings[i].strip() if i < len(item_wallcoverings) else ''
+                #item_wallcovering_id = item_wallcoverings[i].strip() if i < len(item_wallcoverings) else ''
 
                 if not item_description:
                     continue
 
-                wallcovering_obj = None
-                if item_wallcovering_id:
-                    wallcovering_obj = Wallcovering.objects.filter(id=item_wallcovering_id).first()
+                #wallcovering_obj = None
+                # if item_wallcovering_id:
+                #     wallcovering_obj = Wallcovering.objects.filter(id=item_wallcovering_id).first()
 
                 try:
                     quantity = int(item_quantity_raw) if item_quantity_raw else 0
@@ -295,7 +294,6 @@ def submittals_new(request, job_number):
                     quantity = 0
 
                 submittal_item = SubmittalItems.objects.create(
-                    wallcovering_id=wallcovering_obj,
                     description=item_description,
                     notes=item_note,
                     job_number=submittal.job_number,
