@@ -37,7 +37,7 @@ class SubmittalItems(models.Model):
     job_number = models.ForeignKey(Jobs, on_delete=models.PROTECT,null=True,blank=True)
 
     def __str__(self):
-        return f"{self.submittal} {self.description}"
+        return f"{self.job_number} {self.description}"
 
 
 class SubmittalApprovals(models.Model):
