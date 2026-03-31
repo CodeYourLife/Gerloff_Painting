@@ -383,11 +383,13 @@ def submittal_send(request, submittal_id):
     )
 
     folder_name = f"{job.job_number} {submittal.submittal_number}"
-
     main_folder_path = os.path.join(settings.MEDIA_ROOT, "submittals", folder_name)
     sent_to_gc_path = os.path.join(main_folder_path, "Sent to GC")
     approval_docs_path = os.path.join(main_folder_path, "Approval Documents")
 
+    main_folder_path2 = rf"\\gp-webserver\trinity\submittals\{job.job_number} {submittal.submittal_number}"
+    sent_to_gc_path2 = rf"\\gp-webserver\trinity\submittals\{job.job_number} {submittal.submittal_number}\Sent to GC"
+    approval_docs_path2 = rf"\\gp-webserver\trinity\submittals\{job.job_number} {submittal.submittal_number}\Approval Documents"
     os.makedirs(main_folder_path, exist_ok=True)
     os.makedirs(sent_to_gc_path, exist_ok=True)
     os.makedirs(approval_docs_path, exist_ok=True)
@@ -816,17 +818,17 @@ def submittal_send(request, submittal_id):
         'latest_notes': latest_notes,
         'older_notes': older_notes,
         'new_row_id': new_row_id,
-        'main_folder_path': main_folder_path,
+        'main_folder_path': main_folder_path2,
         'main_files': main_files,
         'main_file_count': len(main_files),
         'no_main_files': len(main_files) == 0,
 
-        'sent_to_gc_path': sent_to_gc_path,
+        'sent_to_gc_path': sent_to_gc_path2,
         'sent_to_gc_files': sent_to_gc_files,
         'sent_to_gc_file_count': len(sent_to_gc_files),
         'no_sent_to_gc_files': len(sent_to_gc_files) == 0,
 
-        'approval_docs_path': approval_docs_path,
+        'approval_docs_path': approval_docs_path2,
         'approval_docs_files': approval_docs_files,
         'approval_docs_file_count': len(approval_docs_files),
         'no_approval_docs_files': len(approval_docs_files) == 0,
