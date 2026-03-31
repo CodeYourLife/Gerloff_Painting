@@ -1517,13 +1517,8 @@ function show_submit_button(){
 
                         {% for ticket in tickets_not_done %}
 
-<!--                                {% if ticket.is_t_and_m %}-->
-<!--        <tr style="background-color:hsla(69, 100%, 92%);">-->
-<!--            {% else %}-->
-            <tr>
-<!--            {% endif %}-->
-
-                            <td><a href="{% url 'extra_work_ticket' ticket.id %}">{{ticket.cop_number}}</a></td>
+            <tr onclick="window.location.href='{% url 'extra_work_ticket' ticket.id %}'" style="cursor:pointer;">
+                            <td>{{ticket.cop_number}}</td>
                             <td>{{ticket.description}}</td>
                             <td>{{ticket.status}}</td>
                         </tr>
@@ -1563,11 +1558,15 @@ function show_submit_button(){
                         {% for open_co in open_changeorders %}
 
                                 {% if open_co.is_t_and_m %}
-        <tr style="background-color:hsla(69, 100%, 92%);">
+                        <tr class="clickable-row"
+                            onclick="window.location.href='{% url 'extra_work_ticket' open_co.id %}'"
+                            style="background-color:hsla(69, 100%, 92%); cursor:pointer;">
             {% else %}
-            <tr>
+                        <tr class="clickable-row"
+                            onclick="window.location.href='{% url 'extra_work_ticket' open_co.id %}'"
+                            style="cursor:pointer;">
             {% endif %}
-                            <td><a href="{% url 'extra_work_ticket' open_co.id %}">{{open_co.cop_number}}</a></td>
+                            <td>{{open_co.cop_number}}</td>
                             <td>{{open_co.description}}</td>
                             <td>{{open_co.status}}</td>
                         </tr>

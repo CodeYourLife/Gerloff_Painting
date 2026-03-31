@@ -956,12 +956,22 @@ def job_page(request, jobnumber):
                         go_to_pickup = True
             if request.POST['select_status'] == 'done_done':
                 message = "Labor is 100% done."
+                open_changeorders = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,is_approved=False)
+                email_message =  f"Per {request.user.first_name} {request.user.last_name} Labor is 100% Done. Please make sure to Click the Labor Done button in Management Console. {request.POST['closed_note']}"
+                email_message += f"\n\n"
+                email_message += f"There are {open_changeorders.count()} Open Change Orders:"
+                email_message += f"\n\n"
+                for x in open_changeorders:
+                    if x.price:
+                        email_message += f"COP# {x.cop_number} {x.description} - {x.status()} - ${x.price}"
+                    else:
+                        email_message += f"COP# {x.cop_number} {x.description} - {x.status()}"
+                    email_message += f"\n\n"
                 try:
                     check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
                     sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
                     Email.sendEmail("Labor Done - " + selectedjob.job_number + " " + selectedjob.job_name,
-                                    "Per " + request.user.first_name + " " + request.user.last_name + "- Labor is 100% Done. Please make sure to Click the Labor Done button in Management Console. " +
-                                    request.POST['closed_note'],
+                                    email_message,
                                     ['admin2@gerloffpainting.com',
                                      'bridgette@gerloffpainting.com',
                                      'victor@gerloffpainting.com'], False,sender)
@@ -1030,7 +1040,8 @@ def job_page(request, jobnumber):
         short_day = selectedjob.labor_done_Date.strftime("%d")
         send_data['labor_done_date'] = short_mth + "-" + short_day + "-" + short_year
     if selectedjob.current_contract_amount() != 0:
-        contract_amount = int(selectedjob.current_contract_amount())
+        # contract_amount = int(selectedjob.current_contract_amount())
+        contract_amount = selectedjob.current_contract_amount()
         contract_amount = ('{:,}'.format(contract_amount))
     else:
         contract_amount = "T&M"
@@ -1624,6 +1635,14 @@ def close_job(request, job_number):
     body = (
         "Job Closed in Trinity.\n\n"
         f"{job.job_number} {job.job_name}\n"
+        f"\n"
+        f"Superintendent: {job.superintendent.first_name} {job.superintendent.last_name}\n"
+        f"\n"
+        f"Estimator: {job.estimator.first_name} {job.estimator.last_name}\n"
+        f"\n"
+        f"Job Subbed Out: {job.is_painting_subbed}\n"
+        f"\n"
+        f"GC: {job.client.company}\n"
         f"\n"
         f"Final Contract Amount: ${final_contract_amount}\n"
         f"\n"
