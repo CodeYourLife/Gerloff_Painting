@@ -654,6 +654,12 @@ def price_ewt(request, id):
         except:
             return Decimal("0")
 
+    def money(val):
+        try:
+            return Decimal(val or "0").quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        except:
+            return Decimal("0.00")
+
     # ==========================================================
     # ======================= POST LOGIC ========================
     # ==========================================================
@@ -688,7 +694,8 @@ def price_ewt(request, id):
             # --------------------------------------------------
             # Update ChangeOrder Base Values
             # --------------------------------------------------
-            changeorder.price = request.POST.get("final_cost", 0)
+            final_cost = money(request.POST.get("final_cost"))
+            changeorder.price = final_cost
             changeorder.full_description = request.POST.get("notes", "")
             changeorder.save()
 
@@ -713,7 +720,7 @@ def price_ewt(request, id):
                 except:
                     print("ERROR")
             proposal.completed_by = request.POST.get("completed_by", "")
-            proposal.total = request.POST.get("final_cost", 0)
+            proposal.total = final_cost
             proposal.notes = request.POST.get("notes", "")
             proposal.save()
             # --------------------------------------------------
@@ -732,8 +739,8 @@ def price_ewt(request, id):
 
                 desc = request.POST.get(f"labor_item{index}", "").strip()
                 hours = safe_decimal(request.POST.get(f"labor_hours{index}"))
-                rate = safe_decimal(request.POST.get(f"labor_rate{index}"))
-                total = safe_decimal(request.POST.get(f"labor_cost{index}"))
+                rate = money(request.POST.get(f"labor_rate{index}"))
+                total = money(request.POST.get(f"labor_cost{index}"))
 
                 if not desc or hours <= 0 or rate <= 0:
                     continue
@@ -762,8 +769,8 @@ def price_ewt(request, id):
 
                     desc = request.POST.get(f"{prefix}_description{index}", "").strip()
                     qty = safe_decimal(request.POST.get(f"{prefix}_quantity{index}"))
-                    rate = safe_decimal(request.POST.get(f"{prefix}_rate{index}"))
-                    total = safe_decimal(request.POST.get(f"{prefix}_cost{index}"))
+                    rate = money(request.POST.get(f"{prefix}_rate{index}"))
+                    total = money(request.POST.get(f"{prefix}_cost{index}"))
                     units = request.POST.get(f"{prefix}_units{index}", "")
 
                     if not desc or qty <= 0 or rate <= 0:
@@ -789,7 +796,7 @@ def price_ewt(request, id):
             # ==================================================
             # INVENTORY
             # ==================================================
-            inventory_cost = safe_decimal(request.POST.get("inventory_cost"))
+            inventory_cost = money(request.POST.get("inventory_cost"))
             if inventory_cost > 0:
                 TMList.objects.create(
                     change_order=changeorder,
@@ -806,7 +813,7 @@ def price_ewt(request, id):
             # ==================================================
             # BOND
             # ==================================================
-            bond_cost = safe_decimal(request.POST.get("bond_cost"))
+            bond_cost = money(request.POST.get("bond_cost"))
             bond_rate = safe_decimal(request.POST.get("bond_rate"))
 
             if bond_cost > 0:
@@ -948,7 +955,7 @@ def price_ewt(request, id):
     if changeorder.job_number.is_bonded == True:
         bond_rate = TMPricesMaster.objects.get(category='Bond').rate
         bond_cost = bond_rate * totalcost
-        totalcost = totalcost + bond_cost
+        totalcost = money(totalcost + bond_cost)
         is_bonded = True
     week_ending = None
     completed_by = None
@@ -960,11 +967,11 @@ def price_ewt(request, id):
                 labor_counter += 1
                 laboritems.append({'rate': x.rate, 'counter': labor_counter, 'item': x.category2, 'hours': x.quantity, 'cost': x.total,'id':""})
                 totallaborcost += x.total
-                totalcost = totalcost + x.total
+                totalcost = money(totalcost + x.total)
             if x.category == "Material":
                 material_counter += 1
-                totalmaterialcost = totalmaterialcost + x.total
-                totalcost = totalcost + x.total
+                totalmaterialcost = money(totalmaterialcost + x.total)
+                totalcost = money(totalcost + x.total)
                 materials.append(
                     {'rate': x.rate, 'counter': material_counter, 'category': x.category, 'category_id': "",
                      'description': x.description,
@@ -972,8 +979,8 @@ def price_ewt(request, id):
                      'cost': x.total})
             if x.category == "Sundries":
                 sundries_counter += 1
-                totalsundriescost = totalsundriescost + x.total
-                totalcost = totalcost + x.total
+                totalsundriescost = money(totalsundriescost + x.total)
+                totalcost = money(totalcost + x.total)
                 sundries.append(
                     {'rate': x.rate, 'counter': sundries_counter, 'category': x.category, 'category_id': "",
                      'description': x.description,
@@ -981,8 +988,8 @@ def price_ewt(request, id):
                      'cost': x.total})
             if x.category == "Equipment":
                 equip_counter += 1
-                totalequipmentcost = totalequipmentcost + x.total
-                totalcost = totalcost + x.total
+                totalequipmentcost = money(totalequipmentcost + x.total)
+                totalcost = money(totalcost + x.total)
                 equipment.append(
                     {'rate': x.rate, 'counter': equip_counter, 'category': x.category, 'category_id': "",
                      'description': x.description,
@@ -990,14 +997,17 @@ def price_ewt(request, id):
                      'cost': x.total})
             if x.category == "Extras":
                 extras_counter += 1
-                totalextrascost = totalextrascost + x.total
-                totalcost = totalcost + x.total
+                totalextrascost = money(totalextrascost + x.total)
+                totalcost = money(totalcost + x.total)
                 extras.append(
                     {'rate': x.rate, 'counter': extras_counter, 'category': x.category, 'category_id': "",
                      'description': x.description,
                      'quantity': x.quantity, 'units': x.units,
                      'cost': x.total})
-        inventory = int(float(totalmaterialcost) * .15)
+            if x.category == "Inventory":
+                inventory = x.total
+                totalmaterialcost = money(totalmaterialcost + x.total)
+                totalcost = money(totalcost + x.total)
     elif ewt:
         week_ending = ewt.week_ending
         completed_by = ewt.completed_by
@@ -1008,11 +1018,11 @@ def price_ewt(request, id):
                         'master'):
                     hours = hours + y.monday + y.tuesday + y.wednesday + y.thursday + y.friday + y.saturday + y.sunday
                 totalhours = totalhours + hours
-                cost = hours * x.rate
-                totalcost = totalcost + cost
+                cost = money(hours * x.rate)
+                totalcost = money(totalcost + cost)
                 counter = counter + 1
-                rate = float(x.rate)
-                laboritems.append({'rate': rate, 'counter': counter, 'item': x, 'hours': hours, 'cost': int(cost)})
+                rate = money(x.rate)
+                laboritems.append({'rate': rate, 'counter': counter, 'item': x, 'hours': hours, 'cost': money(cost)})
         days = totalhours / 8
         counter = 0
         totallaborcost = totalcost
@@ -1024,18 +1034,18 @@ def price_ewt(request, id):
             category_id = None
             if y.master:
                 cost = y.quantity * y.master.rate
-                totalcost = totalcost + cost
-                totalmaterialcost = totalmaterialcost + cost
-                rate = float(y.master.rate)
+                totalcost = money(totalcost + cost)
+                totalmaterialcost = money(totalmaterialcost + cost)
+                rate = money(y.master.rate)
                 category_id = y.master.id
             materials.append(
                 {'rate': rate, 'counter': counter, 'category': category, 'category_id': category_id,
                  'description': y.description,
                  'quantity': y.quantity, 'units': y.units,
-                 'cost': int(cost)})
-        inventory = int(float(totalmaterialcost) * .15)
-        totalcost = totalcost + inventory
-        totalmaterialcost = totalmaterialcost + inventory
+                 'cost': money(cost)})
+        inventory = money(totalmaterialcost * Decimal("0.15"))
+        totalcost = money(totalcost + inventory)
+        totalmaterialcost = money(totalmaterialcost + inventory)
         counter = 0
         for y in EWTicket.objects.filter(EWT=ewt, category="Equipment").order_by('master'):
             cost=0
@@ -1045,15 +1055,15 @@ def price_ewt(request, id):
             category_id = None
             if y.master:
                 cost = y.quantity * y.master.rate
-                totalcost = totalcost + cost
-                totalequipmentcost += cost
-                rate = float(y.master.rate)
+                totalcost = money(totalcost + cost)
+                totalequipmentcost = money(totalequipmentcost + cost)
+                rate = money(y.master.rate)
                 category_id = y.master.id
             equipment.append(
                 {'rate': rate, 'counter': counter, 'category': category, 'category_id': category_id,
                  'description': y.description,
                  'quantity': y.quantity, 'units': y.units,
-                 'cost': int(cost)})
+                 'cost': money(cost)})
         counter = 0
         for y in EWTicket.objects.filter(EWT=ewt, category="Sundries").order_by('master'):
             cost=0
@@ -1063,39 +1073,39 @@ def price_ewt(request, id):
             category_id = None
             if y.master:
                 cost = y.quantity * y.master.rate
-                totalcost = totalcost + cost
-                totalsundriescost += cost
+                totalcost = money(totalcost + cost)
+                totalsundriescost = money(totalsundriescost + cost)
                 counter = counter + 1
-                rate = float(y.master.rate)
+                rate = money(y.master.rate)
                 #category = y.master.item
                 category_id = y.master.id
             sundries.append(
                 {'rate': rate, 'counter': counter, 'category': category, 'category_id': category_id,
                  'description': y.description,
                  'quantity': y.quantity, 'units': y.units,
-                 'cost': int(cost)})
+                 'cost': money(cost)})
     #as of 2/28/26 joe does not this this part is used anywhere. we should add it, for recurring extras that need to go on every change order for a job
         counter = 0
         for x in JobCharges.objects.filter(job=changeorder.job_number):
             if x.master.unit == "Day":
                 cost = days * x.master.rate
-                totalcost = totalcost + cost
+                totalcost = money(totalcost + cost)
                 counter = counter + 1
-                rate = float(x.master.rate)
+                rate = money(x.master.rate)
                 extras.append(
                     {'rate': rate, 'counter': counter, 'category': x.master.item, 'quantity': days, 'unit': "Days",
-                     'cost': int(cost)})
+                     'cost': money(cost)})
             elif x.master.unit == "Hours":
                 cost = totalhours * x.master.rate
-                totalcost = totalcost + cost
+                totalcost = money(totalcost + cost)
                 counter = counter + 1
-                rate = float(x.master.rate)
+                rate = money(x.master.rate)
                 extras.append(
                     {'rate': rate, 'counter': counter, 'category': x.master.item, 'quantity': totalhours, 'unit': "Hours",
-                     'cost': int(cost)})
+                     'cost': money(cost)})
             else:
                 counter = counter + 1
-                rate = float(x.master.rate)
+                rate = money(x.master.rate)
                 extras.append(
                     {'rate': rate, 'counter': counter, 'category': x.master.item, 'quantity': 0, 'unit': x.master.unit,
                      'cost': 0})
@@ -1119,16 +1129,16 @@ def price_ewt(request, id):
         notes = proposal.notes
 
     return render(request, "price_ewt.html",
-                  {'week_ending':week_ending,'completed_by':completed_by,'proposal':proposal,'notes': notes, 'is_bonded': is_bonded, 'bond_cost': int(bond_cost), 'bond_rate': bond_rate,
+                  {'week_ending':week_ending,'completed_by':completed_by,'proposal':proposal,'notes': notes, 'is_bonded': is_bonded, 'bond_cost': money(bond_cost), 'bond_rate': bond_rate,
                    'extras_json': extras_json, 'employees_json': employees_json, 'material_json': material_json,
                    'equipment_json': equipment_json, 'sundries_json': sundries_json,'laborcount': int(len(laboritems)),
                    'materialcount': int(len(materials)), 'equipmentcount': int(len(equipment)),'sundriescount': int(len(sundries)),
-                   'extrascount': int(len(extras)), 'extras': extras, 'totalcost': int(totalcost),
-                   'inventory': int(inventory), 'equipment': equipment, 'sundries': sundries, 'materials': materials,
+                   'extrascount': int(len(extras)), 'extras': extras, 'totalcost': money(totalcost),
+                   'inventory': money(inventory), 'equipment': equipment, 'sundries': sundries, 'materials': materials,
                    'laboritems': laboritems, 'ewt': ewt,
                    'changeorder': changeorder, 'employees2': employees2, 'materials2': materials2,
-                   'equipment2': equipment2, 'sundries2': sundries2,'extras2': extras2,'totalextrascost':totalextrascost, 'totalmaterialcost': int(totalmaterialcost),
-                   'totallaborcost': int(totallaborcost), 'totalequipmentcost': int(totalequipmentcost),'totalsundriescost': int(totalsundriescost)})
+                   'equipment2': equipment2, 'sundries2': sundries2,'extras2': extras2,'totalextrascost':money(totalextrascost), 'totalmaterialcost': money(totalmaterialcost),
+                   'totallaborcost': money(totallaborcost), 'totalequipmentcost': money(totalequipmentcost),'totalsundriescost': money(totalsundriescost)})
 
 @login_required(login_url='/accounts/login')
 def price_old_ewt(request, id):

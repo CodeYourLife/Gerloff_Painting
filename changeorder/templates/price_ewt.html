@@ -106,6 +106,7 @@ window.onload = function() {
 	var table = $('#sundries_breakdown').DataTable({paging: false,info:false,ordering:false,searching:false })
 	var table = $('#equipment_breakdown').DataTable({paging: false,info:false,ordering:false,searching:false })
 	var table = $('#extras_breakdown').DataTable({paging: false,info:false,ordering:false,searching:false })
+	initializeInventoryMode();
 	calculatetotal()
 };
 
@@ -166,7 +167,7 @@ function add_labor_row() {
 	add_labor_dropdown()
 	cell2.innerHTML = "<input type= 'text' name='labor_item" + laborcount + "' id='labor_item" + laborcount + "'placeholder='Labor Item'  size = '30' required />"
 	cell3.innerHTML ="<input type= 'number' name='labor_hours" + laborcount + "' id='labor_hours" + laborcount + "'  onchange ='calculatetotal(event)' size='7' required />"
-	cell4.innerHTML = "<input type= 'number' name='labor_rate" + laborcount + "' id='labor_rate" + laborcount + "'  onchange ='calculatetotal(event)' size='7' required />"
+	cell4.innerHTML = "<input type= 'number' step = '0.01' name='labor_rate" + laborcount + "' id='labor_rate" + laborcount + "'  onchange ='calculatetotal(event)' size='7' required />"
 	cell5.innerHTML ="<input type= 'hidden' name='labor_cost" + laborcount + "' id='labor_cost" + laborcount + "' /><div id='labor_cost_desc" + laborcount + "'>$</div>"
 	cell6.innerHTML ="<button type='button' onclick='delete_row(this)'>Delete </button>"
 }
@@ -245,6 +246,50 @@ function resetInventoryAuto() {
 
     calculatetotal();
 }
+
+function initializeInventoryMode() {
+    const totalCost = parseFloat("{{ totalcost|default:'0' }}") || 0;
+    const savedInventory = parseFloat("{{ inventory|default:'0' }}") || 0;
+
+    const inventoryCell = document.getElementById("inventory_units_cell");
+    const form = document.getElementById("pricing_form");
+
+    if (!inventoryCell || !form) return;
+
+    force_inventory = false;
+
+    if (totalCost > 0) {
+        let materialSubtotal = 0;
+
+        const rows = form.querySelectorAll(`input[name^="material_description"]`);
+
+        rows.forEach(input => {
+            const index = input.name.replace("material_description", "");
+            const qty = parseFloat(document.getElementById(`material_quantity${index}`)?.value || 0);
+            const rate = parseFloat(document.getElementById(`material_rate${index}`)?.value || 0);
+            materialSubtotal += qty * rate;
+        });
+
+        const expectedInventory = materialSubtotal * 0.15;
+		const savedRounded = Number(savedInventory).toFixed(2);
+		const expectedRounded = Number(expectedInventory).toFixed(2);
+        if (savedRounded !== expectedRounded) {
+            force_inventory = true;
+
+            inventoryCell.innerHTML = `
+                <button type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        onclick="resetInventoryAuto()">
+                    Auto Calculate
+                </button>
+            `;
+            return;
+        }
+    }
+
+    inventoryCell.innerHTML = "Lump Sum";
+}
+
 function calculatetotal() {
 
     const form = document.getElementById("pricing_form");
@@ -429,7 +474,7 @@ function add_material_row(type) {
 	cell2.innerHTML ="<input type= 'text' name='" + type + "_description"+ materialcount + "' id='" + type + "_description"+ materialcount + "' required />"
 	cell3.innerHTML ="<input type= 'number' name='" + type + "_quantity"+ materialcount + "' id='" + type + "_quantity"+ materialcount + "'  onchange = 'calculatetotal(event)' size='10' required />"
 	cell4.innerHTML ="<input type= 'text' name='" + type + "_units"+ materialcount + "' id='" + type + "_units"+ materialcount + "'  size='5' required />"
-	cell5.innerHTML = "<input type= 'number' name='" + type + "_rate" + materialcount + "' id='" + type + "_rate" + materialcount + "'  onchange ='calculatetotal(event)' size='7' required />"
+	cell5.innerHTML = "<input type= 'number' step='0.01' name='" + type + "_rate" + materialcount + "' id='" + type + "_rate" + materialcount + "'  onchange ='calculatetotal(event)' size='7' required />"
 	cell6.innerHTML ="<input type= 'hidden' name='" + type + "_cost" + materialcount + "' id='" + type + "_cost" + materialcount + "' /><div id='" + type + "_cost_desc" + materialcount + "'>$</div>"
 	cell7.innerHTML ="<button type='button' onclick='delete_row(this)'>Delete </button>"
 	calculatetotal()
@@ -749,7 +794,7 @@ calculatetotal()
 		<option value="custom">Custom</option>
 		</select>
 		</td><td><input type= "text" name="labor_item{{x.counter}}" id="labor_item{{x.counter}}" value="{{x.item}}"  size = "30" required /></td>
-		<td><input type= "number" name="labor_hours{{x.counter}}" id="labor_hours{{x.counter}}" value="{{x.hours}}" size="7" onchange = "calculatetotal(event)" required /></td><td><input type= "number" name="labor_rate{{x.counter}}" size="7" id="labor_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="labor_cost{{x.counter}}" id="labor_cost{{x.counter}}" value="{{x.cost}}" /><div id="labor_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+		<td><input type= "number" name="labor_hours{{x.counter}}" id="labor_hours{{x.counter}}" value="{{x.hours}}" size="7" onchange = "calculatetotal(event)" required /></td><td><input type= "number" name="labor_rate{{x.counter}}" step="0.01" size="7" id="labor_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="labor_cost{{x.counter}}" id="labor_cost{{x.counter}}" value="{{x.cost}}" /><div id="labor_cost_desc{{x.counter}}">${{x.cost}}</div></td>
 			<td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
 		{% endfor %}
 		{% endif %}
@@ -773,7 +818,7 @@ calculatetotal()
 			{% endfor %}
 				<option value="custom">Custom</option>
 			</select></td>
-			<td><input type= "text" name="material_description{{x.counter}}" id="material_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="material_quantity{{x.counter}}" id="material_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="material_units{{x.counter}}" id="material_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="material_rate{{x.counter}}" size="7" id="material_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="material_cost{{x.counter}}" id="material_cost{{x.counter}}" value="{{x.cost}}" /><div id="material_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+			<td><input type= "text" name="material_description{{x.counter}}" id="material_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="material_quantity{{x.counter}}" id="material_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="material_units{{x.counter}}" id="material_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="material_rate{{x.counter}}" step="0.01" size="7" id="material_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="material_cost{{x.counter}}" id="material_cost{{x.counter}}" value="{{x.cost}}" /><div id="material_cost_desc{{x.counter}}">${{x.cost}}</div></td>
 	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
 		{% endfor %}
 
@@ -818,7 +863,7 @@ calculatetotal()
 				<option value="custom">Custom</option>
 			</select></td>
 
-			<td><input type= "text" name="equipment_description{{x.counter}}" id="equipment_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="equipment_quantity{{x.counter}}" id="equipment_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="equipment_units{{x.counter}}" id="equipment_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="equipment_rate{{x.counter}}" size="7" id="equipment_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="equipment_cost{{x.counter}}" id="equipment_cost{{x.counter}}" value="{{x.cost}}" /><div id="equipment_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+			<td><input type= "text" name="equipment_description{{x.counter}}" id="equipment_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="equipment_quantity{{x.counter}}" id="equipment_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="equipment_units{{x.counter}}" id="equipment_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="equipment_rate{{x.counter}}" step="0.01" size="7" id="equipment_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="equipment_cost{{x.counter}}" id="equipment_cost{{x.counter}}" value="{{x.cost}}" /><div id="equipment_cost_desc{{x.counter}}">${{x.cost}}</div></td>
 
 	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
 		{% endfor %}
@@ -845,7 +890,7 @@ calculatetotal()
 				<option value="custom">Custom</option>
 			</select></td>
 
-			<td><input type= "text" name="sundries_description{{x.counter}}" id="sundries_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="sundries_quantity{{x.counter}}" id="sundries_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="sundries_units{{x.counter}}" id="sundries_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="sundries_rate{{x.counter}}" size="7" id="sundries_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="sundries_cost{{x.counter}}" id="sundries_cost{{x.counter}}" value="{{x.cost}}" /><div id="sundries_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+			<td><input type= "text" name="sundries_description{{x.counter}}" id="sundries_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="sundries_quantity{{x.counter}}" id="sundries_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="sundries_units{{x.counter}}" id="sundries_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="sundries_rate{{x.counter}}" step="0.01" size="7" id="sundries_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="sundries_cost{{x.counter}}" id="sundries_cost{{x.counter}}" value="{{x.cost}}" /><div id="sundries_cost_desc{{x.counter}}">${{x.cost}}</div></td>
 
 	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
 		{% endfor %}
@@ -872,7 +917,7 @@ calculatetotal()
 			{% endfor %}
 				<option value="custom">Custom</option>
 			</select></td>
-			<td><input type= "text" name="extras_description{{x.counter}}" id="extras_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="extras_quantity{{x.counter}}" id="extras_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="extras_units{{x.counter}}" id="extras_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="extras_rate{{x.counter}}" size="7" id="extras_rate{{x.counter}}" value="{{x.rate}}"  /></td><td><input type= "hidden" name="extras_cost{{x.counter}}" id="extras_cost{{x.counter}}" value="{{x.cost}}" /><div id="extras_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+			<td><input type= "text" name="extras_description{{x.counter}}" id="extras_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="extras_quantity{{x.counter}}" id="extras_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="extras_units{{x.counter}}" id="extras_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="extras_rate{{x.counter}}" step="0.01" size="7" id="extras_rate{{x.counter}}" value="{{x.rate}}"  /></td><td><input type= "hidden" name="extras_cost{{x.counter}}" id="extras_cost{{x.counter}}" value="{{x.cost}}" /><div id="extras_cost_desc{{x.counter}}">${{x.cost}}</div></td>
 	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
 		{% endfor %}
 	  {% endif %}
