@@ -619,6 +619,42 @@ function no_change() { toggleButtonPair('yes_change_button','no_change_button','
 function not_coded_yet() {
     alert("TELL JOE TO CODE THIS")
 }
+
+function submitChangeAmountForm() {
+    const priceInput = document.getElementById("change_amount_price_input");
+    const noteInput = document.getElementById("change_amount_note_input");
+    const hiddenPrice = document.getElementById("new_price");
+    const hiddenNote = document.getElementById("new_price_note");
+    const form = document.getElementById("change_amount_form");
+
+    if (!priceInput || !noteInput || !hiddenPrice || !hiddenNote || !form) {
+        alert("Unable to submit change amount form.");
+        return false;
+    }
+
+    const rawPrice = priceInput.value.trim();
+    const rawNote = noteInput.value.trim();
+
+    if (rawPrice === "") {
+        alert("Please enter a new price.");
+        priceInput.focus();
+        return false;
+    }
+
+    const parsedPrice = parseFloat(rawPrice);
+
+    if (isNaN(parsedPrice)) {
+        alert("Please enter a valid price.");
+        priceInput.focus();
+        return false;
+    }
+
+    hiddenPrice.value = parsedPrice.toFixed(2);
+    hiddenNote.value = rawNote;
+
+    form.submit();
+}
+
 </script>
 
 
@@ -832,6 +868,59 @@ function not_coded_yet() {
         </div>
     </div>
 </div>
+
+<!-- Change Price Modal -->
+<!-- Modal - Change Amount -->
+<div class="modal fade" id="changeAmountModal" tabindex="-1" role="dialog" aria-labelledby="changeAmountModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="changeAmountModalLabel">Change Amount</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="form-group">
+                    <label for="change_amount_price_input">New Price</label>
+                    <input type="number"
+                           step="0.01"
+                           class="form-control"
+                           id="change_amount_price_input"
+                           placeholder="Enter new price">
+                </div>
+
+                <div class="form-group">
+                    <label for="change_amount_note_input">Reason for Change</label>
+                    <textarea class="form-control"
+                              id="change_amount_note_input"
+                              rows="3"
+                              placeholder="Explain why the price was changed"></textarea>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-primary"
+                        onclick="submitChangeAmountForm()">
+                    Save New Amount
+                </button>
+
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-dismiss="modal">
+                    Cancel
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 <!-- Modal -upload ticket -->
 <div class="modal fade" id="signed_ticket-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
@@ -869,7 +958,7 @@ function not_coded_yet() {
 {% csrf_token %}
 
 <div class="modal-header">
-<h5 class="modal-title">Price Already Sent</h5>
+<h5 class="modal-title">Record Price Sent Separately</h5>
 <button type="button" class="close" data-dismiss="modal">
 <span>&times;</span>
 </button>
@@ -1560,7 +1649,24 @@ function not_coded_yet() {
         {% endif %}
     </button>
 </form>
+    {% if changeorder.date_sent %}
+<form id="change_amount_form"
+      name="change_amount"
+      action="{% url 'extra_work_ticket' changeorder.id %}"
+      method="post"
+      class="m-1">
+    {% csrf_token %}
+    <input type="hidden" name="new_price" id="new_price"/>
+    <input type="hidden" name="new_price_note" id="new_price_note"/>
 
+    <button type="button"
+            class="btn btn-secondary btn-sm"
+            data-toggle="modal"
+            data-target="#changeAmountModal">
+        Change Amount
+    </button>
+</form>
+    {% endif %}
 
 
 </div>

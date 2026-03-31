@@ -2114,8 +2114,17 @@ def extra_work_ticket(request, id):
     # else:
     #     send_data['post_bid_doc_folders'] = []
 
-
     if request.method == 'POST':
+        if 'new_price' in request.POST:
+            ChangeOrderNotes.objects.create(
+                cop_number=changeorder,
+                date=date.today(),
+                user=Employees.objects.get(user=request.user),
+                note=f"Price changed from ${changeorder.price} to ${request.POST['new_price']}. {request.POST['new_price_note']}"
+            )
+            changeorder.price = request.POST['new_price']
+            changeorder.save()
+            return redirect('extra_work_ticket', id=id)
         if "create_post_bid_doc_shortcuts" in request.POST:
             return redirect('extra_work_ticket', id=id)
         if 'price_already_sent' in request.POST:
