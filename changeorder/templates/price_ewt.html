@@ -28,19 +28,22 @@
             margin-left: 10px;
             margin-right: 10px;
         }
-        input {
-            margin-left: 10px;
-            margin-right: 10px;
-            padding: 0.375rem 0.75rem;
-            font-size: 1rem;
-            line-height: 1.5;
-            color: #495057;
-            background-color: #fff;
-            background-clip: padding-box;
-            border: 1px solid #ced4da;
-            border-radius: 0.25rem;
-            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
-        }
+		input {
+			margin-left: 0;
+			margin-right: 0;
+			padding: 0.375rem 0.5rem;
+			font-size: 1rem;
+			line-height: 1.5;
+			color: #495057;
+			background-color: #fff;
+			background-clip: padding-box;
+			border: 1px solid #ced4da;
+			border-radius: 0.25rem;
+			transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+			width: 100%;
+			max-width: 100%;
+			box-sizing: border-box;
+		}
         tr th {
             width: fit-content !important;
         }
@@ -87,6 +90,252 @@ input[type=number] {
   -moz-appearance: textfield;
 }
 
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+table.dataTable {
+    width: auto !important;
+    table-layout: fixed;
+}
+
+table.dataTable td,
+table.dataTable th {
+    white-space: normal !important;
+    vertical-align: middle;
+}
+
+table.dataTable input,
+table.dataTable select,
+table.dataTable textarea {
+    width: auto;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+table.dataTable button {
+    white-space: nowrap;
+}
+
+#pricing_form .container {
+    max-width: 100%;
+}
+
+table.dataTable td:nth-child(1) select {
+    width: 100%;
+}
+
+table.dataTable td:nth-child(2) input {
+    width: 100%;
+}
+/* ---------- LABOR TABLE (6 columns) ---------- */
+#labor_breakdown {
+    min-width: 830px;
+}
+
+
+#labor_breakdown th:nth-child(1),
+#labor_breakdown td:nth-child(1) {
+    width: 220px;
+}
+
+/* Keep labor dropdown sized */
+#labor_breakdown td:nth-child(1) select {
+    width: 220px;
+    min-width: 220px;
+    max-width: 220px;
+}
+
+#labor_breakdown th:nth-child(2),
+#labor_breakdown td:nth-child(2) {
+    width: 320px;
+}
+
+/* Keep labor item field sized */
+#labor_breakdown td:nth-child(2) input {
+    width: 320px;
+    min-width: 320px;
+    max-width: 320px;
+}
+
+#labor_breakdown th:nth-child(3),
+#labor_breakdown td:nth-child(3),
+#labor_breakdown th:nth-child(4),
+#labor_breakdown td:nth-child(4) {
+    width: 80px;
+}
+
+/* Keep labor hours and rate from shrinking */
+#labor_breakdown td:nth-child(3) input,
+#labor_breakdown td:nth-child(4) input {
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+}
+
+#labor_breakdown th:nth-child(5),
+#labor_breakdown td:nth-child(5) {
+    width: 70px;
+    white-space: nowrap;
+}
+
+#labor_breakdown th:nth-child(6),
+#labor_breakdown td:nth-child(6) {
+    width: 60px;
+}
+
+
+/* ---------- 7-COLUMN TABLES ---------- */
+#material_breakdown th:nth-child(1),
+#material_breakdown td:nth-child(1),
+#equipment_breakdown th:nth-child(1),
+#equipment_breakdown td:nth-child(1),
+#sundries_breakdown th:nth-child(1),
+#sundries_breakdown td:nth-child(1),
+#extras_breakdown th:nth-child(1),
+#extras_breakdown td:nth-child(1) {
+    width: 275px;
+    min-width: 275px;
+    max-width: 275px;
+}
+
+#material_breakdown td:nth-child(1) select,
+#equipment_breakdown td:nth-child(1) select,
+#sundries_breakdown td:nth-child(1) select,
+#extras_breakdown td:nth-child(1) select {
+    width: 275px;
+    min-width: 275px;
+    max-width: 275px;
+}
+
+
+#material_breakdown th:nth-child(2),
+#material_breakdown td:nth-child(2),
+#equipment_breakdown th:nth-child(2),
+#equipment_breakdown td:nth-child(2),
+#sundries_breakdown th:nth-child(2),
+#sundries_breakdown td:nth-child(2),
+#extras_breakdown th:nth-child(2),
+#extras_breakdown td:nth-child(2) {
+    width: 340px;
+	min-width: 340px;
+	max-width: 340px;
+}
+
+/* 7-column tables: make qty / units / rate / cost visibly tighter */
+#material_breakdown th:nth-child(3),
+#material_breakdown td:nth-child(3),
+#equipment_breakdown th:nth-child(3),
+#equipment_breakdown td:nth-child(3),
+#sundries_breakdown th:nth-child(3),
+#sundries_breakdown td:nth-child(3),
+#extras_breakdown th:nth-child(3),
+#extras_breakdown td:nth-child(3) {
+    width: 80px;
+}
+
+#material_breakdown th:nth-child(4),
+#material_breakdown td:nth-child(4),
+#equipment_breakdown th:nth-child(4),
+#equipment_breakdown td:nth-child(4),
+#sundries_breakdown th:nth-child(4),
+#sundries_breakdown td:nth-child(4),
+#extras_breakdown th:nth-child(4),
+#extras_breakdown td:nth-child(4) {
+    width: 75px;
+}
+
+#material_breakdown th:nth-child(5),
+#material_breakdown td:nth-child(5),
+#equipment_breakdown th:nth-child(5),
+#equipment_breakdown td:nth-child(5),
+#sundries_breakdown th:nth-child(5),
+#sundries_breakdown td:nth-child(5),
+#extras_breakdown th:nth-child(5),
+#extras_breakdown td:nth-child(5) {
+    width: 80px;
+}
+
+#material_breakdown th:nth-child(6),
+#material_breakdown td:nth-child(6),
+#equipment_breakdown th:nth-child(6),
+#equipment_breakdown td:nth-child(6),
+#sundries_breakdown th:nth-child(6),
+#sundries_breakdown td:nth-child(6),
+#extras_breakdown th:nth-child(6),
+#extras_breakdown td:nth-child(6) {
+    width: 85px;
+    white-space: nowrap;
+}
+
+#material_breakdown th:nth-child(7),
+#material_breakdown td:nth-child(7),
+#equipment_breakdown th:nth-child(7),
+#equipment_breakdown td:nth-child(7),
+#sundries_breakdown th:nth-child(7),
+#sundries_breakdown td:nth-child(7),
+#extras_breakdown th:nth-child(7),
+#extras_breakdown td:nth-child(7) {
+    width: 60px;
+}
+table.dataTable {
+    margin-left: 0;
+    margin-right: auto;
+}
+#labor_breakdown,
+#material_breakdown,
+#equipment_breakdown,
+#sundries_breakdown,
+#extras_breakdown {
+    min-width: 700px;
+}
+/* shrink the actual inputs so the columns LOOK smaller */
+#material_breakdown td:nth-child(3) input,
+#equipment_breakdown td:nth-child(3) input,
+#sundries_breakdown td:nth-child(3) input,
+#extras_breakdown td:nth-child(3) input {
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+}
+
+#material_breakdown td:nth-child(4) input,
+#equipment_breakdown td:nth-child(4) input,
+#sundries_breakdown td:nth-child(4) input,
+#extras_breakdown td:nth-child(4) input {
+    width: 75px;
+    min-width: 75px;
+    max-width: 75px;
+}
+
+#material_breakdown td:nth-child(5) input,
+#equipment_breakdown td:nth-child(5) input,
+#sundries_breakdown td:nth-child(5) input,
+#extras_breakdown td:nth-child(5) input {
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+}
+
+#material_breakdown td:nth-child(6) input,
+#equipment_breakdown td:nth-child(6) input,
+#sundries_breakdown td:nth-child(6) input,
+#extras_breakdown td:nth-child(6) input {
+    width: 85px;
+    min-width: 85px;
+    max-width: 85px;
+}
+
+/* cost display column */
+#material_breakdown td:nth-child(6),
+#equipment_breakdown td:nth-child(6),
+#sundries_breakdown td:nth-child(6),
+#extras_breakdown td:nth-child(6) {
+    font-size: 0.95rem;
+    padding-left: 4px;
+    padding-right: 4px;
+}
     </style>
 
 
@@ -99,6 +348,15 @@ var glob_equipmentcount= {{equipmentcount}}
 var glob_sundriescount= {{sundriescount}}
 var glob_extrascount = {{extrascount}}
 let force_inventory = false;
+
+function formatCurrency(value) {
+    if (isNaN(value)) return "$0.00";
+
+    return "$" + Number(value).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
 
 window.onload = function() {
 	var table = $('#labor_breakdown').DataTable({paging: false,info:false,ordering:false,searching:false })
@@ -231,7 +489,7 @@ function setForceInventory() {
         <button type="button"
                 class="btn btn-sm btn-outline-secondary"
                 onclick="resetInventoryAuto()">
-            Auto Calculate
+            Click Here to Switch to Auto Calculate
         </button>
     `;
 
@@ -280,7 +538,7 @@ function initializeInventoryMode() {
                 <button type="button"
                         class="btn btn-sm btn-outline-secondary"
                         onclick="resetInventoryAuto()">
-                    Auto Calculate
+                    Click Here to Switch to Auto Calculate
                 </button>
             `;
             return;
@@ -324,7 +582,7 @@ function calculatetotal() {
             const displayDiv = document.getElementById(`${prefix}_cost_desc${index}`);
 
             if (hiddenInput) hiddenInput.value = lineTotal.toFixed(2);
-            if (displayDiv) displayDiv.innerHTML = "$" + lineTotal.toFixed(2);
+            if (displayDiv) displayDiv.innerHTML = formatCurrency(lineTotal);
 
             categoryTotal += lineTotal;
         });
@@ -346,7 +604,7 @@ function calculatetotal() {
         const lineTotal = hours * rate;
 
         document.getElementById(`labor_cost${index}`).value = lineTotal.toFixed(2);
-        document.getElementById(`labor_cost_desc${index}`).innerHTML = "$" + lineTotal.toFixed(2);
+        document.getElementById(`labor_cost_desc${index}`).innerHTML = formatCurrency(lineTotal);
 
         totals.labor += lineTotal;
     });
@@ -391,7 +649,7 @@ function calculatetotal() {
         bondCost = subtotal * bondRate;
         document.getElementById("bond_cost").value = bondCost.toFixed(2);
         document.getElementById("bond_total_summary").innerHTML =
-            "<b>Bond Cost:</b> $" + bondCost.toFixed(2);
+            "<b>Bond Cost:</b> " + formatCurrency(bondCost);
         subtotal += bondCost;
     }
 
@@ -399,24 +657,24 @@ function calculatetotal() {
     // Update Summary Display
     // -----------------------------------------
     document.getElementById("labor_total_summary").innerHTML =
-        "<b>Labor Cost: $</b>" + totals.labor.toFixed(2);
+        "<b>Labor Cost: </b>" + formatCurrency(totals.labor);
 
     document.getElementById("material_total_summary").innerHTML =
-        "<b>Material Cost: $</b>" + totals.material.toFixed(2);
+        "<b>Material Cost: </b>" + formatCurrency(totals.material);
 
     document.getElementById("equipment_total_summary").innerHTML =
-        "<b>Equipment Cost: $</b>" + totals.equipment.toFixed(2);
+        "<b>Equipment Cost: </b>" + formatCurrency(totals.equipment);
 
     document.getElementById("sundries_total_summary").innerHTML =
-        "<b>Sundries Cost: $</b>" + totals.sundries.toFixed(2);
+        "<b>Sundries Cost: </b>" + formatCurrency(totals.sundries);
 
     document.getElementById("other_total_summary").innerHTML =
-        "<b>Other Cost: $</b>" + totals.extras.toFixed(2);
+        "<b>Other Cost: </b>" + formatCurrency(totals.extras);
 
-    document.getElementById("final_cost").value = subtotal.toFixed(2);
+    document.getElementById("final_cost").value = formatCurrency(subtotal);
 
     document.getElementById("final_cost_display").innerHTML =
-        "<b>Final Cost: $" + subtotal.toFixed(2) + "</b>";
+        "<b>Final Cost: " + formatCurrency(subtotal) + "</b>";
 }
 
 
@@ -656,19 +914,44 @@ function changesundries(event){
     calculatetotal();
 }
 
-function changeextras(){
-	clicked_row = event.currentTarget.id.substring(15,event.currentTarget.id.length)
-	description = document.getElementById("extras_description" + clicked_row)
-	rate = document.getElementById("extras_rate" + clicked_row)
-	unit = document.getElementById("extras_units" + clicked_row)
-	rolodex = JSON.parse("{{extras_json|escapejs}}");
-	for(let i =0; i < rolodex.length; i++){
-		if (rolodex[i].id == event.currentTarget.value){
-			description.value = rolodex[i].item
-			rate.value = rolodex[i].rate
-			unit.value = rolodex[i].unit
-		}
-	}
+function changeextras(event) {
+
+    const clicked_row = event.currentTarget.id.replace("extras_category", "");
+
+    const description = document.getElementById("extras_description" + clicked_row);
+    const rate = document.getElementById("extras_rate" + clicked_row);
+    const unit = document.getElementById("extras_units" + clicked_row);
+
+    const selectedValue = event.currentTarget.value;
+
+    if (selectedValue === "please_select") return;
+
+    if (selectedValue === "custom") {
+        if (!description.value.trim()) {
+            description.placeholder = "Extra Description";
+        }
+        rate.value = 0;
+        unit.value = "";
+        calculatetotal();
+        return;
+    }
+
+    const rolodex = JSON.parse("{{extras_json|escapejs}}");
+
+    for (let i = 0; i < rolodex.length; i++) {
+        if (rolodex[i].id == selectedValue) {
+
+            if (!description.value.trim()) {
+                description.value = rolodex[i].item;
+                unit.value = rolodex[i].unit;
+            }
+
+            rate.value = rolodex[i].rate;
+            break;
+        }
+    }
+
+    calculatetotal();
 }
 
 // function changequantity(){
@@ -739,7 +1022,7 @@ calculatetotal()
         </ul>
     </div>
 </nav>
-  <div class ="container">
+  <div class="container-fluid px-3">
 	<div class ="row">
 		<div class ="col"><H2>Gerloff Painting T&M Price Breakdown </H2></div>
 	</div>
@@ -773,14 +1056,15 @@ calculatetotal()
 <hr>
 
 
-<div class ="container">
+<div class="container-fluid px-3">
 	<label for="notes">Work Description: </label> <br>
 	<textarea id="notes" name="notes" rows="2" cols="100" >{{notes}}</textarea>
 </div>
 	<br>
-	<div class ="container" style="background-color:hsla(5, 100%, 92%);">
-	<h4>Labor Breakdown</h4>
-	<table id="labor_breakdown" class="display compact nowrap" style="width:100%" >
+	<div class="container-fluid px-3" style="background-color:hsla(5, 100%, 92%);">
+	<h4>Labor</h4>
+	<div class="table-responsive">
+	<table id="labor_breakdown" class="display compact" style="width:100%" >
 	<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Hours</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
 	<tbody>
 		{% if laboritems %}
@@ -794,18 +1078,20 @@ calculatetotal()
 		<option value="custom">Custom</option>
 		</select>
 		</td><td><input type= "text" name="labor_item{{x.counter}}" id="labor_item{{x.counter}}" value="{{x.item}}"  size = "30" required /></td>
-		<td><input type= "number" name="labor_hours{{x.counter}}" id="labor_hours{{x.counter}}" value="{{x.hours}}" size="7" onchange = "calculatetotal(event)" required /></td><td><input type= "number" name="labor_rate{{x.counter}}" step="0.01" size="7" id="labor_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="labor_cost{{x.counter}}" id="labor_cost{{x.counter}}" value="{{x.cost}}" /><div id="labor_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+		<td><input type= "number" name="labor_hours{{x.counter}}" id="labor_hours{{x.counter}}" value="{{x.hours}}" size="7" onchange = "calculatetotal(event)" required /></td><td><input type= "number" name="labor_rate{{x.counter}}" step="0.01" size="7" id="labor_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="labor_cost{{x.counter}}" id="labor_cost{{x.counter}}" value="{{x.cost}}" /><div id="labor_cost_desc{{x.counter}}">{{x.cost}}</div></td>
 			<td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
 		{% endfor %}
 		{% endif %}
 	  	<tr><td><input type = "hidden" name="hidden_labor" id = "hidden_labor" value = "{{laborcount}}" /><button type="button" onclick="add_labor_row()">Add Painter Row </button></td><td></td><td></td><td></td><td></td><td></td></tr>
 	</tbody>
 	</table>
-	  </div>
+	</div>
+	</div>
   	<br>
-	<div class ="container" style="background-color:hsla(75, 100%, 92%);">
-	<h4>Material Breakdown</h4>
-	<table id="material_breakdown" class="display compact nowrap" style="width:100%" >
+	<div class="container-fluid px-3" style="background-color:hsla(75, 100%, 92%);">
+	<h4>Material</h4>
+	<div class="table-responsive">
+		<table id="material_breakdown" class="display compact" style="width:100%">
 		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
 		<tbody>
 		{% if materials %}
@@ -818,20 +1104,17 @@ calculatetotal()
 			{% endfor %}
 				<option value="custom">Custom</option>
 			</select></td>
-			<td><input type= "text" name="material_description{{x.counter}}" id="material_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="material_quantity{{x.counter}}" id="material_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="material_units{{x.counter}}" id="material_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="material_rate{{x.counter}}" step="0.01" size="7" id="material_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="material_cost{{x.counter}}" id="material_cost{{x.counter}}" value="{{x.cost}}" /><div id="material_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+			<td><input type= "text" name="material_description{{x.counter}}" id="material_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="material_quantity{{x.counter}}" id="material_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="material_units{{x.counter}}" id="material_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="material_rate{{x.counter}}" step="0.01" size="7" id="material_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="material_cost{{x.counter}}" id="material_cost{{x.counter}}" value="{{x.cost}}" /><div id="material_cost_desc{{x.counter}}">{{x.cost}}</div></td>
 	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
 		{% endfor %}
 
 	  {% endif %}
 <!--		<tr><td>Inventory (Originally ${{inventory}})</td><td></td><td>Lump Sum</td><td></td><td></td><td></td><td><input type= "hidden" name="inventory_cost" id="inventory_cost" value="{{inventory}}" size="7" required /><div id="inventory_cost_display">${{inventory}}</div></td></tr>-->
-		<tr>
+<tr>
     <td>Inventory (Originally ${{inventory}})</td>
+    <td id="inventory_units_cell">Lump Sum</td>
     <td></td>
-    <td id="inventory_units_cell">
-        Lump Sum
-    </td>
-    <td></td>
-    <td></td>
+	<td></td>
     <td></td>
     <td>
         <input type="number"
@@ -839,17 +1122,20 @@ calculatetotal()
                id="inventory_cost"
                value="{{inventory}}"
                step=".01"
-               size="7"
                required
                oninput="setForceInventory()" />
-	</td>
-		<tr><input type = "hidden" name="hidden_material" id = "hidden_material" value = "{{materialcount}}" /><td><button type="button" onclick="add_material_row('material')">Add Material Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    </td>
+    <td></td>
+</tr>
+		<tr><input type = "hidden" name="hidden_material" id = "hidden_material" value = "{{materialcount}}" /><td><button type="button" onclick="add_material_row('material')">Add Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
 	</tbody></table>
 	</div>
+	</div>
     <br>
-	<div class ="container" style="background-color:hsla(135, 100%, 92%);">
-	<h4>Equipment Breakdown</h4>
-	<table id="equipment_breakdown" class="display compact nowrap" style="width:100%" >
+	<div class="container-fluid px-3" style="background-color:hsla(135, 100%, 92%);">
+	<h4>Equipment</h4>
+	<div class="table-responsive">
+		<table id="equipment_breakdown" class="display compact" style="width:100%" >
 		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
 		<tbody>
 		{% if equipment %}
@@ -863,20 +1149,22 @@ calculatetotal()
 				<option value="custom">Custom</option>
 			</select></td>
 
-			<td><input type= "text" name="equipment_description{{x.counter}}" id="equipment_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="equipment_quantity{{x.counter}}" id="equipment_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="equipment_units{{x.counter}}" id="equipment_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="equipment_rate{{x.counter}}" step="0.01" size="7" id="equipment_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="equipment_cost{{x.counter}}" id="equipment_cost{{x.counter}}" value="{{x.cost}}" /><div id="equipment_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+			<td><input type= "text" name="equipment_description{{x.counter}}" id="equipment_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="equipment_quantity{{x.counter}}" id="equipment_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="equipment_units{{x.counter}}" id="equipment_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="equipment_rate{{x.counter}}" step="0.01" size="7" id="equipment_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="equipment_cost{{x.counter}}" id="equipment_cost{{x.counter}}" value="{{x.cost}}" /><div id="equipment_cost_desc{{x.counter}}">{{x.cost}}</div></td>
 
 	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
 		{% endfor %}
 	  {% endif %}
 
-		<tr><input type = "hidden" name="hidden_equipment" id = "hidden_equipment" value = "{{equipmentcount}}" /><td><button type="button" onclick="add_material_row('equipment')">Add Equipment Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+		<tr><input type = "hidden" name="hidden_equipment" id = "hidden_equipment" value = "{{equipmentcount}}" /><td><button type="button" onclick="add_material_row('equipment')">Add Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
 
 	</tbody></table>
+		</div>
 	</div>
 	<br>
-	<div class ="container" style="background-color:hsla(135, 100%, 92%);">
-	<h4>Sundries Breakdown</h4>
-	<table id="sundries_breakdown" class="display compact nowrap" style="width:100%" >
+	<div class="container-fluid px-3" style="background-color:hsla(135, 100%, 92%);">
+	<h4>Sundries</h4>
+	<div class="table-responsive">
+		<table id="sundries_breakdown" class="display compact" style="width:100%" >
 		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
 		<tbody>
 		{% if sundries %}
@@ -890,20 +1178,22 @@ calculatetotal()
 				<option value="custom">Custom</option>
 			</select></td>
 
-			<td><input type= "text" name="sundries_description{{x.counter}}" id="sundries_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="sundries_quantity{{x.counter}}" id="sundries_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="sundries_units{{x.counter}}" id="sundries_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="sundries_rate{{x.counter}}" step="0.01" size="7" id="sundries_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="sundries_cost{{x.counter}}" id="sundries_cost{{x.counter}}" value="{{x.cost}}" /><div id="sundries_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+			<td><input type= "text" name="sundries_description{{x.counter}}" id="sundries_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="sundries_quantity{{x.counter}}" id="sundries_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="sundries_units{{x.counter}}" id="sundries_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="sundries_rate{{x.counter}}" step="0.01" size="7" id="sundries_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="sundries_cost{{x.counter}}" id="sundries_cost{{x.counter}}" value="{{x.cost}}" /><div id="sundries_cost_desc{{x.counter}}">{{x.cost}}</div></td>
 
 	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
 		{% endfor %}
 	  {% endif %}
 
-		<tr><input type = "hidden" name="hidden_sundries" id = "hidden_sundries" value = "{{sundriescount}}" /><td><button type="button" onclick="add_material_row('sundries')">Add Sundries Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+		<tr><input type = "hidden" name="hidden_sundries" id = "hidden_sundries" value = "{{sundriescount}}" /><td><button type="button" onclick="add_material_row('sundries')">Add Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
 
 	</tbody></table>
 	</div>
+	</div>
     <br>
-	<div class ="container" style="background-color:hsla(205, 100%, 92%);">
-		<h4>Other Adders</h4>
-	<table id="extras_breakdown" class="display compact nowrap" style="width:100%" >
+	<div class="container-fluid px-3" style="background-color:hsla(205, 100%, 92%);">
+		<h4>Other</h4>
+		<div class="table-responsive">
+	<table id="extras_breakdown" class="display compact" style="width:100%" >
 		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
 		<tbody>
 		{% if extras %}
@@ -917,29 +1207,34 @@ calculatetotal()
 			{% endfor %}
 				<option value="custom">Custom</option>
 			</select></td>
-			<td><input type= "text" name="extras_description{{x.counter}}" id="extras_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="extras_quantity{{x.counter}}" id="extras_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="extras_units{{x.counter}}" id="extras_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="extras_rate{{x.counter}}" step="0.01" size="7" id="extras_rate{{x.counter}}" value="{{x.rate}}"  /></td><td><input type= "hidden" name="extras_cost{{x.counter}}" id="extras_cost{{x.counter}}" value="{{x.cost}}" /><div id="extras_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+			<td><input type= "text" name="extras_description{{x.counter}}" id="extras_description{{x.counter}}" value="{{x.description}}" required /></td>
+			<td><input type= "number" name="extras_quantity{{x.counter}}" id="extras_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td>
+			<td><input type= "text" name="extras_units{{x.counter}}" id="extras_units{{x.counter}}" size="5" value="{{x.units}}" required /></td>
+			<td><input type="number" name="extras_rate{{x.counter}}" step="0.01" size="7" id="extras_rate{{x.counter}}" value="{{x.rate}}" onchange="calculatetotal(event)" /></td>
+			<td><input type= "hidden" name="extras_cost{{x.counter}}" id="extras_cost{{x.counter}}" value="{{x.cost}}" /><div id="extras_cost_desc{{x.counter}}">{{x.cost}}</div></td>
 	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
 		{% endfor %}
 	  {% endif %}
 
-		<tr><td><input type = "hidden" name="hidden_extras" id = "hidden_extras" value = "{{extrascount}}" /><button type="button" onclick="add_material_row('extras')">Add Extra Item </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+		<tr><td><input type = "hidden" name="hidden_extras" id = "hidden_extras" value = "{{extrascount}}" /><button type="button" onclick="add_material_row('extras')">Add Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
 	</tbody></table>
+			</div>
 	</div>
     <br>
 
 <hr>
-	<div class ="container" style="background-color:hsla(275, 100%, 92%);">
+	<div class="container-fluid px-3" style="background-color:hsla(275, 100%, 92%);">
 		<h4>TOTAL PRICE</h4>
 
-	<div id="labor_total_summary">Labor Cost: ${{totallaborcost}}</div>
-	<div id="material_total_summary">Material Cost: ${{totalmaterialcost}}</div>
-	<div id="equipment_total_summary">Equipment Cost: ${{totalequipmentcost}}</div>
-	<div id="sundries_total_summary">Sundries Cost: ${{totalsundriescost}}</div>
-	<div id="other_total_summary">Other Cost: ${{totalextrascost}}</div>
+	<div id="labor_total_summary">Labor Cost: {{totallaborcost}}</div>
+	<div id="material_total_summary">Material Cost: {{totalmaterialcost}}</div>
+	<div id="equipment_total_summary">Equipment Cost: {{totalequipmentcost}}</div>
+	<div id="sundries_total_summary">Sundries Cost: {{totalsundriescost}}</div>
+	<div id="other_total_summary">Other Cost: {{totalextrascost}}</div>
 {% if is_bonded == True %}
-	   <input type= "hidden" name="bond_cost" id="bond_cost" value="{{bond_cost}}" /> <input type= "hidden" name="bond_rate" id="bond_rate" value="{{bond_rate}}" /><div id="bond_total_summary" ><b>Bond Cost:</b> ${{bond_cost}}</div>
+	   <input type= "hidden" name="bond_cost" id="bond_cost" value="{{bond_cost}}" /> <input type= "hidden" name="bond_rate" id="bond_rate" value="{{bond_rate}}" /><div id="bond_total_summary" ><b>Bond Cost:</b> {{bond_cost}}</div>
 {% endif %}
-	 <input type = "hidden" name="final_cost" id = "final_cost" value = "{{totalcost}}" /><div id = "final_cost_display" ><b>Final Cost: ${{totalcost}}</b></div>
+	 <input type = "hidden" name="final_cost" id = "final_cost" value = "{{totalcost}}" /><div id = "final_cost_display" ><b>Final Cost: {{totalcost}}</b></div>
 	</div>
 	<hr>
 <!--PROPOSAL STATUS-->
