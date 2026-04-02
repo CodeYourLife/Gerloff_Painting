@@ -1985,7 +1985,7 @@ function show_submit_button(){
         <h5 class="mb-0">
             <button class="btn btn-link" data-toggle="collapse" data-target="#collapseUnapproved" aria-expanded="false"
                         aria-controls="collapseUnapproved">
-                Un-Approved Submittal Items
+                {{unapproved_items_count}}- Un-Approved Submittal Items
             </button>
         </h5>
     </div>
@@ -1993,7 +1993,7 @@ function show_submit_button(){
     <div id="collapseUnapproved"
          class="collapse hide"
          aria-labelledby="headingUnapproved"
-        data-parent="#accordian">
+        data-parent="#accordion">
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-sm table-striped mb-0">
@@ -2042,7 +2042,7 @@ function show_submit_button(){
                     data-target="#collapseApproved"
                     aria-expanded="false"
                     aria-controls="collapseApproved">
-                Approved Submittal Items
+                {{approved_items_count}}- Approved Submittal Items
             </button>
         </h5>
     </div>
@@ -2050,7 +2050,7 @@ function show_submit_button(){
     <div id="collapseApproved"
          class="collapse hide"
          aria-labelledby="headingApproved"
-        data-parent="#accordian">
+        data-parent="#accordion">
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-sm table-striped mb-0">

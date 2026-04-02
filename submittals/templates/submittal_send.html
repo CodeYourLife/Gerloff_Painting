@@ -796,9 +796,9 @@ function copyMainFolderPath() {
     input.setSelectionRange(0, 99999);
     try {
         document.execCommand("copy");
-        alert("Folder path copied to clipboard");
+        showToast("Folder path copied to clipboard");
     } catch {
-        alert("Copy not supported in this browser");
+        showAlertModal("Copy not supported in this browser");
     }
 }
 
@@ -809,9 +809,9 @@ function copySentToGCPath() {
     input.setSelectionRange(0, 99999);
     try {
         document.execCommand("copy");
-        alert("Folder path copied to clipboard");
+        showToast("Folder path copied to clipboard");
     } catch {
-        alert("Copy not supported in this browser");
+        showAlertModal("Copy not supported in this browser");
     }
 }
 
@@ -822,9 +822,9 @@ function copyApprovalDocsPath() {
     input.setSelectionRange(0, 99999);
     try {
         document.execCommand("copy");
-        alert("Folder path copied to clipboard");
+        showToast("Folder path copied to clipboard");
     } catch {
-        alert("Copy not supported in this browser");
+        showAlertModal("Copy not supported in this browser");
     }
 }
 
@@ -835,9 +835,9 @@ function copyMCPath() {
     input.setSelectionRange(0, 99999);
     try {
         document.execCommand("copy");
-        alert("Folder path copied to clipboard");
+        showToast("Folder path copied to clipboard");
     } catch {
-        alert("Copy not supported in this browser");
+        showAlertModal("Copy not supported in this browser");
     }
 }
 

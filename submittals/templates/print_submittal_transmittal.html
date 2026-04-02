@@ -94,7 +94,8 @@
                     <strong>Job:</strong> {{ submittal.job_number.job_number }} - {{ submittal.job_number.job_name }}<br>
                     <strong>Submittal #:</strong> {{ submittal.submittal_number }}<br>
                     <strong>Description:</strong> {{ submittal.description }}<br>
-                    <strong>Date:</strong> {{ today }}
+                    <strong>Date:</strong> {{ today }}<br>
+                    <strong>Sent To:</strong> {{ submittal.job_number.client.company }} - {{ submittal.job_number.client_Pm.name }}
                 </div>
             </td>
             <td class="logo-cell">
@@ -131,6 +132,30 @@
             {% endfor %}
         </tbody>
     </table>
+<br><br><br>
+<div class="info-block" style="line-height: 0.4; font-size: 12px;">
 
+    <div style="margin-top: 6px;">Sincerely,</div>
+
+    <div style="margin-top: 4px; font-weight: 600; font-size: 10px;">
+        Bridgette Clause
+    </div>
+
+    <div style="color: #555; font-size: 10px;">
+        Office Manager
+    </div>
+
+    <div style="margin-top: 2px;">
+        <a href="mailto:bridgette@gerloffpainting.com"
+           style="color: #007bff; text-decoration: none; font-size: 10px;">
+            bridgette@gerloffpainting.com
+        </a>
+    </div>
+
+    <div style="color: #555; font-size: 10px;">
+        (757) 857-4880 x 211
+    </div>
+
+</div>
 </body>
 </html>
