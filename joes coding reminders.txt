@@ -1,3 +1,9 @@
 python manage.py cleanup_tools delete_cos
 
-
+showToast("Folder path copied to clipboard");
+showToast("Upload failed.", "error");
+showToast("Please check this field.", "warning");
+showAlertModal("Copy not supported in this browser");
+showConfirmModal("Are you sure you want to void this change order?", function () {
+    document.void_input.submit();
+});

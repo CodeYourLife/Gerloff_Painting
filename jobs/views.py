@@ -1128,6 +1128,8 @@ def job_page(request, jobnumber):
             })
     send_data['approved_items'] = approved_items
     send_data['unapproved_items'] = unapproved_items
+    send_data['approved_items_count'] = len(approved_items)
+    send_data['unapproved_items_count'] = len(unapproved_items)
     subcontracts = []
     for x in Subcontracts.objects.filter(job_number=selectedjob):
         total_contract = "{:,}".format(int(x.total_contract_amount()))

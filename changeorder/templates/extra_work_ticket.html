@@ -423,9 +423,10 @@ function copyChangeOrderPath() {
 
     try {
         document.execCommand("copy");
-        alert("Folder path copied to clipboard");
+        showToast("Folder path copied to clipboard");
+       /*alert("Folder path copied to clipboard");*/
     } catch {
-        alert("Copy not supported in this browser");
+        showAlertModal("Copy not supported in this browser");
     }
 }
 
@@ -438,9 +439,9 @@ function copyMCPath() {
 
     try {
         document.execCommand("copy");
-        alert("Folder path copied to clipboard");
+        showToast("Folder path copied to clipboard");
     } catch {
-        alert("Copy not supported in this browser");
+        showAlertModal("Copy not supported in this browser");
     }
 }
 
@@ -1252,6 +1253,7 @@ function submitChangeAmountForm() {
             onclick="copyChangeOrderPath()">
         📋 Copy Trinity Folder Path
     </button>
+
     {% if mc_folder_path %}
         <button type="button"
             class="btn btn-secondary btn-sm"
