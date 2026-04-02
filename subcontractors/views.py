@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 import json
 from changeorder.views import link_callback
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
 from wallcovering.models import Wallcovering
@@ -750,7 +750,7 @@ def subcontract_invoices(request, subcontract_id, item_id):
                     send_data['error_message'] = "ERROR! Email not sent.  Please tell the office that you made changes to this invoice."
     # build the HTML page
     if item_id == 'ALL':
-        invoices = SubcontractorInvoice.objects.filter(subcontract=subcontract)
+        invoices = SubcontractorInvoice.objects.filter(subcontract=subcontract).order_by('id')
         send_data['invoices'] = invoices
     else:
         items = []
@@ -1571,12 +1571,28 @@ def new_subcontractor_payment(request):
         if 'check_number' in request.POST:
             if InvoiceBatch.objects.filter(invoice__subcontract__subcontractor=selected_sub, invoice__is_sent=True,
                                            invoice__processed=False).exists():
+                def money(val):
+                    try:
+                        return f"{Decimal(str(val).replace(',', '')):,.2f}"
+                    except (InvalidOperation, TypeError, ValueError):
+                        return "0.00"
+                raw_final_amount = request.POST.get('final_amount', '').replace(',', '').strip()
+                try:
+                    final_amount = Decimal(raw_final_amount)
+                except (InvalidOperation, TypeError):
+                    final_amount = Decimal('0.00')
                 payment = SubcontractorPayments.objects.create(subcontractor=selected_sub,
                                                                date=request.POST['pay_date'],
                                                                check_number=request.POST['check_number'],
-                                                               final_amount=request.POST['final_amount'],
+                                                               final_amount=final_amount,
                                                                notes=request.POST['note'])
-                new_email_message = "You have a new payment.\nPayment Amount: $" + str(payment.final_amount) + "\nCheck Number #" + str(payment.check_number) + "\n"
+
+                lines = [
+                    "You have a new payment.",
+                    "",
+                    f"Payment Amount : ${money(payment.final_amount)}",
+                    f"Check Number   : {payment.check_number}",
+                ]
                 for x in InvoiceBatch.objects.filter(invoice__subcontract__subcontractor=selected_sub,
                                                      invoice__is_sent=True, invoice__processed=False):
                     selected_invoice = x.invoice
@@ -1585,10 +1601,14 @@ def new_subcontractor_payment(request):
                     selected_invoice.payment = payment
                     amount_paid = selected_invoice.final_amount - selected_invoice.retainage
                     selected_invoice.save()
-                    new_email_message += "\n\nJob: " + str(subcontract.job_number.job_name)
-                    new_email_message += "\nAmount Paid This Week-  $" + str(amount_paid)
-                    new_email_message += "\nTotal Contract Amount-  $" + str(subcontract.total_contract_amount())
-                    new_email_message += "\nTotal Paid To Date-  $" + str(subcontract.total_actually_paid())
+                    lines.extend([
+                        "",
+                        "-" * 50,
+                        f"Job                                    : {subcontract.job_number.job_name}",
+                        f"Amount Paid This Week: ${money(amount_paid)}",
+                        f"Total Contract Amount  : ${money(subcontract.total_contract_amount())}",
+                        f"Total Paid To Date           : ${money(subcontract.total_actually_paid())}",
+                    ])
                     ready_to_close = True
                     #check to see if there are open invoices still
                     if SubcontractorInvoice.objects.filter(subcontract=subcontract, processed=False).exists():
@@ -1645,8 +1665,10 @@ def new_subcontractor_payment(request):
                                                     date=date.today())
                     check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
                     sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+                    new_email_message = "\r\n".join(lines)
                     try:
                         Email.sendEmail("New Payment " + selected_sub.company, new_email_message, recipients, False,sender)
+                        messages.success(request, "Email Sent Successfully")
                     except:
                         Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name,
                                                     error="Email Not Sent",
