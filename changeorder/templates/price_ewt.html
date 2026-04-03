@@ -671,7 +671,7 @@ function calculatetotal() {
     document.getElementById("other_total_summary").innerHTML =
         "<b>Other Cost: </b>" + formatCurrency(totals.extras);
 
-    document.getElementById("final_cost").value = formatCurrency(subtotal);
+    document.getElementById("final_cost").value = subtotal.toFixed(2);
 
     document.getElementById("final_cost_display").innerHTML =
         "<b>Final Cost: " + formatCurrency(subtotal) + "</b>";

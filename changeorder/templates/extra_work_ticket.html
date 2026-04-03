@@ -934,11 +934,15 @@ function submitChangeAmountForm() {
                 </button>
             </div>
             <div class="modal-body">
-                            <form action="{% url 'extra_work_ticket' changeorder.id %}" method="post" enctype="multipart/form-data" onSubmit="return check_paper_ticket()" >
+                            <form action="{% url 'extra_work_ticket' changeorder.id %}" method="post" enctype="multipart/form-data"  >
                                 {% csrf_token %}
+                                <input type ="hidden" name="upload_file2" value="Yes">
+                                <strong>PLEASE SAVE THE SIGNED TICKET IN THE FOLDER</strong>
+<!--                                JOE DELETED 4.3.26
                                 <div class="input-group">
                                   <input type="file" class="form-control" name="upload_file2" id="upload_file2" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
-                                </div>
+                                </div>-->
+
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -1379,6 +1383,17 @@ function submitChangeAmountForm() {
                                             Print T&M Entries for Ink Signature
                                         </button>
                                     </form>
+                                {% endif %}
+                                {% if changeorder.is_printed %}
+                                <form action="{% url 'extra_work_ticket' changeorder.id %}" method="post">
+                                {% csrf_token %}
+                                <button type="button"
+                                        data-toggle="modal"
+                                        data-target="#signed_ticket-modal"
+                                        class="btn btn-outline-secondary btn-sm">
+                                    Paper Ticket Signed
+                                </button>
+                            </form>
                                 {% endif %}
 </div>
                                 {% if not changeorder.digital_ticket_completed %}

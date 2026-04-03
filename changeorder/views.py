@@ -2257,27 +2257,28 @@ def extra_work_ticket(request, id):
             ChangeOrderNotes.objects.create(note=request.POST['new_note'],
                                             cop_number=changeorder, date=date.today(),
                                             user=Employees.objects.get(user=request.user))
-        if 'upload_file2' in request.FILES:
-            fileitem = request.FILES['upload_file2']
-            short_year = date.today().strftime("%y")
-            short_mth = date.today().strftime("%m")
-            short_day = date.today().strftime("%d")
-            short_date = short_year + "-" + short_mth + "-" + short_day
-            extension = fileitem.name.split(".")[1]
-            fn = os.path.basename(short_date + " Signed EWT." + extension)
-            fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number), fn)
-            #changed per chatgpt
-            #open(fn2, 'wb').write(fileitem.file.read())
-            os.makedirs(os.path.dirname(fn2), exist_ok=True)
-            with open(fn2, 'wb') as f:
-                for chunk in fileitem.chunks():
-                    f.write(chunk)
-            try:
-                path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
-                foldercontents = os.listdir(path)
-                send_data['foldercontents'] = foldercontents
-            except Exception as e:
-                print('no folder contents')
+        if 'upload_file2' in request.POST:
+            # ----------------JOE DELETED THE FOLLOWING ON 4.3.26 and just changed it to say "PLEASE SAVE EWT"
+            # if 'upload_file2' in request.FILES:
+            # fileitem = request.FILES['upload_file2']
+            # short_year = date.today().strftime("%y")
+            # short_mth = date.today().strftime("%m")
+            # short_day = date.today().strftime("%d")
+            # short_date = short_year + "-" + short_mth + "-" + short_day
+            # extension = fileitem.name.split(".")[1]
+            # fn = os.path.basename(short_date + " Signed EWT." + extension)
+            # fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number), fn)
+            # os.makedirs(os.path.dirname(fn2), exist_ok=True)
+            # with open(fn2, 'wb') as f:
+            #     for chunk in fileitem.chunks():
+            #         f.write(chunk)
+            # try:
+            #     path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
+            #     foldercontents = os.listdir(path)
+            #     send_data['foldercontents'] = foldercontents
+            # except Exception as e:
+            #     print('no folder contents')
+            # ---------------END OF JOE DELETION
             changeorder.is_ticket_signed = True
             changeorder.date_signed = date.today()
             changeorder.save()
