@@ -292,9 +292,12 @@ def print_TMProposal(request, id):
         bond = TMList.objects.get(change_order=changeorder, category="Bond")
         bond_exists = True
     ewt = newproposal.ticket
-    path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
-    result_file = open(f"{path}/GP COP {changeorder.cop_number} {changeorder.description} {date.today()}.pdf", "w+b")
+    #--old changed 4.3.26 to allow revised change orders
+    # path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
+    # result_file = open(f"{path}/GP COP {changeorder.cop_number} {changeorder.description} {date.today()}.pdf", "w+b")
+
     if request.method == 'POST':
+        no_email_clicked = False
         for x in request.POST:
             if x[0:11] == 'updateemail':
                 person = ClientEmployees.objects.get(person_pk=x[11:len(x)])
@@ -330,12 +333,23 @@ def print_TMProposal(request, id):
                                                      employee=person).exists():
                     ClientJobRoles.objects.create(role="Change Orders", job=changeorder.job_number, employee=person)
                     TempRecipients.objects.create(person=person, changeorder=changeorder)
-            if request.POST['status'] == 'Final' or x[0:8] == 'no_email':
+            if x[0:8] == 'no_email':
+                no_email_clicked = True
+            if request.POST['status'] == 'Final' or no_email_clicked:
                 newproposal.status = "Sent"
                 newproposal.save()
                 changeorder.date_sent = date.today()
                 changeorder.save()
+                base_filename = f"GP COP {changeorder.cop_number} {changeorder.description} {date.today()}.pdf"
+                file_path = os.path.join(path, base_filename)
 
+                counter = 1
+                while os.path.exists(file_path):
+                    name, ext = os.path.splitext(base_filename)
+                    file_path = os.path.join(path, f"{name} REV{counter}{ext}")
+                    counter += 1
+
+                result_file = open(file_path, "w+b")
                 recipients = ["bridgette@gerloffpainting.com"]
                 bridgette = Employees.objects.get(first_name="Bridgette", last_name="Clause")
                 current_user = Employees.objects.get(user=request.user)
@@ -366,7 +380,9 @@ def print_TMProposal(request, id):
                     Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
                     try:
                         files=[]
-                        files.append(f"{path}/GP COP {changeorder.cop_number} {changeorder.description} {date.today()}.pdf")
+                        #changed 4.3.26 to allow revised proposals
+                        # files.append(f"{path}/GP COP {changeorder.cop_number} {changeorder.description} {date.today()}.pdf")
+                        files.append(file_path)
                         files.append(f"{path}/" + request.POST['filename'])
                         email_subject = f"GP COP{changeorder.cop_number}- {changeorder.job_number.job_name}"
                         email_body = (f"Please find the T&M Proposal attached for job {changeorder.job_number.job_name}"
@@ -1717,6 +1733,18 @@ def change_order_send(request, id):
 
             filename = f"GP COP {changeorder.cop_number} {changeorder.description} {date.today()}.pdf"
             filepath = os.path.join(path, filename)
+
+            # If file exists, start adding REV numbers
+            if os.path.exists(filepath):
+                name, ext = os.path.splitext(filename)
+                counter = 1
+
+                while True:
+                    new_filepath = os.path.join(path, f"{name} REV{counter}{ext}")
+                    if not os.path.exists(new_filepath):
+                        filepath = new_filepath
+                        break
+                    counter += 1
 
             with open(filepath, "w+b") as result_file:
 
