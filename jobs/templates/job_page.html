@@ -1070,6 +1070,15 @@ function show_submit_button(){
             <div class="modal-footer">
                 <button class="btn btn-secondary" data-dismiss="modal">Exit</button>
                 <div class="mt-3">
+                    {% if job.is_closed %}
+                                            <button type="button"
+                                class="btn btn-danger"
+                                data-toggle="modal"
+                                data-target="#closeJobModal">
+                            Re-Open Job
+                        </button>
+
+                    {% else %}
                     {% if tickets_not_done or open_changeorders or not job.is_labor_done %}
                         <button type="button" class="btn btn-danger" disabled>
                             Close Job
@@ -1084,6 +1093,7 @@ function show_submit_button(){
                                 data-target="#closeJobModal">
                             Close Job
                         </button>
+                    {% endif %}
                     {% endif %}
                 </div>
             </div>
@@ -1105,10 +1115,22 @@ function show_submit_button(){
                 </button>
             </div>
 
+
             <form method="post" action="{% url 'close_job' job.job_number %}">
                 {% csrf_token %}
-                <div class="modal-body">
 
+                <div class="modal-body">
+                {% if job.is_closed %}
+                    <label for="notes">
+                            Please explain why you are re-opening the job.
+                        </label>
+
+                <textarea name="notes" id="notes"
+                      class="form-control form-control-sm textarea-compact"
+                      rows="3"
+                placeholder="Explanation"></textarea>
+                    <button type="submit" class="btn btn-danger">Re Open Job</button>
+                {% else %}
                     <p class="mb-3">
                         Are you sure you want to close job
                         <strong>{{ job.job_number }} - {{ job.job_name }}</strong>?
@@ -1130,25 +1152,19 @@ function show_submit_button(){
                                name="cumulative_costs_at_closing"
                                placeholder="Enter total job costs"
                                required>
+                    {% endif %}
                     </div>
 
-<!--                    <div class="form-group mb-0">-->
-<!--                        <label for="close_job_confirm_text">-->
-<!--                            Type <strong>CLOSE</strong> to confirm-->
-<!--                        </label>-->
-<!--                        <input type="text"-->
-<!--                               class="form-control"-->
-<!--                               id="close_job_confirm_text"-->
-<!--                               name="close_job_confirm_text"-->
-<!--                               placeholder="Type CLOSE"-->
-<!--                               required>-->
-<!--                    </div>-->
 
                 </div>
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    {% if job.is_closed %}
+
+                    {% else %}
                     <button type="submit" class="btn btn-danger">Close Job</button>
+                    {% endif %}
                 </div>
             </form>
 
@@ -1281,7 +1297,7 @@ function show_submit_button(){
 
 {% if job.is_closed %}
 <div style="background-color:hsl(0, 0%, 75%);">
-<h4>JOB IS CLOSED</h4>
+<h4>JOB IS CLOSED. CLOSED JOB NUMBER: {{job.closed_job_number}}</h4>
 {% endif %}
 <div style="background-color:hsl(202, 64%, 95%);">
 <!--Header info-->
@@ -2114,7 +2130,7 @@ function show_submit_button(){
                             {% endif %}
                             <td>{{subcontract.subcontractor}}</td>
                             <td>${{subcontract.total_contract}}</td>
-                            <td>{{subcontract.percent_complete}}</td>
+                            <td>{{subcontract.percent_complete}}{% if subcontract.subcontract.is_closed  %}-CLOSED{% endif %}</td>
                         </tr>
                         {% endfor %}
                         </tbody>

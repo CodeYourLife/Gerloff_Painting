@@ -178,52 +178,52 @@ def update_job_info(request, jobnumber):
         else:
             if selectedjob.spray_scale != request.POST['spray_scale']:
                 selectedjob.spray_scale = request.POST['spray_scale']
-        if 'is_closed' in request.POST:
-            if selectedjob.is_closed == False:
-                if Inventory.objects.filter(job_number=selectedjob, is_closed=False).exists():
-                    message = "Job: " + selectedjob.job_name + " is closed. The following equipment is assigned to the job and must be returned immediately!\n "
-                    recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com",
-                                  "warehouse@gerloffpainting.com", "joe@gerloffpainting.com"]
-                    if selectedjob.superintendent.email is None:
-                        message = message + "\n No email address for " + str(selectedjob.superintendent)
-                    else:
-                        recipients.append(selectedjob.superintendent.email)
-                    for x in Inventory.objects.filter(job_number=selectedjob, is_closed=False):
-                        if x.number:
-                            message = message + "\n -" + x.item + " GP Number #" + x.number
-                        else:
-                            message = message + "\n -" + x.item + " -No GP Number! "
-                    check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
-                    sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
-                    try:
-                        Email.sendEmail("Closed Job - " + selectedjob.job_name, message,
-                                        recipients, False,sender)
-                        success = True
-                    except:
-                        send_data['error_message'] = "Email Failed to send. Please let warehouse know. " + message
-                if Subcontracts.objects.filter(is_closed=False, job_number=selectedjob).exists():
-                    message = "Job: " + selectedjob.job_name + " cannot be closed. The following subcontracts are still open!\n "
-                    recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com",
-                                  "joe@gerloffpainting.com"]
-                    for x in Subcontracts.objects.filter(is_closed=False, job_number=selectedjob):
-                        if x.po_number:
-                            message += "\n -" + x.subcontractor.company + " - PO# " + x.po_number + "! "
-                        else:
-                            message += "\n -" + x.subcontractor.company + " - PO# N/A!"
-                    check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
-                    sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
-                    try:
-                        Email.sendEmail("Closed Job Error- " + selectedjob.job_name, message,
-                                        recipients, False,sender)
-                        success = True
-                    except:
-                        send_data['error_message'] = "Email Failed to send. Please note that the job can't be closed because there are open subcontractors"
-                    send_data['subcontract_open_error'] = True
-                    send_data['open_subcontracts'] = message
-                else:
-                    selectedjob.is_closed = True
-        else:
-            selectedjob.is_closed = False
+        # if 'is_closed' in request.POST:
+        #     if selectedjob.is_closed == False:
+        #         if Inventory.objects.filter(job_number=selectedjob, is_closed=False).exists():
+        #             message = "Job: " + selectedjob.job_name + " is closed. The following equipment is assigned to the job and must be returned immediately!\n "
+        #             recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com",
+        #                           "warehouse@gerloffpainting.com", "joe@gerloffpainting.com"]
+        #             if selectedjob.superintendent.email is None:
+        #                 message = message + "\n No email address for " + str(selectedjob.superintendent)
+        #             else:
+        #                 recipients.append(selectedjob.superintendent.email)
+        #             for x in Inventory.objects.filter(job_number=selectedjob, is_closed=False):
+        #                 if x.number:
+        #                     message = message + "\n -" + x.item + " GP Number #" + x.number
+        #                 else:
+        #                     message = message + "\n -" + x.item + " -No GP Number! "
+        #             check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+        #             sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+        #             try:
+        #                 Email.sendEmail("Closed Job - " + selectedjob.job_name, message,
+        #                                 recipients, False,sender)
+        #                 success = True
+        #             except:
+        #                 send_data['error_message'] = "Email Failed to send. Please let warehouse know. " + message
+        #         if Subcontracts.objects.filter(is_closed=False, job_number=selectedjob).exists():
+        #             message = "Job: " + selectedjob.job_name + " cannot be closed. The following subcontracts are still open!\n "
+        #             recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com",
+        #                           "joe@gerloffpainting.com"]
+        #             for x in Subcontracts.objects.filter(is_closed=False, job_number=selectedjob):
+        #                 if x.po_number:
+        #                     message += "\n -" + x.subcontractor.company + " - PO# " + x.po_number + "! "
+        #                 else:
+        #                     message += "\n -" + x.subcontractor.company + " - PO# N/A!"
+        #             check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+        #             sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+        #             try:
+        #                 Email.sendEmail("Closed Job Error- " + selectedjob.job_name, message,
+        #                                 recipients, False,sender)
+        #                 success = True
+        #             except:
+        #                 send_data['error_message'] = "Email Failed to send. Please note that the job can't be closed because there are open subcontractors"
+        #             send_data['subcontract_open_error'] = True
+        #             send_data['open_subcontracts'] = message
+        #         else:
+        #             selectedjob.is_closed = True
+        # else:
+        #     selectedjob.is_closed = False
         if 'is_t_m_job' in request.POST:
             selectedjob.is_t_m_job = True
         else:
@@ -1134,7 +1134,7 @@ def job_page(request, jobnumber):
     for x in Subcontracts.objects.filter(job_number=selectedjob):
         total_contract = "{:,}".format(int(x.total_contract_amount()))
         percent_complete = format(x.percent_complete(), ".0%")
-        subcontracts.append({'id': x.id, 'po_number': x.po_number, 'subcontractor': x.subcontractor.company,
+        subcontracts.append({'id': x.id, 'po_number': x.po_number, 'subcontract':x,'subcontractor': x.subcontractor.company,
                              'total_contract': total_contract, 'percent_complete': percent_complete})
     send_data['subcontracts'] = subcontracts
     all_notes = JobNotesFilter(request.GET, queryset=JobNotes.objects.filter(job_number=selectedjob))
@@ -1598,7 +1598,86 @@ def close_job(request, job_number):
 
     if request.method != "POST":
         return redirect('job_page', jobnumber=job.job_number)
+    #imported code from other section
+    if job.is_closed:
+        email_message = f"Job {job.job_number} {job.job_name} has been re-opened. {request.POST['notes']}. Please re-open the job in Sirius and MC.  Pull Closed Job Folder {job.closed_job_number}."
+        recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com",
+                      "warehouse@gerloffpainting.com", "victor@gerloffpainting.com", "joe@gerloffpainting.com"]
 
+        JobNotes.objects.create(job_number=job,
+                                note=f"Job Reopened. {request.POST['notes']}. Closed Job Number #{job.closed_job_number}",
+                                type="auto_misc_note",
+                                user=Employees.objects.get(user=request.user),
+                                date=date.today())
+        check_sender = Employees.objects.filter(
+            user=request.user).first() if request.user.is_authenticated else None
+        sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+        try:
+            Email.sendEmail("Re-Open Job - " + job.job_name, email_message,
+                            recipients, False, sender)
+            messages.success(
+                request,
+                f"Email Successfully Sent."
+            )
+        except:
+            messages.error(request,
+                f"Re Open Job Email Failed. Please email manually to reopen in sirius and mc."
+            )
+        job.is_closed = False
+        job.save()
+        return redirect('job_page', jobnumber=job.job_number)
+    if Inventory.objects.filter(job_number=job, is_closed=False).exists():
+        message = "Job: " + job.job_name + " is closed. The following equipment is assigned to the job and must be returned immediately!\n "
+
+        recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com",
+                      "warehouse@gerloffpainting.com", "victor@gerloffpainting.com","joe@gerloffpainting.com"]
+        if job.superintendent.email is None:
+            message = message + "\n No email address for " + str(job.superintendent)
+        else:
+            recipients.append(job.superintendent.email)
+        for x in Inventory.objects.filter(job_number=job, is_closed=False):
+            if x.number:
+                message = message + "\n -" + x.item + " GP Number #" + x.number
+            else:
+                message = message + "\n -" + x.item + " -No GP Number! "
+        check_sender = Employees.objects.filter(
+            user=request.user).first() if request.user.is_authenticated else None
+        sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+        try:
+            Email.sendEmail("Closed Job - " + job.job_name, message,
+                            recipients, False, sender)
+            messages.success(
+                request,
+                f"Email Successfully Sent To Warehouse About Equipment"
+            )
+        except:
+            messages.error(request,
+                f"Equipment Email Failed. Please tell Warehouse Manager there is equipment assigned to closed job."
+            )
+    if Subcontracts.objects.filter(is_closed=False, job_number=job).exists():
+        message = "Job: " + job.job_name + " cannot be closed. The following subcontracts are still open!\n "
+
+        recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com",
+                      "joe@gerloffpainting.com"]
+        for x in Subcontracts.objects.filter(is_closed=False, job_number=job):
+            if x.po_number:
+                message += "\n -" + x.subcontractor.company + " - PO# " + x.po_number + "! "
+            else:
+                message += "\n -" + x.subcontractor.company + " - PO# N/A!"
+        check_sender = Employees.objects.filter(
+            user=request.user).first() if request.user.is_authenticated else None
+        sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+        try:
+            Email.sendEmail("Closed Job Error- " + job.job_name, message,
+                            recipients, False, sender)
+            messages.success(request,"Can't Close Job- Open Subcontract! Email Sent..")
+            success = True
+        except:
+            messages.error(request,"Email Failed to send. Please note that the job can't be closed because there are open subcontractors")
+        return redirect('job_page', jobnumber=job.job_number)
+
+
+    #end of imported code
     open_change_orders = ChangeOrders.objects.filter(
         job_number=job,
         is_closed=False,
@@ -1626,6 +1705,11 @@ def close_job(request, job_number):
     job.ar_closed_date = date.today()
     job.cumulative_costs_at_closing = cumulative_costs
     job.save()
+    JobNotes.objects.create(job_number=job,
+                            note=f"Job Closed. Closed Job Number {job.closed_job_number}",
+                            type="auto_misc_note",
+                            user=Employees.objects.get(user=request.user),
+                            date=date.today())
     if job.current_contract_amount() != 0:
         final_contract_amount = int(job.current_contract_amount())
         profit = final_contract_amount - cumulative_costs
@@ -1656,6 +1740,7 @@ def close_job(request, job_number):
         f"\n"
         f"Please close job in Sirius and MC"
     )
+
     recipients = ["admin2@gerloffpainting.com", "bridgette@gerloffpainting.com","gene@gerloffpainting.com","victor@gerloffpainting.com","joe@gerloffpainting.com"]
 
     try:
