@@ -754,11 +754,20 @@ def price_ewt(request, id):
                 index = key.replace("labor_item", "")
 
                 desc = request.POST.get(f"labor_item{index}", "").strip()
-                hours = safe_decimal(request.POST.get(f"labor_hours{index}"))
-                rate = money(request.POST.get(f"labor_rate{index}"))
-                total = money(request.POST.get(f"labor_cost{index}"))
+                hours_raw = request.POST.get(f"labor_hours{index}", "").strip()
+                rate_raw = request.POST.get(f"labor_rate{index}", "").strip()
+                total_raw = request.POST.get(f"labor_cost{index}", "").strip()
 
-                if not desc or hours <= 0 or rate <= 0:
+                # skip completely blank rows
+                if not desc and not hours_raw and not rate_raw and not total_raw:
+                    continue
+
+                hours = safe_decimal(hours_raw)
+                rate = money(rate_raw)
+                total = money(total_raw)
+
+                # require description only for rows being saved
+                if not desc:
                     continue
 
                 TMList.objects.create(
@@ -784,12 +793,21 @@ def price_ewt(request, id):
                     index = key.replace(f"{prefix}_description", "")
 
                     desc = request.POST.get(f"{prefix}_description{index}", "").strip()
-                    qty = safe_decimal(request.POST.get(f"{prefix}_quantity{index}"))
-                    rate = money(request.POST.get(f"{prefix}_rate{index}"))
-                    total = money(request.POST.get(f"{prefix}_cost{index}"))
-                    units = request.POST.get(f"{prefix}_units{index}", "")
+                    qty_raw = request.POST.get(f"{prefix}_quantity{index}", "").strip()
+                    rate_raw = request.POST.get(f"{prefix}_rate{index}", "").strip()
+                    total_raw = request.POST.get(f"{prefix}_cost{index}", "").strip()
+                    units = request.POST.get(f"{prefix}_units{index}", "").strip()
 
-                    if not desc or qty <= 0 or rate <= 0:
+                    # skip completely blank rows
+                    if not desc and not qty_raw and not rate_raw and not total_raw and not units:
+                        continue
+
+                    qty = safe_decimal(qty_raw)
+                    rate = money(rate_raw)
+                    total = money(total_raw)
+
+                    # require description only for rows being saved
+                    if not desc:
                         continue
 
                     TMList.objects.create(
@@ -813,7 +831,7 @@ def price_ewt(request, id):
             # INVENTORY
             # ==================================================
             inventory_cost = money(request.POST.get("inventory_cost"))
-            if inventory_cost > 0:
+            if inventory_cost != 0:
                 TMList.objects.create(
                     change_order=changeorder,
                     description="Inventory",
@@ -832,7 +850,7 @@ def price_ewt(request, id):
             bond_cost = money(request.POST.get("bond_cost"))
             bond_rate = safe_decimal(request.POST.get("bond_rate"))
 
-            if bond_cost > 0:
+            if bond_cost != 0:
                 TMList.objects.create(
                     change_order=changeorder,
                     description="Bond",

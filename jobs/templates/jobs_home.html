@@ -488,7 +488,9 @@ window.onload = function() {
            <!--<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_job('{{x.job_number}}')"><a href="#">{% if x.is_labor_done == True %}<b>[DONE]</b>{% elif x.is_waiting_for_punchlist == True %}<b>[PUNCH]</b>{% endif %}{{x.job_name}}{% if x.is_painting_subbed == True %}<b>[SUB]</b>{% endif %}</a></td>-->
             <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_number}} {{x.job_name}}{% if x.is_painting_subbed == True %}<b>[SUB]</b>{% endif %}</a></td>
 <td>
-    {% if x.is_labor_done %}
+    {% if x.is_closed %}
+    <span class="badge badge-dark">Closed</span>
+    {% elif x.is_labor_done %}
         <span class="badge badge-dark">Closing</span>
     {% elif x.is_waiting_for_punchlist %}
         <span class="badge badge-secondary">Punch</span>
