@@ -2170,16 +2170,188 @@ def extra_work_ticket(request, id):
     # else:
     #     send_data['post_bid_doc_folders'] = []
 
+    from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+    from datetime import date
+    from django.shortcuts import redirect
+    from django.contrib import messages
+
     if request.method == 'POST':
+        if 'toggle_work_complete' in request.POST:
+            note = request.POST.get('work_complete_note', '').strip()
+            employee = Employees.objects.filter(user=request.user).first()
+            if changeorder.is_work_complete:
+                changeorder.is_work_complete = False
+                ChangeOrderNotes.objects.create(
+                    cop_number=changeorder,
+                    date=date.today(),
+                    user=employee,
+                    note=f"Work Not Complete. {note}"
+                )
+            else:
+                changeorder.is_work_complete = True
+                ChangeOrderNotes.objects.create(
+                    cop_number=changeorder,
+                    date=date.today(),
+                    user=employee,
+                    note=f"Work Completed. {note}"
+                )
+            changeorder.save()
+            return redirect('extra_work_ticket', id=id)
         if 'new_price' in request.POST:
+            employee = Employees.objects.filter(user=request.user).first()
+
+            # --- old values before changes ---
+            old_price = changeorder.price
+            old_gc_number = (changeorder.gc_number or "").strip()
+            old_is_approved = bool(changeorder.is_approved)
+            old_is_approved_to_bill = bool(changeorder.is_approved_to_bill)
+            old_date_approved = changeorder.date_approved
+
+            # --- posted values ---
+            raw_new_price = request.POST.get('new_price', '').replace(',', '').strip()
+            raw_note = request.POST.get('new_price_note', '').strip()
+            new_gc_number = request.POST.get('formal_co_number', '').strip()
+            new_is_approved = request.POST.get('informally_approved') == 'on'
+            new_is_approved_to_bill = request.POST.get('approved_to_bill') == 'on'
+
+            # --- validate/parse price ---
+            try:
+                new_price = Decimal(raw_new_price).quantize(
+                    Decimal("0.01"),
+                    rounding=ROUND_HALF_UP
+                )
+            except (InvalidOperation, TypeError):
+                messages.error(request, "Please enter a valid price.")
+                return redirect('extra_work_ticket', id=id)
+
+            # --- business rule: if gc number exists, approved to bill must be checked ---
+            if new_gc_number and not new_is_approved_to_bill:
+                messages.error(
+                    request,
+                    "Approved To Bill must be checked when a Formal Change Order Number is entered."
+                )
+                return redirect('extra_work_ticket', id=id)
+
+            changes = []
+
+            # --- price ---
+            if old_price != new_price:
+                old_price_display = f"${old_price:,.2f}" if old_price is not None else "blank"
+                new_price_display = f"${new_price:,.2f}"
+                changes.append(f"Price changed from {old_price_display} to {new_price_display}")
+                changeorder.price = new_price
+
+            # --- formal change order number (stored in gc_number) ---
+            if old_gc_number != new_gc_number:
+                if old_gc_number and new_gc_number:
+                    changes.append(
+                        f"Formal Change Order Number changed from '{old_gc_number}' to '{new_gc_number}'"
+                    )
+                elif not old_gc_number and new_gc_number:
+                    changes.append(f"Formal Change Order Number set to '{new_gc_number}'")
+                elif old_gc_number and not new_gc_number:
+                    changes.append(f"Formal Change Order Number cleared from '{old_gc_number}'")
+
+                changeorder.gc_number = new_gc_number
+
+            # --- remember overall approval state before changes ---
+            old_has_any_approval = old_is_approved or old_is_approved_to_bill
+
+            # --- approved to bill ---
+            if old_is_approved_to_bill != new_is_approved_to_bill:
+                changes.append(
+                    f"Approved To Bill changed from "
+                    f"{'Yes' if old_is_approved_to_bill else 'No'} to "
+                    f"{'Yes' if new_is_approved_to_bill else 'No'}"
+                )
+                changeorder.is_approved_to_bill = new_is_approved_to_bill
+            else:
+                changeorder.is_approved_to_bill = old_is_approved_to_bill
+
+            # --- enforce dependency: Approved To Bill means Informally Approved ---
+            if new_is_approved_to_bill:
+                if not old_is_approved:
+                    changes.append("Informally Approved set to Yes (required for Approved To Bill)")
+                changeorder.is_approved = True
+            else:
+                if old_is_approved != new_is_approved:
+                    changes.append(
+                        f"Informally Approved changed from "
+                        f"{'Yes' if old_is_approved else 'No'} to "
+                        f"{'Yes' if new_is_approved else 'No'}"
+                    )
+                changeorder.is_approved = new_is_approved
+
+            # --- update date_approved based on overall approval state ---
+            new_has_any_approval = changeorder.is_approved or changeorder.is_approved_to_bill
+
+            if not old_has_any_approval and new_has_any_approval:
+                changeorder.date_approved = date.today()
+                if old_date_approved != changeorder.date_approved:
+                    changes.append(f"Date Approved set to {changeorder.date_approved}")
+            elif old_has_any_approval and not new_has_any_approval:
+                changeorder.date_approved = None
+                if old_date_approved is not None:
+                    changes.append("Date Approved cleared because all approvals were removed")
+            else:
+                changeorder.date_approved = old_date_approved
+
+            # --- if nothing changed, do nothing ---
+            if not changes:
+                messages.warning(request, "No changes were made.")
+                return redirect('extra_work_ticket', id=id)
+
+            # --- require note if changes were made ---
+            if not raw_note:
+                messages.error(request, "Please explain the change in the notes field.")
+                return redirect('extra_work_ticket', id=id)
+
+            # --- append user's note ---
+            final_note = ". ".join(changes) + f". {raw_note}"
+
+            # --- determine if newly approved to bill ---
+            newly_approved_to_bill = (not old_is_approved_to_bill and changeorder.is_approved_to_bill)
+
+            # --- save changeorder first ---
+            changeorder.save()
+
+            # --- save note after save ---
             ChangeOrderNotes.objects.create(
                 cop_number=changeorder,
                 date=date.today(),
-                user=Employees.objects.get(user=request.user),
-                note=f"Price changed from ${changeorder.price} to ${request.POST['new_price']}. {request.POST['new_price_note']}"
+                user=employee,
+                note=final_note
             )
-            changeorder.price = request.POST['new_price']
-            changeorder.save()
+
+            # --- send email only if newly approved to bill ---
+            if newly_approved_to_bill:
+                subject = f"Change Order #{changeorder.cop_number} Approved To Bill"
+                email_message = (
+                    f"Change Order #{changeorder.cop_number} has been marked Approved To Bill.\n\n"
+                    f"Job: {changeorder.job_number}\n"
+                    f"Description: {changeorder.description}\n"
+                    f"Price: {f'${changeorder.price:,.2f}' if changeorder.price is not None else 'N/A'}\n"
+                    f"Formal Change Order Number: {changeorder.gc_number or 'N/A'}\n"
+                    f"Informally Approved: {'Yes' if changeorder.is_approved else 'No'}\n"
+                    f"Approved To Bill: {'Yes' if changeorder.is_approved_to_bill else 'No'}\n"
+                    f"Date Approved: {changeorder.date_approved or 'N/A'}\n\n"
+                    f"Notes:\n{raw_note}\n"
+                )
+
+                recipients = ["joe@gerloffpainting.com"]
+                check_sender = Employees.objects.filter(
+                    user=request.user).first() if request.user.is_authenticated else None
+                sender = check_sender.email if check_sender and check_sender.email else "bridgette@gerloffpainting.com"
+
+                try:
+                    Email.sendEmail(subject, email_message, recipients, False, sender)
+                    messages.success(request, "Email Sent to Bridgette")
+                except Exception:
+                    messages.error(
+                        request,
+                        "There was a problem sending the email to Bridgette. Please tell her it is approved."
+                    )
+
             return redirect('extra_work_ticket', id=id)
         if "create_post_bid_doc_shortcuts" in request.POST:
             return redirect('extra_work_ticket', id=id)

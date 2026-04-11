@@ -624,34 +624,97 @@ function not_coded_yet() {
 function submitChangeAmountForm() {
     const priceInput = document.getElementById("change_amount_price_input");
     const noteInput = document.getElementById("change_amount_note_input");
+    const formalCoInput = document.getElementById("formal_co_number_input");
+    const informallyApprovedCheckbox = document.getElementById("informally_approved_checkbox");
+    const approvedToBillCheckbox = document.getElementById("approved_to_bill_checkbox");
+
     const hiddenPrice = document.getElementById("new_price");
     const hiddenNote = document.getElementById("new_price_note");
+    const hiddenFormalCo = document.getElementById("formal_co_number");
+    const hiddenInformallyApproved = document.getElementById("informally_approved");
+    const hiddenApprovedToBill = document.getElementById("approved_to_bill");
+
     const form = document.getElementById("change_amount_form");
 
-    if (!priceInput || !noteInput || !hiddenPrice || !hiddenNote || !form) {
+    if (
+        !priceInput ||
+        !noteInput ||
+        !formalCoInput ||
+        !informallyApprovedCheckbox ||
+        !approvedToBillCheckbox ||
+        !hiddenPrice ||
+        !hiddenNote ||
+        !hiddenFormalCo ||
+        !hiddenInformallyApproved ||
+        !hiddenApprovedToBill ||
+        !form
+    ) {
         alert("Unable to submit change amount form.");
         return false;
     }
 
     const rawPrice = priceInput.value.trim();
     const rawNote = noteInput.value.trim();
+    const rawFormalCo = formalCoInput.value.trim();
+    const informallyApproved = informallyApprovedCheckbox.checked;
+    const approvedToBill = approvedToBillCheckbox.checked;
+
+    const originalPriceRaw = (priceInput.dataset.original || "").trim();
+    const originalFormalCo = (formalCoInput.dataset.original || "").trim();
+    const originalInformallyApproved = informallyApprovedCheckbox.dataset.original === "true";
+    const originalApprovedToBill = approvedToBillCheckbox.dataset.original === "true";
 
     if (rawPrice === "") {
-        alert("Please enter a new price.");
+        alert("Please enter a price.");
         priceInput.focus();
         return false;
     }
 
-    const parsedPrice = parseFloat(rawPrice);
-
+    const parsedPrice = parseFloat(rawPrice.replace(/,/g, ""));
     if (isNaN(parsedPrice)) {
         alert("Please enter a valid price.");
         priceInput.focus();
         return false;
     }
 
-    hiddenPrice.value = parsedPrice.toFixed(2);
+    const normalizedCurrentPrice = parsedPrice.toFixed(2);
+
+    let normalizedOriginalPrice = "";
+    if (originalPriceRaw !== "") {
+        const parsedOriginalPrice = parseFloat(originalPriceRaw.replace(/,/g, ""));
+        if (!isNaN(parsedOriginalPrice)) {
+            normalizedOriginalPrice = parsedOriginalPrice.toFixed(2);
+        }
+    }
+
+    const priceChanged = normalizedCurrentPrice !== normalizedOriginalPrice;
+    const formalCoChanged = rawFormalCo !== originalFormalCo;
+    const informallyApprovedChanged = informallyApproved !== originalInformallyApproved;
+    const approvedToBillChanged = approvedToBill !== originalApprovedToBill;
+
+    const anythingChanged =
+        priceChanged ||
+        formalCoChanged ||
+        informallyApprovedChanged ||
+        approvedToBillChanged;
+
+    if (rawFormalCo !== "" && !approvedToBill) {
+        alert("Approved To Bill must be checked when a Formal Change Order Number is entered.");
+        approvedToBillCheckbox.focus();
+        return false;
+    }
+
+    if (anythingChanged && rawNote === "") {
+        alert("Please explain this change in the notes field.");
+        noteInput.focus();
+        return false;
+    }
+
+    hiddenPrice.value = normalizedCurrentPrice;
     hiddenNote.value = rawNote;
+    hiddenFormalCo.value = rawFormalCo;
+    hiddenInformallyApproved.value = informallyApproved ? "on" : "";
+    hiddenApprovedToBill.value = approvedToBill ? "on" : "";
 
     form.submit();
 }
@@ -871,7 +934,6 @@ function submitChangeAmountForm() {
 </div>
 
 <!-- Change Price Modal -->
-<!-- Modal - Change Amount -->
 <div class="modal fade" id="changeAmountModal" tabindex="-1" role="dialog" aria-labelledby="changeAmountModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -891,7 +953,43 @@ function submitChangeAmountForm() {
                            step="0.01"
                            class="form-control"
                            id="change_amount_price_input"
-                           placeholder="Enter new price">
+                           placeholder="Enter new price"
+                           value="{{ changeorder.price|default_if_none:'' }}"
+                           data-original="{{ changeorder.price|default_if_none:'' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="formal_co_number_input">Formal Change Order Number</label>
+                    <input type="text"
+                           class="form-control"
+                           id="formal_co_number_input"
+                           placeholder="Enter formal CO number"
+                           value="{{ changeorder.gc_number|default_if_none:'' }}"
+                           data-original="{{ changeorder.gc_number|default_if_none:'' }}">
+                </div>
+
+                <div class="form-group">
+                    <div class="form-check">
+                        <input type="checkbox"
+                               class="form-check-input"
+                               id="informally_approved_checkbox"
+                               {% if changeorder.is_approved %}checked{% endif %}
+                               data-original="{% if changeorder.is_approved %}true{% else %}false{% endif %}">
+                        <label class="form-check-label" for="informally_approved_checkbox">
+                            Informally Approved
+                        </label>
+                    </div>
+
+                    <div class="form-check">
+                        <input type="checkbox"
+                               class="form-check-input"
+                               id="approved_to_bill_checkbox"
+                               {% if changeorder.is_approved_to_bill %}checked{% endif %}
+                               data-original="{% if changeorder.is_approved_to_bill %}true{% else %}false{% endif %}">
+                        <label class="form-check-label" for="approved_to_bill_checkbox">
+                            Approved To Bill
+                        </label>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -899,7 +997,7 @@ function submitChangeAmountForm() {
                     <textarea class="form-control"
                               id="change_amount_note_input"
                               rows="3"
-                              placeholder="Explain why the price was changed"></textarea>
+                              placeholder="Explain This Change"></textarea>
                 </div>
 
             </div>
@@ -908,7 +1006,7 @@ function submitChangeAmountForm() {
                 <button type="button"
                         class="btn btn-primary"
                         onclick="submitChangeAmountForm()">
-                    Save New Amount
+                    Save Now
                 </button>
 
                 <button type="button"
@@ -1014,7 +1112,49 @@ function submitChangeAmountForm() {
 </div>
 </div>
 </div>
+<!-- modal - clarify work complete -->
+<div class="modal fade" id="workCompleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
 
+            <form method="post" action="{% url 'extra_work_ticket' changeorder.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="toggle_work_complete" value="1">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Update Work Status</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="form-group">
+                        <label>Note (required)</label>
+                        <textarea name="work_complete_note"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Explain why you are changing the work status"
+                                  required></textarea>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">
+                        Confirm
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
 <!-- Modal -select post bid docs -->
 <div
   class="modal fade"
@@ -1673,18 +1813,33 @@ function submitChangeAmountForm() {
       method="post"
       class="m-1">
     {% csrf_token %}
+
     <input type="hidden" name="new_price" id="new_price"/>
     <input type="hidden" name="new_price_note" id="new_price_note"/>
+    <input type="hidden" name="formal_co_number" id="formal_co_number"/>
+    <input type="hidden" name="informally_approved" id="informally_approved"/>
+    <input type="hidden" name="approved_to_bill" id="approved_to_bill"/>
 
     <button type="button"
             class="btn btn-secondary btn-sm"
             data-toggle="modal"
             data-target="#changeAmountModal">
-        Change Amount
+        Change
     </button>
 </form>
     {% endif %}
-
+<form class="m-1 d-inline">
+    <button type="button"
+            class="btn btn-sm {% if changeorder.is_work_complete %}btn-success{% else %}btn-warning{% endif %}"
+            data-toggle="modal"
+            data-target="#workCompleteModal">
+        {% if changeorder.is_work_complete %}
+            Work Done
+        {% else %}
+            Work Not Done
+        {% endif %}
+    </button>
+</form>
 
 </div>
 
