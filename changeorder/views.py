@@ -1,6 +1,7 @@
 
+
 from changeorder.models import *
-from changeorder.models import ChangeOrders, EWT, EWTicket, TMPricesMaster
+from changeorder.models import ChangeOrders, EWT, EWTicket, TMPricesMaster,JobCharges2
 from collections import defaultdict
 from console.misc import createfolder, getFilesOrFolders, create_shortcut
 from console.misc import Email, get_client_ip, is_internal_ip, create_excel_from_template, get_subfolders, find_post_bid_docs_shortcut, resolve_shortcut, create_folder_shortcut, create_changeorder_shortcut_in_plan_folder
@@ -154,7 +155,7 @@ def email_for_signature(request, id):
                     recipient.email=email
                     recipient.save()
             email_body = "You have received an extra work ticket from Gerloff Painting.  \nPlease click this link http://www.google.com"
-            recipients = ["joe@gerloffpainting.com"]
+            recipients = ["joe@gerloffpainting.com","bridgette@gerloffpainting.com"]
             recipients.append(email)
             Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
             check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
@@ -664,6 +665,50 @@ def price_ewt(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
     ewt = EWT.objects.filter(change_order=changeorder).first()
 
+    job = changeorder.job_number
+
+    def effective_rate(master_obj):
+        override = JobPrices.objects.filter(
+            master=master_obj,
+            job_number=job
+        ).first()
+        return override.rate if override else master_obj.rate
+
+    def effective_master_values(category):
+        rows = []
+        masters = TMPricesMaster.objects.filter(category=category).order_by("item")
+
+        for master in masters:
+            override = JobPrices.objects.filter(
+                master=master,
+                job_number=job
+            ).first()
+
+            rows.append({
+                "id": master.id,
+                "category": master.category,
+                "item": master.item,
+                "unit": master.unit,
+                "rate": override.rate if override else master.rate,
+                "is_job_price": bool(override),
+            })
+
+        return rows
+
+    def effective_master_obj(master_id):
+        master = TMPricesMaster.objects.get(id=master_id)
+        override = JobPrices.objects.filter(
+            master=master,
+            job_number=job
+        ).first()
+        return {
+            "id": master.id,
+            "category": master.category,
+            "item": master.item,
+            "unit": master.unit,
+            "rate": override.rate if override else master.rate,
+        }
+
     def safe_decimal(val):
         try:
             return Decimal(val or "0")
@@ -987,7 +1032,8 @@ def price_ewt(request, id):
     bond_rate = 0
     bond_cost = 0
     if changeorder.job_number.is_bonded == True:
-        bond_rate = TMPricesMaster.objects.get(category='Bond').rate
+        bond_master = TMPricesMaster.objects.get(category='Bond')
+        bond_rate = effective_rate(bond_master)
         bond_cost = bond_rate * totalcost
         totalcost = money(totalcost + bond_cost)
         is_bonded = True
@@ -1047,16 +1093,32 @@ def price_ewt(request, id):
         completed_by = ewt.completed_by
         for x in TMPricesMaster.objects.filter(category="Labor", ewtmaster__isnull=False).distinct():
             if EWTicket.objects.filter(EWT=ewt, master=x).exclude(employee=None, custom_employee=None).exists():
+                is_job_price = JobPrices.objects.filter(
+                    master=x,
+                    job_number=job
+                ).exists()
+
                 hours = 0
-                for y in EWTicket.objects.filter(EWT=ewt, master=x).exclude(employee=None, custom_employee=None).order_by(
-                        'master'):
+                for y in EWTicket.objects.filter(EWT=ewt, master=x).exclude(employee=None,
+                                                                            custom_employee=None).order_by('master'):
                     hours = hours + y.monday + y.tuesday + y.wednesday + y.thursday + y.friday + y.saturday + y.sunday
+
+                job_rate = money(effective_rate(x))
                 totalhours = totalhours + hours
-                cost = money(hours * x.rate)
+                cost = money(hours * job_rate)
                 totalcost = money(totalcost + cost)
                 counter = counter + 1
-                rate = money(x.rate)
-                laboritems.append({'rate': rate, 'counter': counter, 'item': x, 'hours': hours, 'cost': money(cost)})
+
+                laboritems.append({
+                    'rate': job_rate,
+                    'counter': counter,
+                    'item': x,
+                    'hours': hours,
+                    'cost': money(cost),
+                    'id': x.id,
+                    'is_job_price': is_job_price,
+                    'is_job_charge': False,
+                })
         days = totalhours / 8
         counter = 0
         totallaborcost = totalcost
@@ -1067,16 +1129,22 @@ def price_ewt(request, id):
             category = y.category
             category_id = None
             if y.master:
-                cost = y.quantity * y.master.rate
+                job_rate = money(effective_rate(y.master))
+                cost = y.quantity * job_rate
                 totalcost = money(totalcost + cost)
                 totalmaterialcost = money(totalmaterialcost + cost)
-                rate = money(y.master.rate)
+                rate = job_rate
                 category_id = y.master.id
+                is_job_price = JobPrices.objects.filter(
+                    master=y.master,
+                    job_number=job
+                ).exists()
             materials.append(
                 {'rate': rate, 'counter': counter, 'category': category, 'category_id': category_id,
                  'description': y.description,
                  'quantity': y.quantity, 'units': y.units,
-                 'cost': money(cost)})
+                 'cost': money(cost), 'is_job_price': is_job_price,
+    'is_job_charge': False,})
         inventory = money(totalmaterialcost * Decimal("0.15"))
         totalcost = money(totalcost + inventory)
         totalmaterialcost = money(totalmaterialcost + inventory)
@@ -1088,16 +1156,22 @@ def price_ewt(request, id):
             category = y.category
             category_id = None
             if y.master:
-                cost = y.quantity * y.master.rate
+                job_rate = money(effective_rate(y.master))
+                cost = y.quantity * job_rate
                 totalcost = money(totalcost + cost)
                 totalequipmentcost = money(totalequipmentcost + cost)
-                rate = money(y.master.rate)
+                rate = job_rate
                 category_id = y.master.id
+                is_job_price = JobPrices.objects.filter(
+                    master=y.master,
+                    job_number=job
+                ).exists()
             equipment.append(
                 {'rate': rate, 'counter': counter, 'category': category, 'category_id': category_id,
                  'description': y.description,
                  'quantity': y.quantity, 'units': y.units,
-                 'cost': money(cost)})
+                 'cost': money(cost), 'is_job_price': is_job_price,
+    'is_job_charge': False,})
         counter = 0
         for y in EWTicket.objects.filter(EWT=ewt, category="Sundries").order_by('master'):
             cost=0
@@ -1106,56 +1180,51 @@ def price_ewt(request, id):
             category = y.category
             category_id = None
             if y.master:
-                cost = y.quantity * y.master.rate
+                job_rate = money(effective_rate(y.master))
+                cost = y.quantity * job_rate
                 totalcost = money(totalcost + cost)
                 totalsundriescost = money(totalsundriescost + cost)
                 counter = counter + 1
-                rate = money(y.master.rate)
-                #category = y.master.item
+                rate = job_rate
                 category_id = y.master.id
+                is_job_price = JobPrices.objects.filter(
+                    master=y.master,
+                    job_number=job
+                ).exists()
             sundries.append(
                 {'rate': rate, 'counter': counter, 'category': category, 'category_id': category_id,
                  'description': y.description,
                  'quantity': y.quantity, 'units': y.units,
-                 'cost': money(cost)})
-    #as of 2/28/26 joe does not this this part is used anywhere. we should add it, for recurring extras that need to go on every change order for a job
+                 'cost': money(cost),'is_job_price': is_job_price,
+    'is_job_charge': False,})
+    #added 4.12.26
         counter = 0
-        for x in JobCharges.objects.filter(job=changeorder.job_number):
-            if x.master.unit == "Day":
-                cost = days * x.master.rate
-                totalcost = money(totalcost + cost)
-                counter = counter + 1
-                rate = money(x.master.rate)
-                extras.append(
-                    {'rate': rate, 'counter': counter, 'category': x.master.item, 'quantity': days, 'unit': "Days",
-                     'cost': money(cost)})
-            elif x.master.unit == "Hours":
-                cost = totalhours * x.master.rate
-                totalcost = money(totalcost + cost)
-                counter = counter + 1
-                rate = money(x.master.rate)
-                extras.append(
-                    {'rate': rate, 'counter': counter, 'category': x.master.item, 'quantity': totalhours, 'unit': "Hours",
-                     'cost': money(cost)})
-            else:
-                counter = counter + 1
-                rate = money(x.master.rate)
-                extras.append(
-                    {'rate': rate, 'counter': counter, 'category': x.master.item, 'quantity': 0, 'unit': x.master.unit,
-                     'cost': 0})
-    #end of part that joe doesn't think is used anywhere
+        for x in JobCharges2.objects.filter(job=changeorder.job_number):
+            counter += 1
+            extras.append({
+                'rate': money(x.rate),
+                'counter': counter,
+                'category': x.category,
+                'description': x.item,
+                'quantity': 0,
+                'units': x.unit,
+                'cost': 0,
+                'is_job_price': True,
+                'is_job_charge': True,
+            })
+    #end of part added 4.12.26
 
+    employees2 = effective_master_values("Labor")
+    materials2 = effective_master_values("Material")
+    equipment2 = effective_master_values("Equipment")
+    sundries2 = effective_master_values("Sundries")
+    extras2 = effective_master_values("Misc")
 
-    employees2 = TMPricesMaster.objects.filter(category="Labor").values()
-    materials2 = TMPricesMaster.objects.filter(category="Material").values()
-    equipment2 = TMPricesMaster.objects.filter(category="Equipment").values()
-    sundries2 = TMPricesMaster.objects.filter(category="Sundries").values()
-    extras2 = TMPricesMaster.objects.filter(category="Misc").values()
-    employees_json = json.dumps(list(employees2), cls=DjangoJSONEncoder)
-    material_json = json.dumps(list(materials2), cls=DjangoJSONEncoder)
-    equipment_json = json.dumps(list(equipment2), cls=DjangoJSONEncoder)
-    sundries_json = json.dumps(list(sundries2), cls=DjangoJSONEncoder)
-    extras_json = json.dumps(list(extras2), cls=DjangoJSONEncoder)
+    employees_json = json.dumps(employees2, cls=DjangoJSONEncoder)
+    material_json = json.dumps(materials2, cls=DjangoJSONEncoder)
+    equipment_json = json.dumps(equipment2, cls=DjangoJSONEncoder)
+    sundries_json = json.dumps(sundries2, cls=DjangoJSONEncoder)
+    extras_json = json.dumps(extras2, cls=DjangoJSONEncoder)
     notes = ""
     if ewt:
         notes=ewt.notes
@@ -2170,12 +2239,10 @@ def extra_work_ticket(request, id):
     # else:
     #     send_data['post_bid_doc_folders'] = []
 
-    from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
-    from datetime import date
-    from django.shortcuts import redirect
-    from django.contrib import messages
+
 
     if request.method == 'POST':
+        print(request.POST)
         if 'toggle_work_complete' in request.POST:
             note = request.POST.get('work_complete_note', '').strip()
             employee = Employees.objects.filter(user=request.user).first()
@@ -2338,7 +2405,7 @@ def extra_work_ticket(request, id):
                     f"Notes:\n{raw_note}\n"
                 )
 
-                recipients = ["joe@gerloffpainting.com"]
+                recipients = ["victor@gerloffpainting.com", "bridgette@gerloffpainting.com"]
                 check_sender = Employees.objects.filter(
                     user=request.user).first() if request.user.is_authenticated else None
                 sender = check_sender.email if check_sender and check_sender.email else "bridgette@gerloffpainting.com"
@@ -2470,6 +2537,7 @@ def extra_work_ticket(request, id):
                                             user=Employees.objects.get(user=request.user),
                                             note="Blank Ticket Printed")
             changeorder.is_old_form_printed = True
+            changeorder.is_work_complete = True
             changeorder.save()
         if 'new_note' in request.POST:
             ChangeOrderNotes.objects.create(note=request.POST['new_note'],
@@ -2499,6 +2567,7 @@ def extra_work_ticket(request, id):
             # ---------------END OF JOE DELETION
             changeorder.is_ticket_signed = True
             changeorder.date_signed = date.today()
+            changeorder.is_work_complete = True
             changeorder.save()
             ChangeOrderNotes.objects.create(note="Paper Ticket Signed and Uploaded",
                                             cop_number=changeorder, date=date.today(),
@@ -2990,6 +3059,8 @@ def ewt_create(request, changeorder_id):
         # --------------------------------------------------
         # 1️⃣ Create EWT Header
         # --------------------------------------------------
+        change_order.is_work_complete = True
+        change_order.save()
         ewt = EWT.objects.create(
             change_order=change_order,
             week_ending=request.POST.get("week_ending"),

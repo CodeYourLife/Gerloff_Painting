@@ -5,13 +5,13 @@ from console.misc import createfolder, Email
 from console.models import *
 from datetime import datetime,date
 from dateutil.parser import parse as parse_date
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, auth
 from django.db import transaction
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from employees.forms import SiriusUploadForm,ClockSharkUploadForm, ToolboxTalksUploadForm
 from employees.models import *
@@ -35,7 +35,6 @@ import openpyxl
 import os
 import os.path
 import random
-
 
 
 @login_required(login_url='/accounts/login')
@@ -1423,3 +1422,125 @@ def import_change_orders(request):
 
 
 
+def job_prices(request, job_number):
+    job = get_object_or_404(Jobs, job_number=job_number)
+
+    if request.method == "POST":
+        if "delete_job_charge" in request.POST:
+            charge_id = request.POST.get("job_charge_id")
+
+            charge = JobCharges2.objects.filter(
+                id=charge_id,
+                job=job
+            ).first()
+
+            if charge:
+                deleted_item = charge.item
+                charge.delete()
+                messages.success(request, f"Deleted job charge: {deleted_item}.")
+            else:
+                messages.error(request, "Could not find that job charge.")
+
+            return redirect("job_prices", job_number=job.job_number)
+        # -----------------------------------
+        # Save job-specific TMPricesMaster override
+        # -----------------------------------
+        if "master_id" in request.POST:
+            master_id = request.POST.get("master_id")
+            raw_rate = request.POST.get("rate", "").replace(",", "").strip()
+
+            try:
+                new_rate = Decimal(raw_rate).quantize(
+                    Decimal("0.01"),
+                    rounding=ROUND_HALF_UP
+                )
+            except (InvalidOperation, TypeError):
+                messages.error(request, "Please enter a valid rate.")
+                return redirect("job_prices", job_number=job.job_number)
+
+            master = get_object_or_404(TMPricesMaster, id=master_id)
+
+            existing_job_price = JobPrices.objects.filter(
+                master=master,
+                job_number=job
+            ).first()
+
+            current_rate = existing_job_price.rate if existing_job_price else master.rate
+
+            if current_rate != new_rate:
+                if existing_job_price:
+                    existing_job_price.rate = new_rate
+                    existing_job_price.save()
+                else:
+                    JobPrices.objects.create(
+                        master=master,
+                        rate=new_rate,
+                        job_number=job
+                    )
+                messages.success(request, f"Saved override for {master.item}.")
+            else:
+                messages.info(request, f"No change made for {master.item}.")
+
+            return redirect("job_prices", job_number=job.job_number)
+
+        # -----------------------------------
+        # Add new JobCharges2 row
+        # -----------------------------------
+        if "add_job_charge" in request.POST:
+            category = "Misc"
+            item = request.POST.get("charge_item", "").strip()
+            unit = request.POST.get("charge_unit", "").strip()
+            raw_rate = request.POST.get("charge_rate", "").replace(",", "").strip()
+
+            if not category or not item or not unit or raw_rate == "":
+                messages.error(request, "Please fill out all new charge fields.")
+                return redirect("job_prices", job_number=job.job_number)
+
+            try:
+                rate = Decimal(raw_rate).quantize(
+                    Decimal("0.01"),
+                    rounding=ROUND_HALF_UP
+                )
+            except (InvalidOperation, TypeError):
+                messages.error(request, "Please enter a valid charge rate.")
+                return redirect("job_prices", job_number=job.job_number)
+
+            JobCharges2.objects.create(
+                job=job,
+                category=category,
+                item=item,
+                unit=unit,
+                rate=rate
+            )
+
+            messages.success(request, f"Added job charge: {item}.")
+            return redirect("job_prices", job_number=job.job_number)
+
+    rows = []
+    for master in TMPricesMaster.objects.all().order_by("category", "item"):
+        override = JobPrices.objects.filter(
+            master=master,
+            job_number=job
+        ).first()
+
+        rows.append({
+            "master_id": master.id,
+            "category": master.category,
+            "item": master.item,
+            "unit": master.unit,
+            "master_rate": master.rate,
+            "current_rate": override.rate if override else master.rate,
+            "has_override": bool(override),
+        })
+
+    job_charges = JobCharges2.objects.filter(job=job).order_by("category", "item")
+
+    return render(
+        request,
+        "job_prices.html",
+        {
+            "job": job,
+            "rows": rows,
+            "job_charges": job_charges,
+        }
+    )

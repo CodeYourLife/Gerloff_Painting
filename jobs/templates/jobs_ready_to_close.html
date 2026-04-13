@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_item_jobs %}active{% endblock nav_item_jobs %}
+{% block content %}
+
+<style type="text/css" class="init">
+.badge {
+    font-size: 11px;
+    padding: 4px 6px;
+    border-radius: 4px;
+}
+
+.badge-dark {
+    background-color: #343a40;
+    color: white;
+}
+
+.badge-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.badge-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.colored-header th {
+    background-color: lightblue;
+    padding: 5px;
+    border: solid 1px #777;
+}
+
+.dataTables_wrapper {
+    font-family: tahoma;
+    font-size: 13px;
+}
+
+nav .active,
+.collapsible:hover {
+    background-color: Salmon;
+}
+
+.nav-pills a {
+    color: black;
+}
+
+.nav-pills li {
+    padding: 2px;
+}
+
+.nav-pills .active {
+    background-color: #6c757d !important;
+    padding: 5px;
+}
+
+label {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+input {
+    margin-left: 10px;
+    margin-right: 10px;
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #495057;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+tr th {
+    width: fit-content !important;
+}
+
+.text-wrap {
+    white-space: normal;
+}
+
+.width-200 {
+    width: 200px;
+}
+
+.dataTables_filter {
+    float: left !important;
+}
+</style>
+
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+
+<script type="text/javascript">
+function go_to_job(jobnumber){
+    let url = "{% url 'job_page' 'ALL' %}";
+    url = url.replace('ALL', jobnumber);
+    window.location.href = url;
+}
+
+function rowClick(e, jobnumber) {
+    // if clicked inside a button or link, do nothing
+    if (e.target.closest('a, button, textarea')) {
+        return;
+    }
+    go_to_job(jobnumber);
+}
+
+function openClosingNoteModal(e, jobId) {
+    if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+    }
+
+    $('#closingNoteModal' + jobId).modal('show');
+}
+
+function testModal(e, jobId) {
+    if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+    }
+
+    alert('button clicked for modal ' + jobId);
+
+    const modalEl = document.getElementById('closingNoteModal' + jobId);
+    console.log('modal element:', modalEl);
+    console.log('jquery exists:', typeof $);
+    console.log('bootstrap modal fn:', $.fn.modal);
+
+    $('#closingNoteModal' + jobId).modal('show');
+}
+
+window.onload = function() {
+    $('#jobs_table').DataTable({
+        paging: false,
+        ordering: false,
+        searching: false,
+        info: false
+    });
+};
+</script>
+
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'jobs_home' %}">Jobs</a>
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav">
+            <li><a class="nav-item nav-link" href="{% url 'jobs_home' %}">Jobs List</a></li>
+            <li><a class="nav-item nav-link active" href="#">Jobs Being Closed</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="table-responsive">
+    <table id="jobs_table" class="display table table-sm">
+        <thead>
+            <tr>
+                <th>Job</th>
+                <th>Client</th>
+                <th>Open Change Orders</th>
+                <th>Closing Note</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for x in jobstable %}
+            <tr onclick="rowClick(event, '{{ x.job_number }}')" style="cursor:pointer;">
+                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px;">
+                    <span>{{ x.job_number }} {{ x.job_name }}</span>
+                </td>
+
+                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;">
+                    {{ x.client }}
+                </td>
+
+                <td>
+                    {% if x.open_cos_work_done == 0 and x.open_cos_work_not_done == 0 %}
+                        <span class="badge badge-success">Ready to close</span>
+                    {% else %}
+                        <span class="badge badge-dark">{{ x.open_cos_work_done }} Work Done</span>
+                        <span class="badge badge-secondary">{{ x.open_cos_work_not_done }} Work Not Done</span>
+                    {% endif %}
+                </td>
+              <td style="max-width: 300px;">
+    <button type="button"
+            class="note-button"
+            onclick="openClosingNoteModal(event, '{{ x.job_number }}')"
+            style="display:block; width:100%; text-align:left; white-space:normal;">
+
+        {% if x.latest_closing_note %}
+            <span style="white-space: normal;">
+                <strong style="font-size:11px; color:#6c757d; margin-right:4px;">
+                    {{ x.latest_closing_note_date|date:"M-d" }}
+                </strong>
+                - {{ x.latest_closing_note|truncatechars:190 }}
+            </span>
+        {% else %}
+            <span class="badge badge-secondary">Add Note</span>
+        {% endif %}
+
+    </button>
+</td>
+            </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% for x in jobstable %}
+<div class="modal fade" id="closingNoteModal{{ x.job_number }}" tabindex="-1" role="dialog" aria-labelledby="closingNoteModalLabel{{ x.job_number }}" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="closingNoteModalLabel{{ x.job_number }}">
+                    Closing Notes - {{ x.job_number }} {{ x.job_name }}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <h6>Existing Closing Notes</h6>
+
+                {% if x.closing_notes %}
+                    <div class="mb-3">
+                        {% for note in x.closing_notes %}
+                            <div class="border rounded p-2 mb-2">
+                                <strong>{{ note.date }}</strong>
+                                {% if note.user %} - {{ note.user }}{% endif %}
+                                <br>
+                                <div style="white-space: pre-wrap;">{{ note.note }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No closing notes yet.</p>
+                {% endif %}
+
+                <hr>
+
+                <h6>Add New Closing Note</h6>
+                <form method="post" action="{% url 'jobs_ready_to_close' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="job_id" value="{{ x.job_number }}">
+
+                    <div class="form-group">
+                        <textarea name="new_closing_note"
+                                  class="form-control"
+                                  rows="4"
+                                  placeholder="Enter closing note"
+                                  required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        Save Note
+                    </button>
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
