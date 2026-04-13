@@ -291,6 +291,7 @@ window.onload = function() {
         <ul class="sub-nav-list navbar-nav ">
             <li><a class="nav-item nav-link active" href="{% url 'jobs_home' %}">Jobs List</a></li>
              <li><a class="nav-item nav-link" href="{% url 'super_home' 'AUTO' %}">Superintendent View</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'jobs_ready_to_close' %}">Jobs Being Closed</a></li>
 <!--            <li><a class="nav-item nav-link" href="{% url 'book_new_job' %}">Book New Job</a></li>-->
         </ul>
     </div>
@@ -470,6 +471,7 @@ window.onload = function() {
             <th scope="col">Client</th>
             <th scope="col">Super</th>
             <th scope="col">Contract Amount</th>
+            <th scope="col">Address</th>
         </tr>
         </thead>
         <tbody>
@@ -502,6 +504,7 @@ window.onload = function() {
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px" >{{x.client}}</td>
                 <td data-toggle="modal" data-target="#super-modal" onclick="populate_super_modal('{{x.job_name}}','{{x.superintendent.id}}','{{x.job_number}}','{{x.superintendent.first_name}}',this,1)"><a href="#">{{x.superintendent.first_name}}</a></td>
                 <td>{% if x.contract_amount %}{{x.contract_amount}}{% else %}T and M{% endif %}</td>
+            <td>{{x.address}}-{{x.city}}-{{x.state}}</td>
             </tr>
         {% endfor %}
         </tbody>

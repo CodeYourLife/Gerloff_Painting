@@ -10,7 +10,7 @@ from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import Q, Max
+from django.db.models import Q, Max, Count
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_datetime
@@ -48,8 +48,6 @@ from django.contrib.auth.decorators import login_required
 
 from jobs.models import Jobs
 from changeorder.models import ChangeOrders
-
-
 
 
 @login_required(login_url='/accounts/login')
@@ -1756,3 +1754,69 @@ def close_job(request, job_number):
                        f"There was an error sending email. Please manually send email. Final Contract Amount: {final_contract_amount}.Profit: {profit_percent}% ")
 
     return redirect('job_page', jobnumber=job.job_number)
+
+
+
+
+def jobs_ready_to_close(request):
+    if request.method == "POST":
+        if "new_closing_note" in request.POST:
+            job_id = request.POST.get("job_id")
+            note_text = request.POST.get("new_closing_note", "").strip()
+
+            if job_id and note_text:
+                job = Jobs.objects.get(job_number=job_id)
+                employee = Employees.objects.filter(user=request.user).first()
+
+                JobNotes.objects.create(
+                    job_number=job,
+                    note=note_text,
+                    type="closing_note",
+                    user=employee,
+                    date=date.today()
+                )
+
+            return redirect("jobs_ready_to_close")
+
+    jobstable = list(
+        Jobs.objects
+        .filter(is_labor_done=True,is_closed=False)
+        .annotate(
+            open_cos_work_done=Count(
+                'changeorders',
+                filter=Q(
+                    changeorders__is_closed=False,
+                    changeorders__is_approved_to_bill=False,
+                    changeorders__is_work_complete=True,
+                ),
+                distinct=True
+            ),
+            open_cos_work_not_done=Count(
+                'changeorders',
+                filter=Q(
+                    changeorders__is_closed=False,
+                    changeorders__is_approved_to_bill=False,
+                    changeorders__is_work_complete=False,
+                ),
+                distinct=True
+            ),
+        )
+        .order_by('job_number')
+    )
+
+    for job in jobstable:
+        latest_note = JobNotes.objects.filter(
+            job_number=job,
+            type="closing_note"
+        ).order_by("-date", "-id").first()
+
+        job.latest_closing_note = latest_note.note if latest_note else ""
+        job.latest_closing_note_date = latest_note.date if latest_note else None
+        job.closing_notes = JobNotes.objects.filter(
+            job_number=job,
+            type="closing_note"
+        ).order_by("-date", "-id")
+
+    return render(request, 'jobs_ready_to_close.html', {
+        'jobstable': jobstable,
+    })

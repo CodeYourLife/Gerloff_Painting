@@ -18,4 +18,5 @@ urlpatterns = [
     path('new_jobsite_safety_inspection', views.new_jobsite_safety_inspection, name='new_jobsite_safety_inspection'),
     path('jobsite_safety_inspection_detail<inspection_id>', views.jobsite_safety_inspection_detail, name='jobsite_safety_inspection_detail'),
     path('close_job/<job_number>', views.close_job, name='close_job'),
+    path('jobs_ready_to_close', views.jobs_ready_to_close, name='jobs_ready_to_close')
 ]

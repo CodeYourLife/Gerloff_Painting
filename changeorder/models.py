@@ -23,6 +23,27 @@ class TMPricesMaster(models.Model):
     def __str__(self):
         return f"{self.item}"
 
+class JobPrices(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    master = models.ForeignKey('changeorder.TMPricesMaster', on_delete=models.PROTECT)
+    rate = models.DecimalField(max_digits=9, decimal_places=2)
+    job_number = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT)
+
+    class Meta:
+        unique_together = ('master', 'job_number')
+
+class JobCharges2(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    category = models.CharField(null=False, max_length=50, validators=[
+        validate_tm_category])  # Misc
+    item = models.CharField(null=False, max_length=50)
+    unit = models.CharField(null=False, max_length=50)  # gallons, hours
+    rate = models.DecimalField(max_digits=9, decimal_places=2)
+    job = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT)
+
+    def __str__(self):
+        return f"{self.item}"
+
 class Signature(models.Model):
     id = models.BigAutoField(primary_key=True)
     type = models.CharField(null=False, max_length=50)

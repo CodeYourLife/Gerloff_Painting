@@ -15,7 +15,7 @@ from django.utils.text import capfirst
 from decimal import Decimal, ROUND_HALF_UP
 
 def validate_job_notes(value):
-    if value == "manhours_note" or value == "auto_booking_note" or value == "auto_misc_note" or value == "employee_note" or value == "auto_co_note" or value == "auto_submittal_note" or value == "auto_start_date_note" or value == "daily_report":
+    if value == "manhours_note" or value == "auto_booking_note" or value == "auto_misc_note" or value == "employee_note" or value == "auto_co_note" or value == "auto_submittal_note" or value == "auto_start_date_note" or value == "daily_report"or value == "closing_note":
         return value
     else:
         raise ValidationError("Category Not Allowed")

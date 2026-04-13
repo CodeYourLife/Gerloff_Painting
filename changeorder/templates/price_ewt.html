@@ -90,6 +90,12 @@ input[type=number] {
   -moz-appearance: textfield;
 }
 
+.job-highlight {
+    border: 2px solid #6f42c1 !important;
+    background-color: #faf7ff;
+    box-shadow: 0 0 3px rgba(111, 66, 193, 0.4);
+}
+
 .table-responsive {
     width: 100%;
     overflow-x: auto;
@@ -456,7 +462,13 @@ function changelabor(){
 		if (rolodex[i].id == event.currentTarget.value){
 			description.value = rolodex[i].rate
 			description2.value = rolodex[i].item
+			if (rolodex[i].is_job_price) {
+                description.classList.add("job-highlight");
+            } else {
+                description.classList.remove("job-highlight");
+            }
 		}
+
 	}
 	if (event.currentTarget.value=="custom"){
 			description.value = 0
@@ -806,6 +818,13 @@ function changematerial(event) {
             // ALWAYS update rate
             rateInput.value = rolodex[i].rate;
 
+			if (rolodex[i].is_job_price) {
+                rateInput.classList.add("job-highlight");
+            } else {
+                rateInput.classList.remove("job-highlight");
+            }
+
+
             break;
         }
     }
@@ -849,6 +868,12 @@ function changeequipment(event){
             // Always update rate
             rate.value = rolodex[i].rate;
 
+			if (rolodex[i].is_job_price) {
+                rate.classList.add("job-highlight");
+            } else {
+                rate.classList.remove("job-highlight");
+            }
+
             break;
         }
     }
@@ -891,6 +916,12 @@ function changesundries(event){
 
             // Always update rate
             rate.value = rolodex[i].rate;
+
+			if (rolodex[i].is_job_price) {
+                rate.classList.add("job-highlight");
+            } else {
+                rate.classList.remove("job-highlight");
+            }
 
             break;
         }
@@ -1064,7 +1095,10 @@ calculatetotal()
 		</select>
 		</td><td><input type= "text" name="labor_item{{x.counter}}" id="labor_item{{x.counter}}" value="{{x.item}}"  size = "30" required /></td>
 		<td>
-			<input type= "number" step="0.1" name="labor_hours{{x.counter}}" id="labor_hours{{x.counter}}" value="{{x.hours}}" size="7" onchange = "calculatetotal(event)" required /></td><td><input type= "number" name="labor_rate{{x.counter}}" step="0.01" size="7" id="labor_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="labor_cost{{x.counter}}" id="labor_cost{{x.counter}}" value="{{x.cost}}" /><div id="labor_cost_desc{{x.counter}}">{{x.cost}}</div>
+			<input type= "number" step="0.1" name="labor_hours{{x.counter}}" id="labor_hours{{x.counter}}" value="{{x.hours}}" size="7" onchange = "calculatetotal(event)" required /></td>
+		<td>
+			<input type= "number" name="labor_rate{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %} step="0.01" size="7" id="labor_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td>
+		<td><input type= "hidden" name="labor_cost{{x.counter}}" id="labor_cost{{x.counter}}" value="{{x.cost}}" /><div id="labor_cost_desc{{x.counter}}">{{x.cost}}</div>
 			</td>
 			<td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
 		{% endfor %}
@@ -1091,7 +1125,7 @@ calculatetotal()
 			{% endfor %}
 				<option value="custom">Custom</option>
 			</select></td>
-			<td><input type= "text" name="material_description{{x.counter}}" id="material_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" step="0.1" name="material_quantity{{x.counter}}" id="material_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="material_units{{x.counter}}" id="material_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="material_rate{{x.counter}}" step="0.01" size="7" id="material_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="material_cost{{x.counter}}" id="material_cost{{x.counter}}" value="{{x.cost}}" /><div id="material_cost_desc{{x.counter}}">{{x.cost}}</div></td>
+			<td><input type= "text" name="material_description{{x.counter}}" id="material_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" step="0.1" name="material_quantity{{x.counter}}" id="material_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="material_units{{x.counter}}" id="material_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="material_rate{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %} step="0.01" size="7" id="material_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="material_cost{{x.counter}}" id="material_cost{{x.counter}}" value="{{x.cost}}" /><div id="material_cost_desc{{x.counter}}">{{x.cost}}</div></td>
 	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
 		{% endfor %}
 
@@ -1136,7 +1170,7 @@ calculatetotal()
 				<option value="custom">Custom</option>
 			</select></td>
 
-			<td><input type= "text" name="equipment_description{{x.counter}}" id="equipment_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" step="0.1" name="equipment_quantity{{x.counter}}" id="equipment_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="equipment_units{{x.counter}}" id="equipment_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="equipment_rate{{x.counter}}" step="0.01" size="7" id="equipment_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="equipment_cost{{x.counter}}" id="equipment_cost{{x.counter}}" value="{{x.cost}}" /><div id="equipment_cost_desc{{x.counter}}">{{x.cost}}</div></td>
+			<td><input type= "text" name="equipment_description{{x.counter}}" id="equipment_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" step="0.1" name="equipment_quantity{{x.counter}}" id="equipment_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="equipment_units{{x.counter}}" id="equipment_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="equipment_rate{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %} step="0.01" size="7" id="equipment_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="equipment_cost{{x.counter}}" id="equipment_cost{{x.counter}}" value="{{x.cost}}" /><div id="equipment_cost_desc{{x.counter}}">{{x.cost}}</div></td>
 
 	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
 		{% endfor %}
@@ -1165,7 +1199,7 @@ calculatetotal()
 				<option value="custom">Custom</option>
 			</select></td>
 
-			<td><input type= "text" name="sundries_description{{x.counter}}" id="sundries_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" step="0.1" name="sundries_quantity{{x.counter}}" id="sundries_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="sundries_units{{x.counter}}" id="sundries_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="sundries_rate{{x.counter}}" step="0.01" size="7" id="sundries_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="sundries_cost{{x.counter}}" id="sundries_cost{{x.counter}}" value="{{x.cost}}" /><div id="sundries_cost_desc{{x.counter}}">{{x.cost}}</div></td>
+			<td><input type= "text" name="sundries_description{{x.counter}}" id="sundries_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" step="0.1" name="sundries_quantity{{x.counter}}" id="sundries_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="sundries_units{{x.counter}}" id="sundries_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="sundries_rate{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %} step="0.01" size="7" id="sundries_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="sundries_cost{{x.counter}}" id="sundries_cost{{x.counter}}" value="{{x.cost}}" /><div id="sundries_cost_desc{{x.counter}}">{{x.cost}}</div></td>
 
 	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
 		{% endfor %}
@@ -1194,10 +1228,10 @@ calculatetotal()
 			{% endfor %}
 				<option value="custom">Custom</option>
 			</select></td>
-			<td><input type= "text" name="extras_description{{x.counter}}" id="extras_description{{x.counter}}" value="{{x.description}}" required /></td>
+			<td><input type= "text" name="extras_description{{x.counter}}" id="extras_description{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %}value="{{x.description}}" required /></td>
 			<td><input type= "number" step="0.1" name="extras_quantity{{x.counter}}" id="extras_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td>
-			<td><input type= "text" name="extras_units{{x.counter}}" id="extras_units{{x.counter}}" size="5" value="{{x.units}}" required /></td>
-			<td><input type="number" name="extras_rate{{x.counter}}" step="0.01" size="7" id="extras_rate{{x.counter}}" value="{{x.rate}}" onchange="calculatetotal(event)" /></td>
+			<td><input type= "text" name="extras_units{{x.counter}}" id="extras_units{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %}size="5" value="{{x.units}}" required /></td>
+			<td><input type="number" name="extras_rate{{x.counter}}" step="0.01" size="7" id="extras_rate{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %}value="{{x.rate}}" onchange="calculatetotal(event)" /></td>
 			<td><input type= "hidden" name="extras_cost{{x.counter}}" id="extras_cost{{x.counter}}" value="{{x.cost}}" /><div id="extras_cost_desc{{x.counter}}">{{x.cost}}</div></td>
 	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
 		{% endfor %}
