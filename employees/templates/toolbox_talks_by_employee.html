@@ -27,10 +27,10 @@
             padding: 5px;
         }
         .table td {
-            overflow-x: hidden;
-            text-wrap: nowrap !important;
-            word-wrap: normal !important;
-        }
+    overflow-x: hidden;
+    white-space: normal;
+    word-wrap: break-word;
+}
         label {
             margin-left: 10px;
             margin-right: 10px;
@@ -107,19 +107,23 @@
                 <th class="col">Date</th>
                 <th class="col">Employee</th>
                 <th class="col">Status</th>
+                <th class="col">Notes</th>
             </tr>
             </thead>
             <tbody>
             {% for toolboxtalk in toolbox_talks %}
             <tr>
                 <td>{{toolboxtalk.topic}}</td>
-                <td>{{toolboxtalk.date}}</td>
+                <td data-order="{{ toolboxtalk.date }}">{{ toolboxtalk.date }}</td>
                 <td>{{toolboxtalk.employee}}</td>
-                {% if toolboxtalk.status == "Incomplete" %}
-                <td><p style="color: red;">{{toolboxtalk.status}}</p></td>
-                {% else %}
-                <td>{{toolboxtalk.status}}</td>
-                {% endif %}
+                <td>
+                    {% if toolboxtalk.status == "Incomplete" %}
+                        <span class="badge badge-danger">Incomplete</span>
+                    {% else %}
+                        <span class="badge badge-success">Completed</span>
+                    {% endif %}
+                </td>
+                <td style="white-space: normal;">{{ toolboxtalk.notes }}</td>
             </tr>
             {% endfor %}
             </tbody>

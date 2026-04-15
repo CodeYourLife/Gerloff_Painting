@@ -1,0 +1,457 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+ .select2-results__option {
+    font-size: 13px;
+}
+
+.select2-selection__rendered {
+    font-size: 13px;
+}
+</style>
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand" href="{% url 'portal' selected_sub.id 'ALL' %}">Go Back Home</a>
+</nav>
+
+
+<div class="container mt-3">
+
+    <h4>Employee Management</h4>
+
+    <div class="mb-3">
+        <button class="btn btn-primary" data-toggle="modal" data-target="#addEmployeeModal">
+            + Add Employee
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Jobs</th>
+                    <th>Toolbox</th>
+                    <th>T&amp;M Access</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for x in employees %}
+                <tr>
+                    <td>
+                        <a href="#" onclick="return openEmployeeModal('{{x.id}}');">
+                            {{x.name}}
+                        </a>
+                    </td>
+
+                    <td>{{x.job_count}}</td>
+
+                    <td>
+                        {% if x.toolbox_display == "Not Enrolled" %}
+                            <span class="badge badge-secondary">Not Enrolled</span>
+                        {% else %}
+                            {{x.toolbox_display}}
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if x.has_access_to_TM %}
+                            <span class="badge badge-success">Yes</span>
+                        {% else %}
+                            <span class="badge badge-secondary">No</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<div class="modal fade" id="employeeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Employee Details</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+
+                <input type="hidden" id="emp_id">
+
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="emp_name" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="emp_username" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="text" id="emp_password" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="emp_toolbox">
+                        Toolbox Access
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="emp_tm">
+                        T&amp;M Access
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>Assigned Jobs</label>
+                    <div id="emp_current_jobs" class="border rounded p-2" style="min-height:44px;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Add to Job</label>
+                    <select id="emp_job_select" class="form-control"></select>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="assign_job_btn" type="button" onclick="assignJobToEmployee()" style="display:none;">
+                    Assign Job
+                </button>
+                <button class="btn btn-primary" type="button" onclick="saveEmployeeModal()">Save</button>
+                <button class="btn btn-danger" type="button" onclick="removeEmployee()">Remove Employee</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addEmployeeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Add Employee</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="add_emp_name" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="add_emp_username" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="text" id="add_emp_password" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="add_emp_toolbox">
+                        Toolbox Access
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="add_emp_tm">
+                        T&amp;M Access
+                    </label>
+                </div>
+
+                <div class="form-group mb-0">
+                    <label>Assign to Job</label>
+                    <select id="add_emp_job_select" class="form-control"></select>
+                    <small class="form-text text-muted">Optional. You can assign a job now or later.</small>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-primary" type="button" onclick="createEmployee()">Create Employee</button>
+                <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).on('change', '#emp_job_select', function () {
+    toggleAssignJobButton();
+});
+$('#emp_job_select').select2({
+    width: '100%',
+    dropdownAutoWidth: true
+});
+$('#add_emp_job_select').select2({
+    width: '100%',
+    dropdownAutoWidth: true
+});
+function loadSubJobsForNewEmployee() {
+    let $target = $('#add_emp_job_select');
+    $target.empty();
+
+    $.ajax({
+        url: "{% url 'ajax_subcontractor_jobs' %}",
+        data: {
+            subcontractor_id: "{{ selected_sub.id }}"
+        },
+        success: function (response) {
+            $target.append($('<option>', {
+                value: '',
+                text: 'Please Select'
+            }));
+
+            $.each(response.results, function (index, item) {
+                $target.append(
+                    $('<option>', {
+                        value: item.id,
+                        text: item.label
+                    })
+                );
+            });
+        }
+    });
+}
+
+$('#addEmployeeModal').on('show.bs.modal', function () {
+    $('#add_emp_name').val('');
+    $('#add_emp_username').val('');
+    $('#add_emp_password').val('');
+    $('#add_emp_toolbox').prop('checked', false);
+    $('#add_emp_tm').prop('checked', false);
+    $('#add_emp_job_select').empty();
+
+    loadSubJobsForNewEmployee();
+});
+
+function createEmployee() {
+    $.ajax({
+        method: 'POST',
+        url: "{% url 'subcontractor_employee_create' %}",
+        data: {
+            subcontractor_id: "{{ selected_sub.id }}",
+            name: $('#add_emp_name').val(),
+            username: $('#add_emp_username').val(),
+            password1: $('#add_emp_password').val(),
+            has_access_to_toolbox: $('#add_emp_toolbox').is(':checked'),
+            has_access_to_TM: $('#add_emp_tm').is(':checked'),
+            job_id: $('#add_emp_job_select').val(),
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        },
+        success: function () {
+            location.reload();
+        },
+        error: function (xhr) {
+            let msg = 'Could not create employee.';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                msg = xhr.responseJSON.error;
+            }
+            alert(msg);
+        }
+    });
+}
+
+
+
+function loadSubJobsForEmployee() {
+    let $target = $('#emp_job_select');
+    $target.empty();
+
+    $.ajax({
+        url: "{% url 'ajax_subcontractor_jobs' %}",
+        data: {
+            subcontractor_id: "{{ selected_sub.id }}"
+        },
+        success: function (response) {
+            $target.append($('<option>', {
+                value: '',
+                text: 'Please Select'
+            }));
+
+            $.each(response.results, function (index, item) {
+                $target.append(
+                    $('<option>', {
+                        value: item.id,
+                        text: item.label
+                    })
+                );
+            });
+
+            toggleAssignJobButton();
+        }
+    });
+}
+
+function openEmployeeModal(id) {
+    $('#employeeModal').modal('show');
+    $('#emp_id').val(id);
+
+    $('#emp_name').val('');
+    $('#emp_username').val('');
+    $('#emp_password').val('');
+    $('#emp_toolbox').prop('checked', false);
+    $('#emp_tm').prop('checked', false);
+    $('#emp_current_jobs').html('Loading...');
+    $('#emp_job_select').empty();
+    $('#assign_job_btn').hide();
+    loadSubJobsForEmployee();
+    $.ajax({
+        url: "{% url 'subcontractor_employee_ajax' %}",
+        data: {
+            employee_id: id
+        },
+        success: function (response) {
+            $('#emp_name').val(response.name);
+            $('#emp_username').val(response.username);
+            $('#emp_password').val(response.password1);
+            $('#emp_toolbox').prop('checked', response.has_access_to_toolbox);
+            $('#emp_tm').prop('checked', response.has_access_to_TM);
+
+            let jobsHtml = '';
+            if (response.jobs.length === 0) {
+                jobsHtml = 'No jobs assigned.';
+            } else {
+                response.jobs.forEach(function(job) {
+                    jobsHtml += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid #eee;">
+                            <span>${job.label}</span>
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger"
+                                    onclick="removeJobFromEmployee('${response.id}', '${job.id}')">
+                                Remove
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+            $('#emp_current_jobs').html(jobsHtml);
+        },
+        error: function () {
+            $('#emp_current_jobs').html('Could not load employee.');
+        }
+    });
+
+    return false;
+}
+
+function saveEmployeeModal() {
+    $.ajax({
+        method: 'POST',
+        url: "{% url 'subcontractor_employee_update' %}",
+        data: {
+            employee_id: $('#emp_id').val(),
+            name: $('#emp_name').val(),
+            username: $('#emp_username').val(),
+            password1: $('#emp_password').val(),
+            has_access_to_toolbox: $('#emp_toolbox').is(':checked'),
+            has_access_to_TM: $('#emp_tm').is(':checked'),
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        },
+        success: function () {
+            location.reload();
+        },
+        error: function () {
+            alert('Could not save employee.');
+        }
+    });
+}
+
+function assignJobToEmployee() {
+    let empId = $('#emp_id').val();
+    let jobId = $('#emp_job_select').val();
+
+    if (!jobId) {
+        alert('Please select a job.');
+        return;
+    }
+
+    $.ajax({
+        method: 'POST',
+        url: "{% url 'assign_subcontractor_employee_job' %}",
+        data: {
+            employee_id: empId,
+            job_id: jobId,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        },
+        success: function () {
+            openEmployeeModal(empId);
+        },
+        error: function () {
+            alert('Could not assign job.');
+        }
+    });
+}
+
+function removeEmployee() {
+    if (!confirm('Remove this employee?')) {
+        return;
+    }
+
+    $.ajax({
+        method: 'POST',
+        url: "{% url 'subcontractor_employee_remove' %}",
+        data: {
+            employee_id: $('#emp_id').val(),
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        },
+        success: function () {
+            location.reload();
+        },
+        error: function () {
+            alert('Could not remove employee.');
+        }
+    });
+}
+
+function removeJobFromEmployee(employeeId, jobId) {
+    if (!confirm('Remove this job from the employee?')) {
+        return;
+    }
+
+    $.ajax({
+        method: 'POST',
+        url: "{% url 'remove_subcontractor_employee_job' %}",
+        data: {
+            employee_id: employeeId,
+            job_id: jobId,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        },
+        success: function () {
+            openEmployeeModal(employeeId);
+        },
+        error: function () {
+            alert('Could not remove job.');
+        }
+    });
+}
+function toggleAssignJobButton() {
+    let selectedJob = $('#emp_job_select').val();
+
+    if (selectedJob) {
+        $('#assign_job_btn').show();
+    } else {
+        $('#assign_job_btn').hide();
+    }
+}
+</script>
+{% endblock %}

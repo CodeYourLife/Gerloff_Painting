@@ -290,7 +290,7 @@ textarea {
             {% if is_emailed_link %}
                 <form action="{% url 'emailed_ticket' changeorder.id %}" method="post">
             {% else %}
-                <form action="{% url 'subcontractor_portal_get_signature' changeorder.id subcontractor.id %}" method="post">
+                <form action="{% url 'subcontractor_portal_get_signature' changeorder.id subcontractor.id employee_id %}" method="post">
             {% endif %}
 
                 {% csrf_token %}
