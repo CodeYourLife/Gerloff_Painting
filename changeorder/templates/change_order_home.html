@@ -314,7 +314,7 @@ function new_filter_now(){
                                         </span>
                                     {% elif changeorder.status == "Informal Approval" or changeorder.status == "Sent to GC" %}
                                         <span class="badge badge-success badge-status">
-                                            {{ changeorder.status }}
+                                            {{ changeorder.status }}{% if changeorder.is_work_complete %}-Work Done {% endif %}
                                         </span>
                                     {% elif changeorder.status == "Approved" %}
                                         <span class="badge badge-primary badge-status">

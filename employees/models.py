@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from employees.models import *
-import employees.models
+
 
 
 class TemporaryPassword(models.Model):
@@ -433,6 +432,8 @@ class ScheduledToolboxTalks(models.Model):
     master = models.ForeignKey(ToolboxTalks, on_delete=models.PROTECT, null=True)
     date = models.DateField(null=True, blank=True)
     description = models.CharField(max_length=2000, blank=True, null=True) #use this only for a custom one
+    is_all_employees = models.BooleanField(default=True)
+    notes = models.CharField(max_length=2000, blank=True, null=True)
 
     def link_has_been_viewed(self,employee):
         if ViewedToolboxTalks.objects.filter(employee=employee, master=self).exists():
@@ -588,3 +589,12 @@ class RespiratorNotes(models.Model):
     date = models.DateField()
     employee = models.ForeignKey(Employees, on_delete=models.CASCADE)
     note = models.CharField(max_length=2000, blank=True, null=True)
+
+class ScheduledToolboxTalkEmployees(models.Model):
+    scheduled = models.ForeignKey(ScheduledToolboxTalks, on_delete=models.CASCADE)
+    employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
+    job = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT, null=True, blank=True)
+
+    class Meta:
+        unique_together = ('scheduled', 'employee', 'job')
+

@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
-
+from employees.models import *
+from subcontractors.models import *
 from changeorder.models import (
     ChangeOrders,
     EWTicket,
@@ -42,6 +43,15 @@ def delete_all_submittals():
 def just_print_hello():
     print("Hello Joe 👋")
 
+def delete_all_scheduled_toolbox_talks():
+    with transaction.atomic():
+        CompletedSubToolboxTalks.objects.all().delete()
+        ViewedSubToolboxTalks.objects.all().delete()
+        CompletedToolboxTalks.objects.all().delete()
+        ViewedToolboxTalks.objects.all().delete()
+        ScheduledToolboxTalkEmployees.objects.all().delete()
+        ScheduledToolboxTalkSubEmployees.objects.all().delete()
+        ScheduledToolboxTalks.objects.all().delete()
 
 # ----------------------------------------
 # DJANGO ENTRY POINT
@@ -72,6 +82,10 @@ class Command(BaseCommand):
 
         elif action == "hello":
             just_print_hello()
+
+        elif action == "delete_toolbox":
+            delete_all_scheduled_toolbox_talks()
+            self.stdout.write(self.style.SUCCESS("All scheduled toolbox talks deleted."))
 
         else:
             self.stdout.write(self.style.ERROR("Unknown action."))

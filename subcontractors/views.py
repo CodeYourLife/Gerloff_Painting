@@ -6,6 +6,7 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date
+from employees.views import get_scheduled_toolbox_folder, get_uploaded_toolbox_file
 from wallcovering.models import Wallcovering
 from subcontractors.models import *
 from jobs.models import *
@@ -14,15 +15,20 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.db.models import Q
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import get_template, render_to_string
 from django.urls import reverse
+from django.views.decorators.http import require_POST
+from django.utils.timezone import now
 from employees.models import *
 import datetime
 import os
 from datetime import date
 from console.misc import Email
 from xhtml2pdf import pisa
+from media.utilities import MediaUtilities
 
 
 
@@ -39,6 +45,24 @@ def portal(request, sub_id, contract_id):
     send_data = {}
     selected_sub = Subcontractors.objects.get(id=sub_id)
     send_data['selected_sub'] = selected_sub
+    outstanding_tm_tickets = 0
+
+    job_numbers = Subcontracts.objects.filter(
+        subcontractor=selected_sub,
+        is_closed=False
+    ).values_list('job_number', flat=True)
+
+    all_changeorders = ChangeOrders.objects.filter(
+        job_number__in=job_numbers,
+        is_closed=False,
+    ).order_by('cop_number').distinct()
+
+
+    for co in all_changeorders:
+        if co.need_ticket() or co.needs_ticket_signed():
+            outstanding_tm_tickets += 1
+
+    send_data['outstanding_tm_tickets'] = outstanding_tm_tickets
     subcontracts = []
     if contract_id == 'ALL':
         today = datetime.date.today()
@@ -127,10 +151,13 @@ def connect(request):
     if request.method == 'POST':
         send_data = {}
         if 'login_now' in request.POST:
-            if Subcontractors.objects.filter(username=request.POST['username']).exists():
+            if Subcontractors.objects.filter(username=request.POST['username'],password=request.POST['password']).exists():
                 selected_sub = Subcontractors.objects.get(username=request.POST['username'])
-                if request.POST['password'] == selected_sub.password:
-                    return redirect('portal', sub_id=selected_sub.id, contract_id='ALL')
+                return redirect('portal', sub_id=selected_sub.id, contract_id='ALL')
+
+            elif Subcontractor_Employees.objects.filter(username=request.POST['username'],password1=request.POST['password']).exists():
+                selected_employee = Subcontractor_Employees.objects.filter(username=request.POST['username'],password1=request.POST['password']).first()
+                return redirect('subcontractor_employee_portal', employee_id=selected_employee.id)
             else:
                 send_data['message'] = "Username or password not valid"
                 return render(request, "portal_registration.html", send_data)
@@ -1751,13 +1778,20 @@ def subcontractor_approvers(request,subcontractor_id):
     send_data['approvers']=Subcontractor_Approvers.objects.filter(subcontractor=subcontractor)
     return render(request, "subcontractor_approvers.html", send_data)
 
-def subcontractor_portal_select_job_for_ticket(request,subcontractor_id):
+def subcontractor_portal_select_job_for_ticket(request,subcontractor_id,employee_id):
+    send_data = {}
     subcontractor = Subcontractors.objects.get(id=subcontractor_id)
-
-    jobs = Jobs.objects.filter(
-        subcontracts__subcontractor=subcontractor
-    ).distinct().order_by('job_name')
-
+    send_data['employee_id'] = employee_id
+    if employee_id == "0":
+        jobs = Jobs.objects.filter(
+            subcontracts__subcontractor=subcontractor
+        ).distinct().order_by('job_name')
+    else:
+        selected_employee = Subcontractor_Employees.objects.filter(id=employee_id).first()
+        if selected_employee.has_access_to_TM:
+            jobs = Jobs.objects.filter(
+                subcontractor_job_assignments__employee=selected_employee
+            ).distinct().order_by('job_name')
     job_list = []
 
     for job in jobs:
@@ -1783,16 +1817,14 @@ def subcontractor_portal_select_job_for_ticket(request,subcontractor_id):
                 "not_completed": not_completed,
                 "not_signed": not_signed
             })
-
-    send_data = {
-        "jobs": job_list,
-        "subcontractor": subcontractor
-    }
+    send_data['jobs']=job_list
+    send_data['subcontractor']=subcontractor
 
     return render(request, "subcontractor_portal_select_job_for_ticket.html", send_data)
 
-def subcontractor_portal_select_changeorder(request,job_number, subcontractor_id):
+def subcontractor_portal_select_changeorder(request,job_number, subcontractor_id,employee_id):
     send_data = {}
+    send_data['employee_id'] = employee_id
     subcontractor = Subcontractors.objects.get(id=subcontractor_id)
     job = Jobs.objects.get(job_number=job_number)
 
@@ -1823,10 +1855,12 @@ def safe_decimal(val):
     except:
         return Decimal("0")
 
-def subcontractor_portal_create_ticket(request,changeorder_id,subcontractor_id):
+def subcontractor_portal_create_ticket(request,changeorder_id,subcontractor_id,employee_id2):
     send_data = {}
+    send_data['employee_id'] = employee_id2
     subcontractor = Subcontractors.objects.get(id=subcontractor_id)
     change_order = ChangeOrders.objects.get(id=changeorder_id)
+
 
     # --------------------------------------------------
     # GET REQUEST
@@ -1838,6 +1872,7 @@ def subcontractor_portal_create_ticket(request,changeorder_id,subcontractor_id):
             "tm_equipment": TMPricesMaster.objects.filter(category="Equipment"),
             "tm_sundries": TMPricesMaster.objects.filter(category="Sundries"),
             "employees": None,
+            "employee_id":employee_id2,
         }
 
         return render(request, "subcontractor_portal_create_ticket.html", context)
@@ -2081,18 +2116,22 @@ def subcontractor_portal_create_ticket(request,changeorder_id,subcontractor_id):
                 units=units
             )
         if "get_signature_now" in request.POST:
-            return redirect("subcontractor_portal_get_signature", change_order.id, subcontractor_id)
+            return redirect("subcontractor_portal_get_signature", change_order.id, subcontractor_id, employee_id2)
 
         elif "email_signature" in request.POST:
-            return redirect("subcontractor_portal_email_for_signature", change_order.id, subcontractor_id)
+            return redirect("subcontractor_portal_email_for_signature", change_order.id, subcontractor_id, employee_id2)
 
         else:
-            return redirect("portal",subcontractor.id, 'ALL')
+            if employee_id2 == "0":
+                return redirect("portal",subcontractor.id, 'ALL')
+            else:
+                return redirect("subcontractor_employee_portal",employee_id2)
         # return redirect("extra_work_ticket", id=change_order.id)
 
 
-def subcontractor_portal_select_ticket_for_signature(request, subcontractor_id):
+def subcontractor_portal_select_ticket_for_signature(request, subcontractor_id,employee_id):
     send_data = {}
+    send_data['employee_id'] = employee_id
     subcontractor = Subcontractors.objects.get(id=subcontractor_id)
     all_changeorders = ChangeOrders.objects.filter(
         created_by_subcontractor=subcontractor,
@@ -2111,8 +2150,9 @@ def subcontractor_portal_select_ticket_for_signature(request, subcontractor_id):
     send_data['subcontractor']= subcontractor
     return render(request, "subcontractor_portal_select_ticket_for_signature.html", send_data)
 
-def subcontractor_portal_get_signature(request, changeorder_id, subcontractor_id):
+def subcontractor_portal_get_signature(request, changeorder_id, subcontractor_id,employee_id):
     send_data = {}
+    send_data['employee_id'] = employee_id
     status = "NEW"
     subcontractor = Subcontractors.objects.get(id=subcontractor_id)
     changeorder = ChangeOrders.objects.get(id=changeorder_id)
@@ -2175,17 +2215,18 @@ def subcontractor_portal_get_signature(request, changeorder_id, subcontractor_id
             result_file.close()
         # with open(file_path, "w+b") as result_file:
         #     pisa.CreatePDF(html, dest=result_file)
-        return redirect('subcontractor_portal_email_signed_ticket', changeorder_id=changeorder.id,subcontractor_id=subcontractor_id)
+        return redirect('subcontractor_portal_email_signed_ticket', changeorder_id=changeorder.id,subcontractor_id=subcontractor_id,employee_id=employee_id)
 
     return render(request, "subcontractor_portal_get_signature.html",
                   {'sundries': sundries, 'equipment': equipment, 'materials': materials, 'laboritems': laboritems,
                    'ewt': ewt,
-                   'changeorder': changeorder, 'signature': signature, 'status': status,'subcontractor':subcontractor})
+                   'changeorder': changeorder, 'signature': signature, 'status': status,'subcontractor':subcontractor,'employee_id':employee_id})
 
 
 
-def subcontractor_portal_email_for_signature(request, changeorder_id, subcontractor_id):
+def subcontractor_portal_email_for_signature(request, changeorder_id, subcontractor_id,employee_id):
     send_data={}
+    send_data['employee_id'] = employee_id
     changeorder = ChangeOrders.objects.get(id=changeorder_id)
     subcontractor = Subcontractors.objects.get(id=subcontractor_id)
     job = changeorder.job_number
@@ -2250,13 +2291,18 @@ def subcontractor_portal_email_for_signature(request, changeorder_id, subcontrac
             ChangeOrderNotes.objects.create(note="Attempted to Email Ticket For Signature, But Email Failed. Tried to send to: " + str(email),
                                             cop_number=changeorder, date=date.today(),
                                             user=Employees.objects.get(id=42))
-        return redirect('portal', sub_id=subcontractor.id, contract_id='ALL')
+        if employee_id == "0":
+            return redirect('portal', sub_id=subcontractor.id, contract_id='ALL')
+        else:
+            return redirect('subcontractor_employee_portal',employee_id=employee_id)
     client_employees = ClientEmployees.objects.filter(id=client,is_active=True).order_by('name')
     send_data['client_employees'] = client_employees
     return render(request, 'subcontractor_portal_email_for_signature.html',send_data)
 
-def subcontractor_portal_ewt_edit(request, changeorder_id, subcontractor_id):
+def subcontractor_portal_ewt_edit(request, changeorder_id, subcontractor_id,employee_id2):
+
     send_data = {}
+    send_data['employee_id'] = employee_id2
     subcontractor = Subcontractors.objects.get(id=subcontractor_id)
     change_order = ChangeOrders.objects.get(id=changeorder_id)
     send_data['changeorder'] = change_order
@@ -2483,13 +2529,17 @@ def subcontractor_portal_ewt_edit(request, changeorder_id, subcontractor_id):
                     units=units,
                 )
         if "get_signature_now" in request.POST:
-            return redirect("subcontractor_portal_get_signature", change_order.id, subcontractor_id)
+            return redirect("subcontractor_portal_get_signature", change_order.id, subcontractor_id,employee_id2)
 
         elif "email_signature" in request.POST:
-            return redirect("subcontractor_portal_email_for_signature", change_order.id, subcontractor_id)
+            return redirect("subcontractor_portal_email_for_signature", change_order.id, subcontractor_id,employee_id2)
 
         else:
-            return redirect("portal",subcontractor.id, 'ALL')
+            if employee_id2 == "0":
+                return redirect('portal', sub_id=subcontractor.id, contract_id='ALL')
+            else:
+                return redirect('subcontractor_employee_portal', employee_id=employee_id2)
+
 
 
     # =====================================================
@@ -2556,10 +2606,12 @@ def subcontractor_portal_ewt_edit(request, changeorder_id, subcontractor_id):
         "tm_equipment": TMPricesMaster.objects.filter(category="Equipment"),
         "tm_sundries": TMPricesMaster.objects.filter(category="Sundries"),
         "employees": Employees.objects.filter(active=True),
+        "employee_id": employee_id2,
     })
 
-def subcontractor_portal_email_signed_ticket(request,changeorder_id,subcontractor_id):
+def subcontractor_portal_email_signed_ticket(request,changeorder_id,subcontractor_id,employee_id):
     send_data={}
+    send_data['employee_id'] = employee_id
     changeorder = ChangeOrders.objects.get(id=changeorder_id)
     subcontractor = Subcontractors.objects.get(id=subcontractor_id)
     send_data = {}
@@ -2655,7 +2707,10 @@ def subcontractor_portal_email_signed_ticket(request,changeorder_id,subcontracto
                     messages.success(request, "Email was successfully sent")
                 except:
                     messages.error(request, "Email Failed to Send!")
-                return redirect('portal', sub_id=subcontractor.id, contract_id='ALL')
+                if employee_id == "0":
+                    return redirect('portal', sub_id=subcontractor.id, contract_id='ALL')
+                else:
+                    return redirect('subcontractor_employee_portal', employee_id=employee_id)
     extra_contacts = False
     project_pm = ClientEmployees.objects.get(person_pk=changeorder.job_number.client_Pm.person_pk)
     client_list = []
@@ -2689,7 +2744,7 @@ def subcontractor_portal_email_signed_ticket(request,changeorder_id,subcontracto
                     {'person_pk': x.person_pk, 'name': x.name, 'default': False, 'current': False, 'email': x.email})
     client_list = sorted(client_list, key=lambda x: x['name'].lower())
     return render(request, "subcontractor_portal_email_signed_ticket.html", {'client_list': client_list,
-                                                       'extra_contacts': extra_contacts, 'changeorder': changeorder,'subcontractor':subcontractor})
+                                                       'extra_contacts': extra_contacts, 'changeorder': changeorder,'subcontractor':subcontractor,'employee_id':employee_id})
 
 
 
@@ -2800,3 +2855,417 @@ def subcontractor_payment_print(request, id):
         'subcontract_sections': subcontract_sections,
     }
     return render(request, 'subcontractor_payment_print.html', context)
+
+
+def subcontractor_employee_management(request, sub_id):
+    send_data = {}
+
+    subcontractor = Subcontractors.objects.get(id=sub_id)
+    send_data['selected_sub'] = subcontractor
+
+    employees = Subcontractor_Employees.objects.filter(
+        subcontractor=subcontractor
+    ).order_by('name')
+
+    jobs = Jobs.objects.filter(is_closed=False).order_by('job_number')
+
+    # Build employee list with job assignments
+    employee_rows = []
+
+    for emp in employees:
+
+        # Job count
+        job_count = Subcontractor_Job_Assignments.objects.filter(employee=emp).count()
+
+        # -----------------------------
+        # TOOLBOX CALCULATION
+        # -----------------------------
+        if not emp.has_access_to_toolbox:
+            toolbox_display = "Not Enrolled"
+        else:
+            assigned_talks = ScheduledToolboxTalkSubEmployees.objects.filter(
+                employee=emp
+            ).values_list('scheduled_id', flat=True).distinct()
+
+            total_assigned = len(assigned_talks)
+
+            completed_count = CompletedSubToolboxTalks.objects.filter(
+                employee=emp,
+                master_id__in=assigned_talks
+            ).count()
+
+            toolbox_display = f"{completed_count} of {total_assigned}" if total_assigned > 0 else "0 of 0"
+
+        employee_rows.append({
+            'id': emp.id,
+            'name': emp.name,
+            'username': emp.username,
+            'job_count': job_count,
+            'toolbox_display': toolbox_display,
+            'has_access_to_TM': emp.has_access_to_TM,
+            'is_active': emp.is_active,
+        })
+
+    send_data['employees'] = employee_rows
+    send_data['jobs'] = jobs
+
+    return render(request, "subcontractor_employee_management.html", send_data)
+
+
+@transaction.atomic
+def assign_subcontractor_employee_job(request):
+    if request.method == 'POST':
+        employee_id = request.POST.get('employee_id')
+        job_id = request.POST.get('job_id')
+
+        employee = Subcontractor_Employees.objects.get(id=employee_id)
+        job = Jobs.objects.get(job_number=job_id)
+
+        Subcontractor_Job_Assignments.objects.get_or_create(
+            employee=employee,
+            job=job
+        )
+
+        return JsonResponse({'success': True})
+
+    return JsonResponse({'success': False}, status=400)
+
+
+def subcontractor_employee_ajax(request):
+    employee_id = request.GET.get('employee_id')
+    if not employee_id:
+        return JsonResponse({'error': 'Missing employee_id'}, status=400)
+
+    emp = Subcontractor_Employees.objects.filter(id=employee_id).first()
+    if not emp:
+        return JsonResponse({'error': 'Employee not found'}, status=404)
+
+    assignments = Subcontractor_Job_Assignments.objects.filter(
+        employee=emp
+    ).select_related('job').order_by('job__job_number')
+
+    jobs = []
+    for a in assignments:
+        jobs.append({
+            'id': a.job.job_number,
+            'label': f"{a.job.job_number} {a.job.job_name}"
+        })
+
+    return JsonResponse({
+        'id': emp.id,
+        'name': emp.name or "",
+        'username': emp.username or "",
+        'password1': emp.password1 or "",
+        'has_access_to_TM': emp.has_access_to_TM,
+        'has_access_to_toolbox': emp.has_access_to_toolbox,
+        'is_active': emp.is_active,
+        'jobs': jobs,
+    })
+
+
+
+
+@require_POST
+@transaction.atomic
+def subcontractor_employee_update(request):
+    employee_id = request.POST.get('employee_id')
+    emp = Subcontractor_Employees.objects.filter(id=employee_id).first()
+
+    if not emp:
+        return JsonResponse({'error': 'Employee not found'}, status=404)
+
+    username = request.POST.get('username', '').strip()
+
+    if username:
+        username_exists_in_employees = Subcontractor_Employees.objects.filter(
+            username__iexact=username
+        ).exclude(id=emp.id).exists()
+
+        username_exists_in_subcontractors = Subcontractors.objects.filter(
+            username__iexact=username
+        ).exists()
+
+        if username_exists_in_employees or username_exists_in_subcontractors:
+            return JsonResponse({'error': 'That username is already in use.'}, status=400)
+
+    emp.name = request.POST.get('name', '').strip()
+    emp.username = request.POST.get('username', '').strip()
+    emp.password1 = request.POST.get('password1', '').strip()
+    emp.has_access_to_toolbox = request.POST.get('has_access_to_toolbox') == 'true'
+    emp.has_access_to_TM = request.POST.get('has_access_to_TM') == 'true'
+    emp.save()
+
+    return JsonResponse({'success': True})
+
+
+@require_POST
+@transaction.atomic
+def subcontractor_employee_remove(request):
+    employee_id = request.POST.get('employee_id')
+    emp = Subcontractor_Employees.objects.filter(id=employee_id).first()
+
+    if not emp:
+        return JsonResponse({'error': 'Employee not found'}, status=404)
+
+    emp.is_active = False
+    emp.save()
+
+    return JsonResponse({'success': True})
+
+
+
+@require_POST
+@transaction.atomic
+def subcontractor_employee_create(request):
+    subcontractor_id = request.POST.get('subcontractor_id')
+    name = request.POST.get('name', '').strip()
+    username = request.POST.get('username', '').strip()
+    password1 = request.POST.get('password1', '').strip()
+    has_access_to_toolbox = request.POST.get('has_access_to_toolbox') == 'true'
+    has_access_to_tm = request.POST.get('has_access_to_TM') == 'true'
+    job_id = request.POST.get('job_id')
+
+    if not subcontractor_id:
+        return JsonResponse({'error': 'Missing subcontractor.'}, status=400)
+
+    if not name:
+        return JsonResponse({'error': 'Name is required.'}, status=400)
+
+    subcontractor = Subcontractors.objects.filter(id=subcontractor_id).first()
+    if not subcontractor:
+        return JsonResponse({'error': 'Subcontractor not found.'}, status=404)
+
+    if username:
+        username_exists_in_employees = Subcontractor_Employees.objects.filter(
+            username__iexact=username
+        ).exists()
+
+        username_exists_in_subcontractors = Subcontractors.objects.filter(
+            username__iexact=username
+        ).exists()
+
+        if username_exists_in_employees or username_exists_in_subcontractors:
+            return JsonResponse({'error': 'That username is already in use.'}, status=400)
+    new_emp = Subcontractor_Employees.objects.create(
+        subcontractor=subcontractor,
+        name=name,
+        username=username,
+        password1=password1,
+        has_access_to_toolbox=has_access_to_toolbox,
+        has_access_to_TM=has_access_to_tm,
+        is_active=True,
+        date_enrolled=date.today()
+    )
+
+    if job_id:
+        job = Jobs.objects.filter(job_number=job_id).first()
+        if job:
+            Subcontractor_Job_Assignments.objects.get_or_create(
+                employee=new_emp,
+                job=job
+            )
+
+    return JsonResponse({'success': True, 'employee_id': new_emp.id})
+
+
+@require_POST
+@transaction.atomic
+def remove_subcontractor_employee_job(request):
+    employee_id = request.POST.get('employee_id')
+    job_id = request.POST.get('job_id')
+
+    employee = Subcontractor_Employees.objects.filter(id=employee_id).first()
+    if not employee:
+        return JsonResponse({'error': 'Employee not found.'}, status=404)
+
+    job = Jobs.objects.filter(job_number=job_id).first()
+    if not job:
+        return JsonResponse({'error': 'Job not found.'}, status=404)
+
+    Subcontractor_Job_Assignments.objects.filter(
+        employee=employee,
+        job=job
+    ).delete()
+
+    return JsonResponse({'success': True})
+
+
+
+
+
+def subcontractor_employee_portal(request, employee_id):
+    selected_employee = get_object_or_404(Subcontractor_Employees, id=employee_id)
+
+    send_data = {}
+    subcontractor = selected_employee.subcontractor
+
+    send_data['selected_employee'] = selected_employee
+    send_data['subcontractor'] = subcontractor
+    send_data['employee_id'] = employee_id
+
+    # Assigned jobs
+    assigned_jobs = Subcontractor_Job_Assignments.objects.filter(
+        employee=selected_employee,
+        job__is_closed=False
+    ).select_related('job').order_by('job__job_name')
+
+    send_data['assigned_jobs'] = assigned_jobs
+
+    # T&M tickets
+    outstanding_tm_tickets = 0
+    if selected_employee.has_access_to_TM:
+        jobs = assigned_jobs.values_list('job', flat=True)
+
+        all_changeorders = ChangeOrders.objects.filter(
+            job_number__in=jobs,
+            is_closed=False
+        ).order_by('cop_number')
+
+        for co in all_changeorders:
+            if co.need_ticket() or co.needs_ticket_signed():
+                outstanding_tm_tickets += 1
+
+    send_data['outstanding_tm_tickets'] = outstanding_tm_tickets
+
+    # Toolbox talks
+    toolbox_talks_required = []
+    if selected_employee.has_access_to_toolbox:
+        send_data['toolbox_allowed'] = True
+
+        scheduled_ids = ScheduledToolboxTalkSubEmployees.objects.filter(
+            employee=selected_employee
+        ).values_list('scheduled_id', flat=True).distinct()
+
+        scheduled_qs = ScheduledToolboxTalks.objects.filter(
+            id__in=scheduled_ids,
+            date__lte=date.today()
+        ).order_by('date')
+
+        for x in scheduled_qs:
+            # skip completed talks
+            if CompletedSubToolboxTalks.objects.filter(
+                employee=selected_employee,
+                master=x
+            ).exists():
+                continue
+
+            if x.master:
+                talk_description = x.master.description
+            else:
+                talk_description = x.description or "Custom Toolbox Talk"
+
+            english_file = get_uploaded_toolbox_file(x, "English")
+            spanish_file = get_uploaded_toolbox_file(x, "Spanish")
+
+            english_view = ViewedSubToolboxTalks.objects.filter(
+                employee=selected_employee,
+                master=x,
+                language="English"
+            ).order_by('-date').first()
+
+            spanish_view = ViewedSubToolboxTalks.objects.filter(
+                employee=selected_employee,
+                master=x,
+                language="Spanish"
+            ).order_by('-date').first()
+
+            toolbox_talks_required.append({
+                'item': x.id,  # scheduled talk id
+                'description': talk_description,
+                'date': x.date,
+                'english': english_file['filename'] if english_file else None,
+                'spanish': spanish_file['filename'] if spanish_file else None,
+                'english_viewed': bool(english_view),
+                'english_date': english_view.date if english_view else None,
+                'spanish_viewed': bool(spanish_view),
+                'spanish_date': spanish_view.date if spanish_view else None,
+                'can_complete': bool(english_view or spanish_view),
+            })
+
+        send_data['toolbox_talks_required'] = toolbox_talks_required
+        send_data['toolbox_talks_required_count'] = len(toolbox_talks_required)
+    else:
+        send_data['toolbox_allowed'] = False
+        send_data['toolbox_talks_required'] = []
+        send_data['toolbox_talks_required_count'] = 0
+
+    return render(request, "subcontractor_employee_portal.html", send_data)
+
+
+
+def subcontractor_toolbox_file(request, scheduled_id, language, employee_id):
+    selected_employee = get_object_or_404(Subcontractor_Employees, id=employee_id)
+    scheduled = get_object_or_404(ScheduledToolboxTalks, id=scheduled_id)
+
+    ViewedSubToolboxTalks.objects.get_or_create(
+        employee=selected_employee,
+        master=scheduled,
+        language=language,
+        defaults={"date": now().date()}
+    )
+
+    if scheduled.master:
+        folder_path = os.path.join(
+            settings.MEDIA_ROOT,
+            "toolbox_talks",
+            str(scheduled.master.id),
+            language
+        )
+        relative_id = f"{scheduled.master.id}/{language}"
+        app_name = "toolbox_talks"
+    else:
+        folder_path = os.path.join(
+            settings.MEDIA_ROOT,
+            "custom_toolbox_talks",
+            str(scheduled.id),
+            language
+        )
+        relative_id = f"{scheduled.id}/{language}"
+        app_name = "custom_toolbox_talks"
+
+    if not os.path.exists(folder_path):
+        return HttpResponse("File not found", status=404)
+
+    files = [
+        f for f in os.listdir(folder_path)
+        if os.path.isfile(os.path.join(folder_path, f))
+    ]
+
+    if not files:
+        return HttpResponse("File not found", status=404)
+
+    file_name = files[0]
+
+    return MediaUtilities().getDirectoryContents(
+        relative_id,
+        file_name,
+        app_name
+    )
+
+
+
+
+def complete_subcontractor_toolbox_talk(request):
+    if request.method == "POST":
+        employee_id = request.POST.get("employee_id")
+        scheduledtalk_id = request.POST.get("scheduledtalk_id")
+
+        selected_employee = get_object_or_404(Subcontractor_Employees, id=employee_id)
+        scheduled = get_object_or_404(ScheduledToolboxTalks, id=scheduledtalk_id)
+
+        already_viewed = ViewedSubToolboxTalks.objects.filter(
+            employee=selected_employee,
+            master=scheduled
+        ).exists()
+
+        if already_viewed:
+            CompletedSubToolboxTalks.objects.get_or_create(
+                employee=selected_employee,
+                master=scheduled,
+                defaults={"date": date.today()}
+            )
+
+        return redirect('subcontractor_employee_portal', employee_id=employee_id)
+
+    return redirect('subcontractor_employee_portal', employee_id=employee_id)
+

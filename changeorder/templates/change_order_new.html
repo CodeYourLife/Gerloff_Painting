@@ -373,7 +373,7 @@ document.addEventListener("DOMContentLoaded", function() {
                                       <span class="badge badge-danger badge-status">{{ changeorder.status }}</span>
 
                                   {% elif changeorder.status == "Informal Approval" or changeorder.status == "Sent to GC" %}
-                                      <span class="badge badge-success badge-status">{{ changeorder.status }}</span>
+                                      <span class="badge badge-success badge-status">{{ changeorder.status }}{% if changeorder.is_work_complete %}-Work Done {% endif %}</span>
 
                                   {% elif changeorder.status == "Approved" %}
                                       <span class="badge badge-primary badge-status">{{ changeorder.status }}</span>

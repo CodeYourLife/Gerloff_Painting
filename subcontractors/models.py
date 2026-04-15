@@ -4,7 +4,7 @@ from wallcovering.models import Wallcovering
 import employees.models
 from datetime import date
 import datetime
-
+from employees.models import *
 
 class Subcontractors(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -585,3 +585,45 @@ class Subcontract_Approvers(models.Model):
     employee = models.ForeignKey(employees.models.Employees, on_delete=models.PROTECT,null=True, blank=True)
     subcontract = models.ForeignKey(Subcontracts, on_delete=models.PROTECT)
 
+class Subcontractor_Employees(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(null=True, max_length=2000, blank=True)
+    subcontractor = models.ForeignKey(Subcontractors, on_delete=models.PROTECT)
+    username = models.CharField(null=True, max_length=2000, blank=True)
+    password1 = models.CharField(null=True, max_length=2000, blank=True)
+    has_access_to_TM = models.BooleanField(default=False)
+    has_access_to_toolbox = models.BooleanField(default=False)
+    date_enrolled = models.DateField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+class Subcontractor_Job_Assignments(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    employee = models.ForeignKey(Subcontractor_Employees, on_delete=models.PROTECT)
+    job = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT)
+
+class CompletedSubToolboxTalks(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    date = models.DateField(null=True, blank=True)
+    employee = models.ForeignKey(Subcontractor_Employees, on_delete=models.PROTECT)
+    master = models.ForeignKey('employees.ScheduledToolboxTalks', on_delete=models.PROTECT)
+
+class ViewedSubToolboxTalks(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    date = models.DateField(null=True, blank=True)
+    employee = models.ForeignKey(Subcontractor_Employees, on_delete=models.PROTECT)
+    master = models.ForeignKey('employees.ScheduledToolboxTalks', on_delete=models.PROTECT)
+    language = models.CharField(max_length=50, blank=True, null=True)  # This will say English or Spanish
+
+
+class ScheduledToolboxTalkSubEmployees(models.Model):
+    scheduled = models.ForeignKey(ScheduledToolboxTalks, on_delete=models.CASCADE)
+    employee = models.ForeignKey(Subcontractor_Employees, on_delete=models.PROTECT)
+    job = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT,null=True, blank=True)
+
+    class Meta:
+        unique_together = ('scheduled', 'employee', 'job')
+
+class ScheduledToolboxTalkSubJobs(models.Model):
+    scheduled = models.ForeignKey(ScheduledToolboxTalks, on_delete=models.CASCADE)
+    job = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT)
+    subcontractor = models.ForeignKey(Subcontractors, on_delete=models.PROTECT)

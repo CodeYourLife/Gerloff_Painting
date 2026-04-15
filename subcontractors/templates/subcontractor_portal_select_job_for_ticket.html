@@ -17,7 +17,7 @@
 
 {% for item in jobs %}
 
-<a href="{% url 'subcontractor_portal_select_changeorder' item.job.job_number subcontractor.id %}"
+ <a href="{% url 'subcontractor_portal_select_changeorder' item.job.job_number subcontractor.id employee_id %}"
    class="list-group-item list-group-item-action">
 
     <div class="d-flex justify-content-between align-items-center">

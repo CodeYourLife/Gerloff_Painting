@@ -1,28 +1,39 @@
-from django.contrib.auth.decorators import login_required
-from employees.models import *
-from django.shortcuts import render, redirect
-import json
-from django.core.serializers.json import DjangoJSONEncoder
-from django.utils.timezone import now
-from datetime import date, timedelta, datetime
-from equipment.models import Inventory
-from jobs.models import Jobs, JobNotes, Email_Errors, JobsiteSafetyInspection
-from django.http import HttpResponse
-from console.misc import createfolder
-import json
-import os
-from django.conf import settings
-from media.utilities import MediaUtilities
-from django.shortcuts import render, redirect
-from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import render, redirect, get_object_or_404
-from console.misc import Email
-import openpyxl
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.db import transaction
 from .forms import EmployeeUploadForm
-
+from console.misc import createfolder
+from console.misc import Email
+from datetime import date, timedelta, datetime
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.serializers.json import DjangoJSONEncoder
+from django.db import transaction
+from django.db.models import Q, Max
+from django.http import JsonResponse, HttpResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.template.loader import get_template
+from django.utils.timezone import now
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
+from employees.models import *
+from employees.models import Employees, ToolboxTalks, ScheduledToolboxTalks,ScheduledToolboxTalkEmployees
+from equipment.models import Inventory
+from jobs.models import Jobs, JobNotes, Email_Errors, JobsiteSafetyInspection, ClockSharkTimeEntry
+from media.utilities import MediaUtilities
+import json
+import openpyxl
+import os
+import shutil
+from subcontractors.models import (
+    Subcontractors,
+    Subcontractor_Employees,
+    Subcontractor_Job_Assignments,
+    Subcontracts,
+    ScheduledToolboxTalkSubEmployees,
+    ScheduledToolboxTalkSubJobs,
+    CompletedSubToolboxTalks,
+    ViewedSubToolboxTalks,
+)
+from xhtml2pdf import pisa
 
 @login_required(login_url='/accounts/login')
 def employee_notes(request, employee):
@@ -432,11 +443,10 @@ def training(request):
     return render(request, "training.html", send_data)
 
 def toolbox_file(request, scheduled_id, language):
-
     employee = Employees.objects.get(user=request.user)
     scheduled = ScheduledToolboxTalks.objects.get(id=scheduled_id)
 
-    # ✅ Prevent duplicate entries for same day + language
+    # Prevent duplicate entries for same talk + language
     ViewedToolboxTalks.objects.get_or_create(
         employee=employee,
         master=scheduled,
@@ -444,12 +454,30 @@ def toolbox_file(request, scheduled_id, language):
         defaults={"date": now().date()}
     )
 
-    folder_path = os.path.join(
-        settings.MEDIA_ROOT,
-        "toolbox_talks",
-        str(scheduled.master.id),
-        language
-    )
+    if scheduled.master:
+        folder_path = os.path.join(
+            settings.MEDIA_ROOT,
+            "toolbox_talks",
+            str(scheduled.master.id),
+            language
+        )
+
+        relative_id = f"{scheduled.master.id}/{language}"
+        app_name = "toolbox_talks"
+
+    else:
+        folder_path = os.path.join(
+            settings.MEDIA_ROOT,
+            "custom_toolbox_talks",
+            str(scheduled.id),
+            language
+        )
+
+        relative_id = f"{scheduled.id}/{language}"
+        app_name = "custom_toolbox_talks"
+
+    if not os.path.exists(folder_path):
+        return HttpResponse("File not found", status=404)
 
     files = [
         f for f in os.listdir(folder_path)
@@ -462,9 +490,9 @@ def toolbox_file(request, scheduled_id, language):
     file_name = files[0]
 
     return MediaUtilities().getDirectoryContents(
-        f"{scheduled.master.id}/{language}",
+        relative_id,
         file_name,
-        "toolbox_talks"
+        app_name
     )
 
 @login_required(login_url='/accounts/login')
@@ -524,52 +552,33 @@ def my_page(request):
     if employee.job_title.description == "Painter":
 
         toolbox_talks_required = []
-        folder_root = settings.MEDIA_ROOT
 
-        for x in ScheduledToolboxTalks.objects.filter(
-                date__lte=date.today(),
-                date__gte=employee.date_added
-        ).order_by('date'):
+        scheduled_qs = ScheduledToolboxTalks.objects.filter(
+            date__lte=date.today(),
+            date__gte=employee.date_added
+        ).filter(
+            Q(is_all_employees=True) |
+            Q(scheduledtoolboxtalkemployees__employee=employee)
+        ).distinct().order_by('date')
+
+        for x in scheduled_qs:
 
             if CompletedToolboxTalks.objects.filter(employee=employee, master=x).exists():
                 continue
 
-            toolbox_talk = x.master
+            if x.master:
+                talk_description = x.master.description
+                talk_display_id = x.master.id
+            else:
+                talk_description = x.description or "Custom Toolbox Talk"
+                talk_display_id = x.id
 
-            spanish = None
-            english = None
+            english_file = get_uploaded_toolbox_file(x, "English")
+            spanish_file = get_uploaded_toolbox_file(x, "Spanish")
 
-            # -------------------
-            # SPANISH FILE
-            # -------------------
-            spanish_path = os.path.join(
-                folder_root, "toolbox_talks", str(toolbox_talk.id), "Spanish"
-            )
+            english = english_file['filename'] if english_file else None
+            spanish = spanish_file['filename'] if spanish_file else None
 
-            if os.path.exists(spanish_path):
-                for entry in os.listdir(spanish_path):
-                    full_path = os.path.join(spanish_path, entry)
-                    if os.path.isfile(full_path):
-                        spanish = entry
-                        break
-
-            # -------------------
-            # ENGLISH FILE
-            # -------------------
-            english_path = os.path.join(
-                folder_root, "toolbox_talks", str(toolbox_talk.id), "English"
-            )
-
-            if os.path.exists(english_path):
-                for entry in os.listdir(english_path):
-                    full_path = os.path.join(english_path, entry)
-                    if os.path.isfile(full_path):
-                        english = entry
-                        break
-
-            # -------------------
-            # VIEWED STATUS
-            # -------------------
             spanish_view = ViewedToolboxTalks.objects.filter(
                 employee=employee,
                 master=x,
@@ -583,20 +592,19 @@ def my_page(request):
             ).order_by('-date').first()
 
             toolbox_talks_required.append({
-                'id': toolbox_talk.id,
+                'id': talk_display_id,
                 'item': x.id,
-                'description': toolbox_talk.description,
+                'description': talk_description,
                 'date': x.date,
                 'english': english,
                 'spanish': spanish,
-
                 'spanish_viewed': bool(spanish_view),
                 'spanish_date': spanish_view.date if spanish_view else None,
-
                 'english_viewed': bool(english_view),
                 'english_date': english_view.date if english_view else None,
-
                 'can_complete': bool(spanish_view or english_view),
+                'notes': x.notes or "",
+                'is_all_employees': x.is_all_employees,
             })
 
         send_data['toolbox_talks_required'] = toolbox_talks_required
@@ -848,30 +856,103 @@ def scheduled_toolbox_talks(request):
     days_until_monday = (0 - today.weekday() + 7) % 7
     if days_until_monday == 0:
         days_until_monday = 7
+
     next_monday_date = today + timedelta(days=days_until_monday)
     next_date = next_monday_date - timedelta(days=7)
+
     if request.method == 'POST':
-        if ScheduledToolboxTalks.objects.all().exists():
-            latest_object = ScheduledToolboxTalks.objects.all().order_by('-date')[0]
+        if ScheduledToolboxTalks.objects.exists():
+            latest_object = ScheduledToolboxTalks.objects.order_by('-date').first()
             next_date = latest_object.date + timedelta(days=7)
+
         for x in ToolboxTalks.objects.all():
-            ScheduledToolboxTalks.objects.create(master=x, date=next_date)
+            ScheduledToolboxTalks.objects.create(
+                master=x,
+                date=next_date,
+                is_all_employees=True,
+                notes="Auto Created for All Employees"
+            )
             next_date = next_date + timedelta(days=7)
+
+        return redirect('scheduled_toolbox_talks')
+
     send_data = {}
     toolboxtalks = []
-    for x in ScheduledToolboxTalks.objects.all():
-        if x.date >= next_monday_date:
-            ratio = "Not Issued Yet"
+
+    scheduled_rows = ScheduledToolboxTalks.objects.all().order_by('date')
+
+    for x in scheduled_rows:
+        if x.master:
+            description = f"{x.master.description}"
         else:
-            total_painters = Employees.objects.filter(active=True, date_added__lte=x.date, job_title__description = "Painter").count()
-            painters_completed = 0
-            for y in Employees.objects.filter(active=True,date_added__lte=x.date, job_title__description = "Painter"):
-                if CompletedToolboxTalks.objects.filter(master=x, employee=y).exists():
-                    painters_completed += 1
-            ratio = str(painters_completed) + " of " + str(total_painters)
-        description = str(x.master.id) + " - " + x.master.description
-        toolboxtalks.append({'Item':x.id, 'description': description, 'date': x.date, 'ratio': ratio})
-    send_data['toolboxtalks']= toolboxtalks
+            description = x.description or "Custom Toolbox Talk"
+
+        english_file = get_uploaded_toolbox_file(x, "English")
+        spanish_file = get_uploaded_toolbox_file(x, "Spanish")
+        files_uploaded = bool(english_file) and bool(spanish_file)
+        if not files_uploaded:
+            ratio = "FILES NOT UPLOADED"
+        else:
+
+            ratio = "Not Issued Yet"
+
+            employee_assignments = ScheduledToolboxTalkEmployees.objects.filter(
+                scheduled=x
+            ).select_related('employee')
+
+            sub_assignments = ScheduledToolboxTalkSubEmployees.objects.filter(
+                scheduled=x
+            ).select_related('employee', 'job', 'employee__subcontractor')
+
+            if x.date < next_monday_date:
+                if employee_assignments.exists():
+                    total_count = employee_assignments.count()
+                    completed_count = 0
+
+                    for row in employee_assignments:
+                        if CompletedToolboxTalks.objects.filter(master=x, employee=row.employee).exists():
+                            completed_count += 1
+
+                    ratio = f"{completed_count} of {total_count}"
+
+                elif sub_assignments.exists():
+                    total_count = sub_assignments.count()
+                    completed_count = 0
+
+                    for row in sub_assignments:
+                        if CompletedSubToolboxTalks.objects.filter(master=x, employee=row.employee).exists():
+                            completed_count += 1
+
+                    ratio = f"{completed_count} of {total_count}"
+
+                elif x.is_all_employees:
+                    target_employees = Employees.objects.filter(
+                        active=True,
+                        date_added__lte=x.date,
+                        job_title__description="Painter"
+                    )
+
+                    total_count = target_employees.count()
+                    completed_count = 0
+
+                    for y in target_employees:
+                        if CompletedToolboxTalks.objects.filter(master=x, employee=y).exists():
+                            completed_count += 1
+
+                    ratio = f"{completed_count} of {total_count}"
+
+                else:
+                    ratio = "0 of 0"
+
+        toolboxtalks.append({
+            'Item': x.id,
+            'description': description,
+            'date': x.date,
+            'ratio': ratio,
+            'notes': x.notes or "",
+        })
+
+    send_data['toolboxtalks'] = toolboxtalks
     return render(request, 'scheduled_toolbox_talks.html', send_data)
 
 def respirator_clearance_base(request):
@@ -1098,24 +1179,67 @@ def respirator_clearance_completed(request,respirator_id):
     send_data['part6'] = RespiratorClearance6.objects.get(main=main)
     return render(request, 'respirator_clearance_completed.html', send_data)
 
+from datetime import date, timedelta
+
 def toolbox_talks_by_employee(request):
     send_data = {}
     today = date.today()
+
     days_until_monday = (0 - today.weekday() + 7) % 7
     if days_until_monday == 0:
         days_until_monday = 7
+
     next_monday_date = today + timedelta(days=days_until_monday)
+
     toolbox_talks = []
-    for toolbox_talk in ScheduledToolboxTalks.objects.filter(date__lt = next_monday_date).order_by('-date'):
-        for employee in Employees.objects.filter(active=True,date_added__lte=toolbox_talk.date, job_title__description="Painter"):
-            topic = toolbox_talk.master.description
-            scheduled_date = toolbox_talk.date.strftime('%Y/%m/%d')
-            name = employee.first_name + " " + employee.last_name
-            if CompletedToolboxTalks.objects.filter(master=toolbox_talk, employee=employee).exists():
+
+    scheduled_rows = ScheduledToolboxTalks.objects.filter(
+        date__lt=next_monday_date
+    ).order_by('-date')
+
+    for scheduled in scheduled_rows:
+        if scheduled.master:
+            topic = scheduled.master.description
+        else:
+            topic = scheduled.description or "Custom Toolbox Talk"
+
+        scheduled_date = scheduled.date.strftime('%Y/%m/%d')
+
+        employee_assignments = ScheduledToolboxTalkEmployees.objects.filter(
+            scheduled=scheduled
+        ).select_related('employee')
+
+        if employee_assignments.exists():
+            target_employees = [
+                row.employee for row in employee_assignments
+                if row.employee.active and row.employee.job_title and row.employee.job_title.description == "Painter"
+            ]
+        elif scheduled.is_all_employees:
+            target_employees = Employees.objects.filter(
+                active=True,
+                date_added__lte=scheduled.date,
+                job_title__description="Painter"
+            ).order_by('last_name', 'first_name')
+        else:
+            target_employees = []
+
+        for employee in target_employees:
+            name = f"{employee.first_name} {employee.last_name}"
+
+            if CompletedToolboxTalks.objects.filter(master=scheduled, employee=employee).exists():
                 status = "Completed"
             else:
                 status = "Incomplete"
-            toolbox_talks.append({'topic':topic, 'date':scheduled_date,'employee':name, 'status':status})
+
+            toolbox_talks.append({
+                'topic': topic,
+                'date': scheduled_date,
+                'employee': name,
+                'status': status,
+                'notes': scheduled.notes or "",
+                'scheduled_id': scheduled.id,
+            })
+
     send_data['toolbox_talks'] = toolbox_talks
     return render(request, 'toolbox_talks_by_employee.html', send_data)
 
@@ -1251,3 +1375,904 @@ def upload_employees(request):
 
     return render(request, "upload_employees.html", {"form": form})
 
+
+
+@login_required
+@transaction.atomic
+def toolbox_talk_assign(request):
+    toolbox_talks = ToolboxTalks.objects.all().order_by('description')
+
+    painters = Employees.objects.filter(
+        active=True,
+        job_title__description="Painter"
+    ).order_by('last_name', 'first_name')
+
+    subcontractors = Subcontractors.objects.filter(
+        is_inactive=False
+    ).order_by('company')
+
+    jobs = Jobs.objects.filter(
+        is_closed=False
+    ).order_by('job_number')
+
+    context = {
+        'toolbox_talks': toolbox_talks,
+        'painters': painters,
+        'subcontractors': subcontractors,
+        'jobs': jobs,
+    }
+
+    def create_custom_toolbox_folders(scheduled_obj):
+        base_path = f"custom_toolbox_talks/{scheduled_obj.id}"
+        createfolder(base_path)
+        createfolder(f"{base_path}/English")
+        createfolder(f"{base_path}/Spanish")
+
+    if request.method == 'POST':
+        talk_source = request.POST.get('talk_source')
+        schedule_mode = request.POST.get('schedule_mode')
+        assignment_type = request.POST.get('assignment_type')
+
+        existing_talk_id = request.POST.get('existing_talk_id')
+        custom_description = request.POST.get('custom_description', '').strip()
+        custom_date_raw = request.POST.get('custom_date')
+
+        employee_ids = request.POST.getlist('employee_ids')
+        sub_employee_ids = request.POST.getlist('sub_employee_ids')
+        sub_job_id = request.POST.get('sub_job_ids')
+
+        job_number = request.POST.get('job_number')
+        subcontractor_employee_id = request.POST.get('subcontractor_employee_id')
+        subcontractor_job_id = request.POST.get('subcontractor_job_id')
+
+        selected_master = None
+        selected_description = None
+
+        # -----------------------------
+        # Validate talk selection
+        # -----------------------------
+        if talk_source == 'existing':
+            if not existing_talk_id:
+                messages.error(request, 'Please select an existing Toolbox Talk.')
+                return render(request, 'toolbox_talk_assign.html', context)
+
+            try:
+                selected_master = ToolboxTalks.objects.get(id=existing_talk_id)
+            except ToolboxTalks.DoesNotExist:
+                messages.error(request, 'Selected Toolbox Talk could not be found.')
+                return render(request, 'toolbox_talk_assign.html', context)
+
+        elif talk_source == 'custom':
+            if not custom_description:
+                messages.error(request, 'Please enter a custom Toolbox Talk description.')
+                return render(request, 'toolbox_talk_assign.html', context)
+            selected_description = custom_description
+
+        else:
+            messages.error(request, 'Please choose an existing Toolbox Talk or enter a custom one.')
+            return render(request, 'toolbox_talk_assign.html', context)
+
+        # -----------------------------
+        # Scheduling method: Replace next scheduled talk for all employees
+        # -----------------------------
+        if schedule_mode == 'replace_next':
+            next_scheduled = ScheduledToolboxTalks.objects.filter(
+                date__gte=date.today()
+            ).order_by('date', 'id').first()
+
+            if next_scheduled:
+                next_date = next_scheduled.date
+
+                future_talks = ScheduledToolboxTalks.objects.filter(
+                    date__gte=next_date
+                ).order_by('-date', '-id')
+
+                for talk in future_talks:
+                    talk.date = talk.date + timedelta(days=7)
+                    talk.save()
+
+                new_scheduled = ScheduledToolboxTalks.objects.create(
+                    master=selected_master,
+                    description=selected_description if selected_master is None else None,
+                    date=next_date,
+                    is_all_employees=True,
+                    notes="Auto Created for All Employees"
+                )
+            else:
+                fallback_date = date.today()
+                new_scheduled = ScheduledToolboxTalks.objects.create(
+                    master=selected_master,
+                    description=selected_description if selected_master is None else None,
+                    date=fallback_date,
+                    is_all_employees=True,
+                    notes="Auto Created for All Employees"
+                )
+
+            if selected_master is None:
+                create_custom_toolbox_folders(new_scheduled)
+
+            messages.success(request, 'Toolbox Talk created successfully.')
+            return redirect('toolbox_talk_assign')
+
+        # -----------------------------
+        # Scheduling method: Add to end of schedule for all employees
+        # -----------------------------
+        if schedule_mode == 'add_to_end_all':
+            latest_scheduled = ScheduledToolboxTalks.objects.order_by('-date', '-id').first()
+
+            if latest_scheduled and latest_scheduled.date:
+                scheduled_date = latest_scheduled.date + timedelta(days=7)
+            else:
+                scheduled_date = date.today()
+
+            new_scheduled = ScheduledToolboxTalks.objects.create(
+                master=selected_master,
+                description=selected_description if selected_master is None else None,
+                date=scheduled_date,
+                is_all_employees=True,
+                notes="Auto Created for All Employees"
+            )
+
+            if selected_master is None:
+                create_custom_toolbox_folders(new_scheduled)
+
+            messages.success(request, 'Toolbox Talk added to the end of the schedule for all employees.')
+            return redirect('toolbox_talk_assign')
+
+        # -----------------------------
+        # All other options require custom date
+        # -----------------------------
+        if schedule_mode != 'custom_date':
+            messages.error(request, 'Please choose a scheduling option.')
+            return render(request, 'toolbox_talk_assign.html', context)
+
+        if not custom_date_raw:
+            messages.error(request, 'Please choose a date.')
+            return render(request, 'toolbox_talk_assign.html', context)
+
+        try:
+            scheduled_date = date.fromisoformat(custom_date_raw)
+        except ValueError:
+            messages.error(request, 'Invalid date.')
+            return render(request, 'toolbox_talk_assign.html', context)
+
+        is_all_employees = assignment_type == 'all_employees'
+
+        scheduled = ScheduledToolboxTalks.objects.create(
+            master=selected_master,
+            description=selected_description if selected_master is None else None,
+            date=scheduled_date,
+            is_all_employees=is_all_employees
+        )
+
+        if selected_master is None:
+            create_custom_toolbox_folders(scheduled)
+
+        # -----------------------------
+        # Assignment type: All Employees
+        # -----------------------------
+        if assignment_type == 'all_employees':
+            scheduled.notes = (
+                "Existing Talk Assigned to All Employees"
+                if selected_master else
+                "Custom Talk Created for All Employees"
+            )
+            scheduled.save()
+
+            messages.success(request, 'Toolbox Talk assigned to all employees.')
+            return redirect('toolbox_talk_assign')
+
+        # -----------------------------
+        # Assignment type: Employees
+        # -----------------------------
+        elif assignment_type == 'employees':
+            if not employee_ids:
+                scheduled.delete()
+                messages.error(request, 'Please select at least one employee.')
+                return render(request, 'toolbox_talk_assign.html', context)
+
+            valid_employees = Employees.objects.filter(
+                id__in=employee_ids,
+                active=True,
+                job_title__description="Painter"
+            )
+
+            ScheduledToolboxTalkEmployees.objects.bulk_create([
+                ScheduledToolboxTalkEmployees(
+                    scheduled=scheduled,
+                    employee=emp
+                )
+                for emp in valid_employees
+            ])
+
+            scheduled.notes = (
+                "Existing Talk Assigned to Certain Employees"
+                if selected_master else
+                "Custom Talk Created for Certain Employees"
+            )
+            scheduled.save()
+
+            messages.success(request, 'Toolbox Talk assigned to selected employees.')
+            return redirect('toolbox_talk_assign')
+
+        # -----------------------------
+        # Assignment type: Job
+        # -----------------------------
+        elif assignment_type == 'job':
+            if not job_number:
+                scheduled.delete()
+                messages.error(request, 'Please select a job.')
+                return render(request, 'toolbox_talk_assign.html', context)
+
+            entries = ClockSharkTimeEntry.objects.filter(
+                job_id=job_number
+            ).exclude(
+                employee_first_name__isnull=True
+            ).exclude(
+                employee_last_name__isnull=True
+            )
+
+            matched_employees = []
+            seen_ids = set()
+
+            for entry in entries:
+                emp = Employees.objects.filter(
+                    active=True,
+                    job_title__description="Painter",
+                    first_name__iexact=entry.employee_first_name,
+                    last_name__iexact=entry.employee_last_name
+                ).first()
+
+                if emp and emp.id not in seen_ids:
+                    seen_ids.add(emp.id)
+                    matched_employees.append(emp)
+
+            if not matched_employees:
+                scheduled.delete()
+                messages.error(request, 'No matching active employees were found from ClockShark for that job.')
+                return render(request, 'toolbox_talk_assign.html', context)
+
+            ScheduledToolboxTalkEmployees.objects.bulk_create([
+                ScheduledToolboxTalkEmployees(
+                    scheduled=scheduled,
+                    employee=emp,
+                    job_id=job_number
+                )
+                for emp in matched_employees
+            ])
+
+            job_obj = Jobs.objects.filter(job_number=job_number).first()
+            job_label = f"{job_obj.job_number}" if job_obj else str(job_number)
+
+            scheduled.notes = (
+                f"Existing Talk For Job {job_label}"
+                if selected_master else
+                f"Custom Talk Created For Job {job_label}"
+            )
+            scheduled.save()
+
+            messages.success(request, 'Toolbox Talk assigned to job.')
+            return redirect('toolbox_talk_assign')
+
+        # -----------------------------
+        # Assignment type: Subcontractor Employees
+        # -----------------------------
+        elif assignment_type == 'sub_employees':
+            if not subcontractor_employee_id:
+                scheduled.delete()
+                messages.error(request, 'Please choose a subcontractor.')
+                return render(request, 'toolbox_talk_assign.html', context)
+
+            if not sub_employee_ids:
+                scheduled.delete()
+                messages.error(request, 'Please select at least one subcontractor employee.')
+                return render(request, 'toolbox_talk_assign.html', context)
+
+            valid_sub_employees = Subcontractor_Employees.objects.filter(
+                id__in=sub_employee_ids,
+                subcontractor_id=subcontractor_employee_id,
+                is_active=True,
+                has_access_to_toolbox=True
+            )
+
+            ScheduledToolboxTalkSubEmployees.objects.bulk_create([
+                ScheduledToolboxTalkSubEmployees(
+                    scheduled=scheduled,
+                    employee=emp,
+                    job=None
+                )
+                for emp in valid_sub_employees
+            ])
+
+            sub = Subcontractors.objects.filter(id=subcontractor_employee_id).first()
+            company = sub.company if sub else "Unknown Subcontractor"
+
+            scheduled.notes = (
+                f"Existing Talk Assigned to Subcontractor {company}"
+                if selected_master else
+                f"Custom Talk Created for Subcontractor {company}"
+            )
+            scheduled.save()
+
+            messages.success(request, 'Toolbox Talk assigned to selected subcontractor employees.')
+            return redirect('toolbox_talk_assign')
+
+        # -----------------------------
+        # Assignment type: Subcontractor Jobs
+        # -----------------------------
+        elif assignment_type == 'sub_jobs':
+            if not subcontractor_job_id:
+                scheduled.delete()
+                messages.error(request, 'Please choose a subcontractor.')
+                return render(request, 'toolbox_talk_assign.html', context)
+
+            if not sub_job_id:
+                scheduled.delete()
+                messages.error(request, 'Please select at least one subcontractor job.')
+                return render(request, 'toolbox_talk_assign.html', context)
+
+            valid_job_ids = Subcontracts.objects.filter(
+                    subcontractor_id=subcontractor_job_id,
+                    is_closed=False,
+                    job_number__is_closed=False,
+                    job_number=sub_job_id
+                ).values_list('job_number', flat=True).distinct()
+
+
+            if not valid_job_ids:
+                scheduled.delete()
+                messages.error(request, 'No valid open jobs were found for that subcontractor.')
+                return render(request, 'toolbox_talk_assign.html', context)
+
+            assignments = Subcontractor_Job_Assignments.objects.filter(
+                job_id__in=valid_job_ids,
+                employee__subcontractor_id=subcontractor_job_id,
+                employee__is_active=True,
+                employee__has_access_to_toolbox=True
+            ).select_related('employee', 'job')
+
+            create_rows = []
+            seen = set()
+
+            for assignment in assignments:
+                key = (scheduled.id, assignment.employee.id, assignment.job.pk)
+                if key in seen:
+                    continue
+                seen.add(key)
+
+                create_rows.append(
+                    ScheduledToolboxTalkSubEmployees(
+                        scheduled=scheduled,
+                        employee=assignment.employee,
+                        job=assignment.job
+                    )
+                )
+
+            if not create_rows:
+                scheduled.delete()
+                messages.error(request, 'No active subcontractor employees were assigned to the selected job(s).')
+                return render(request, 'toolbox_talk_assign.html', context)
+
+            ScheduledToolboxTalkSubEmployees.objects.bulk_create(create_rows)
+
+            sub = Subcontractors.objects.filter(id=subcontractor_job_id).first()
+            company = sub.company if sub else "Unknown Subcontractor"
+
+            job_list = ", ".join(str(x) for x in valid_job_ids[:5])
+            if len(valid_job_ids) > 5:
+                job_list += "..."
+
+            scheduled.notes = (
+                f"Existing Talk Assigned to Subcontractor {company} for job(s) {job_list}"
+                if selected_master else
+                f"Custom Talk Created for Subcontractor {company} for job(s) {job_list}"
+            )
+            scheduled.save()
+
+            messages.success(request, 'Toolbox Talk assigned to subcontractor employees on the selected job(s).')
+            return redirect('toolbox_talk_assign')
+
+        else:
+            scheduled.delete()
+            messages.error(request, 'Please select an assignment type.')
+            return render(request, 'toolbox_talk_assign.html', context)
+
+    return render(request, 'toolbox_talk_assign.html', context)
+
+
+@login_required
+@require_GET
+def ajax_subcontractor_employees(request):
+    subcontractor_id = request.GET.get('subcontractor_id')
+
+    results = []
+    if subcontractor_id:
+        employees = Subcontractor_Employees.objects.filter(
+            subcontractor_id=subcontractor_id,
+            is_active=True,
+            has_access_to_toolbox=True
+        ).order_by('name')
+
+        results = [
+            {
+                'id': x.id,
+                'name': x.name or f'Employee #{x.id}'
+            }
+            for x in employees
+        ]
+
+    return JsonResponse({'results': results})
+
+
+@require_GET
+def ajax_subcontractor_jobs(request):
+    subcontractor_id = request.GET.get('subcontractor_id')
+
+    results = []
+    if subcontractor_id:
+        rows = Subcontracts.objects.filter(
+            subcontractor_id=subcontractor_id,
+            is_closed=False,
+            job_number__is_closed=False
+        ).select_related('job_number').order_by(
+            'job_number__job_number'
+        ).distinct()
+
+        seen = set()
+        for row in rows:
+            job = row.job_number
+            if job.pk in seen:
+                continue
+            seen.add(job.pk)
+
+            results.append({
+                'id': job.job_number,
+                'label': f'{job.job_number} - {job.job_name}'
+            })
+
+    return JsonResponse({'results': results})
+
+
+def participation_ajax(request):
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        if 'scheduled_toolbox_talk_id' not in request.GET:
+            return HttpResponse(
+                json.dumps({'error': 'Missing scheduled_toolbox_talk_id'}),
+                content_type='application/json',
+                status=400
+            )
+
+        send_data = {}
+
+        x = ScheduledToolboxTalks.objects.get(id=request.GET['scheduled_toolbox_talk_id'])
+
+        incomplete_people = []
+        completed_people = []
+        assignment_type = ""
+        job_info = ""
+
+        description = x.master.description if x.master else (x.description or "Custom Toolbox Talk")
+
+        employee_assignments = ScheduledToolboxTalkEmployees.objects.filter(
+            scheduled=x
+        ).select_related('employee', 'job')
+
+        sub_assignments = ScheduledToolboxTalkSubEmployees.objects.filter(
+            scheduled=x
+        ).select_related('employee', 'employee__subcontractor', 'job')
+
+        # Build job info for header
+        sub_job = sub_assignments.exclude(job__isnull=True).first()
+        emp_job = employee_assignments.exclude(job__isnull=True).first()
+
+        if sub_job and sub_job.job:
+            job_info = f"{sub_job.job.job_number} {sub_job.job.job_name}"
+        elif emp_job and emp_job.job:
+            job_info = f"{emp_job.job.job_number} {emp_job.job.job_name}"
+
+        # Certain regular employees
+        if employee_assignments.exists():
+            jobs_used = employee_assignments.exclude(job__isnull=True)
+
+            if jobs_used.exists():
+                assignment_type = "Assigned by Job"
+            else:
+                assignment_type = "Certain Employees"
+
+            for row in employee_assignments:
+                y = row.employee
+
+                completed = CompletedToolboxTalks.objects.filter(
+                    master=x,
+                    employee=y
+                ).order_by('-date').first()
+
+                label = f"{y.first_name} {y.last_name}"
+
+                if completed:
+                    completed_people.append({
+                        'name': label,
+                        'completed_date': completed.date.strftime('%m/%d/%y') if completed.date else ""
+                    })
+                else:
+                    incomplete_people.append({
+                        'name': label
+                    })
+
+        # Subcontractor employees / jobs
+        elif sub_assignments.exists():
+            jobs_used = sub_assignments.exclude(job__isnull=True)
+
+            if jobs_used.exists():
+                assignment_type = "Subcontractor Job Assignment"
+            else:
+                assignment_type = "Subcontractor Employees"
+
+            for row in sub_assignments:
+                y = row.employee
+                if not y.has_access_to_toolbox:
+                    continue
+                completed = CompletedSubToolboxTalks.objects.filter(
+                    master=x,
+                    employee=y
+                ).order_by('-date').first()
+
+                label = y.name or f"Employee #{y.id}"
+
+                if completed:
+                    completed_people.append({
+                        'name': label,
+                        'completed_date': completed.date.strftime('%m/%d/%y') if completed.date else ""
+                    })
+                else:
+                    incomplete_people.append({
+                        'name': label
+                    })
+
+        # All employees
+        elif x.is_all_employees:
+            assignment_type = "All Employees"
+
+            target_employees = Employees.objects.filter(
+                active=True,
+                date_added__lte=x.date,
+                job_title__description="Painter"
+            ).order_by('last_name', 'first_name')
+
+            for y in target_employees:
+                completed = CompletedToolboxTalks.objects.filter(
+                    master=x,
+                    employee=y
+                ).order_by('-date').first()
+
+                label = f"{y.first_name} {y.last_name}"
+
+                if completed:
+                    completed_people.append({
+                        'name': label,
+                        'completed_date': completed.date.strftime('%m/%d/%y') if completed.date else ""
+                    })
+                else:
+                    incomplete_people.append({
+                        'name': label
+                    })
+
+        else:
+            assignment_type = "Unassigned"
+
+        send_data['assignment_type'] = assignment_type
+        send_data['description'] = description
+        send_data['date'] = x.date.strftime('%Y-%m-%d') if x.date else ""
+        send_data['job_info'] = job_info
+        send_data['people'] = incomplete_people
+        send_data['completed_people'] = completed_people
+        send_data['english_file'] = get_uploaded_toolbox_file(x, "English")
+        send_data['spanish_file'] = get_uploaded_toolbox_file(x, "Spanish")
+
+        return HttpResponse(json.dumps(send_data), content_type='application/json')
+
+def upload_toolbox_file(request):
+    if request.method == 'POST':
+        fileitem = request.FILES.get('upload_file')
+        language = request.POST.get('language')
+        scheduled_id = request.POST.get('scheduled_id')
+
+        if not scheduled_id:
+            messages.error(request, 'No scheduled toolbox talk was selected.')
+            return redirect('scheduled_toolbox_talks')
+
+        if not fileitem:
+            messages.error(request, 'Please choose a file to upload.')
+            return redirect('scheduled_toolbox_talks')
+
+        scheduled = ScheduledToolboxTalks.objects.get(id=scheduled_id)
+
+        rel_path, abs_path = get_scheduled_toolbox_folder(scheduled, language)
+
+        os.makedirs(abs_path, exist_ok=True)
+
+        # delete existing file
+        for f in os.listdir(abs_path):
+            os.remove(os.path.join(abs_path, f))
+
+        fn = os.path.basename(fileitem.name)
+        filepath = os.path.join(abs_path, fn)
+
+        with open(filepath, 'wb') as f:
+            f.write(fileitem.read())
+
+        return redirect('scheduled_toolbox_talks')
+
+def get_scheduled_toolbox_folder(scheduled, language):
+    if scheduled.master:
+        rel_path = os.path.join("toolbox_talks", str(scheduled.master.id), language)
+    else:
+        rel_path = os.path.join("custom_toolbox_talks", str(scheduled.id), language)
+
+    abs_path = os.path.join(settings.MEDIA_ROOT, rel_path)
+    return rel_path, abs_path
+
+def get_uploaded_toolbox_file(scheduled, language):
+    rel_path, abs_path = get_scheduled_toolbox_folder(scheduled, language)
+
+    if not os.path.exists(abs_path):
+        return None
+
+    for fn in os.listdir(abs_path):
+        full_path = os.path.join(abs_path, fn)
+        if os.path.isfile(full_path):
+            return {
+                'filename': fn,
+                'url': os.path.join(settings.MEDIA_URL, rel_path, fn).replace("\\", "/")
+            }
+
+    return None
+
+
+
+def scheduled_toolbox_report(request, scheduled_id):
+    scheduled = ScheduledToolboxTalks.objects.get(id=scheduled_id)
+
+    if scheduled.master:
+        topic = scheduled.master.description
+    else:
+        topic = scheduled.description or "Custom Toolbox Talk"
+
+    job = None
+
+    sub_row = ScheduledToolboxTalkSubEmployees.objects.filter(
+        scheduled=scheduled,
+        job__isnull=False
+    ).select_related('job').first()
+
+    emp_row = ScheduledToolboxTalkEmployees.objects.filter(
+        scheduled=scheduled,
+        job__isnull=False
+    ).select_related('job').first()
+
+    if sub_row:
+        job = sub_row.job
+    elif emp_row:
+        job = emp_row.job
+
+    job_info = f"{job.job_number} {job.job_name}" if job else ""
+    # # Job info for header only
+    # job_info = ""
+    # job_numbers = list(
+    #     ScheduledToolboxTalkSubEmployees.objects.filter(
+    #         scheduled=scheduled,
+    #         job__isnull=False
+    #     ).values_list('job__job_number', flat=True).distinct()
+    # )
+    # if job_numbers:
+    #     job_info = ", ".join(str(x) for x in job_numbers if x)
+
+    rows = []
+
+    employee_assignments = ScheduledToolboxTalkEmployees.objects.filter(
+        scheduled=scheduled
+    ).select_related('employee')
+
+    sub_assignments = ScheduledToolboxTalkSubEmployees.objects.filter(
+        scheduled=scheduled
+    ).select_related('employee', 'job', 'employee__subcontractor')
+
+    # Certain regular employees
+    if employee_assignments.exists():
+        for row in employee_assignments:
+            emp = row.employee
+
+            completed = CompletedToolboxTalks.objects.filter(
+                master=scheduled,
+                employee=emp
+            ).order_by('-date').first()
+
+            if not completed:
+                continue
+
+            rows.append({
+                'employee_name': f"{emp.first_name} {emp.last_name}",
+                'completed_date': completed.date,
+            })
+
+    # Subcontractor employees / subcontractor job assignments
+    elif sub_assignments.exists():
+        seen = set()
+
+        for row in sub_assignments:
+            emp = row.employee
+
+            if emp.id in seen:
+                continue
+            seen.add(emp.id)
+
+            completed = CompletedSubToolboxTalks.objects.filter(
+                master=scheduled,
+                employee=emp
+            ).order_by('-date').first()
+
+            if not completed:
+                continue
+
+            rows.append({
+                'employee_name': emp.name or f"Employee #{emp.id}",
+                'completed_date': completed.date,
+            })
+
+    # All employees
+    elif scheduled.is_all_employees:
+        target_employees = Employees.objects.filter(
+            active=True,
+            date_added__lte=scheduled.date,
+            job_title__description="Painter"
+        ).order_by('last_name', 'first_name')
+
+        for emp in target_employees:
+            completed = CompletedToolboxTalks.objects.filter(
+                master=scheduled,
+                employee=emp
+            ).order_by('-date').first()
+
+            if not completed:
+                continue
+
+            rows.append({
+                'employee_name': f"{emp.first_name} {emp.last_name}",
+                'completed_date': completed.date,
+            })
+
+    # Optional: sort by completed date, newest first
+    rows = sorted(rows, key=lambda x: x['completed_date'], reverse=True)
+
+    context = {
+        'topic': topic,
+        'scheduled_date': scheduled.date,
+        'job_info': job_info,
+        'rows': rows,
+    }
+
+    template = get_template('print_scheduled_toolbox_report.html')
+    html = template.render(context)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="scheduled_toolbox_report_{scheduled.id}.pdf"'
+
+    pisa_status = pisa.CreatePDF(html, dest=response)
+
+    if pisa_status.err:
+        return HttpResponse("Error generating PDF", status=500)
+
+    return response
+
+
+
+@login_required
+@require_GET
+def ajax_job_sorted_employees(request):
+    job_number = request.GET.get('job_number')
+
+    results = []
+
+    active_painters = Employees.objects.filter(
+        active=True,
+        job_title__description="Painter"
+    ).order_by('last_name', 'first_name')
+
+    if not job_number:
+        results = [
+            {
+                'id': emp.id,
+                'label': f'{emp.first_name} {emp.last_name}'
+            }
+            for emp in active_painters
+        ]
+        return JsonResponse({'results': results})
+
+    # Pull ClockShark entries for this job and get latest clock-in per name
+    clock_rows = (
+        ClockSharkTimeEntry.objects.filter(
+            job_id=job_number
+        )
+        .exclude(employee_first_name__isnull=True)
+        .exclude(employee_last_name__isnull=True)
+        .values('employee_first_name', 'employee_last_name')
+        .annotate(last_clock_in=Max('clock_in'))
+        .order_by('-last_clock_in', 'employee_last_name', 'employee_first_name')
+    )
+
+    used_employee_ids = set()
+
+    # 1. Employees who clocked into the selected job, most recent first
+    for row in clock_rows:
+        match = Employees.objects.filter(
+            active=True,
+            job_title__description="Painter",
+            first_name__iexact=row['employee_first_name'],
+            last_name__iexact=row['employee_last_name']
+        ).order_by('last_name', 'first_name').first()
+
+        if not match:
+            continue
+
+        if match.id in used_employee_ids:
+            continue
+
+        used_employee_ids.add(match.id)
+
+        last_clock_in = row['last_clock_in']
+        label = f"{match.first_name} {match.last_name}"
+        if last_clock_in:
+            label += f" - last clocked in {last_clock_in.strftime('%m/%d/%y')}"
+
+        results.append({
+            'id': match.id,
+            'label': label
+        })
+
+    # 2. Remaining active painters who have not clocked into that job
+    remaining_employees = active_painters.exclude(id__in=used_employee_ids)
+
+    for emp in remaining_employees:
+        results.append({
+            'id': emp.id,
+            'label': f'{emp.first_name} {emp.last_name}'
+        })
+
+    return JsonResponse({'results': results})
+
+@login_required
+@transaction.atomic
+def delete_scheduled_toolbox_talk(request):
+    if request.method != 'POST':
+        return redirect('scheduled_toolbox_talks')
+
+    scheduled_id = request.POST.get('scheduled_id')
+    if not scheduled_id:
+        messages.error(request, 'No scheduled toolbox talk was selected.')
+        return redirect('scheduled_toolbox_talks')
+
+    scheduled = ScheduledToolboxTalks.objects.filter(id=scheduled_id).first()
+    if not scheduled:
+        messages.error(request, 'Scheduled toolbox talk not found.')
+        return redirect('scheduled_toolbox_talks')
+
+    # Delete related records first
+    CompletedSubToolboxTalks.objects.filter(master=scheduled).delete()
+    ViewedSubToolboxTalks.objects.filter(master=scheduled).delete()
+
+    CompletedToolboxTalks.objects.filter(master=scheduled).delete()
+    ViewedToolboxTalks.objects.filter(master=scheduled).delete()
+
+    ScheduledToolboxTalkEmployees.objects.filter(scheduled=scheduled).delete()
+    ScheduledToolboxTalkSubEmployees.objects.filter(scheduled=scheduled).delete()
+
+    # If it is a custom scheduled talk, remove its folder too
+    if not scheduled.master:
+        folder_path = os.path.join(settings.MEDIA_ROOT, "custom_toolbox_talks", str(scheduled.id))
+        if os.path.exists(folder_path):
+            shutil.rmtree(folder_path, ignore_errors=True)
+
+    scheduled.delete()
+
+    messages.success(request, 'Scheduled toolbox talk deleted.')
+    return redirect('scheduled_toolbox_talks')
