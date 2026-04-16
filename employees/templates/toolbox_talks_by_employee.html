@@ -1,137 +1,266 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block nav_item_employees %}active{% endblock nav_item_employees %}
+
+{% block title %}Toolbox Talks By Employee{% endblock %}
+
 {% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
-<!--    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-    <style type="text/css" class="init">
-        nav .active, .collapsible:hover {
-          background-color: Salmon;
-        }
-        .nav-pills a {
-            color: black;
-        }
-        .nav-pills li {
-            padding: 2px;
-        }
-        .nav-pills .active {
-            background-color: #6c757d !important;
-            padding: 5px;
-        }
-        .table td {
-    overflow-x: hidden;
-    white-space: normal;
-    word-wrap: break-word;
-}
-        label {
-            margin-left: 10px;
-            margin-right: 10px;
-        }
-        input {
-            margin-left: 10px;
-            margin-right: 10px;
-            padding: 0.375rem 0.75rem;
-            font-size: 1rem;
-            line-height: 1.5;
-            color: #495057;
-            background-color: #fff;
-            background-clip: padding-box;
-            border: 1px solid #ced4da;
-            border-radius: 0.25rem;
-            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
-        }
-        tr th {
-            width: fit-content !important;
-        }
-        .tab-content * {
-          color : black;
-          background-color: white !important;
-        }
+<div class="container-fluid mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h4 class="mb-0">Toolbox Talks By Employee</h4>
+        </div>
 
-        .active * {
-            background-color: white !important;
-        }
-    </style>
-    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
-            data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-    <script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html"
-            async></script>
-    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html"
-            async></script>
-    <script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-    <script type="text/javascript" language="javascript"
-            src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-    <script type="text/javascript" class="init">
-        $(document).ready(function () {
-            var table = $('#employees_table').DataTable({paging: false});
-        })
-
-    </script>
-
-</head>
-<body>
-
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav ">
-            <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
-<!--            <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>-->
-            <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'employee_notes' 'AUTO' %}">Employee Notes</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'safety_home' %}">Safety</a></li>
-            <li><a class="nav-item nav-link active" href="{% url 'safety_home' %}">Toolbox Talks By Employee</a></li>
-        </ul>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="toolboxByEmployeeTable" class="table table-sm table-striped table-hover mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th style="width:38%;">Employee Name</th>
+                            <th style="width:32%;">Employer</th>
+                            <th style="width:30%;">Completed Talks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                        <tr class="toolbox-person-row"
+                            data-person-type="{{ row.person_type }}"
+                            data-person-id="{{ row.person_id }}"
+                            style="cursor:pointer;">
+                            <td data-order="{{ row.name|default_if_none:''|lower }}">
+                                {{ row.name }}
+                            </td>
+                            <td data-order="{{ row.employer|default_if_none:''|lower }}">
+                                {{ row.employer }}
+                            </td>
+                            <td data-order="{{ row.ratio_sort_completed }}-{{ row.ratio_sort_total }}">
+                                {% if row.ratio_display == "Not Signed Up" %}
+                                    <span class="badge badge-warning">Not Signed Up</span>
+                                {% else %}
+                                    {{ row.ratio_display }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">No employees found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-
-</nav>
-
-    <div style="margin-top: 12px" class="table-responsive">
-        <table id="employees_table" class="table display">
-            <thead>
-            <tr>
-                <th class="col">Topic</th>
-                <th class="col">Date</th>
-                <th class="col">Employee</th>
-                <th class="col">Status</th>
-                <th class="col">Notes</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for toolboxtalk in toolbox_talks %}
-            <tr>
-                <td>{{toolboxtalk.topic}}</td>
-                <td data-order="{{ toolboxtalk.date }}">{{ toolboxtalk.date }}</td>
-                <td>{{toolboxtalk.employee}}</td>
-                <td>
-                    {% if toolboxtalk.status == "Incomplete" %}
-                        <span class="badge badge-danger">Incomplete</span>
-                    {% else %}
-                        <span class="badge badge-success">Completed</span>
-                    {% endif %}
-                </td>
-                <td style="white-space: normal;">{{ toolboxtalk.notes }}</td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
 </div>
-</body>
-</html>
 
+<div id="toolbox-modal-url-template"
+     data-url-template="{% url 'toolbox_talks_by_employee_modal' 'TYPE_PLACEHOLDER' 999999 %}"
+     style="display:none;"></div>
+
+<div class="modal fade" id="toolboxEmployeeModal" tabindex="-1" role="dialog" aria-labelledby="toolboxEmployeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title mb-1" id="toolboxEmployeeModalLabel">Toolbox Talks</h5>
+                    <div id="toolboxEmployeeModalSubheader" class="text-muted small"></div>
+                </div>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div id="toolboxModalLoading" class="text-center py-4" style="display:none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+
+                <div id="toolboxModalError" class="alert alert-danger" style="display:none;">
+                    There was an error loading toolbox talks.
+                </div>
+
+                <div id="toolboxModalNotSignedUp" class="alert alert-warning" style="display:none;">
+                    This subcontractor employee is not signed up for toolbox talks.
+                </div>
+
+                <div id="toolboxModalContent" style="display:none;">
+                    <div id="toolboxAccordion">
+
+                        <div class="card">
+                            <div class="card-header" id="headingCompleted">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseCompleted"
+                                            aria-expanded="true" aria-controls="collapseCompleted">
+                                        Completed Talks (<span id="completedCount">0</span>)
+                                    </button>
+                                </h5>
+                            </div>
+
+                            <div id="collapseCompleted" class="collapse show" aria-labelledby="headingCompleted" data-parent="#toolboxAccordion">
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-striped mb-0">
+                                            <thead class="thead-light">
+                                                <tr>
+                                                    <th style="width:20%;">Date</th>
+                                                    <th style="width:45%;">Talk</th>
+                                                    <th style="width:35%;">Notes</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="completedTalksBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mt-3">
+                            <div class="card-header" id="headingIncomplete">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseIncomplete"
+                                            aria-expanded="false" aria-controls="collapseIncomplete">
+                                        Incomplete Talks (<span id="incompleteCount">0</span>)
+                                    </button>
+                                </h5>
+                            </div>
+
+                            <div id="collapseIncomplete" class="collapse" aria-labelledby="headingIncomplete" data-parent="#toolboxAccordion">
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-striped mb-0">
+                                            <thead class="thead-light">
+                                                <tr>
+                                                    <th style="width:20%;">Date</th>
+                                                    <th style="width:45%;">Talk</th>
+                                                    <th style="width:35%;">Notes</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="incompleteTalksBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        return $('<div>').text(text).html();
+    }
+
+    function buildTalkRows(talks) {
+        if (!talks || talks.length === 0) {
+            return '<tr><td colspan="3" class="text-center text-muted">None</td></tr>';
+        }
+
+        let html = '';
+        talks.forEach(function(talk) {
+            html += `
+                <tr>
+                    <td>${escapeHtml(talk.date || '')}</td>
+                    <td style="white-space: normal;">${escapeHtml(talk.title || '')}</td>
+                    <td style="white-space: normal;">${escapeHtml(talk.notes || '')}</td>
+                </tr>
+            `;
+        });
+        return html;
+    }
+
+    function getModalUrl(personType, personId) {
+        let template = $('#toolbox-modal-url-template').data('url-template');
+        template = template.replace('TYPE_PLACEHOLDER', personType);
+        template = template.replace('999999', personId);
+        return template;
+    }
+
+    function resetToolboxModal() {
+        $('#toolboxModalLoading').hide();
+        $('#toolboxModalError').hide();
+        $('#toolboxModalNotSignedUp').hide();
+        $('#toolboxModalContent').hide();
+
+        $('#toolboxEmployeeModalLabel').text('Toolbox Talks');
+        $('#toolboxEmployeeModalSubheader').text('');
+
+        $('#completedCount').text('0');
+        $('#incompleteCount').text('0');
+
+        $('#completedTalksBody').html('');
+        $('#incompleteTalksBody').html('');
+
+        $('#collapseCompleted').collapse('show');
+        $('#collapseIncomplete').collapse('hide');
+    }
+
+    function loadToolboxEmployeeModal(personType, personId) {
+        resetToolboxModal();
+        $('#toolboxModalLoading').show();
+
+        $.ajax({
+            url: getModalUrl(personType, personId),
+            type: 'GET',
+            success: function(response) {
+                $('#toolboxModalLoading').hide();
+
+                if (!response.success) {
+                    $('#toolboxModalError').show();
+                    return;
+                }
+
+                $('#toolboxEmployeeModalLabel').text(response.person_name || 'Toolbox Talks');
+                $('#toolboxEmployeeModalSubheader').text(response.employer_name || '');
+
+                if (response.has_access_to_toolbox === false) {
+                    $('#toolboxModalNotSignedUp').show();
+                    return;
+                }
+
+                $('#completedCount').text(response.completed_talks.length);
+                $('#incompleteCount').text(response.incomplete_talks.length);
+
+                $('#completedTalksBody').html(buildTalkRows(response.completed_talks));
+                $('#incompleteTalksBody').html(buildTalkRows(response.incomplete_talks));
+
+                $('#toolboxModalContent').show();
+            },
+            error: function(xhr) {
+                console.log('toolbox modal ajax error:', xhr);
+                $('#toolboxModalLoading').hide();
+                $('#toolboxModalError').show();
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        $('#toolboxByEmployeeTable').DataTable({
+            paging: false,
+            info: false,
+            order: [[1, 'asc'], [0, 'asc']]
+        });
+
+        $(document).on('click', '.toolbox-person-row', function () {
+            const personType = $(this).data('person-type');
+            const personId = $(this).data('person-id');
+
+            $('#toolboxEmployeeModal').modal('show');
+            loadToolboxEmployeeModal(personType, personId);
+        });
+
+        $('#toolboxEmployeeModal').on('hidden.bs.modal', function () {
+            resetToolboxModal();
+        });
+    });
+</script>
 {% endblock %}

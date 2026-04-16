@@ -12,6 +12,7 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import get_template
 from django.utils.timezone import now
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 from employees.models import *
@@ -870,7 +871,7 @@ def scheduled_toolbox_talks(request):
                 master=x,
                 date=next_date,
                 is_all_employees=True,
-                notes="Auto Created for All Employees"
+                notes="All Employees"
             )
             next_date = next_date + timedelta(days=7)
 
@@ -1179,69 +1180,281 @@ def respirator_clearance_completed(request,respirator_id):
     send_data['part6'] = RespiratorClearance6.objects.get(main=main)
     return render(request, 'respirator_clearance_completed.html', send_data)
 
-from datetime import date, timedelta
+
+def _get_talk_title(talk):
+    if talk.master and talk.master.description:
+        return talk.master.description
+    if talk.description:
+        return talk.description
+    return f"Scheduled Toolbox Talk #{talk.id}"
+
+
+def _get_assigned_talk_ids_for_employee(employee):
+    """
+    Assigned talks for regular employees:
+    1. Explicitly assigned via ScheduledToolboxTalkEmployees
+    2. OR talk.is_all_employees=True AND:
+       - talk.date is not null
+       - talk.date <= today
+       - employee.date_added <= talk.date
+    """
+    assigned_ids = set()
+
+    explicit_ids = set(
+        ScheduledToolboxTalkEmployees.objects
+        .filter(employee=employee)
+        .values_list('scheduled_id', flat=True)
+        .distinct()
+    )
+    assigned_ids.update(explicit_ids)
+
+    if employee.date_added:
+        today = timezone.localdate()
+        global_ids = set(
+            ScheduledToolboxTalks.objects
+            .filter(
+                is_all_employees=True,
+                date__isnull=False,
+                date__lte=today,
+                date__gte=employee.date_added,
+            )
+            .values_list('id', flat=True)
+            .distinct()
+        )
+        assigned_ids.update(global_ids)
+
+    return assigned_ids
+
+
+def _get_assigned_talk_ids_for_sub_employee(sub_employee):
+    """
+    Assigned talks for subcontractor employees:
+    1. If has_access_to_toolbox=False -> none
+    2. Explicitly assigned via ScheduledToolboxTalkSubEmployees
+    3. OR talk.is_all_employees=True AND:
+       - talk.date is not null
+       - talk.date <= today
+       - sub_employee.date_enrolled <= talk.date
+       - sub_employee.has_access_to_toolbox=True
+    """
+    if not sub_employee.has_access_to_toolbox:
+        return set()
+
+    assigned_ids = set()
+
+    explicit_ids = set(
+        ScheduledToolboxTalkSubEmployees.objects
+        .filter(employee=sub_employee)
+        .values_list('scheduled_id', flat=True)
+        .distinct()
+    )
+    assigned_ids.update(explicit_ids)
+
+    if sub_employee.date_enrolled:
+        today = timezone.localdate()
+        global_ids = set(
+            ScheduledToolboxTalks.objects
+            .filter(
+                is_all_employees=True,
+                date__isnull=False,
+                date__lte=today,
+                date__gte=sub_employee.date_enrolled,
+            )
+            .values_list('id', flat=True)
+            .distinct()
+        )
+        assigned_ids.update(global_ids)
+
+    return assigned_ids
+
 
 def toolbox_talks_by_employee(request):
-    send_data = {}
-    today = date.today()
+    rows = []
 
-    days_until_monday = (0 - today.weekday() + 7) % 7
-    if days_until_monday == 0:
-        days_until_monday = 7
+    employees = (
+        Employees.objects
+        .filter(active=True)
+        .select_related('employment_company')
+        .order_by('first_name', 'last_name')
+    )
 
-    next_monday_date = today + timedelta(days=days_until_monday)
+    for emp in employees:
+        assigned_ids = _get_assigned_talk_ids_for_employee(emp)
 
-    toolbox_talks = []
+        completed_ids = set(
+            CompletedToolboxTalks.objects
+            .filter(employee=emp, master_id__in=assigned_ids)
+            .values_list('master_id', flat=True)
+            .distinct()
+        )
 
-    scheduled_rows = ScheduledToolboxTalks.objects.filter(
-        date__lt=next_monday_date
-    ).order_by('-date')
+        total_assigned = len(assigned_ids)
+        total_completed = len(completed_ids)
 
-    for scheduled in scheduled_rows:
-        if scheduled.master:
-            topic = scheduled.master.description
-        else:
-            topic = scheduled.description or "Custom Toolbox Talk"
+        full_name = f"{emp.first_name or ''} {emp.last_name or ''}".strip()
+        if not full_name:
+            full_name = f"Employee #{emp.id}"
 
-        scheduled_date = scheduled.date.strftime('%Y/%m/%d')
+        employer_name = str(emp.employment_company) if emp.employment_company else ""
 
-        employee_assignments = ScheduledToolboxTalkEmployees.objects.filter(
-            scheduled=scheduled
-        ).select_related('employee')
+        rows.append({
+            'person_type': 'employee',
+            'person_id': emp.id,
+            'name': full_name,
+            'employer': employer_name,
+            'ratio_sort_completed': total_completed,
+            'ratio_sort_total': total_assigned,
+            'ratio_display': f"{total_completed} out of {total_assigned}",
+        })
 
-        if employee_assignments.exists():
-            target_employees = [
-                row.employee for row in employee_assignments
-                if row.employee.active and row.employee.job_title and row.employee.job_title.description == "Painter"
-            ]
-        elif scheduled.is_all_employees:
-            target_employees = Employees.objects.filter(
-                active=True,
-                date_added__lte=scheduled.date,
-                job_title__description="Painter"
-            ).order_by('last_name', 'first_name')
-        else:
-            target_employees = []
+    sub_employees = (
+        Subcontractor_Employees.objects
+        .filter(is_active=True)
+        .select_related('subcontractor')
+        .order_by('name')
+    )
 
-        for employee in target_employees:
-            name = f"{employee.first_name} {employee.last_name}"
+    for sub_emp in sub_employees:
+        employer_name = sub_emp.subcontractor.company if sub_emp.subcontractor else ""
 
-            if CompletedToolboxTalks.objects.filter(master=scheduled, employee=employee).exists():
-                status = "Completed"
-            else:
-                status = "Incomplete"
+        if not sub_emp.has_access_to_toolbox:
+            rows.append({
+                'person_type': 'sub',
+                'person_id': sub_emp.id,
+                'name': sub_emp.name or f"Sub Employee #{sub_emp.id}",
+                'employer': employer_name,
+                'ratio_sort_completed': -1,
+                'ratio_sort_total': -1,
+                'ratio_display': "Not Signed Up",
+            })
+            continue
 
-            toolbox_talks.append({
-                'topic': topic,
-                'date': scheduled_date,
-                'employee': name,
-                'status': status,
-                'notes': scheduled.notes or "",
-                'scheduled_id': scheduled.id,
+        assigned_ids = _get_assigned_talk_ids_for_sub_employee(sub_emp)
+
+        completed_ids = set(
+            CompletedSubToolboxTalks.objects
+            .filter(employee=sub_emp, master_id__in=assigned_ids)
+            .values_list('master_id', flat=True)
+            .distinct()
+        )
+
+        total_assigned = len(assigned_ids)
+        total_completed = len(completed_ids)
+
+        rows.append({
+            'person_type': 'sub',
+            'person_id': sub_emp.id,
+            'name': sub_emp.name or f"Sub Employee #{sub_emp.id}",
+            'employer': employer_name,
+            'ratio_sort_completed': total_completed,
+            'ratio_sort_total': total_assigned,
+            'ratio_display': f"{total_completed} out of {total_assigned}",
+        })
+
+    rows = sorted(
+        rows,
+        key=lambda x: (
+            (x['employer'] or '').lower(),
+            (x['name'] or '').lower()
+        )
+    )
+
+    return render(request, 'toolbox_talks_by_employee.html', {
+        'rows': rows
+    })
+
+
+def toolbox_talks_by_employee_modal(request, person_type, person_id):
+    if person_type == 'employee':
+        person = get_object_or_404(
+            Employees.objects.select_related('employment_company'),
+            id=person_id,
+            active=True
+        )
+
+        person_name = f"{person.first_name or ''} {person.last_name or ''}".strip()
+        if not person_name:
+            person_name = f"Employee #{person.id}"
+
+        employer_name = str(person.employment_company) if person.employment_company else ""
+        has_access_to_toolbox = True
+
+        assigned_ids = _get_assigned_talk_ids_for_employee(person)
+
+        completed_ids = set(
+            CompletedToolboxTalks.objects
+            .filter(employee=person, master_id__in=assigned_ids)
+            .values_list('master_id', flat=True)
+            .distinct()
+        )
+
+    elif person_type == 'sub':
+        person = get_object_or_404(
+            Subcontractor_Employees.objects.select_related('subcontractor'),
+            id=person_id,
+            is_active=True
+        )
+
+        person_name = person.name or f"Sub Employee #{person.id}"
+        employer_name = person.subcontractor.company if person.subcontractor else ""
+        has_access_to_toolbox = person.has_access_to_toolbox
+
+        if not has_access_to_toolbox:
+            return JsonResponse({
+                'success': True,
+                'person_name': person_name,
+                'employer_name': employer_name,
+                'has_access_to_toolbox': False,
+                'completed_talks': [],
+                'incomplete_talks': [],
             })
 
-    send_data['toolbox_talks'] = toolbox_talks
-    return render(request, 'toolbox_talks_by_employee.html', send_data)
+        assigned_ids = _get_assigned_talk_ids_for_sub_employee(person)
+
+        completed_ids = set(
+            CompletedSubToolboxTalks.objects
+            .filter(employee=person, master_id__in=assigned_ids)
+            .values_list('master_id', flat=True)
+            .distinct()
+        )
+
+    else:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid person type.'
+        }, status=400)
+
+    assigned_talks = list(
+        ScheduledToolboxTalks.objects
+        .filter(id__in=assigned_ids)
+        .select_related('master')
+        .order_by('-date', '-id')
+    )
+
+    completed_talks = []
+    incomplete_talks = []
+
+    for talk in assigned_talks:
+        talk_dict = {
+            'id': talk.id,
+            'title': _get_talk_title(talk),
+            'date': talk.date.strftime('%m/%d/%Y') if talk.date else '',
+            'notes': talk.notes or '',
+        }
+
+        if talk.id in completed_ids:
+            completed_talks.append(talk_dict)
+        else:
+            incomplete_talks.append(talk_dict)
+
+    return JsonResponse({
+        'success': True,
+        'person_name': person_name,
+        'employer_name': employer_name,
+        'has_access_to_toolbox': has_access_to_toolbox,
+        'completed_talks': completed_talks,
+        'incomplete_talks': incomplete_talks,
+    })
 
 def view_respirator_certification(request,id):
     send_data = {}
@@ -1476,7 +1689,7 @@ def toolbox_talk_assign(request):
                     description=selected_description if selected_master is None else None,
                     date=next_date,
                     is_all_employees=True,
-                    notes="Auto Created for All Employees"
+                    notes="All Employees"
                 )
             else:
                 fallback_date = date.today()
@@ -1485,7 +1698,7 @@ def toolbox_talk_assign(request):
                     description=selected_description if selected_master is None else None,
                     date=fallback_date,
                     is_all_employees=True,
-                    notes="Auto Created for All Employees"
+                    notes="All Employees"
                 )
 
             if selected_master is None:
@@ -1510,7 +1723,7 @@ def toolbox_talk_assign(request):
                 description=selected_description if selected_master is None else None,
                 date=scheduled_date,
                 is_all_employees=True,
-                notes="Auto Created for All Employees"
+                notes="All Employees"
             )
 
             if selected_master is None:
@@ -1553,9 +1766,9 @@ def toolbox_talk_assign(request):
         # -----------------------------
         if assignment_type == 'all_employees':
             scheduled.notes = (
-                "Existing Talk Assigned to All Employees"
+                "All Employees"
                 if selected_master else
-                "Custom Talk Created for All Employees"
+                "Custom -All Employees"
             )
             scheduled.save()
 
@@ -1586,9 +1799,9 @@ def toolbox_talk_assign(request):
             ])
 
             scheduled.notes = (
-                "Existing Talk Assigned to Certain Employees"
+                "Certain Employees"
                 if selected_master else
-                "Custom Talk Created for Certain Employees"
+                "Custom-Certain Employees"
             )
             scheduled.save()
 
@@ -1645,9 +1858,9 @@ def toolbox_talk_assign(request):
             job_label = f"{job_obj.job_number}" if job_obj else str(job_number)
 
             scheduled.notes = (
-                f"Existing Talk For Job {job_label}"
+                f"For Job {job_label}"
                 if selected_master else
-                f"Custom Talk Created For Job {job_label}"
+                f"Custom-For Job {job_label}"
             )
             scheduled.save()
 
@@ -1688,9 +1901,9 @@ def toolbox_talk_assign(request):
             company = sub.company if sub else "Unknown Subcontractor"
 
             scheduled.notes = (
-                f"Existing Talk Assigned to Subcontractor {company}"
+                f"Assigned to {company}"
                 if selected_master else
-                f"Custom Talk Created for Subcontractor {company}"
+                f"Custom-Assigned to {company}"
             )
             scheduled.save()
 
@@ -1763,9 +1976,9 @@ def toolbox_talk_assign(request):
                 job_list += "..."
 
             scheduled.notes = (
-                f"Existing Talk Assigned to Subcontractor {company} for job(s) {job_list}"
+                f"For job {job_list}"
                 if selected_master else
-                f"Custom Talk Created for Subcontractor {company} for job(s) {job_list}"
+                f"Custom-for job {job_list}"
             )
             scheduled.save()
 
