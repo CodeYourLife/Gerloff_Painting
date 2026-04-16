@@ -53,4 +53,5 @@ path('get_scheduled_toolbox_folder/', views.get_scheduled_toolbox_folder, name='
 path('scheduled_toolbox_report/<int:scheduled_id>/', views.scheduled_toolbox_report, name='scheduled_toolbox_report'),
 path('ajax/job-sorted-employees/', views.ajax_job_sorted_employees, name='ajax_job_sorted_employees'),
 path('delete_scheduled_toolbox_talk/', views.delete_scheduled_toolbox_talk, name='delete_scheduled_toolbox_talk'),
+path('toolbox_talks_by_employee/modal/<str:person_type>/<int:person_id>/',views.toolbox_talks_by_employee_modal,name='toolbox_talks_by_employee_modal'),
 ]
