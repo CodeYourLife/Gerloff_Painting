@@ -130,6 +130,16 @@ $(document).ready(function () {
 	}
 })
 
+$(document).on('input', 'input[type="number"]', function () {
+    let value = this.value;
+
+    if (value.includes('.')) {
+        let parts = value.split('.');
+        parts[1] = parts[1].substring(0, 2);  // limit to 2 decimals
+        this.value = parts.join('.');
+    }
+});
+
 function add_retainage(){
 	showing_retainage = 1
 	if ("{{me_approve}}" || "{{other_approve}}"){
@@ -256,84 +266,109 @@ else {percentage_cell.innerHTML = "Rev: " + String(percentage_calc)+ "%"}
 calculate_invoice_total()
 }
 
-function calculate_invoice_total(){
-	form = changes_form
-	let invoice_total = 0
-	let total_to_date = 0
-	let previously_billed = 0
-	let total_contract = 0
-	Array.from(form.elements).forEach((input) => {
-	  	console.log("HERE")
-	  	if (input.name.substring(0,8) == "quantity"){
-	  		console.log("HERE")
-			item_number = String(input.id)
-			console.log("HERE")
-			if (input.value){
-				console.log("HERE")
-				quantity = Number(input.value)
-				if (document.getElementById("quantity_ordered"+ item_number).value == "1 Lump Sum"){
-					console.log("LUMP SUM")
-					console.log(quantity)
-					invoice_total += quantity
-				}
-				else {
-						rate = Number(document.getElementById("SOV_rate" + item_number).value)
-						console.log ("Here comes the rate")
-						console.log(rate)
-						invoice_total += rate*quantity
-											console.log("PER UNIT")
-					console.log(quantity)
-				}
-			}
-			previously_billed += Number(document.getElementById("previous"+ item_number).value)
-			total_contract += Number(document.getElementById("total_cost"+ item_number).value)
-		}
-		console.log("HERE2")
-	});
-	total_to_date += invoice_total + previously_billed
-	document.getElementById("invoice_total").innerHTML="<b>Total Invoice:</b> $" + invoice_total
-	document.getElementById("invoice_total3").innerHTML= invoice_total
-	changes_form.invoice_total2.value = invoice_total
-	retainage_percentage = Number("{{subcontract.retainage_percentage}}")
-	this_retainage = retainage_percentage * invoice_total
-	if (showing_retainage == 1){
-	this_retainage += Number(changes_form.retainage_adjust.value)
-	}
-	changes_form.this_retainage.value = this_retainage
-	total_retainage = Number("{{other_retainage}}") + Number(this_retainage)
-	if (total_retainage < 0 ){
-		alert("Total retainage cannot be less than zero")
-		this_retainage = retainage_percentage * invoice_total
-		changes_form.retainage_adjust.value = 0 - Number("{{other_retainage}}")-this_retainage
-		this_retainage += Number(changes_form.retainage_adjust.value)
-		changes_form.this_retainage.value = this_retainage
-		total_retainage = Number("{{other_retainage}}") + Number(this_retainage)
-	}
-<!--	if (this_retainage > invoice_total){-->
-<!--		if (invoice_total > 0){-->
-<!--		alert("Total retainage cannot be more than the invoice total")-->
-<!--		this_retainage = retainage_percentage * invoice_total-->
-<!--		if (showing_retainage == 1){-->
-<!--			changes_form.retainage_adjust.value = invoice_total - this_retainage-->
-<!--			this_retainage += Number(changes_form.retainage_adjust.value)-->
-<!--			changes_form.this_retainage.value = this_retainage-->
-<!--		}-->
-<!--		else{-->
-<!--			this_retainage += Number(invoice_total - this_retainage)-->
-<!--		}-->
-<!--		total_retainage = Number("{{other_retainage}}") + Number(this_retainage)-->
-<!--		}-->
-<!--	}-->
-	document.getElementById("retainage_total").innerHTML="<b>Retainage - All Invoices Including This One:</b> $" + total_retainage
-	document.getElementById("total_to_date").innerHTML="<b>Total Billed To Date:</b> $" + total_to_date
-	document.getElementById("previously_billed").innerHTML="<b>Previously Billed:</b> $" + previously_billed
-	document.getElementById("total_contract").innerHTML="<b>Total Contract:</b> $" + total_contract
-	document.getElementById("retainage_this").innerHTML="<b>Retainage - This Invoice:</b> $" + this_retainage
-	document.getElementById("retainage_this2").innerHTML= this_retainage
-	invoice_total_after_retainage = invoice_total - this_retainage
-	document.getElementById("invoice_total_after_retainage").innerHTML= "<b>Total Invoice After Retainage:</b> $" + invoice_total_after_retainage
-	global_to_date = total_to_date
-	global_total_contract = total_contract
+function formatMoney(value) {
+    const num = Number(value) || 0;
+    return num.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function calculate_invoice_total() {
+    const form = document.getElementById("changes_form");
+
+    let invoice_total = 0;
+    let total_to_date = 0;
+    let previously_billed = 0;
+    let total_contract = 0;
+
+    Array.from(form.elements).forEach((input) => {
+        if (!input.name) return;
+
+        if (input.name.substring(0, 8) === "quantity") {
+            const item_number = String(input.id);
+            const quantity = Number(input.value || 0);
+
+            const quantityOrderedEl = document.getElementById("quantity_ordered" + item_number);
+            const previousEl = document.getElementById("previous" + item_number);
+            const totalCostEl = document.getElementById("total_cost" + item_number);
+            const rateEl = document.getElementById("SOV_rate" + item_number);
+
+            if (quantityOrderedEl) {
+                if (quantityOrderedEl.value === "1 Lump Sum") {
+                    invoice_total += quantity;
+                } else {
+                    const rate = Number(rateEl ? rateEl.value : 0);
+                    invoice_total += rate * quantity;
+                }
+            }
+
+            previously_billed += Number(previousEl ? previousEl.value : 0);
+            total_contract += Number(totalCostEl ? totalCostEl.value : 0);
+        }
+    });
+
+    total_to_date = invoice_total + previously_billed;
+
+    document.getElementById("invoice_total").innerHTML =
+        "<b>Total Invoice:</b> $" + formatMoney(invoice_total);
+
+    document.getElementById("invoice_total3").innerHTML = formatMoney(invoice_total);
+    document.getElementById("invoice_total2").value = invoice_total.toFixed(2);
+
+    const retainage_percentage = Number("{{subcontract.retainage_percentage}}") || 0;
+    let this_retainage = retainage_percentage * invoice_total;
+
+    if (showing_retainage === 1) {
+        const retainageAdjust = Number(form.retainage_adjust ? form.retainage_adjust.value : 0);
+        this_retainage += retainageAdjust;
+    }
+
+    form.this_retainage.value = this_retainage.toFixed(2);
+
+    let total_retainage = Number("{{other_retainage}}") + this_retainage;
+
+    if (total_retainage < 0) {
+        alert("Total retainage cannot be less than zero");
+
+        this_retainage = retainage_percentage * invoice_total;
+
+        if (form.retainage_adjust) {
+            form.retainage_adjust.value = (
+                0 - Number("{{other_retainage}}") - this_retainage
+            ).toFixed(2);
+
+            this_retainage += Number(form.retainage_adjust.value);
+        }
+
+        form.this_retainage.value = this_retainage.toFixed(2);
+        total_retainage = Number("{{other_retainage}}") + this_retainage;
+    }
+
+    document.getElementById("retainage_total").innerHTML =
+        "<b>Retainage - All Invoices Including This One:</b> $" + formatMoney(total_retainage);
+
+    document.getElementById("total_to_date").innerHTML =
+        "<b>Total Billed To Date:</b> $" + formatMoney(total_to_date);
+
+    document.getElementById("previously_billed").innerHTML =
+        "<b>Previously Billed:</b> $" + formatMoney(previously_billed);
+
+    document.getElementById("total_contract").innerHTML =
+        "<b>Total Contract:</b> $" + formatMoney(total_contract);
+
+    document.getElementById("retainage_this").innerHTML =
+        "<b>Retainage - This Invoice:</b> $" + formatMoney(this_retainage);
+
+    document.getElementById("retainage_this2").innerHTML = formatMoney(this_retainage);
+
+    const invoice_total_after_retainage = invoice_total - this_retainage;
+
+    document.getElementById("invoice_total_after_retainage").innerHTML =
+        "<b>Total Invoice After Retainage:</b> $" + formatMoney(invoice_total_after_retainage);
+
+    global_to_date = total_to_date;
+    global_total_contract = total_contract;
 }
 
 function picked_person(){
@@ -644,7 +679,7 @@ function check_form(){
  <div id="total_contract"><b>Total Contract:</b> ${{total_contract|floatformat:2|intcomma }}</div>
 	  <br>
 
-	 <div id="retainage_this"><b>Retainage - This Invoice:</b> ${{selected_invoice.retainage}}</div>
+	 <div id="retainage_this"><b>Retainage - This Invoice:</b> ${{selected_invoice.retainage|floatformat:2|intcomma}}</div>
 <input type="hidden" name="this_retainage" id="this_retainage"  value="{{selected_invoice.retainage}}" />
 	 <br>
 	 <div id="retainage_total"><b>Retainage - All Invoices Including This One:</b> ${{total_retainage|floatformat:2|intcomma }}</div>

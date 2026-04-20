@@ -33,7 +33,7 @@ from xhtml2pdf import pisa
 import json
 import os
 import os.path
-
+import re
 
 
 def emailed_ticket(request, id):
@@ -263,6 +263,7 @@ def link_callback(uri, rel):
 
 @login_required(login_url='/accounts/login')
 def print_TMProposal(request, id):
+    #def preview_TMProposal
     send_data={}
     email_send_error = "no"
     newproposal = TMProposal.objects.get(id=id)
@@ -2036,6 +2037,32 @@ def change_order_new_select(request):
             return redirect('change_order_new',selectedjob.job_number)
     return render(request, "change_order_new_select.html", send_data)
 
+
+
+def sanitize_windows_filename_part(value):
+    """
+    Make text safe for use inside Windows file/folder names.
+    Keeps it readable, but removes characters Windows does not allow.
+    """
+    if not value:
+        return ""
+
+    value = str(value).strip()
+
+    # Replace forbidden Windows filename characters with a dash
+    value = re.sub(r'[\\/:*?"<>|]+', '-', value)
+
+    # Replace newlines/tabs with spaces
+    value = re.sub(r'[\r\n\t]+', ' ', value)
+
+    # Collapse repeated spaces
+    value = re.sub(r'\s+', ' ', value).strip()
+
+    # Remove trailing periods/spaces, which Windows dislikes
+    value = value.rstrip(' .')
+
+    return value
+
 @login_required(login_url='/accounts/login')
 def change_order_new(request, jobnumber):
     send_data = {}
@@ -2059,83 +2086,101 @@ def change_order_new(request, jobnumber):
     # changeorders = search_cos
     send_data['changeorders'] = changeorders
     if request.method == 'POST':
-            t_and_m = False
-            if 'is_t_and_m' in request.POST:
-                t_and_m = True
-            if changeorders:
-                last_cop = changeorders.order_by('cop_number').last()
-                next_cop = last_cop.cop_number + 1
-            else:
-                next_cop = 1
-            changeorder = ChangeOrders.objects.create(job_number=Jobs.objects.get(job_number=jobnumber),
-                                                      is_t_and_m=t_and_m, description=request.POST['description'],
-                                                      cop_number=next_cop, notes=request.POST['notes'])
-            try:
-                #createfolder("changeorder/" + str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
-                createfolder("changeorder/" + str(changeorder.job_number.job_number) + " COP #" + str(changeorder.cop_number))
-            except OSError as error:
-                messages.error(request,
-                               "Folder Not Made - Tell Joe")
-            try:
-                new_file = create_excel_from_template(
-                    template_name="Change Order Takeoff.xlsm",
-                    destination_subfolder=os.path.join("changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number)),
-                    new_filename=f"Change Order {next_cop} Takeoff.xlsm",
-                )
-            except:
-                Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name, error="Change Order Takeoff Not Made",date = date.today())
-            if changeorder.is_t_and_m == True:
-                note = ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
-                                                       user=Employees.objects.get(user=request.user),
-                                                       note="T&M COP Added. " + request.POST['notes'])
-            else:
-                note = ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
-                                                       user=Employees.objects.get(user=request.user),
-                                                       note="COP Added. " + request.POST['notes'])
-            # CREATE LINK IN MANAGEMENT CONSOLE DELETED ON 2/26/26
-            # parent_dir = settings.MEDIA_ROOT
-            # trinity_folder = os.path.join(parent_dir, "changeorder/" + str(changeorder.job_number.job_number) + " COP #" + str(changeorder.cop_number))
-            # os.makedirs(trinity_folder, exist_ok=True)
-            #
-            # # 2️⃣ Build network folder path
-            # BASE_JOBS_PATH = r"\\gp2022\company\jobs\open jobs"
-            # if os.path.exists(BASE_JOBS_PATH):
-            #     job_folder_name = (
-            #             f"{changeorder.job_number.job_number} "
-            #             f"{changeorder.job_number.job_name}\\Contract & Billings\\Change Order Proposals"
-            #         )
-            #     job_folder = os.path.join(BASE_JOBS_PATH, job_folder_name)
-            # if os.path.exists(job_folder):
-            #     changeorder_folder_name = (
-            #         f"GP COP {changeorder.cop_number} {changeorder.description}"
-            #     )
-            #
-            #     changeorder_folder = os.path.join(
-            #         BASE_JOBS_PATH,
-            #         job_folder_name,
-            #         changeorder_folder_name
-            #     )
-            #
-            #     # 3️⃣ If network folder exists
-            #     if os.path.exists(changeorder_folder):
-            #         shortcut_name = "Shortcut to MC.lnk"
-            #         shortcut_path = os.path.join(trinity_folder, shortcut_name)
-            #         create_shortcut(shortcut_path, changeorder_folder)
-            #         shortcut_name = "Shortcut to Trinity.lnk"
-            #         shortcut_path = os.path.join(changeorder_folder, shortcut_name)
-            #
-            #     else:
-            #         # If network folder does NOT exist,
-            #         # create shortcut inside Trinity folder instead
-            #         shortcut_name = f"{changeorder_folder_name}.lnk"
-            #         shortcut_path = os.path.join(job_folder, shortcut_name)
-            #
-            #     # 4️⃣ Create the shortcut from MC to Trinity
-            #     create_shortcut(shortcut_path, os.path.abspath(trinity_folder))
-            # else:
-            #     print("GP2022 share not accessible")
+        t_and_m = 'is_t_and_m' in request.POST
 
-            return redirect('extra_work_ticket', id=changeorder.id)
+        raw_description = request.POST.get('description', '')
+        safe_description = sanitize_windows_filename_part(raw_description)
+
+        if not safe_description:
+            messages.error(request, "Description is required.")
+            send_data['changeorders'] = changeorders
+            return render(request, "change_order_new.html", send_data)
+
+        if changeorders:
+            last_cop = changeorders.order_by('cop_number').last()
+            next_cop = last_cop.cop_number + 1
+        else:
+            next_cop = 1
+
+        if safe_description != raw_description.strip():
+            messages.warning(
+                request,
+                f'Description was adjusted for file/folder safety: "{safe_description}"'
+            )
+
+        changeorder = ChangeOrders.objects.create(
+            job_number=Jobs.objects.get(job_number=jobnumber),
+            is_t_and_m=t_and_m,
+            description=safe_description,
+            cop_number=next_cop,
+            notes=request.POST.get('notes', '')
+        )
+        try:
+            #createfolder("changeorder/" + str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
+            createfolder("changeorder/" + str(changeorder.job_number.job_number) + " COP #" + str(changeorder.cop_number))
+        except OSError as error:
+            messages.error(request,
+                           "Folder Not Made - Tell Joe")
+        try:
+            new_file = create_excel_from_template(
+                template_name="Change Order Takeoff.xlsm",
+                destination_subfolder=os.path.join("changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number)),
+                new_filename=f"Change Order {next_cop} Takeoff.xlsm",
+            )
+        except:
+            Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name, error="Change Order Takeoff Not Made",date = date.today())
+        if changeorder.is_t_and_m == True:
+            note = ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                                   user=Employees.objects.get(user=request.user),
+                                                   note="T&M COP Added. " + request.POST['notes'])
+        else:
+            note = ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+                                                   user=Employees.objects.get(user=request.user),
+                                                   note="COP Added. " + request.POST['notes'])
+        # CREATE LINK IN MANAGEMENT CONSOLE DELETED ON 2/26/26
+        # parent_dir = settings.MEDIA_ROOT
+        # trinity_folder = os.path.join(parent_dir, "changeorder/" + str(changeorder.job_number.job_number) + " COP #" + str(changeorder.cop_number))
+        # os.makedirs(trinity_folder, exist_ok=True)
+        #
+        # # 2️⃣ Build network folder path
+        # BASE_JOBS_PATH = r"\\gp2022\company\jobs\open jobs"
+        # if os.path.exists(BASE_JOBS_PATH):
+        #     job_folder_name = (
+        #             f"{changeorder.job_number.job_number} "
+        #             f"{changeorder.job_number.job_name}\\Contract & Billings\\Change Order Proposals"
+        #         )
+        #     job_folder = os.path.join(BASE_JOBS_PATH, job_folder_name)
+        # if os.path.exists(job_folder):
+        #     changeorder_folder_name = (
+        #         f"GP COP {changeorder.cop_number} {changeorder.description}"
+        #     )
+        #
+        #     changeorder_folder = os.path.join(
+        #         BASE_JOBS_PATH,
+        #         job_folder_name,
+        #         changeorder_folder_name
+        #     )
+        #
+        #     # 3️⃣ If network folder exists
+        #     if os.path.exists(changeorder_folder):
+        #         shortcut_name = "Shortcut to MC.lnk"
+        #         shortcut_path = os.path.join(trinity_folder, shortcut_name)
+        #         create_shortcut(shortcut_path, changeorder_folder)
+        #         shortcut_name = "Shortcut to Trinity.lnk"
+        #         shortcut_path = os.path.join(changeorder_folder, shortcut_name)
+        #
+        #     else:
+        #         # If network folder does NOT exist,
+        #         # create shortcut inside Trinity folder instead
+        #         shortcut_name = f"{changeorder_folder_name}.lnk"
+        #         shortcut_path = os.path.join(job_folder, shortcut_name)
+        #
+        #     # 4️⃣ Create the shortcut from MC to Trinity
+        #     create_shortcut(shortcut_path, os.path.abspath(trinity_folder))
+        # else:
+        #     print("GP2022 share not accessible")
+
+        return redirect('extra_work_ticket', id=changeorder.id)
     return render(request, "change_order_new.html", send_data)
 
 
@@ -3764,6 +3809,7 @@ def select_pm_approval(request, id):
     return render(request, "select_pm_approval.html",send_data)
 
 def send_cop_report(request,job_number):
+    print("HI1")
     job = Jobs.objects.filter(job_number=job_number).first()
     raw_changeorders = ChangeOrders.objects.filter(
         job_number=job,
@@ -3807,9 +3853,10 @@ def send_cop_report(request,job_number):
         # -----------------------------
         # Button Flags
         # -----------------------------
-        is_final = 'final' in request.POST
-        is_myself = 'myself' in request.POST
-
+        # is_final = 'final' in request.POST
+        # is_myself = 'myself' in request.POST
+        is_final = request.POST.get('submit_action') == 'final'
+        is_myself = request.POST.get('submit_action') == 'myself'
         # ==================================================
         # 1️⃣ UPDATE EMAILS
         # ==================================================
@@ -3960,6 +4007,10 @@ def send_cop_report(request,job_number):
             body = f"Attached is the current Change Order report for {job.job_number}. Please advise on approval status."
             check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
             sender = check_sender.email if check_sender else "bridgette@gerloffpainting.com"
+            print("FINAL:", is_final)
+            print("RECIPIENTS:", recipients)
+            print("SENDER:", sender)
+            print("FILEPATH:", filepath)
             try:
                 Email.sendEmail(
                     subject,
@@ -3977,7 +4028,9 @@ def send_cop_report(request,job_number):
                 )
                 messages.success(request, "COP Report sent")
 
-            except Exception:
+
+            except Exception as e:
+                print("SEND ERROR:", repr(e))
                 messages.error(request,"Email Not Sent.  Please Try Again Later")
 
             return redirect('change_order_new', job.job_number)
