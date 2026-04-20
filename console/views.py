@@ -1544,3 +1544,28 @@ def job_prices(request, job_number):
             "job_charges": job_charges,
         }
     )
+
+
+
+
+def export_jobs_ar_closed_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="jobs_ar_closed.csv"'
+
+    writer = csv.writer(response)
+
+    # Header
+    writer.writerow(['Job Number', 'AR Closed Date'])
+
+    # Only jobs with AR Closed Date, sorted by date
+    jobs = Jobs.objects.filter(
+        ar_closed_date__isnull=False
+    ).order_by('ar_closed_date')
+
+    for job in jobs:
+        writer.writerow([
+            job.job_number,
+            job.ar_closed_date.strftime('%m/%d/%Y')  # Excel-friendly format
+        ])
+
+    return response
