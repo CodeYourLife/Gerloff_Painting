@@ -10,6 +10,6 @@ path("submittals_page/<id>", views.submittals_page, name='submittals_page'),
 path("submittals_item_close/<id>", views.submittals_item_close, name='submittals_item_close'),
 path("submittals_new_selectjob", views.submittals_new_selectjob, name='submittals_new_selectjob'),
 path('submittal_send/<submittal_id>', views.submittal_send, name='submittal_send'),
-path('submittal_item_detail/<item_id>',views.submittal_item_detail,name='submittal_item_detail'
-),
+path('submittal_item_detail/<item_id>',views.submittal_item_detail,name='submittal_item_detail'),
+path('job_submittals_summary/<job_number>',views.job_submittals_summary,name='job_submittals_summary'),
 ]

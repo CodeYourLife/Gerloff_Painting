@@ -187,7 +187,7 @@ class Jobs(models.Model):
 
     def approved_co_amount(self):
         total_amount =0
-        for x in ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=True):
+        for x in ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=True,is_closed=False):
             if x.price: total_amount += x.price
         return total_amount
 
@@ -199,17 +199,17 @@ class Jobs(models.Model):
             return True
 
     def count_approved_changes(self):
-        total_amount = ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=True).count()
+        total_amount = ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=True,is_closed=False).count()
         return total_amount
 
     def pending_co_amount(self):
         total_amount = 0
-        for x in ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=False):
+        for x in ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=False,is_closed=False):
             if x.price: total_amount += x.price
         return total_amount
 
     def count_pending_changes(self):
-        total_amount = ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=False).count()
+        total_amount = ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=False,is_closed=False).count()
         return total_amount
 
     def current_contract_amount(self):
@@ -217,7 +217,7 @@ class Jobs(models.Model):
         if self.is_t_m_job==False:
             total_amount=self.contract_amount
         else: total_amount=0
-        for x in ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=True):
+        for x in ChangeOrders.objects.filter(job_number=self, is_approved_to_bill=True,is_closed=False):
             if x.price: total_amount += x.price
         return total_amount
 
@@ -225,9 +225,9 @@ class Jobs(models.Model):
         formals_list=[]
         current_gc_number = 999
         current_total = 0
-        for x in ChangeOrders.objects.filter(job_number=self).exclude(gc_number__isnull=True).exclude(gc_number='').order_by('gc_number'):
+        for x in ChangeOrders.objects.filter(job_number=self,is_closed=False).exclude(gc_number__isnull=True).exclude(gc_number='').order_by('gc_number'):
             if current_gc_number == 999:
-                count = ChangeOrders.objects.filter(job_number=self, gc_number = x.gc_number).count()
+                count = ChangeOrders.objects.filter(job_number=self, gc_number = x.gc_number,is_closed=False).count()
                 if count == 1:
                     description = "COP " + str(x.cop_number) + " -" + x.description
                 else:
@@ -236,7 +236,7 @@ class Jobs(models.Model):
                 current_total = x.price
             elif x.gc_number != current_gc_number:
                 formals_list.append({'gc_number':current_gc_number,'description':description, 'total':"$" + str(('{:,}'.format(current_total)))})
-                count = ChangeOrders.objects.filter(job_number=self, gc_number=x.gc_number).count()
+                count = ChangeOrders.objects.filter(job_number=self, gc_number=x.gc_number, is_closed=False).count()
                 if count == 1:
                     description = "COP " + str(x.cop_number) + " -" + x.description
                 else:

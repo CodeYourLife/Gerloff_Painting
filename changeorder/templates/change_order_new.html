@@ -170,12 +170,18 @@ document.addEventListener("DOMContentLoaded", function() {
 <!-- ===== COLLAPSIBLE SECTION ===== -->
 
 <div class="card mb-3">
-  <div class="card-header d-flex justify-content-between align-items-center"
+<!--  <div class="card-header d-flex justify-content-between align-items-center"-->
+<!--       data-toggle="collapse"-->
+<!--       data-target="#newCOCollapse"-->
+<!--       aria-expanded="true"-->
+<!--       aria-controls="newCOCollapse"-->
+<!--       style="cursor:pointer;">-->
+  <div class="card-header d-flex justify-content-between align-items-center bg-warning text-dark"
        data-toggle="collapse"
        data-target="#newCOCollapse"
        aria-expanded="true"
        aria-controls="newCOCollapse"
-       style="cursor:pointer;">
+       style="cursor:pointer; font-size:16px; font-weight:700;">
     <span>➕ New Change Order</span>
     <span class="text-muted small">click to expand/collapse</span>
   </div>
@@ -226,58 +232,58 @@ document.addEventListener("DOMContentLoaded", function() {
   </div>
 </div>
     <!-- Filters Card -->
-    <div class="card mb-3">
-        <div class="card-header">
-            🔎 Filters
-        </div>
-        <div class="card-body">
-            <form id="filter_form" method="get">
-                <div class="filter-bar d-flex flex-wrap align-items-center">
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input" id="search1" name="search1"
-                               {% if search1_exists %}checked{% endif %}
-                               onchange="new_filter_now()">
-                        <label class="custom-control-label" for="search1">Needs Ticket</label>
-                    </div>
+<!--    <div class="card mb-3">-->
+<!--        <div class="card-header">-->
+<!--            🔎 Filters-->
+<!--        </div>-->
+<!--        <div class="card-body">-->
+<!--            <form id="filter_form" method="get">-->
+<!--                <div class="filter-bar d-flex flex-wrap align-items-center">-->
+<!--                    <div class="custom-control custom-checkbox">-->
+<!--                        <input type="checkbox" class="custom-control-input" id="search1" name="search1"-->
+<!--                               {% if search1_exists %}checked{% endif %}-->
+<!--                               onchange="new_filter_now()">-->
+<!--                        <label class="custom-control-label" for="search1">Needs Ticket</label>-->
+<!--                    </div>-->
 
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input" id="search7" name="search7"
-                               {% if search7_exists %}checked{% endif %}
-                               onchange="new_filter_now()">
-                        <label class="custom-control-label" for="search7">Needs to be Sent</label>
-                    </div>
+<!--                    <div class="custom-control custom-checkbox">-->
+<!--                        <input type="checkbox" class="custom-control-input" id="search7" name="search7"-->
+<!--                               {% if search7_exists %}checked{% endif %}-->
+<!--                               onchange="new_filter_now()">-->
+<!--                        <label class="custom-control-label" for="search7">Needs to be Sent</label>-->
+<!--                    </div>-->
 
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input" id="search3" name="search3"
-                               {% if search3_exists %}checked{% endif %}
-                               onchange="new_filter_now()">
-                        <label class="custom-control-label" for="search3">Awaiting Approval</label>
-                    </div>
+<!--                    <div class="custom-control custom-checkbox">-->
+<!--                        <input type="checkbox" class="custom-control-input" id="search3" name="search3"-->
+<!--                               {% if search3_exists %}checked{% endif %}-->
+<!--                               onchange="new_filter_now()">-->
+<!--                        <label class="custom-control-label" for="search3">Awaiting Approval</label>-->
+<!--                    </div>-->
 
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input" id="search4" name="search4"
-                               {% if search4_exists %}checked{% endif %}
-                               onchange="new_filter_now()">
-                        <label class="custom-control-label" for="search4">Approved</label>
-                    </div>
+<!--                    <div class="custom-control custom-checkbox">-->
+<!--                        <input type="checkbox" class="custom-control-input" id="search4" name="search4"-->
+<!--                               {% if search4_exists %}checked{% endif %}-->
+<!--                               onchange="new_filter_now()">-->
+<!--                        <label class="custom-control-label" for="search4">Approved</label>-->
+<!--                    </div>-->
 
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input" id="search5" name="search5"
-                               {% if search5_exists %}checked{% endif %}
-                               onchange="new_filter_now()">
-                        <label class="custom-control-label" for="search5">T&amp;M Only</label>
-                    </div>
+<!--                    <div class="custom-control custom-checkbox">-->
+<!--                        <input type="checkbox" class="custom-control-input" id="search5" name="search5"-->
+<!--                               {% if search5_exists %}checked{% endif %}-->
+<!--                               onchange="new_filter_now()">-->
+<!--                        <label class="custom-control-label" for="search5">T&amp;M Only</label>-->
+<!--                    </div>-->
 
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input" id="search6" name="search6"
-                               {% if search6_exists %}checked{% endif %}
-                               onchange="new_filter_now()">
-                        <label class="custom-control-label" for="search6">Include Voided</label>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
+<!--                    <div class="custom-control custom-checkbox">-->
+<!--                        <input type="checkbox" class="custom-control-input" id="search6" name="search6"-->
+<!--                               {% if search6_exists %}checked{% endif %}-->
+<!--                               onchange="new_filter_now()">-->
+<!--                        <label class="custom-control-label" for="search6">Include Voided</label>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </form>-->
+<!--        </div>-->
+<!--    </div>-->
 <!--key-->
 <!--    <div class="card mb-3">-->
 <!--  <div class="card-header">-->
@@ -333,11 +339,58 @@ document.addEventListener("DOMContentLoaded", function() {
     <!-- Table Card -->
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <span>📋 Change Orders</span>
+            <span>📋 All Change Orders For This Job</span>
             <span class="text-muted small">Tip: use the search box on the left</span>
         </div>
-        <div class="card-body">
 
+        <div class="card-body">
+            <div>
+<form id="filter_form" method="get">
+                <div class="filter-bar d-flex flex-wrap align-items-center">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="search1" name="search1"
+                               {% if search1_exists %}checked{% endif %}
+                               onchange="new_filter_now()">
+                        <label class="custom-control-label" for="search1">Needs Ticket</label>
+                    </div>
+
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="search7" name="search7"
+                               {% if search7_exists %}checked{% endif %}
+                               onchange="new_filter_now()">
+                        <label class="custom-control-label" for="search7">Needs to be Sent</label>
+                    </div>
+
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="search3" name="search3"
+                               {% if search3_exists %}checked{% endif %}
+                               onchange="new_filter_now()">
+                        <label class="custom-control-label" for="search3">Awaiting Approval</label>
+                    </div>
+
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="search4" name="search4"
+                               {% if search4_exists %}checked{% endif %}
+                               onchange="new_filter_now()">
+                        <label class="custom-control-label" for="search4">Approved</label>
+                    </div>
+
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="search5" name="search5"
+                               {% if search5_exists %}checked{% endif %}
+                               onchange="new_filter_now()">
+                        <label class="custom-control-label" for="search5">T&amp;M Only</label>
+                    </div>
+
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="search6" name="search6"
+                               {% if search6_exists %}checked{% endif %}
+                               onchange="new_filter_now()">
+                        <label class="custom-control-label" for="search6">Include Voided</label>
+                    </div>
+                </div>
+            </form>
+            </div>
             <div class="table-responsive">
                 <table id="changeorder_table" class="table table-sm table-hover">
                     <thead>

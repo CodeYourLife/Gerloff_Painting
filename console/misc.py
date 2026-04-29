@@ -24,7 +24,7 @@ class Email:
     def sendEmail(title, body, to, filename,sender2):
         msg = MIMEMultipart()
         # sender = to
-        sender = 'joe@gerloffpainting.com'
+        sender = sender2
         msg['From'] = sender2
         # msg['From'] = 'operations@gerloffpainting.com'
         msg['To'] = ", ".join(to)
@@ -45,7 +45,7 @@ class Email:
     def sendEmail2(title, body, to, filename,sender2):
         msg = MIMEMultipart()
         # sender = to
-        sender = 'joe@gerloffpainting.com'
+        sender = sender2
         # msg['From'] = 'operations@gerloffpainting.com'
         msg['From'] = sender2
         msg['To'] = ", ".join(to)
