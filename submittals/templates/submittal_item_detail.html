@@ -37,27 +37,6 @@
                 <strong>Description:</strong>
                 {{ item.description }}
             </p>
-
-            <p class="mb-2">
-                <strong>Notes:</strong>
-                {{ item.notes|default:"" }}
-            </p>
-
-            <p class="mb-0">
-                <strong>No Longer Used:</strong>
-                {% if item.is_no_longer_used %}
-                    <span class="badge badge-secondary">YES</span>
-                {% else %}
-                    <span class="badge badge-success">NO</span>
-                {% endif %}
-            </p>
-        <div class="mt-3 d-flex gap-2">
-
-            <a href="{% url 'submittals_new' item.job_number.job_number %}"
-               class="btn btn-primary btn-sm mr-2">
-                SUBMIT NOW
-            </a>
-
             {% if not item.is_no_longer_used %}
             <form method="post" class="d-inline">
                 {% csrf_token %}
@@ -68,7 +47,49 @@
                     No Longer Used
                 </button>
             </form>
+            {% else %}
+            <form method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit"
+                        name="mark_no_longer_used"
+                        class="btn btn-danger btn-sm"
+                        onclick="return confirm('Add this back to the project?');">
+                    Add Back to Project
+                </button>
+            </form>
             {% endif %}
+            <p class="mb-2">
+                <strong>Notes:</strong>
+                {{ item.notes|default:"" }}
+            </p>
+
+            <p class="mb-0">
+<!--                <strong>No Longer Used:</strong>-->
+                {% if item.is_no_longer_used %}
+                    <span class="badge badge-secondary">No Longer Used</span>
+                {% else %}
+                    <span class="badge badge-success">Active</span>
+                {% endif %}
+            </p>
+        <div class="mt-3 d-flex gap-2">
+            {% if unlinked_approvals %}
+            <a href="{% url 'submittals_new' item.job_number.job_number %}"
+               class="btn btn-primary btn-sm mr-2">
+                SUBMIT NOW
+            </a>
+            {% if approvals %}
+            <form method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit"
+                        name="mark_no_additional_needed"
+                        class="btn btn-danger btn-sm"
+                        onclick="return confirm('No further submittal needed?');">
+                    No Additional Submittal Needed
+                </button>
+            </form>
+            {% endif %}
+            {% endif %}
+
 
         </div>
         </div>

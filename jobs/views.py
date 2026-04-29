@@ -1102,28 +1102,52 @@ def job_page(request, jobnumber):
     send_data['deliveries'] = OutgoingItem.objects.filter(outgoing_event__job_number=selectedjob)
     approved_items = []
     unapproved_items = []
-    for item in SubmittalItems.objects.filter(job_number=selectedjob,is_no_longer_used=False):
-        approvals = SubmittalApprovals.objects.filter(submittalitem=item).order_by('id')
-        if approvals.exists():
-            approval = approvals.filter(is_approved=True).first()
-            if approval:
-                approved_items.append({
-                    'item': item,
-                    'approval': approval,
-                    'notes':item.notes + ". " + approval.notes,
-                })
-            else:
-                unapproved_items.append({
-                    'item': item,
-                    'approval': approvals.last(),
-                    'notes': item.notes + ". " + approvals.last().notes,
-                })
-        else:
+
+    for item in SubmittalItems.objects.filter(job_number=selectedjob, is_no_longer_used=False):
+        approvals = SubmittalApprovals.objects.filter(
+            submittalitem=item
+        ).order_by('id')
+
+        has_problem = approvals.filter(
+            Q(submittal__isnull=True) | Q(is_approved__isnull=True)
+        ).exists()
+
+        if not approvals.exists():
             unapproved_items.append({
                 'item': item,
                 'approval': None,
-                'notes': item.notes,
+                'notes': item.notes or '',
             })
+
+        elif has_problem:
+            approval = approvals.filter(
+                Q(submittal__isnull=True) | Q(is_approved__isnull=True)
+            ).last()
+
+            unapproved_items.append({
+                'item': item,
+                'approval': approval,
+                'notes': f"{item.notes or ''}. {approval.notes or ''}".strip(". "),
+            })
+
+        elif approvals.filter(is_approved=True).exists():
+            approval = approvals.filter(is_approved=True).last()
+
+            approved_items.append({
+                'item': item,
+                'approval': approval,
+                'notes': f"{item.notes or ''}. {approval.notes or ''}".strip(". "),
+                'submittal_number':approval.submittal.submittal_number,
+            })
+
+        # else:
+        #     approval = approvals.last()
+        #     print("3")
+        #     unapproved_items.append({
+        #         'item': item,
+        #         'approval': approval,
+        #         'notes': f"{item.notes or ''}. {approval.notes or ''}".strip(". "),
+        #     })
     send_data['approved_items'] = approved_items
     send_data['unapproved_items'] = unapproved_items
     send_data['approved_items_count'] = len(approved_items)

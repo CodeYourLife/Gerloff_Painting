@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.db.models import Max, Q, Prefetch
 from django.http import FileResponse, Http404
+from django.db.models import Prefetch
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import get_template
 from django.utils import timezone
@@ -102,7 +103,7 @@ def submittals_home(request):
     show_closed = request.GET.get('show_closed') == 'on'
 
     submittals = Submittals.objects.filter(
-        job_number__status="Open"
+        job_number__is_closed="False"
     ).order_by('job_number', 'submittal_number')
 
     if not show_closed:
@@ -844,25 +845,45 @@ def submittal_item_detail(request, item_id):
     item = get_object_or_404(SubmittalItems, id=item_id)
 
     if request.method == 'POST':
-
+        if 'mark_no_additional_needed' in request.POST:
+            SubmittalApprovals.objects.filter(submittalitem=item,submittal__isnull=True).delete()
+            SubmittalItemNotes.objects.create(
+                submittal=None,
+                submittalitem=item,
+                date=timezone.now().date(),
+                user=Employees.objects.filter(user=request.user).first(),
+                note="Additional Submittal No Longer Required"
+            )
+            return redirect('submittal_item_detail', item.id)
         # -------------------------------
         # MARK NO LONGER USED
         # -------------------------------
         if 'mark_no_longer_used' in request.POST:
-            item.is_no_longer_used = True
-            item.save()
-
             employee = Employees.objects.filter(user=request.user).first()
-            if employee:
-                SubmittalItemNotes.objects.create(
-                    submittal=None,
-                    submittalitem=item,
-                    date=timezone.now().date(),
-                    user=employee,
-                    note="Item marked as no longer used"
-                )
-
-            messages.success(request, "Item marked as no longer used.")
+            if item.is_no_longer_used:
+                item.is_no_longer_used = False
+                item.save()
+                if employee:
+                    SubmittalItemNotes.objects.create(
+                        submittal=None,
+                        submittalitem=item,
+                        date=timezone.now().date(),
+                        user=employee,
+                        note="Item added back to project"
+                    )
+                messages.success(request, "Item added back to project!")
+            else:
+                item.is_no_longer_used = True
+                item.save()
+                if employee:
+                    SubmittalItemNotes.objects.create(
+                        submittal=None,
+                        submittalitem=item,
+                        date=timezone.now().date(),
+                        user=employee,
+                        note="Item marked as no longer used"
+                    )
+                messages.success(request, "Item marked as no longer used.")
             return redirect('submittal_item_detail', item.id)
 
 
@@ -875,6 +896,11 @@ def submittal_item_detail(request, item_id):
 
     approval_notes = SubmittalItemNotes.objects.filter(
         submittalitem=item
+    ).order_by('id')
+
+    unlinked_approvals = SubmittalApprovals.objects.filter(
+        submittalitem=item,
+        submittal__isnull=True
     ).order_by('id')
 
     if request.method == 'POST' and 'new_note' in request.POST:
@@ -900,6 +926,46 @@ def submittal_item_detail(request, item_id):
         'item': item,
         'approvals': approvals,
         'approval_notes': approval_notes,
+        'unlinked_approvals': unlinked_approvals,
     }
 
     return render(request, 'submittal_item_detail.html', send_data)
+
+
+
+
+def job_submittals_summary(request, job_number):
+    job = get_object_or_404(Jobs, job_number=job_number)
+
+    submittals = (
+        Submittals.objects
+        .filter(job_number=job)
+        .order_by("submittal_number")
+        .prefetch_related(
+            Prefetch(
+                "submittalapprovals_set",
+                queryset=SubmittalApprovals.objects.select_related("submittalitem").order_by("submittalitem__description"),
+                to_attr="approval_rows"
+            )
+        )
+    )
+
+    linked_item_ids = SubmittalApprovals.objects.filter(
+        submittal__job_number=job,
+        submittal__isnull=False
+    ).values_list("submittalitem_id", flat=True)
+
+    not_sent_items = (
+        SubmittalItems.objects
+        .filter(job_number=job, is_no_longer_used=False)
+        .exclude(id__in=linked_item_ids)
+        .order_by("description")
+    )
+
+    context = {
+        "job": job,
+        "submittals": submittals,
+        "not_sent_items": not_sent_items,
+    }
+
+    return render(request, "job_submittals_summary.html", context)
