@@ -1,0 +1,542 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container-fluid mt-3">
+
+    <h3 class="mb-4">Approver Management</h3>
+
+    <!-- STANDARD APPROVERS -->
+    <div class="card mb-4">
+        <div class="card-header bg-dark text-white">
+            <strong>Default Approvers for All New Subcontractors & Subcontracts</strong>
+        </div>
+
+        <div class="card-body">
+            <p class="mb-0 text-muted" style="font-size: 0.9rem;">
+                <strong>Note:</strong> Changes made here will only apply to newly created subcontractors and subcontracts.
+                Existing records will not be updated automatically — use the sections below to manage those.
+            </p>
+        </div>
+            <div class="card-body">
+
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Job Description</th>
+                        <th style="width: 120px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for approver in standard_approvers %}
+                    <tr>
+                        <td>{{ approver.employee }}</td>
+                        <td>{{ approver.job_description|default:"" }}</td>
+                        <td>
+                            <form method="post" class="mb-0">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="remove_standard_approver">
+                                <input type="hidden" name="approver_id" value="{{ approver.id }}">
+                                <input type="hidden" name="redirect_url" value="{{ request.get_full_path }}">
+                                <button class="btn btn-danger btn-sm">
+                                    REMOVE
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-muted">No standard approvers found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <hr>
+
+            <form method="post" class="form-inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_standard_approver">
+                <input type="hidden" name="redirect_url" value="{{ request.get_full_path }}">
+
+                <select name="employee_id" class="form-control mr-2" required>
+                    <option value="">Select Employee</option>
+                    {% for employee in eligible_employees %}
+                        <option value="{{ employee.id }}">{{ employee }}</option>
+                    {% endfor %}
+                </select>
+
+                <button class="btn btn-success">
+                    ADD
+                </button>
+            </form>
+
+        </div>
+    </div>
+
+
+    <!-- SEARCH BY EMPLOYEE -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <strong>Select Employee to Remove From Certain Subcontractors / Subcontracts</strong>
+        </div>
+
+        <div class="card-body">
+
+            <form method="get" class="form-inline mb-3">
+                <select name="employee" class="form-control mr-2" onchange="this.form.submit()">
+                    <option value="">Select Employee</option>
+                    {% for employee in linked_employees %}
+                        <option value="{{ employee.id }}"
+                            {% if selected_employee_id|stringformat:"s" == employee.id|stringformat:"s" %}selected{% endif %}>
+                            {{ employee }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                {% if selected_subcontractor_id %}
+                    <input type="hidden" name="subcontractor" value="{{ selected_subcontractor_id }}">
+                {% endif %}
+            </form>
+
+            {% if selected_employee %}
+
+                <h5 class="mt-3">Section 1 - Default Approver</h5>
+
+                <table class="table table-sm table-bordered">
+                    <tbody>
+                        {% for approver in employee_standard_approvers %}
+                        <tr>
+                            <td>{{ approver.employee }}</td>
+                            <td>{{ approver.job_description|default:"" }}</td>
+                            <td style="width: 120px;">
+                                <form method="post" class="mb-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="remove_standard_approver">
+                                    <input type="hidden" name="approver_id" value="{{ approver.id }}">
+                                    <input type="hidden" name="redirect_url" value="{{ request.get_full_path }}">
+                                    <button class="btn btn-danger btn-sm">REMOVE</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td class="text-muted">Not a standard approver.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+<!--
+                <form method="post" class="mb-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="remove_employee_from_all_standard">
+                    <input type="hidden" name="employee_id" value="{{ selected_employee.id }}">
+                    <input type="hidden" name="redirect_url" value="{{ request.get_full_path }}">
+                    <button class="btn btn-outline-danger btn-sm">
+                        REMOVE FROM ALL
+                    </button>
+                </form>
+-->
+
+
+                <h5>Section 2 - Subcontractor Approvers</h5>
+
+                <form method="post" class="mb-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="remove_employee_from_all_subcontractors">
+                    <input type="hidden" name="employee_id" value="{{ selected_employee.id }}">
+                    <input type="hidden" name="redirect_url" value="{{ request.get_full_path }}">
+                    <button class="btn btn-outline-danger btn-sm">
+                        Click to Remove {{selected_employee}} From All Future PO's For the Below Subcontractors
+                    </button>
+                </form>
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Subcontractor</th>
+                            <th>Employee</th>
+                            <th style="width: 120px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for approver in employee_subcontractor_approvers %}
+                        <tr>
+                            <td>{{ approver.subcontractor.company }}</td>
+                            <td>{{ approver.employee }}</td>
+                            <td>
+                                <form method="post" class="mb-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="remove_subcontractor_approver">
+                                    <input type="hidden" name="approver_id" value="{{ approver.id }}">
+                                    <input type="hidden" name="redirect_url" value="{{ request.get_full_path }}">
+                                    <button class="btn btn-danger btn-sm">REMOVE</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-muted">No subcontractor approver records found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+
+
+
+                <h5>Section 3 - Subcontract Approvers</h5>
+                <form method="post" class="mb-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="remove_employee_from_all_subcontracts">
+                    <input type="hidden" name="employee_id" value="{{ selected_employee.id }}">
+                    <input type="hidden" name="redirect_url" value="{{ request.get_full_path }}">
+                    <button class="btn btn-outline-danger btn-sm">
+                        Click to Remove {{selected_employee}} From All Future Invoices For the Below Subcontracts
+                    </button>
+                </form>
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Subcontractor</th>
+                            <th>Job</th>
+                            <th>Employee</th>
+                            <th style="width: 120px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for approver in employee_subcontract_approvers %}
+                        <tr>
+                            <td>{{ approver.subcontract.subcontractor.company }}</td>
+                            <td>{{ approver.subcontract.job_number.job_name }}</td>
+                            <td>{{ approver.employee }}</td>
+                            <td>
+                                <form method="post" class="mb-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="remove_subcontract_approver">
+                                    <input type="hidden" name="approver_id" value="{{ approver.id }}">
+                                    <input type="hidden" name="redirect_url" value="{{ request.get_full_path }}">
+                                    <button class="btn btn-danger btn-sm">REMOVE</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-muted">No subcontract approver records found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+
+
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- SEARCH BY EMPLOYEE TO ADD AS REVIEWER -->
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <strong>Select Employee to Add To Certain Subcontractors / Subcontracts</strong>
+    </div>
+
+    <div class="card-body">
+
+        <form method="get" class="form-inline mb-3">
+
+            {% if selected_employee_id %}
+                <input type="hidden" name="employee" value="{{ selected_employee_id }}">
+            {% endif %}
+
+            {% if selected_subcontractor_id %}
+                <input type="hidden" name="subcontractor" value="{{ selected_subcontractor_id }}">
+            {% endif %}
+
+            <select name="add_employee" class="form-control mr-2" onchange="this.form.submit()">
+                <option value="">Select Employee</option>
+                {% for employee in eligible_employees %}
+                    <option value="{{ employee.id }}"
+                        {% if selected_add_employee_id|stringformat:"s" == employee.id|stringformat:"s" %}selected{% endif %}>
+                        {{ employee }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+
+        {% if selected_add_employee %}
+
+            <h5 class="mt-3">Section 1 - Standard Approver</h5>
+
+            {% if add_standard_available %}
+                <form method="post" class="mb-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_standard_approver">
+                    <input type="hidden" name="employee_id" value="{{ selected_add_employee.id }}">
+                    <input type="hidden" name="redirect_url" value="{{ request.get_full_path }}">
+
+                    <button class="btn btn-success btn-sm">
+                        Click to Add {{selected_add_employee}} as a Default Approver. This will not add them to any existing subcontractors or contracts.
+                    </button>
+                </form>
+            {% else %}
+                <p class="text-muted">
+                    {{ selected_add_employee }} is already a standard approver.
+                </p>
+            {% endif %}
+
+
+            <h5>Section 2 - Subcontractor Approvers</h5>
+
+            <form method="post" class="mb-3">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_employee_to_all_subcontractors">
+                <input type="hidden" name="employee_id" value="{{ selected_add_employee.id }}">
+                <input type="hidden" name="redirect_url" value="{{ request.get_full_path }}">
+
+                <button class="btn btn-success btn-sm">
+                    Click to Add {{selected_add_employee}} To Future Subcontracts For All of the Below Subcontractors
+                </button>
+            </form>
+            <table class="table table-sm table-bordered">
+                <thead>
+                    <tr>
+                        <th>Subcontractor</th>
+                        <th style="width: 120px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subcontractor in add_subcontractor_rows %}
+                    <tr>
+                        <td>{{ subcontractor.company }}</td>
+                        <td>
+                            <form method="post" class="mb-0">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="add_subcontractor_approver">
+                                <input type="hidden" name="employee_id" value="{{ selected_add_employee.id }}">
+                                <input type="hidden" name="subcontractor_id" value="{{ subcontractor.id }}">
+                                <input type="hidden" name="redirect_url" value="{{ request.get_full_path }}">
+
+                                <button class="btn btn-success btn-sm">
+                                    ADD
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="text-muted">
+                            Employee is already assigned to all active subcontractors.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+
+            <h5>Section 3 - Subcontract Approvers</h5>
+
+            <form method="post" class="mb-3">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_employee_to_all_subcontracts">
+                <input type="hidden" name="employee_id" value="{{ selected_add_employee.id }}">
+                <input type="hidden" name="redirect_url" value="{{ request.get_full_path }}">
+
+                <button class="btn btn-success btn-sm">
+                    Click to Add {{selected_add_employee}} To Future Invoices For All of The Below Subcontracts
+                </button>
+            </form>
+            <table class="table table-sm table-bordered">
+                <thead>
+                    <tr>
+                        <th>Subcontractor</th>
+                        <th>Job</th>
+                        <th style="width: 120px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subcontract in add_subcontract_rows %}
+                    <tr>
+                        <td>{{ subcontract.subcontractor.company }}</td>
+                        <td>{{ subcontract.job_number.job_name }}</td>
+                        <td>
+                            <form method="post" class="mb-0">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="add_subcontract_approver">
+                                <input type="hidden" name="employee_id" value="{{ selected_add_employee.id }}">
+                                <input type="hidden" name="subcontract_id" value="{{ subcontract.id }}">
+                                <input type="hidden" name="redirect_url" value="{{ request.get_full_path }}">
+
+                                <button class="btn btn-success btn-sm">
+                                    ADD
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-muted">
+                            Employee is already assigned to all open subcontracts.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        {% endif %}
+
+    </div>
+</div>
+
+
+    <!-- SEARCH BY SUBCONTRACTOR -->
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+            <strong>Search By Subcontractor</strong>
+        </div>
+
+        <div class="card-body">
+
+            <form method="get" class="form-inline mb-3">
+                {% if selected_employee_id %}
+                    <input type="hidden" name="employee" value="{{ selected_employee_id }}">
+                {% endif %}
+
+                <select name="subcontractor" class="form-control mr-2" onchange="this.form.submit()">
+                    <option value="">Select Subcontractor</option>
+                    {% for subcontractor in active_subcontractors %}
+                        <option value="{{ subcontractor.id }}"
+                            {% if selected_subcontractor_id|stringformat:"s" == subcontractor.id|stringformat:"s" %}selected{% endif %}>
+                            {{ subcontractor.company }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+
+            {% if selected_subcontractor %}
+
+                <h5>{{ selected_subcontractor.company }} - Subcontractor Approvers</h5>
+
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Approver</th>
+                            <th>Job Description</th>
+                            <th style="width: 120px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for approver in subcontractor_approvers %}
+                        <tr>
+                            <td>{{ approver.employee }}</td>
+                            <td>{{ approver.job_description|default:"" }}</td>
+                            <td>
+                                <form method="post" class="mb-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="remove_subcontractor_approver">
+                                    <input type="hidden" name="approver_id" value="{{ approver.id }}">
+                                    <input type="hidden" name="redirect_url" value="{{ request.get_full_path }}">
+                                    <button class="btn btn-danger btn-sm">REMOVE</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-muted">No subcontractor approvers found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <form method="post" class="form-inline mt-2 mb-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_subcontractor_approver">
+                    <input type="hidden" name="subcontractor_id" value="{{ selected_subcontractor.id }}">
+                    <input type="hidden" name="redirect_url" value="{{ request.get_full_path }}">
+
+                    <select name="employee_id" class="form-control mr-2" required>
+                        <option value="">Select Employee</option>
+                        {% for employee in eligible_employees %}
+                            <option value="{{ employee.id }}">{{ employee }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <button class="btn btn-success btn-sm">
+                        ADD
+                    </button>
+                </form>
+
+                <h5 class="mt-4">Open Subcontracts</h5>
+
+                {% for row in subcontract_rows %}
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <strong>{{ row.subcontract.subcontractor.company }}</strong>
+                            -
+                            {{ row.subcontract.job_number.job_name }}
+                        </div>
+
+                        <div class="card-body">
+
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Approver</th>
+                                        <th>Job Description</th>
+                                        <th style="width: 120px;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for approver in row.approvers %}
+                                    <tr>
+                                        <td>{{ approver.employee }}</td>
+                                        <td>{{ approver.job_description|default:"" }}</td>
+                                        <td>
+                                            <form method="post" class="mb-0">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="remove_subcontract_approver">
+                                                <input type="hidden" name="approver_id" value="{{ approver.id }}">
+                                                <input type="hidden" name="redirect_url" value="{{ request.get_full_path }}">
+                                                <button class="btn btn-danger btn-sm">REMOVE</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="3" class="text-muted">No approvers assigned.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+
+                            <form method="post" class="form-inline mt-2">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="add_subcontract_approver">
+                                <input type="hidden" name="subcontract_id" value="{{ row.subcontract.id }}">
+                                <input type="hidden" name="redirect_url" value="{{ request.get_full_path }}">
+
+                                <select name="employee_id" class="form-control mr-2" required>
+                                    <option value="">Select Employee</option>
+                                    {% for employee in eligible_employees %}
+                                        <option value="{{ employee.id }}">{{ employee }}</option>
+                                    {% endfor %}
+                                </select>
+
+                                <button class="btn btn-success btn-sm">
+                                    ADD
+                                </button>
+                            </form>
+
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-muted">No open subcontracts found for this subcontractor.</p>
+                {% endfor %}
+
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

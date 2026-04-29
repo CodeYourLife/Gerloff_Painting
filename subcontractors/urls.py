@@ -53,4 +53,9 @@ path(
     views.subcontractor_toolbox_file,
     name='subcontractor_toolbox_file'
 ),
+path(
+    "subcontractor-approvers/",
+    views.subcontractor_approvers_management,
+    name="subcontractor_approvers_management"
+),
 ]
