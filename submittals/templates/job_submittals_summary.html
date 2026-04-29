@@ -71,6 +71,8 @@
                                             <span class="badge badge-success">Approved</span>
                                         {% elif approval.is_approved == False %}
                                             <span class="badge badge-danger">Rejected</span>
+                                        {% elif approval.submittalitem.is_no_longer_used %}
+                                            <span class="badge badge-secondary">No Longer Used</span>
                                         {% else %}
                                             <span class="badge badge-warning">Pending</span>
                                         {% endif %}
