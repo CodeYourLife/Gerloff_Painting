@@ -127,6 +127,21 @@ select {
     padding-top: 4px;
     padding-bottom: 4px;
 }
+.no-longer-used-row {
+    background-color: #f1f1f1 !important;
+    color: #6c757d;
+}
+
+.no-longer-used-row input,
+.no-longer-used-row textarea {
+    background-color: #e9ecef !important;
+    color: #6c757d !important;
+    pointer-events: none;
+}
+
+.no-longer-used-row td {
+    opacity: 0.75;
+}
 </style>
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
 {% endblock %}
@@ -629,7 +644,7 @@ select {
                 </thead>
                 <tbody>
                     {% for row in item_rows %}
-                    <tr {% if row.item.is_no_longer_used %}class="table-secondary"{% endif %}>
+                    <tr class="{% if row.item.is_no_longer_used %}no-longer-used-row{% endif %}">
                         <td colspan="7" class="p-0 border-0">
                             <form method="post"
                               class="row-edit-form mb-0"
@@ -640,7 +655,7 @@ select {
                                 <input type="hidden" name="reject_action" class="reject-action" value="">
 
                                 <table class="table table-sm table-striped mb-0">
-                                    <tr {% if row.item.is_no_longer_used %}class="table-secondary"{% endif %}>
+                                    <tr class="{% if row.item.is_no_longer_used %}no-longer-used-row{% endif %}">
                                         <td style="min-width:220px;">
                                             <input type="text"
                                                    name="item_description"
@@ -686,23 +701,36 @@ select {
                                         </td>
 
                                         <td class="text-center align-middle" style="width:260px; white-space:nowrap;">
-                                            <button type="submit" name="save_row" class="btn btn-secondary btn-sm row-save-btn">
-                                                Save
-                                            </button>
 
-                                            {% if row.has_history %}
+                                            {% if row.item.is_no_longer_used %}
+
                                                 <a href="{% url 'submittal_item_detail' row.item.id %}"
-                                                   class="btn btn-info btn-sm">
-                                                    HISTORY
+                                                   class="btn btn-secondary btn-sm">
+                                                    No Longer Used – Click to Change
                                                 </a>
+
+                                            {% else %}
+
+                                                <button type="submit" name="save_row" class="btn btn-secondary btn-sm row-save-btn">
+                                                    Save
+                                                </button>
+
+                                                {% if row.has_history %}
+                                                    <a href="{% url 'submittal_item_detail' row.item.id %}"
+                                                       class="btn btn-info btn-sm">
+                                                        HISTORY
+                                                    </a>
+                                                {% endif %}
+
+                                                <button type="submit"
+                                                        name="delete_row"
+                                                        class="btn btn-danger btn-sm"
+                                                        onclick="return confirm('Delete this row?');">
+                                                    Delete
+                                                </button>
+
                                             {% endif %}
 
-                                            <button type="submit"
-                                                    name="delete_row"
-                                                    class="btn btn-danger btn-sm"
-                                                    onclick="return confirm('Delete this row?');">
-                                                Delete
-                                            </button>
                                         </td>
                                     </tr>
                                 </table>

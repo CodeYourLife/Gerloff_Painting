@@ -927,6 +927,7 @@ def submittal_item_detail(request, item_id):
         'approvals': approvals,
         'approval_notes': approval_notes,
         'unlinked_approvals': unlinked_approvals,
+        'status':item.status(),
     }
 
     return render(request, 'submittal_item_detail.html', send_data)

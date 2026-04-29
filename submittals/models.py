@@ -2,7 +2,7 @@ from django.db import models
 from jobs.models import Jobs
 from wallcovering.models import Wallcovering
 import employees.models
-
+from django.db.models import Q, Max, Count
 
 class Submittals(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -21,7 +21,8 @@ class Submittals(models.Model):
 
         has_pending = SubmittalApprovals.objects.filter(
             submittal=self,
-            is_approved__isnull=True
+            is_approved__isnull=True,
+            submittalitem__is_no_longer_used=False  # 👈 exclude “No Longer Used”
         ).exists()
 
         return "OPEN" if has_pending else "CLOSED"
@@ -39,6 +40,29 @@ class SubmittalItems(models.Model):
     def __str__(self):
         return f"{self.job_number} {self.description}"
 
+    def status(self):
+        if self.is_no_longer_used:
+            return "No Longer Used"
+        else:
+            approvals = SubmittalApprovals.objects.filter(
+                submittalitem=self
+            ).order_by('id')
+
+            has_problem = approvals.filter(
+                Q(submittal__isnull=True) | Q(is_approved__isnull=True)
+            ).exists()
+
+            if not approvals.exists():
+                return "Submittal Required"
+
+            elif has_problem:
+                return "Not Approved"
+
+            elif approvals.filter(is_approved=True).exists():
+                return "Approved"
+
+            else:
+                return "Check Status"
 
 class SubmittalApprovals(models.Model):
     id = models.BigAutoField(primary_key=True)
