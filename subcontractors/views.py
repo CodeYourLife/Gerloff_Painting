@@ -31,7 +31,6 @@ from xhtml2pdf import pisa
 from media.utilities import MediaUtilities
 
 
-
 def sub_change_orders(request):
     send_data = {}
     send_data['unapproved_change_orders'] = SubcontractItems.objects.filter(is_approved=False,
@@ -3269,3 +3268,283 @@ def complete_subcontractor_toolbox_talk(request):
 
     return redirect('subcontractor_employee_portal', employee_id=employee_id)
 
+
+
+def subcontractor_approvers_management(request):
+
+    eligible_employees = Employees.objects.exclude(
+        job_title__description="Painter"
+    ).order_by("last_name", "first_name")
+
+    active_subcontractors = Subcontractors.objects.filter(
+        is_inactive=False
+    ).order_by("company")
+
+    selected_employee_id = request.GET.get("employee")
+    selected_subcontractor_id = request.GET.get("subcontractor")
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        employee_id = request.POST.get("employee_id")
+        subcontractor_id = request.POST.get("subcontractor_id")
+        subcontract_id = request.POST.get("subcontract_id")
+        approver_id = request.POST.get("approver_id")
+
+        redirect_url = request.POST.get("redirect_url") or "."
+
+        # -------------------------
+        # STANDARD APPROVERS
+        # -------------------------
+        if action == "add_standard_approver":
+            employee = get_object_or_404(Employees, id=employee_id)
+
+            Standard_Approvers.objects.get_or_create(
+                employee=employee,
+                defaults={"job_description": ""}
+            )
+
+        elif action == "remove_standard_approver":
+            Standard_Approvers.objects.filter(id=approver_id).delete()
+
+        # -------------------------
+        # REMOVE SELECTED EMPLOYEE FROM ALL
+        # -------------------------
+        elif action == "remove_employee_from_all_standard":
+            Standard_Approvers.objects.filter(employee_id=employee_id).delete()
+
+        elif action == "remove_employee_from_all_subcontractors":
+            Subcontractor_Approvers.objects.filter(
+                employee_id=employee_id,
+                subcontractor__is_inactive=False
+            ).delete()
+
+        elif action == "remove_employee_from_all_subcontracts":
+            Subcontract_Approvers.objects.filter(
+                employee_id=employee_id,
+                subcontract__is_closed=False,
+                subcontract__subcontractor__is_inactive=False
+            ).delete()
+
+        # -------------------------
+        # INDIVIDUAL REMOVES
+        # -------------------------
+        elif action == "remove_subcontractor_approver":
+            Subcontractor_Approvers.objects.filter(id=approver_id).delete()
+
+        elif action == "remove_subcontract_approver":
+            Subcontract_Approvers.objects.filter(id=approver_id).delete()
+
+        # -------------------------
+        # ADD APPROVER TO SUBCONTRACT
+        # -------------------------
+        elif action == "add_subcontract_approver":
+            employee = get_object_or_404(Employees, id=employee_id)
+            subcontract = get_object_or_404(Subcontracts, id=subcontract_id)
+
+            Subcontract_Approvers.objects.get_or_create(
+                employee=employee,
+                subcontract=subcontract,
+                defaults={"job_description": ""}
+            )
+        elif action == "add_subcontractor_approver":
+            employee = get_object_or_404(Employees, id=employee_id)
+            subcontractor = get_object_or_404(
+                Subcontractors,
+                id=subcontractor_id,
+                is_inactive=False
+            )
+
+            Subcontractor_Approvers.objects.get_or_create(
+                employee=employee,
+                subcontractor=subcontractor,
+                defaults={"job_description": ""}
+            )
+        elif action == "add_employee_to_all_subcontractors":
+            employee = get_object_or_404(Employees, id=employee_id)
+            print(employee)
+            for subcontractor in Subcontractors.objects.filter(is_inactive=False):
+                Subcontractor_Approvers.objects.get_or_create(
+                    employee=employee,
+                    subcontractor=subcontractor,
+                )
+
+        elif action == "add_employee_to_all_subcontracts":
+            employee = get_object_or_404(Employees, id=employee_id)
+
+            for subcontract in Subcontracts.objects.filter(
+                    is_closed=False,
+                    subcontractor__is_inactive=False
+            ):
+                Subcontract_Approvers.objects.get_or_create(
+                    employee=employee,
+                    subcontract=subcontract,
+                )
+        return redirect(redirect_url)
+
+    # -------------------------
+    # TOP STANDARD APPROVERS
+    # -------------------------
+    standard_approvers = Standard_Approvers.objects.select_related(
+        "employee"
+    ).order_by("employee__last_name", "employee__first_name")
+
+    # -------------------------
+    # SEARCH BY EMPLOYEE DROPDOWN
+    # only employees linked to any approver model
+    # -------------------------
+    employee_ids = set(Standard_Approvers.objects.exclude(employee=None).values_list("employee_id", flat=True))
+    employee_ids.update(Subcontractor_Approvers.objects.exclude(employee=None).values_list("employee_id", flat=True))
+    employee_ids.update(Subcontract_Approvers.objects.exclude(employee=None).values_list("employee_id", flat=True))
+
+    linked_employees = Employees.objects.filter(
+        id__in=employee_ids
+    ).order_by("last_name", "first_name")
+
+    selected_employee = None
+    employee_standard_approvers = []
+    employee_subcontractor_approvers = []
+    employee_subcontract_approvers = []
+
+    if selected_employee_id:
+        selected_employee = get_object_or_404(Employees, id=selected_employee_id)
+
+        employee_standard_approvers = Standard_Approvers.objects.filter(
+            employee=selected_employee
+        ).select_related("employee")
+
+        employee_subcontractor_approvers = Subcontractor_Approvers.objects.filter(
+            employee=selected_employee,
+            subcontractor__is_inactive=False
+        ).select_related("employee", "subcontractor").order_by("subcontractor__company")
+
+        employee_subcontract_approvers = Subcontract_Approvers.objects.filter(
+            employee=selected_employee,
+            subcontract__is_closed=False,
+            subcontract__subcontractor__is_inactive=False
+        ).select_related(
+            "employee",
+            "subcontract",
+            "subcontract__subcontractor",
+            "subcontract__job_number",
+        ).order_by(
+            "subcontract__subcontractor__company",
+            "subcontract__job_number__job_name"
+        )
+
+    # -------------------------
+    # SEARCH BY EMPLOYEE DROPDOWN
+    # for adding employees
+    # -------------------------
+    selected_add_employee_id = request.GET.get("add_employee")
+
+    selected_add_employee = None
+    add_standard_available = False
+    add_subcontractor_rows = []
+    add_subcontract_rows = []
+
+    if selected_add_employee_id:
+        selected_add_employee = get_object_or_404(Employees, id=selected_add_employee_id)
+
+        add_standard_available = not Standard_Approvers.objects.filter(
+            employee=selected_add_employee
+        ).exists()
+
+        existing_subcontractor_ids = Subcontractor_Approvers.objects.filter(
+            employee=selected_add_employee
+        ).values_list("subcontractor_id", flat=True)
+
+        add_subcontractor_rows = Subcontractors.objects.filter(
+            is_inactive=False
+        ).exclude(
+            id__in=existing_subcontractor_ids
+        ).order_by("company")
+
+        existing_subcontract_ids = Subcontract_Approvers.objects.filter(
+            employee=selected_add_employee
+        ).values_list("subcontract_id", flat=True)
+
+        add_subcontract_rows = Subcontracts.objects.filter(
+            is_closed=False,
+            subcontractor__is_inactive=False
+        ).exclude(
+            id__in=existing_subcontract_ids
+        ).select_related(
+            "subcontractor",
+            "job_number"
+        ).order_by(
+            "subcontractor__company",
+            "job_number__job_name"
+        )
+
+    # -------------------------
+    # SEARCH BY SUBCONTRACTOR
+    # -------------------------
+    selected_subcontractor = None
+    subcontractor_approvers = []
+    subcontract_rows = []
+
+    if selected_subcontractor_id:
+        selected_subcontractor = get_object_or_404(
+            Subcontractors,
+            id=selected_subcontractor_id,
+            is_inactive=False
+        )
+
+        subcontractor_approvers = Subcontractor_Approvers.objects.filter(
+            subcontractor=selected_subcontractor
+        ).select_related("employee").order_by(
+            "employee__last_name",
+            "employee__first_name"
+        )
+
+        open_subcontracts = Subcontracts.objects.filter(
+            subcontractor=selected_subcontractor,
+            is_closed=False
+        ).select_related(
+            "subcontractor",
+            "job_number"
+        ).order_by("job_number__job_name")
+
+        for subcontract in open_subcontracts:
+            approvers = Subcontract_Approvers.objects.filter(
+                subcontract=subcontract
+            ).select_related("employee").order_by(
+                "employee__last_name",
+                "employee__first_name"
+            )
+
+            subcontract_rows.append({
+                "subcontract": subcontract,
+                "approvers": approvers,
+            })
+
+    context = {
+        "eligible_employees": eligible_employees,
+        "standard_approvers": standard_approvers,
+
+        "linked_employees": linked_employees,
+        "selected_employee_id": selected_employee_id,
+        "selected_employee": selected_employee,
+        "employee_standard_approvers": employee_standard_approvers,
+        "employee_subcontractor_approvers": employee_subcontractor_approvers,
+        "employee_subcontract_approvers": employee_subcontract_approvers,
+
+        "active_subcontractors": active_subcontractors,
+        "selected_subcontractor_id": selected_subcontractor_id,
+        "selected_subcontractor": selected_subcontractor,
+        "subcontractor_approvers": subcontractor_approvers,
+        "subcontract_rows": subcontract_rows,
+
+        "selected_add_employee_id": selected_add_employee_id,
+        "selected_add_employee": selected_add_employee,
+        "add_standard_available": add_standard_available,
+        "add_subcontractor_rows": add_subcontractor_rows,
+        "add_subcontract_rows": add_subcontract_rows,
+    }
+
+    return render(
+        request,
+        "subcontractor_approvers_management.html",
+        context
+    )
