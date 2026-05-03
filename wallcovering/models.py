@@ -1,6 +1,6 @@
 from django.db import models
 from equipment.models import Vendors
-
+import employees.models
 
 
 class Wallcovering(models.Model):
@@ -17,10 +17,9 @@ class Wallcovering(models.Model):
     is_random_reverse = models.BooleanField(default=False)
     is_repeat = models.BooleanField(default=False)
     notes = models.CharField(null=True, max_length=2000, blank=True)
-    qnty_ordered = models.IntegerField(blank=True, null=True)  # not used
-    qnty_received = models.IntegerField(blank=True, null=True)  # not used
-    packages_received = models.IntegerField(blank=True, null=True)  # not used
-    packages_sent = models.IntegerField(blank=True, null=True)  # not used
+    roll_length =  models.CharField(null=True, max_length=50, blank=True)
+    is_owner_furnished = models.BooleanField(default=False)
+
 
     def __str__(self):
         return f"{self.job_number} {self.code}"
@@ -159,3 +158,13 @@ class OutgoingItem(models.Model):
 
     def __str__(self):
         return f"{self.description}"
+
+class WallcoveringNotes(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    pattern = models.ForeignKey('Wallcovering', on_delete=models.PROTECT)
+    order = models.ForeignKey('OrderItems', on_delete=models.PROTECT,null=True, blank=True)
+    receipt = models.ForeignKey('WallcoveringDelivery', on_delete=models.PROTECT, null=True, blank=True)
+    sent = models.ForeignKey('OutgoingWallcovering', on_delete=models.PROTECT, null=True, blank=True)
+    date = models.DateField(null=True, blank=True)
+    user = models.ForeignKey(employees.models.Employees, on_delete=models.PROTECT)
+    note = models.CharField(null=True, max_length=2000)
