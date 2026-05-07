@@ -434,9 +434,23 @@ def submittal_send(request, submittal_id):
             break
 
     if request.method == 'POST':
+
+        if "add_note" in request.POST:
+            new_note = request.POST.get("new_note", "").strip()
+
+            if new_note:
+                SubmittalNotes.objects.create(
+                    submittal=submittal,
+                    date=timezone.now().date(),
+                    user=employee,
+                    note=new_note
+                )
+            return redirect("submittal_send", submittal.id)
+
         # =========================
         # DELETE ROW
         # =========================
+
         if 'delete_row' in request.POST:
             item_id = request.POST.get('item_id')
             approval_id = request.POST.get('approval_id')
@@ -843,8 +857,53 @@ def submittal_send(request, submittal_id):
 
 def submittal_item_detail(request, item_id):
     item = get_object_or_404(SubmittalItems, id=item_id)
+    all_job_submittal_items = SubmittalItems.objects.filter(
+        job_number=item.job_number,
+        submittalapprovals__submittal__isnull=False
+    ).exclude(
+        id=item.id,
+        is_no_longer_used=False,
+    ).distinct().order_by("description")
+    item_has_been_submitted = SubmittalApprovals.objects.filter(
+        submittalitem=item,
+        submittal__isnull=False
+    ).exists()
 
     if request.method == 'POST':
+        if "change_description" in request.POST:
+
+            new_description = request.POST.get(
+                "new_description", ""
+            ).strip()
+
+            if new_description:
+                item.description = new_description
+                item.save()
+
+            return redirect(
+                "submittal_item_detail",
+                item.id
+            )
+        if "link_to_previous_item" in request.POST:
+            previous_item_id = request.POST.get("previous_item_id")
+
+            if previous_item_id:
+                previous_item = get_object_or_404(
+                    SubmittalItems,
+                    id=previous_item_id,
+                    job_number=item.job_number
+                )
+
+                SubmittalApprovals.objects.filter(
+                    submittalitem=item,
+                    submittal__isnull=True
+                ).delete()
+                SubmittalApprovals.objects.create(
+                    submittalitem=previous_item
+                )
+                item.delete()
+
+            return redirect("submittal_item_detail", previous_item.id)
         if 'mark_no_additional_needed' in request.POST:
             SubmittalApprovals.objects.filter(submittalitem=item,submittal__isnull=True).delete()
             SubmittalItemNotes.objects.create(
@@ -928,6 +987,8 @@ def submittal_item_detail(request, item_id):
         'approval_notes': approval_notes,
         'unlinked_approvals': unlinked_approvals,
         'status':item.status(),
+        "all_job_submittal_items": all_job_submittal_items,
+        "item_has_been_submitted": item_has_been_submitted,
     }
 
     return render(request, 'submittal_item_detail.html', send_data)
@@ -937,7 +998,34 @@ def submittal_item_detail(request, item_id):
 
 def job_submittals_summary(request, job_number):
     job = get_object_or_404(Jobs, job_number=job_number)
+    if request.method == "POST":
 
+        if "create_new_submittal_item" in request.POST:
+
+            description = request.POST.get(
+                "new_item_description", ""
+            ).strip()
+
+            notes = request.POST.get(
+                "new_item_notes", ""
+            ).strip()
+
+            if description:
+                new_item = SubmittalItems.objects.create(
+                    job_number=job,
+                    description=description,
+                    notes=notes
+                )
+
+                SubmittalApprovals.objects.create(
+                    submittalitem=new_item
+                )
+
+                return redirect(
+                    "job_submittals_summary",
+                    job.job_number
+                )
+    not_sent_items = []
     submittals = (
         Submittals.objects
         .filter(job_number=job)
@@ -951,17 +1039,46 @@ def job_submittals_summary(request, job_number):
         )
     )
 
-    linked_item_ids = SubmittalApprovals.objects.filter(
-        submittal__job_number=job,
-        submittal__isnull=False
-    ).values_list("submittalitem_id", flat=True)
+    for item in SubmittalItems.objects.filter(job_number=job, is_no_longer_used=False):
+        approvals = SubmittalApprovals.objects.filter(
+            submittalitem=item
+        ).order_by('id')
 
-    not_sent_items = (
-        SubmittalItems.objects
-        .filter(job_number=job, is_no_longer_used=False)
-        .exclude(id__in=linked_item_ids)
-        .order_by("description")
-    )
+        has_problem = approvals.filter(
+            Q(submittal__isnull=True) | Q(is_approved__isnull=True)
+        ).exists()
+
+        if not approvals.exists():
+            not_sent_items.append({
+                'description': item.description,
+                'id':item.id,
+                'notes': item.notes or '',
+            })
+
+        elif has_problem:
+            approval = approvals.filter(
+                Q(submittal__isnull=True) | Q(is_approved__isnull=True)
+            ).last()
+
+            not_sent_items.append({
+                'description': item.description,
+                'id':item.id,
+                'notes': f"{item.notes or ''}. {approval.notes or ''}".strip(". "),
+            })
+
+
+#----old code deleted 5.7.26 -----
+    # linked_item_ids = SubmittalApprovals.objects.filter(
+    #     submittal__job_number=job,
+    #     submittal__isnull=False
+    # ).values_list("submittalitem_id", flat=True)
+    #
+    # not_sent_items = (
+    #     SubmittalItems.objects
+    #     .filter(job_number=job, is_no_longer_used=False)
+    #     .exclude(id__in=linked_item_ids)
+    #     .order_by("description")
+    # )
 
     context = {
         "job": job,

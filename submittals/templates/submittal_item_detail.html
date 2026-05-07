@@ -23,6 +23,26 @@
 
 <div class="container-fluid mt-4">
 
+    <div style="padding-top: 12px;margin-bottom: 20px;" class="d-flex flex-row">
+
+    <div class="col-sm-2">
+        <form action="{% url 'job_page' item.job_number.job_number %}">
+            <input type="submit" class="btn btn-info btn-sm w-100"
+                   value="Goto Job Page"/>
+        </form>
+    </div>
+
+
+    <div class="col-sm-2">
+        <form action="{% url 'job_submittals_summary' item.job_number.job_number %}">
+            <input type="submit" class="btn btn-info btn-sm w-100"
+                   value="View All Submittals For This Job"/>
+        </form>
+    </div>
+
+</div>
+
+
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-dark text-white">
             Submittal Item Detail
@@ -37,6 +57,31 @@
                 <strong>Description:</strong>
                 {{ item.description }}
             </p>
+
+            {% if not item_has_been_submitted %}
+            <form method="post" class="mb-3">
+                {% csrf_token %}
+
+                <div class="input-group" style="max-width:700px;">
+
+                    <input type="text"
+                           name="new_description"
+                           class="form-control form-control-sm"
+                           value="{{ item.description }}"
+                           required>
+
+                    <div class="input-group-append">
+                        <button type="submit"
+                                name="change_description"
+                                class="btn btn-primary btn-sm">
+                            Change Description
+                        </button>
+                    </div>
+
+                </div>
+            </form>
+            {% endif %}
+
             {% if not item.is_no_longer_used %}
             <form method="post" class="d-inline">
                 {% csrf_token %}
@@ -188,7 +233,52 @@
             </table>
         </div>
     </div>
+{% if not item_has_been_submitted %}
+    <div class="card shadow-sm mt-4 mb-4">
+        <div class="card-header bg-dark text-white">
+            Link This Item To A Previous Submittal
+        </div>
 
+        <div class="card-body">
+            <p class="mb-3">
+                If this item has been submitted before, but you don't see it in this list,
+                click this button to link it to a previous submittal.
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="form-row align-items-end">
+                    <div class="col-md-8">
+                        <label for="previous_item_id"><strong>Select Previous Submittal Item</strong></label>
+                        <select name="previous_item_id"
+                                id="previous_item_id"
+                                class="form-control searchable-select"
+                                required>
+                            <option value="">Search for an item...</option>
+
+                            {% for x in all_job_submittal_items %}
+                                {% if x.id != item.id %}
+                                <option value="{{ x.id }}">
+                                    {{ x.description }}{% if x.notes %} - {{ x.notes }}{% endif %}
+                                </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mt-3 mt-md-0">
+                        <button type="submit"
+                                name="link_to_previous_item"
+                                class="btn btn-primary btn-sm">
+                            Link To Previous Submittal
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endif %}
 </div>
 
 {% endblock %}
@@ -202,5 +292,11 @@ function promptNote() {
         document.getElementById("note_input").submit();
     }
 }
+$(document).ready(function () {
+    $('.searchable-select').select2({
+        width: '100%',
+        placeholder: 'Search for an item...'
+    });
+});
 </script>
 {% endblock %}
