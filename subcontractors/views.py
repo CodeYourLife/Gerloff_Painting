@@ -306,16 +306,32 @@ def subcontractor_invoice_new(request, subcontract_id):
             # invoice.final_amount = invoice_total
             # if invoice.subcontract.is_retainage: invoice.retainage = float(invoice_total) * float(.1)
             invoice.save()
-            for x in Subcontract_Approvers.objects.filter(subcontract=subcontract):
-                if x.employee:
-                    InvoiceApprovals.objects.create(employee=x.employee, invoice=invoice)
-            for x in Subcontract_Approvers.objects.filter(subcontract=subcontract):
-                if x.job_description:
-                    if x.job_description == "Superintendent":
-                        if subcontract.job_number.superintendent:
-                            job_super = subcontract.job_number.superintendent
-                            if not InvoiceApprovals.objects.filter(invoice=invoice, employee=job_super).exists():
-                                InvoiceApprovals.objects.create(employee=job_super, invoice=invoice)
+            approver_employee_ids = set()
+
+            # Employees directly linked as subcontract approvers
+            approver_employee_ids.update(
+                Subcontract_Approvers.objects
+                .filter(subcontract=subcontract, employee__isnull=False)
+                .values_list("employee_id", flat=True)
+            )
+
+            # Add job superintendent only if Superintendent is a required approver role
+            superintendent_required = Subcontract_Approvers.objects.filter(
+                subcontract=subcontract,
+                job_description="Superintendent"
+            ).exists()
+
+            if superintendent_required and subcontract.job_number.superintendent_id:
+                approver_employee_ids.add(subcontract.job_number.superintendent_id)
+
+            # Create InvoiceApprovals without duplicates
+            InvoiceApprovals.objects.bulk_create([
+                InvoiceApprovals(
+                    invoice=invoice,
+                    employee_id=employee_id,
+                )
+                for employee_id in approver_employee_ids
+            ])
             return redirect('subcontract_invoices', subcontract_id=subcontract_id, item_id='ALL')
     return render(request, "subcontractor_invoice_new.html",
                   {'next_number': next_number, 'items': items, 'subcontract': subcontract})
@@ -365,16 +381,32 @@ def portal_invoice_new(request, subcontract_id):
                                             note="Retainage Request From Portal",
                                             invoice=invoice)
 
-            for x in Subcontract_Approvers.objects.filter(subcontract=subcontract):
-                if x.employee:
-                    InvoiceApprovals.objects.create(employee=x.employee, invoice=invoice)
-            for x in Subcontract_Approvers.objects.filter(subcontract=subcontract):
-                if x.job_description:
-                    if x.job_description == "Superintendent":
-                        if subcontract.job_number.superintendent:
-                            job_super = subcontract.job_number.superintendent
-                            if not InvoiceApprovals.objects.filter(invoice=invoice, employee=job_super).exists():
-                                InvoiceApprovals.objects.create(employee=job_super, invoice=invoice)
+            approver_employee_ids = set()
+
+            # Employees directly linked as subcontract approvers
+            approver_employee_ids.update(
+                Subcontract_Approvers.objects
+                .filter(subcontract=subcontract, employee__isnull=False)
+                .values_list("employee_id", flat=True)
+            )
+
+            # Add job superintendent only if Superintendent is a required approver role
+            superintendent_required = Subcontract_Approvers.objects.filter(
+                subcontract=subcontract,
+                job_description="Superintendent"
+            ).exists()
+
+            if superintendent_required and subcontract.job_number.superintendent_id:
+                approver_employee_ids.add(subcontract.job_number.superintendent_id)
+
+            # Create InvoiceApprovals without duplicates
+            InvoiceApprovals.objects.bulk_create([
+                InvoiceApprovals(
+                    invoice=invoice,
+                    employee_id=employee_id,
+                )
+                for employee_id in approver_employee_ids
+            ])
 
             email_body = "Retainage Request Entered For " + str(subcontract.subcontractor.company) + "\n Job: " + str(
                 subcontract.job_number.job_name)
@@ -476,16 +508,32 @@ def portal_invoice_new(request, subcontract_id):
             # invoice.final_amount = invoice_total
             # if invoice.subcontract.is_retainage: invoice.retainage = float(invoice_total) * float(.1)
             invoice.save()
-            for x in Subcontract_Approvers.objects.filter(subcontract=subcontract):
-                if x.employee:
-                    InvoiceApprovals.objects.create(employee=x.employee, invoice=invoice)
-            for x in Subcontract_Approvers.objects.filter(subcontract=subcontract):
-                if x.job_description:
-                    if x.job_description == "Superintendent":
-                        if subcontract.job_number.superintendent:
-                            job_super = subcontract.job_number.superintendent
-                            if not InvoiceApprovals.objects.filter(invoice=invoice, employee=job_super).exists():
-                                InvoiceApprovals.objects.create(employee=job_super, invoice=invoice)
+            approver_employee_ids = set()
+
+            # Employees directly linked as subcontract approvers
+            approver_employee_ids.update(
+                Subcontract_Approvers.objects
+                .filter(subcontract=subcontract, employee__isnull=False)
+                .values_list("employee_id", flat=True)
+            )
+
+            # Add job superintendent only if Superintendent is a required approver role
+            superintendent_required = Subcontract_Approvers.objects.filter(
+                subcontract=subcontract,
+                job_description="Superintendent"
+            ).exists()
+
+            if superintendent_required and subcontract.job_number.superintendent_id:
+                approver_employee_ids.add(subcontract.job_number.superintendent_id)
+
+            # Create InvoiceApprovals without duplicates
+            InvoiceApprovals.objects.bulk_create([
+                InvoiceApprovals(
+                    invoice=invoice,
+                    employee_id=employee_id,
+                )
+                for employee_id in approver_employee_ids
+            ])
             email_body = "New Invoice Entered For " + str(subcontract.subcontractor.company) + "\n Job: " + str(
                 subcontract.job_number.job_name)
             check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
@@ -513,6 +561,51 @@ def subcontract_invoices(request, subcontract_id, item_id):
         selected_invoice = SubcontractorInvoice.objects.get(id=item_id)
         approvers = InvoiceApprovals.objects.filter(invoice=selected_invoice)
     if request.method == 'POST':
+        if 'sync_subcontract_approvers' in request.POST:
+            added_count = 0
+            skipped_count = 0
+
+            for approver in Subcontract_Approvers.objects.filter(subcontract=subcontract):
+
+                employee_to_add = None
+
+                if approver.employee:
+                    employee_to_add = approver.employee
+
+                elif approver.job_description == "Superintendent":
+                    employee_to_add = subcontract.job_number.superintendent
+
+                if employee_to_add:
+                    already_exists = InvoiceApprovals.objects.filter(
+                        invoice=selected_invoice,
+                        employee=employee_to_add
+                    ).exists()
+
+                    if not already_exists:
+                        InvoiceApprovals.objects.create(
+                            invoice=selected_invoice,
+                            employee=employee_to_add,
+                            is_reviewed=False,
+                            is_approved=False,
+                            made_changes=False,
+                            notes="Added from Subcontract Approvers"
+                        )
+                        added_count += 1
+                    else:
+                        skipped_count += 1
+                else:
+                    skipped_count += 1
+
+            SubcontractNotes.objects.create(
+                subcontract=subcontract,
+                date=date.today(),
+                user=current_employee,
+                note=f"Synced subcontract approvers to invoice. {added_count} approver(s) added. {skipped_count} skipped.",
+                invoice=selected_invoice
+            )
+
+            return redirect(request.path)
+
         if 'edit_invoice' in request.POST:
             send_data['edit_now'] = True
         if 'other_approver' in request.POST:
@@ -3282,7 +3375,10 @@ def subcontractor_approvers_management(request):
 
     selected_employee_id = request.GET.get("employee")
     selected_subcontractor_id = request.GET.get("subcontractor")
+    JOB_SUPERINTENDENT_VALUE = "JOB_SUPERINTENDENT"
 
+    def is_job_superintendent(value):
+        return value == JOB_SUPERINTENDENT_VALUE
     if request.method == "POST":
         action = request.POST.get("action")
 
@@ -3297,12 +3393,18 @@ def subcontractor_approvers_management(request):
         # STANDARD APPROVERS
         # -------------------------
         if action == "add_standard_approver":
-            employee = get_object_or_404(Employees, id=employee_id)
+            if employee_id == JOB_SUPERINTENDENT_VALUE:
+                Standard_Approvers.objects.get_or_create(
+                    employee=None,
+                    job_description="Superintendent"
+                )
+            else:
+                employee = get_object_or_404(Employees, id=employee_id)
 
-            Standard_Approvers.objects.get_or_create(
-                employee=employee,
-                defaults={"job_description": ""}
-            )
+                Standard_Approvers.objects.get_or_create(
+                    employee=employee,
+                    defaults={"job_description": ""}
+                )
 
         elif action == "remove_standard_approver":
             Standard_Approvers.objects.filter(id=approver_id).delete()
@@ -3311,20 +3413,41 @@ def subcontractor_approvers_management(request):
         # REMOVE SELECTED EMPLOYEE FROM ALL
         # -------------------------
         elif action == "remove_employee_from_all_standard":
-            Standard_Approvers.objects.filter(employee_id=employee_id).delete()
+            if is_job_superintendent(employee_id):
+                Standard_Approvers.objects.filter(
+                    employee__isnull=True,
+                    job_description="Superintendent"
+                ).delete()
+            else:
+                Standard_Approvers.objects.filter(employee_id=employee_id).delete()
 
         elif action == "remove_employee_from_all_subcontractors":
-            Subcontractor_Approvers.objects.filter(
-                employee_id=employee_id,
-                subcontractor__is_inactive=False
-            ).delete()
+            if is_job_superintendent(employee_id):
+                Subcontractor_Approvers.objects.filter(
+                    employee__isnull=True,
+                    job_description="Superintendent",
+                    subcontractor__is_inactive=False
+                ).delete()
+            else:
+                Subcontractor_Approvers.objects.filter(
+                    employee_id=employee_id,
+                    subcontractor__is_inactive=False
+                ).delete()
 
         elif action == "remove_employee_from_all_subcontracts":
-            Subcontract_Approvers.objects.filter(
-                employee_id=employee_id,
-                subcontract__is_closed=False,
-                subcontract__subcontractor__is_inactive=False
-            ).delete()
+            if is_job_superintendent(employee_id):
+                Subcontract_Approvers.objects.filter(
+                    employee__isnull=True,
+                    job_description="Superintendent",
+                    subcontract__is_closed=False,
+                    subcontract__subcontractor__is_inactive=False
+                ).delete()
+            else:
+                Subcontract_Approvers.objects.filter(
+                    employee_id=employee_id,
+                    subcontract__is_closed=False,
+                    subcontract__subcontractor__is_inactive=False
+                ).delete()
 
         # -------------------------
         # INDIVIDUAL REMOVES
@@ -3339,47 +3462,81 @@ def subcontractor_approvers_management(request):
         # ADD APPROVER TO SUBCONTRACT
         # -------------------------
         elif action == "add_subcontract_approver":
-            employee = get_object_or_404(Employees, id=employee_id)
             subcontract = get_object_or_404(Subcontracts, id=subcontract_id)
+            if employee_id == JOB_SUPERINTENDENT_VALUE:
+                Subcontract_Approvers.objects.get_or_create(
+                    employee=None,
+                    subcontract=subcontract,
+                    job_description="Superintendent"
+                )
+            else:
+                employee = get_object_or_404(Employees, id=employee_id)
 
-            Subcontract_Approvers.objects.get_or_create(
-                employee=employee,
-                subcontract=subcontract,
-                defaults={"job_description": ""}
-            )
+                Subcontract_Approvers.objects.get_or_create(
+                    employee=employee,
+                    subcontract=subcontract,
+                    defaults={"job_description": ""}
+                )
         elif action == "add_subcontractor_approver":
-            employee = get_object_or_404(Employees, id=employee_id)
             subcontractor = get_object_or_404(
                 Subcontractors,
                 id=subcontractor_id,
                 is_inactive=False
             )
+            if employee_id == JOB_SUPERINTENDENT_VALUE:
+                Subcontractor_Approvers.objects.get_or_create(
+                    employee=None,
+                    subcontractor=subcontractor,
+                    job_description="Superintendent"
+                )
+            else:
+                employee = get_object_or_404(Employees, id=employee_id)
 
-            Subcontractor_Approvers.objects.get_or_create(
-                employee=employee,
-                subcontractor=subcontractor,
-                defaults={"job_description": ""}
-            )
-        elif action == "add_employee_to_all_subcontractors":
-            employee = get_object_or_404(Employees, id=employee_id)
-            print(employee)
-            for subcontractor in Subcontractors.objects.filter(is_inactive=False):
+
                 Subcontractor_Approvers.objects.get_or_create(
                     employee=employee,
                     subcontractor=subcontractor,
+                    defaults={"job_description": ""}
                 )
+        elif action == "add_employee_to_all_subcontractors":
+            if employee_id == JOB_SUPERINTENDENT_VALUE:
+                for subcontractor in Subcontractors.objects.filter(is_inactive=False):
+                    Subcontractor_Approvers.objects.get_or_create(
+                        employee=None,
+                        subcontractor=subcontractor,
+                        job_description="Superintendent"
+                    )
+            else:
+                employee = get_object_or_404(Employees, id=employee_id)
+                for subcontractor in Subcontractors.objects.filter(is_inactive=False):
+                    Subcontractor_Approvers.objects.get_or_create(
+                        employee=employee,
+                        subcontractor=subcontractor,
+                    )
 
         elif action == "add_employee_to_all_subcontracts":
-            employee = get_object_or_404(Employees, id=employee_id)
 
-            for subcontract in Subcontracts.objects.filter(
-                    is_closed=False,
-                    subcontractor__is_inactive=False
-            ):
-                Subcontract_Approvers.objects.get_or_create(
-                    employee=employee,
-                    subcontract=subcontract,
-                )
+            if employee_id == JOB_SUPERINTENDENT_VALUE:
+                for subcontract in Subcontracts.objects.filter(
+                        is_closed=False,
+                        subcontractor__is_inactive=False
+                ):
+                    Subcontract_Approvers.objects.get_or_create(
+                        employee=None,
+                        subcontract=subcontract,
+                        job_description="Superintendent"
+                    )
+            else:
+                employee = get_object_or_404(Employees, id=employee_id)
+
+                for subcontract in Subcontracts.objects.filter(
+                        is_closed=False,
+                        subcontractor__is_inactive=False
+                ):
+                    Subcontract_Approvers.objects.get_or_create(
+                        employee=employee,
+                        subcontract=subcontract,
+                    )
         return redirect(redirect_url)
 
     # -------------------------
@@ -3407,30 +3564,83 @@ def subcontractor_approvers_management(request):
     employee_subcontract_approvers = []
 
     if selected_employee_id:
-        selected_employee = get_object_or_404(Employees, id=selected_employee_id)
 
-        employee_standard_approvers = Standard_Approvers.objects.filter(
-            employee=selected_employee
-        ).select_related("employee")
+        if is_job_superintendent(selected_employee_id):
+            selected_employee = "Job Superintendent"
 
-        employee_subcontractor_approvers = Subcontractor_Approvers.objects.filter(
-            employee=selected_employee,
-            subcontractor__is_inactive=False
-        ).select_related("employee", "subcontractor").order_by("subcontractor__company")
+            employee_standard_approvers = Standard_Approvers.objects.filter(
+                employee__isnull=True,
+                job_description="Superintendent"
+            )
 
-        employee_subcontract_approvers = Subcontract_Approvers.objects.filter(
-            employee=selected_employee,
-            subcontract__is_closed=False,
-            subcontract__subcontractor__is_inactive=False
-        ).select_related(
-            "employee",
-            "subcontract",
-            "subcontract__subcontractor",
-            "subcontract__job_number",
-        ).order_by(
-            "subcontract__subcontractor__company",
-            "subcontract__job_number__job_name"
-        )
+            employee_subcontractor_approvers = Subcontractor_Approvers.objects.filter(
+                employee__isnull=True,
+                job_description="Superintendent",
+                subcontractor__is_inactive=False
+            ).select_related("subcontractor").order_by("subcontractor__company")
+
+            employee_subcontract_approvers = Subcontract_Approvers.objects.filter(
+                employee__isnull=True,
+                job_description="Superintendent",
+                subcontract__is_closed=False,
+                subcontract__subcontractor__is_inactive=False
+            ).select_related(
+                "subcontract",
+                "subcontract__subcontractor",
+                "subcontract__job_number",
+            ).order_by(
+                "subcontract__subcontractor__company",
+                "subcontract__job_number__job_name"
+            )
+
+        else:
+            selected_employee = get_object_or_404(Employees, id=selected_employee_id)
+
+            employee_standard_approvers = Standard_Approvers.objects.filter(
+                employee=selected_employee
+            ).select_related("employee")
+
+            employee_subcontractor_approvers = Subcontractor_Approvers.objects.filter(
+                employee=selected_employee,
+                subcontractor__is_inactive=False
+            ).select_related("employee", "subcontractor").order_by("subcontractor__company")
+
+            employee_subcontract_approvers = Subcontract_Approvers.objects.filter(
+                employee=selected_employee,
+                subcontract__is_closed=False,
+                subcontract__subcontractor__is_inactive=False
+            ).select_related(
+                "employee",
+                "subcontract",
+                "subcontract__subcontractor",
+                "subcontract__job_number",
+            ).order_by(
+                "subcontract__subcontractor__company",
+                "subcontract__job_number__job_name"
+            )
+
+        # employee_standard_approvers = Standard_Approvers.objects.filter(
+        #     employee=selected_employee
+        # ).select_related("employee")
+        #
+        # employee_subcontractor_approvers = Subcontractor_Approvers.objects.filter(
+        #     employee=selected_employee,
+        #     subcontractor__is_inactive=False
+        # ).select_related("employee", "subcontractor").order_by("subcontractor__company")
+        #
+        # employee_subcontract_approvers = Subcontract_Approvers.objects.filter(
+        #     employee=selected_employee,
+        #     subcontract__is_closed=False,
+        #     subcontract__subcontractor__is_inactive=False
+        # ).select_related(
+        #     "employee",
+        #     "subcontract",
+        #     "subcontract__subcontractor",
+        #     "subcontract__job_number",
+        # ).order_by(
+        #     "subcontract__subcontractor__company",
+        #     "subcontract__job_number__job_name"
+        # )
 
     # -------------------------
     # SEARCH BY EMPLOYEE DROPDOWN
@@ -3444,38 +3654,108 @@ def subcontractor_approvers_management(request):
     add_subcontract_rows = []
 
     if selected_add_employee_id:
-        selected_add_employee = get_object_or_404(Employees, id=selected_add_employee_id)
 
-        add_standard_available = not Standard_Approvers.objects.filter(
-            employee=selected_add_employee
-        ).exists()
+        if is_job_superintendent(selected_add_employee_id):
+            selected_add_employee = "Job Superintendent"
 
-        existing_subcontractor_ids = Subcontractor_Approvers.objects.filter(
-            employee=selected_add_employee
-        ).values_list("subcontractor_id", flat=True)
+            add_standard_available = not Standard_Approvers.objects.filter(
+                employee__isnull=True,
+                job_description="Superintendent"
+            ).exists()
 
-        add_subcontractor_rows = Subcontractors.objects.filter(
-            is_inactive=False
-        ).exclude(
-            id__in=existing_subcontractor_ids
-        ).order_by("company")
+            existing_subcontractor_ids = Subcontractor_Approvers.objects.filter(
+                employee__isnull=True,
+                job_description="Superintendent"
+            ).values_list("subcontractor_id", flat=True)
 
-        existing_subcontract_ids = Subcontract_Approvers.objects.filter(
-            employee=selected_add_employee
-        ).values_list("subcontract_id", flat=True)
+            add_subcontractor_rows = Subcontractors.objects.filter(
+                is_inactive=False
+            ).exclude(
+                id__in=existing_subcontractor_ids
+            ).order_by("company")
 
-        add_subcontract_rows = Subcontracts.objects.filter(
-            is_closed=False,
-            subcontractor__is_inactive=False
-        ).exclude(
-            id__in=existing_subcontract_ids
-        ).select_related(
-            "subcontractor",
-            "job_number"
-        ).order_by(
-            "subcontractor__company",
-            "job_number__job_name"
-        )
+            existing_subcontract_ids = Subcontract_Approvers.objects.filter(
+                employee__isnull=True,
+                job_description="Superintendent"
+            ).values_list("subcontract_id", flat=True)
+
+            add_subcontract_rows = Subcontracts.objects.filter(
+                is_closed=False,
+                subcontractor__is_inactive=False
+            ).exclude(
+                id__in=existing_subcontract_ids
+            ).select_related(
+                "subcontractor",
+                "job_number"
+            ).order_by(
+                "subcontractor__company",
+                "job_number__job_name"
+            )
+
+        else:
+            selected_add_employee = get_object_or_404(Employees, id=selected_add_employee_id)
+
+            add_standard_available = not Standard_Approvers.objects.filter(
+                employee=selected_add_employee
+            ).exists()
+
+            existing_subcontractor_ids = Subcontractor_Approvers.objects.filter(
+                employee=selected_add_employee
+            ).values_list("subcontractor_id", flat=True)
+
+            add_subcontractor_rows = Subcontractors.objects.filter(
+                is_inactive=False
+            ).exclude(
+                id__in=existing_subcontractor_ids
+            ).order_by("company")
+
+            existing_subcontract_ids = Subcontract_Approvers.objects.filter(
+                employee=selected_add_employee
+            ).values_list("subcontract_id", flat=True)
+
+            add_subcontract_rows = Subcontracts.objects.filter(
+                is_closed=False,
+                subcontractor__is_inactive=False
+            ).exclude(
+                id__in=existing_subcontract_ids
+            ).select_related(
+                "subcontractor",
+                "job_number"
+            ).order_by(
+                "subcontractor__company",
+                "job_number__job_name"
+            )
+
+        # add_standard_available = not Standard_Approvers.objects.filter(
+        #     employee=selected_add_employee
+        # ).exists()
+
+        # existing_subcontractor_ids = Subcontractor_Approvers.objects.filter(
+        #     employee=selected_add_employee
+        # ).values_list("subcontractor_id", flat=True)
+
+        # add_subcontractor_rows = Subcontractors.objects.filter(
+        #     is_inactive=False
+        # ).exclude(
+        #     id__in=existing_subcontractor_ids
+        # ).order_by("company")
+
+        # existing_subcontract_ids = Subcontract_Approvers.objects.filter(
+        #     employee=selected_add_employee
+        # ).values_list("subcontract_id", flat=True)
+
+        # add_subcontract_rows = Subcontracts.objects.filter(
+        #     is_closed=False,
+        #     subcontractor__is_inactive=False
+        # ).exclude(
+        #     id__in=existing_subcontract_ids
+        # ).select_related(
+        #     "subcontractor",
+        #     "job_number"
+        # ).order_by(
+        #     "subcontractor__company",
+        #     "job_number__job_name"
+        # )
 
     # -------------------------
     # SEARCH BY SUBCONTRACTOR
