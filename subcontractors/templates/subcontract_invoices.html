@@ -742,6 +742,18 @@ function check_form(){
 {% endif %}
 {% endif %}
 </div>
+{% if selected_invoice %}
+    <div class="card mt-4 mb-4">
+        <div class="card-body text-center">
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" name="sync_subcontract_approvers" class="btn btn-warning">
+                    Add Missing Subcontract Approvers to This Invoice
+                </button>
+            </form>
+        </div>
+    </div>
+{% endif %}
 </body>
 </html>
 
