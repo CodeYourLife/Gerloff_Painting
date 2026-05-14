@@ -661,13 +661,13 @@ def submittal_send(request, submittal_id):
 
             request.session['new_row_id'] = new_approval.id
 
-            if employee:
-                SubmittalNotes.objects.create(
-                    submittal=submittal,
-                    date=timezone.now().date(),
-                    user=employee,
-                    note=f"Added new item {new_item.description} to submittal {submittal.submittal_number}"
-                )
+            # if employee:
+            #     SubmittalNotes.objects.create(
+            #         submittal=submittal,
+            #         date=timezone.now().date(),
+            #         user=employee,
+            #         note=f"Added new item {new_item.description} to submittal {submittal.submittal_number}"
+            #     )
 
             messages.success(request, "New row added.")
             return redirect('submittal_send', submittal.id)
