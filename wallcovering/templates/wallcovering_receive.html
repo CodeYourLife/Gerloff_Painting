@@ -1,0 +1,576 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+
+<div class="container-fluid mt-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-0">Receive Wallcovering</h4>
+            {% if wallcovering %}
+                <small class="text-muted">
+                    {{ wallcovering.code }} - {{ wallcovering.pattern }}
+                </small>
+            {% endif %}
+        </div>
+
+        {% if wallcovering %}
+            <a href="{% url 'wallcovering_detail' wallcovering.id %}" class="btn btn-secondary">
+                Cancel
+            </a>
+        {% else %}
+            <a href="{% url 'wallcovering_home' %}" class="btn btn-secondary">
+                Back to Wallcovering
+            </a>
+        {% endif %}
+    </div>
+
+    <form method="post" id="receiveForm">
+        {% csrf_token %}
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-dark text-white">
+                <strong>Receipt Information</strong>
+            </div>
+
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label>Date Received</label>
+                        <input type="date"
+                               name="date"
+                               class="form-control"
+                               value="{% if is_edit %}{{ delivery.date|date:'Y-m-d' }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}"
+                               required>
+                    </div>
+
+                    <div class="form-group col-md-9">
+                        <label>Receipt Notes</label>
+                        <input type="text"
+       name="notes"
+       class="form-control"
+       value="{% if is_edit %}{{ delivery.notes|default:'' }}{% endif %}"
+       placeholder="Delivery notes, damage notes, packing slip notes, etc.">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <strong>Received Items</strong>
+
+
+            </div>
+
+            <div class="card-body" id="receivedItemsContainer">
+
+                {% if is_edit %}
+
+    {% for received in received_items %}
+
+        <div class="received-item border rounded p-3 mb-3 bg-light shadow-sm">
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong>Received Item</strong>
+
+                <button type="button"
+                        class="btn btn-sm btn-outline-danger removeReceivedItemBtn">
+                    Remove
+                </button>
+            </div>
+
+            <div class="form-row">
+
+                <div class="form-group col-md-8">
+                    <label>Ordered Item</label>
+
+                    <select name="order_item[]" class="form-control order-item-select" required>
+                        <option value="">Select Ordered Wallcovering Item</option>
+
+                        {% for item in open_order_items %}
+                            <option value="{{ item.id }}"
+                                    data-order="{{ item.order.id }}"
+                                    data-ordered="{{ item.quantity }}"
+                                    data-received="{{ item.quantity_received }}"
+                                    data-description="{% if item.wallcovering %}{{ item.wallcovering.code }} {{ item.wallcovering.pattern }}{% else %}{{ item.item_description }}{% endif %}"
+                                    {% if received.order_item.id == item.id %}selected{% endif %}>
+
+                                PO {{ item.order.po_number }} -
+
+                                {% if item.wallcovering %}
+                                    {{ item.wallcovering.code }} {{ item.wallcovering.pattern }}
+                                {% else %}
+                                    {{ item.item_description }}
+                                {% endif %}
+
+                                | Ordered:
+                                {{ item.quantity|floatformat:2|intcomma }} {{ item.unit }}
+
+                                | Received:
+                                {{ item.quantity_received|floatformat:2|intcomma }} {{ item.unit }}
+
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group col-md-4">
+                    <label>Quantity Received</label>
+
+                    <input type="number"
+                           name="quantity[]"
+                           class="form-control quantity-received"
+                           step="0.01"
+                           min="0"
+                           value="{{ received.quantity }}"
+                           required>
+                </div>
+
+            </div>
+
+            <div class="item-packages mt-3">
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <strong>Packages for this item</strong>
+
+                    <button type="button"
+                            class="btn btn-sm btn-outline-primary addItemPackageBtn">
+                        + Add Package
+                    </button>
+                </div>
+
+                <div class="itemPackagesContainer">
+
+                    {% for package in received.related_packages %}
+
+                        <div class="package-row border rounded p-2 mb-2 bg-light">
+                            <input type="hidden" name="package_id[]" value="{{ package.id }}">
+                            <input type="hidden"
+                                   name="package_orderitem[]"
+                                   class="package-orderitem-id"
+                                   value="{{ received.order_item.id }}">
+
+                            <div class="form-row">
+
+                                <div class="form-group col-md-2">
+                                    <label>Type</label>
+                                    <input type="text"
+                                           name="package_type[]"
+                                           class="form-control"
+                                           value="{{ package.type|default:'' }}"
+                                           placeholder="Box, bolt, bucket">
+                                </div>
+
+                                <div class="form-group col-md-4">
+                                    <label>Contents</label>
+                                    <input type="text"
+                                           name="package_contents[]"
+                                           class="form-control package-contents"
+                                           value="{{ package.contents|default:'' }}">
+                                </div>
+
+                                <div class="form-group col-md-2">
+                                    <label>Packages Received</label>
+                                    <input type="number"
+                                           name="package_quantity[]"
+                                           class="form-control"
+                                           min="0"
+                                           step="1"
+                                           value="{{ package.quantity_received }}">
+                                </div>
+
+                                <div class="form-group col-md-3">
+                                    <label>Package Notes</label>
+                                    <input type="text"
+                                           name="package_notes[]"
+                                           class="form-control"
+                                           value="{{ package.notes|default:'' }}">
+                                </div>
+
+                                <div class="form-group col-md-1 d-flex align-items-end">
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger removePackageBtn">
+                                        X
+                                    </button>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    {% endfor %}
+
+{% else %}
+
+    <div class="received-item border rounded p-3 mb-3 bg-light shadow-sm">
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong>Received Item</strong>
+
+            <button type="button"
+                    class="btn btn-sm btn-outline-danger removeReceivedItemBtn"
+                    style="display:none;">
+                Remove
+            </button>
+        </div>
+
+        <div class="form-row">
+
+            <div class="form-group col-md-8">
+                <label>Ordered Item</label>
+
+                <select name="order_item[]" class="form-control order-item-select" required>
+                    <option value="">Select Ordered Wallcovering Item</option>
+
+                    {% for item in open_order_items %}
+                        <option value="{{ item.id }}"
+                                data-order="{{ item.order.id }}"
+                                data-ordered="{{ item.quantity }}"
+                                data-received="{{ item.quantity_received }}"
+                                data-description="{% if item.wallcovering %}{{ item.wallcovering.code }} {{ item.wallcovering.pattern }}{% else %}{{ item.item_description }}{% endif %}"
+                                {% if selected_item and selected_item.id == item.id %}selected{% endif %}>
+
+                            PO {{ item.order.po_number }} -
+
+                            {% if item.wallcovering %}
+                                {{ item.wallcovering.code }} {{ item.wallcovering.pattern }}
+                            {% else %}
+                                {{ item.item_description }}
+                            {% endif %}
+
+                            | Ordered:
+                            {{ item.quantity|floatformat:2|intcomma }} {{ item.unit }}
+
+                            | Received:
+                            {{ item.quantity_received|floatformat:2|intcomma }} {{ item.unit }}
+
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group col-md-4">
+                <label>Quantity Received</label>
+
+                <input type="number"
+                       name="quantity[]"
+                       class="form-control quantity-received"
+                       step="0.01"
+                       min="0"
+                       {% if selected_item %}
+                           placeholder="{{ selected_item.quantity }}"
+                       {% else %}
+                           placeholder="Qty Received"
+                       {% endif %}
+                       required>
+            </div>
+
+        </div>
+
+        <div class="item-packages mt-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong>Packages for this item</strong>
+
+                <button type="button"
+                        class="btn btn-sm btn-outline-primary addItemPackageBtn">
+                    + Add Package
+                </button>
+            </div>
+
+            <div class="itemPackagesContainer"></div>
+        </div>
+
+    </div>
+
+{% endif %}
+
+            </div>
+            <div class="text-center mt-3 mb-4">
+                <button type="button" id="addReceivedItemBtn" class="btn btn-danger add-received-item">
+                    + Add Another Received Item
+                </button>
+            </div>
+        </div>
+
+
+
+        <button type="submit" class="btn btn-success btn-lg">
+            Save Receipt
+        </button>
+
+    </form>
+    <div id="itemPackageTemplate" style="display:none;">
+        <div class="package-row border rounded p-2 mb-2 bg-light">
+            <input type="hidden" name="package_orderitem[]" class="package-orderitem-id">
+            <input type="hidden" name="package_id[]" value="">
+            <div class="form-row">
+                <div class="form-group col-md-2">
+                    <label>Type</label>
+                    <input type="text"
+                           name="package_type[]"
+                           class="form-control"
+                           placeholder="Box, bolt, bucket">
+                </div>
+
+                <div class="form-group col-md-4">
+                    <label>Contents</label>
+                    <input type="text"
+                           name="package_contents[]"
+                           class="form-control package-contents">
+                </div>
+
+                <div class="form-group col-md-2">
+                    <label>Packages Received</label>
+                    <input type="number"
+                           name="package_quantity[]"
+                           class="form-control"
+                           min="0"
+                           step="1">
+                </div>
+
+                <div class="form-group col-md-3">
+                    <label>Package Notes</label>
+                    <input type="text"
+                           name="package_notes[]"
+                           class="form-control">
+                </div>
+
+                <div class="form-group col-md-1 d-flex align-items-end">
+                    <button type="button" class="btn btn-sm btn-outline-danger removePackageBtn">
+                        X
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function () {
+
+    function initSelect2(scope) {
+        $(scope).find('.order-item-select').select2({
+            width: '100%',
+            placeholder: 'Select Ordered Wallcovering Item'
+        });
+    }
+
+    initSelect2(document);
+
+    function updateRemoveButtons() {
+        if ($('.received-item').length <= 1) {
+            $('.removeReceivedItemBtn').hide();
+        } else {
+            $('.removeReceivedItemBtn').show();
+        }
+    }
+
+    function updateQuantityPlaceholder(row) {
+        const selected = row.find('.order-item-select option:selected');
+        const ordered = parseFloat(selected.data('ordered')) || 0;
+        const received = parseFloat(selected.data('received')) || 0;
+        const remaining = ordered - received;
+
+        if (remaining > 0) {
+            row.find('.quantity-received').attr('placeholder', remaining.toFixed(2));
+        }
+    }
+
+    function syncPackageOrderItemIds(row) {
+        const orderItemId = row.find('.order-item-select').val();
+
+        row.find('.package-orderitem-id').val(orderItemId);
+    }
+
+    function addPackageToReceivedItem(row) {
+        const selected = row.find('.order-item-select option:selected');
+        const orderItemId = row.find('.order-item-select').val();
+        const description = selected.data('description') || '';
+
+        if (!orderItemId) {
+            alert('Please select an ordered item before adding a package.');
+            return;
+        }
+
+        const template = $('#itemPackageTemplate').html();
+        const packageRow = $(template);
+
+        packageRow.find('.package-orderitem-id').val(orderItemId);
+        packageRow.find('.package-contents').val(description);
+
+        row.find('.itemPackagesContainer').append(packageRow);
+    }
+
+    $(document).on('change', '.order-item-select', function () {
+        const row = $(this).closest('.received-item');
+
+        updateQuantityPlaceholder(row);
+
+        row.find('.itemPackagesContainer').empty();
+    });
+
+    $(document).on('input', '.quantity-received', function () {
+        const row = $(this).closest('.received-item');
+        const qty = $(this).val();
+
+        if (qty && parseFloat(qty) > 0 && row.find('.package-row').length === 0) {
+            addPackageToReceivedItem(row);
+        }
+    });
+
+    $(document).on('click', '.addItemPackageBtn', function () {
+        const row = $(this).closest('.received-item');
+        addPackageToReceivedItem(row);
+    });
+
+    $(document).on('click', '.removePackageBtn', function () {
+        $(this).closest('.package-row').remove();
+    });
+
+    $('#addReceivedItemBtn').on('click', function () {
+        const firstRow = $('.received-item').first();
+
+        firstRow.find('.order-item-select').select2('destroy');
+
+        const newRow = firstRow.clone();
+
+        const selectedValues = [];
+
+    $('.order-item-select').each(function () {
+
+        const value = $(this).val();
+
+        if (value) {
+            selectedValues.push(value);
+        }
+
+    });
+
+    const newSelect = newRow.find('.order-item-select');
+
+    newSelect.find('option').each(function () {
+
+        const optionValue = $(this).attr('value');
+
+        if (
+            optionValue &&
+            selectedValues.includes(optionValue)
+        ) {
+            $(this).remove();
+        }
+
+    });
+
+
+        firstRow.find('.order-item-select').select2({
+            width: '100%',
+            placeholder: 'Select Ordered Wallcovering Item'
+        });
+
+        newRow.find('select[name="order_item[]"]').val('');
+        newRow.find('input[name="quantity[]"]').val('');
+        newRow.find('input[name="quantity[]"]').attr('placeholder', 'Qty Received');
+        newRow.find('.itemPackagesContainer').empty();
+
+        $('#receivedItemsContainer').append(newRow);
+
+        initSelect2(newRow);
+        updateRemoveButtons();
+    });
+
+    $(document).on('click', '.removeReceivedItemBtn', function () {
+        $(this).closest('.received-item').remove();
+        updateRemoveButtons();
+    });
+
+    $('#receiveForm').on('submit', function (e) {
+        let errorMessage = "";
+        let selectedOrder = null;
+        let hasReceivedItem = false;
+
+        $('.received-item').each(function () {
+            const row = $(this);
+            const select = row.find('.order-item-select');
+            const selectedOption = select.find('option:selected');
+            const itemId = select.val();
+            const orderId = selectedOption.data('order');
+            const quantity = row.find('.quantity-received').val();
+
+            if (itemId || quantity) {
+                if (!itemId) {
+                    errorMessage = "Each received item needs an ordered item selected.";
+                    return false;
+                }
+
+                if (!quantity || parseFloat(quantity) <= 0) {
+                    errorMessage = "Each received item needs a quantity greater than 0.";
+                    return false;
+                }
+
+                if (selectedOrder === null) {
+                    selectedOrder = orderId;
+                } else if (selectedOrder !== orderId) {
+                    errorMessage = "All received items must be from the same PO / order.";
+                    return false;
+                }
+
+                if (row.find('.package-row').length === 0) {
+                    errorMessage = "Each received item needs at least one package.";
+                    return false;
+                }
+
+                row.find('.package-row').each(function () {
+                    const packageQty = $(this).find('input[name="package_quantity[]"]').val();
+
+                    if (!packageQty || parseInt(packageQty) <= 0) {
+                        errorMessage = "Each package needs a package quantity greater than 0.";
+                        return false;
+                    }
+                });
+
+                if (errorMessage) {
+                    return false;
+                }
+
+                syncPackageOrderItemIds(row);
+                hasReceivedItem = true;
+            }
+        });
+
+        if (errorMessage) {
+            e.preventDefault();
+            alert(errorMessage);
+            return false;
+        }
+
+        if (!hasReceivedItem) {
+            e.preventDefault();
+            alert("Please enter at least one received item.");
+            return false;
+        }
+    });
+
+    $('.received-item').each(function () {
+        updateQuantityPlaceholder($(this));
+    });
+
+    updateRemoveButtons();
+
+});
+</script>
+{% endblock %}

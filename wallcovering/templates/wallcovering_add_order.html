@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+
+<div class="container-fluid mt-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-0">Add Wallcovering Order</h4>
+            <small class="text-muted">
+                {{ default_description }}
+            </small>
+        </div>
+
+        <a href="{% url 'wallcovering_detail' wallcovering.id %}" class="btn btn-secondary">
+            Cancel
+        </a>
+    </div>
+
+    <form method="post" id="orderForm">
+        {% csrf_token %}
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-dark text-white">
+                <strong>Order Information</strong>
+            </div>
+
+            <div class="card-body">
+
+                {% if is_edit %}
+
+                    <div class="small text-muted mb-3">
+                        Editing PO {{ order.po_number }}
+                    </div>
+
+                {% else %}
+
+                    <div class="small text-muted mb-3">
+                        A new PO number will be generated automatically using the next available TR number.
+                    </div>
+
+                {% endif %}
+
+                <div class="bg-light border rounded p-2 mb-3">
+                    <div class="row">
+
+                        <div class="col-md-5 mb-2 mb-md-0">
+                            <div class="text-muted small">Job</div>
+                            <div class="font-weight-bold">
+                                {{ wallcovering.job_number.job_number }}
+                                {{ wallcovering.job_number.job_name }}
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 mb-2 mb-md-0">
+                            <div class="text-muted small">Vendor</div>
+                            <div class="font-weight-bold">
+                                {{ wallcovering.vendor }}
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="mb-1">Date Ordered</label>
+                            <input type="date"
+                                   name="date_ordered"
+                                   class="form-control form-control-sm"
+                                   value="{% if is_edit %}{{ order.date_ordered|date:'Y-m-d' }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}">
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="form-group mb-0">
+                    <label>Order Notes</label>
+                    <textarea name="order_notes"
+                      class="form-control"
+                      rows="2"
+                      placeholder="Optional notes for this purchase order">{% if is_edit %}{{ order.notes }}{% endif %}</textarea>
+                </div>
+
+            </div>
+        </div>
+
+
+
+        <div class="card shadow-sm mb-3">
+    <div class="card-header bg-dark text-white">
+        <strong>Main Wallcovering Item</strong>
+    </div>
+
+    <div class="card-body">
+
+        <div class="form-row">
+            <div class="form-group col-md-5">
+                <label>Item Description</label>
+                <input type="text"
+                       class="form-control"
+                       value="{{ default_description }}"
+                       readonly>
+            </div>
+
+            <div class="form-group col-md-2">
+                <label>Quantity Ordered</label>
+                <input type="number"
+                       name="main_quantity"
+                       class="form-control"
+                       step="0.01"
+                       min="0"
+                       value="{% if main_item %}{{ main_item.quantity }}{% endif %}"
+placeholder="{{ wallcovering.estimated_quantity }}"
+                       >
+            </div>
+
+            <div class="form-group col-md-2">
+                <label>Unit</label>
+                <input type="text"
+                       name="main_unit"
+                       class="form-control"
+                       value="{% if main_item %}{{ main_item.unit }}{% else %}{{ wallcovering.estimated_unit|default:'' }}{% endif %}"
+                       >
+            </div>
+
+            <div class="form-group col-md-3">
+                <label>Price</label>
+                <select name="main_price" class="form-control price-select">
+
+    <option value="">Select or Type Price</option>
+
+    {% for p in pricing %}
+        <option value="{{ p.price }}"
+            {% if main_item and main_item.price == p.price %}selected{% endif %}>
+
+            {{ p.quote_date|date:"m/d/Y" }}
+            -
+            ${{ p.price|floatformat:2|intcomma }}
+            {% if p.unit %} / {{ p.unit }}{% endif %}
+
+        </option>
+    {% endfor %}
+
+    {% if main_item and main_item.price %}
+        <option value="{{ main_item.price }}" selected>
+            Current Price - ${{ main_item.price|floatformat:2|intcomma }}
+        </option>
+    {% endif %}
+
+</select>
+            </div>
+        </div>
+
+        <div class="form-group mb-0">
+            <label>Wallcovering Item Notes</label>
+            <textarea name="main_item_notes"
+          class="form-control"
+          rows="2">{% if main_item %}{{ main_item.item_notes }}{% endif %}</textarea>
+        </div>
+
+    </div>
+</div>
+
+        <div class="card shadow-sm mb-3">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+        <strong>Additional Items (glue, trim, etc.)</strong>
+
+        <button type="button" class="btn btn-sm btn-light" id="addExtraItemBtn">
+            + Add Item
+        </button>
+    </div>
+
+    <div class="card-body" id="extraItemsContainer">
+        <div class="text-muted text-center py-3"
+     id="noExtraItemsMessage"
+     {% if extra_items %}style="display:none;"{% endif %}>
+    No additional items added.
+</div>
+
+{% for item in extra_items %}
+
+<div class="extra-item border rounded p-3 mb-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <strong>Item</strong>
+
+        <button type="button"
+                class="btn btn-sm btn-outline-danger removeExtraItemBtn">
+            Remove
+        </button>
+    </div>
+
+    <div class="form-row">
+
+        <div class="form-group col-md-5">
+            <input type="hidden" name="extra_item_id[]" value="{{ item.id }}">
+            <label>Description</label>
+
+            <input type="text"
+                   name="extra_description[]"
+                   class="form-control"
+                   value="{{ item.item_description }}">
+        </div>
+
+        <div class="form-group col-md-2">
+            <label>Quantity</label>
+
+            <input type="number"
+                   name="extra_quantity[]"
+                   class="form-control"
+                   step="0.01"
+                   min="0"
+                   value="{{ item.quantity }}">
+        </div>
+
+        <div class="form-group col-md-2">
+            <label>Unit</label>
+
+            <input type="text"
+                   name="extra_unit[]"
+                   class="form-control"
+                   value="{{ item.unit }}">
+        </div>
+
+        <div class="form-group col-md-3">
+            <label>Price</label>
+
+            <input type="number"
+                   name="extra_price[]"
+                   class="form-control"
+                   step="0.01"
+                   min="0"
+                   value="{{ item.price }}">
+        </div>
+
+    </div>
+
+    <div class="form-group mb-0">
+        <label>Notes</label>
+
+        <textarea name="extra_notes[]"
+                  class="form-control"
+                  rows="2">{{ item.item_notes }}</textarea>
+    </div>
+
+</div>
+
+{% endfor %}
+    </div>
+</div>
+
+        <button type="submit" class="btn btn-success btn-lg">
+
+    {% if is_edit %}
+        Save Changes
+    {% else %}
+        Create Order
+    {% endif %}
+
+</button>
+
+        <a href="{% url 'wallcovering_detail' wallcovering.id %}" class="btn btn-secondary btn-lg">
+            Cancel
+        </a>
+
+    </form>
+
+    <div id="extraItemTemplate" style="display:none;">
+    <div class="extra-item border rounded p-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong>Item</strong>
+            <button type="button" class="btn btn-sm btn-outline-danger removeExtraItemBtn">
+                Remove
+            </button>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-md-5">
+                <label>Description</label>
+                <input type="text" name="extra_description[]" class="form-control">
+            </div>
+
+            <div class="form-group col-md-2">
+                <input type="hidden" name="extra_item_id[]" value="">
+                <label>Quantity</label>
+                <input type="number" name="extra_quantity[]" class="form-control" step="0.01" min="0">
+            </div>
+
+            <div class="form-group col-md-2">
+                <label>Unit</label>
+                <input type="text" name="extra_unit[]" class="form-control">
+            </div>
+
+            <div class="form-group col-md-3">
+                <label>Price</label>
+                <input type="number" name="extra_price[]" class="form-control" step="0.01" min="0">
+            </div>
+        </div>
+
+        <div class="form-group mb-0">
+            <label>Notes</label>
+            <textarea name="extra_notes[]" class="form-control" rows="2"></textarea>
+        </div>
+    </div>
+</div>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function () {
+
+    $('.price-select').select2({
+        width: '100%',
+        tags: true,
+        placeholder: 'Select or type price'
+    });
+
+    $('#addExtraItemBtn').on('click', function () {
+        $('#noExtraItemsMessage').hide();
+
+        const template = $('#extraItemTemplate').html();
+        $('#extraItemsContainer').append(template);
+    });
+
+    $(document).on('click', '.removeExtraItemBtn', function () {
+        $(this).closest('.extra-item').remove();
+
+        if ($('.extra-item').length === 0) {
+            $('#noExtraItemsMessage').show();
+        }
+    });
+
+$('#orderForm').on('submit', function (e) {
+    const mainQty = $('input[name="main_quantity"]').val();
+    const mainUnit = $('input[name="main_unit"]').val().trim();
+    const mainPrice = $('select[name="main_price"]').val();
+
+    const mainHasAnything = mainQty !== '' || mainPrice;
+    const mainIsComplete = (
+        mainQty !== '' &&
+        parseFloat(mainQty) > 0 &&
+        mainUnit !== '' &&
+        mainPrice
+    );
+
+    let hasValidExtraItem = false;
+    let errorMessage = "";
+
+    $('.extra-item').each(function () {
+        const description = $(this).find('input[name="extra_description[]"]').val().trim();
+        const qty = $(this).find('input[name="extra_quantity[]"]').val();
+        const unit = $(this).find('input[name="extra_unit[]"]').val().trim();
+        const price = $(this).find('input[name="extra_price[]"]').val();
+
+        const extraHasAnything = description !== '' || qty !== '' || unit !== '' || price !== '';
+
+        if (extraHasAnything) {
+            if (description === '') {
+                errorMessage = 'Each additional item needs a description.';
+                return false;
+            }
+
+            if (qty === '' || parseFloat(qty) <= 0) {
+                errorMessage = 'Each additional item needs a quantity greater than 0.';
+                return false;
+            }
+
+            if (unit === '') {
+                errorMessage = 'Each additional item needs a unit.';
+                return false;
+            }
+
+            if (price === '' || parseFloat(price) < 0) {
+                errorMessage = 'Each additional item needs a valid price.';
+                return false;
+            }
+
+            hasValidExtraItem = true;
+        }
+    });
+
+    if (errorMessage !== '') {
+        e.preventDefault();
+        alert(errorMessage);
+        return false;
+    }
+
+    if (mainHasAnything && !mainIsComplete) {
+        e.preventDefault();
+        alert('If ordering main wallcovering, quantity, unit, and price are required.');
+        return false;
+    }
+
+    if (!mainIsComplete && !hasValidExtraItem) {
+        e.preventDefault();
+        alert('Please enter the main wallcovering item or at least one additional PO item.');
+        return false;
+    }
+});
+
+});
+</script>
+{% endblock %}

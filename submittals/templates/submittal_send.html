@@ -151,7 +151,146 @@ select {
 {% endblock sub_nav %}
 {% block content %}
 
+<div class="modal fade" id="addWallcoveringItemModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
 
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Add Wallcovering</h5>
+
+                    <button type="button" class="close text-white" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="form-group">
+                        <label>Wallcovering</label>
+                        <select name="wallcovering_id" class="form-control select2" required>
+                            <option value="">Select Wallcovering</option>
+
+                            {% for wc in wallcoverings %}
+                                <option value="{{ wc.id }}">
+                                    {{ wc.code }} - {{ wc.vendor.company_name }} {{ wc.pattern }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Submittal Type</label>
+                        <select name="wallcovering_submittal_type" class="form-control" required>
+                            <option value="">Select Type</option>
+                            <option value="Sample">Sample</option>
+                            <option value="Product Data">Product Data</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="submit" name="add_wallcovering_item" class="btn btn-success">
+                        Add
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addPendingItemsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Add Pending Items</h5>
+
+                    <button type="button" class="close text-white" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    {% if available_items_without_approvals %}
+                        <h6 class="font-weight-bold">Items Without Approvals</h6>
+
+                        {% for item in available_items_without_approvals %}
+                            <div class="border rounded p-2 mb-2">
+                                <label class="mb-0">
+                                    <input type="checkbox"
+                                           name="pending_item_ids[]"
+                                           value="{{ item.id }}">
+                                    <strong>{{ item.description }}</strong>
+                                </label>
+
+                                {% if item.notes %}
+                                    <div class="small text-muted ml-4">
+                                        {{ item.notes }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if available_unlinked_approvals %}
+                        <h6 class="font-weight-bold mt-3">Unlinked Pending Approvals</h6>
+
+                        {% for approval in available_unlinked_approvals %}
+                            <div class="border rounded p-2 mb-2">
+                                <label class="mb-0">
+                                    <input type="checkbox"
+                                           name="pending_approval_ids[]"
+                                           value="{{ approval.id }}">
+                                    <strong>{{ approval.submittalitem.description }}</strong>
+                                </label>
+
+                                {% if approval.notes %}
+                                    <div class="small text-muted ml-4">
+                                        {{ approval.notes }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if not available_items_without_approvals and not available_unlinked_approvals %}
+                        <div class="text-muted text-center py-3">
+                            No pending items available.
+                        </div>
+                    {% endif %}
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="submit" name="add_pending_items" class="btn btn-success">
+                        Add Selected
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="mainFolderModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -300,6 +439,7 @@ select {
     </div>
 </div>
 
+
 <div class="container-ticket section-card text-center">
 
     <div class="mb-3">
@@ -311,10 +451,28 @@ select {
             Submittal #{{ submittal.submittal_number }}
         </div>
 
-        <div class="text-muted mt-1">
-            {{ submittal.description }}
-        </div>
+        <form method="post" class="mt-2" id="submittalDescriptionForm">
+            {% csrf_token %}
 
+            <div class="d-flex justify-content-center align-items-center" style="gap:8px;">
+
+                <input type="text"
+                       name="submittal_description"
+                       id="submittalDescriptionInput"
+                       class="form-control form-control-sm text-center"
+                       value="{{ submittal.description }}"
+                       style="max-width:700px;">
+
+                <button type="submit"
+                        name="save_submittal_description"
+                        id="saveSubmittalDescriptionBtn"
+                        class="btn btn-sm btn-success"
+                        style="display:none;">
+                    Save
+                </button>
+
+            </div>
+        </form>
         <div class="mt-2">
             <strong>Date Sent:</strong> {{ submittal.date_sent|default:"Not Sent" }}
         </div>
@@ -329,17 +487,26 @@ select {
             </button>
         </form>
 
-        <button data-toggle="modal" data-target="#mainFolderModal" class="btn btn-info btn-sm m-2 px-4">
-            Batch Upload To Main Folder
-        </button>
+        <form action="{% url 'job_submittals_summary' submittal.job_number.job_number %}" class="m-2">
+            <button type="submit" class="btn btn-info btn-sm px-4"/>
+            View All Submittals For Job
+            </button>
+        </form>
 
-        <button data-toggle="modal" data-target="#sentToGCFolderModal" class="btn btn-info btn-sm m-2 px-4">
-            Batch Upload To Sent to GC
-        </button>
 
-        <button data-toggle="modal" data-target="#approvalDocsFolderModal" class="btn btn-info btn-sm m-2 px-4">
-            Batch Upload To Approval Documents
-        </button>
+
+
+<!--        <button data-toggle="modal" data-target="#mainFolderModal" class="btn btn-info btn-sm m-2 px-4">-->
+<!--            Batch Upload To Main Folder-->
+<!--        </button>-->
+
+<!--        <button data-toggle="modal" data-target="#sentToGCFolderModal" class="btn btn-info btn-sm m-2 px-4">-->
+<!--            Batch Upload To Sent to GC-->
+<!--        </button>-->
+
+<!--        <button data-toggle="modal" data-target="#approvalDocsFolderModal" class="btn btn-info btn-sm m-2 px-4">-->
+<!--            Batch Upload To Approval Documents-->
+<!--        </button>-->
 
         <form method="post" class="m-2">
             {% csrf_token %}
@@ -379,10 +546,22 @@ select {
     <input type="hidden" id="selected_approval_file" name="selected_approval_file">
 </form>
 
+
+
 <div class="container-fluid px-4">
 <div class="container-ticket">
 <div id="accordion">
+<div class="clean-card">
+    <div class="clean-card-header"
+         data-toggle="collapse"
+         data-target="#viewUploadDocumentsCollapse"
+         aria-expanded="false"
+         style="cursor:pointer;">
+        📁 View / Upload Documents
+        <span class="float-right">+</span>
+    </div>
 
+    <div id="viewUploadDocumentsCollapse" class="collapse">
     <div class="clean-card">
         <div class="clean-card-header" data-toggle="collapse" data-target="#mainFolderCollapse" aria-expanded="false" style="cursor:pointer;">
             📁 {{ main_file_count }} Files in Main Submittal Folder - Click to Upload/View
@@ -612,6 +791,9 @@ select {
         </div>
     </div>
 
+    </div>
+    </div>
+
     <div class="clean-card">
         <div class="clean-card-header d-flex justify-content-between align-items-center">
 
@@ -674,31 +856,37 @@ select {
 
 <div class="container-fluid mt-4">
 
-    <div style="padding-top: 12px;margin-bottom: 20px;" class="d-flex flex-row">
 
-
-
-
-    <div class="col-sm-2">
-        <form action="{% url 'job_submittals_summary' submittal.job_number.job_number %}">
-            <input type="submit" class="btn btn-info btn-sm w-100"
-                   value="View All Submittals For Job"/>
-        </form>
-    </div>
-
-</div>
 
 <div class="container-fluid px-4">
     <div class="clean-card">
         <div class="clean-card-header d-flex justify-content-between align-items-center">
             <span>Submittal Items</span>
 
-            <form method="post" class="mb-0">
-                {% csrf_token %}
-                <button type="submit" name="add_submittal_row" class="btn btn-primary btn-sm">
-                    Add Row
+            <div class="d-flex align-items-center" style="gap:8px;">
+
+                <form method="post" class="mb-0">
+                    {% csrf_token %}
+                    <button type="submit" name="add_submittal_row" class="btn btn-primary btn-sm">
+                        Add Row
+                    </button>
+                </form>
+                {% if pending_item_count > 0 %}
+                <button type="button"
+                        class="btn btn-warning btn-sm"
+                        data-toggle="modal"
+                        data-target="#addPendingItemsModal">
+                    Add Pending Items ({{ pending_item_count }} total)
                 </button>
-            </form>
+                {% endif %}
+                <button type="button"
+                        class="btn btn-success btn-sm"
+                        data-toggle="modal"
+                        data-target="#addWallcoveringItemModal">
+                    Add Wallcovering
+                </button>
+
+            </div>
         </div>
 
         <div class="table-responsive">
@@ -783,7 +971,7 @@ select {
 
                                             {% else %}
 
-                                                <button type="submit" name="save_row" class="btn btn-secondary btn-sm row-save-btn">
+                                                <button type="submit" name="save_row" class="btn btn-secondary btn-sm row-save-btn d-none">
                                                     Save
                                                 </button>
 
@@ -801,6 +989,84 @@ select {
                                                     Delete
                                                 </button>
 
+                                                <button type="button"
+                                                        class="btn btn-sm
+                                                            {% if row.item.wallcovering_id %}
+                                                                btn-success
+                                                            {% else %}
+                                                                btn-outline-primary
+                                                            {% endif %}"
+                                                        data-toggle="modal"
+                                                        data-target="#wcLinkModal{{ row.item.id }}">
+
+                                                    {% if row.item.wallcovering_id %}
+
+                                                        {% if row.item.wallcovering_id.code %}
+                                                            {{ row.item.wallcovering_id.code }}
+                                                        {% else %}
+                                                            Linked
+                                                        {% endif %}
+
+                                                    {% else %}
+                                                        WC Link
+                                                    {% endif %}
+
+                                                </button>
+
+<div class="modal fade" id="wcLinkModal{{ row.item.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+
+            <form method="post" action="{% url 'submittal_item_link_wallcovering' row.item.id %}">
+                {% csrf_token %}
+
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Link Wallcovering</h5>
+
+                    <button type="button" class="close text-white" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="mb-2">
+                        <strong>Submittal Item:</strong><br>
+                        {{ row.item.description }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Select Wallcovering</label>
+
+                        <select name="wallcovering_id" class="form-control select2">
+                            <option value="">No Wallcovering Link</option>
+
+                            {% for wc in wallcoverings %}
+                                <option value="{{ wc.id }}"
+                                    {% if row.item.wallcovering_id_id == wc.id %}selected{% endif %}>
+                                    {{ wc.code }} - {{ wc.vendor }} {{ wc.pattern }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="submit" class="btn btn-success">
+                        Save Link
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
                                             {% endif %}
 
                                         </td>
@@ -1007,7 +1273,7 @@ $(document).ready(function () {
             }
 
             $('#rejectChoiceModal').modal('hide');
-            currentRejectForm.submit();
+            autosaveForm(currentRejectForm);
         }
     });
 
@@ -1020,7 +1286,7 @@ $(document).ready(function () {
             }
 
             $('#rejectChoiceModal').modal('hide');
-            currentRejectForm.submit();
+            autosaveForm(currentRejectForm);
         }
     });
 
@@ -1034,10 +1300,62 @@ $(document).ready(function () {
         currentRejectForm = null;
     });
 
-    $(document).on('input change', '.row-edit-form input:not([type="submit"]), .row-edit-form textarea, .row-edit-form select', function () {
-    const form = $(this).closest('.row-edit-form');
-    markRowDirty(form);
-});
+    let autosaveTimers = {};
+
+function autosaveForm(form) {
+
+    if (form.find('input[name="save_row"]').length === 0) {
+        form.append('<input type="hidden" name="save_row" value="1">');
+    }
+
+    $.ajax({
+        url: window.location.href,
+        method: 'POST',
+        data: form.serialize(),
+
+        success: function () {
+
+            const saveBtn = form.find('.row-save-btn');
+
+            saveBtn.removeClass('btn-success');
+            saveBtn.addClass('btn-secondary');
+            saveBtn.text('Saved');
+
+            setTimeout(function () {
+                saveBtn.text('Save');
+            }, 1000);
+        }
+    });
+}
+
+$(document).on(
+    'input',
+    '.row-edit-form input[type="text"], .row-edit-form input[type="number"], .row-edit-form textarea',
+    function () {
+
+        const form = $(this).closest('.row-edit-form');
+        const approvalId = form.data('approval-id');
+
+        clearTimeout(autosaveTimers[approvalId]);
+
+        autosaveTimers[approvalId] = setTimeout(function () {
+            autosaveForm(form);
+        }, 800);
+
+    }
+);
+
+$(document).on(
+    'change',
+    '.row-edit-form select, .row-edit-form input[type="checkbox"]',
+    function () {
+
+        const form = $(this).closest('.row-edit-form');
+
+        autosaveForm(form);
+
+    }
+);
 
 {% if new_row_id %}
 $('.row-edit-form[data-approval-id="{{ new_row_id }}"]').each(function () {
@@ -1062,6 +1380,24 @@ function markRowDirty(form) {
     saveBtn.removeClass('btn-secondary');
     saveBtn.addClass('btn-success');
     saveBtn.text('Save *');
+}
+
+const submittalDescriptionInput = document.getElementById('submittalDescriptionInput');
+const saveSubmittalDescriptionBtn = document.getElementById('saveSubmittalDescriptionBtn');
+
+if (submittalDescriptionInput && saveSubmittalDescriptionBtn) {
+
+    const originalValue = submittalDescriptionInput.value;
+
+    submittalDescriptionInput.addEventListener('input', function () {
+
+        if (this.value !== originalValue) {
+            saveSubmittalDescriptionBtn.style.display = 'inline-block';
+        } else {
+            saveSubmittalDescriptionBtn.style.display = 'none';
+        }
+
+    });
 }
 
 </script>

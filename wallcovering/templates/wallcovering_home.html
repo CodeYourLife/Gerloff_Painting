@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+
+<div class="container-fluid mt-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Wallcovering</h4>
+
+        <a href="{% url 'wallcovering_new' %}" class="btn btn-success">
+            + New Wallcovering
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white">
+            <strong>Wallcovering Status</strong>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Code / Pattern</th>
+                            <th>Job</th>
+                            <th class="text-right">Quantity</th>
+                            <th class="text-center">Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for wc in wallcoverings %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'wallcovering_detail' wc.id %}" class="font-weight-bold">
+                                        {% if wc.code %}{{ wc.code }}{% else %}WC (No Code) {% endif %}
+                                    </a>
+                                    <br>
+                                    <span class="text-muted">
+                                        {{wc.vendor.company_name}}- {{ wc.pattern }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <a href="{% url 'job_page' wc.job_number.job_number %}">
+                                        {{ wc.job_number.job_name }}
+                                    </a>
+                                </td>
+
+                                <td class="text-right">
+                                    {{ wc.display_quantity }}
+                                </td>
+
+                                <td class="text-center">
+                                    {% if wc.is_owner_furnished %}
+                                        <span class="badge badge-info p-2">Owner Furnished</span>
+                                    {% else %}
+
+                                        <!-- Submittal Status -->
+                                        {% if wc.submittal_status == "Approved" %}
+                                            <span class="badge badge-success d-block mb-1">Approved</span>
+                                        {% elif wc.submittal_status == "Submitted" %}
+                                            <span class="badge badge-primary d-block mb-1">Submitted</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary d-block mb-1">Not Submitted</span>
+                                        {% endif %}
+
+                                        <!-- Ordering Status -->
+                                        {% if wc.ordering_status == "Received" %}
+                                            <span class="badge badge-success d-block mb-1">Received</span>
+                                        {% elif wc.ordering_status == "Partially Received" %}
+                                            <span class="badge badge-info d-block mb-1">Partially Received</span>
+                                        {% elif wc.ordering_status == "Ordered" %}
+                                            <span class="badge badge-warning d-block mb-1">Ordered</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary d-block mb-1">Not Ordered</span>
+                                        {% endif %}
+
+                                        <!-- Sent Status -->
+                                        {% if wc.sent_status == "Sent to Job" %}
+                                            <span class="badge badge-success d-block">Sent to Job</span>
+                                        {% elif wc.sent_status == "Partially Sent" %}
+                                            <span class="badge badge-warning d-block">Partially Sent</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary d-block">Not Sent</span>
+                                        {% endif %}
+
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    No wallcovering has been entered yet.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

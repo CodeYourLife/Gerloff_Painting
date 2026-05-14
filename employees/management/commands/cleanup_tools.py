@@ -13,6 +13,8 @@ from changeorder.models import (
     Signature,
 )
 from submittals.models import *
+from wallcovering.models import *
+from jobs.models import Orders
 
 
 # ----------------------------------------
@@ -53,6 +55,31 @@ def delete_all_scheduled_toolbox_talks():
         ScheduledToolboxTalkSubEmployees.objects.all().delete()
         ScheduledToolboxTalks.objects.all().delete()
 
+def delete_all_wallcovering():
+    with transaction.atomic():
+
+        # OUTGOING / SENT TO JOB
+        OutgoingItem.objects.all().delete()
+        OutgoingWallcovering.objects.all().delete()
+
+        # PACKAGES / RECEIVING
+        Packages.objects.all().delete()
+        ReceivedItems.objects.all().delete()
+        WallcoveringDelivery.objects.all().delete()
+
+        # NOTES / PRICING
+        WallcoveringNotes.objects.all().delete()
+        WallcoveringPricing.objects.all().delete()
+
+        # ORDER ITEMS
+        OrderItems.objects.all().delete()
+
+        # ORDERS
+        Orders.objects.all().delete()
+
+        # WALLCOVERING
+        Wallcovering.objects.all().delete()
+
 # ----------------------------------------
 # DJANGO ENTRY POINT
 # ----------------------------------------
@@ -86,6 +113,10 @@ class Command(BaseCommand):
         elif action == "delete_toolbox":
             delete_all_scheduled_toolbox_talks()
             self.stdout.write(self.style.SUCCESS("All scheduled toolbox talks deleted."))
+
+        elif action == "delete_wallcovering":
+            delete_all_wallcovering()
+            self.stdout.write(self.style.SUCCESS("All wallcovering data deleted."))
 
         else:
             self.stdout.write(self.style.ERROR("Unknown action."))

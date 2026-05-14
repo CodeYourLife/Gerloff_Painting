@@ -1691,6 +1691,7 @@ def toolbox_talk_assign(request):
                     is_all_employees=True,
                     notes="All Employees"
                 )
+
             else:
                 fallback_date = date.today()
                 new_scheduled = ScheduledToolboxTalks.objects.create(
@@ -1701,11 +1702,12 @@ def toolbox_talk_assign(request):
                     notes="All Employees"
                 )
 
+
             if selected_master is None:
                 create_custom_toolbox_folders(new_scheduled)
 
             messages.success(request, 'Toolbox Talk created successfully.')
-            return redirect('toolbox_talk_assign')
+            return redirect('safety_home')
 
         # -----------------------------
         # Scheduling method: Add to end of schedule for all employees
@@ -1730,7 +1732,7 @@ def toolbox_talk_assign(request):
                 create_custom_toolbox_folders(new_scheduled)
 
             messages.success(request, 'Toolbox Talk added to the end of the schedule for all employees.')
-            return redirect('toolbox_talk_assign')
+            return redirect('safety_home')
 
         # -----------------------------
         # All other options require custom date
@@ -1773,7 +1775,7 @@ def toolbox_talk_assign(request):
             scheduled.save()
 
             messages.success(request, 'Toolbox Talk assigned to all employees.')
-            return redirect('toolbox_talk_assign')
+            return redirect('safety_home')
 
         # -----------------------------
         # Assignment type: Employees
@@ -1806,7 +1808,7 @@ def toolbox_talk_assign(request):
             scheduled.save()
 
             messages.success(request, 'Toolbox Talk assigned to selected employees.')
-            return redirect('toolbox_talk_assign')
+            return redirect('safety_home')
 
         # -----------------------------
         # Assignment type: Job
@@ -1865,7 +1867,7 @@ def toolbox_talk_assign(request):
             scheduled.save()
 
             messages.success(request, 'Toolbox Talk assigned to job.')
-            return redirect('toolbox_talk_assign')
+            return redirect('safety_home')
 
         # -----------------------------
         # Assignment type: Subcontractor Employees
@@ -1908,7 +1910,7 @@ def toolbox_talk_assign(request):
             scheduled.save()
 
             messages.success(request, 'Toolbox Talk assigned to selected subcontractor employees.')
-            return redirect('toolbox_talk_assign')
+            return redirect('safety_home')
 
         # -----------------------------
         # Assignment type: Subcontractor Jobs
@@ -1983,7 +1985,7 @@ def toolbox_talk_assign(request):
             scheduled.save()
 
             messages.success(request, 'Toolbox Talk assigned to subcontractor employees on the selected job(s).')
-            return redirect('toolbox_talk_assign')
+            return redirect('safety_home')
 
         else:
             scheduled.delete()

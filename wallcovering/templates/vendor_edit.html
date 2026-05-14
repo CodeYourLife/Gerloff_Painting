@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4" style="max-width: 700px;">
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h4 class="mb-0">{{ page_title }}</h4>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="card-body">
+
+                <div class="form-group">
+                    <label>Company Name</label>
+                    <input type="text"
+                           name="company_name"
+                           class="form-control"
+                           value="{{ vendor.company_name|default:'' }}">
+                </div>
+
+                <div class="form-group">
+                    <label>Category</label>
+                    <select name="category" class="form-control">
+                        <option value="">Please Select</option>
+
+                        {% for category in vendor_categories %}
+                            <option value="{{ category.id }}"
+                                {% if vendor.category.id == category.id %}selected{% endif %}>
+                                {{ category.category }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Company Phone</label>
+                    <input type="text"
+                           name="company_phone"
+                           class="form-control"
+                           value="{{ vendor.company_phone|default:'' }}">
+                </div>
+
+                <div class="form-group">
+                    <label>Company Email</label>
+                    <input type="email"
+                           name="company_email"
+                           class="form-control"
+                           value="{{ vendor.company_email|default:'' }}">
+                </div>
+
+            </div>
+
+            <div class="card-footer d-flex justify-content-between">
+                <a href="{% url 'wallcovering_home' %}" class="btn btn-secondary">
+                    Cancel
+                </a>
+
+                <button type="submit" class="btn btn-success">
+                    Save Vendor
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}

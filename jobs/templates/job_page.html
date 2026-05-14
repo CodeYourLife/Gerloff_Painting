@@ -1610,182 +1610,7 @@ function show_submit_button(){
         </div>
     </div>
 {% endif %}
-<!--tickets not sent 4-->
-<!--{% if tickets_not_sent %}-->
-<!--    <div class="card">-->
-<!--        <div class="card-header" id="headingFour">-->
-<!--            <h5 class="mb-0">-->
-<!--                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false"-->
-<!--                        aria-controls="headingFour">-->
-<!--                   {{tickets_not_sent_count}} - Tickets Signed, But Not Sent Yet-->
-<!--                </button>-->
-<!--            </h5>-->
-<!--        </div>-->
-<!--        <div id="collapseFour" class="collapse hide" aria-labelledby="headingFour" data-parent="#accordion">-->
-<!--            <div class="card-body">-->
-<!--                <div class="table-responsive">-->
-<!--                    <table id="tickets_table2" class="display table">-->
-<!--                        <thead class="colored-header">-->
 
-<!--                        <tr>-->
-<!--                            <th>CO#</th>-->
-<!--                            <th>Description</th>-->
-<!--                            <th>Notes</th>-->
-<!--                        </tr>-->
-<!--                        </thead>-->
-<!--                        <tbody>-->
-<!--                        {% for open_co in tickets_not_sent %}-->
-
-<!--                                {% if open_co.is_t_and_m %}-->
-<!--        <tr style="background-color:hsla(69, 100%, 92%);">-->
-<!--            {% else %}-->
-<!--            <tr>-->
-<!--            {% endif %}-->
-<!--                            <td><a href="{% url 'extra_work_ticket' open_co.id %}">{{open_co.cop_number}}</a></td>-->
-<!--                            <td>{{open_co.description}}</td>-->
-<!--                            <td>{{open_co.notes}}</td>-->
-<!--                        </tr>-->
-<!--                        {% endfor %}-->
-<!--                        </tbody>-->
-<!--                    </table>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
-<!--    </div>-->
-<!--{% endif %}-->
-<!--&lt;!&ndash;open cos 5&ndash;&gt;-->
-<!--{% if open_cos %}-->
-<!--    <div class="card">-->
-<!--        <div class="card-header" id="headingFive">-->
-<!--            <h5 class="mb-0">-->
-<!--                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFive" aria-expanded="false"-->
-<!--                        aria-controls="collapseFive">-->
-<!--                    {{open_cos_count}}- Change Orders Sent, Not Approved-->
-<!--                </button>-->
-<!--            </h5>-->
-<!--        </div>-->
-<!--        <div id="collapseFive" class="collapse hide" aria-labelledby="headingFive" data-parent="#accordion">-->
-<!--            <div class="card-body">-->
-<!--                <div class="table-responsive">-->
-<!--                    <table id="tickets_table9" class="display table">-->
-<!--                        <thead class="colored-header">-->
-
-<!--                        <tr>-->
-<!--                            <th>CO#</th>-->
-<!--                            <th>Description</th>-->
-<!--                            <th>Notes</th>-->
-<!--                        </tr>-->
-<!--                        </thead>-->
-<!--                        <tbody>-->
-
-<!--                        {% for open_co in open_cos %}-->
-
-<!--                                {% if open_co.is_t_and_m %}-->
-<!--        <tr style="background-color:hsla(69, 100%, 92%);">-->
-<!--            {% else %}-->
-<!--            <tr>-->
-<!--            {% endif %}-->
-<!--                            <td><a href="{% url 'extra_work_ticket' open_co.id %}">{{open_co.cop_number}}</a></td>-->
-<!--                            <td>{{open_co.description}}</td>-->
-<!--                            <td>{{open_co.notes}}</td>-->
-<!--                        </tr>-->
-<!--                        {% endfor %}-->
-<!--                        </tbody>-->
-<!--                    </table>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
-<!--    </div>-->
-<!--{% endif %}-->
-
-<!--&lt;!&ndash;informal cos 99&ndash;&gt;-->
-<!--{% if informal_cos %}-->
-<!--    <div class="card">-->
-<!--        <div class="card-header" id="heading99">-->
-<!--            <h5 class="mb-0">-->
-<!--                <button class="btn btn-link" data-toggle="collapse" data-target="#collapse99" aria-expanded="false"-->
-<!--                        aria-controls="collapse99">-->
-<!--                    {{informal_cos_count}}- Change Orders Informally Approved-->
-<!--                </button>-->
-<!--            </h5>-->
-<!--        </div>-->
-<!--        <div id="collapse99" class="collapse hide" aria-labelledby="heading99" data-parent="#accordion">-->
-<!--            <div class="card-body">-->
-<!--                <div class="table-responsive">-->
-<!--                    <table id="tickets_table10" class="display table">-->
-<!--                        <thead class="colored-header">-->
-
-<!--                        <tr>-->
-<!--                            <th>CO#</th>-->
-<!--                            <th>Description</th>-->
-<!--                            <th>Notes</th>-->
-<!--                        </tr>-->
-<!--                        </thead>-->
-<!--                        <tbody>-->
-
-<!--                        {% for open_co in informal_cos %}-->
-
-<!--                                {% if open_co.is_t_and_m %}-->
-<!--        <tr style="background-color:hsla(69, 100%, 92%);">-->
-<!--            {% else %}-->
-<!--            <tr>-->
-<!--            {% endif %}-->
-<!--                            <td><a href="{% url 'extra_work_ticket' open_co.id %}">{{open_co.cop_number}}</a></td>-->
-<!--                            <td>{{open_co.description}}</td>-->
-<!--                            <td>{{open_co.notes}}</td>-->
-<!--                        </tr>-->
-<!--                        {% endfor %}-->
-<!--                        </tbody>-->
-<!--                    </table>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
-<!--    </div>-->
-<!--{% endif %}-->
-<!--&lt;!&ndash;approved cos 6&ndash;&gt;-->
-<!--{% if approved_cos %}-->
-<!--    <div class="card">-->
-<!--        <div class="card-header" id="headingSix">-->
-<!--            <h5 class="mb-0">-->
-<!--                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSix" aria-expanded="false"-->
-<!--                        aria-controls="collapseSix">-->
-<!--                  {{approved_cos_count}}-  Approved Change Orders-->
-<!--                </button>-->
-<!--            </h5>-->
-<!--        </div>-->
-<!--        <div id="collapseSix" class="collapse hide" aria-labelledby="headingSix" data-parent="#accordion">-->
-<!--            <div class="card-body">-->
-<!--                <div class="table-responsive">-->
-<!--                    <table id="approved_changes_table" class="display table">-->
-<!--                        <thead class="colored-header">-->
-
-<!--                        <tr>-->
-<!--                            <th>CO#</th>-->
-<!--                            <th>Description</th>-->
-<!--                            <th>Notes</th>-->
-<!--                        </tr>-->
-<!--                        </thead>-->
-<!--                        <tbody>-->
-<!--                        {% for approved_co in approved_cos %}-->
-<!--                                {% if approved_co.is_t_and_m %}-->
-<!--        <tr style="background-color:hsla(69, 100%, 92%);">-->
-<!--            {% else %}-->
-<!--            <tr>-->
-<!--            {% endif %}-->
-
-<!--                            <td><a href="{% url 'extra_work_ticket' approved_co.id %}">{{approved_co.cop_number}}</a></td>-->
-
-<!--                            <td>{{approved_co.description}}</td>-->
-<!--                            <td>{{approved_co.notes}}</td>-->
-<!--                        </tr>-->
-<!--                        {% endfor %}-->
-<!--                        </tbody>-->
-<!--                    </table>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
-<!--    </div>-->
-<!--{% endif %}-->
 <!--equipment 7-->
 {% if equipments %}
     <div class="card">
@@ -1868,148 +1693,7 @@ function show_submit_button(){
         </div>
     </div>
 {% endif %}
-<!--wc not ordered 9-->
-{% if wc_not_ordereds %}
-    <div class="card">
-        <div class="card-header" id="headingNine">
-            <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseNine" aria-expanded="false"
-                        aria-controls="collapseNine">
-                    Wallcovering Not Ordered
-                </button>
-            </h5>
-        </div>
-        <div id="collapseNine" class="collapse hide" aria-labelledby="headingNine" data-parent="#accordion">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table id="tickets_table5" class="display table">
-                        <thead class="colored-header">
 
-                        <tr>
-                            <th>Code</th>
-                            <th>Vendor</th>
-                            <th>Pattern</th>
-                            <th>Notes</th>
-                        </tr>
-                        </thead>
-                        <tbody>c
-                        {% for wc_not_ordered in wc_not_ordereds %}
-                        <tr>
-                            <td>{{wc_not_ordered.code}}</td>
-                            <td>{{wc_not_ordered.vendor.company_name}}</td>
-                            <td>{{wc_not_ordered.pattern}}</td>
-                            <td>{{wc_not_ordered.notes}}</td>
-                        </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-{% endif %}
-<!--wc ordered 10-->
-{% if wc_ordereds %}
-    <div class="card">
-        <div class="card-header" id="headingTen">
-            <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTen" aria-expanded="false"
-                        aria-controls="collapseTen">
-                    Wallcovering Ordered But Not Received
-                </button>
-            </h5>
-        </div>
-        <div id="collapseTen" class="collapse hide" aria-labelledby="headingTen" data-parent="#accordion">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table id="tickets_table6" class="display table">
-                        <thead class="colored-header">
-
-                        <tr>
-                            <th>Description</th>
-                            <th>Date Ordered</th>
-                            <th>Notes</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for wc_ordered in wc_ordereds %}
-                        <tr>
-                            <td>{{wc_ordered.item_description}}</td>
-                            <td>{{wc_ordered.order.date_ordered}}</td>
-                            <td>{{wc_ordered.order.notes}}</td>
-                        </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-{% endif %}
-<!--wc ordered 11-->
-{% if packages %}
-    <div class="card">
-        <div class="card-header" id="headingEleven">
-            <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseEleven" aria-expanded="false"
-                        aria-controls="collapseEleven">
-                    Received Wallcovering
-                </button>
-            </h5>
-        </div>
-        <div id="collapseEleven" class="collapse hide" aria-labelledby="headingEleven" data-parent="#accordion">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table id="tickets_table7" class="display table">
-                        <thead class="colored-header">
-
-                        <tr>
-                            <th>Description</th>
-                            <th>Quantity</th>
-                            <th>Notes</th>
-                            <th>Sent to Job</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for package in packages %}
-                        <tr>
-                            <td>{{package.description}}
-                                {% if package.order_item1.wallcovering.code != None %}
-                                {{package.order_item1.wallcovering.code}} {{package.qnty_item1}} {{package.unit_item1}}
-                                {% endif %}
-                                {{package.order_item2.wallcovering.code}} {{package.qnty_item2}} {{package.unit_item2}}
-                                {% if package.order_item3.wallcovering.code != None %}
-                                {{package.order_item3.wallcovering.code}} {{package.qnty_item3}} {{package.unit_item3}}
-                                {% endif %}
-                                {% if package.order_item4.wallcovering.code != None %}
-                                {{package.order_item4.wallcovering.code}} {{package.qnty_item4}} {{package.unit_item4}}
-                                {% endif %}
-                                {% if package.order_item5.wallcovering.code != None %}
-                                {{package.order_item5.wallcovering.code}} {{package.qnty_item5}} {{package.unit_item5}}
-                                {% endif %}
-                            </td>
-                            <td>{{package.quantity_received}} {{package.unit}}</td>
-                            <td>{{package.notes}}</td>
-                            <td>
-                                {% if deliveries %}
-                                {% for delivery in deliveries %}
-
-                                {% if delivery.package == package %}
-                                {{delivery.description}} {{delivery.quantity_sent}} {{delivery.outgoing_event.date}}
-                                {% endif %}
-
-                                {% endfor %}
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-{% endif %}
 <!--submittals un approved-->
 {% if unapproved_items %}
 <div class="card">
@@ -2159,6 +1843,106 @@ function show_submit_button(){
     </div>
 {% endif %}
 
+<!--wallcovering-->
+{% if wallcoverings %}
+
+    <div class="card">
+        <div class="card-header" id="headingWC">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseWC" aria-expanded="false"
+                        aria-controls="collapseFourteen">
+                    {{wallcovering_count}}- Wallcoverings
+                </button>
+            </h5>
+        </div>
+        <div id="collapseWC" class="collapse hide" aria-labelledby="headingWC" data-parent="#accordion">
+            <div class="card-body">
+
+                <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Code / Pattern</th>
+                            <th class="text-right">Quantity</th>
+                            <th class="text-center">Submittal</th>
+                            <th class="text-center">Order</th>
+                            <th class="text-center">Sent</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for wc in wallcoverings %}
+                            <tr class="clickable-row"
+                            data-href="{% url 'wallcovering_detail' wc.id %}"
+                            style="cursor:pointer;">
+                                <td>
+                                    <a href="{% url 'wallcovering_detail' wc.id %}" class="font-weight-bold">
+                                        {% if wc.code %}{{ wc.code }}{% else %}WC (No Code) {% endif %}
+                                    </a>
+                                    <br>
+                                    <span class="text-muted">
+                                        {{ wc.vendor }} {{ wc.pattern }}
+                                    </span>
+                                </td>
+
+                                <td class="text-right">
+                                    {{ wc.display_quantity }}
+                                </td>
+
+                                <td class="text-center">
+                                    {% if wc.is_owner_furnished %}
+                                        <span class="badge badge-info">Owner Furnished</span>
+                                    {% elif wc.submittal_status == "Approved" %}
+                                        <span class="badge badge-success">Approved</span>
+                                    {% elif wc.submittal_status == "Submitted" %}
+                                        <span class="badge badge-primary">Submitted</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">Not Submitted</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="text-center">
+                                    {% if wc.is_owner_furnished %}
+                                        <span class="badge badge-info">Owner Furnished</span>
+                                    {% elif wc.ordering_status == "Received" %}
+                                        <span class="badge badge-success">Received</span>
+                                    {% elif wc.ordering_status == "Partially Received" %}
+                                        <span class="badge badge-info">Partially Received</span>
+                                    {% elif wc.ordering_status == "Ordered" %}
+                                        <span class="badge badge-warning">Ordered</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">Not Ordered</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="text-center">
+                                    {% if wc.is_owner_furnished %}
+                                        <span class="badge badge-info">Owner Furnished</span>
+                                    {% elif wc.sent_status == "Sent to Job" %}
+                                        <span class="badge badge-success">Sent to Job</span>
+                                    {% elif wc.sent_status == "Partially Sent" %}
+                                        <span class="badge badge-warning">Partially Sent</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">Not Sent</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-3">
+                                    No wallcovering has been entered for this job.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            </div>
+        </div>
+    </div>
+
+{% endif %}
 <!--Safety 14-->
 
     <div class="card">
@@ -2349,4 +2133,18 @@ function show_submit_button(){
 </body>
 </html>
 
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).on('click', '.clickable-row', function (e) {
+
+    if ($(e.target).closest('a, button').length) {
+        return;
+    }
+
+    window.location = $(this).data('href');
+
+});
+</script>
 {% endblock %}

@@ -17,6 +17,7 @@ from xhtml2pdf import pisa
 from wallcovering.models import Wallcovering
 import os
 
+
 @login_required(login_url='/accounts/login')
 #THIS IS NOT USED RIGHT NOW I DONT THINK
 def submittals_item_close(request, id):
@@ -170,7 +171,9 @@ def submittals_home(request):
 @login_required(login_url='/accounts/login')
 def submittals_new(request, job_number):
     job = get_object_or_404(Jobs, job_number=job_number)
-
+    wallcoverings = Wallcovering.objects.filter(
+        job_number=job
+    ).order_by("code", "pattern")
     max_number = Submittals.objects.filter(job_number=job).aggregate(
         Max('submittal_number')
     )['submittal_number__max']
@@ -192,13 +195,35 @@ def submittals_new(request, job_number):
     ).select_related('submittalitem').order_by('submittalitem__description')
 
     if request.method == 'POST':
+        if "add_wallcovering_item" in request.POST:
+            wallcovering_id = request.POST.get("wallcovering_id")
+            submittal_type = request.POST.get("wallcovering_submittal_type")
+
+            wallcovering = get_object_or_404(
+                Wallcovering,
+                id=wallcovering_id,
+                job_number=job
+            )
+
+            description = f"{wallcovering.code} {wallcovering.vendor.company_name} {wallcovering.pattern}"
+
+            if submittal_type:
+                description = f"{description} - {submittal_type}"
+
+            SubmittalItems.objects.create(
+                job_number=job,
+                wallcovering_id=wallcovering,
+                description=description,
+            )
+
+            return redirect(request.path)
         description = request.POST.get('description', '').strip()
-        item_descriptions = request.POST.getlist('item_description')
-        item_notes = request.POST.getlist('item_notes')
-        item_quantities = request.POST.getlist('item_quantity')
+        # item_descriptions = request.POST.getlist('item_description')
+        # item_notes = request.POST.getlist('item_notes')
+        # item_quantities = request.POST.getlist('item_quantity')
         #item_wallcoverings = request.POST.getlist('item_wallcovering')
-        selected_item_ids = request.POST.getlist('existing_item_ids')
-        selected_unlinked_approval_ids = request.POST.getlist('existing_unlinked_approval_ids')
+        # selected_item_ids = request.POST.getlist('existing_item_ids')
+        # selected_unlinked_approval_ids = request.POST.getlist('existing_unlinked_approval_ids')
 
         if not description:
             messages.error(request, "Please enter a submittal description.")
@@ -229,113 +254,113 @@ def submittals_new(request, job_number):
         # ===================================
         # CASE 1: EXISTING ITEMS SELECTED
         # ===================================
-        if selected_item_ids or selected_unlinked_approval_ids:
-
-            # ---- Items with NO approvals yet ----
-            for item_id in selected_item_ids:
-                item = SubmittalItems.objects.filter(
-                    id=item_id,
-                    job_number=job
-                ).first()
-
-                if item:
-                    SubmittalApprovals.objects.create(
-                        submittal=submittal,
-                        submittalitem=item,
-                        is_approved=None,
-                        notes='',
-                        quantity=0,
-                        date_reviewed=None,
-                    )
-                    if employee:
-                        SubmittalItemNotes.objects.create(
-                            submittal=submittal,
-                            submittalitem=item,
-                            date=timezone.now().date(),
-                            user=employee,
-                            note=f"New submittal {submittal.submittal_number} created"
-                        )
-
-            # ---- Existing approvals NOT yet linked ----
-            for approval_id in selected_unlinked_approval_ids:
-                approval = SubmittalApprovals.objects.filter(
-                    id=approval_id,
-                    submittal__isnull=True,
-                    submittalitem__job_number=job
-                ).first()
-
-                if approval:
-                    approval.submittal = submittal
-                    approval.save()
-                    if employee:
-                        SubmittalItemNotes.objects.create(
-                            submittal=submittal,
-                            submittalitem=approval.submittalitem,
-                            date=timezone.now().date(),
-                            user=employee,
-                            note=f"New submittal {submittal.submittal_number} created"
-                        )
-        else:
-            for i in range(len(item_descriptions)):
-                item_description = item_descriptions[i].strip() if i < len(item_descriptions) else ''
-                item_note = item_notes[i].strip() if i < len(item_notes) else ''
-                item_quantity_raw = item_quantities[i].strip() if i < len(item_quantities) else ''
-                #item_wallcovering_id = item_wallcoverings[i].strip() if i < len(item_wallcoverings) else ''
-
-                if not item_description:
-                    continue
-
-                #wallcovering_obj = None
-                # if item_wallcovering_id:
-                #     wallcovering_obj = Wallcovering.objects.filter(id=item_wallcovering_id).first()
-
-                try:
-                    quantity = int(item_quantity_raw) if item_quantity_raw else 0
-                except ValueError:
-                    quantity = 0
-
-                submittal_item = SubmittalItems.objects.create(
-                    description=item_description,
-                    notes=item_note,
-                    job_number=submittal.job_number,
-                )
-
-                approval = SubmittalApprovals.objects.create(
-                    submittal=submittal,
-                    submittalitem=submittal_item,
-                    quantity=quantity,
-                    is_approved=None,
-                    date_reviewed=None,
-                    notes='',
-                )
-
-                if employee:
-                    SubmittalItemNotes.objects.create(
-                        submittal=submittal,
-                        submittalitem=submittal_item,
-                        date=timezone.now().date(),
-                        user=employee,
-                        note=f"New submittal {submittal.submittal_number} created"
-                    )
-
-                items_created += 1
-
-            # if items_created == 0:
-            #     submittal.delete()
-            #     messages.error(request, "Please add at least one submittal item.")
-            #     return render(request, 'submittals_new.html', {
-            #         'job': job,
-            #         'next_submittal_number': next_submittal_number,
-            #         'wallcoverings': wallcoverings,
-            #     })
-
-            # if employee:
-            #     SubmittalNotes.objects.create(
-            #         submittal=submittal,
-            #         date=timezone.now().date(),
-            #         user=employee,
-            #         note=f"New submittal {submittal.submittal_number} created"
-            #     )
+        # if selected_item_ids or selected_unlinked_approval_ids:
+        #
+        #     # ---- Items with NO approvals yet ----
+        #     for item_id in selected_item_ids:
+        #         item = SubmittalItems.objects.filter(
+        #             id=item_id,
+        #             job_number=job
+        #         ).first()
+        #
+        #         if item:
+        #             SubmittalApprovals.objects.create(
+        #                 submittal=submittal,
+        #                 submittalitem=item,
+        #                 is_approved=None,
+        #                 notes='',
+        #                 quantity=0,
+        #                 date_reviewed=None,
+        #             )
+        #             if employee:
+        #                 SubmittalItemNotes.objects.create(
+        #                     submittal=submittal,
+        #                     submittalitem=item,
+        #                     date=timezone.now().date(),
+        #                     user=employee,
+        #                     note=f"New submittal {submittal.submittal_number} created"
+        #                 )
+        #
+        #     # ---- Existing approvals NOT yet linked ----
+        #     for approval_id in selected_unlinked_approval_ids:
+        #         approval = SubmittalApprovals.objects.filter(
+        #             id=approval_id,
+        #             submittal__isnull=True,
+        #             submittalitem__job_number=job
+        #         ).first()
+        #
+        #         if approval:
+        #             approval.submittal = submittal
+        #             approval.save()
+        #             if employee:
+        #                 SubmittalItemNotes.objects.create(
+        #                     submittal=submittal,
+        #                     submittalitem=approval.submittalitem,
+        #                     date=timezone.now().date(),
+        #                     user=employee,
+        #                     note=f"New submittal {submittal.submittal_number} created"
+        #                 )
+        # else:
+        #     for i in range(len(item_descriptions)):
+        #         item_description = item_descriptions[i].strip() if i < len(item_descriptions) else ''
+        #         item_note = item_notes[i].strip() if i < len(item_notes) else ''
+        #         item_quantity_raw = item_quantities[i].strip() if i < len(item_quantities) else ''
+        #         #item_wallcovering_id = item_wallcoverings[i].strip() if i < len(item_wallcoverings) else ''
+        #
+        #         if not item_description:
+        #             continue
+        #
+        #         #wallcovering_obj = None
+        #         # if item_wallcovering_id:
+        #         #     wallcovering_obj = Wallcovering.objects.filter(id=item_wallcovering_id).first()
+        #
+        #         try:
+        #             quantity = int(item_quantity_raw) if item_quantity_raw else 0
+        #         except ValueError:
+        #             quantity = 0
+        #
+        #         submittal_item = SubmittalItems.objects.create(
+        #             description=item_description,
+        #             notes=item_note,
+        #             job_number=submittal.job_number,
+        #         )
+        #
+        #         approval = SubmittalApprovals.objects.create(
+        #             submittal=submittal,
+        #             submittalitem=submittal_item,
+        #             quantity=quantity,
+        #             is_approved=None,
+        #             date_reviewed=None,
+        #             notes='',
+        #         )
+        #
+        #         if employee:
+        #             SubmittalItemNotes.objects.create(
+        #                 submittal=submittal,
+        #                 submittalitem=submittal_item,
+        #                 date=timezone.now().date(),
+        #                 user=employee,
+        #                 note=f"New submittal {submittal.submittal_number} created"
+        #             )
+        #
+        #         items_created += 1
+        #
+        #     # if items_created == 0:
+        #     #     submittal.delete()
+        #     #     messages.error(request, "Please add at least one submittal item.")
+        #     #     return render(request, 'submittals_new.html', {
+        #     #         'job': job,
+        #     #         'next_submittal_number': next_submittal_number,
+        #     #         'wallcoverings': wallcoverings,
+        #     #     })
+        #
+        #     # if employee:
+        #     #     SubmittalNotes.objects.create(
+        #     #         submittal=submittal,
+        #     #         date=timezone.now().date(),
+        #     #         user=employee,
+        #     #         note=f"New submittal {submittal.submittal_number} created"
+        #     #     )
 
         messages.success(request, "Submittal created successfully.")
         return redirect('submittal_send', submittal.id)
@@ -344,7 +369,8 @@ def submittals_new(request, job_number):
         'job': job,
         'next_submittal_number': next_submittal_number,
         'available_items_without_approvals':available_items_without_approvals,
-        'available_unlinked_approvals':available_unlinked_approvals
+        'available_unlinked_approvals':available_unlinked_approvals,
+        "wallcoverings": wallcoverings,
     })
 
 
@@ -364,6 +390,22 @@ def submittals_new_selectjob(request):
 def submittal_send(request, submittal_id):
     submittal = get_object_or_404(Submittals, id=submittal_id)
     job = submittal.job_number
+    wallcoverings = Wallcovering.objects.filter(
+        job_number=job
+    ).order_by("code", "pattern")
+
+    available_items_without_approvals = SubmittalItems.objects.filter(
+        job_number=job,
+        is_no_longer_used=False,
+        submittalapprovals__isnull=True
+    ).order_by('description')
+
+    available_unlinked_approvals = SubmittalApprovals.objects.filter(
+        submittal__isnull=True,
+        submittalitem__job_number=job,
+        submittalitem__is_no_longer_used=False
+    ).select_related('submittalitem').order_by('submittalitem__description')
+
 
     approvals = SubmittalApprovals.objects.filter(
         submittal=submittal
@@ -434,6 +476,106 @@ def submittal_send(request, submittal_id):
             break
 
     if request.method == 'POST':
+        if "add_pending_items" in request.POST:
+            item_ids = request.POST.getlist("pending_item_ids[]")
+            approval_ids = request.POST.getlist("pending_approval_ids[]")
+
+            added_count = 0
+
+            for item_id in item_ids:
+                item = get_object_or_404(
+                    SubmittalItems,
+                    id=item_id,
+                    job_number=job,
+                    is_no_longer_used=False,
+                )
+
+                SubmittalApprovals.objects.create(
+                    submittal=submittal,
+                    submittalitem=item,
+                    is_approved=None,
+                    notes="",
+                    quantity=0,
+                    date_reviewed=None,
+                )
+
+                added_count += 1
+
+            for approval_id in approval_ids:
+                approval = get_object_or_404(
+                    SubmittalApprovals,
+                    id=approval_id,
+                    submittal__isnull=True,
+                    submittalitem__job_number=job,
+                    submittalitem__is_no_longer_used=False,
+                )
+
+                approval.submittal = submittal
+                approval.save()
+
+                added_count += 1
+
+            # if employee and added_count:
+            #     SubmittalNotes.objects.create(
+            #         submittal=submittal,
+            #         date=timezone.now().date(),
+            #         user=employee,
+            #         note=f"Added {added_count} pending item(s) to submittal {submittal.submittal_number}",
+            #     )
+
+            messages.success(request, f"Added {added_count} pending item(s).")
+            return redirect("submittal_send", submittal.id)
+
+        if "add_wallcovering_item" in request.POST:
+            wallcovering_id = request.POST.get("wallcovering_id")
+            submittal_type = request.POST.get("wallcovering_submittal_type")
+
+            wallcovering = get_object_or_404(
+                Wallcovering,
+                id=wallcovering_id,
+                job_number=job,
+            )
+
+            description = f"{wallcovering.code} {wallcovering.vendor.company_name} {wallcovering.pattern}"
+
+            if submittal_type:
+                description = f"{description} - {submittal_type}"
+
+            new_item = SubmittalItems.objects.create(
+                job_number=job,
+                wallcovering_id=wallcovering,
+                description=description,
+                notes="",
+            )
+
+            new_approval = SubmittalApprovals.objects.create(
+                submittal=submittal,
+                submittalitem=new_item,
+                is_approved=None,
+                notes="",
+                quantity=0,
+                date_reviewed=None,
+            )
+
+            request.session["new_row_id"] = new_approval.id
+
+            # if employee:
+            #     SubmittalNotes.objects.create(
+            #         submittal=submittal,
+            #         date=timezone.now().date(),
+            #         user=employee,
+            #         note=f"Added wallcovering item: {description}",
+            #     )
+
+            messages.success(request, "Wallcovering item added.")
+            return redirect("submittal_send", submittal.id)
+
+
+        if "save_submittal_description" in request.POST:
+            submittal.description = request.POST.get("submittal_description")
+            submittal.save()
+
+            return redirect(request.path)
 
         if "add_note" in request.POST:
             new_note = request.POST.get("new_note", "").strip()
@@ -826,6 +968,10 @@ def submittal_send(request, submittal_id):
             'has_history': other_submittal_history_exists,
         })
     new_row_id = request.session.pop('new_row_id', None)
+    pending_item_count = (
+            available_items_without_approvals.count()
+            + available_unlinked_approvals.count()
+    )
     send_data = {
         'submittal': submittal,
         'item_rows': item_rows,
@@ -851,6 +997,10 @@ def submittal_send(request, submittal_id):
         'mc_folder_path': mc_folder_path,
         'can_open_folder': True,
         'transmittal_exists': transmittal_exists,
+        "wallcoverings": wallcoverings,
+        "available_items_without_approvals":available_items_without_approvals,
+        "available_unlinked_approvals":available_unlinked_approvals,
+        "pending_item_count": pending_item_count,
     }
 
     return render(request, 'submittal_send.html', send_data)
@@ -1087,3 +1237,32 @@ def job_submittals_summary(request, job_number):
     }
 
     return render(request, "job_submittals_summary.html", context)
+
+
+
+
+
+def submittal_item_link_wallcovering(request, item_id):
+    item = get_object_or_404(SubmittalItems, id=item_id)
+
+    if request.method == "POST":
+        wallcovering_id = request.POST.get("wallcovering_id")
+
+        if wallcovering_id:
+            wallcovering = get_object_or_404(
+                Wallcovering,
+                id=wallcovering_id,
+                job_number=item.job_number
+            )
+
+            item.wallcovering_id = wallcovering
+            item.save()
+
+            messages.success(request, "Wallcovering linked.")
+        else:
+            item.wallcovering_id = None
+            item.save()
+
+            messages.success(request, "Wallcovering link removed.")
+
+    return redirect(request.META.get("HTTP_REFERER", "submittals_home"))

@@ -311,6 +311,33 @@ def index(request):
             if not CompletedToolboxTalks.objects.filter(master=toolbox_talk, employee=employee).exists():
                 missing_toolbox_talks +=1
     send_data['missing_toolbox_talks'] = missing_toolbox_talks
+    wallcoverings = Wallcovering.objects.filter(
+        job_number__is_closed=False,
+        is_owner_furnished=False
+    ).select_related(
+        "job_number",
+        "vendor"
+    )
+
+    wc_not_submitted_count = 0
+    wc_not_approved_count = 0
+    wc_approved_not_ordered_count = 0
+
+    for wc in wallcoverings:
+
+        if wc.submittal_status() == "Not Submitted":
+            wc_not_submitted_count += 1
+
+        elif wc.submittal_status() == "Submitted":
+            wc_not_approved_count += 1
+
+        elif wc.submittal_status() == "Approved" and wc.ordering_status() == "Not Ordered":
+            wc_approved_not_ordered_count += 1
+
+    send_data['wc_not_submitted_count'] =wc_not_submitted_count
+    send_data['wc_not_approved_count'] =wc_not_approved_count
+    send_data['wc_approved_not_ordered_count'] =wc_approved_not_ordered_count
+
     return render(request, 'index.html', send_data)
 
 
