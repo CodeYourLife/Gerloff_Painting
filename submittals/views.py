@@ -1244,7 +1244,7 @@ def job_submittals_summary(request, job_number):
 
 def submittal_item_link_wallcovering(request, item_id):
     item = get_object_or_404(SubmittalItems, id=item_id)
-
+    print("HERE")
     if request.method == "POST":
         wallcovering_id = request.POST.get("wallcovering_id")
 

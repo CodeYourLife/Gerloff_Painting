@@ -1013,7 +1013,17 @@ select {
 
                                                 </button>
 
-<div class="modal fade" id="wcLinkModal{{ row.item.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+
+                                            {% endif %}
+
+                                        </td>
+                                    </tr>
+                                </table>
+                            </form>
+
+                        </td>
+                    </tr>
+                    <div class="modal fade" id="wcLinkModal{{ row.item.id }}" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
 
@@ -1067,14 +1077,6 @@ select {
         </div>
     </div>
 </div>
-                                            {% endif %}
-
-                                        </td>
-                                    </tr>
-                                </table>
-                            </form>
-                        </td>
-                    </tr>
                     {% empty %}
                     <tr>
                         <td colspan="7">No items found.</td>
