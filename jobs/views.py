@@ -688,6 +688,11 @@ def upload_new_job(request):
             if sheet_obj.cell(row=36, column=2).value: job.is_off_hours = True
             job.start_date_checked = date.today()
             job.save()
+            if job.has_wallcovering:
+                Wallcovering.objects.create(
+                    job_number=job,
+                    pattern="Default at Booking-Please Complete",
+                )
             temp_note = "New Job Booked By: " + request.user.first_name + " " + request.user.last_name
             if sheet_obj.cell(row=37, column=2).value: temp_note = temp_note + ": " + sheet_obj.cell(row=37,
                                                                                                      column=2).value
@@ -1061,31 +1066,7 @@ def job_page(request, jobnumber):
     open_changeorders = ChangeOrders.objects.filter(job_number=selectedjob, is_approved_to_bill = False,is_closed=False).order_by('id')
     send_data['open_changeorders'] = open_changeorders
     send_data['open_changeorders_count'] = open_changeorders.count()
-    # tickets_not_signed = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
-    #                                                  is_ticket_signed=False,
-    #                                                  ) | ChangeOrders.objects.filter(
-    #     job_number=selectedjob, is_t_and_m=True, is_ticket_signed=False, ewt__isnull=False).order_by('cop_number')
-    # send_data['tickets_not_signed'] = tickets_not_signed
-    # send_data['tickets_not_signed_count'] = tickets_not_signed.count()
-    # tickets_not_sent = ChangeOrders.objects.filter(job_number=selectedjob, is_t_and_m=True,
-    #                                                is_ticket_signed=True, date_sent__isnull=True).order_by('cop_number')
-    # send_data['tickets_not_sent'] = tickets_not_sent
-    # send_data['tickets_not_sent_count'] = tickets_not_sent.count()
-    # open_cos = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
-    #                                        is_approved_to_bill=False, date_sent__isnull=False).order_by('cop_number')
-    # send_data['open_cos'] = open_cos
-    # send_data['open_cos_count'] = open_cos.count()
-    # informal_cos = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
-    #                                            is_approved_to_bill=False, is_approved=True).order_by('cop_number')
-    # send_data['informal_cos'] = informal_cos
-    # send_data['informal_cos_count'] = informal_cos.count()
-    # approved_cos = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,
-    #                                            is_approved_to_bill=True).order_by('cop_number')
-    # send_data['approved_cos'] = approved_cos
-    # send_data['approved_cos_count'] = approved_cos.count()
-    # changeorders_not_sent = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,date_sent__isnull=False,is_t_and_m=False).order_by('cop_number')
-    # send_data['changeorders_not_sent'] = changeorders_not_sent
-    # send_data['changeorders_not_sent_count'] = changeorders_not_sent.count()
+
     send_data['equipments'] = Inventory.objects.filter(job_number=selectedjob, is_closed=False).order_by(
         'inventory_type')
     send_data['rentals'] = Rentals.objects.filter(job_number=selectedjob, off_rent_number__isnull=True, is_closed=False)
@@ -1094,12 +1075,7 @@ def job_page(request, jobnumber):
         send_data['has_equipment'] = True
     if Rentals.objects.filter(job_number=selectedjob, off_rent_number__isnull=True).exists():
         send_data['has_rentals'] = True
-    send_data['wallcovering2'] = Wallcovering.objects.filter(job_number=selectedjob)
-    send_data['wc_not_ordereds'] = Wallcovering.objects.filter(job_number=selectedjob,
-                                                               orderitems1__isnull=True)
-    send_data['wc_ordereds'] = OrderItems.objects.filter(order__job_number=selectedjob, is_satisfied=False)
-    send_data['packages'] = Packages.objects.filter(delivery__order__job_number=selectedjob)
-    send_data['deliveries'] = OutgoingItem.objects.filter(outgoing_event__job_number=selectedjob)
+
     approved_items = []
     unapproved_items = []
 
@@ -1140,14 +1116,7 @@ def job_page(request, jobnumber):
                 'submittal_number':approval.submittal.submittal_number,
             })
 
-        # else:
-        #     approval = approvals.last()
-        #     print("3")
-        #     unapproved_items.append({
-        #         'item': item,
-        #         'approval': approval,
-        #         'notes': f"{item.notes or ''}. {approval.notes or ''}".strip(". "),
-        #     })
+
     send_data['approved_items'] = approved_items
     send_data['unapproved_items'] = unapproved_items
     send_data['approved_items_count'] = len(approved_items)
@@ -1222,6 +1191,20 @@ def job_page(request, jobnumber):
     send_data['man_hours_budgeted'] = selectedjob.man_hours_budgeted
     send_data['man_hours_used'] = selectedjob.hours_to_date()
     send_data['manhours_notes'] = JobNotes.objects.filter(job_number=selectedjob, type="manhours_note")
+
+    wallcoverings = Wallcovering.objects.filter(
+        job_number=selectedjob
+    ).select_related(
+        "job_number",
+        "vendor"
+    ).order_by(
+        "code",
+        "pattern"
+    )
+
+    send_data["wallcoverings"] = wallcoverings
+    send_data["wallcovering_count"] = wallcoverings.count()
+
     if go_to_pickup:
         return redirect('request_pickup', jobnumber=selectedjob.job_number, item='ALL', pickup='ALL', status='ALL')
     else:

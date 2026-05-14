@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+
+<div class="container-fluid mt-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-0">Send Wallcovering to Job</h4>
+            <small class="text-muted">
+                {{ wallcovering.code }} - {{ wallcovering.pattern }}
+            </small>
+        </div>
+
+        <a href="{% url 'wallcovering_detail' wallcovering.id %}" class="btn btn-secondary">
+            Cancel
+        </a>
+    </div>
+
+    <form method="post" id="sendToJobForm">
+        {% csrf_token %}
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-success text-white">
+                <strong>Delivery Information</strong>
+            </div>
+
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label>Date Sent</label>
+                        <input type="date"
+                               name="date"
+                               class="form-control"
+                               value="{% if is_edit %}{{ outgoing_event.date|date:'Y-m-d' }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}"
+                               required>
+                    </div>
+
+                    <div class="form-group col-md-3">
+                        <label>Delivered By</label>
+                        <input type="text"
+       name="delivered_by"
+       class="form-control"
+       value="{% if is_edit %}{{ outgoing_event.delivered_by|default:'' }}{% endif %}"
+       required>
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        <label>Notes</label>
+                        <input type="text"
+       name="notes"
+       class="form-control"
+       value="{% if is_edit %}{{ outgoing_event.notes|default:'' }}{% endif %}"
+       placeholder="Delivery notes, who received it, truck, etc.">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <strong>Packages Sent</strong>
+
+            </div>
+
+            <div class="card-body" id="packagesContainer">
+
+                {% if is_edit %}
+
+    {% for outgoing_item in outgoing_items %}
+
+        <div class="package-row border rounded p-3 mb-3 bg-light">
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong>Package</strong>
+
+                <button type="button"
+                        class="btn btn-sm btn-outline-danger removePackageBtn">
+                    Remove
+                </button>
+            </div>
+
+            <div class="form-row">
+
+                <div class="form-group col-md-7">
+                    <label>Available Package</label>
+
+                    <select name="package[]" class="form-control package-select" required>
+                        <option value="">Select Package</option>
+
+                        {% for package in available_packages %}
+                            <option value="{{ package.id }}"
+                                    data-remaining="{{ package.remaining_to_send }}"
+                                    data-contents="{{ package.contents }}"
+                                    {% if outgoing_item.package.id == package.id %}selected{% endif %}>
+
+                                {{ package.type }} -
+                                {{ package.contents }} -
+                                {% if package.notes %}{{ package.notes }} -{% endif %}
+                                | Received: {{ package.quantity_received|intcomma }}
+                                | Sent To Job: {{ package.sent_to_date|intcomma }}
+
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group col-md-2">
+                    <label>Qty Sent</label>
+
+                    <input type="number"
+                           name="quantity_sent[]"
+                           class="form-control quantity-sent"
+                           min="1"
+                           step="1"
+                           value="{{ outgoing_item.quantity_sent }}"
+                           required>
+                </div>
+
+            </div>
+
+        </div>
+
+    {% endfor %}
+
+{% else %}
+
+    <div class="package-row border rounded p-3 mb-3 bg-light">
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong>Package</strong>
+
+            <button type="button"
+                    class="btn btn-sm btn-outline-danger removePackageBtn"
+                    style="display:none;">
+                Remove
+            </button>
+        </div>
+
+        <div class="form-row">
+
+            <div class="form-group col-md-7">
+                <label>Available Package</label>
+
+                <select name="package[]" class="form-control package-select" required>
+                    <option value="">Select Package</option>
+
+                    {% for package in available_packages %}
+                        <option value="{{ package.id }}"
+                                data-remaining="{{ package.remaining_to_send }}"
+                                data-contents="{{ package.contents }}">
+
+                            {{ package.type }} -
+                            {{ package.contents }} -
+                            {% if package.notes %}{{ package.notes }} -{% endif %}
+                            | Received: {{ package.quantity_received|intcomma }}
+                            | Sent To Job: {{ package.sent_to_date|intcomma }}
+
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group col-md-2">
+                <label>Qty Sent</label>
+
+                <input type="number"
+                       name="quantity_sent[]"
+                       class="form-control quantity-sent"
+                       min="1"
+                       step="1"
+                       required>
+            </div>
+
+        </div>
+
+    </div>
+
+{% endif %}
+
+            </div>
+                            <div class="text-center mt-3 mb-4">
+<button type="button" id="addPackageBtn" class="btn btn-danger font-weight-bold">
+                    + Add Package
+                </button>
+                    </div>
+        </div>
+
+        <button type="submit" class="btn btn-success btn-lg">
+            Save
+        </button>
+
+        <a href="{% url 'wallcovering_detail' wallcovering.id %}" class="btn btn-secondary btn-lg">
+            Cancel
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function () {
+
+    function refreshPackageDropdowns() {
+        let selectedPackages = [];
+
+        $('.package-select').each(function () {
+            const selectedValue = $(this).val();
+
+            if (selectedValue) {
+                selectedPackages.push(selectedValue);
+            }
+        });
+
+        $('.package-select').each(function () {
+            const currentSelect = $(this);
+            const currentValue = currentSelect.val();
+
+            currentSelect.find('option').each(function () {
+                const optionValue = $(this).val();
+
+                if (!optionValue) {
+                    return;
+                }
+
+                if (selectedPackages.includes(optionValue) && optionValue !== currentValue) {
+                    $(this).prop('disabled', true);
+                } else {
+                    $(this).prop('disabled', false);
+                }
+            });
+
+            currentSelect.trigger('change.select2');
+        });
+    }
+
+    function updatePackageMaxValues() {
+        $('.package-select').each(function () {
+            const row = $(this).closest('.package-row');
+            const selected = $(this).find('option:selected');
+            const remaining = selected.data('remaining');
+
+            if (remaining) {
+                row.find('.quantity-sent')
+                    .attr('placeholder', remaining)
+                    .attr('max', remaining);
+            }
+        });
+    }
+
+    function initSelect2(scope) {
+        $(scope).find('.package-select').select2({
+            width: '100%',
+            placeholder: 'Select Package'
+        });
+    }
+
+    function updateRemoveButtons() {
+        if ($('.package-row').length <= 1) {
+            $('.removePackageBtn').hide();
+        } else {
+            $('.removePackageBtn').show();
+        }
+    }
+
+    initSelect2(document);
+
+    $('#addPackageBtn').on('click', function () {
+        const firstRow = $('.package-row').first();
+
+        firstRow.find('.package-select').select2('destroy');
+
+        const newRow = firstRow.clone();
+
+        firstRow.find('.package-select').select2({
+            width: '100%',
+            placeholder: 'Select Package'
+        });
+
+        newRow.find('select[name="package[]"]').val('');
+        newRow.find('input[name="quantity_sent[]"]').val('').attr('placeholder', '').removeAttr('max');
+
+        $('#packagesContainer').append(newRow);
+
+        initSelect2(newRow);
+        updatePackageMaxValues();
+        updateRemoveButtons();
+        refreshPackageDropdowns();
+    });
+
+    $(document).on('click', '.removePackageBtn', function () {
+        $(this).closest('.package-row').remove();
+
+        updatePackageMaxValues();
+        updateRemoveButtons();
+        refreshPackageDropdowns();
+    });
+
+    $(document).on('change', '.package-select', function () {
+        const row = $(this).closest('.package-row');
+        const selected = $(this).find('option:selected');
+        const remaining = selected.data('remaining');
+
+        if (remaining) {
+            row.find('.quantity-sent')
+                .attr('placeholder', remaining)
+                .attr('max', remaining);
+        } else {
+            row.find('.quantity-sent')
+                .attr('placeholder', '')
+                .removeAttr('max');
+        }
+
+        refreshPackageDropdowns();
+    });
+
+    $(document).on('input', '.quantity-sent', function () {
+        const input = $(this);
+
+        const max = parseInt(input.attr('max')) || 0;
+        let value = parseInt(input.val()) || 0;
+
+        if (max > 0 && value > max) {
+            input.val(max);
+            alert("You cannot send more packages than are available.");
+        }
+    });
+
+    $('#sendToJobForm').on('submit', function (e) {
+        let errorMessage = "";
+        let hasPackage = false;
+
+        $('.package-row').each(function () {
+            const row = $(this);
+            const packageId = row.find('.package-select').val();
+            const qty = row.find('.quantity-sent').val();
+            const remaining = parseInt(row.find('.package-select option:selected').data('remaining')) || 0;
+
+            if (packageId || qty) {
+                if (!packageId) {
+                    errorMessage = "Each row needs a package selected.";
+                    return false;
+                }
+
+                if (!qty || parseInt(qty) <= 0) {
+                    errorMessage = "Each selected package needs a quantity greater than 0.";
+                    return false;
+                }
+
+                if (parseInt(qty) > remaining) {
+                    errorMessage = "You cannot send more packages than are remaining.";
+                    return false;
+                }
+
+                hasPackage = true;
+            }
+        });
+
+        if (errorMessage) {
+            e.preventDefault();
+            alert(errorMessage);
+            return false;
+        }
+
+        if (!hasPackage) {
+            e.preventDefault();
+            alert("Please select at least one package to send.");
+            return false;
+        }
+    });
+
+    updatePackageMaxValues();
+    refreshPackageDropdowns();
+    updateRemoveButtons();
+
+});
+</script>
+{% endblock %}

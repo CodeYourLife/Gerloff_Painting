@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid mt-3">
+
+    <h4 class="mb-3">New Wallcovering</h4>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-dark text-white">
+                <strong>Wallcovering Information</strong>
+            </div>
+
+            <div class="card-body">
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>Job</label>
+                        <select name="job_number" class="form-control select2" required>
+                            <option value="">Select Job</option>
+                            {% for job in jobs %}
+                                <option value="{{ job.job_number }}">
+                                    {{ job.job_number }} {{job.job_name}}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group col-md-3">
+                        <label>Code</label>
+                        <input type="text" name="code" class="form-control">
+                    </div>
+
+                    <div class="form-group col-md-3">
+                        <label>Vendor</label>
+                        <select name="vendor" class="form-control select2-tags" required>
+                            <option value="">Select or Type Vendor</option>
+                            {% for v in vendors %}
+                                <option value="{{ v.company_name }}">
+                                    {{ v.company_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                    <label>Pattern</label>
+                    <input type="text" name="pattern" class="form-control" required>
+                    </div>
+
+                    <div class="form-group col-md-4">
+                        <label>Estimated Quantity</label>
+                        <input type="number" name="estimated_quantity" class="form-control">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Estimated Unit</label>
+                        <input type="text" name="estimated_unit" class="form-control">
+                    </div>
+
+                </div>
+
+                <div class="form-row">
+
+                    <div class="form-group col-md-4">
+                        <label>Roll Width</label>
+                        <input type="text" name="roll_width" class="form-control">
+                    </div>
+
+                    <div class="form-group col-md-4">
+                        <label>Roll Length</label>
+                        <input type="text" name="roll_length" class="form-control">
+                    </div>
+                    
+                    <div class="form-group col-md-4">
+                        <label>Increment Requirement</label>
+                        <input type="text"
+                               name="increment_requirement"
+                               class="form-control">
+                    </div>
+
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label>Vertical Repeat</label>
+                        <input type="text" name="vertical_repeat" class="form-control">
+                    </div>
+
+                    <div class="form-group col-md-4">
+                        <label>Cut Charge</label>
+                        <input type="text" name="cut_charge" class="form-control">
+                    </div>
+
+                    <div class="form-group col-md-4">
+
+                        <div class="form-check">
+                            <input type="checkbox" name="is_owner_furnished" class="form-check-input">
+                            <label class="form-check-label">Owner Furnished</label>
+                        </div>
+
+                        <div class="form-check">
+                            <input type="checkbox" name="is_random_reverse" class="form-check-input">
+                            <label class="form-check-label">Random Match</label>
+                        </div>
+
+                        <div class="form-check">
+                            <input type="checkbox" name="is_repeat" class="form-check-input">
+                            <label class="form-check-label">Repeat Pattern</label>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea name="notes" class="form-control"></textarea>
+                </div>
+
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-success btn-lg">
+            Save Wallcovering
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+<script>
+$(document).ready(function () {
+
+    $('.select2').select2({
+        width: '100%',
+        placeholder: 'Search Job...'
+    });
+
+    $('.select2-tags').select2({
+        width: '100%',
+        tags: true,
+        placeholder: 'Select or type vendor'
+    });
+
+    const verticalRepeatInput = $('input[name="vertical_repeat"]');
+    const repeatCheckbox = $('input[name="is_repeat"]');
+    const randomReverseCheckbox = $('input[name="is_random_reverse"]');
+
+    verticalRepeatInput.on('input', function () {
+        if ($(this).val().trim() !== '') {
+            repeatCheckbox.prop('checked', true);
+            randomReverseCheckbox.prop('checked', false);
+        }
+    });
+
+    repeatCheckbox.on('change', function () {
+        if ($(this).is(':checked')) {
+            randomReverseCheckbox.prop('checked', false);
+        }
+    });
+
+    randomReverseCheckbox.on('change', function () {
+        if ($(this).is(':checked')) {
+            repeatCheckbox.prop('checked', false);
+        }
+    });
+
+    $('form').on('submit', function (e) {
+        const verticalRepeat = verticalRepeatInput.val().trim();
+        const isRepeat = repeatCheckbox.is(':checked');
+        const isRandomReverse = randomReverseCheckbox.is(':checked');
+
+         const vendor = $('select[name="vendor"]').val();
+        const pattern = $('input[name="pattern"]').val().trim();
+
+        // 🔴 Vendor required
+        if (!vendor) {
+            e.preventDefault();
+            alert('Vendor is required.');
+            return false;
+        }
+
+        // 🔴 Pattern required
+        if (pattern === '') {
+            e.preventDefault();
+            alert('Pattern is required.');
+            $('input[name="pattern"]').focus();
+            return false;
+        }
+
+
+        if (isRepeat && isRandomReverse) {
+            e.preventDefault();
+            alert('Please check either Random Reverse or Repeat, not both.');
+            return false;
+        }
+
+        if (isRepeat && verticalRepeat === '') {
+            e.preventDefault();
+            alert('If Repeat is checked, Vertical Repeat must be filled in.');
+            verticalRepeatInput.focus();
+            return false;
+        }
+        if (verticalRepeat !== '' && !isRepeat) {
+            e.preventDefault();
+            alert('Repeat Match must be checked if a Vertical Repeat is entered.');
+            repeatCheckbox.focus();
+            return false;
+        }
+    });
+
+});
+</script>
+{% endblock %}

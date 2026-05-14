@@ -1,0 +1,839 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block extra_head %}
+<style>
+.wc-event-card {
+    background: #f8f9fa;
+    border: 1px solid #cfd4da;
+    border-left: 6px solid #4f5d75;
+    border-radius: 8px;
+    padding: 14px;
+    margin: 14px 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.wc-event-card-header {
+    background: #ffffff;
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid mt-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-0">
+                {{ wallcovering.code }} - {{ wallcovering.pattern }}
+            </h4>
+            <small class="text-muted">
+                <a href="{% url 'job_page' wallcovering.job_number.job_number %}">
+                    {{ wallcovering.job_number.job_number }} {{ wallcovering.job_number.job_name }}
+                </a>
+            </small>
+        </div>
+
+        <a href="{% url 'wallcovering_home' %}" class="btn btn-secondary">
+            Back to Wallcovering
+        </a>
+    </div>
+
+    <!-- STATUS SUMMARY -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+
+            <div class="row text-center">
+
+                <div class="col-md-3 mb-2">
+                    <div class="text-muted small">Wallcovering</div>
+
+                    {% if wallcovering.wallcovering_status == "Owner Furnished" %}
+                        <span class="badge badge-info p-2">Owner Furnished</span>
+
+                    {% elif wallcovering.wallcovering_status == "Not Ordered" %}
+                        <span class="badge badge-secondary p-2">Not Ordered</span>
+
+                    {% elif wallcovering.wallcovering_status == "Ordered" %}
+                        <span class="badge badge-warning p-2">Ordered</span>
+
+                    {% elif wallcovering.wallcovering_status == "Received Partial, Sent to Job" %}
+                        <span class="badge badge-warning p-2">
+                            Partial Received / Sent
+                        </span>
+
+                    {% elif wallcovering.wallcovering_status == "Received Partial" %}
+                        <span class="badge badge-info p-2">
+                            Partially Received
+                        </span>
+
+                    {% elif wallcovering.wallcovering_status == "Received" %}
+                        <span class="badge badge-primary p-2">Received</span>
+
+                    {% elif wallcovering.wallcovering_status == "Partially Sent to Job" %}
+                        <span class="badge badge-warning p-2">
+                            {{ wallcovering.sent_percentage }}% Sent
+                        </span>
+
+                    {% elif wallcovering.wallcovering_status == "Sent to Job" %}
+                        <span class="badge badge-success p-2">Sent to Job</span>
+
+                    {% endif %}
+                </div>
+
+                <div class="col-md-3 mb-2">
+                    <div class="text-muted small">Quantity Ordered</div>
+                    <strong>{{ wallcovering.quantity_ordered|floatformat:2|intcomma }}</strong>
+                    {{ wallcovering.ordered_unit }}
+                </div>
+
+                <div class="col-md-3 mb-2">
+                    <div class="text-muted small">Quantity Received</div>
+                    <strong>{{ wallcovering.quantity_received|floatformat:2|intcomma }}</strong>
+                    {{ wallcovering.ordered_unit }}
+                </div>
+
+                <div class="col-md-3 mb-2">
+                    <div class="text-muted small">Sent To Job</div>
+                    <strong>{{ wallcovering.packages_sent|intcomma }}</strong>
+                    of
+                    <strong>{{ wallcovering.packages_received|intcomma }}</strong>
+                </div>
+
+            </div>
+
+<!--            {% if wallcovering.packages_received > 0 %}-->
+<!--                <div class="progress mt-3" style="height: 24px;">-->
+<!--                    <div class="progress-bar bg-success"-->
+<!--                         role="progressbar"-->
+<!--                         style="width: {{ wallcovering.sent_percentage }}%;">-->
+<!--                        {{ wallcovering.sent_percentage }}%-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            {% endif %}-->
+            {% if other_order_items %}
+
+
+                {% for item in other_order_items %}
+                    <div class="row text-center mt-3">
+
+                        <div class="col-md-3 mb-2">
+                            <div class="text-muted small">{{ item.description }}</div>
+
+                            {% if item.status == "Sent to Job" %}
+                                <span class="badge badge-success p-2">
+                                    Sent to Job
+                                </span>
+
+                            {% elif item.status == "Partial Sent to Job" %}
+                                <span class="badge badge-warning p-2">
+                                    {{ item.sent_percentage }}% Sent
+                                </span>
+
+                            {% elif item.remaining <= 0 %}
+                                <span class="badge badge-primary p-2">
+                                    Received
+                                </span>
+
+                            {% elif item.received > 0 %}
+                                <span class="badge badge-warning p-2">
+                                    {{ item.received|floatformat:0|intcomma }}
+                                    /
+                                    {{ item.quantity|floatformat:0|intcomma }}
+                                    Received
+                                </span>
+
+                            {% else %}
+                                <span class="badge badge-warning p-2">
+                                    Ordered
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-3 mb-2">
+                            <div class="text-muted small">Quantity Ordered</div>
+                            <strong>{{ item.quantity|floatformat:2|intcomma }}</strong>
+                            {{ item.unit }}
+                        </div>
+
+                        <div class="col-md-3 mb-2">
+                            <div class="text-muted small">Quantity Received</div>
+                            <strong>{{ item.received|floatformat:2|intcomma }}</strong>
+                            {{ item.unit }}
+                        </div>
+
+                        <div class="col-md-3 mb-2">
+                            <div class="text-muted small">Sent To Job</div>
+
+                            <strong>{{ item.packages_sent|intcomma }}</strong>
+                            of
+                            <strong>{{ item.packages_received|intcomma }}</strong>
+                        </div>
+
+                    </div>
+<!--                    {% if item.packages_received > 0 %}-->
+<!--                        <div class="progress mt-2 mb-3" style="height: 20px;">-->
+<!--                            <div class="progress-bar bg-success"-->
+<!--                                 role="progressbar"-->
+<!--                                 style="width: {{ item.sent_percentage }}%;">-->
+<!--                                {{ item.sent_percentage }}%-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    {% endif %}-->
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+
+    <!-- WALLCOVERING INFO -->
+
+    <div class="card shadow-sm mb-3">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                        <a class="text-white font-weight-bold"
+                           data-toggle="collapse"
+                           href="#wallcoveringInfoCollapse"
+                           role="button"
+                           aria-expanded="true">
+                            Wallcovering Information - Click Here!
+                        </a>
+<!--                <strong>Wallcovering Information</strong>-->
+
+                <a href="{% url 'wallcovering_edit' wallcovering.id %}"
+                   class="btn btn-sm btn-success">
+                    <i class="fa fa-edit"></i> Edit Wallcovering Information
+                </a>
+            </div>
+        <div class="collapse" id="wallcoveringInfoCollapse">
+        <div class="card-body">
+
+            <div class="table-responsive">
+    <table class="table table-sm table-bordered mb-0 small">
+
+        <tbody>
+
+            <tr>
+                <th style="width:220px;" class="bg-light">Code</th>
+                <td>{{ wallcovering.code }}</td>
+            </tr>
+
+            <tr>
+                <th class="bg-light">Vendor</th>
+                <td> <a href="{% url 'vendor_edit' wallcovering.vendor.id %}">{{ wallcovering.vendor.company_name }}</a></td>
+            </tr>
+
+            <tr>
+                <th class="bg-light">Pattern</th>
+                <td>{{ wallcovering.pattern }}</td>
+            </tr>
+
+            <tr>
+                <th class="bg-light">Estimated Quantity</th>
+                <td>
+                    {{ wallcovering.estimated_quantity|intcomma }}
+                    {{ wallcovering.estimated_unit }}
+                </td>
+            </tr>
+
+
+
+            <tr>
+                <th class="bg-light">Roll Width</th>
+                <td>{{ wallcovering.roll_width }}</td>
+            </tr>
+
+
+
+            <tr>
+                <th class="bg-light">Roll Length</th>
+                <td>{{ wallcovering.roll_length }}</td>
+            </tr>
+
+            <tr>
+                <th>Match</th>
+                <td>
+            {% if wallcovering.is_random_reverse %}
+                            Random
+                    {% elif wallcovering.is_repeat %}
+                        <span class="badge badge-warning p-2">
+                            Repeat - {{ wallcovering.vertical_repeat }}
+                        </span>
+                    {% else %}
+                    Not Sure
+                    {% endif %}
+                </td>
+            </tr>
+                    {% if wallcovering.is_owner_furnished %}
+            <tr>
+                <th>Owner Furnished</th>
+                <td>
+                        <span class="badge badge-info p-2">
+                            Owner Furnished
+                        </span>
+                </td>
+            </tr>
+                    {% endif %}
+
+
+
+
+
+            <tr>
+                <th class="bg-light">Increment Requirement</th>
+                <td>{{ wallcovering.increment_requirement }}</td>
+            </tr>
+
+
+
+
+            <tr>
+                <th class="bg-light">Cut Charge</th>
+                <td>{{ wallcovering.cut_charge }}</td>
+            </tr>
+
+
+
+            <tr>
+                <th class="bg-light">Notes</th>
+                <td>{{ wallcovering.notes|linebreaksbr }}</td>
+            </tr>
+
+
+        </tbody>
+
+    </table>
+</div>
+    <!-- Pricing -->
+        <hr>
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong class="text-muted">Pricing Received</strong>
+
+            <button type="button"
+                    class="btn btn-sm btn-outline-danger"
+                    data-toggle="collapse"
+                    data-target="#addPricingCollapse">
+                + Add Pricing
+            </button>
+        </div>
+
+        <div class="collapse mb-3" id="addPricingCollapse">
+            <form method="post" action="{% url 'wallcovering_add_pricing' wallcovering.id %}">
+                {% csrf_token %}
+
+                <div class="form-row">
+                        <div class="form-group col-md-2">
+                            <label>Quote Date</label>
+                            <input type="date" name="quote_date" class="form-control form-control-sm"
+                                   value="{{ today|date:'Y-m-d' }}" required>
+                        </div>
+
+                        <div class="form-group col-md-2">
+                            <label>Min Yards</label>
+                            <input type="number" name="min_yards" class="form-control form-control-sm" min="0">
+                        </div>
+
+                        <div class="form-group col-md-2">
+                            <label>Price</label>
+                            <input type="number" name="price" class="form-control form-control-sm"
+                                   step="0.01" min="0" required>
+                        </div>
+
+                        <div class="form-group col-md-2">
+                            <label>Unit</label>
+                            <input type="text" name="unit" class="form-control form-control-sm"
+                                   placeholder="yd, roll, each">
+                        </div>
+
+                        <div class="form-group col-md-4">
+                            <label>Note</label>
+                            <input type="text" name="note" class="form-control form-control-sm">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-sm btn-success">
+                        Save Pricing
+                    </button>
+                </form>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Date</th>
+                            <th class="text-right">Min Yards</th>
+                            <th class="text-right">Price</th>
+                            <th>Unit</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for p in pricing %}
+                            <tr>
+                                <td>{{ p.quote_date|date:"m/d/Y" }}</td>
+                                <td class="text-right">
+                                    {% if p.min_yards %}{{ p.min_yards|intcomma }}{% else %}-{% endif %}
+                                </td>
+                                <td class="text-right">
+                                    {% if p.price %}${{ p.price|floatformat:2|intcomma }}{% else %}-{% endif %}
+                                </td>
+                                <td>{{ p.unit|default:"" }}</td>
+                                <td>{{ p.note|default:"" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-2">
+                                    No pricing entered.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        <hr>
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong class="text-muted">Submittals</strong>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Submittal Item</th>
+                        <th>Submittal #</th>
+                        <th>Date Sent</th>
+                        <th class="text-center">Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for row in submittal_rows %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'submittal_send' row.approval.submittal.id %}">
+                                    {{ row.item.description }}
+                                </a>
+                            </td>
+
+                            <td>
+                                {% if row.approval and row.approval.submittal %}
+                                    <a href="{% url 'submittal_send' row.approval.submittal.id %}">
+                                        {{ row.approval.submittal.submittal_number }}
+                                    </a>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if row.approval and row.approval.submittal.date_sent %}
+                                    {{ row.approval.submittal.date_sent|date:"m/d/Y" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <td class="text-center">
+                                {% if row.status == "Approved" %}
+                                    <span class="badge badge-success">Approved</span>
+                                {% elif row.status == "Rejected" %}
+                                    <span class="badge badge-danger">Rejected</span>
+                                {% elif row.status == "Sent" %}
+                                    <span class="badge badge-primary">Sent</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">Not Sent</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-2">
+                                No submittals linked to this wallcovering.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        </div>
+        </div>
+    </div>
+
+
+    <!-- ORDERS -->
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+        <a class="text-white font-weight-bold"
+           data-toggle="collapse"
+           href="#ordersCollapse"
+           role="button"
+           aria-expanded="true">
+            {{ order_groups|length }} Orders
+        </a>
+        <a href="{% url 'wallcovering_add_order' wallcovering.id %}" class="btn btn-sm btn-success">
+            Add Order
+        </a>
+    </div>
+    <div class="collapse" id="ordersCollapse">
+    <div class="card-body p-0">
+
+        {% for group in order_groups %}
+            <div class="wc-event-card">
+
+    <div class="wc-event-card-header">
+
+        <div class="row align-items-center">
+
+            <div class="col-md-5">
+                <div class="font-weight-bold">
+                    PO # {{ group.order.po_number }}
+                </div>
+
+                <div class="small text-muted">
+                    {{ group.order.date_ordered|date:"m/d/Y" }}
+                </div>
+            </div>
+
+            <div class="col-md-4 text-md-center mt-2 mt-md-0">
+                <span class="badge badge-primary p-2">
+                    Wallcovering Qty:
+                    {{ group.wallcovering_item.quantity|floatformat:2|intcomma }}
+                    {{ group.wallcovering_item.unit }}
+                </span>
+            </div>
+
+            <div class="col-md-3 text-md-right mt-2 mt-md-0">
+                <a href="{% url 'wallcovering_order_edit' group.order.id %}"
+                   class="btn btn-sm btn-outline-primary">
+                    Edit Order
+                </a>
+            </div>
+
+        </div>
+
+        {% if group.order.notes %}
+            <div class="small text-muted border-top pt-2 mt-2">
+                {{ group.order.notes }}
+            </div>
+        {% endif %}
+
+    </div>
+
+    <!-- existing table/items below -->
+
+
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Description</th>
+                                <th class="text-right">Qty</th>
+                                <th>Unit</th>
+                                <th class="text-right">Price</th>
+                                <th>Notes</th>
+<!--                                <th class="text-center">Counts Toward WC?</th>-->
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for item in group.all_items %}
+                                <tr>
+                                    <td>{{ item.item_description }}</td>
+                                    <td class="text-right">{{ item.quantity|floatformat:2|intcomma }}</td>
+                                    <td>{{ item.unit }}</td>
+                                    <td class="text-right">${{ item.price|floatformat:2|intcomma }}</td>
+                                    <td>{{ item.item_notes|default:"" }}</td>
+<!--                                    <td class="text-center">-->
+<!--                                        {% if item.wallcovering_id == wallcovering.id %}-->
+<!--                                            <span class="badge badge-success">Yes</span>-->
+<!--                                        {% else %}-->
+<!--                                            <span class="badge badge-secondary">No</span>-->
+<!--                                        {% endif %}-->
+<!--                                    </td>-->
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+
+                    </table>
+                </div>
+
+            </div>
+        {% empty %}
+            <div class="text-center text-muted py-3">
+                No orders entered.
+            </div>
+        {% endfor %}
+
+    </div>
+    </div>
+</div>
+
+
+    <!-- RECEIVING -->
+    <!-- RECEIVING -->
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+        <a class="text-white font-weight-bold"
+           data-toggle="collapse"
+           href="#receivingCollapse"
+           role="button"
+           aria-expanded="true">
+            {{ deliveries|length }} Deliveries Received at Warehouse
+        </a>
+        <a href="{% url 'wallcovering_receive_for_wallcovering' wallcovering.id %}" class="btn btn-sm btn-success">
+            New Delivery
+        </a>
+    </div>
+    <div class="collapse" id="receivingCollapse">
+    <div class="card-body p-0">
+
+        {% for group in receipt_groups %}
+                <div class="wc-event-card">
+                    <div class="wc-event-card-header">
+                    <div class="mb-3">
+                        <strong>{{ group.delivery.date|date:"m/d/Y" }}</strong>
+
+                        {% if group.delivery.notes %}
+                            <div class="text-muted mt-1">
+                                {{ group.delivery.notes }}
+                            </div>
+                        {% endif %}
+                        <a href="{% url 'wallcovering_receipt_edit' group.delivery.id %}"
+       class="btn btn-sm btn-outline-primary">
+        Edit Delivery
+    </a>
+                    </div>
+                    </div>
+                    {% for row in group.items %}
+                        <div class="border rounded p-2 mb-2 bg-white">
+
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong>{{ row.received_item.order_item.item_description }}</strong>
+
+                                <span class="badge badge-primary p-2">
+                                    Received:
+                                    {{ row.received_item.quantity|floatformat:2|intcomma }}
+                                    {{ row.received_item.order_item.unit }}
+                                </span>
+                            </div>
+
+                            {% if row.packages %}
+                                <div class="ml-2 mt-2">
+                                    <div class="small text-muted mb-1">
+                                        Packages
+                                    </div>
+
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>Type</th>
+                                                <th>Contents</th>
+                                                <th class="text-right">Packages Received</th>
+                                                <th class="text-right">Packages Sent</th>
+                                                <th class="text-right">Remaining</th>
+                                                <th>Notes</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            {% for package in row.packages %}
+                                                <tr>
+                                                    <td>{{ package.type }}</td>
+                                                    <td>{{ package.contents }}</td>
+                                                    <td class="text-right">{{ package.quantity_received|intcomma }}</td>
+                                                    <td class="text-right">{{ package.total_sent|intcomma }}</td>
+                                                    <td class="text-right">{{ package.quantity_remaining|intcomma }}</td>
+                                                    <td>{{ package.notes|default:"" }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% endif %}
+
+                        </div>
+                    {% endfor %}
+
+                </div>
+            {% empty %}
+                <div class="text-center text-muted py-3">
+                    Nothing received yet.
+                </div>
+            {% endfor %}
+
+    </div>
+    </div>
+</div>
+
+
+
+    <!-- SENT TO JOB -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+            <a class="text-white font-weight-bold"
+               data-toggle="collapse"
+               href="#sentToJobCollapse"
+               role="button"
+               aria-expanded="true">
+                {{ outgoing_events|length }} Deliveries Sent to Job
+            </a>
+            <a href="{% url 'wallcovering_send_to_job' wallcovering.id %}" class="btn btn-sm btn-success">Send to Job</a>
+        </div>
+        <div class="collapse" id="sentToJobCollapse">
+        <div class="card-body p-0">
+
+            {% for group in sent_to_job_groups %}
+                <div class="wc-event-card">
+                    <div class="wc-event-card-header">
+                    <div class="mb-3">
+                        <strong>{{ group.event.date|date:"m/d/Y" }}</strong>
+
+                        {% if group.event.delivered_by %}
+                            <span class="text-muted">
+                                - Delivered By: {{ group.event.delivered_by }}
+                            </span>
+                        {% endif %}
+
+                        {% if group.event.notes %}
+                            <div class="text-muted mt-1">
+                                {{ group.event.notes }}
+                            </div>
+                        {% endif %}
+
+                        <a href="{% url 'wallcovering_sent_edit' group.event.id %}"
+       class="btn btn-sm btn-outline-primary">
+        Edit Delivery
+    </a>
+                    </div>
+                    </div>
+                    <table class="table table-sm table-bordered mb-0 bg-white">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Item</th>
+                                <th>Contents</th>
+                                <th>Type</th>
+                                <th class="text-right">Packages Sent</th>
+                                <th>Package Notes</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for item in group.items %}
+                                <tr>
+                                    <td>{{ item.description }}</td>
+                                    <td>{{ item.contents }}</td>
+                                    <td>{{ item.type }}</td>
+                                    <td class="text-right">{{ item.quantity_sent|intcomma }}</td>
+                                    <td>
+                                        {% for note in item.notes %}
+                                            <div>{{ note }}</div>
+                                        {% empty %}
+                                            -
+                                        {% endfor %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                </div>
+            {% empty %}
+                <div class="text-center text-muted py-3">
+                    Nothing has been sent to the job yet.
+                </div>
+            {% endfor %}
+
+        </div>
+        </div>
+    </div>
+
+
+    <!-- NOTES -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+            <strong>Notes</strong>
+            <button type="button"
+        class="btn btn-sm btn-success"
+        data-toggle="modal"
+        data-target="#addWallcoveringNoteModal">
+    Add Note
+</button>
+        </div>
+
+        <div class="card-body">
+            {% for note in notes %}
+                <div class="border-bottom pb-2 mb-2">
+                    <div class="small text-muted">
+                        {{ note.date|date:"m/d/Y" }}
+                        {% if note.user %}
+                            - {{ note.user }}
+                        {% endif %}
+                    </div>
+                    <div>
+                        {{ note.note|linebreaksbr }}
+                    </div>
+                </div>
+            {% empty %}
+                <div class="text-center text-muted py-3">
+                    No notes yet.
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="addWallcoveringNoteModal" tabindex="-1" role="dialog" aria-labelledby="addWallcoveringNoteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+
+            <form method="post" action="{% url 'wallcovering_add_note' wallcovering.id %}">
+                {% csrf_token %}
+
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="addWallcoveringNoteModalLabel">
+                        Add Wallcovering Note
+                    </h5>
+
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <label>Note</label>
+                    <textarea name="note"
+                              class="form-control"
+                              rows="5"
+                              required
+                              placeholder="Type note here..."></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="submit" class="btn btn-success">
+                        Save Note
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}b

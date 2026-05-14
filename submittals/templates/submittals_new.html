@@ -69,108 +69,151 @@
             </div>
         </div>
 
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light">
-                <h5 class="mb-0">Available Existing Items</h5>
-            </div>
-            <div class="card-body p-0">
+<!--        <div class="card shadow-sm mb-4">-->
+<!--            <div class="card-header bg-light">-->
+<!--                <h5 class="mb-0">Available Existing Items</h5>-->
+<!--            </div>-->
+<!--            <div class="card-body p-0">-->
 
-                {% if available_items_without_approvals or available_unlinked_approvals %}
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0 existing-items-table">
-                        <thead class="thead-light">
-                            <tr>
-                                <th style="width: 12%;">Add to this submittal</th>
-                                <th style="width: 38%;">Description</th>
-                                <th style="width: 25%;">Item Notes</th>
-                                <th style="width: 25%;">Current Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+<!--                {% if available_items_without_approvals or available_unlinked_approvals %}-->
+<!--                <div class="table-responsive">-->
+<!--                    <table class="table table-sm table-bordered mb-0 existing-items-table">-->
+<!--                        <thead class="thead-light">-->
+<!--                            <tr>-->
+<!--                                <th style="width: 12%;">Add to this submittal</th>-->
+<!--                                <th style="width: 38%;">Description</th>-->
+<!--                                <th style="width: 25%;">Item Notes</th>-->
+<!--                                <th style="width: 25%;">Current Status</th>-->
+<!--                            </tr>-->
+<!--                        </thead>-->
+<!--                        <tbody>-->
 
-                            {% for item in available_items_without_approvals %}
-                            <tr>
-                                <td class="text-center">
-                                    <input type="checkbox" class="existing-item-checkbox" name="existing_item_ids" value="{{ item.id }}">
-                                </td>
-                                <td>{{ item.description }}</td>
-                                <td>{{ item.notes|default:"" }}</td>
-                                <td>No approval history yet</td>
-                            </tr>
-                            {% endfor %}
+<!--                            {% for item in available_items_without_approvals %}-->
+<!--                            <tr>-->
+<!--                                <td class="text-center">-->
+<!--                                    <input type="checkbox" class="existing-item-checkbox" name="existing_item_ids" value="{{ item.id }}">-->
+<!--                                </td>-->
+<!--                                <td>{{ item.description }}</td>-->
+<!--                                <td>{{ item.notes|default:"" }}</td>-->
+<!--                                <td>No approval history yet</td>-->
+<!--                            </tr>-->
+<!--                            {% endfor %}-->
 
-                            {% for approval in available_unlinked_approvals %}
-                            <tr>
-                                <td class="text-center">
-                                    <input type="checkbox" class="existing-item-checkbox" name="existing_unlinked_approval_ids" value="{{ approval.id }}">
-                                </td>
-                                <td>{{ approval.submittalitem.description }}</td>
-                                <td>{{ approval.submittalitem.notes|default:"" }}</td>
-                                <td>
-                                    {% if approval.notes %}
-                                        {{ approval.notes }}
-                                    {% else %}
-                                        Pending item not yet assigned to a submittal
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
+<!--                            {% for approval in available_unlinked_approvals %}-->
+<!--                            <tr>-->
+<!--                                <td class="text-center">-->
+<!--                                    <input type="checkbox" class="existing-item-checkbox" name="existing_unlinked_approval_ids" value="{{ approval.id }}">-->
+<!--                                </td>-->
+<!--                                <td>{{ approval.submittalitem.description }}</td>-->
+<!--                                <td>{{ approval.submittalitem.notes|default:"" }}</td>-->
+<!--                                <td>-->
+<!--                                    {% if approval.notes %}-->
+<!--                                        {{ approval.notes }}-->
+<!--                                    {% else %}-->
+<!--                                        Pending item not yet assigned to a submittal-->
+<!--                                    {% endif %}-->
+<!--                                </td>-->
+<!--                            </tr>-->
+<!--                            {% endfor %}-->
 
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <div class="p-3">
-                    No existing items are available to add to this submittal.
-                </div>
-                {% endif %}
+<!--                        </tbody>-->
+<!--                    </table>-->
+<!--                </div>-->
+<!--                {% else %}-->
+<!--                <div class="p-3">-->
+<!--                    No existing items are available to add to this submittal.-->
+<!--                </div>-->
+<!--                {% endif %}-->
 
-            </div>
-        </div>
-        <div id="manual-items-disabled-message" class="alert alert-info d-none">
-            Additional Items can be added later
-        </div>
-        <div id="manual-items-section">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Add New Items Manually</h5>
-                <button type="button" class="btn btn-sm btn-secondary" id="add-row-btn">Add Item</button>
-            </div>
-            <div class="card-body p-0">
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div id="manual-items-disabled-message" class="alert alert-info d-none">-->
+<!--            Additional Items can be added later-->
+<!--        </div>-->
 
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0 new-items-table" id="items-table">
-                        <thead class="thead-light">
-                            <tr>
-                                <th style="width: 45%;">Description</th>
-                                <th style="width: 20%;">Quantity</th>
-                                <th style="width: 25%;">Notes</th>
-                                <th style="width: 10%;"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>
-                                    <input type="text" name="item_description" class="form-control form-control-sm">
-                                </td>
-                                <td>
-                                    <input type="number" name="item_quantity" class="form-control form-control-sm" min="0" value="0">
-                                </td>
-                                <td>
-                                    <input type="text" name="item_notes" class="form-control form-control-sm">
-                                </td>
-                                <td class="text-center">
-                                    <button type="button" class="btn btn-sm btn-danger remove-row-btn">X</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+<!--        <div class="clean-card mt-3">-->
+<!--            <div class="clean-card-header">-->
+<!--                Add Wallcovering-->
+<!--            </div>-->
 
-            </div>
-        </div>
-        </div>
-        <button type="submit" class="btn btn-primary">Save Submittal</button>
+<!--            <form method="post">-->
+<!--                {% csrf_token %}-->
+
+<!--                <div class="form-row align-items-end">-->
+<!--                    <div class="form-group col-md-6">-->
+<!--                        <label>Wallcovering</label>-->
+<!--                        <select name="wallcovering_id" class="form-control select2" required>-->
+<!--                            <option value="">Select Wallcovering</option>-->
+<!--                            {% for wc in wallcoverings %}-->
+<!--                                <option value="{{ wc.id }}">-->
+<!--                                    {{ wc.code }} - {{ wc.vendor.company_name }} {{ wc.pattern }}-->
+<!--                                </option>-->
+<!--                            {% endfor %}-->
+<!--                        </select>-->
+<!--                    </div>-->
+
+<!--                    <div class="form-group col-md-3">-->
+<!--                        <label>Submittal Type</label>-->
+<!--                        <select name="wallcovering_submittal_type" class="form-control" required>-->
+<!--                            <option value="">Select Type</option>-->
+<!--                            <option value="Sample">Sample</option>-->
+<!--                            <option value="Product Data">Product Data</option>-->
+<!--                            <option value="Other">Other</option>-->
+<!--                        </select>-->
+<!--                    </div>-->
+
+<!--                    <div class="form-group col-md-3">-->
+<!--                        <button type="submit"-->
+<!--                                name="add_wallcovering_item"-->
+<!--                                class="btn btn-primary">-->
+<!--                            Add-->
+<!--                        </button>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </form>-->
+<!--        </div>-->
+
+<!--        <div id="manual-items-section">-->
+<!--        <div class="card shadow-sm mb-4">-->
+<!--            <div class="card-header bg-light d-flex justify-content-between align-items-center">-->
+<!--                <h5 class="mb-0">Add New Items Manually</h5>-->
+<!--                <button type="button" class="btn btn-sm btn-secondary" id="add-row-btn">Add Item</button>-->
+<!--            </div>-->
+<!--            <div class="card-body p-0">-->
+
+<!--                <div class="table-responsive">-->
+<!--                    <table class="table table-sm table-bordered mb-0 new-items-table" id="items-table">-->
+<!--                        <thead class="thead-light">-->
+<!--                            <tr>-->
+<!--                                <th style="width: 45%;">Description</th>-->
+<!--                                <th style="width: 20%;">Quantity</th>-->
+<!--                                <th style="width: 25%;">Notes</th>-->
+<!--                                <th style="width: 10%;"></th>-->
+<!--                            </tr>-->
+<!--                        </thead>-->
+<!--                        <tbody>-->
+<!--                            <tr>-->
+<!--                                <td>-->
+<!--                                    <input type="text" name="item_description" class="form-control form-control-sm">-->
+<!--                                </td>-->
+<!--                                <td>-->
+<!--                                    <input type="number" name="item_quantity" class="form-control form-control-sm" min="0" value="0">-->
+<!--                                </td>-->
+<!--                                <td>-->
+<!--                                    <input type="text" name="item_notes" class="form-control form-control-sm">-->
+<!--                                </td>-->
+<!--                                <td class="text-center">-->
+<!--                                    <button type="button" class="btn btn-sm btn-danger remove-row-btn">X</button>-->
+<!--                                </td>-->
+<!--                            </tr>-->
+<!--                        </tbody>-->
+<!--                    </table>-->
+<!--                </div>-->
+
+<!--            </div>-->
+<!--        </div>-->
+<!--        </div>-->
+        <button type="submit" class="btn btn-primary">Save and Add Items</button>
     </form>
 </div>
 {% endblock content %}

@@ -109,7 +109,10 @@
             </div>
         </div>
     </div>
+    <!-- JOBS and equipment-->
+
     <div class="row h-100 d-flex" style="justify-content: space-around;">
+        <!-- JOBS-->
         <div class="card" style="width: 18rem; margin-top: 22px;">
             <h5 class="card-header">Jobs</h5>
             <div class="card-body" style="height: 135px;">
@@ -124,6 +127,7 @@
                 </div>
             </div>
         </div>
+        <!-- Equipment-->
         <div class="card" style="width: 18rem; margin-top: 22px;">
             <h5 class="card-header">Equipment</h5>
             <div class="card-body" style="height: 135px;">
@@ -141,8 +145,10 @@
                 </div>
             </div>
         </div>
-    </div>
-    <div class="row h-100 d-flex" style="justify-content: space-around;">
+
+    <!-- rentals superintendent warehouse-->
+<!--    <div class="row h-100 d-flex" style="justify-content: space-around;">-->
+        <!-- rentals-->
         <div class="card" style="width: 18rem; margin-top: 22px;">
             <h5 class="card-header">Rentals</h5>
             <div class="card-body" style="height: 135px;">
@@ -158,6 +164,7 @@
                 </div>
             </div>
         </div>
+        <!-- super-->
         <div class="card" style="width: 18rem; margin-top: 22px;">
             <h5 class="card-header">Superintendent Page</h5>
             <div class="card-body" style="height: 185px;">
@@ -177,6 +184,7 @@
                 </div>
             </div>
         </div>
+        <!-- warehouse-->
         <div class="card" style="width: 18rem; margin-top: 22px;">
             <h5 class="card-header">Warehouse</h5>
             <div class="card-body" style="height: 135px;">
@@ -192,6 +200,7 @@
                 </div>
             </div>
         </div>
+        <!-- subs-->
         <div class="card" style="width: 18rem; margin-top: 22px;">
             <h5 class="card-header">Subcontractors</h5>
             <div class="card-body" style="height: 135px;">
@@ -208,7 +217,8 @@
                 </div>
             </div>
         </div>
-                <div class="card" style="width: 18rem; margin-top: 22px;">
+        <!-- safety-->
+        <div class="card" style="width: 18rem; margin-top: 22px;">
             <h5 class="card-header">Safety</h5>
             <div class="card-body" style="height: 155px;">
                 <div class="card-text">
@@ -223,7 +233,8 @@
                 </div>
             </div>
         </div>
-                        <div class="card" style="width: 18rem; margin-top: 22px;">
+        <!-- admin-->
+        <div class="card" style="width: 18rem; margin-top: 22px;">
             <h5 class="card-header">Admin</h5>
             <div class="card-body" style="height: 135px;">
                 <div class="card-text">
@@ -232,12 +243,33 @@
             </div>
             <div class="card-footer">
                 <div style="text-align: center;">
-
+                    <a href="{% url 'jobs_home' %}" class="btn btn-info btn-sm">Go to Jobs</a>
                 </div>
             </div>
         </div>
-    </div>
+        <!-- wallcovering-->
+        <div class="card" style="width: 18rem; margin-top: 22px;">
+            <h5 class="card-header">Wallcovering</h5>
+            <div class="card-body" style="height: 135px;">
+                <div class="card-text">
+                    <div style="display: flex"><b>{{ wc_not_submitted_count }}</b> -Not Submitted</div>
+                </div>
+                <div class="card-text">
+                    <div style="display: flex"><b>{{ wc_not_approved_count }}</b> -Not Approved</div>
+                </div>
+                <div class="card-text">
+                    <div style="display: flex"><b>{{ wc_approved_not_ordered_count }}</b> -Need to be Ordered</div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div style="text-align: center;">
+                    <a href="{% url 'wallcovering_home' %}" class="btn btn-info btn-sm">Go to Wallcovering</a>
+                </div>
+            </div>
+        </div>
+<!--    </div>-->
 </div>
+    </div>
 </body>
 </html>
 {% endblock %}

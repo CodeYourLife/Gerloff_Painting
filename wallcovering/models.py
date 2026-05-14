@@ -1,15 +1,16 @@
 from django.db import models
+from django.apps import apps
 from equipment.models import Vendors
 import employees.models
-
+from decimal import Decimal
 
 class Wallcovering(models.Model):
     id = models.BigAutoField(primary_key=True)
     job_number = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT)
-    code = models.CharField(null=True, max_length=10)  # wc1, etc.
-    vendor = models.ForeignKey(Vendors, on_delete=models.PROTECT)
-    pattern = models.CharField(null=True, max_length=2000)
-    estimated_quantity = models.IntegerField(default=0, blank=True)
+    code = models.CharField(null=True, max_length=10,blank=True)
+    vendor = models.ForeignKey(Vendors, on_delete=models.PROTECT,null=True)
+    pattern = models.CharField(null=True, max_length=2000,blank=True)
+    estimated_quantity = models.IntegerField(default=0, blank=True,null=True)
     estimated_unit = models.CharField(null=True, max_length=20, blank=True)
     cut_charge = models.CharField(null=True, max_length=1000, blank=True)
     roll_width = models.CharField(null=True, max_length=50, blank=True)
@@ -17,39 +18,168 @@ class Wallcovering(models.Model):
     is_random_reverse = models.BooleanField(default=False)
     is_repeat = models.BooleanField(default=False)
     notes = models.CharField(null=True, max_length=2000, blank=True)
-    roll_length =  models.CharField(null=True, max_length=50, blank=True)
+    roll_length = models.CharField(null=True, max_length=50, blank=True)
     is_owner_furnished = models.BooleanField(default=False)
+    increment_requirement = models.CharField(null=True, max_length=500, blank=True)
 
 
     def __str__(self):
         return f"{self.job_number} {self.code}"
 
     def quantity_ordered(self):
-        totalquantity = 0
-        for x in OrderItems.objects.filter(wallcovering=self):
-            totalquantity = totalquantity + x.quantity
-        return totalquantity
+        total = Decimal("0.00")
+        for item in OrderItems.objects.filter(wallcovering=self):
+            total += item.quantity or Decimal("0.00")
+        return total
+
+    def ordered_unit(self):
+        item = OrderItems.objects.filter(wallcovering=self).first()
+        return item.unit if item else self.estimated_unit
 
     def quantity_received(self):
-        totalquantity = 0
-        for x in OrderItems.objects.filter(wallcovering=self):
-            totalquantity = totalquantity + x.quantity_received()
-        return totalquantity
+        total = Decimal("0.00")
+        for item in OrderItems.objects.filter(wallcovering=self):
+            total += item.quantity_received()
+        return total
 
     def packages_received(self):
         totalquantity = 0
-        # these are all orders with packages
-        for y in models.ForeignObject('jobs.Orders').objects.filter(orderitems2__isnull=False, job_number=self.job_number, orderitems2__wallcovering=self).distinct():
-            totalquantity = totalquantity + y.packages_received()
+
+        for package in Packages.objects.filter(orderitem__wallcovering=self):
+            totalquantity += package.quantity_received or 0
+
         return totalquantity
 
     def packages_sent(self):
         totalquantity = 0
-        totalquantity = 0
-        # these are all orders with packages
-        for y in models.ForeignObject('jobs.Orders').objects.filter(orderitems2__isnull=False, job_number=self.job_number, orderitems2__wallcovering=self).distinct():
-            totalquantity = totalquantity + y.packages_sent()
+
+        for package in Packages.objects.filter(orderitem__wallcovering=self):
+            totalquantity += package.total_sent()
+
         return totalquantity
+
+    def sent_percentage(self):
+        received = self.packages_received()
+        sent = self.packages_sent()
+
+        if received == 0:
+            return 0
+
+        return round((sent / received) * 100)
+
+    def wallcovering_status(self):
+        if self.is_owner_furnished:
+            return "Owner Furnished"
+
+        ordered = self.quantity_ordered()
+        received = self.quantity_received()
+        packages_received = self.packages_received()
+        packages_sent = self.packages_sent()
+
+        if ordered <= 0:
+            return "Not Ordered"
+
+        if received <= 0:
+            return "Ordered"
+
+        # PARTIAL RECEIVED + SOME SENT
+        if received < ordered and packages_sent > 0:
+            return "Received Partial, Sent to Job"
+
+        # FULLY SENT
+        if packages_received > 0 and packages_sent >= packages_received:
+            return "Sent to Job"
+
+        # PARTIALLY SENT
+        if packages_received > 0 and packages_sent > 0:
+            return "Partially Sent to Job"
+
+        # PARTIAL RECEIVED
+        if received < ordered:
+            return "Received Partial"
+
+        return "Received"
+
+    def display_quantity(self):
+        if self.quantity_ordered() > 0:
+            return f"{self.quantity_ordered():,.2f} {self.ordered_unit() or ''}"
+
+        return f"{self.estimated_quantity:,} {self.estimated_unit or ''}"
+
+    def submittal_status(self):
+        if self.is_owner_furnished:
+            return "Owner Furnished"
+
+        from submittals.models import SubmittalItems, SubmittalApprovals
+        from django.db.models import Q
+
+        matching_items = SubmittalItems.objects.filter(
+            wallcovering_id=self,
+            is_no_longer_used=False
+        )
+
+        if not matching_items.exists():
+            return "Not Submitted"
+
+        has_approved = False
+        has_problem = False
+
+        for item in matching_items:
+            approvals = SubmittalApprovals.objects.filter(
+                submittalitem=item
+            ).order_by("id")
+
+            if not approvals.exists():
+                has_problem = True
+                continue
+
+            if approvals.filter(
+                    Q(submittal__isnull=True) | Q(is_approved__isnull=True)
+            ).exists():
+                has_problem = True
+                continue
+
+            if approvals.filter(is_approved=True).exists():
+                has_approved = True
+
+        if has_problem:
+            return "Submitted"
+
+        if has_approved:
+            return "Approved"
+
+    def ordering_status(self):
+        if self.is_owner_furnished:
+            return "Owner Furnished"
+
+        ordered = self.quantity_ordered()
+        received = self.quantity_received()
+
+        if ordered <= 0:
+            return "Not Ordered"
+
+        if received <= 0:
+            return "Ordered"
+
+        if received < ordered:
+            return "Partially Received"
+
+        return "Received"
+
+    def sent_status(self):
+        if self.is_owner_furnished:
+            return "Owner Furnished"
+
+        received = self.packages_received()
+        sent = self.packages_sent()
+
+        if received <= 0 or sent <= 0:
+            return "Not Sent"
+
+        if sent < received:
+            return "Partially Sent"
+
+        return "Sent to Job"
 
 
 class WallcoveringPricing(models.Model):
@@ -77,6 +207,8 @@ class OrderItems(models.Model):  # usually just one of these per order
     item_description = models.CharField(null=True, max_length=100)
     item_notes = models.CharField(null=True, max_length=1000, blank=True)
     is_satisfied = models.BooleanField(default=False)  # all has been received
+    link_to_wallcovering = models.ForeignKey(
+        Wallcovering, on_delete=models.PROTECT, related_name='linked_orderitems', null=True, blank=True)
 
     def __str__(self):
         return f"{self.item_description}"
@@ -124,6 +256,8 @@ class Packages(models.Model):
     quantity_received = models.IntegerField(
         default=0, verbose_name='Packages Received')  # 3
     notes = models.CharField(null=True, max_length=2000, blank=True)
+    orderitem = models.ForeignKey(
+        OrderItems, on_delete=models.PROTECT, related_name="packages")
 
     def __str__(self):
         return f"{self.delivery.order.job_number} {self.contents}"
@@ -133,6 +267,9 @@ class Packages(models.Model):
         for x in OutgoingItem.objects.filter(package=self):
             totalquantity = totalquantity+x.quantity_sent
         return totalquantity
+
+    def quantity_remaining(self):
+        return (self.quantity_received or 0) - self.total_sent()
 
 
 class OutgoingWallcovering(models.Model):
