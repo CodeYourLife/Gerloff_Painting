@@ -1,3 +1,4 @@
+from console.misc import Email
 from decimal import Decimal, InvalidOperation
 from datetime import date
 from django.apps import apps
@@ -489,7 +490,19 @@ def wallcovering_add_order(request, wallcovering_id):
         po_number = f"TR{po_number_int}"
 
         default_description = f"{wallcovering.code or ''} {wallcovering.pattern or ''}".strip()
+        if wallcovering.vendor.company_email:
+            lines = [f"Send this email to {wallcovering.vendor}: - {wallcovering.vendor.company_email}",]
+        else:
+            lines = [f"Send this email to {wallcovering.vendor}. No Email is entered in Trinity..", ]
 
+
+        lines.extend([
+            "",
+            f"Hello I would like to place an order",
+            "",
+            f"Job Name: {wallcovering.job_number.job_name}",
+            f"PO#: TR{po_number_int}",
+            "",])
         order = Orders.objects.create(
             po_number=po_number,
             job_number=wallcovering.job_number,
@@ -514,7 +527,9 @@ def wallcovering_add_order(request, wallcovering_id):
                 item_notes=request.POST.get("main_item_notes"),
                 link_to_wallcovering = wallcovering,
             )
-
+        lines.extend([
+            f"{clean_decimal(request.POST.get('main_quantity'))} {request.POST.get('main_unit')} of {wallcovering.code} {wallcovering.vendor.company_name} {wallcovering.pattern}",
+            "",])
         # EXTRA ITEMS - paste, adhesive, sundries, etc.
         descriptions = request.POST.getlist("extra_description[]")
         quantities = request.POST.getlist("extra_quantity[]")
@@ -542,7 +557,24 @@ def wallcovering_add_order(request, wallcovering_id):
                 item_notes=item_note,
                 link_to_wallcovering=wallcovering,
             )
-
+            lines.extend([
+                f"{quantity} {unit} of {description}",
+                "", ])
+        subject = "Wallcovering Purchase Order"
+        employee = Employees.objects.filter(user=request.user).first()
+        if employee and employee.email:
+            recipient = [employee.email]
+            sender = employee.email
+        else:
+            recipient = ["bridgette@gerloffpainting.com"]
+            sender = "bridgette@gerloffpainting.com"
+        new_email_message = "\r\n".join(lines)
+        try:
+            Email.sendEmail(subject, new_email_message, recipient, False, sender)
+            messages.success(request, "Please Forward the Order Email to the Vendor ")
+        except:
+            messages.error(request,
+                           "There was a problem sending the email, you will have to manually send the order.")
         return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
 
     return render(request, "wallcovering_add_order.html", {
