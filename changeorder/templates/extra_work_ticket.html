@@ -1486,6 +1486,7 @@ function submitChangeAmountForm() {
 </div>
 </div>
 </div>
+
 <!--ticket status-->
     {% if changeorder.is_t_and_m %}
 <div class="ticket-status-wrapper my-3">
@@ -1498,6 +1499,8 @@ function submitChangeAmountForm() {
 <div class="container">
 {% if changeorder.is_closed == True %}
     <h1>VOIDED</h1>
+{% elif changeorder.is_internal == True %}
+    <h1>INTERNAL</h1>
 {% else %}
 <!-- TICKET COLLECTION-->
     {% if changeorder.is_t_and_m == True %}
@@ -1828,15 +1831,33 @@ function submitChangeAmountForm() {
     </button>
 </form>
     {% endif %}
+
 <form class="m-1 d-inline">
     <button type="button"
             class="btn btn-sm {% if changeorder.is_work_complete %}btn-success{% else %}btn-warning{% endif %}"
             data-toggle="modal"
             data-target="#workCompleteModal">
         {% if changeorder.is_work_complete %}
-            Work Done
+            Work is Done
         {% else %}
-            Work Not Done
+            Click Here If Work Is Done
+        {% endif %}
+    </button>
+</form>
+
+
+<form name="void_internal"
+      action="{% url 'extra_work_ticket' changeorder.id %}"
+      method="post"
+      class="m-1">
+    {% csrf_token %}
+    <input type="hidden" name="change_internal" id="change_internal"/>
+
+    <button class="btn btn-secondary btn-sm">
+        {% if changeorder.is_internal %}
+            NOT INTERNAL
+        {% else %}
+            CHANGE TO INTERNAL
         {% endif %}
     </button>
 </form>

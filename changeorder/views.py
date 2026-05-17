@@ -2087,7 +2087,7 @@ def change_order_new(request, jobnumber):
     send_data['changeorders'] = changeorders
     if request.method == 'POST':
         t_and_m = 'is_t_and_m' in request.POST
-
+        internal = 'is_internal' in request.POST
         raw_description = request.POST.get('description', '')
         safe_description = sanitize_windows_filename_part(raw_description)
 
@@ -2113,7 +2113,8 @@ def change_order_new(request, jobnumber):
             is_t_and_m=t_and_m,
             description=safe_description,
             cop_number=next_cop,
-            notes=request.POST.get('notes', '')
+            notes=request.POST.get('notes', ''),
+            is_internal = internal
         )
         try:
             #createfolder("changeorder/" + str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
@@ -2129,56 +2130,20 @@ def change_order_new(request, jobnumber):
             )
         except:
             Email_Errors.objects.create(user=request.user.first_name + " " + request.user.last_name, error="Change Order Takeoff Not Made",date = date.today())
-        if changeorder.is_t_and_m == True:
-            note = ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
-                                                   user=Employees.objects.get(user=request.user),
-                                                   note="T&M COP Added. " + request.POST['notes'])
+        if changeorder.is_t_and_m:
+            if changeorder.is_internal:
+                note = "Internal T&M COP Added. " + request.POST['notes']
+            else:
+                note = "T&M COP Added. " + request.POST['notes']
         else:
-            note = ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
+            if changeorder.is_internal:
+                note = "Internal COP Added. " + request.POST['notes']
+            else:
+                note = "COP Added. " + request.POST['notes']
+
+        ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                                    user=Employees.objects.get(user=request.user),
-                                                   note="COP Added. " + request.POST['notes'])
-        # CREATE LINK IN MANAGEMENT CONSOLE DELETED ON 2/26/26
-        # parent_dir = settings.MEDIA_ROOT
-        # trinity_folder = os.path.join(parent_dir, "changeorder/" + str(changeorder.job_number.job_number) + " COP #" + str(changeorder.cop_number))
-        # os.makedirs(trinity_folder, exist_ok=True)
-        #
-        # # 2️⃣ Build network folder path
-        # BASE_JOBS_PATH = r"\\gp2022\company\jobs\open jobs"
-        # if os.path.exists(BASE_JOBS_PATH):
-        #     job_folder_name = (
-        #             f"{changeorder.job_number.job_number} "
-        #             f"{changeorder.job_number.job_name}\\Contract & Billings\\Change Order Proposals"
-        #         )
-        #     job_folder = os.path.join(BASE_JOBS_PATH, job_folder_name)
-        # if os.path.exists(job_folder):
-        #     changeorder_folder_name = (
-        #         f"GP COP {changeorder.cop_number} {changeorder.description}"
-        #     )
-        #
-        #     changeorder_folder = os.path.join(
-        #         BASE_JOBS_PATH,
-        #         job_folder_name,
-        #         changeorder_folder_name
-        #     )
-        #
-        #     # 3️⃣ If network folder exists
-        #     if os.path.exists(changeorder_folder):
-        #         shortcut_name = "Shortcut to MC.lnk"
-        #         shortcut_path = os.path.join(trinity_folder, shortcut_name)
-        #         create_shortcut(shortcut_path, changeorder_folder)
-        #         shortcut_name = "Shortcut to Trinity.lnk"
-        #         shortcut_path = os.path.join(changeorder_folder, shortcut_name)
-        #
-        #     else:
-        #         # If network folder does NOT exist,
-        #         # create shortcut inside Trinity folder instead
-        #         shortcut_name = f"{changeorder_folder_name}.lnk"
-        #         shortcut_path = os.path.join(job_folder, shortcut_name)
-        #
-        #     # 4️⃣ Create the shortcut from MC to Trinity
-        #     create_shortcut(shortcut_path, os.path.abspath(trinity_folder))
-        # else:
-        #     print("GP2022 share not accessible")
+                                                   note=note)
 
         return redirect('extra_work_ticket', id=changeorder.id)
     return render(request, "change_order_new.html", send_data)
@@ -2202,49 +2167,7 @@ def change_order_home(request):
                                                                                          job_number__is_closed=False))
     changeorders = search_cos.qs.order_by('id')
     send_data['supers'] = Employees.objects.filter(job_title__description="Superintendent", active=True)
-    # changeorders = []
-    # for x in search_cos.qs.order_by('job_number', 'id'):
-    #     status = "Not Sent"
-    #     color = "beige"
-    #     if x.is_approved:
-    #         if x.is_approved_to_bill:
-    #             status = "Approved"
-    #             color = "none"
-    #         else:
-    #             status = "Informal Approval"
-    #             color = "yellow"
-    #     elif x.date_sent:
-    #         status = "Sent to GC"
-    #         color = "yellow"
-    #     else:
-    #         if x.is_t_and_m == True:
-    #             if x.is_ticket_signed == True:
-    #                 tmproposal = TMProposal.objects.filter(change_order=x).first()
-    #                 if tmproposal:
-    #                     if tmproposal.date_sent_for_approval:
-    #                         status="PM Review"
-    #                         color = "beige"
-    #                     else:
-    #                         status="Proposal in Progress"
-    #                         color = "beige"
-    #                 else:
-    #                     status = "Ticket Signed"
-    #                     color = "beige"
-    #             else:
-    #                 if x.need_ticket() == True and x.is_printed == False:
-    #                     status = "Ticket Not Completed"
-    #                     color = "red"
-    #                 else:
-    #                     status = "Ticket Not Signed"
-    #                     color = "red"
-    #     price = None
-    #     if x.price: price = "{:,}".format(int(x.price))
-    #
-    #     changeorders.append(
-    #         {'color':color,'is_t_and_m': x.is_t_and_m, 'job_name': x.job_number.job_name, 'job_number': x.job_number.job_number,
-    #          'cop_number': x.cop_number, 'description': x.description, 'status': status, 'id': x.id,
-    #          'date_sent': x.date_sent, 'date_approved': x.date_approved, 'is_approved': x.is_approved,
-    #          'gc_number': x.gc_number, 'price': price})
+
 
     send_data['changeorders'] = changeorders
     # send_data['changeorders'] = search_cos.qs.order_by('job_number', 'cop_number')
@@ -2287,7 +2210,22 @@ def extra_work_ticket(request, id):
 
 
     if request.method == 'POST':
-        print(request.POST)
+        if 'change_internal' in request.POST:
+            employee = Employees.objects.filter(user=request.user).first()
+            if changeorder.is_internal:
+                note = "No Longer Internal"
+                changeorder.is_internal = False
+            else:
+                note = "Changed to Internal"
+                changeorder.is_internal = True
+            changeorder.save()
+            ChangeOrderNotes.objects.create(
+                cop_number=changeorder,
+                date=date.today(),
+                user=employee,
+                note=note
+            )
+            return redirect('extra_work_ticket', id=id)
         if 'toggle_work_complete' in request.POST:
             note = request.POST.get('work_complete_note', '').strip()
             employee = Employees.objects.filter(user=request.user).first()
@@ -3809,7 +3747,6 @@ def select_pm_approval(request, id):
     return render(request, "select_pm_approval.html",send_data)
 
 def send_cop_report(request,job_number):
-    print("HI1")
     job = Jobs.objects.filter(job_number=job_number).first()
     raw_changeorders = ChangeOrders.objects.filter(
         job_number=job,
@@ -3823,7 +3760,7 @@ def send_cop_report(request,job_number):
 
         is_approved = status == "Approved"
         is_sent = status in ["Sent to GC", "Informal Approval", "Approved"]
-        is_not_sent = not is_sent
+        is_not_sent = (not is_sent) and status != "Internal"
 
         default_checked = is_sent and not is_approved
 
