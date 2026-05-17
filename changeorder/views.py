@@ -2090,14 +2090,14 @@ def change_order_new(request, jobnumber):
         internal = 'is_internal' in request.POST
         raw_description = request.POST.get('description', '')
         safe_description = sanitize_windows_filename_part(raw_description)
-
+        changeorders2 = ChangeOrders.objects.filter(job_number=selected_job)
         if not safe_description:
             messages.error(request, "Description is required.")
             send_data['changeorders'] = changeorders
             return render(request, "change_order_new.html", send_data)
 
-        if changeorders:
-            last_cop = changeorders.order_by('cop_number').last()
+        if changeorders2:
+            last_cop = changeorders2.order_by('cop_number').last()
             next_cop = last_cop.cop_number + 1
         else:
             next_cop = 1
@@ -2193,20 +2193,6 @@ def extra_work_ticket(request, id):
     send_data['changeorder'] = changeorder
 
     job = changeorder.job_number
-    #---send plan folders to select from, to create shortcuts to those folders --#
-    # REMOVED 2/26/26
-    # BASE_JOBS_PATH = r"\\gp2022\company\jobs\open jobs"
-    # job_folder_name = f"{changeorder.job_number.job_number} {changeorder.job_number.job_name} "
-    # plans_folder = os.path.join(BASE_JOBS_PATH, job_folder_name, "plans")
-    # lnk_path = find_post_bid_docs_shortcut(plans_folder)
-    # post_bid_docs_target = None
-    # if lnk_path:
-    #     post_bid_docs_target = resolve_shortcut(lnk_path)
-    # if post_bid_docs_target and os.path.isdir(post_bid_docs_target):
-    #     send_data['post_bid_doc_folders'] = get_subfolders(post_bid_docs_target)
-    # else:
-    #     send_data['post_bid_doc_folders'] = []
-
 
 
     if request.method == 'POST':
