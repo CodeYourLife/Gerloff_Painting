@@ -86,6 +86,7 @@ class ChangeOrders(models.Model):
         max_digits=9, decimal_places=2, null=True, blank=True)
     created_by_subcontractor = models.ForeignKey('subcontractors.Subcontractors', on_delete=models.PROTECT,null=True,blank=True)
     originated_in_management_console = models.BooleanField(default=False)
+    is_internal = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.job_number} {self.cop_number}"
@@ -94,30 +95,34 @@ class ChangeOrders(models.Model):
         status = "Not Sent"
         if self.is_closed:
             status = "Voided"
-        else:
-            if self.is_approved:
-                if self.is_approved_to_bill:
-                    status = "Approved"
-                else:
-                    status = "Informal Approval"
-            elif self.date_sent:
-                status = "Sent to GC"
+            return status
+        if self.is_internal:
+            status = "Internal"
+            return status
+
+        if self.is_approved:
+            if self.is_approved_to_bill:
+                status = "Approved"
             else:
-                if self.is_t_and_m:
-                    if self.is_ticket_signed:
-                        tmproposal = TMProposal.objects.filter(change_order=self).first()
-                        if tmproposal:
-                            if tmproposal.date_sent_for_approval:
-                                status="PM Review"
-                            else:
-                                status="Proposal in Progress"
+                status = "Informal Approval"
+        elif self.date_sent:
+            status = "Sent to GC"
+        else:
+            if self.is_t_and_m:
+                if self.is_ticket_signed:
+                    tmproposal = TMProposal.objects.filter(change_order=self).first()
+                    if tmproposal:
+                        if tmproposal.date_sent_for_approval:
+                            status="PM Review"
                         else:
-                            status = "Ticket Signed"
+                            status="Proposal in Progress"
                     else:
-                        if self.need_ticket() == True and self.is_printed == False:
-                            status = "Ticket Not Completed"
-                        else:
-                            status = "Ticket Not Signed"
+                        status = "Ticket Signed"
+                else:
+                    if self.need_ticket() == True and self.is_printed == False:
+                        status = "Ticket Not Completed"
+                    else:
+                        status = "Ticket Not Signed"
         return status
 
     def need_ticket(self):

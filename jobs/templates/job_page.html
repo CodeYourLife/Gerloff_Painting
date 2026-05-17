@@ -1,16 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block nav_item_jobs %}active{% endblock nav_item_jobs %}
-{% block content %}
 {% load render_table from django_tables2 %}
 
+{% block nav_item_jobs %}active{% endblock nav_item_jobs %}
 
-<!DOCTYPE html>
-<html>
-<head>
-<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Trinity GP</title>
+{% block extra_head %}
 <style type="text/css" class="init">
 #notes_table thead {
     display: none;
@@ -122,403 +116,31 @@ float: left !important;
     white-space: normal;
 }
 
+.row-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+    color: inherit;
+    text-decoration: none;
+}
+
+.row-link:hover {
+    color: inherit;
+    text-decoration: none;
+}
+
+
 </style>
 
 <!--<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
 <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-<link href="https://www.jqueryscript.net/css/jquerysctipttop.css" rel="stylesheet" type="text/css">
-<script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
-<script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-<script src="https://www.jqueryscript.net/demo/Two-side-Multi-Select-Plugin-with-jQuery-multiselect-js/js/multiselect.js"></script>
-<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" language="javascript" src="../resources/demo.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
-<script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
-<script type="text/javascript" class="init">
-
-var original_start_date = "Test"
-
-function check_if_start_date_changed(){
-    if (original_start_date != change_start_form.start_date.value){
-        confirm_date_button.style.display = "none"
-        change_start_form.confirm_date.checked = true
-    }
-    else {
-        confirm_date_button.style.display = "block"
-        change_start_formconfirm_date.checked = false
-    }
-
-}
-
-$(document).ready(function() {
-  if ("{{error_message}}"){alert("{{error_message}}")}
-    document.getElementById("hide_this").style.display = "none"
-    hide_submit_button.style.display = "none"
-    hide_competent_person_list.style.display = "none"
-});
-
-function add_new_note(){
-    var name=prompt("Job Note:");
-    if (name!=null){
-        document.getElementById("add_note").value = name
-        document.getElementById('new_note_form').submit();
-    }
-}
-
-function labor_done_changed(current_status){
-    if (labor_close_form.select_status.value == 'nothing_done' || labor_close_form.select_status.value == 'waiting_for_punchlist'){
-        if (current_status == "True"){alert("Sending email notification to Bridgette and Victor.  This may take a second so be patient")}
-    }
-    if (labor_close_form.select_status.value == 'done_done'){
-        alert("Sending email notification to Bridgette and Victor.  This may take a second so be patient")
-    }
-    document.getElementById('labor_close_form').submit();
-}
 
 
-function before_postpm(){
-    pmselect = change_client_pm_form.select_pm.value
-    if (pmselect == 'add_new'){
-        newpm = change_client_pm_form.new_pm.value
-        newpmemail = change_client_pm_form.new_pm_email.value
-       if(newpm == ""){
-         alert("You must type the new PM's name")
-         return false
-       }
-        if(newpmemail == ""){
-         alert("You must type the new PM's email")
-         return false
-       }
-    }
-    else if (pmselect == 'please_select'){
-        alert("You must select a PM Option")
-        return false
-    }
-    else{
-        pmname = change_client_pm_form.pm_name.value
-        pmemail = change_client_pm_form.pm_email.value
-        if (pmemail == ""){
-            alert("The PM must have an email address")
-            return false
-        }
-        if (pmname == ""){
-            alert("You must enter a name")
-            return false
-        }
-    }
-}
-function before_postsuper(){
-    superselect = change_client_super_form.select_super.value
-    newsuper = change_client_super_form.new_super.value
-    if (superselect == 'add_new'){
-       if(newsuper == ""){
-         alert("You must type the new Super's name at least")
-         return false
-       }
-    }
-}
+{% endblock %}
 
-function new_pm1(){
-    existingPM= "{{job.client_Pm.person_pk}}"
-    newPM = change_client_pm_form.select_pm.value
-    if (newPM == "add_new"){
-        document.getElementById("show_new_pm").style.display = "block";
-        document.getElementById("show_existing_pm").style.display = "none";
-    }
-    else {
-        $.ajax({
-            method: 'GET',
-            url: '/superintendent/super_ajax',
-            data: {'client_employee_id':change_client_pm_form.select_pm.value},
-            success: function (data) {
-                parsedData = JSON.parse(data);
-                change_client_pm_form.pm_name.value = parsedData.name
-                change_client_pm_form.pm_email.value = parsedData.email
-                change_client_pm_form.pm_phone.value = parsedData.phone
-                document.getElementById("show_new_pm").style.display = "none";
-                document.getElementById("show_existing_pm").style.display = "block";
-            }
-        })
-    }
-
-}
-
-function new_super1(){
-    existingPM= "{{job.client_Super.person_pk}}"
-    newPM = change_client_super_form.select_super.value
-    if (newPM == "add_new"){
-        document.getElementById("show_new_super").style.display = "block";
-        document.getElementById("show_existing_super").style.display = "none";
-    }
-    else if (newPM == "not_sure"){
-        document.getElementById("show_new_super").style.display = "none";
-        document.getElementById("show_existing_super").style.display = "block";
-        document.getElementById("super_name_row").style.display = "none";
-        document.getElementById("super_email_row").style.display = "none";
-        document.getElementById("super_phone_row").style.display = "none";
-    }
-    else {
-        $.ajax({
-            method: 'GET',
-            url: '/superintendent/super_ajax',
-            data: {'client_employee_id':change_client_super_form.select_super.value},
-            success: function (data) {
-                parsedData = JSON.parse(data);
-                change_client_super_form.super_name.value = parsedData.name
-                change_client_super_form.super_email.value = parsedData.email
-                change_client_super_form.super_phone.value = parsedData.phone
-                document.getElementById("show_new_super").style.display = "none";
-                document.getElementById("show_existing_super").style.display = "block";
-                document.getElementById("super_name_row").style.display = "block";
-                document.getElementById("super_email_row").style.display = "block";
-                document.getElementById("super_phone_row").style.display = "block";
-            }
-        })
-    }
-}
-
-$('#test_header').on('click', 'th', function () {
-  var index = table.column(this).index();
-});
-
-function hi(){
-}
-
-function showEmployeeData(status, client, client_email, client_phone,pm,superintendent,super_phone,super_email, pm_phone,pm_email) {
-    document.getElementById("client_title").innerHTML = client;
-    document.getElementById("client_pm_title").innerHTML = client;
-    document.getElementById("client_super_title").innerHTML = client;
-    document.getElementById("change_client_title").innerHTML = client;
-    document.getElementById("change_client_pm_title").innerHTML = client;
-    document.getElementById("change_client_super_title").innerHTML = client;
-    let text = "<table border='1' class='table display'>";
-    text += "<tr><td>Company: " + client + "</td></tr>";
-    text += "<tr><td><a href='tel:" + client_phone + "'>Phone: " + client_phone + "</a></td></tr>";
-    text += "<tr><td><a href='mailto: " + client_email + "'>Email: " + client_email + "</a></td></tr>"
-    text += "</table>"
-    document.getElementById("client_info").innerHTML = text;
-    text = "<table border='1' class='table display'>";
-    text += "<tr><td>PM: " + pm + "</td></tr>";
-    text += "<tr><td><a href='tel:" + pm_phone + "'>Phone: " + pm_phone + "</a></td></tr>";
-    text += "<tr><td><a href='mailto: " + pm_email + "'>Email: " + pm_email + "</a></td></tr>";
-    text += "</table>";
-    document.getElementById("client_pm_info").innerHTML = text;
-    text = "<table border='1' class='table display'>";
-    text += "<tr><td>Superintendent: " + superintendent + "</td></tr>";
-    text += "<tr><td><a href='tel:" + super_phone + "'>Phone: " + super_phone + "</a></td></tr>";
-    text += "<tr><td><a href='mailto: " + super_email + "'>Email: " + super_email + "</a></td></tr>"
-    text += "</table>"
-    document.getElementById("client_super_info").innerHTML = text;
-}
-
-function change_start(){
-    document.getElementById("hide_this").style.display = "block"
-    document.getElementById("hide_button1").style.display = "none"
-    document.getElementById("hide_button2").style.display = "none"
-    $.ajax({
-        method: 'GET',
-        url: '/superintendent/super_ajax',
-        data: {'confirm_date':change_start_form.confirm_date.checked, 'notify':change_start_form.notify_super.checked, 'job_number':change_start_form.job_number.value, 'start_date': change_start_form.start_date.value,'is_active':change_start_form.is_active.checked,'notes':change_start_form.date_note.value,'row':change_start_form.row_number.value},
-        success: function (data) {
-            parsedData = JSON.parse(data);
-            if (parsedData.email_sent){alert("Email Sent")}
-            else {alert("Email Not Sent")}
-            begin = document.getElementById("TEST_YO").innerHTML.search('">')+2
-            end = document.getElementById("TEST_YO").innerHTML.search("</a>")
-            left = document.getElementById("TEST_YO").innerHTML.substring(0,begin)
-            document.getElementById("TEST_YO").innerHTML = left + parsedData.new_date + "</a>"
-            change_start_form.submit()
-        }
-    })
-
-}
-
-function submit_new_super(){
-    $.ajax({
-        method: 'GET',
-        url: '/superintendent/super_ajax',
-        data: {'job_number':pmform3.job_number.value, 'select_super':pmform3.select_super.value},
-        success: function (data) {
-            parsedData = JSON.parse(data);
-            if (parsedData.email_sent){alert("Email Sent")}
-            else {alert("Email Not Sent")}
-            begin = document.getElementById("TEST_BRO").innerHTML.search("</b>") + 4
-            end = document.getElementById("TEST_BRO").innerHTML.search("</a>")
-            left = document.getElementById("TEST_BRO").innerHTML.substring(0,begin)
-            document.getElementById("TEST_BRO").innerHTML = left + pmform3.select_super.options[pmform3.select_super.selectedIndex].text
-       }
-    })
-}
-
-function populate_super_modal(jobname,superid,jobnumber,firstname,x,origin){
-    pmform3.select_super.value=superid
-    pmform3.row_number.value= "NO"
-    document.getElementById("title3").innerHTML = jobname
-    pmform3.job_number.value=jobnumber
-    pmform3.first_name.value=firstname
-}
-
-function populate_start_date_modal(jobnumber,startdate,is_active,x,origin){
-           original_start_date = change_start_form.start_date.value
-    confirm_date_button.style.display = "block"
-    change_start_form.confirm_date.checked = false
-    $.ajax({
-        method: 'GET',
-        url: '/superintendent/super_ajax',
-        data: {'job_number':jobnumber,'build_notes': "True"},
-        success: function (data) {
-           parsedData = JSON.parse(data);
-            let text = "<table border='1' class='table display'>"
-            text += "<thead><tr><th>Date</th><th>User</th><th>Note</th></tr></thead>"
-            parsedData.notes.forEach((element) => {
-                text += "<tr><td>" + element.date + "</td><td>" + element.user + "</td><td>" + element.note + "</td></tr>";
-            })
-            text += "</table>"
-            document.getElementById("notes_tab").innerHTML = text;
-            var d = new Date(startdate),
-            month = '' + (d.getMonth() + 1),
-            day = '' + d.getDate(),
-            year = d.getFullYear();
-            if (month.length < 2){month = '0' + month;}
-            if (day.length < 2){day = '0' + day;}
-            adjusted_date=[year, month, day].join('-')
-            document.getElementById("title2").innerHTML = parsedData.job_name
-            change_start_form.date_note.value=""
-            change_start_form.start_date.value=adjusted_date
-            change_start_form.row_number.value = "NO"
-            change_start_form.job_number.value=jobnumber
-            if (parsedData.is_active == true){
-                change_start_form.is_active.checked = true
-                change_start_form.confirm_date.checked = false
-                change_start_form.notify_super.checked = false
-                document.getElementById("start_date_input").style.display = "none"
-                document.getElementById("confirm_date_button").style.display = "none"
-                document.getElementById("notify_super_button").style.display = "none"
-            }
-            else{
-                change_start_form.is_active.checked = false
-                document.getElementById("start_date_input").style.display = "block"
-                document.getElementById("confirm_date_button").style.display = "block"
-                document.getElementById("notify_super_button").style.display = "block"
-            }
-        }
-    })
-
-}
-
-function active_button_changed(){
-    if(change_start_form.is_active.checked == true){
-        change_start_form.confirm_date.checked = false
-        change_start_form.notify_super.checked = false
-        document.getElementById("start_date_input").style.display = "none"
-        document.getElementById("confirm_date_button").style.display = "none"
-        document.getElementById("notify_super_button").style.display = "none"
-    }
-    else{
-        document.getElementById("start_date_input").style.display = "block"
-        document.getElementById("confirm_date_button").style.display = "block"
-        document.getElementById("notify_super_button").style.display = "block"
-    }
-}
-
-
-function open_dropbox(jobnumber){
-    $.ajax({
-        method: 'GET',
-        url: '/superintendent/super_ajax',
-        data: {'dropbox': 'True','job_number':jobnumber},
-        success: function (data) {window.open(data)}
-    })
-}
-
-function open_dropbox2(jobnumber){
-    document.getElementById("dropbox_link_hide").style.display = "block";
-    document.getElementById("dropbox_button_hide").style.display = "none";
-    var link = document.getElementById('link');
-    link.innerHTML = "Please Wait...."
-    $.ajax({
-        method: 'GET',
-        url: '/superintendent/super_ajax',
-        data: {'dropbox': 'True','job_number':jobnumber},
-        success: function (data) {
-
-            if (data == 'False'){link.innerHTML="REMOVED FROM DROPBOX"}
-            else{
-                link.setAttribute('href', data);
-                link.innerHTML = "CLICK HERE FOR PLANS!"
-                link.click();
-            }
-        }
-    })
-}
-
-window.onload = function() {
-    $.fn.dataTable.moment( 'MMM-DD-YYYY' );
-    var table = $('#notes_table').DataTable({paging: false,info:false, ordering:false, searching:false})
-    var table = $('#subcontractors_table').DataTable({paging: false,info:false, ordering:false, searching:false})
-    var table = $('#approved_changes_table').DataTable({paging: false, ordering:false, searching:false,info:false})
-    var table = $('#tickets_table').DataTable({paging: false, ordering:false, searching:false,info:false})
-    var table = $('#tickets_table1').DataTable({paging: false, ordering:false, searching:false,info:false})
-    var table = $('#tickets_table2').DataTable({paging: false, ordering:false, searching:false,info:false})
-    var table = $('#tickets_table3').DataTable({paging: false, ordering:false, searching:false,info:false})
-    var table = $('#tickets_table4').DataTable({paging: false, ordering:false, searching:false,info:false})
-    var table = $('#tickets_table5').DataTable({paging: false, ordering:false, searching:false,info:false})
-    var table = $('#tickets_table6').DataTable({paging: false, ordering:false, searching:false,info:false})
-    var table = $('#tickets_table7').DataTable({paging: false, ordering:false, searching:false,info:false})
-    var table = $('#tickets_table8').DataTable({paging: false, ordering:false, searching:false,info:false})
-    var table = $('#tickets_table9').DataTable({paging: false, ordering:false, searching:false,info:false})
-    var table = $('#tickets_table10').DataTable({paging: false, ordering:false, searching:false,info:false})
-    var table = $('#competent_persons_table').DataTable({paging: false, ordering:false, searching:false,info:false})
-    document.getElementById("show_new_pm").style.display = "none";
-    document.getElementById("show_new_super").style.display = "none";
-    document.getElementById("dropbox_link_hide").style.display = "none";
-    document.getElementById("dropbox_button_hide").style.display = "block";
-    document.getElementById("notes_filter_and_button").style.display = "none";
-    if ('{{job.client_Super}}'=='None'){
-            document.getElementById("super_name_row").style.display = "none";
-        document.getElementById("super_email_row").style.display = "none";
-        document.getElementById("super_phone_row").style.display = "none";
-    }
-    if ('{{notes_open_button}}'){document.getElementById("collapseOne").style.display = "block";}
-
-};
-
-function run_filter_form(){
-filter_form.submit()
-}
-
-function hide_filter(){
-document.getElementById("notes_filter_and_button").style.display = "block";
-document.getElementById("notes_filter_button").style.display = "none";
-}
-
-function submit_safety_packet(){
-    myForm= document.getElementById("safety_packet_form")
-    myForm.submit()
-}
-
-function show_competent_person_list(){
-    hide_competent_person_list= document.getElementById("hide_competent_person_list")
-    hide_competent_person_list.style.display = "block"
-    hide_first_competent_button = document.getElementById("hide_first_competent_button")
-    hide_first_competent_button.style.display = "none"
-}
-
-function show_submit_button(){
-    hide_submit_button= document.getElementById("hide_submit_button")
-    hide_submit_button.style.display = "block"
-}
-</script>
-
-</head>
-<body>
+{% block content %}
+<!-- nav bar -->
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
 
     <a class="navbar-brand sub-navbar-brand" href="{% url 'jobs_home' %}">Jobs</a>
@@ -532,7 +154,6 @@ function show_submit_button(){
         </ul>
     </div>
 </nav>
-
 
 <!-- Modal -->
 <div class="modal fade" id="startdate-modal" tabindex="-1" role="dialog" aria-labelledby="title"
@@ -1390,7 +1011,7 @@ function show_submit_button(){
             <form action="{% url 'activate_sub_job' job.job_number %}"><input type="submit" class="btn btn-danger btn-sm" value="ALREADY SUBBED OUT" />
             </form>
             {% else %}
-            <form action="{% url 'activate_sub_job' job.job_number %}"> <input type="submit" class="btn btn-light btn-sm" value="Sub This Job Out" />
+            <form action="{% url 'activate_sub_job' job.job_number %}"> <input type="submit" class="btn btn-light btn-sm" value="Click to Sub This Job Out" />
             </form>
             {% endif %}
         </div>
@@ -1722,18 +1343,23 @@ function show_submit_button(){
                     </thead>
                     <tbody>
                         {% for row in unapproved_items %}
-                        <tr class="clickable-row"
-                            onclick="window.location='{% url 'submittal_item_detail' row.item.id %}';">
-                            <td>{{ row.item.description }}</td>
-                            <td>{{ row.notes|default:"" }}</td>
+                        <tr class="clickable-row">
+                            <td><a class="row-link" href="{% url 'submittal_item_detail' row.item.id %}">
+            {{ row.item.description }}
+        </a></td>
+                            <td>        <a class="row-link" href="{% url 'submittal_item_detail' row.item.id %}">
+            {{ row.notes|default:"" }}
+        </a></td>
                             <td>
-                                {% if not row.approval %}
-                                    Not Submitted
-                                {% elif row.approval.is_approved == False %}
-                                    Rejected
-                                {% else %}
-                                    Pending
-                                {% endif %}
+                                <a class="row-link" href="{% url 'submittal_item_detail' row.item.id %}">
+            {% if not row.approval %}
+                Not Submitted
+            {% elif row.approval.is_approved == False %}
+                Rejected
+            {% else %}
+                Pending
+            {% endif %}
+        </a>
                             </td>
                         </tr>
                         {% empty %}
@@ -1779,17 +1405,33 @@ function show_submit_button(){
                     </thead>
                     <tbody>
                         {% for row in approved_items %}
-                        <tr class="clickable-row"
-                            onclick="window.location='{% url 'submittal_send' row.approval.submittal.id %}';">
-                            <td>{{ row.item.description }}</td>
-                            <td>{{ row.submittal_number }}</td>
-                            <td>{{ row.notes|default:"" }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="4">No approved items</td>
-                        </tr>
-                        {% endfor %}
+                            <tr class="clickable-row">
+                                <td>
+                                    <a class="row-link"
+                                       href="{% url 'submittal_send' row.approval.submittal.id %}">
+                                        {{ row.item.description }}
+                                    </a>
+                                </td>
+
+                                <td>
+                                    <a class="row-link"
+                                       href="{% url 'submittal_send' row.approval.submittal.id %}">
+                                        {{ row.submittal_number }}
+                                    </a>
+                                </td>
+
+                                <td>
+                                    <a class="row-link"
+                                       href="{% url 'submittal_send' row.approval.submittal.id %}">
+                                        {{ row.notes|default:"" }}
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4">No approved items</td>
+                            </tr>
+                            {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -2112,8 +1754,396 @@ function show_submit_button(){
     </div>
 </div>
 
+{% endblock %}
 
+{% block extra_scripts %}
+<script src="https://www.jqueryscript.net/demo/Two-side-Multi-Select-Plugin-with-jQuery-multiselect-js/js/multiselect.js"></script>
 <script>
+$(document).on('click', '.clickable-row', function (e) {
+    if ($(e.target).closest('a, button').length) {
+        return;
+    }
+
+    var href = $(this).data('href');
+
+    if (href) {
+        window.location = href;
+    }
+});
+
+var original_start_date = "Test"
+
+function check_if_start_date_changed(){
+    if (original_start_date != change_start_form.start_date.value){
+        confirm_date_button.style.display = "none"
+        change_start_form.confirm_date.checked = true
+    }
+    else {
+        confirm_date_button.style.display = "block"
+        change_start_formconfirm_date.checked = false
+    }
+
+}
+
+$(document).ready(function() {
+  if ("{{error_message}}"){alert("{{error_message}}")}
+    document.getElementById("hide_this").style.display = "none"
+    hide_submit_button.style.display = "none"
+    hide_competent_person_list.style.display = "none"
+});
+
+function add_new_note(){
+    var name=prompt("Job Note:");
+    if (name!=null){
+        document.getElementById("add_note").value = name
+        document.getElementById('new_note_form').submit();
+    }
+}
+
+function labor_done_changed(current_status){
+    if (labor_close_form.select_status.value == 'nothing_done' || labor_close_form.select_status.value == 'waiting_for_punchlist'){
+        if (current_status == "True"){alert("Sending email notification to Bridgette and Victor.  This may take a second so be patient")}
+    }
+    if (labor_close_form.select_status.value == 'done_done'){
+        alert("Sending email notification to Bridgette and Victor.  This may take a second so be patient")
+    }
+    document.getElementById('labor_close_form').submit();
+}
+
+
+function before_postpm(){
+    pmselect = change_client_pm_form.select_pm.value
+    if (pmselect == 'add_new'){
+        newpm = change_client_pm_form.new_pm.value
+        newpmemail = change_client_pm_form.new_pm_email.value
+       if(newpm == ""){
+         alert("You must type the new PM's name")
+         return false
+       }
+        if(newpmemail == ""){
+         alert("You must type the new PM's email")
+         return false
+       }
+    }
+    else if (pmselect == 'please_select'){
+        alert("You must select a PM Option")
+        return false
+    }
+    else{
+        pmname = change_client_pm_form.pm_name.value
+        pmemail = change_client_pm_form.pm_email.value
+        if (pmemail == ""){
+            alert("The PM must have an email address")
+            return false
+        }
+        if (pmname == ""){
+            alert("You must enter a name")
+            return false
+        }
+    }
+}
+function before_postsuper(){
+    superselect = change_client_super_form.select_super.value
+    newsuper = change_client_super_form.new_super.value
+    if (superselect == 'add_new'){
+       if(newsuper == ""){
+         alert("You must type the new Super's name at least")
+         return false
+       }
+    }
+}
+
+function new_pm1(){
+    existingPM= "{{job.client_Pm.person_pk}}"
+    newPM = change_client_pm_form.select_pm.value
+    if (newPM == "add_new"){
+        document.getElementById("show_new_pm").style.display = "block";
+        document.getElementById("show_existing_pm").style.display = "none";
+    }
+    else {
+        $.ajax({
+            method: 'GET',
+            url: '/superintendent/super_ajax',
+            data: {'client_employee_id':change_client_pm_form.select_pm.value},
+            success: function (data) {
+                parsedData = JSON.parse(data);
+                change_client_pm_form.pm_name.value = parsedData.name
+                change_client_pm_form.pm_email.value = parsedData.email
+                change_client_pm_form.pm_phone.value = parsedData.phone
+                document.getElementById("show_new_pm").style.display = "none";
+                document.getElementById("show_existing_pm").style.display = "block";
+            }
+        })
+    }
+
+}
+
+function new_super1(){
+    existingPM= "{{job.client_Super.person_pk}}"
+    newPM = change_client_super_form.select_super.value
+    if (newPM == "add_new"){
+        document.getElementById("show_new_super").style.display = "block";
+        document.getElementById("show_existing_super").style.display = "none";
+    }
+    else if (newPM == "not_sure"){
+        document.getElementById("show_new_super").style.display = "none";
+        document.getElementById("show_existing_super").style.display = "block";
+        document.getElementById("super_name_row").style.display = "none";
+        document.getElementById("super_email_row").style.display = "none";
+        document.getElementById("super_phone_row").style.display = "none";
+    }
+    else {
+        $.ajax({
+            method: 'GET',
+            url: '/superintendent/super_ajax',
+            data: {'client_employee_id':change_client_super_form.select_super.value},
+            success: function (data) {
+                parsedData = JSON.parse(data);
+                change_client_super_form.super_name.value = parsedData.name
+                change_client_super_form.super_email.value = parsedData.email
+                change_client_super_form.super_phone.value = parsedData.phone
+                document.getElementById("show_new_super").style.display = "none";
+                document.getElementById("show_existing_super").style.display = "block";
+                document.getElementById("super_name_row").style.display = "block";
+                document.getElementById("super_email_row").style.display = "block";
+                document.getElementById("super_phone_row").style.display = "block";
+            }
+        })
+    }
+}
+
+$('#test_header').on('click', 'th', function () {
+  var index = table.column(this).index();
+});
+
+function hi(){
+}
+
+function showEmployeeData(status, client, client_email, client_phone,pm,superintendent,super_phone,super_email, pm_phone,pm_email) {
+    document.getElementById("client_title").innerHTML = client;
+    document.getElementById("client_pm_title").innerHTML = client;
+    document.getElementById("client_super_title").innerHTML = client;
+    document.getElementById("change_client_title").innerHTML = client;
+    document.getElementById("change_client_pm_title").innerHTML = client;
+    document.getElementById("change_client_super_title").innerHTML = client;
+    let text = "<table border='1' class='table display'>";
+    text += "<tr><td>Company: " + client + "</td></tr>";
+    text += "<tr><td><a href='tel:" + client_phone + "'>Phone: " + client_phone + "</a></td></tr>";
+    text += "<tr><td><a href='mailto: " + client_email + "'>Email: " + client_email + "</a></td></tr>"
+    text += "</table>"
+    document.getElementById("client_info").innerHTML = text;
+    text = "<table border='1' class='table display'>";
+    text += "<tr><td>PM: " + pm + "</td></tr>";
+    text += "<tr><td><a href='tel:" + pm_phone + "'>Phone: " + pm_phone + "</a></td></tr>";
+    text += "<tr><td><a href='mailto: " + pm_email + "'>Email: " + pm_email + "</a></td></tr>";
+    text += "</table>";
+    document.getElementById("client_pm_info").innerHTML = text;
+    text = "<table border='1' class='table display'>";
+    text += "<tr><td>Superintendent: " + superintendent + "</td></tr>";
+    text += "<tr><td><a href='tel:" + super_phone + "'>Phone: " + super_phone + "</a></td></tr>";
+    text += "<tr><td><a href='mailto: " + super_email + "'>Email: " + super_email + "</a></td></tr>"
+    text += "</table>"
+    document.getElementById("client_super_info").innerHTML = text;
+}
+
+function change_start(){
+    document.getElementById("hide_this").style.display = "block"
+    document.getElementById("hide_button1").style.display = "none"
+    document.getElementById("hide_button2").style.display = "none"
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'confirm_date':change_start_form.confirm_date.checked, 'notify':change_start_form.notify_super.checked, 'job_number':change_start_form.job_number.value, 'start_date': change_start_form.start_date.value,'is_active':change_start_form.is_active.checked,'notes':change_start_form.date_note.value,'row':change_start_form.row_number.value},
+        success: function (data) {
+            parsedData = JSON.parse(data);
+            if (parsedData.email_sent){alert("Email Sent")}
+            else {alert("Email Not Sent")}
+            begin = document.getElementById("TEST_YO").innerHTML.search('">')+2
+            end = document.getElementById("TEST_YO").innerHTML.search("</a>")
+            left = document.getElementById("TEST_YO").innerHTML.substring(0,begin)
+            document.getElementById("TEST_YO").innerHTML = left + parsedData.new_date + "</a>"
+            change_start_form.submit()
+        }
+    })
+
+}
+
+function submit_new_super(){
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'job_number':pmform3.job_number.value, 'select_super':pmform3.select_super.value},
+        success: function (data) {
+            parsedData = JSON.parse(data);
+            if (parsedData.email_sent){alert("Email Sent")}
+            else {alert("Email Not Sent")}
+            begin = document.getElementById("TEST_BRO").innerHTML.search("</b>") + 4
+            end = document.getElementById("TEST_BRO").innerHTML.search("</a>")
+            left = document.getElementById("TEST_BRO").innerHTML.substring(0,begin)
+            document.getElementById("TEST_BRO").innerHTML = left + pmform3.select_super.options[pmform3.select_super.selectedIndex].text
+       }
+    })
+}
+
+function populate_super_modal(jobname,superid,jobnumber,firstname,x,origin){
+    pmform3.select_super.value=superid
+    pmform3.row_number.value= "NO"
+    document.getElementById("title3").innerHTML = jobname
+    pmform3.job_number.value=jobnumber
+    pmform3.first_name.value=firstname
+}
+
+function populate_start_date_modal(jobnumber,startdate,is_active,x,origin){
+           original_start_date = change_start_form.start_date.value
+    confirm_date_button.style.display = "block"
+    change_start_form.confirm_date.checked = false
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'job_number':jobnumber,'build_notes': "True"},
+        success: function (data) {
+           parsedData = JSON.parse(data);
+            let text = "<table border='1' class='table display'>"
+            text += "<thead><tr><th>Date</th><th>User</th><th>Note</th></tr></thead>"
+            parsedData.notes.forEach((element) => {
+                text += "<tr><td>" + element.date + "</td><td>" + element.user + "</td><td>" + element.note + "</td></tr>";
+            })
+            text += "</table>"
+            document.getElementById("notes_tab").innerHTML = text;
+            var d = new Date(startdate),
+            month = '' + (d.getMonth() + 1),
+            day = '' + d.getDate(),
+            year = d.getFullYear();
+            if (month.length < 2){month = '0' + month;}
+            if (day.length < 2){day = '0' + day;}
+            adjusted_date=[year, month, day].join('-')
+            document.getElementById("title2").innerHTML = parsedData.job_name
+            change_start_form.date_note.value=""
+            change_start_form.start_date.value=adjusted_date
+            change_start_form.row_number.value = "NO"
+            change_start_form.job_number.value=jobnumber
+            if (parsedData.is_active == true){
+                change_start_form.is_active.checked = true
+                change_start_form.confirm_date.checked = false
+                change_start_form.notify_super.checked = false
+                document.getElementById("start_date_input").style.display = "none"
+                document.getElementById("confirm_date_button").style.display = "none"
+                document.getElementById("notify_super_button").style.display = "none"
+            }
+            else{
+                change_start_form.is_active.checked = false
+                document.getElementById("start_date_input").style.display = "block"
+                document.getElementById("confirm_date_button").style.display = "block"
+                document.getElementById("notify_super_button").style.display = "block"
+            }
+        }
+    })
+
+}
+
+function active_button_changed(){
+    if(change_start_form.is_active.checked == true){
+        change_start_form.confirm_date.checked = false
+        change_start_form.notify_super.checked = false
+        document.getElementById("start_date_input").style.display = "none"
+        document.getElementById("confirm_date_button").style.display = "none"
+        document.getElementById("notify_super_button").style.display = "none"
+    }
+    else{
+        document.getElementById("start_date_input").style.display = "block"
+        document.getElementById("confirm_date_button").style.display = "block"
+        document.getElementById("notify_super_button").style.display = "block"
+    }
+}
+
+
+function open_dropbox(jobnumber){
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'dropbox': 'True','job_number':jobnumber},
+        success: function (data) {window.open(data)}
+    })
+}
+
+function open_dropbox2(jobnumber){
+    document.getElementById("dropbox_link_hide").style.display = "block";
+    document.getElementById("dropbox_button_hide").style.display = "none";
+    var link = document.getElementById('link');
+    link.innerHTML = "Please Wait...."
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'dropbox': 'True','job_number':jobnumber},
+        success: function (data) {
+
+            if (data == 'False'){link.innerHTML="REMOVED FROM DROPBOX"}
+            else{
+                link.setAttribute('href', data);
+                link.innerHTML = "CLICK HERE FOR PLANS!"
+                link.click();
+            }
+        }
+    })
+}
+
+window.onload = function() {
+    $.fn.dataTable.moment( 'MMM-DD-YYYY' );
+    var table = $('#notes_table').DataTable({paging: false,info:false, ordering:false, searching:false})
+    var table = $('#subcontractors_table').DataTable({paging: false,info:false, ordering:false, searching:false})
+    var table = $('#approved_changes_table').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table1').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table2').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table3').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table4').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table5').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table6').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table7').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table8').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table9').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#tickets_table10').DataTable({paging: false, ordering:false, searching:false,info:false})
+    var table = $('#competent_persons_table').DataTable({paging: false, ordering:false, searching:false,info:false})
+    document.getElementById("show_new_pm").style.display = "none";
+    document.getElementById("show_new_super").style.display = "none";
+    document.getElementById("dropbox_link_hide").style.display = "none";
+    document.getElementById("dropbox_button_hide").style.display = "block";
+    document.getElementById("notes_filter_and_button").style.display = "none";
+    if ('{{job.client_Super}}'=='None'){
+            document.getElementById("super_name_row").style.display = "none";
+        document.getElementById("super_email_row").style.display = "none";
+        document.getElementById("super_phone_row").style.display = "none";
+    }
+    if ('{{notes_open_button}}'){document.getElementById("collapseOne").style.display = "block";}
+
+};
+
+function run_filter_form(){
+filter_form.submit()
+}
+
+function hide_filter(){
+document.getElementById("notes_filter_and_button").style.display = "block";
+document.getElementById("notes_filter_button").style.display = "none";
+}
+
+function submit_safety_packet(){
+    myForm= document.getElementById("safety_packet_form")
+    myForm.submit()
+}
+
+function show_competent_person_list(){
+    hide_competent_person_list= document.getElementById("hide_competent_person_list")
+    hide_competent_person_list.style.display = "block"
+    hide_first_competent_button = document.getElementById("hide_first_competent_button")
+    hide_first_competent_button.style.display = "none"
+}
+
+function show_submit_button(){
+    hide_submit_button= document.getElementById("hide_submit_button")
+    hide_submit_button.style.display = "block"
+}
+
     var coll = document.getElementsByClassName("collapsible");
     var i;
 
@@ -2128,23 +2158,8 @@ function show_submit_button(){
         }
       });
     }
+
 </script>
 
-</body>
-</html>
 
-{% endblock %}
-
-{% block extra_scripts %}
-<script>
-$(document).on('click', '.clickable-row', function (e) {
-
-    if ($(e.target).closest('a, button').length) {
-        return;
-    }
-
-    window.location = $(this).data('href');
-
-});
-</script>
 {% endblock %}
