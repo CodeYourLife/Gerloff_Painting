@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_item_employees %}active{% endblock nav_item_employees %}
+{% block content %}
+
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav">
+            <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'safety_home' %}">Safety</a></li>
+            <li>
+                <a class="nav-item nav-link active">
+                    Edit {{ employee.first_name }} {{ employee.last_name }}
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<br>
+
+<div class="container-fluid">
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Edit Employee Details</strong>
+
+            <a href="{% url 'employees_page' employee.id %}" class="btn btn-sm btn-outline-secondary">
+                Cancel
+            </a>
+        </div>
+
+        <div class="card-body">
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="row">
+
+                    <div class="col-md-4 mb-3">
+                        <label>First Name</label>
+                        <input type="text"
+                               name="first_name"
+                               class="form-control"
+                               value="{{ employee.first_name|default:'' }}">
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label>Middle Name</label>
+                        <input type="text"
+                               name="middle_name"
+                               class="form-control"
+                               value="{{ employee.middle_name|default:'' }}">
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label>Last Name</label>
+                        <input type="text"
+                               name="last_name"
+                               class="form-control"
+                               value="{{ employee.last_name|default:'' }}">
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label>Phone</label>
+                        <input type="text"
+                               name="phone"
+                               class="form-control"
+                               value="{{ employee.phone|default:'' }}">
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label>Email</label>
+                        <input type="email"
+                               name="email"
+                               class="form-control"
+                               value="{{ employee.email|default:'' }}">
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label>Nickname</label>
+                        <input type="text"
+                               name="nickname"
+                               class="form-control"
+                               value="{{ employee.nickname|default:'' }}">
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label>Job Title</label>
+                        <select name="job_title" class="form-control">
+                            <option value="">---------</option>
+                            {% for title in job_titles %}
+                                <option value="{{ title.id }}"
+                                        {% if employee.job_title.id == title.id %}selected{% endif %}>
+                                    {{ title }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label>Date Added</label>
+                        <input type="date"
+                               name="date_added"
+                               class="form-control"
+                               value="{{ employee.date_added|date:'Y-m-d' }}">
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label>Birth Date</label>
+                        <input type="date"
+                               name="birth_date"
+                               class="form-control"
+                               value="{{ employee.birth_date|date:'Y-m-d' }}">
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label>Employment Company</label>
+                        <select id="employment_company"
+                                name="employment_company"
+                                class="form-control">
+                            <option value="">---------</option>
+
+                            {% for company in employment_companies %}
+                                <option value="{{ company.id }}"
+                                        {% if employee.employment_company.id == company.id %}selected{% endif %}>
+                                    {{ company.company_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                </div>
+
+                <hr>
+
+                <div class="d-flex justify-content-end">
+                    <a href="{% url 'employees_page' employee.id %}" class="btn btn-outline-secondary mr-2">
+                        Cancel
+                    </a>
+
+                    <button type="submit" class="btn btn-success">
+                        Save Employee
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    $(document).ready(function () {
+        $('#employment_company').select2({
+            width: '100%',
+            tags: true,
+            placeholder: 'Select or type company'
+        });
+    });
+</script>
+{% endblock %}

@@ -1,130 +1,436 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block content %}
-{% load render_table from django_tables2 %}
-<!DOCTYPE html>
-<html>
-<head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>Trinity GP</title>
-<!--	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
-    .list-items {
-    border-bottom: 1px solid black; display: flex; justify-content: space-between;
+{% block extra_head %}
+<style>
+    .equipment-page {
+        padding: 10px;
     }
-	</style>
-	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
 
-	function job_update2(){
-		var hidden = document.getElementById("select_job")
-		var selectedjob = document.getElementById("selected_job")
-		document.getElementById("try_this").innerHTML = "PLEASE SELECT ITEMS GOING TO" + " " + selectedjob.options[selectedjob.selectedIndex].text.toUpperCase();
-		hidden.value = selectedjob.value
-	}
+    .equipment-card {
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 18px;
+    }
 
-	function check_booking_data(){
-		var hidden = document.getElementById("select_job")
-		var location = document.getElementById("inventory_notes")
-		if (hidden.value == "Not Selected"){
-			alert("Job Not Selected")
-			return false
-		}
-    	var x;
-    	var name=prompt("Please make any notes about this:");
-    	if (name!=null){
-       		location.value = name;
-   		}
-	}
+    .equipment-header-card {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 18px;
+    }
 
-	</script>
-</head>
-<body>
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Equipment</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'equipment_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'equipment_new' %}">New</a></li>
-		{% if status == 'Outgoing' %}
-        <li><a class="nav-item nav-link active" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
-		{% else %}
-        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
-        <li><a class="nav-item nav-link active" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
-		{% endif %}
-    </ul>
-  </div>
+    .table-responsive-equipment {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-responsive-equipment table {
+        width: 100% !important;
+    }
+
+    .job-filter-row,
+    .job-select-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .job-filter-row input,
+    .job-select-row select {
+        flex: 1;
+    }
+
+    .dataTables_wrapper .dataTables_filter {
+        margin-bottom: 10px;
+    }
+
+    .dataTables_wrapper .dataTables_filter input {
+        max-width: 275px;
+        width: 100%;
+    }
+
+    @media (max-width: 576px) {
+        .equipment-page {
+            padding: 6px;
+        }
+
+        .equipment-page h3 {
+            font-size: 1.15rem;
+        }
+
+        .equipment-page h5 {
+            font-size: 1rem;
+        }
+
+        .job-filter-row,
+        .job-select-row {
+            display: block;
+        }
+
+        .job-filter-row input,
+        .job-filter-row button,
+        .job-select-row select,
+        .equipment-card input[type="submit"],
+        .equipment-card button,
+        .equipment-card .btn {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            float: none;
+            text-align: left;
+            width: 100%;
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            margin-left: 0;
+            margin-top: 6px;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .sub-nav-list {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        .sub-nav-list .nav-link {
+            padding: 8px 10px;
+        }
+    }
+
+	    .clickable-row {
+        cursor: pointer;
+    }
+
+    .clickable-row:hover {
+        background-color: #f1f7ff;
+    }
+
+</style>
+{% endblock %}
+{% block content %}
+<!-- navbar -->
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark mb-3">
+    <a class="navbar-brand sub-navbar-brand" href="#">Equipment</a>
+
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav">
+            <li>
+                <a class="nav-item nav-link" href="{% url 'equipment_home' %}">Home</a>
+            </li>
+            <li>
+                <a class="nav-item nav-link" href="{% url 'equipment_new' %}">New</a>
+            </li>
+
+            {% if status == 'Outgoing' %}
+                <li>
+                    <a class="nav-item nav-link active" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">
+                        Check-Out
+                    </a>
+                </li>
+                <li>
+                    <a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">
+                        Check-In
+                    </a>
+                </li>
+            {% else %}
+                <li>
+                    <a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">
+                        Check-Out
+                    </a>
+                </li>
+                <li>
+                    <a class="nav-item nav-link active" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">
+                        Check-In
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
 </nav>
-{% if status == 'Outgoing' %}
 
+<div class="equipment-page">
+<!-- header -->
+    <div class="equipment-header-card">
+        {% if status == 'Outgoing' %}
+            <h3 id="try_this">PLEASE SELECT ITEMS GOING TO JOB:</h3>
+            <p class="text-muted mb-0">
+                Use the search box to find equipment. Click all items you are sending, select the job, then click green button.
+            </p>
+        {% else %}
+            <h3>PLEASE SELECT ITEMS RETURNING TO SHOP:</h3>
+            <p class="text-muted mb-0">
+                Use the search box find equipment. Click all items you are checking back in, then click the green button.
+            </p>
+        {% endif %}
+    </div>
+<!-- select job -->
+        {% if status == 'Outgoing' %}
+        <div class="equipment-card">
+            <h5>Select Job</h5>
+            <div class="job-select-row">
+            <select id="selected_job"
+                    name="selected_job"
+                    class="form-control"
+                    onchange="job_update2()">
 
-<h3 id="try_this">PLEASE SELECT ITEMS GOING TO JOB:</h3>
+                <option value="none_selected">Select Job</option>
 
- {% else %}
-<h3>PLEASE SELECT ITEMS RETURNING TO SHOP: </h3>
-{% endif %}
-
-		{% if has_filter %}
-  		<a href="{%  url 'equipment_batch_outgoing' status %}">Clear Filter</a>
-		{% endif %}
-
-<!--        	<div class="content">-->
-		    <form method="get">
-        {{ available_filter.form }}
-        <input type="submit" value="Filter Now" />
-    </form>
-<!--	</div>-->
-{% render_table available_table %}
-
-<h3>SELECTED ITEMS</h3>
-
-{% render_table pending_table %}
-<br>
-	<hr>
-	 <form name = job_filter action="{%  url 'equipment_batch_outgoing' status='Outgoing' %}" method="post"  >
-	  {% csrf_token %}
-		 <input type= "text" name="filter_job_name" id="filter_job_name" placeholder="Job Name" size="30" />
-		 <input type="submit" value="Filter Jobs" />
-	 </form>
- <form name = job_update action="{%  url 'equipment_batch_outgoing' status='Outgoing' %}" method="post"  onSubmit = "return check_booking_data()">
-
-            <label for="selected_job">Select the Job Where the Equipment is Going: </label>
-            <select id="selected_job" name="selected_job" onchange="job_update2()">
-                <option value=none_selected>Select Job</option>
-				{% if jobs %}
                 {% for job in jobs %}
-                <option value={{job.job_number}}>{{job.job_name}}</option>
+                    <option value="{{ job.job_number }}">
+                        {{ job.job_number }} - {{ job.job_name }}
+                    </option>
                 {% endfor %}
-                {% endif %}
             </select>
- </form>
-{% if status == 'Outgoing' %}
- <form name = batch_update action="{%  url 'equipment_batch_outgoing' status='Outgoing' %}" method="post"  onSubmit = "return check_booking_data()">
-{% else %}
- <form name = batch_update action="{%  url 'equipment_batch_outgoing' status='Incoming' %}" method="post" >
-{% endif %}
-	 {% csrf_token %}
- <input type = "hidden" id="select_job" name="select_job" value ="Not Selected">
-<input type="hidden" id="inventory_notes" name = "inventory_notes" value="" />
-     {% if status == 'Outgoing' %}
-<input type="submit" class="btn btn-primary btn-sm" value="Assign to Job" />
-{% else %}
-<input type="submit" class="btn btn-primary btn-sm" value="Check Equipment Back In to Shop" />
-{% endif %}
-</form>
-</body>
-</html>
+            </div>
+        </div>
+        {% endif %}
+<!-- selected equipment-->
+    <div class="equipment-card">
+        {% if status == 'Outgoing' %}
+        <h5>Items Going to Job (click to remove)</h5>
+        {% else %}
+        <h5>Items Returned to Warehouse (click to remove)</h5>
+        {% endif %}
+        <div class="table-responsive-equipment">
+            <table id="selectedTable" class="table table-sm table-hover table-bordered">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Number</th>
+                                <th>Item</th>
+                                {% if status == 'Incoming' %}
+                                <th>Location / Job</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in pending_items %}
+                                {% if status == 'Outgoing' %}
+                                    <tr class="clickable-row"
+                                        onclick="window.location.href='{% url 'equipment_remove_from_outgoing_cart' item.id %}'">
+                                {% else %}
+                                    <tr class="clickable-row"
+                                        onclick="window.location.href='{% url 'equipment_remove_from_incoming_cart' item.id %}'">
+                                {% endif %}
+                                        <td>{{ item.number|default:"" }}</td>
+                                        <td>{{ item.item|default:"" }}</td>
+
+
+                                        {% if status == 'Incoming' %}
+                                            <td>{{ item.job_number|default:"" }}</td>
+                                        {% endif %}
+
+
+                                    </tr>
+                            {% empty %}
+                <tr>
+                    <td></td>
+                    <td class="text-muted">No selected items.</td>
+                                        {% if status == 'Incoming' %}
+                <td></td>
+                                    {% endif %}
+
+                </tr>
+                {% endfor %}
+                        </tbody>
+                    </table>
+        </div>
+    <!-- submit buttons-->
+    <div>
+    {% if status == 'Outgoing' %}
+            <form name="batch_update"
+                  action="{% url 'equipment_batch_outgoing' status='Outgoing' %}"
+                  method="post"
+                  onsubmit="return check_booking_data()">
+                {% csrf_token %}
+
+                <input type="hidden" id="select_job" name="select_job" value="Not Selected">
+                <input type="hidden" id="inventory_notes" name="inventory_notes" value="">
+
+                <input type="submit"
+                       class="btn btn-success btn-block"
+                       value="Assign to Job">
+            </form>
+    {% else %}
+
+
+
+
+            <form name="batch_update"
+      action="{% url 'equipment_batch_outgoing' status='Incoming' %}"
+      method="post"
+      onsubmit="return check_return_data()">
+                {% csrf_token %}
+
+                <input type="hidden" id="inventory_notes" name="inventory_notes" value="">
+
+                <input type="submit"
+                       class="btn btn-success btn-block"
+                       value="Check Equipment Back In to Shop">
+            </form>
+
+
+    {% endif %}
+        </div>
+    </div>
+
+	<div class="equipment-card">
+    {% if status == 'Outgoing' %}
+        <h5>Available Items (click to select)</h5>
+    {% else %}
+        <h5>Checked-Out Items (click to select)</h5>
+    {% endif %}
+
+<div class="table-responsive-equipment">
+    <table id="availableTable" class="table table-sm table-hover table-bordered">
+        <thead class="thead-light">
+            <tr>
+                <th>Number</th>
+                <th>Item</th>
+                {% if status == 'Incoming' %}
+                <th>Location</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in available_items %}
+                {% if status == 'Outgoing' %}
+                    <tr class="clickable-row"
+                        onclick="window.location.href='{% url 'equipment_add_to_outgoing' item.id %}'">
+                {% else %}
+                    <tr class="clickable-row"
+                        onclick="window.location.href='{% url 'equipment_add_to_incoming' item.id %}'">
+                {% endif %}
+                        <td>{{ item.number|default:"" }}</td>
+                        <td>{{ item.item|default:"" }}</td>
+
+
+                        {% if status == 'Incoming' %}
+                            <td>{{ item.job_number|default:"" }}</td>
+                        {% endif %}
+
+
+                    </tr>
+            {% empty %}
+                <tr>
+                    <td></td>
+<td class="text-muted">No items found.</td>
+                    {% if status == 'Incoming' %}
+<td></td>
+                    {% endif %}
+
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+	</div>
+
+
+
+
+
+
+</div>
+{% endblock %}
+{% block extra_scripts %}
+
+
+<script>
+    function job_update2() {
+        var hidden = document.getElementById("select_job");
+        var selectedjob = document.getElementById("selected_job");
+        var header = document.getElementById("try_this");
+
+        if (selectedjob.value !== "none_selected") {
+            header.innerHTML = "PLEASE SELECT ITEMS GOING TO " +
+                selectedjob.options[selectedjob.selectedIndex].text.toUpperCase();
+
+            hidden.value = selectedjob.value;
+        } else {
+            header.innerHTML = "PLEASE SELECT ITEMS GOING TO JOB:";
+            hidden.value = "Not Selected";
+        }
+    }
+
+    function check_booking_data() {
+
+    var hidden = document.getElementById("select_job");
+    var notes = document.getElementById("inventory_notes");
+
+    if (hidden.value === "Not Selected") {
+        alert("Job Not Selected");
+        return false;
+    }
+
+    var selectedRows = $('#selectedTable tbody tr').filter(function () {
+        return $(this).find('td').length > 1 &&
+               !$(this).text().includes('No selected items.');
+    });
+
+    if (selectedRows.length === 0) {
+        alert("No equipment selected.");
+        return false;
+    }
+
+    var noteText = prompt("Please make any notes about this:");
+
+    if (noteText !== null) {
+        notes.value = noteText;
+        return true;
+    }
+
+    return false;
+}
+
+    function check_return_data() {
+
+    var selectedRows = $('#selectedTable tbody tr').filter(function () {
+        return $(this).find('td').length > 1 &&
+               !$(this).text().includes('No selected items.');
+    });
+
+    if (selectedRows.length === 0) {
+        alert("No equipment selected.");
+        return false;
+    }
+
+    return true;
+}
+
+$(document).ready(function () {
+    $('#availableTable').DataTable({
+        paging: false,
+        info: false,
+        order: [],
+        autoWidth: false
+    });
+
+    $('#selectedTable').DataTable({
+        paging: false,
+        info: false,
+        searching: false,
+        order: [],
+        autoWidth: false
+    });
+        $('#selected_job').select2({
+    width: '100%',
+    placeholder: 'Search for a job'
+});
+});
+
+
+
+</script>
 
 {% endblock %}

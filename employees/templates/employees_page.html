@@ -2,96 +2,488 @@
 {% load static %}
 {% block nav_item_employees %}active{% endblock nav_item_employees %}
 {% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>Trinity GP</title>
-<!--	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
-.active, .collapsible:hover {
-  background-color: Salmon;
-}
 
-
-	</style>
-	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
-$(document).ready(function () {
-    var table = $('#employees_table').DataTable({});
-})
-
-	</script>
-</head>
-<body>
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
-        <!--            <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>-->
-        <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'safety_home' %}">Safety</a></li>
-		 <li><a class="nav-item nav-link active" >{{employee.first_name}} {{employee.last_name}}</a></li>
-    </ul>
-  </div>
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav">
+            <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'safety_home' %}">Safety</a></li>
+            <li><a class="nav-item nav-link active">{{ employee.first_name }} {{ employee.last_name }}</a></li>
+        </ul>
+    </div>
 </nav>
-<br>
-
-<form name="add_new" action="{% url 'delete_employee' employee.id %}" >
-{% csrf_token %}
-<input type="submit" class= "btn btn-danger btn" value="Delete Employee" />
-</form>
 
 <br>
 
+<div class="container-fluid">
 
-<H3>The bottom of this page is still in production</H3>
-<br><hr>
-<H5><a href = "{% url 'employees_page' employee.id %}">First Name, Last Name</a></H5>
+    <!-- Employee Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="mb-0">{{ employee.first_name }} {{ employee.last_name }}</h3>
+            <small class="text-muted">
+                Employee #{{ employee.employee_number }}
+            </small>
+        </div>
 
-<H5><a href = "{% url 'employees_page' employee.id %}">Phone Number, Email</a></H5>
+        <form name="add_new" action="{% url 'delete_employee' employee.id %}">
+            {% csrf_token %}
+            	{% if employee.active %}
+<input type="submit" class= "btn btn-danger btn" value="Change to In-Active" />
+	{% else %}
+	<input type="submit" class= "btn btn-danger btn" value="Change to Active" />
+	{% endif %}
+        </form>
+    </div>
 
-<H5><a href = "{% url 'employees_page' employee.id %}">Current Level</a></H5>
 
-<H5><a href = "{% url 'employees_page' employee.id %}">View Assessments</a></H5>
+    <!-- Employee Details -->
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Employee Details</strong>
 
-<H5><a href = "{% url 'employees_page' employee.id %}">View Production Reports</a></H5>
+            <!-- replace employee_edit with your actual url name -->
+            <a href="{% url 'employee_edit' employee.id %}" class="btn btn-sm btn-outline-primary">
+                Edit
+            </a>
+        </div>
 
-<H5><a href = "{% url 'employees_page' employee.id %}">View Mentorships</a></H5>
+        <div class="card-body">
+            <div class="row">
 
-<H5><a href = "{% url 'employees_page' employee.id %}">View Certifications</a></H5>
+                <div class="col-md-4 mb-3">
+                    <small class="text-muted">First Name</small>
+                    <div>{{ employee.first_name|default:"" }}</div>
+                </div>
 
-<H5><a href = "{% url 'employees_page' employee.id %}">View Exams</a></H5>
+                <div class="col-md-4 mb-3">
+                    <small class="text-muted">Middle Name</small>
+                    <div>{{ employee.middle_name|default:"" }}</div>
+                </div>
 
-<H5><a href = "{% url 'employees_page' employee.id %}">View Classes</a></H5>
+                <div class="col-md-4 mb-3">
+                    <small class="text-muted">Last Name</small>
+                    <div>{{ employee.last_name|default:"" }}</div>
+                </div>
 
-<H5><a href = "{% url 'employees_page' employee.id %}">View Write Ups</a></H5>
+                <div class="col-md-4 mb-3">
+                    <small class="text-muted">Phone</small>
+                    <div>{{ employee.phone|default:"" }}</div>
+                </div>
 
-<H5><a href = "{% url 'employees_page' employee.id %}">View Vacations</a></H5>
+                <div class="col-md-4 mb-3">
+                    <small class="text-muted">Email</small>
+                    <div>{{ employee.email|default:"" }}</div>
+                </div>
 
-<H5><a href = "{% url 'employees_page' employee.id %}">View Assessments Completed</a></H5>
+                <div class="col-md-4 mb-3">
+                    <small class="text-muted">Nickname</small>
+                    <div>{{ employee.nickname|default:"" }}</div>
+                </div>
 
-<H5><a href = "{% url 'employees_page' employee.id %}">View Daily Reports Completed</a></H5>
+                <div class="col-md-4 mb-3">
+                    <small class="text-muted">Job Title</small>
+                    <div>{{ employee.job_title|default:"" }}</div>
+                </div>
 
-<H5><a href = "{% url 'employees_page' employee.id %}">View Weekly Super Reports Completed</a></H5>
+                <div class="col-md-4 mb-3">
+                    <small class="text-muted">Date Added</small>
+                    <div>{{ employee.date_added|date:"m/d/Y" }}</div>
+                </div>
 
-<H5><a href = "{% url 'employees_page' employee.id %}">View Assigned Equipment</a></H5>
+                <div class="col-md-4 mb-3">
+                    <small class="text-muted">Birth Date</small>
+                    <div>{{ employee.birth_date|date:"m/d/Y"|default:"" }}</div>
+                </div>
 
-</body>
-</html>
+                <div class="col-md-4 mb-3">
+                    <small class="text-muted">Employment Company</small>
+                    <div>{{ employee.employment_company|default:"" }}</div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+<!-- Trinity Registration Status -->
+<div class="card mb-3">
+    <div class="card-header">
+        <strong>Trinity Registration Status</strong>
+    </div>
+
+    <div class="card-body">
+
+        {% if employee.user %}
+
+            <span class="badge badge-success">
+                Registered
+            </span>
+
+            <span class="ml-2">
+                Username = {{ employee.user.username }}
+            </span>
+
+        {% elif employee.pin %}
+
+            <span class="badge badge-warning">
+                Not Registered
+            </span>
+
+            <span class="ml-2">
+                Pin {{ employee.pin }} Assigned
+            </span>
+
+        {% else %}
+
+            <span class="badge badge-danger mr-2">
+                Not Registered
+            </span>
+
+            <a href="{% url 'grant_web_access_with_id' employee.id %}"
+               class="btn btn-sm btn-primary">
+                Grant Web Access
+            </a>
+
+        {% endif %}
+
+    </div>
+</div>
+
+
+
+<!-- Toolbox Talks -->
+<div class="card mb-3">
+
+    <div class="card-header">
+        <a class="text-dark d-block"
+           data-toggle="collapse"
+           href="#toolboxTalksCollapse"
+           role="button"
+           aria-expanded="false"
+           aria-controls="toolboxTalksCollapse"
+           style="text-decoration: none;">
+            <strong>
+                Toolbox Talks -
+                {{ toolbox_completed_count }} Completed,
+                {{ toolbox_incomplete_count }} Incomplete
+            </strong>
+        </a>
+    </div>
+
+    <div class="collapse" id="toolboxTalksCollapse">
+        <div class="card-body">
+
+            <!-- Incomplete Talks Collapse -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <a class="text-danger d-block"
+                       data-toggle="collapse"
+                       href="#incompleteToolboxTalksCollapse"
+                       role="button"
+                       aria-expanded="false"
+                       aria-controls="incompleteToolboxTalksCollapse"
+                       style="text-decoration: none;">
+                        <strong>Incomplete Talks - {{ toolbox_incomplete_count }}</strong>
+                    </a>
+                </div>
+
+                <div class="collapse" id="incompleteToolboxTalksCollapse">
+                    <div class="card-body">
+
+                        {% if toolbox_summary.incomplete_talks %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Scheduled Date</th>
+                                            <th>Toolbox Talk</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for talk in toolbox_summary.incomplete_talks %}
+                                            <tr>
+                                                <td>{{ talk.scheduled_date|date:"m/d/Y" }}</td>
+                                                <td>{{ talk.description }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="mb-0 text-muted">No incomplete toolbox talks.</p>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Completed Talks Collapse -->
+            <div class="card mb-0">
+                <div class="card-header">
+                    <a class="text-success d-block"
+                       data-toggle="collapse"
+                       href="#completedToolboxTalksCollapse"
+                       role="button"
+                       aria-expanded="false"
+                       aria-controls="completedToolboxTalksCollapse"
+                       style="text-decoration: none;">
+                        <strong>Completed Talks - {{ toolbox_completed_count }}</strong>
+                    </a>
+                </div>
+
+                <div class="collapse" id="completedToolboxTalksCollapse">
+                    <div class="card-body">
+
+                        {% if toolbox_summary.completed_talks %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Scheduled Date</th>
+                                            <th>Completed Date</th>
+                                            <th>Toolbox Talk</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for talk in toolbox_summary.completed_talks %}
+                                            <tr>
+                                                <td>{{ talk.scheduled_date|date:"m/d/Y" }}</td>
+                                                <td>{{ talk.completed_date|date:"m/d/Y" }}</td>
+                                                <td>{{ talk.description }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="mb-0 text-muted">No completed toolbox talks.</p>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+
+<!-- Certifications -->
+<div class="card mb-3">
+
+    <div class="card-header">
+        <a class="text-dark d-block"
+           data-toggle="collapse"
+           href="#certificationsCollapse"
+           role="button"
+           aria-expanded="false"
+           aria-controls="certificationsCollapse"
+           style="text-decoration: none;">
+            <strong>{{ certification_count }} Certifications</strong>
+        </a>
+    </div>
+
+    <div class="collapse" id="certificationsCollapse">
+        <div class="card-body">
+
+            {% if certification_summary.open_certifications %}
+                <h6>Open Certifications - {{ certification_summary.open_count }}</h6>
+
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Date Received</th>
+                                <th>Date Expires</th>
+                                <th>Action Required</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cert in certification_summary.open_certifications %}
+                                <tr {% if cert.action_required %}class="table-warning"{% endif %}>
+                                    <td>{{ cert.category|default:"" }}</td>
+                                    <td>{{ cert.description|default:"" }}</td>
+                                    <td>{{ cert.date_received|date:"m/d/Y" }}</td>
+                                    <td>{{ cert.date_expires|date:"m/d/Y" }}</td>
+                                    <td>
+                                        {% if cert.action_required %}
+                                            <span class="badge badge-warning">Yes</span>
+                                        {% else %}
+                                            <span class="badge badge-success">No</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ cert.action|default:"" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+
+
+            {% if certification_summary.closed_certifications %}
+                <h6>Closed Certifications - {{ certification_summary.closed_count }}</h6>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Date Received</th>
+                                <th>Date Expires</th>
+                                <th>Note</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cert in certification_summary.closed_certifications %}
+                                <tr class="table-secondary">
+                                    <td>{{ cert.category|default:"" }}</td>
+                                    <td>{{ cert.description|default:"" }}</td>
+                                    <td>{{ cert.date_received|date:"m/d/Y" }}</td>
+                                    <td>{{ cert.date_expires|date:"m/d/Y" }}</td>
+                                    <td>{{ cert.note|default:"" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+
+
+            {% if not certification_summary.open_certifications and not certification_summary.closed_certifications %}
+                <p class="mb-0 text-muted">No certifications found for this employee.</p>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+
+<!-- Assigned Equipment -->
+<div class="card mb-3">
+
+    <div class="card-header">
+        <a class="text-dark d-block"
+           data-toggle="collapse"
+           href="#assignedEquipmentCollapse"
+           role="button"
+           aria-expanded="false"
+           aria-controls="assignedEquipmentCollapse"
+           style="text-decoration: none;">
+            <strong>{{ assigned_equipment_count }} Assigned Equipment</strong>
+        </a>
+    </div>
+
+    <div class="collapse" id="assignedEquipmentCollapse">
+        <div class="card-body">
+
+            {% if inventory_summary.assigned_inventory %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Number</th>
+                                <th>Item</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Date Out</th>
+                                <th>Job</th>
+                                <th>Storage Location</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for item in inventory_summary.assigned_inventory %}
+                                <tr>
+                                    <td>{{ item.number|default:"" }}</td>
+                                    <td>{{ item.item|default:"" }}</td>
+                                    <td>{{ item.inventory_type|default:"" }}</td>
+                                    <td>{{ item.status|default:"" }}</td>
+                                    <td>{{ item.date_out|date:"m/d/Y" }}</td>
+                                    <td>{{ item.job_number|default:"" }}</td>
+                                    <td>{{ item.storage_location|default:"" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="mb-0 text-muted">No equipment currently assigned to this employee.</p>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+
+    <!-- Vacation History -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <strong>Vacation History</strong>
+        </div>
+
+        <div class="card-body">
+
+            {% if vacation_by_year %}
+
+                {% for year, data in vacation_by_year.items %}
+                    <div class="mb-4 border rounded p-3">
+
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0">{{ year }}</h5>
+                            <span class="badge badge-info">
+                                {{ data.total_hours }} Hours Used
+                            </span>
+                        </div>
+
+                        {% if data.vacations %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Hours</th>
+                                            <th>Notes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for vacation in data.vacations %}
+                                            <tr>
+                                                <td>{{ vacation.date|date:"m/d/Y" }}</td>
+                                                <td>{{ vacation.hours }}</td>
+                                                <td>{{ vacation.notes|default:"" }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted mb-0">No vacation detail for this year.</p>
+                        {% endif %}
+
+                    </div>
+                {% endfor %}
+
+            {% else %}
+                <p class="text-muted mb-0">No vacation history found.</p>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
 
 {% endblock %}

@@ -1,334 +1,541 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block nav_item_subs %}active{% endblock nav_item_subs %}
+
 {% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
-        <style type="text/css" class="init">
 
-.colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
+<style>
+    .invoice-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 15px;
+    }
 
-.dataTables_wrapper {
-    font-family: tahoma;
-    font-size: 13px;
-}
+    .invoice-header-card,
+    .invoice-note-card,
+    .invoice-summary-card {
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 15px;
+        background: #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,.06);
+    }
 
-        nav .active, .collapsible:hover {
-          background-color: Salmon;
+    .invoice-header-card h5 {
+        margin-bottom: 6px;
+    }
+
+    .invoice-note-card textarea {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+        padding: 10px;
+    }
+
+    .invoice-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+    }
+
+    .invoice-table th {
+        background: #d9edf7;
+        padding: 8px;
+        border: 1px solid #bbb;
+        font-size: 13px;
+    }
+
+    .invoice-table td {
+        padding: 8px;
+        border: 1px solid #ddd;
+        vertical-align: middle;
+        font-size: 13px;
+    }
+
+    .invoice-table input[type="number"],
+    .invoice-table input[type="text"] {
+        width: 100%;
+        max-width: 220px;
+        padding: 7px;
+        border-radius: 6px;
+        border: 1px solid #ced4da;
+        margin: 0;
+    }
+
+    .invoice-description {
+        min-width: 220px;
+        font-weight: 600;
+    }
+
+    .nowrap {
+        white-space: nowrap;
+    }
+
+    .invoice-summary-card {
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+        font-size: 15px;
+    }
+
+    .invoice-summary-card div {
+        margin-bottom: 8px;
+    }
+
+    .submit-area {
+        max-width: 500px;
+        margin: 20px auto;
+        text-align: center;
+    }
+
+    #Form3 {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        border-radius: 8px;
+    }
+
+    #hide_this {
+        display: none;
+        color: red;
+        font-weight: bold;
+        text-align: center;
+        margin-top: 15px;
+    }
+
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+
+    @media (max-width: 768px) {
+        .invoice-page {
+            padding: 10px;
         }
-        .nav-pills a {
-            color: black;
+
+        .sub-nav {
+            text-align: center;
         }
-        .nav-pills li {
-            padding: 2px;
+
+        .sub-nav-list {
+            flex-direction: column;
+            width: 100%;
         }
-        .nav-pills .active {
-            background-color: #6c757d !important;
-            padding: 5px;
+
+        .invoice-header-card {
+            text-align: center;
         }
-        label {
-            margin-left: 10px;
+
+        .invoice-table,
+        .invoice-table thead,
+        .invoice-table tbody,
+        .invoice-table th,
+        .invoice-table td,
+        .invoice-table tr {
+            display: block;
+            width: 100%;
+        }
+
+        .invoice-table thead {
+            display: none;
+        }
+
+        .invoice-table tr {
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            margin-bottom: 14px;
+            padding: 12px;
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,.08);
+        }
+
+        .invoice-table td {
+            border: none;
+            border-bottom: 1px solid #eee;
+            padding: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .invoice-table td:last-child {
+            border-bottom: none;
+            display: block;
+        }
+
+        .invoice-table td::before {
+            content: attr(data-label);
+            font-weight: bold;
+            color: #666;
             margin-right: 10px;
-        }
-        input {
-            margin-left: 10px;
-            margin-right: 10px;
-            padding: 0.375rem 0.75rem;
-            font-size: 1rem;
-            line-height: 1.5;
-            color: #495057;
-            background-color: #fff;
-            background-clip: padding-box;
-            border: 1px solid #ced4da;
-            border-radius: 0.25rem;
-            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
-        }
-        tr th {
-            width: fit-content !important;
-        }
-        .tab-content * {
-          color : black;
-          background-color: white !important;
-        }
-        .active * {
-            background-color: white !important;
-        }
-                .list-items {
-        border-bottom: 1px solid black; display: flex; justify-content: space-between;
-        }
-        .text-wrap{
-    white-space:normal;
-}
-.width-200{
-    width:200px;
-}
-.dataTables_filter {
-   float: left !important;
-}
-.tb { border-collapse: collapse; width:300px; }
-
-.tb th, .tb td { padding: 5px; border: solid 1px #777; }
-.tb th { background-color: lightblue; }
-
-.table td {
+            flex: 0 0 42%;
         }
 
-/* Chrome, Safari, Edge, Opera */
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
+        .invoice-table td.invoice-description {
+            display: block;
+            font-size: 15px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 6px;
+        }
 
-/* Firefox */
-input[type=number] {
-  -moz-appearance: textfield;
-}
+        .invoice-table td.invoice-description::before {
+            display: none;
+        }
 
-    </style>
+        .invoice-table input[type="number"],
+        .invoice-table input[type="text"] {
+            width: 100%;
+            max-width: 100%;
+            font-size: 16px;
+        }
 
-<!--    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+        .mobile-full {
+            display: block !important;
+        }
 
-    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-    <script type="text/javascript" class="init">
-$(document).ready(function () {
-    var table = $('#job_table').DataTable({paging:false,searching:false,info: false, ordering:false});
-    document.getElementById("hide_this").style.display = "none"
-})
+        .mobile-full::before {
+            display: block;
+            margin-bottom: 5px;
+        }
+    }
+</style>
 
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark mb-3">
+    <a class="navbar-brand sub-navbar-brand" href="#">{{ subcontract.subcontractor }}</a>
 
-var global_to_date = 0
-var global_total_contract = 0
-
-function update_percentage(event){
-type = document.getElementById("type"+event.currentTarget.id).value
-percentage_cell = document.getElementById("percentage"+event.currentTarget.id)
-if (event.currentTarget.value){
-current_total=parseFloat(event.currentTarget.value)
-}
-else {current_total = 0}
-quantity_ordered_cell = document.getElementById("quantity_ordered"+event.currentTarget.id)
-
-if (type == "Lump Sum"){
-	previous = parseFloat(document.getElementById("previous"+event.currentTarget.id).value)
-	totalcost = parseFloat(document.getElementById("total_cost"+event.currentTarget.id).value)
-}
-else{
-	totalcost = parseFloat(document.getElementById("quantity_ordered"+event.currentTarget.id).value)
-	previous = parseFloat(document.getElementById("quantity_billed"+event.currentTarget.id).value)
-}
-total_to_date = current_total + previous
-percentage_calc = parseFloat(total_to_date/totalcost *100).toFixed(1)
-if (totalcost < 0){
-	if (total_to_date > 0){
-		alert("You can't bill for a positive amount on a negative line item")
-		event.currentTarget.value = ""
-		percentage_cell.innerHTML = ""
-	}
-	if (total_to_date < totalcost){
-		alert("You can't deduct more than the contract")
-		event.currentTarget.value = ""
-		percentage_cell.innerHTML = ""
-	}
-}
-
-else if (previous + current_total > totalcost){
-alert("You can't bill for more than the contract")
-event.currentTarget.value = ""
-percentage_cell.innerHTML = ""
-}
-else{percentage_cell.innerHTML = String(percentage_calc)+ "%"}
-calculate_invoice_total()
-}
-
-function calculate_invoice_total(){
-	form = invoice_form
-	let invoice_total = 0
-	let total_to_date = 0
-	let previously_billed = 0
-	let total_contract = 0
-	Array.from(form.elements).forEach((input) => {
-	  	if (input.name.substring(0,8) == "quantity"){
-			item_number = String(input.id)
-			if (input.value){
-				quantity = Number(input.value)
-				console.log("HERE2")
-				if (document.getElementById("type"+ item_number).value == "Lump Sum"){
-					console.log("HERE3")
-					invoice_total += quantity
-				}
-				else {
-						rate = Number(document.getElementById("SOV_rate" + item_number).value)
-						invoice_total += rate*quantity
-				}
-			}
-			previously_billed += Number(document.getElementById("previous"+ item_number).value)
-			total_contract += Number(document.getElementById("total_cost"+ item_number).value)
-		}
-	});
-	total_to_date += invoice_total + previously_billed
-	document.getElementById("invoice_total").innerHTML="<b>Total Invoice:</b> $" + invoice_total
-	document.getElementById("total_to_date").innerHTML="<b>Total To Date:</b> $" + total_to_date
-	document.getElementById("previously_billed").innerHTML="<b>Previously Billed:</b> $" + previously_billed
-	document.getElementById("total_contract").innerHTML="<b>Total Contract:</b> $" + total_contract
-	global_to_date = total_to_date
-	global_total_contract = total_contract
-}
-
-function check_form(){
-	form = invoice_form
-	stop_now=0
-	all_blank=0
-	Array.from(form.elements).forEach((input) => {
-		if (input.name.substring(0,8) == "quantity" && input.value != ""){
-			console.log("Here")
-			all_blank=1
-		}
-		if (input.name.substring(0,4) == "note" && input.value != ""){
-			x = input.name.length
-			item_number=input.name.substring(4,x)
-			if (document.getElementById(item_number).value == ""){
-				stop_now = 1
-			}
-		}
-	});
-	if (stop_now == 1){
-		alert("You can't type a note next to an item without entering a quantity")
-		return false;
-	}
-	if (all_blank == 0){
-		alert("You need to enter at least 1 quantity")
-		return false;
-	}
-document.getElementById("hide_this").style.display = "block"
-document.getElementById("Form3").style.display = "none"
-
-}
-
-	</script>
-</head>
-<body>
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">{{subcontract.subcontractor}}</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'portal' subcontract.subcontractor.id 'ALL' %}">My Contracts</a></li>
-			  <li><a class="nav-item nav-link active" href="#">New Invoice</a></li>
-    </ul>
-  </div>
-
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav">
+            <li>
+                <a class="nav-item nav-link" href="{% url 'portal' subcontract.subcontractor.id 'ALL' %}">
+                    My Contracts
+                </a>
+            </li>
+            <li>
+                <a class="nav-item nav-link active" href="#">
+                    New Invoice
+                </a>
+            </li>
+        </ul>
+    </div>
 </nav>
-<h5>New Invoice For {{subcontract.job_number}}</h5>
-<h5>PO# {{subcontract.po_number}}</h5>
-<h5>Pay App Number: {{next_number}}</h5>
-<h5><b>Pay Date: {{friday}}</b></h5>
-<br>
 
+<div class="invoice-page">
 
- <form action="{% url 'portal_invoice_new' subcontract.id %}" id="invoice_form" method="post" onSubmit="return check_form()" >
-{% csrf_token %}
+    <div class="invoice-header-card">
+        <h5>New Invoice For {{ subcontract.job_number }}</h5>
+        <h5>PO# {{ subcontract.po_number }}</h5>
+        <h5>Pay App Number: {{ next_number }}</h5>
+        <h5><b>Pay Date: {{ friday }}</b></h5>
+    </div>
 
+    <form action="{% url 'portal_invoice_new' subcontract.id %}"
+          id="invoice_form"
+          method="post"
+          onsubmit="return check_form();">
 
-	 <br>
-	 <div class="container">
-        <label for="subcontract_note">Provide any notes about this invoice: </label> <br>
-        <textarea id="subcontract_note" name="subcontract_note" rows="2" cols="100" ></textarea>
-	 </div>
-<br>
+        {% csrf_token %}
 
-<div class="demo-html" style="width:90%">
-		<table id="job_table" class="display" style="width:90%">
-			<thead>
-				<tr>
-					<th>Description</th>
-					<th>Total</th>
-					<th>Billed</th>
-					<th>Current Bill</th>
-					<th>%</th>
-					<th>Note</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% if items %}
-				{% for item in items %}
-				<tr>
-					<td>{{item.is_approved}}- {{item.SOV_description}}</td>
-					<input type="hidden" id="item_number" value="{{item.id}}" />
-					{% if item.SOV_is_lump_sum == True %}
-					<input type="hidden" id="type{{item.id}}" value="Lump Sum" />
+        <div class="invoice-note-card">
+            <label for="subcontract_note"><b>Provide any notes about this invoice:</b></label>
+            <textarea id="subcontract_note"
+                      name="subcontract_note"
+                      rows="3"></textarea>
+        </div>
 
-					<td style="white-space: nowrap;"><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>
-					<td style="white-space: nowrap;"><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
-					{% if item.is_approved %}
-					<td style="white-space: nowrap;"><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost}} size="5" step="0.01" onchange="update_percentage(event)" />$</td>
+        <table id="job_table" class="invoice-table">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Total</th>
+                    <th>Billed</th>
+                    <th>Current Bill</th>
+                    <th>%</th>
+                    <th>Note</th>
+                </tr>
+            </thead>
 
-					<td><div id="percentage{{item.id}}" >{% widthratio item.total_billed item.total_cost 100 %}%</div></td>
-					{% else %}
-					<td>Not Approved</td><td></td>
-					{% endif %}
-					{% else %}
-					<input type="hidden" id="type{{item.id}}" value="Per Unit" />
-					<td style="white-space: nowrap;"><input type="hidden" id="quantity_ordered{{item.id}}" value="{{item.SOV_total_ordered}}" />{{item.SOV_total_ordered|floatformat}} {{item.SOV_unit}}</td>
-<input type="hidden" id="SOV_rate{{item.id}}" value="{{item.SOV_rate}}" /><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />
-					<!--					<td><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>-->
-					<td style="white-space: nowrap;"><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" /><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.quantity_billed}}" />{{item.quantity_billed|floatformat}} {{item.SOV_unit}}</td>
-<!--					<td><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>-->
-					{% if item.is_approved %}
-					<td style="white-space: nowrap;"><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty|floatformat}} size="5" step="0.01" onchange="update_percentage(event)" />{{item.SOV_unit}}</td>
-<!--					<td><input type="hidden" id="current_total{{item.id}}" value="" /></td>-->
-					<td><div id="percentage{{item.id}}" >{% widthratio item.quantity_billed item.SOV_total_ordered 100 %}%</div></td>
-					{% else %}
-					<td>Not Approved</td><td></td>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="invoice-description" data-label="Description">
+                        {{ item.SOV_description }}
 
-					{% endif %}
-					{% endif %}
+                        {% if item.SOV_is_lump_sum %}
+                            <input type="hidden" id="type{{ item.id }}" value="Lump Sum">
+                        {% else %}
+                            <input type="hidden" id="type{{ item.id }}" value="Per Unit">
+                            <input type="hidden" id="quantity_ordered{{ item.id }}" value="{{ item.SOV_total_ordered }}">
+                            <input type="hidden" id="quantity_billed{{ item.id }}" value="{{ item.quantity_billed }}">
+                            <input type="hidden" id="SOV_rate{{ item.id }}" value="{{ item.SOV_rate }}">
+                        {% endif %}
 
-					{% if item.is_approved %}
-					<td><input type="text"  name="note{{item.id}}" size="40" /></td>
-					{% else %}
-					<td></td>
-					{% endif %}
-				</tr>
-				{% endfor %}
-				{% endif %}
-			</tbody>
-		</table>
-	<br>
-	<div id="contract_total"></div>
+                        <input type="hidden" id="total_cost{{ item.id }}" value="{{ item.total_cost }}">
+                        <input type="hidden" id="previous{{ item.id }}" value="{{ item.total_billed }}">
+                    </td>
+
+                    {% if item.SOV_is_lump_sum %}
+                        <td class="nowrap" data-label="Total">
+                            ${{ item.total_cost }}
+                        </td>
+
+                        <td class="nowrap" data-label="Billed">
+                            ${{ item.total_billed }}
+                        </td>
+
+                        <td class="nowrap mobile-full" data-label="Current Bill">
+                            {% if item.is_approved %}
+                                <input type="number"
+                                       name="quantity{{ item.id }}"
+                                       id="{{ item.id }}"
+                                       data-item-id="{{ item.id }}"
+                                       class="bill-input"
+                                       placeholder="{{ item.remainingcost }}"
+                                       step="0.01"
+                                       onchange="update_percentage(event)">
+                            {% else %}
+                                <span class="badge badge-warning">Not Approved</span>
+                            {% endif %}
+                        </td>
+
+                        <td data-label="%">
+                            <div id="percentage{{ item.id }}">
+                                {% widthratio item.total_billed item.total_cost 100 %}%
+                            </div>
+                        </td>
+                    {% else %}
+                        <td class="nowrap" data-label="Total">
+                            {{ item.SOV_total_ordered|floatformat }} {{ item.SOV_unit }}
+                        </td>
+
+                        <td class="nowrap" data-label="Billed">
+                            {{ item.quantity_billed|floatformat }} {{ item.SOV_unit }}
+                        </td>
+
+                        <td class="nowrap mobile-full" data-label="Current Bill">
+                            {% if item.is_approved %}
+                                <input type="number"
+                                       name="quantity{{ item.id }}"
+                                       id="{{ item.id }}"
+                                       data-item-id="{{ item.id }}"
+                                       class="bill-input"
+                                       placeholder="{{ item.remainingqnty|floatformat }}"
+                                       step="0.01"
+                                       onchange="update_percentage(event)">
+                                {{ item.SOV_unit }}
+                            {% else %}
+                                <span class="badge badge-warning">Not Approved</span>
+                            {% endif %}
+                        </td>
+
+                        <td data-label="%">
+                            <div id="percentage{{ item.id }}">
+                                {% widthratio item.quantity_billed item.SOV_total_ordered 100 %}%
+                            </div>
+                        </td>
+                    {% endif %}
+
+                    <td class="mobile-full" data-label="Note">
+                        {% if item.is_approved %}
+                            <input type="text"
+                                   name="note{{ item.id }}"
+                                   data-item-id="{{ item.id }}"
+                                   class="note-input">
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="invoice-summary-card">
+            <div id="previously_billed"><b>Previously Billed:</b> $0.00</div>
+            <div id="invoice_total"><b>Total Invoice:</b> $0.00</div>
+            <div id="total_to_date"><b>Total To Date:</b> $0.00</div>
+            <div id="total_contract"><b>Total Contract:</b> $0.00</div>
+        </div>
+
+        <div class="submit-area">
+            <input type="submit"
+                   name="Form3"
+                   id="Form3"
+                   class="btn btn-primary btn-sm"
+                   value="Send Invoice for Approval">
+
+            <div id="hide_this">
+                <h4>Submitted... Please wait, do not click anything while this is processing.</h4>
+            </div>
+        </div>
+
+    </form>
 </div>
- <div id="previously_billed"></div>
- <br>
-<div id="invoice_total"></div>
-	 <br>
-<div id="total_to_date"></div>
-	 <br>
- <div id="total_contract"></div>
-	 <br>
-<input type="submit" name="Form3" id="Form3" class="btn btn-primary btn-sm" value="Send Invoice for Approval" />
-	 <div id="hide_this"><h2><font color = "red" >Submitted.... Please wait, do not click anything while this is processing. </font></h2></div>
- <br>
-	 <br>
-	 <br>
-	 .
 
- </form>
+<script>
+    var global_to_date = 0;
+    var global_total_contract = 0;
 
+    document.addEventListener("DOMContentLoaded", function () {
+        calculate_invoice_total();
+    });
 
-</body>
-</html>
+    function moneyFormat(value) {
+        value = Number(value || 0);
+        return value.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
+    function update_percentage(event) {
+        var itemId = event.currentTarget.dataset.itemId || event.currentTarget.id;
+
+        var type = document.getElementById("type" + itemId).value;
+        var percentage_cell = document.getElementById("percentage" + itemId);
+
+        var current_total = 0;
+        if (event.currentTarget.value) {
+            current_total = parseFloat(event.currentTarget.value);
+        }
+
+        var previous = 0;
+        var totalcost = 0;
+        var total_to_date = 0;
+        var percentage_calc = 0;
+
+        if (type === "Lump Sum") {
+            previous = parseFloat(document.getElementById("previous" + itemId).value || 0);
+            totalcost = parseFloat(document.getElementById("total_cost" + itemId).value || 0);
+            total_to_date = current_total + previous;
+        } else {
+            totalcost = parseFloat(document.getElementById("quantity_ordered" + itemId).value || 0);
+            previous = parseFloat(document.getElementById("quantity_billed" + itemId).value || 0);
+            total_to_date = current_total + previous;
+        }
+
+        if (totalcost !== 0) {
+            percentage_calc = parseFloat(total_to_date / totalcost * 100).toFixed(1);
+        } else {
+            percentage_calc = "0.0";
+        }
+
+        if (totalcost < 0) {
+            if (total_to_date > 0) {
+                alert("You can't bill for a positive amount on a negative line item");
+                event.currentTarget.value = "";
+                percentage_cell.innerHTML = "";
+                calculate_invoice_total();
+                return;
+            }
+
+            if (total_to_date < totalcost) {
+                alert("You can't deduct more than the contract");
+                event.currentTarget.value = "";
+                percentage_cell.innerHTML = "";
+                calculate_invoice_total();
+                return;
+            }
+        } else if (previous + current_total > totalcost) {
+            alert("You can't bill for more than the contract");
+            event.currentTarget.value = "";
+            percentage_cell.innerHTML = "";
+            calculate_invoice_total();
+            return;
+        }
+
+        percentage_cell.innerHTML = String(percentage_calc) + "%";
+        calculate_invoice_total();
+    }
+
+    function calculate_invoice_total() {
+        var form = document.getElementById("invoice_form");
+
+        var invoice_total = 0;
+        var previously_billed = 0;
+        var total_contract = 0;
+
+        var billInputs = form.querySelectorAll(".bill-input");
+
+        billInputs.forEach(function (input) {
+            var itemId = input.dataset.itemId || input.id;
+            var quantity = 0;
+
+            if (input.value) {
+                quantity = Number(input.value);
+            }
+
+            var type = document.getElementById("type" + itemId).value;
+
+            if (type === "Lump Sum") {
+                invoice_total += quantity;
+            } else {
+                var rate = Number(document.getElementById("SOV_rate" + itemId).value || 0);
+                invoice_total += rate * quantity;
+            }
+
+            previously_billed += Number(document.getElementById("previous" + itemId).value || 0);
+            total_contract += Number(document.getElementById("total_cost" + itemId).value || 0);
+        });
+
+        var total_to_date = invoice_total + previously_billed;
+
+        document.getElementById("invoice_total").innerHTML = "<b>Total Invoice:</b> $" + moneyFormat(invoice_total);
+        document.getElementById("total_to_date").innerHTML = "<b>Total To Date:</b> $" + moneyFormat(total_to_date);
+        document.getElementById("previously_billed").innerHTML = "<b>Previously Billed:</b> $" + moneyFormat(previously_billed);
+        document.getElementById("total_contract").innerHTML = "<b>Total Contract:</b> $" + moneyFormat(total_contract);
+
+        global_to_date = total_to_date;
+        global_total_contract = total_contract;
+    }
+
+    function check_form() {
+        var form = document.getElementById("invoice_form");
+
+        var stop_now = 0;
+        var has_quantity = 0;
+
+        var billInputs = form.querySelectorAll(".bill-input");
+
+        billInputs.forEach(function (input) {
+            if (input.value !== "") {
+                has_quantity = 1;
+            }
+        });
+
+        var noteInputs = form.querySelectorAll(".note-input");
+
+        noteInputs.forEach(function (noteInput) {
+            var itemId = noteInput.dataset.itemId;
+            var billInput = document.getElementById(itemId);
+
+            if (noteInput.value !== "" && billInput && billInput.value === "") {
+                stop_now = 1;
+            }
+        });
+
+        if (stop_now === 1) {
+            alert("You can't type a note next to an item without entering a quantity");
+            return false;
+        }
+
+        if (has_quantity === 0) {
+            alert("You need to enter at least 1 quantity");
+            return false;
+        }
+
+        document.getElementById("hide_this").style.display = "block";
+        document.getElementById("Form3").style.display = "none";
+
+        return true;
+    }
+</script>
 
 {% endblock %}

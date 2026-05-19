@@ -1,13 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block content %}
+
 {% load render_table from django_tables2 %}
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
+{% block extra_head %}
+
     <style type="text/css" class="init">
 
     .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
@@ -79,221 +75,280 @@ white-space:normal;
 
 .table td {
         }
+
+.job-name-cell {
+    white-space: normal !important;
+    min-width: 180px;
+}
+
+.job-card-link {
+    display: block;
+    color: #007bff;
+    font-weight: 600;
+}
+
+.job-badges {
+    margin-top: 4px;
+}
+
+.job-badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-right: 4px;
+    background: #e9ecef;
+    color: #333;
+}
+
+@media (max-width: 767px) {
+    #jobs_table thead {
+        display: none;
+    }
+
+    #jobs_table,
+    #jobs_table tbody,
+    #jobs_table tr,
+    #jobs_table td {
+        display: block;
+        width: 100% !important;
+    }
+
+    #jobs_table tr {
+        margin-bottom: 12px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 8px;
+        background-color: #fff;
+        box-shadow: 0 1px 4px rgba(0,0,0,.12);
+    }
+
+    #jobs_table td {
+        border: none;
+        padding: 5px 8px;
+        white-space: normal !important;
+    }
+
+    #jobs_table td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 11px;
+        font-weight: bold;
+        color: #666;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+    }
+
+    .dataTables_filter {
+        width: 100%;
+        float: none !important;
+        margin-bottom: 10px;
+    }
+
+    .dataTables_filter input {
+        width: 95%;
+        margin-left: 0;
+    }
+}
+
+    .equipment-item-link {
+    display: block;
+    color: #007bff;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+}
+
+.equipment-item-link:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 767px) {
+    #equipment_table thead {
+        display: none;
+    }
+
+    #equipment_table,
+    #equipment_table tbody,
+    #equipment_table tr,
+    #equipment_table td {
+        display: block;
+        width: 100% !important;
+    }
+
+    #equipment_table tr {
+        margin-bottom: 12px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 8px;
+        background-color: #fff;
+        box-shadow: 0 1px 4px rgba(0,0,0,.12);
+    }
+
+    #equipment_table td {
+        border: none;
+        padding: 5px 8px;
+        white-space: normal !important;
+    }
+
+    #equipment_table td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 11px;
+        font-weight: bold;
+        color: #666;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+    }
+}
+
+    .rental-item-link {
+    display: block;
+    color: #007bff;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+}
+
+.rental-item-link:hover {
+    text-decoration: underline;
+}
+
+.rental-badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 3px 7px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.rental-badge-active {
+    background: #e9ecef;
+    color: #333;
+}
+
+.rental-badge-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+@media (max-width: 767px) {
+    #rentals_table thead {
+        display: none;
+    }
+
+    #rentals_table,
+    #rentals_table tbody,
+    #rentals_table tr,
+    #rentals_table td {
+        display: block;
+        width: 100% !important;
+    }
+
+    #rentals_table tr {
+        margin-bottom: 12px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 8px;
+        background-color: #fff;
+        box-shadow: 0 1px 4px rgba(0,0,0,.12);
+    }
+
+    #rentals_table td {
+        border: none;
+        padding: 5px 8px;
+        white-space: normal !important;
+    }
+
+    #rentals_table td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 11px;
+        font-weight: bold;
+        color: #666;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+    }
+}
+
+    .ticket-link {
+    display: block;
+    color: #007bff;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+}
+
+.ticket-link:hover {
+    text-decoration: underline;
+}
+
+.ticket-badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 3px 7px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.ticket-badge-danger {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.ticket-badge-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.ticket-badge-secondary {
+    background: #e9ecef;
+    color: #333;
+}
+
+@media (max-width: 767px) {
+    #tickets_table thead {
+        display: none;
+    }
+
+    #tickets_table,
+    #tickets_table tbody,
+    #tickets_table tr,
+    #tickets_table td {
+        display: block;
+        width: 100% !important;
+    }
+
+    #tickets_table tr {
+        margin-bottom: 12px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 8px;
+        background-color: #fff;
+        box-shadow: 0 1px 4px rgba(0,0,0,.12);
+    }
+
+    #tickets_table td {
+        border: none;
+        padding: 5px 8px;
+        white-space: normal !important;
+    }
+
+    #tickets_table td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 11px;
+        font-weight: bold;
+        color: #666;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+    }
+}
+
     </style>
-<!--    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
-            data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-    <script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html"
-            async></script>
-    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html"
-            async></script>
-    <script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-    <script type="text/javascript" language="javascript"
-            src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
-    <script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
-    <script type="text/javascript" class="init">
+{% endblock %}
+{% block content %}
 
-var original_start_date = "Test"
-
-function check_if_start_date_changed(){
-    if (original_start_date != pmform.start_date.value){
-        confirm_date_button.style.display = "none"
-        pmform.confirm_date.checked = true
-    }
-    else {
-        confirm_date_button.style.display = "block"
-        pmform.confirm_date.checked = false
-    }
-
-}
-
-function go_to_job(jobnumber){
-    url = "{% url 'job_page' 'ALL' %}"
-    url = url.replace('ALL', jobnumber);
-    window.location.href = url
-}
-function go_to_equipment(item_id){
-    url = "{% url 'equipment_page' 'ALL' %}"
-    url = url.replace('ALL', item_id);
-    window.location.href = url
-}
-function go_to_rental(rental_id){
-    url = "{% url 'rental_page' 3 "YES" %}"
-    url = url.replace(3, rental_id);
-    window.location.href = url
-}
-
-window.onload = function() {
-    $.fn.dataTable.moment( 'MMM-DD-YYYY' );
-    var table = $('#jobs_table').DataTable({paging: false, aaSorting:[], })
-    var table = $('#equipment_table').DataTable({paging: false})
-    var table = $('#rentals_table').DataTable({paging: false})
-    var table = $('#subcontractors_table').DataTable({paging: false})
-    if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "block";}
-    document.getElementById("hide_this").style.display = "none"
-
-}
-
-function populate_start_date_modal(jobnumber,startdate,is_active,x){
-       original_start_date = pmform.start_date.value
-    confirm_date_button.style.display = "block"
-    pmform.confirm_date.checked = false
-    $.ajax({
-        method: 'GET',
-        url: '/superintendent/super_ajax',
-        data: {'job_number':jobnumber,'build_notes': "True"},
-        success: function (data) {
-            parsedData = JSON.parse(data);
-            let text = "<table border='1' class='table display'>"
-            text += "<thead><tr><th width='10%'>Date</th><th width='10%'>User</th><th class='col'>Note</th></tr></thead>"
-            parsedData.notes.forEach((element) => {
-                text += "<tr><td width='10%'>" + element.date + "</td><td width='10%'>" + element.user + "</td><td>" + element.note + "</td></tr>";
-            })
-            text += "</table>"
-            document.getElementById("notes_tab").innerHTML = text;
-            adjusted_date = parsedData.start_date
-            document.getElementById("title").innerHTML = parsedData.job_name
-            pmform.date_note.value=""
-            pmform.start_date.value=adjusted_date
-            pmform.row_number.value=x.rowIndex
-            pmform.job_number.value=jobnumber
-            if (parsedData.is_active == true){
-                pmform.is_active.checked = true
-                pmform.confirm_date.checked = false
-                pmform.notify_super.checked = false
-                document.getElementById("start_date_input").style.display = "none"
-                document.getElementById("confirm_date_button").style.display = "none"
-                document.getElementById("notify_super_button").style.display = "none"
-            }
-            else{
-                pmform.is_active.checked = false
-                document.getElementById("start_date_input").style.display = "block"
-                document.getElementById("confirm_date_button").style.display = "block"
-                document.getElementById("notify_super_button").style.display = "block"
-            }
-        }
-    })
-
-}
-
-
-
-function change_start_date(){
-
-    $.ajax({
-        method: 'GET',
-        url: '/superintendent/super_ajax',
-        data: {'confirm_date':pmform.confirm_date.checked, 'notify':pmform.notify_super.checked, 'job_number':pmform.job_number.value, 'start_date': pmform.start_date.value,'is_active':pmform.is_active.checked,'notes':pmform.date_note.value,'row':pmform.row_number.value},
-        success: function (data) {
-            parsedData = JSON.parse(data);
-            if (parsedData.email_sent){alert("Email Sent")}
-            else {alert("Email Not Sent")}
-            table = document.getElementById("jobs_table");
-            rows= table.rows;
-            sorted = "true"
-            for (i = 2; i < (rows.length - 1); i++) {
-                greater = moment(table.rows[i].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
-                lesser = moment(table.rows[i-1].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
-                if (greater < lesser){
-                    sorted = "false";
-                    break;
-                }
-            }
-
-            document.getElementById("jobs_table").rows[pmform.row_number.value].cells[2].innerHTML = "<a href='#'>" + parsedData.new_date + "</a>"
-if (pmform.confirm_date.checked){            document.getElementById("jobs_table").rows[pmform.row_number.value].cells[2].style.backgroundColor = ""}
-            if (parsedData.is_active == "true"){
-                if ('{{search5_exists}}'){
-                    document.getElementById("jobs_table").deleteRow(pmform.row_number.value)
-                    return;
-                }
-            }
-            if (sorted == "false"){return}
-            newdate =moment(table.rows[pmform.row_number.value].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
-            for (i = 1; i < (rows.length - 1); i++) {
-                if (i != pmform.row_number.value){
-                    existingdate = moment(table.rows[i].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
-                    if (newdate > existingdate){break;}
-                }
-            }
-            for (j = i; j < (rows.length - 1); j++) {
-                if (j != pmform.row_number.value){
-                    existingdate = moment(table.rows[j].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
-                    if (newdate < existingdate){break;}
-                }
-            }
-            rows[pmform.row_number.value].parentNode.insertBefore(rows[pmform.row_number.value],rows[j]);
-        }
-    })
-}
-
-function new_filter_now(){
-    if (document.getElementById("jobs_section").style.display == "block"){document.getElementById("is_button_collapsed").value = "NO";}
-    else {document.getElementById("is_button_collapsed").value = "YES"}
-    document.getElementById('filter_form').submit();
-}
-
-function populate_super_modal(jobname,superid,jobnumber,firstname,x,origin){
-    pmform3.select_super.value=superid
-    if (origin == 1){
-    var table = $('#jobs_table').DataTable()
-    pmform3.row_number.value=table.row(x).index()
-    }
-    else{pmform3.row_number.value= "NO"}
-    document.getElementById("title3").innerHTML = jobname
-    pmform3.job_number.value=jobnumber
-    pmform3.first_name.value=firstname
-}
-
-function submit_new_super(){
-    $.ajax({
-        method: 'GET',
-        url: '/superintendent/super_ajax',
-        data: {'job_number':pmform3.job_number.value, 'select_super':pmform3.select_super.value},
-        success: function (data) {
-            parsedData = JSON.parse(data);
-            if (parsedData.email_sent){alert("Email Sent")}
-            else {alert("Email Not Sent")}
-       if (pmform3.row_number.value != "NO"){
-            var table = $('#jobs_table').DataTable()
-            table.cell(pmform3.row_number.value,3).data(pmform3.select_super.options[pmform3.select_super.selectedIndex].text)
-        }
-        else{
-            begin = document.getElementById("TEST_BRO").innerHTML.search("</b>") + 6
-            end = document.getElementById("TEST_BRO").innerHTML.search("</a>")
-            left = document.getElementById("TEST_BRO").innerHTML.substring(0,begin)
-            document.getElementById("TEST_BRO").innerHTML = left + pmform3.select_super.options[pmform3.select_super.selectedIndex].text + "</a>"
-       }
-       }
-        })
-}
-
-function active_button_changed(){
-    if(pmform.is_active.checked == true){
-        pmform.confirm_date.checked = false
-        pmform.notify_super.checked = false
-        document.getElementById("start_date_input").style.display = "none"
-        document.getElementById("confirm_date_button").style.display = "none"
-        document.getElementById("notify_super_button").style.display = "none"
-    }
-    else{
-        document.getElementById("start_date_input").style.display = "block"
-        document.getElementById("confirm_date_button").style.display = "block"
-        document.getElementById("notify_super_button").style.display = "block"
-    }
-}
-    </script>
-
-
-</head>
-<body>
 
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
     <a class="navbar-brand sub-navbar-brand" href="{% url 'jobs_home' %}">Jobs</a>
@@ -484,9 +539,25 @@ function active_button_changed(){
                    {% endif %} onchange="new_filter_now()">
             <label class="form-check-label" for="search7">Active Only</label>
         </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="search9" name="search9" {% if search9_exists %} checked
+                   {% endif %} onchange="new_filter_now()">
+            <label class="form-check-label" for="search9">Show Jobs with Labor Done</label>
+        </div>
     </div>
 </form>
 <div id="accordion">
+    {% if toolbox_talks_required_count %}
+        <div class="card">
+        <div class="card-header" >
+            <h5 class="mb-0">
+            <a class="btn btn-link" href="{% url 'my_page' %}">
+                {{ toolbox_talks_required_count }} Toolbox Talks Required
+            </a>
+            </h5>
+        </div>
+        </div>
+    {% endif %}
     <div class="card">
         <div class="card-header" id="headingOne">
             <h5 class="mb-0">
@@ -499,23 +570,63 @@ function active_button_changed(){
         <div id="collapseOne" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">
             <div class="card-body">
                 <div id="jobs_section">
-                    <div style="text-align: center"><h3>Job List</h3></div>
-                    <fieldset style="width: 95%; margin: 10px; border: 1px solid rgba(0,0,0,.125);">
-                        <legend style="font-size: 12px; width: fit-content;">Job Table Legend</legend>
-                        <div class="row h-100 d-flex"
-                             style="margin-left: 10px; justify-content: space-around; margin-bottom: 10px;">
-                            <div style="margin: 8px; width:fit-content; background-color:hsl(63, 85%, 79%); padding: 5px; border-radius: 5px;">
-                                Off Hours
 
-                            </div>
-                            <div style="margin: 8px; width:fit-content; background-color:hsl(90,100%,75%); padding: 5px; border-radius: 5px;">
-                                On Base
-                            </div>
-                            <div style="margin: 8px; width:fit-content; background-color:hsl(340, 100%, 92%);  padding: 5px; border-radius: 5px;">
-                                Check Date
-                            </div>
+                <fieldset style="
+                    width: fit-content;
+                    margin: 6px 10px;
+                    padding: 4px 8px 6px 8px;
+                    border: 1px solid rgba(0,0,0,.125);
+                    border-radius: 6px;
+                ">
+
+                    <legend style="
+                        font-size: 11px;
+                        width: auto;
+                        padding: 0 4px;
+                        margin-bottom: 0;
+                    ">
+                        Legend
+                    </legend>
+
+                    <div style="
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 6px;
+                        align-items: center;
+                    ">
+
+                        <div style="
+                            background-color:hsl(63, 85%, 79%);
+                            padding: 2px 6px;
+                            border-radius: 4px;
+                            font-size: 11px;
+                            line-height: 1.2;
+                        ">
+                            Off Hours
                         </div>
-                    </fieldset>
+
+                        <div style="
+                            background-color:hsl(90,100%,75%);
+                            padding: 2px 6px;
+                            border-radius: 4px;
+                            font-size: 11px;
+                            line-height: 1.2;
+                        ">
+                            On Base
+                        </div>
+
+                        <div style="
+                            background-color:hsl(340, 100%, 92%);
+                            padding: 2px 6px;
+                            border-radius: 4px;
+                            font-size: 11px;
+                            line-height: 1.2;
+                        ">
+                            Check Date
+                        </div>
+
+                    </div>
+                </fieldset>
                     <div class="table-responsive">
                         <table id="jobs_table" class="display table table-sm">
                             <thead class="colored-header">
@@ -527,15 +638,6 @@ function active_button_changed(){
                                 <th scope="col">Super</th>
                                 {% endif %}
                                 <th scope="col">GC</th>
-                                <th scope="col">Hours</th>
-                                <th scope="col">Budget</th>
-                                <th scope="col">Equip</th>
-                                <th scope="col">Subs</th>
-                                <th scope="col">VWC</th>
-                                <th scope="col">Rents</th>
-                                <th scope="col">Tix</th>
-                                <th scope="col">Notes</th>
-
                             </tr>
                             </thead>
                             <tbody>
@@ -548,41 +650,67 @@ function active_button_changed(){
                                 {% else %}
                                 <tr onclick="populate_start_date_modal('{{job.job_number}}','{{job.start_date}}','{{job.is_active}}',this)">
                                 {% endif %}
-                                {% if job.is_off_hours == True and job.is_labor_done == False and job.is_waiting_for_punchlist == False %}
 
-                                <td style="background-color:hsl(63, 85%, 79%)">{% else %}
-                                <td>{% endif %}{{job.job_number}}{% if job.is_active %}[A]{% endif %}</td>
 
-                                {% if job.is_on_base == True and job.is_labor_done == False and job.is_waiting_for_punchlist == False %}
-                                <td style="background-color:hsl(90,100%,75%)">{% else %}
+                                <td data-label="Job Number"
+                                    {% if job.is_off_hours == True and job.is_labor_done == False and job.is_waiting_for_punchlist == False %}
+                                    style="background-color:hsl(63, 85%, 79%)"
+                                    {% endif %}>
+                                    {{ job.job_number }}{% if job.is_active %} [Active]{% endif %}
+                                </td>
 
-                                <td style="white-space:nowrap" width="200">{% endif %}<a
-                                        href="{% url 'job_page' job.job_number %}">
-                                    <div style="height:100%;width:100%">{% if job.is_labor_done == True %}<b>[DONE]</b>{% elif job.is_waiting_for_punchlist == True %}<b>[PUNCH]</b>{% endif %}{{job.job_name}}{% if job.is_painting_subbed == True %}<b>[SUB]</b>{% endif %}</div>
-                                </a></td>
-                                {% if job.check_start_date == True and job.is_labor_done == False and job.is_waiting_for_punchlist == False %}
+                                <td data-label="Job Name"
+                                    class="job-name-cell"
+                                    {% if job.is_on_base == True and job.is_labor_done == False and job.is_waiting_for_punchlist == False %}
+                                    style="background-color:hsl(90,100%,75%)"
+                                    {% endif %}>
 
-                                <td data-toggle="modal" style="background-color:hsl(340, 100%, 92%);white-space:nowrap"
+                                    <a class="job-card-link" href="{% url 'job_page' job.job_number %}">
+                                        {{ job.job_name }}
+                                    </a>
 
-                                    data-target="#employee-modal"><a href="#">{{job.start_date|date:'M-d-Y'}}</a></td>
-                                {% else %}
-                                <td data-toggle="modal" data-target="#employee-modal" style="white-space:nowrap"><a
-                                        href="#">{{job.start_date|date:'M-d-Y'}}</a></td>
+                                    <div class="job-badges">
+                                        {% if job.is_labor_done == True %}
+                                            <span class="job-badge">DONE</span>
+                                        {% elif job.is_waiting_for_punchlist == True %}
+                                            <span class="job-badge">PUNCH</span>
+                                        {% endif %}
+
+                                        {% if job.is_painting_subbed == True %}
+                                            <span class="job-badge">SUB</span>
+                                        {% endif %}
+
+                                        {% if job.is_off_hours == True %}
+                                            <span class="job-badge">Off Hours</span>
+                                        {% endif %}
+
+                                        {% if job.is_on_base == True %}
+                                            <span class="job-badge">On Base</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+
+                                <td data-label="Start Date"
+                                    data-toggle="modal"
+                                    data-target="#employee-modal"
+                                    {% if job.check_start_date == True and job.is_labor_done == False and job.is_waiting_for_punchlist == False %}
+                                    style="background-color:hsl(340, 100%, 92%);"
+                                    {% endif %}>
+                                    <a href="#">{{ job.start_date|date:'M-d-Y' }}</a>
+                                </td>
+
+                                {% if selected_super == None %}
+                                <td data-label="Super"
+                                    data-toggle="modal"
+                                    data-target="#super-modal"
+                                    onclick="populate_super_modal('{{ job.job_name }}','{{ job.superintendent.id }}','{{ job.job_number }}','{{ job.superintendent.first_name }}',this,1)">
+                                    <a href="#">{{ job.superintendent.first_name }}</a>
+                                </td>
                                 {% endif %}
-                                {% if selected_super == None%}
-                                <td data-toggle="modal" data-target="#super-modal"
-                                    onclick="populate_super_modal('{{job.job_name}}','{{job.superintendent.id}}','{{job.job_number}}','{{job.superintendent.first_name}}',this,1)">
-                                    <a href="#">{{job.superintendent.first_name}}</a></td>
-                                {% endif %}
-                                <td style="white-space:nowrap" width="90">{{job.client}}</td>
-                                <td>{{job.hours_to_date}}</td>
-                                <td>{{job.man_hours_budgeted}}</td>
-                                <td>{{job.equipment_count}}</td>
-                                <td>{{job.subcontract_count}}</td>
-                                <td>{{job.wc_count}}</td>
-                                <td>{{job.rentals_count}}</td>
-                                <td>{{job.tickets_count}}</td>
-                                <td>{{job.field_notes_count}}</td>
+
+                                <td data-label="GC">
+                                    {{ job.client }}
+                                </td>
 
                             </tr>
                             {% endfor %}
@@ -618,9 +746,16 @@ function active_button_changed(){
                         {% if equipment %}
                         {% for item in equipment %}
                         <tr>
-                            <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{item.job_number.job_number}}')"><a href="#">{{item.job_number}}</a></td>
-                            <td style="white-space: nowrap;" width = "20px" onclick="go_to_equipment('{{item.id}}')">
-                                <a href="#">{% if item.number %}#{{item.number}}- {% endif %}{{item.item}}</a>
+                            <td data-label="Job Number">
+                                <a href="{% url 'job_page' item.job_number.job_number %}">
+                                    {{ item.job_number }}
+                                </a>
+                            </td>
+
+                            <td data-label="Equipment">
+                                <a class="equipment-item-link" href="{% url 'equipment_page' item.id %}">
+                                    {% if item.number %}#{{ item.number }} - {% endif %}{{ item.item }}
+                                </a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -647,22 +782,48 @@ function active_button_changed(){
                     <table id="rentals_table" class="display table table-sm">
                         <thead class="colored-header">
                         <tr>
-                            <th>Job Number</th>
+                            <th>Job</th>
                             <th>Item</th>
-                            <th>On Date</th>
-                            <th>Off Date</th>
-                            <th>Notes</th>
+                            <th>Current Duration</th>
+                            <th>Next Period</th>
+                            <th>Status</th>
                         </tr>
                         </thead>
                         <tbody>
                         {% if rentals %}
                         {% for item in rentals %}
-                        <tr>
-                            <td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{item.job_number.job_number}}')"><a href="#">{{item.job_number}}</a></td>
-                            <td style="white-space: nowrap;" width = "20px" onclick="go_to_rental('{{item.id}}')"><a href="#">{{item.item}}{% if item.requested_off_rent %} [Requested Off-Rent] {% endif %}</a></td>
-                            <td style="white-space: nowrap;" width = "20px" >{{item.on_rent_date}}</td>
-                            <td style="white-space: nowrap;" width = "20px" >{{item.off_rent_date}}</td>
-                            <td style="white-space: nowrap;" width = "20px" >{{item.notes}}</td>
+                        <tr {% if item.colorize %}style="background-color:hsl(340, 100%, 92%);"{% endif %}>
+                            <td data-label="Job">
+                                <a href="{% url 'job_page' item.job_number.job_number %}">
+                                    {{ item.job_number.job_name }}
+                                </a>
+                            </td>
+
+                            <td data-label="Item">
+                                <a class="rental-item-link" href="{% url 'rental_page' item.id 'YES' %}">
+                                    {{ item.item }}
+                                </a>
+                            </td>
+
+                            <td data-label="Current Duration">
+                                {{ item.current_duration }}
+                            </td>
+
+                            <td data-label="Next Period">
+                                {% if item.next_period %}
+                                    {{ item.next_period }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <td data-label="Status">
+                                {% if item.requested_off_rent %}
+                                    <span class="rental-badge rental-badge-warning">Requested Off-Rent</span>
+                                {% else %}
+                                    <span class="rental-badge rental-badge-active">On Rent</span>
+                                {% endif %}
+                            </td>
                         </tr>
                         {% endfor %}
                         {% endif %}
@@ -677,35 +838,54 @@ function active_button_changed(){
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false"
                         aria-controls="collapseFour">
-                    {{tickets_count}} Outstanding Extra Work Tickets
+                    {{tickets_count}} Incomplete Extra Work Tickets
                 </button>
             </h5>
         </div>
         <div id="collapseFour" class="collapse hide" aria-labelledby="headingFour" data-parent="#accordion">
             <div class="card-body">
-                <div style="text-align: center"><h3>Outstanding Work</h3></div>
+
                 <div class="table-responsive">
-                    <table id="rentals_table" class="display table table-sm">
+                    <table id="tickets_table" class="display table table-sm">
                         <thead class="colored-header">
                         <tr>
-                            <th>Job Number</th>
-                            <th>COP Number</th>
+                            <th>Job</th>
+                            <th>Change Order</th>
                             <th>Description</th>
+                            <th>Status</th>
                         </tr>
                         </thead>
                         <tbody>
                         {% if tickets %}
                         {% for item in tickets %}
                         <tr>
-                            <td>{{item.job_number}}</td>
-                            <td>
-                                <a href="{% url 'extra_work_ticket' item.id %}">
-                                    <div style="height:100%;width:100%">
-                                        {{item.cop_number}}
-                                    </div>
+                            <td data-label="Job">
+                                <a href="{% url 'job_page' item.job_number.job_number %}">
+                                    {{ item.job_number.job_name }}
                                 </a>
                             </td>
-                            <td>{{item.description}}</td>
+
+                            <td data-label="Ticket">
+                                <a class="ticket-link" href="{% url 'extra_work_ticket' item.id %}">
+                                    {{ item.cop_number }}
+                                </a>
+                            </td>
+
+                            <td data-label="Description">
+                                <a class="ticket-link" href="{% url 'extra_work_ticket' item.id %}">
+                                {{ item.description }}
+                                    </a>
+                            </td>
+
+                            <td data-label="Status">
+                                {% if item.status == "Ticket Not Completed" %}
+                                    <span class="ticket-badge ticket-badge-danger">Ticket Not Completed</span>
+                                {% elif item.status == "Ticket Not Signed" %}
+                                    <span class="ticket-badge ticket-badge-warning">Ticket Not Signed</span>
+                                {% else %}
+                                    <span class="ticket-badge ticket-badge-secondary">{{ item.status }}</span>
+                                {% endif %}
+                            </td>
                         </tr>
                         {% endfor %}
                         {% endif %}
@@ -757,7 +937,29 @@ function active_button_changed(){
 </div>
 
 
-<script>
+
+
+{% endblock %}
+
+{% block extra_scripts %}
+<!--    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
+
+    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
+            data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
+    <script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html"
+            async></script>
+    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html"
+            async></script>
+    <script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script type="text/javascript" language="javascript"
+            src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
+    <script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
+    <script type="text/javascript" class="init">
+
+
     var coll = document.getElementsByClassName("collapsible");
     var i;
 
@@ -772,8 +974,198 @@ function active_button_changed(){
         }
       });
     }
-</script>
-</body>
-</html>
 
+
+
+var original_start_date = "Test"
+
+function check_if_start_date_changed(){
+    if (original_start_date != pmform.start_date.value){
+        confirm_date_button.style.display = "none"
+        pmform.confirm_date.checked = true
+    }
+    else {
+        confirm_date_button.style.display = "block"
+        pmform.confirm_date.checked = false
+    }
+
+}
+
+function go_to_job(jobnumber){
+    url = "{% url 'job_page' 'ALL' %}"
+    url = url.replace('ALL', jobnumber);
+    window.location.href = url
+}
+function go_to_equipment(item_id){
+    url = "{% url 'equipment_page' 'ALL' %}"
+    url = url.replace('ALL', item_id);
+    window.location.href = url
+}
+function go_to_rental(rental_id){
+    url = "{% url 'rental_page' 3 "YES" %}"
+    url = url.replace(3, rental_id);
+    window.location.href = url
+}
+
+window.onload = function() {
+    $.fn.dataTable.moment( 'MMM-DD-YYYY' );
+    var table = $('#jobs_table').DataTable({paging: false, aaSorting:[], })
+    var table = $('#equipment_table').DataTable({paging: false})
+    var table = $('#rentals_table').DataTable({paging: false})
+    var table = $('#tickets_table').DataTable({paging: false})
+    var table = $('#subcontractors_table').DataTable({paging: false})
+    if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "block";}
+    document.getElementById("hide_this").style.display = "none"
+
+}
+
+function populate_start_date_modal(jobnumber,startdate,is_active,x){
+       original_start_date = pmform.start_date.value
+    confirm_date_button.style.display = "block"
+    pmform.confirm_date.checked = false
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'job_number':jobnumber,'build_notes': "True"},
+        success: function (data) {
+            parsedData = JSON.parse(data);
+            let text = "<table border='1' class='table display'>"
+            text += "<thead><tr><th width='10%'>Date</th><th width='10%'>User</th><th class='col'>Note</th></tr></thead>"
+            parsedData.notes.forEach((element) => {
+                text += "<tr><td width='10%'>" + element.date + "</td><td width='10%'>" + element.user + "</td><td>" + element.note + "</td></tr>";
+            })
+            text += "</table>"
+            document.getElementById("notes_tab").innerHTML = text;
+            adjusted_date = parsedData.start_date
+            document.getElementById("title").innerHTML = parsedData.job_name
+            pmform.date_note.value=""
+            pmform.start_date.value=adjusted_date
+            pmform.row_number.value=x.rowIndex
+            pmform.job_number.value=jobnumber
+            if (parsedData.is_active == true){
+                pmform.is_active.checked = true
+                pmform.confirm_date.checked = false
+                pmform.notify_super.checked = false
+                document.getElementById("start_date_input").style.display = "none"
+                document.getElementById("confirm_date_button").style.display = "none"
+                document.getElementById("notify_super_button").style.display = "none"
+            }
+            else{
+                pmform.is_active.checked = false
+                document.getElementById("start_date_input").style.display = "block"
+                document.getElementById("confirm_date_button").style.display = "block"
+                document.getElementById("notify_super_button").style.display = "block"
+            }
+        }
+    })
+
+}
+
+
+
+function change_start_date(){
+
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'confirm_date':pmform.confirm_date.checked, 'notify':pmform.notify_super.checked, 'job_number':pmform.job_number.value, 'start_date': pmform.start_date.value,'is_active':pmform.is_active.checked,'notes':pmform.date_note.value,'row':pmform.row_number.value},
+        success: function (data) {
+            parsedData = JSON.parse(data);
+            if (parsedData.email_sent){alert("Email Sent")}
+            else {alert("Email Not Sent")}
+            table = document.getElementById("jobs_table");
+            rows= table.rows;
+            sorted = "true"
+            for (i = 2; i < (rows.length - 1); i++) {
+                greater = moment(table.rows[i].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+                lesser = moment(table.rows[i-1].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+                if (greater < lesser){
+                    sorted = "false";
+                    break;
+                }
+            }
+
+            document.getElementById("jobs_table").rows[pmform.row_number.value].cells[2].innerHTML = "<a href='#'>" + parsedData.new_date + "</a>"
+if (pmform.confirm_date.checked){            document.getElementById("jobs_table").rows[pmform.row_number.value].cells[2].style.backgroundColor = ""}
+            if (parsedData.is_active == "true"){
+                if ('{{search5_exists}}'){
+                    document.getElementById("jobs_table").deleteRow(pmform.row_number.value)
+                    return;
+                }
+            }
+            if (sorted == "false"){return}
+            newdate =moment(table.rows[pmform.row_number.value].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+            for (i = 1; i < (rows.length - 1); i++) {
+                if (i != pmform.row_number.value){
+                    existingdate = moment(table.rows[i].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+                    if (newdate > existingdate){break;}
+                }
+            }
+            for (j = i; j < (rows.length - 1); j++) {
+                if (j != pmform.row_number.value){
+                    existingdate = moment(table.rows[j].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+                    if (newdate < existingdate){break;}
+                }
+            }
+            rows[pmform.row_number.value].parentNode.insertBefore(rows[pmform.row_number.value],rows[j]);
+        }
+    })
+}
+
+function new_filter_now(){
+    if (document.getElementById("jobs_section").style.display == "block"){document.getElementById("is_button_collapsed").value = "NO";}
+    else {document.getElementById("is_button_collapsed").value = "YES"}
+    document.getElementById('filter_form').submit();
+}
+
+function populate_super_modal(jobname,superid,jobnumber,firstname,x,origin){
+    pmform3.select_super.value=superid
+    if (origin == 1){
+    var table = $('#jobs_table').DataTable()
+    pmform3.row_number.value=table.row(x).index()
+    }
+    else{pmform3.row_number.value= "NO"}
+    document.getElementById("title3").innerHTML = jobname
+    pmform3.job_number.value=jobnumber
+    pmform3.first_name.value=firstname
+}
+
+function submit_new_super(){
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'job_number':pmform3.job_number.value, 'select_super':pmform3.select_super.value},
+        success: function (data) {
+            parsedData = JSON.parse(data);
+            if (parsedData.email_sent){alert("Email Sent")}
+            else {alert("Email Not Sent")}
+       if (pmform3.row_number.value != "NO"){
+            var table = $('#jobs_table').DataTable()
+            table.cell(pmform3.row_number.value,3).data(pmform3.select_super.options[pmform3.select_super.selectedIndex].text)
+        }
+        else{
+            begin = document.getElementById("TEST_BRO").innerHTML.search("</b>") + 6
+            end = document.getElementById("TEST_BRO").innerHTML.search("</a>")
+            left = document.getElementById("TEST_BRO").innerHTML.substring(0,begin)
+            document.getElementById("TEST_BRO").innerHTML = left + pmform3.select_super.options[pmform3.select_super.selectedIndex].text + "</a>"
+       }
+       }
+        })
+}
+
+function active_button_changed(){
+    if(pmform.is_active.checked == true){
+        pmform.confirm_date.checked = false
+        pmform.notify_super.checked = false
+        document.getElementById("start_date_input").style.display = "none"
+        document.getElementById("confirm_date_button").style.display = "none"
+        document.getElementById("notify_super_button").style.display = "none"
+    }
+    else{
+        document.getElementById("start_date_input").style.display = "block"
+        document.getElementById("confirm_date_button").style.display = "block"
+        document.getElementById("notify_super_button").style.display = "block"
+    }
+}
+    </script>
 {% endblock %}

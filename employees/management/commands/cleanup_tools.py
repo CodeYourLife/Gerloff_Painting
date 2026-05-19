@@ -47,12 +47,22 @@ def just_print_hello():
 
 def delete_all_scheduled_toolbox_talks():
     with transaction.atomic():
+        CompletedSubToolboxJobTalkEmployees.objects.all().delete()
+        CompletedSubToolboxJobTalks.objects.all().delete()
+
         CompletedSubToolboxTalks.objects.all().delete()
         ViewedSubToolboxTalks.objects.all().delete()
+        ViewedSubToolboxJobTalks.objects.all().delete()
+
         CompletedToolboxTalks.objects.all().delete()
         ViewedToolboxTalks.objects.all().delete()
+
         ScheduledToolboxTalkEmployees.objects.all().delete()
         ScheduledToolboxTalkSubEmployees.objects.all().delete()
+        ScheduledToolboxTalkSubJobs.objects.all().delete()
+
+        SubcontractorEmployeeDelegation.objects.all().delete()
+
         ScheduledToolboxTalks.objects.all().delete()
 
 def delete_all_wallcovering():

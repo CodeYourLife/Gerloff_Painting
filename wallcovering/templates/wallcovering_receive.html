@@ -67,7 +67,7 @@
 
             <div class="card-body" id="receivedItemsContainer">
 
-                {% if is_edit %}
+{% if is_edit %}
 
     {% for received in received_items %}
 
@@ -193,7 +193,7 @@
                                 <div class="form-group col-md-1 d-flex align-items-end">
                                     <button type="button"
                                             class="btn btn-sm btn-outline-danger removePackageBtn">
-                                        X
+                                        Remove
                                     </button>
                                 </div>
 
@@ -204,7 +204,10 @@
                     {% endfor %}
 
                 </div>
-
+                <button type="button"
+                        class="btn btn-sm btn-outline-primary addItemPackageBtn">
+                    + Add Package
+                </button>
             </div>
 
         </div>
@@ -282,15 +285,18 @@
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <strong>Packages for this item</strong>
 
-                <button type="button"
-                        class="btn btn-sm btn-outline-primary addItemPackageBtn">
-                    + Add Package
-                </button>
+<!--                <button type="button"-->
+<!--                        class="btn btn-sm btn-outline-primary addItemPackageBtn">-->
+<!--                    + Add Package-->
+<!--                </button>-->
             </div>
 
             <div class="itemPackagesContainer"></div>
         </div>
-
+                <button type="button"
+                        class="btn btn-sm btn-outline-primary addItemPackageBtn">
+                    + Add Package
+                </button>
     </div>
 
 {% endif %}
@@ -348,7 +354,7 @@
 
                 <div class="form-group col-md-1 d-flex align-items-end">
                     <button type="button" class="btn btn-sm btn-outline-danger removePackageBtn">
-                        X
+                        Remove
                     </button>
                 </div>
             </div>

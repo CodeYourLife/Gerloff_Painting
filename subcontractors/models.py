@@ -25,6 +25,8 @@ class Subcontractors(models.Model):
     business_license_expiration_date = models.DateField(blank=True, null=True)
     has_w9_form = models.BooleanField(default=False)
     w9_form_date = models.DateField(blank=True, null=True)
+    is_toolbox_required = models.BooleanField(default=True)
+
 
     def __str__(self):
         return f"{self.company}"
@@ -606,7 +608,12 @@ class CompletedSubToolboxTalks(models.Model):
     date = models.DateField(null=True, blank=True)
     employee = models.ForeignKey(Subcontractor_Employees, on_delete=models.PROTECT)
     master = models.ForeignKey('employees.ScheduledToolboxTalks', on_delete=models.PROTECT)
+    job = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT, null=True, blank=True)
 
+    class Meta:
+        unique_together = ('employee', 'master', 'job')
+
+#Used in sub employee portal
 class ViewedSubToolboxTalks(models.Model):
     id = models.BigAutoField(primary_key=True)
     date = models.DateField(null=True, blank=True)
@@ -614,7 +621,7 @@ class ViewedSubToolboxTalks(models.Model):
     master = models.ForeignKey('employees.ScheduledToolboxTalks', on_delete=models.PROTECT)
     language = models.CharField(max_length=50, blank=True, null=True)  # This will say English or Spanish
 
-
+# NOT USING THIS MODEL CURRENTLY
 class ScheduledToolboxTalkSubEmployees(models.Model):
     scheduled = models.ForeignKey(ScheduledToolboxTalks, on_delete=models.CASCADE)
     employee = models.ForeignKey(Subcontractor_Employees, on_delete=models.PROTECT)
@@ -627,3 +634,51 @@ class ScheduledToolboxTalkSubJobs(models.Model):
     scheduled = models.ForeignKey(ScheduledToolboxTalks, on_delete=models.CASCADE)
     job = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT)
     subcontractor = models.ForeignKey(Subcontractors, on_delete=models.PROTECT)
+
+class CompletedSubToolboxJobTalks(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    scheduled = models.ForeignKey(ScheduledToolboxTalks, on_delete=models.PROTECT)
+    subcontractor = models.ForeignKey(Subcontractors, on_delete=models.PROTECT)
+    job = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT)
+    date = models.DateField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('scheduled', 'subcontractor', 'job')
+
+#each employee that was part of CompletedSubToolboxJobTalks
+class CompletedSubToolboxJobTalkEmployees(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    completed = models.ForeignKey(
+        CompletedSubToolboxJobTalks,
+        on_delete=models.CASCADE,
+        related_name='employees'
+    )
+    employee = models.ForeignKey(
+        Subcontractor_Employees,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True
+    )
+    custom_name = models.CharField(max_length=250, null=True, blank=True)
+    added_to_employee_list = models.BooleanField(default=False)
+    note = models.TextField(null=True, blank=True)
+
+#If a job is not delegated, this keeps track of subcontractor foreman talks
+class ViewedSubToolboxJobTalks(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    scheduled = models.ForeignKey(ScheduledToolboxTalks, on_delete=models.CASCADE)
+    subcontractor = models.ForeignKey(Subcontractors, on_delete=models.PROTECT)
+    job = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT)
+    language = models.CharField(max_length=20)  # English / Spanish
+    date = models.DateField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('scheduled', 'subcontractor', 'job', 'language')
+
+#USED FROM THE PORTAL.  ALLOWS SUB EMPLOYEES TO DO THEIR OWN TOOLBOX TALKS
+class SubcontractorEmployeeDelegation(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    subcontractor = models.ForeignKey(Subcontractors, on_delete=models.PROTECT)
+    subcontract = models.ForeignKey(Subcontracts, on_delete=models.PROTECT)
+    date = models.DateField(auto_now_add=True)
+

@@ -1,0 +1,320 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+    .edit-wrap {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 12px;
+    }
+
+    .edit-card {
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(0,0,0,.05);
+        margin-bottom: 14px;
+    }
+
+    .edit-card .card-header {
+        font-weight: 600;
+    }
+
+    .edit-wrap .form-control,
+    .edit-wrap .select2-container {
+        width: 100% !important;
+    }
+
+    .edit-wrap .btn {
+        min-height: 42px;
+    }
+
+    @media (max-width: 768px) {
+        .edit-wrap {
+            padding: 8px;
+        }
+
+        .edit-actions .btn {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+    }
+</style>
+
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'scheduled_toolbox_talks' %}">
+        Go Back to Scheduled Toolbox Talks
+    </a>
+</nav>
+
+<div class="edit-wrap">
+
+    <h3 class="mb-3">Edit Scheduled Toolbox Talk</h3>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="card edit-card">
+            <div class="card-header">
+                Toolbox Talk
+            </div>
+
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="master_id">Topic</label>
+                    <select name="master_id"
+        id="master_id"
+        class="form-control"
+        {% if has_any_completion %}disabled{% endif %}>
+                        <option value="">Please Select</option>
+
+                        {% for talk in toolbox_talks %}
+                            <option value="{{ talk.id }}"
+                                {% if scheduled.master and scheduled.master.id == talk.id %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ talk.description }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if has_any_completion and scheduled.master %}
+                    <input type="hidden" name="master_id" value="{{ scheduled.master.id }}">
+                {% endif %}
+                {% if has_any_completion %}
+                    <small class="form-text text-danger">
+                        Topic cannot be changed because someone has already completed this talk.
+                    </small>
+                {% endif %}
+                {% if not scheduled.master %}
+                    <div class="alert alert-info mb-0">
+                        This is currently a custom toolbox talk:
+                        <strong>{{ scheduled.description }}</strong>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card edit-card">
+            <div class="card-header">
+                Date
+            </div>
+
+            <div class="card-body">
+                <div class="form-group mb-0">
+                    <label for="scheduled_date">Scheduled Date</label>
+                    <input type="date"
+                           name="scheduled_date"
+                           id="scheduled_date"
+                           class="form-control"
+                           value="{{ scheduled.date|date:'Y-m-d' }}">
+                </div>
+            </div>
+        </div>
+
+        {% if scheduled.is_all_employees %}
+            <div class="card edit-card">
+                <div class="card-header">
+                    Assignment
+                </div>
+
+                <div class="card-body">
+                    <div class="alert alert-secondary mb-0">
+                        This toolbox talk is assigned to <strong>All Employees</strong>.
+                        You can change the topic and date above.
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="card edit-card">
+                <div class="card-header">
+                    Job Assignment
+                </div>
+
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="job_number">Job</label>
+                        <select name="job_number" id="job_number" class="form-control">
+                            <option value="">Please Select</option>
+
+                            {% for job in jobs %}
+                                <option value="{{ job.job_number }}"
+                                    {% if assigned_job and assigned_job.job_number == job.job_number %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ job.job_number }} - {{ job.job_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="employee_ids">Assigned Employees</label>
+                        <select name="employee_ids"
+                                id="employee_ids"
+                                class="form-control"
+                                multiple>
+                        </select>
+                        <small class="form-text text-muted">
+                            Select the job first. Employees will load for that job.
+                        </small>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label for="subcontractor_ids">Assigned Subcontractors</label>
+                        <select name="subcontractor_ids"
+                                id="subcontractor_ids"
+                                class="form-control"
+                                multiple>
+                        </select>
+                        <small class="form-text text-muted">
+                            Only subcontractors with active subcontracts on this job will appear.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="edit-actions d-flex justify-content-between">
+            <a href="{% url 'scheduled_toolbox_talks' %}"
+               class="btn btn-outline-secondary">
+                Cancel
+            </a>
+
+            <button type="submit" class="btn btn-primary">
+                Save Changes
+            </button>
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+
+<script>
+$(document).ready(function () {
+
+    $('#master_id').select2({
+        placeholder: "Select toolbox talk...",
+        allowClear: true,
+        width: '100%'
+    });
+
+    $('#job_number').select2({
+        placeholder: "Select job...",
+        allowClear: true,
+        width: '100%'
+    });
+
+    $('#employee_ids').select2({
+        placeholder: "Select employees...",
+        width: '100%',
+        closeOnSelect: false
+    });
+
+    $('#subcontractor_ids').select2({
+        placeholder: "Select subcontractors...",
+        width: '100%',
+        closeOnSelect: false
+    });
+
+    function loadEmployeesByJob(preselectedIds) {
+        let jobNumber = $('#job_number').val();
+        let $target = $('#employee_ids');
+
+        $target.empty();
+
+        if (!jobNumber) {
+            $target.trigger('change');
+            return;
+        }
+
+        $.ajax({
+            url: "{% url 'ajax_job_sorted_employees' %}",
+            data: {
+                job_number: jobNumber
+            },
+            success: function (response) {
+                $.each(response.results, function (index, item) {
+                    let selected = preselectedIds.includes(String(item.id));
+
+                    $target.append(
+                        $('<option>', {
+                            value: item.id,
+                            text: item.label,
+                            selected: selected
+                        })
+                    );
+                });
+
+                $target.trigger('change');
+            }
+        });
+    }
+
+    function loadSubcontractorsByJob(preselectedIds) {
+        let jobNumber = $('#job_number').val();
+        let $target = $('#subcontractor_ids');
+
+        $target.empty();
+
+        if (!jobNumber) {
+            $target.trigger('change');
+            return;
+        }
+
+        $.ajax({
+            url: "{% url 'ajax_job_subcontractors' %}",
+            data: {
+                job_number: jobNumber
+            },
+            success: function (response) {
+                $.each(response.results, function (index, item) {
+                    let selected = preselectedIds.includes(String(item.id));
+
+                    $target.append(
+                        $('<option>', {
+                            value: item.id,
+                            text: item.label,
+                            selected: selected
+                        })
+                    );
+                });
+
+                $target.trigger('change');
+            }
+        });
+    }
+
+    let selectedEmployeeIds = [
+        {% for id in selected_employee_ids %}
+            "{{ id }}",
+        {% endfor %}
+    ];
+
+    let selectedSubcontractorIds = [
+        {% for id in selected_subcontractor_ids %}
+            "{{ id }}",
+        {% endfor %}
+    ];
+
+    if ($('#job_number').length && $('#job_number').val()) {
+        loadEmployeesByJob(selectedEmployeeIds);
+        loadSubcontractorsByJob(selectedSubcontractorIds);
+    }
+
+    $('#job_number').change(function () {
+        loadEmployeesByJob([]);
+        loadSubcontractorsByJob([]);
+    });
+
+});
+</script>
+
+{% endblock %}

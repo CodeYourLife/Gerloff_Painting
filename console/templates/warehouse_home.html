@@ -1,33 +1,157 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_roles %}active{% endblock nav_item_roles %}
-{% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>Trinity GP</title>
-<!--	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
-window.onload = function() {
-    if ("{{error_message}}"){alert("{{error_message}}")}
+{% block extra_head %}
+<style type="text/css" class="init">
+.mobile-card-section {
+    margin: 12px;
 }
 
-	</script>
-</head>
-<body>
+.mobile-card-section h4 {
+    font-size: 18px;
+    margin-bottom: 12px;
+}
+
+.mobile-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 5px rgba(0,0,0,.12);
+}
+
+.mobile-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #007bff;
+}
+
+.mobile-card-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.mobile-card-row span:first-child {
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #666;
+}
+
+.badge-offrent {
+    background: #fff3cd;
+    color: #856404;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+@media (min-width: 768px) {
+    .mobile-card-section {
+        max-width: 900px;
+        margin: 15px auto;
+    }
+}
+.mobile-card-note {
+    padding: 6px 0;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.mobile-card-note span {
+    display: block;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 3px;
+}
+
+.mobile-card-note p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.badge-info-soft {
+    background: #d1ecf1;
+    color: #0c5460;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.mobile-dashboard-card {
+    margin: 12px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.mobile-collapse-button {
+    width: 100%;
+    text-align: left;
+    font-weight: 600;
+    font-size: 17px;
+    color: #007bff;
+    text-decoration: none !important;
+}
+
+.mobile-collapse-button:hover {
+    text-decoration: none !important;
+}
+
+.mobile-dashboard-card .card-header {
+    background: #f8f9fa;
+    padding: 10px 14px;
+}
+
+.mobile-dashboard-card .card-body {
+    padding: 10px;
+}
+
+.warehouse-action-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin: 18px 12px 30px 12px;
+}
+
+.warehouse-action-card {
+    display: block;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    background: #fff;
+    box-shadow: 0 1px 5px rgba(0,0,0,.12);
+    color: #212529;
+    text-decoration: none !important;
+    font-weight: 700;
+}
+
+.warehouse-action-card small {
+    display: block;
+    margin-top: 4px;
+    color: #666;
+    font-weight: 400;
+}
+
+@media (max-width: 576px) {
+    .warehouse-action-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+</style>
+{% endblock %}
+
+
+	{% block content %}
+
 	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
 		<a class="navbar-brand sub-navbar-brand" href="#">Warehouse</a>
 		<div id="navbarNavDropdown2">
@@ -37,63 +161,433 @@ window.onload = function() {
   </div>
 </nav>
 <hr>
-		{% if pending_pickups %}
-		 <br>
-			<h3>Equipment Pickup Requests</h3>
-			<table id="pickup_requests" class="display" style="width:90%">
-			{% for x in pending_pickups %}
-			<tr><td><a href = "{%  url 'complete_pickup' x.id %}"> {{x.date}} - {{x.job_number}} - {% if x.all_items == True %}All Items {% else %} Certain Items {% endif %}</a></td></tr>
-			{% endfor %}
-			</table>
-		{% endif %}
-<hr><br><br>
+{% if pending_pickups %}
+<div class="card mobile-dashboard-card">
+    <div class="card-header" id="pendingPickupHeading">
+        <h5 class="mb-0">
+            <button class="btn btn-link mobile-collapse-button"
+                    data-toggle="collapse"
+                    data-target="#pendingPickupCollapse"
+                    aria-expanded="false"
+                    aria-controls="pendingPickupCollapse">
 
-<a href = "{% url 'rental_new' "ALL" %}">
-							<div style="height:100%;width:100%">
-								Rentals - Add New	</div>
-						</a>
-<br>
-<a href = "{% url 'rentals_home' %}">
-							<div style="height:100%;width:100%">
-								Rentals - View All	</div>
-						</a>
-<br>
-<a href = "{% url 'equipment_new' %}">
-							<div style="height:100%;width:100%">
-								Equipment - Add New Equipment	</div>
-						</a>
-<br>
-<a href = "{% url 'equipment_home' %}">
-							<div style="height:100%;width:100%">
-								Equipment - View All Equipment	</div>
-						</a>
-<br>
-<a href = "{% url 'equipment_batch_outgoing' 'Incoming' %}">
-							<div style="height:100%;width:100%">
-								Equipment - Check Back In To Shop 	</div>
-						</a>
-<br>
-<a href = "{% url 'equipment_batch_outgoing' 'Outgoing' %}">
-							<div style="height:100%;width:100%">
-								Equipment - Check-Out to Job	</div>
-						</a>
-<br>
-<a href = "{% url 'wallcovering_order_new' 'ALL' 'ALL' %}">
-							<div style="height:100%;width:100%">
-								Wallcovering - Order New	</div>
-						</a>
-<br>
-<a href = "{% url 'wallcovering_receive' 'ALL' %}">
-							<div style="height:100%;width:100%">
-								Wallcovering - Receive Delivery	</div>
-						</a>
-<br>
-<a href = "{% url 'wallcovering_send' 'ALL' %}">
-							<div style="height:100%;width:100%">
-								Wallcovering - Send to Job	</div>
-						</a>
-<br>
-</body>
-</html>
+                {{ pending_pickups|length }} Pending Pickups
+            </button>
+        </h5>
+    </div>
+
+    <div id="pendingPickupCollapse"
+         class="collapse"
+         aria-labelledby="pendingPickupHeading">
+
+        <div class="card-body">
+
+            {% for pickup in pending_pickups %}
+            <div class="mobile-card">
+
+                <div class="mobile-card-title">
+                    {{ pickup.job_number }}
+                </div>
+
+                <div class="mobile-card-row">
+                    <span>Date</span>
+                    <strong>{{ pickup.date }}</strong>
+                </div>
+
+                <div class="mobile-card-row">
+                    <span>Requested By</span>
+                    <strong>{{ pickup.requested_by }}</strong>
+                </div>
+
+                {% if pickup.request_notes %}
+                <div class="mobile-card-note">
+                    <span>Notes</span>
+                    <p>{{ pickup.request_notes }}</p>
+                </div>
+                {% endif %}
+
+                <div class="mobile-card-row">
+                    <span>Pickup Type</span>
+                    <strong>
+                        {% if pickup.all_items %}
+                            All Items
+                        {% else %}
+                            Selected Items
+                        {% endif %}
+                    </strong>
+                </div>
+
+                {% if pickup.remove_trash %}
+                <div class="mobile-card-row">
+                    <span>Trash</span>
+                    <span class="badge-offrent">Remove Trash</span>
+                </div>
+                {% endif %}
+
+                {% if pickup.save_leftover_paint %}
+                <div class="mobile-card-row">
+                    <span>Paint</span>
+                    <span class="badge-info-soft">Save Leftover Paint</span>
+                </div>
+                {% endif %}
+
+                <a class="btn btn-primary btn-block mt-2"
+                   href="{% url 'complete_pickup' pickup.id %}">
+                    Open Pickup
+                </a>
+
+            </div>
+            {% endfor %}
+
+        </div>
+    </div>
+</div>
+{% endif %}
+			{% if pending_rentals %}
+<div class="card mobile-dashboard-card">
+    <div class="card-header" id="pendingRentalHeading">
+        <h5 class="mb-0">
+            <button class="btn btn-link mobile-collapse-button"
+                    data-toggle="collapse"
+                    data-target="#pendingRentalCollapse"
+                    aria-expanded="false"
+                    aria-controls="pendingRentalCollapse">
+
+                {{ pending_rentals|length }} Pending Off-Rent Requests
+            </button>
+        </h5>
+    </div>
+
+    <div id="pendingRentalCollapse"
+         class="collapse"
+         aria-labelledby="pendingRentalHeading">
+
+        <div class="card-body">
+
+            {% for rental in pending_rentals %}
+            <div class="mobile-card">
+
+                <div class="mobile-card-title">
+                    {{ rental.item }}
+                </div>
+
+                <div class="mobile-card-row">
+                    <span>Job</span>
+                    <a href="{% url 'job_page' rental.job_number.job_number %}">
+                        {{ rental.job_number }}
+                    </a>
+                </div>
+
+                <div class="mobile-card-row">
+                    <span>Vendor</span>
+                    <strong>{{ rental.company.company_name }}</strong>
+                </div>
+
+                <div class="mobile-card-row">
+                    <span>On Rent Date</span>
+                    <strong>{{ rental.on_rent_date }}</strong>
+                </div>
+
+                <div class="mobile-card-row">
+                    <span>Status</span>
+                    <span class="badge-offrent">Requested Off Rent</span>
+                </div>
+
+                <a class="btn btn-primary btn-block mt-2"
+                   href="{% url 'rental_page' rental.id 'NO' %}">
+                    Open Rental
+                </a>
+
+            </div>
+            {% endfor %}
+
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if rentals_to_check %}
+<div class="card mobile-dashboard-card">
+    <div class="card-header" id="rentalsToCheckHeading">
+        <h5 class="mb-0">
+            <button class="btn btn-link mobile-collapse-button"
+                    data-toggle="collapse"
+                    data-target="#rentalsToCheckCollapse"
+                    aria-expanded="false"
+                    aria-controls="rentalsToCheckCollapse">
+
+                {{ check_rentals }} Rentals to Check
+            </button>
+        </h5>
+    </div>
+
+    <div id="rentalsToCheckCollapse"
+         class="collapse"
+         aria-labelledby="rentalsToCheckHeading">
+
+        <div class="card-body">
+
+            {% for rental in rentals_to_check %}
+<div class="mobile-card">
+
+    <div class="mobile-card-title">
+        {{ rental.item }}
+    </div>
+
+    <div class="mobile-card-row">
+        <span>Job</span>
+        <a href="{% url 'job_page' rental.job_number.job_number %}">
+            {{ rental.job_number.job_name }}
+        </a>
+    </div>
+
+    <div class="mobile-card-row">
+        <span>Superintendent</span>
+        <strong>
+            {% if rental.job_number.superintendent %}
+                {{ rental.job_number.superintendent.first_name }}
+                {{ rental.job_number.superintendent.last_name }}
+            {% else %}
+                UNASSIGNED
+            {% endif %}
+        </strong>
+    </div>
+
+    <div class="mobile-card-row">
+        <span>Status</span>
+        <span class="badge-offrent">
+            {{ rental.next_period }}
+        </span>
+    </div>
+
+    <a class="btn btn-primary btn-block mt-2"
+       href="{% url 'rental_page' rental.id 'NO' %}">
+        Open Rental
+    </a>
+
+</div>
+{% endfor %}
+
+        </div>
+    </div>
+</div>
+{% endif %}
+    <!--#toolbox talks 16-->
+    <div class="card mobile-dashboard-card">
+    <div class="card-header" id="toolboxTalksHeading">
+        <h5 class="mb-0">
+            <button class="btn btn-link mobile-collapse-button"
+                    data-toggle="collapse"
+                    data-target="#toolboxTalksCollapse"
+                    aria-expanded="false"
+                    aria-controls="toolboxTalksCollapse">
+                {% if toolbox_talks_required %}
+                    {{ toolbox_talks_required_count }} Toolbox Talks Required
+                {% else %}
+                    No Toolbox Talks Required At This Time
+                {% endif %}
+            </button>
+        </h5>
+    </div>
+
+    <div id="toolboxTalksCollapse"
+         class="collapse"
+         aria-labelledby="toolboxTalksHeading">
+
+        <div class="card-body">
+            <form name="select_file"
+      id="select_file"
+      action="{% url 'warehouse_home' %}"
+      method="post">
+                     {% csrf_token %}
+                    <input type="hidden" id="selected_file" name="selected_file" value="pumpkin">
+                    <input type="hidden" id="selected_id" name="selected_id" >
+                    <input type="hidden" id="selected_language" name="selected_language" >
+                    <input type="hidden" id="scheduledtalk_id" name="scheduledtalk_id" >
+                {% if toolbox_talks_required %}
+                <div class="container-fluid p-2">
+
+                {% for x in toolbox_talks_required %}
+                <div class="card mb-3 shadow-sm toolbox-card" id="card-{{x.id}}">
+                    <div class="card-body">
+
+                        <h6 class="mb-1 font-weight-bold">
+                            {{x.description}}
+                        </h6>
+
+                        <div class="text-muted small mb-2">
+                            {{x.date}}
+                        </div>
+
+<div class="mt-2">
+
+<!-- Spanish -->
+{% if x.spanish %}
+    <a href="{% url 'toolbox_file' x.item 'Spanish' %}"
+       class="btn btn-block mb-2
+              {% if x.spanish_viewed %}
+                  btn-success
+              {% else %}
+                  btn-outline-primary
+              {% endif %}">
+        {% if x.spanish_viewed %}
+            ✅ Spanish (Viewed {{ x.spanish_date|date:"m/d/Y" }})
+        {% else %}
+            📄 View Spanish
+        {% endif %}
+    </a>
+{% else %}
+    <button type="button"
+            class="btn btn-block btn-outline-secondary mb-2"
+            onclick="alert('Tell your supervisor that no file has been uploaded for this talk.')">
+        📄 View Spanish
+    </button>
+{% endif %}
+
+
+<!-- English -->
+{% if x.english %}
+    <a href="{% url 'toolbox_file' x.item 'English' %}"
+       class="btn btn-block mb-2
+              {% if x.english_viewed %}
+                  btn-success
+              {% else %}
+                  btn-outline-primary
+              {% endif %}">
+        {% if x.english_viewed %}
+            ✅ English (Viewed {{ x.english_date|date:"m/d/Y" }})
+        {% else %}
+            📄 View English
+        {% endif %}
+    </a>
+{% else %}
+    <button type="button"
+            class="btn btn-block btn-outline-secondary mb-2"
+            onclick="alert('Tell your supervisor that no file has been uploaded for this talk.')">
+        📄 View English
+    </button>
+{% endif %}
+
+<button type="button"
+        class="btn btn-block
+               {% if x.can_complete %}
+                   btn-danger
+               {% else %}
+                   btn-secondary
+               {% endif %}"
+        {% if not x.can_complete %}
+            onclick="alert('You need to read the toolbox talk first before marking the course complete.')"
+        {% else %}
+            onclick="complete_toolbox('{{ x.item }}')"
+        {% endif %}>
+    I have read and understand this topic
+</button>
+
+</div>
+
+                    </div>
+                </div>
+                {% endfor %}
+
+                </div>
+                {% else %}
+                <div>No Toolbox Talks Required At This Time</div>
+                {% endif %}
+                </form>
+        </div>
+    </div>
+</div>
+<hr>
+
+<div class="warehouse-action-grid">
+
+    <a href="{% url 'equipment_batch_outgoing' 'Outgoing' %}" class="warehouse-action-card">
+        Check-Out to Job
+        <small>Send selected equipment to a job</small>
+    </a>
+
+    <a href="{% url 'equipment_batch_outgoing' 'Incoming' %}" class="warehouse-action-card">
+        Check Back In
+        <small>Return equipment to the shop</small>
+    </a>
+
+    <a href="{% url 'equipment_new' %}" class="warehouse-action-card">
+        Add New Equipment
+        <small>Create a new equipment item</small>
+    </a>
+
+    <a href="{% url 'equipment_home' %}" class="warehouse-action-card">
+        View Equipment
+        <small>Search and manage equipment</small>
+    </a>
+
+    <a href="{% url 'rental_new' 'ALL' %}" class="warehouse-action-card">
+        Add New Rental
+        <small>Create a new rental item</small>
+    </a>
+
+    <a href="{% url 'rentals_home' %}" class="warehouse-action-card">
+        View Rentals
+        <small>Search and manage rentals</small>
+    </a>
+
+        <a href="{% url 'wallcovering_home' %}" class="warehouse-action-card">
+        Wallcovering - Send and Receive
+        <small>Send and receive wallcovering</small>
+    </a>
+</div>
+
+{% endblock %}
+
+	{% block extra_scripts %}
+	<script type="text/javascript" class="init">
+window.onload = function() {
+    if ("{{error_message}}"){alert("{{error_message}}")}
+}
+
+function complete_toolbox(scheduled_id){
+let form = document.getElementById("select_file");
+document.getElementById("selected_file").value = "pumpkin";
+document.getElementById("scheduledtalk_id").value = scheduled_id;
+form.submit();
+}
+
+function restoreWarehouseAccordion() {
+    let openId = localStorage.getItem("openWarehouseAccordion");
+
+    if (openId) {
+        let collapseElement = document.getElementById(openId);
+
+        if (collapseElement && !collapseElement.classList.contains("show")) {
+            $(collapseElement).collapse('show');
+        }
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    restoreWarehouseAccordion();
+
+    $('.collapse').on('shown.bs.collapse', function () {
+        localStorage.setItem("openWarehouseAccordion", this.id);
+    });
+
+    $('.collapse').on('hidden.bs.collapse', function () {
+        localStorage.removeItem("openWarehouseAccordion");
+    });
+
+});
+
+window.addEventListener("pageshow", function (event) {
+
+    restoreWarehouseAccordion();
+
+    if (event.persisted) {
+        window.location.href = window.location.href;
+    }
+
+});
+
+	</script>
 
 {% endblock %}

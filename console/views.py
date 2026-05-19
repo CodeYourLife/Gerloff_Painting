@@ -11,10 +11,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, auth
 from django.db import transaction
 from django.http import HttpResponse
+from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from employees.forms import SiriusUploadForm,ClockSharkUploadForm, ToolboxTalksUploadForm
 from employees.models import *
+from employees.views import get_scheduled_toolbox_folder, get_uploaded_toolbox_file
 from jobs.models import *
 from jobs.models import Jobs
 from openpyxl import load_workbook
@@ -237,6 +239,12 @@ def index(request):
     current_employee = Employees.objects.get(user=request.user)
     if current_employee.job_title.description == "Painter":
         return redirect('my_page')
+    if current_employee.job_title.description == "Superintendent":
+        return redirect('super_home', super='AUTO')
+    if current_employee.last_name == "Flottman":
+        return redirect('safety_home')
+    if current_employee.job_title.description == "Warehouse":
+        return redirect('warehouse_home')
     send_data = {}
     next_two_weeks = 0
     for x in Jobs.objects.filter(is_closed=False, is_active=False, is_labor_done=False):
@@ -307,7 +315,7 @@ def index(request):
         days_until_monday = 7
     next_monday_date = today + timedelta(days=days_until_monday)
     for toolbox_talk in ScheduledToolboxTalks.objects.filter(date__lt = next_monday_date).order_by('-date'):
-        for employee in Employees.objects.filter(active=True, date_added__lte=toolbox_talk.date, job_title__description="Painter"):
+        for employee in Employees.objects.filter(active=True, date_added__lte=toolbox_talk.date).exclude(job_title__description__in=["Office", "Estimator"]):
             if not CompletedToolboxTalks.objects.filter(master=toolbox_talk, employee=employee).exists():
                 missing_toolbox_talks +=1
     send_data['missing_toolbox_talks'] = missing_toolbox_talks
@@ -347,8 +355,119 @@ def warehouse_home(request):
     if Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).exists():
         send_data['error_message']= Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).last().error
     Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
-    if PickupRequest.objects.filter(confirmed=True, is_closed=False).exists():
-        send_data['pending_pickups'] = PickupRequest.objects.filter(confirmed=True, is_closed=False).order_by('date')
+    pending_pickups = PickupRequest.objects.filter(confirmed=True, is_closed=False).order_by('date')
+    if pending_pickups:
+        send_data['pending_pickups'] = pending_pickups
+    pending_rentals = Rentals.objects.filter(
+        requested_off_rent=True
+    ).filter(
+        Q(off_rent_number__isnull=True) | Q(off_rent_number="")
+    )
+    if pending_rentals.exists():
+        send_data["pending_rentals"] = pending_rentals
+
+    rentals_to_check = []
+
+    for rental in Rentals.objects.filter(off_rent_number__isnull=True, is_closed=False):
+        if rental.colorize():
+            rentals_to_check.append(rental)
+
+    if rentals_to_check:
+        send_data["rentals_to_check"] = rentals_to_check
+        send_data["check_rentals"] = len(rentals_to_check)
+    employee = Employees.objects.get(user=request.user)
+    if request.method == 'POST':
+        scheduledtalk_id = request.POST.get('scheduledtalk_id')
+
+        if scheduledtalk_id:
+            scheduled_talk = get_object_or_404(
+                ScheduledToolboxTalks,
+                id=scheduledtalk_id
+            )
+
+            has_viewed = ViewedToolboxTalks.objects.filter(
+                employee=employee,
+                master=scheduled_talk
+            ).exists()
+
+            if not has_viewed:
+                messages.error(
+                    request,
+                    "You need to read the toolbox talk first before marking the course complete."
+                )
+                return redirect('warehouse_home')
+
+            CompletedToolboxTalks.objects.get_or_create(
+                employee=employee,
+                master=scheduled_talk,
+                defaults={
+                    'date': date.today()
+                }
+            )
+
+            messages.success(request, "Toolbox talk completed.")
+            return redirect('warehouse_home')
+    if employee.job_title.description == "Painter" or employee.job_title.description == "Superintendent" or employee.job_title.description == "Warehouse":
+
+        toolbox_talks_required = []
+
+        scheduled_qs = ScheduledToolboxTalks.objects.filter(
+            date__lte=date.today(),
+            date__gte=employee.date_added
+        ).filter(
+            Q(is_all_employees=True) |
+            Q(scheduledtoolboxtalkemployees__employee=employee)
+        ).distinct().order_by('date')
+
+        for x in scheduled_qs:
+
+            if CompletedToolboxTalks.objects.filter(employee=employee, master=x).exists():
+                continue
+
+            if x.master:
+                talk_description = x.master.description
+                talk_display_id = x.master.id
+            else:
+                talk_description = x.description or "Custom Toolbox Talk"
+                talk_display_id = x.id
+
+            english_file = get_uploaded_toolbox_file(x, "English")
+            spanish_file = get_uploaded_toolbox_file(x, "Spanish")
+
+            english = english_file['filename'] if english_file else None
+            spanish = spanish_file['filename'] if spanish_file else None
+
+            spanish_view = ViewedToolboxTalks.objects.filter(
+                employee=employee,
+                master=x,
+                language="Spanish"
+            ).order_by('-date').first()
+
+            english_view = ViewedToolboxTalks.objects.filter(
+                employee=employee,
+                master=x,
+                language="English"
+            ).order_by('-date').first()
+
+            toolbox_talks_required.append({
+                'id': talk_display_id,
+                'item': x.id,
+                'description': talk_description,
+                'date': x.date,
+                'english': english,
+                'spanish': spanish,
+                'spanish_viewed': bool(spanish_view),
+                'spanish_date': spanish_view.date if spanish_view else None,
+                'english_viewed': bool(english_view),
+                'english_date': english_view.date if english_view else None,
+                'can_complete': bool(spanish_view or english_view),
+                'notes': x.notes or "",
+                'is_all_employees': x.is_all_employees,
+            })
+
+        send_data['toolbox_talks_required'] = toolbox_talks_required
+        send_data['toolbox_talks_required_count'] = len(toolbox_talks_required)
+
     return render(request, 'warehouse_home.html', send_data)
 
 
@@ -400,9 +519,13 @@ def base(request):
 
 
 @login_required(login_url='/accounts/login')
-def grant_web_access(request):
+def grant_web_access(request,id=None):
     send_data = {}
-    send_data['employees'] = Employees.objects.filter(user__isnull=True, pin__isnull=True,active=True)
+    employee = None
+    if id:
+        employee = get_object_or_404(Employees, id=id)
+        send_data['selected_employee'] = employee
+    send_data['employees'] = Employees.objects.filter(user__isnull=True, pin__isnull=True,active=True).order_by('first_name')
     if request.method == 'POST':
         selected_employee = Employees.objects.get(id=request.POST['select_employee'])
         tester = False

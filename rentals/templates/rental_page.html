@@ -14,6 +14,108 @@
 	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
 	<style type="text/css" class="init">
 
+.rental-page {
+    max-width: 900px;
+    margin: 15px auto;
+    padding: 0 10px;
+}
+
+.rental-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 15px;
+    box-shadow: 0 1px 5px rgba(0,0,0,.10);
+}
+
+.rental-card h4 {
+    margin-bottom: 12px;
+    font-size: 18px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+.rental-info-row {
+    margin-bottom: 10px;
+}
+
+.rental-label {
+    display: block;
+    font-size: 11px;
+    font-weight: bold;
+    color: #666;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+}
+
+.rental-value {
+    font-size: 15px;
+}
+
+.rental-page input[type="text"],
+.rental-page input[type="tel"],
+.rental-page input[type="email"],
+.rental-page input[type="date"],
+.rental-page input[type="file"],
+.rental-page select,
+.rental-page textarea {
+    width: 100% !important;
+    max-width: 100%;
+    margin: 0;
+}
+
+.rental-action-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.rental-action-row .btn,
+.rental-action-row input[type="submit"] {
+    flex: 1;
+    min-width: 160px;
+}
+
+.note-card {
+    border-left: 4px solid #ffc107;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    background: #fffdf5;
+    border-radius: 6px;
+}
+
+.document-link {
+    display: block;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    color: #007bff;
+    background: #f8f9fa;
+}
+
+@media (max-width: 767px) {
+    .rental-card {
+        padding: 12px;
+        border-radius: 10px;
+    }
+
+    .rental-action-row {
+        display: block;
+    }
+
+    .rental-action-row .btn,
+    .rental-action-row input[type="submit"] {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+
+    .sub-nav-list {
+        font-size: 13px;
+    }
+}
+
 	</style>
   <link rel="stylesheet" href="{% static 'project_styles.css' %}">
 	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
@@ -101,256 +203,253 @@ function off_rent_note_now(){
         <li><a class="nav-item nav-link active" href="#">{{rental.job_number}} {{rental.item}}</a></li>
     </ul>
   </div>
-</nav>
-  <div class ="container">
- <form  id="call_off_rent" action="{% url 'rental_page' rental.id 'NO' %}" method="post" >
-{% csrf_token %}
+</nav><div class="rental-page">
 
-     <input type="hidden" id="off_rent_note" name="off_rent_note" >
-                <button type="button" class="btn btn-danger" onclick="off_rent_note_now()" value="Call Off Rent" />Request Off Rent</button>
-     </form>
-  </div>
- <form name = rental_change id=rental_change action="{% url 'rental_page' rental.id 'NO' %}" method="post"  onSubmit = "return check_booking_data()">
-{% csrf_token %}
-<div class ="container">
-    <div class = "row">
-        <div class ="col-sm-12">
-<a href="{% url 'job_page' rental.job_number.job_number %}">Job: {{rental.job_number}}</a>
+    <div class="rental-card">
+        <h4>{{ rental.item }}</h4>
+
+        <div class="rental-info-row">
+            <span class="rental-label">Job</span>
+            <span class="rental-value">
+                <a href="{% url 'job_page' rental.job_number.job_number %}">
+                    {{ rental.job_number }}
+                </a>
+            </span>
+        </div>
+
+        <div class="rental-info-row">
+            <span class="rental-label">Vendor</span>
+            <span class="rental-value">{{ rental.company.company_name }}</span>
+        </div>
+
+        <div class="rental-action-row">
+            <form id="call_off_rent" action="{% url 'rental_page' rental.id 'NO' %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" id="off_rent_note" name="off_rent_note">
+                <button type="button" class="btn btn-danger" onclick="off_rent_note_now()">
+                    Request Off Rent
+                </button>
+            </form>
         </div>
     </div>
-<br>
-    <div class = "row">
-        <div class ="col-sm-12">
-Vendor: {{rental.company.company_name}}
-        </div>
-    </div>
-    <div class = "row">
-{% if rental.company.company_phone %}
-        <input  type= "text" id="company_phone" name="company_phone" class="form-control" value = "{{rental.company.company_phone}}" size="30" />
-        {% else %}
-        <input  type= "text" id="company_phone" name="company_phone" class="form-control" placeholder = "Phone" size="30" />
-        {% endif %}
-    </div>
-        <div class = "row">
-        {% if rental.company.company_email %}
-        <input  type= "text" id="company_email" name="company_email" class="form-control" value = "{{rental.company.company_email}}" size="30" />
-        {% else %}
-        <input  type= "text" id="company_email" name="company_email" class="form-control" placeholder = "Email" size="30" />
-        {% endif %}
-    </div>
-            <br>
-    <div class = "row">
-        <div class ="col-sm-12">
-<label>Please select rep</label>
-<select class="form-control" id="select_pm" name="select_pm" onchange="change_rep()" >
-    {% if rental.rep  %}
-    <option value="{{rental.rep.id}}">{{rental.rep.name}}</option>
-    {% endif %}
-    <option value="no_rep">No Specific Rep</option>
-    <option value="add_new">Add New</option>
-    {% if reps %}
-    {% for rep in reps %}
-    <option value={{rep.id}}>{{rep.name}}</option>
-    {% endfor %}
-    {% endif %}
-</select>
-        </div>
-    </div>
-</div>
 
+    <form name="rental_change" id="rental_change" action="{% url 'rental_page' rental.id 'NO' %}" method="post" onsubmit="return check_booking_data()">
+        {% csrf_token %}
 
+        <div class="rental-card">
+            <h4>Vendor / Rep Info</h4>
 
-<div class="container">
+            <div class="rental-info-row">
+                <span class="rental-label">Company Phone</span>
+                {% if rental.company.company_phone %}
+                    <input type="text" id="company_phone" name="company_phone" class="form-control" value="{{ rental.company.company_phone }}">
+                {% else %}
+                    <input type="text" id="company_phone" name="company_phone" class="form-control" placeholder="Phone">
+                {% endif %}
+            </div>
 
-    <div id="rep_info" class="content">
-                <div class ="row" style="margin-top: 22px">
-                    <div id="more_rep_info" class ="col-sm-12">Enter New below: </div>
-                </div>
-                <div class ="row" style="margin-top: 22px">
-                    <div id="pm_name" class ="col-sm-12">
-                        {% if rental.rep == None %}
-                        <input  type= "text" id="new_pm" name="new_pm" class="form-control" placeholder="rep name" size="30" />
+            <div class="rental-info-row">
+                <span class="rental-label">Company Email</span>
+                {% if rental.company.company_email %}
+                    <input type="text" id="company_email" name="company_email" class="form-control" value="{{ rental.company.company_email }}">
+                {% else %}
+                    <input type="text" id="company_email" name="company_email" class="form-control" placeholder="Email">
+                {% endif %}
+            </div>
+
+            <div class="rental-info-row">
+                <span class="rental-label">Rep</span>
+                <select class="form-control" id="select_pm" name="select_pm" onchange="change_rep()">
+                    {% if rental.rep %}
+                        <option value="{{ rental.rep.id }}">{{ rental.rep.name }}</option>
+                    {% endif %}
+                    <option value="no_rep">No Specific Rep</option>
+                    <option value="add_new">Add New</option>
+                    {% if reps %}
+                    {% for rep in reps %}
+                        <option value="{{ rep.id }}">{{ rep.name }}</option>
+                    {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+
+            <div id="rep_info">
+                <div class="rental-info-row">
+                    <span class="rental-label" id="more_rep_info">Rep Info</span>
+                    {% if rental.rep == None %}
+                        <input type="text" id="new_pm" name="new_pm" class="form-control" placeholder="Rep Name">
                     {% else %}
-                        <input  type= "text" id="new_pm" name="new_pm" class="form-control" value="{{rental.rep.name}}" size="30" />
-                        {% endif %}
-                    </div>
+                        <input type="text" id="new_pm" name="new_pm" class="form-control" value="{{ rental.rep.name }}">
+                    {% endif %}
                 </div>
 
-                <div class ="row">
-                    <div class ="col-sm-12">
-                        {% if rental.rep == None %}
-                        <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" id="new_pm_phone" placeholder="phone Number" size="30"/>
-                        {% else %}
-                        <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" id="new_pm_phone" value="{{rental.rep.phone}}" size="30"/>
-                        {% endif %}
-                    </div>
+                <div class="rental-info-row">
+                    <span class="rental-label">Rep Phone</span>
+                    {% if rental.rep == None %}
+                        <input class="form-control" type="tel" name="new_pm_phone" id="new_pm_phone" placeholder="Phone Number">
+                    {% else %}
+                        <input class="form-control" type="tel" name="new_pm_phone" id="new_pm_phone" value="{{ rental.rep.phone }}">
+                    {% endif %}
                 </div>
-                <div class ="row">
-                    <div class ="col-sm-12">
-                        {% if rental.rep == None %}
-                        <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" id="new_pm_email" placeholder="email" size="30"/>
-                        {% else %}
-                        <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" id="new_pm_email" value="{{rental.rep.email}}" size="30"/>
-                        {% endif %}
-                    </div>
+
+                <div class="rental-info-row">
+                    <span class="rental-label">Rep Email</span>
+                    {% if rental.rep == None %}
+                        <input class="form-control" type="email" name="new_pm_email" id="new_pm_email" placeholder="Email">
+                    {% else %}
+                        <input class="form-control" type="email" name="new_pm_email" id="new_pm_email" value="{{ rental.rep.email }}">
+                    {% endif %}
                 </div>
             </div>
-</div>
-<br>
-<div class ="container">
-    <div class = "row">
-        <div class ="col-sm-12">
-Item: {{rental.item}}
         </div>
-    </div>
-<br>
-    <div class = "row">
-        <div class ="col-sm-12">
-{% if rental.purchase_order == None %}
-Purchase Order: <input type= "text" name="purchase_order" id="purchase_order" placeholder="Purchase Order #" size="30" />
-{% else %}
- <input type="hidden" name="purchase_order" value = ''/>
-Purchase Order: {{rental.purchase_order}}
- {% endif %}
+
+        <div class="rental-card">
+            <h4>Rental Details</h4>
+
+            <div class="rental-info-row">
+                <span class="rental-label">Item</span>
+                <span class="rental-value">{{ rental.item }}</span>
+            </div>
+
+            <div class="rental-info-row">
+                <span class="rental-label">Purchase Order</span>
+                {% if rental.purchase_order == None %}
+                    <input type="text" name="purchase_order" id="purchase_order" class="form-control" placeholder="Purchase Order #">
+                {% else %}
+                    <input type="hidden" name="purchase_order" value="">
+                    <span class="rental-value">{{ rental.purchase_order }}</span>
+                {% endif %}
+            </div>
+
+            <div class="rental-info-row">
+                <span class="rental-label">Daily Price</span>
+                {% if rental.day_price == None %}
+                    <input type="text" name="day_price" id="day_price" class="form-control" placeholder="Daily Price">
+                {% else %}
+                    <input type="hidden" name="day_price" value="">
+                    <span class="rental-value">${{ rental.day_price }}</span>
+                {% endif %}
+            </div>
+
+            <div class="rental-info-row">
+                <span class="rental-label">Weekly Price</span>
+                {% if rental.week_price == None %}
+                    <input type="text" name="week_price" id="week_price" class="form-control" placeholder="Weekly Price">
+                {% else %}
+                    <input type="hidden" name="week_price" value="">
+                    <span class="rental-value">${{ rental.week_price }}</span>
+                {% endif %}
+            </div>
+
+            <div class="rental-info-row">
+                <span class="rental-label">Monthly Price</span>
+                {% if rental.month_price == None %}
+                    <input type="text" name="month_price" id="month_price" class="form-control" placeholder="Monthly Price">
+                {% else %}
+                    <input type="hidden" name="month_price" value="">
+                    <span class="rental-value">${{ rental.month_price }}</span>
+                {% endif %}
+            </div>
+
+            <div class="rental-info-row">
+                <span class="rental-label">On Rent Date</span>
+                <span class="rental-value">{{ rental.on_rent_date }}</span>
+            </div>
+
+            <div class="rental-info-row">
+                <span class="rental-label">Off Rent Date</span>
+                {% if rental.off_rent_date == None %}
+                    <input type="date" id="off_rent_date" name="off_rent_date" class="form-control">
+                {% else %}
+                    <input type="hidden" name="off_rent_date" value="">
+                    <span class="rental-value">{{ rental.off_rent_date }}</span>
+                {% endif %}
+            </div>
+
+            <div class="rental-info-row">
+                <span class="rental-label">Off Rent Number</span>
+                {% if rental.off_rent_number == None %}
+                    <input type="text" name="off_rent_number" id="off_rent_number" class="form-control" placeholder="Off Rent Number">
+                {% else %}
+                    <input type="hidden" name="off_rent_number" value="">
+                    <span class="rental-value">{{ rental.off_rent_number }}</span>
+                {% endif %}
+            </div>
+
+            <div class="rental-info-row">
+                {% if rental.is_closed == False %}
+                    <input type="checkbox" name="is_closed" id="is_closed">
+                {% else %}
+                    <input type="checkbox" name="is_closed" id="is_closed" checked>
+                {% endif %}
+                <label for="is_closed">Billed</label>
+            </div>
+
+            <input type="hidden" id="rental_notes" name="rental_notes" value="">
+
+            <div class="rental-action-row">
+                <input type="submit" name="form_1" class="btn btn-primary" value="Update Information">
+            </div>
         </div>
-    </div>
-            <br>
-    <div class = "row">
-        <div class ="col-sm-12">
- {% if rental.day_price == None %}
-                          <label for="day_price">Daily Price: $</label>
-                            <input type="text" name="day_price"  maxlength="250" id="day_price">
- {% else %}
-  <input type="hidden" name="day_price" value = ''/>
- Price Per Day: ${{rental.day_price}}
-  {% endif %}
-        </div>
-    </div>
-            <br>
-    <div class = "row">
-        <div class ="col-sm-12">
- {% if rental.week_price == None %}
-                         <label for="week_price">Weekly Price: $</label>
-                            <input type="text" name="week_price"  maxlength="250" id="week_price">
-  {% else %}
-  <input type="hidden" name="week_price" value = ''/>
-Price Per Week: ${{rental.week_price}}
-  {% endif %}
-        </div>
-    </div>
-            <br>
-    <div class = "row">
-        <div class ="col-sm-12">
- {% if rental.month_price == None %}
-                         <label for="month_price">Monthly Price: $</label>
-                            <input type="text" name="month_price"  maxlength="250" id="month_price">
-  {% else %}
-  <input type="hidden" name="month_price" value = ''/>
-Price Per Month: ${{rental.month_price}}
-  {% endif %}
-        </div>
-    </div>
-<br>
-    <div class = "row">
-        <div class ="col-sm-12">
-On Rent Date: {{rental.on_rent_date}}
-        </div>
-    </div>
-<br>
-    <div class = "row">
-        <div class ="col-sm-12">
- {% if rental.off_rent_date == None %}
-	                     <label for="off_rent_date">Off Rent Date:</label>
-                    <input type="date" id="off_rent_date" name="off_rent_date">
-	 {% else %}
-  <input type="hidden" name="off_rent_date" value = ''/>
-Off Rent Date: {{rental.off_rent_date}}
-	  {% endif %}
-        </div>
-    </div>
-            <br>
-    <div class = "row">
-        <div class ="col-sm-12">
-  {% if rental.off_rent_number == None %}
-Off Rent Number: <input type= "text" name="off_rent_number" id="off_rent_number" placeholder="Off Rent Number" size="30" />
-	 {% else %}
-  <input type="hidden" name="off_rent_number" value = ''/>
-Off Rent Number: {{rental.off_rent_number}}
-	  {% endif %}
-        </div>
-    </div>
-            <br>
-    <div class = "row">
-        <div class ="col-sm-12">
-  {% if rental.is_closed == False %}
-<input type="checkbox" name ="is_closed" id="is_closed"  /> <label for="is_closed"> Billed </label>
-	 {% else %}
-<input type="checkbox" name ="is_closed" id="is_closed" checked /> <label for="is_closed"> Billed </label>
-	  {% endif %}
-        </div>
-    </div>
-	 <br>
-<input type="hidden" id="rental_notes" name = "rental_notes" value="" />
-	 <input type="submit" name="form_1" class="btn-primary" value="Update Information" />
     </form>
- <br>
-<hr>
-  <h4>NOTES</h4>
-   <form name = rental_change2 action="{% url 'rental_page' rental.id 'NO' %}" method="post" >
-        	{% csrf_token %}
-    <div class = "row">
-        <div class ="col-sm-12">
-			<label for="rental_note"> Make a note:  </label> <br>
-			<textarea id="rental_note" name="rental_note" rows="1" cols="100" required ></textarea>
-			<br>
-			<input type="submit" class="btn-warning" value="Add Note" />
-			</form>
-			</div>
-	</div>
-      <div class = "row">
-        <div class ="col-sm-12">
-  	{% if notes %}
 
+    <div class="rental-card">
+        <h4>Notes</h4>
 
-{% for note in notes %}
-<h7>[{{note.date}}- {{note.user}}] {{note.note}}</h7>
-<br>
-{% endfor %}
-{% endif %}
-        </div>
-      </div>
-  <hr>
-  <br>
-    <div class = "row">
-        <div class ="col-sm-12">
-              <h4>DOCUMENTS & PICTURES</h4>
-				<font color = "red" >Upload Documents (Pictures, Etc.) For This Rental</font>
-				<form name = add_file action="{% url 'rental_page' rental.id 'NO' %}" method="post" enctype="multipart/form-data">
-        			{% csrf_token %}
-					Attachment: <input type= "file" name="upload_file" id="upload_file" />
-					<input type="submit" class="btn-info" value="Upload File" />
-				</form>
-			</div>
-		</div>
-		<div class ="row">
-			<div class ="col-sm-12">
-				<font color = "red" >Here are the documents that have been uploaded for this rental</font>
-				<br>
-			{% for x in foldercontents %}
-				<a style="color: blue; cursor: pointer;" name="get_directory_contents" href="{% url 'get_directory_contents' rental.id x 'rentals' %}" target="_blank">{{x}}</a>
-				<br>
-			{% endfor %}
-			</div>
-		</div>
-			</form>
+        <form name="rental_change2" action="{% url 'rental_page' rental.id 'NO' %}" method="post">
+            {% csrf_token %}
+            <div class="rental-info-row">
+                <span class="rental-label">Make a note</span>
+                <textarea id="rental_note" name="rental_note" rows="3" class="form-control" required></textarea>
+            </div>
 
+            <div class="rental-action-row">
+                <input type="submit" class="btn btn-warning" value="Add Note">
+            </div>
+        </form>
 
+        {% if notes %}
+            <hr>
+            {% for note in notes %}
+                <div class="note-card">
+                    <strong>[{{ note.date }} - {{ note.user }}]</strong><br>
+                    {{ note.note }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
 
-<hr>
-  <br><br>
-{%if reverse == 'YES' %}
-  <button onclick="Previous()">Back to Previous Page</button>
-{% endif %}
+    <div class="rental-card">
+        <h4>Documents & Pictures</h4>
+
+        <form name="add_file" action="{% url 'rental_page' rental.id 'NO' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="rental-info-row">
+                <span class="rental-label">Upload Document / Picture</span>
+                <input type="file" name="upload_file" id="upload_file" class="form-control">
+            </div>
+
+            <div class="rental-action-row">
+                <input type="submit" class="btn btn-info" value="Upload File">
+            </div>
+        </form>
+
+        {% if foldercontents %}
+            <hr>
+            <span class="rental-label">Uploaded Files</span>
+            {% for x in foldercontents %}
+                <a class="document-link" name="get_directory_contents" href="{% url 'get_directory_contents' rental.id x 'rentals' %}" target="_blank">
+                    {{ x }}
+                </a>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    {% if reverse == 'YES' %}
+        <button type="button" class="btn btn-secondary btn-block" onclick="Previous()">Back to Previous Page</button>
+    {% endif %}
+
 </div>
                 <script>
 var coll = document.getElementsByClassName("collapsible");

@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+from datetime import date
 
 
 class TemporaryPassword(models.Model):
@@ -19,7 +19,7 @@ class Employers(models.Model):
         return f"{self.company_name}"
 
 
-class EmployeeTitles(models.Model):
+class EmployeeTitles(models.Model): #Warehouse, Office, Estimator, Superintendent, Painter
     id = models.BigAutoField(primary_key=True)
     description = models.CharField(max_length=50)
 
@@ -70,6 +70,108 @@ class Employees(models.Model):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
+
+    def toolbox_talk_summary(self):
+        from datetime import date
+        from django.db.models import Q
+        from employees.models import ScheduledToolboxTalks, CompletedToolboxTalks
+
+        completed_talks = []
+        incomplete_talks = []
+
+        if (
+                not self.job_title or
+                self.job_title.description not in [
+            "Painter",
+            "Warehouse",
+            "Superintendent"
+        ]
+        ):
+            return {
+                "completed_count": 0,
+                "incomplete_count": 0,
+                "completed_talks": completed_talks,
+                "incomplete_talks": incomplete_talks,
+            }
+
+        scheduled_qs = ScheduledToolboxTalks.objects.filter(
+            date__lte=date.today(),
+            date__gte=self.date_added
+        ).filter(
+            Q(is_all_employees=True) |
+            Q(scheduledtoolboxtalkemployees__employee=self)
+        ).distinct().order_by("-date")
+
+        for talk in scheduled_qs:
+            completed = CompletedToolboxTalks.objects.filter(
+                employee=self,
+                master=talk
+            ).order_by("-date").first()
+
+            description = talk.master.description if talk.master else (talk.description or "Custom Toolbox Talk")
+
+            row = {
+                "talk": talk,
+                "description": description,
+                "scheduled_date": talk.date,
+                "completed_date": completed.date if completed else None,
+                "is_all_employees": talk.is_all_employees,
+                "notes": talk.notes or "",
+            }
+
+            if completed:
+                completed_talks.append(row)
+            else:
+                incomplete_talks.append(row)
+
+        return {
+            "completed_count": len(completed_talks),
+            "incomplete_count": len(incomplete_talks),
+            "completed_talks": completed_talks,
+            "incomplete_talks": incomplete_talks,
+        }
+
+    def certification_summary(self):
+        certifications = Certifications.objects.filter(
+            employee=self
+        ).select_related(
+            "category",
+            "job"
+        ).order_by(
+            "is_closed",
+            "date_expires",
+            "category__description"
+        )
+
+        open_certifications = certifications.filter(is_closed=False)
+        closed_certifications = certifications.filter(is_closed=True)
+
+        return {
+            "count": certifications.count(),
+            "open_count": open_certifications.count(),
+            "closed_count": closed_certifications.count(),
+            "open_certifications": open_certifications,
+            "closed_certifications": closed_certifications,
+        }
+
+    def inventory_summary(self):
+        from equipment.models import Inventory
+        assigned_inventory = Inventory.objects.filter(
+            assigned_to=self,
+            is_closed=False
+        ).select_related(
+            "inventory_type",
+            "job_number"
+        ).order_by(
+            "inventory_type__type",
+            "number",
+            "item"
+        )
+
+        return {
+            "count": assigned_inventory.count(),
+            "assigned_inventory": assigned_inventory,
+        }
 
 class EmployeeJob(models.Model):
     employee = models.ForeignKey(Employees, on_delete=models.PROTECT)

@@ -1,6 +1,37 @@
 {% extends "base.html" %}
 {% load humanize %}
 
+{% block extra_head %}
+<style>
+@media (max-width: 576px) {
+    #wallcoveringTable {
+        font-size: 12px;
+    }
+
+    #wallcoveringTable th,
+    #wallcoveringTable td {
+        padding: 6px 4px;
+    }
+
+    #wallcoveringTable .badge {
+        font-size: 10px;
+        padding: 4px 5px !important;
+    }
+
+    .dataTables_filter {
+        float: none !important;
+        text-align: left !important;
+        padding: 8px;
+    }
+
+    .dataTables_filter input {
+        width: 100% !important;
+        margin-left: 0 !important;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 
 <div class="container-fluid mt-3">
@@ -19,8 +50,8 @@
         </div>
 
         <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-sm table-hover mb-0">
+            <div class="table-responsive" style="overflow-x:auto;">
+                <table id="wallcoveringTable" class="table table-sm table-hover mb-0">
                     <thead class="thead-light">
                         <tr>
                             <th>Code / Pattern</th>
@@ -92,9 +123,12 @@
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-4">
+                                <td></td>
+                                <td class="text-center text-muted py-4">
                                     No wallcovering has been entered yet.
                                 </td>
+                                <td></td>
+                                <td></td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -106,4 +140,17 @@
 
 </div>
 
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function () {
+    $('#wallcoveringTable').DataTable({
+        paging: false,
+        info: false,
+        order: [],
+        autoWidth: false
+    });
+});
+</script>
 {% endblock %}
