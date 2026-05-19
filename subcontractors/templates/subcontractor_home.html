@@ -205,6 +205,14 @@ function populate_contact_info(subcontractor_id){
                 text += "<tr><td>Independent Contractor Agreement?: No</td></tr>";
                 contact_info_form2.is_signed_labor_agreement.checked = false;
             }
+            if (parsedData.is_toolbox_required){
+                text += "<tr><td>Toolbox Required?: Yes</td></tr>";
+                contact_info_form.is_toolbox_required.checked = true;
+            }
+            else{
+                text += "<tr><td>Toolbox Required?: No</td></tr>";
+                contact_info_form.is_toolbox_required.checked = false;
+            }
 
             document.getElementById("show_contact_info_title").innerHTML = parsedData.company
             document.getElementById("contact_info_title").innerHTML = parsedData.company
@@ -403,6 +411,10 @@ function populate_pending_approvals_modal(invoice_id){
                                     <input type="checkbox" id="is_inactive" name="is_inactive"  />
                                     <label for="is_inactive">Inactive</label>
                                     </td></tr>
+                                        <tr><td>
+                                    <input type="checkbox" id="is_toolbox_required" name="is_toolbox_required"  />
+                                    <label for="is_toolbox_required">Toolbox Required?</label>
+                                    </td></tr>
                                 </td></tr></table>
                                 <input type="submit" class="btn btn-primary" value="Save Changes" />
                                 </form>
@@ -518,7 +530,7 @@ function populate_pending_approvals_modal(invoice_id){
 
 			{% for x in subcontractors %}
 				<tr>
-					<td style="white-space:nowrap" data-toggle="modal" data-target="#show_contact_info-modal" onclick="populate_contact_info('{{x.id}}')"><a href="#">{{x.company}}</a></td>
+					<td style="white-space:nowrap" data-toggle="modal" data-target="#show_contact_info-modal" onclick="populate_contact_info('{{x.id}}')"><a href="#">{{x.company}}{% if x.is_toolbox_required %} [Toolbox Required]{% endif %}</a></td>
 					<td style="white-space:nowrap" data-toggle="modal" data-target="#active_contracts-modal" onclick="populate_active_contracts_modal('{{x.id}}')"><a href="#">{{x.active_contracts}} Active Contracts</a></td>
                     <td style="white-space:nowrap" data-toggle="modal" data-target="#active_contracts-modal" onclick="populate_pending_invoices_modal('{{x.id}}')"><a href="#">{{x.pending_invoices}} Pending Invoices</a></td>
                 </tr>

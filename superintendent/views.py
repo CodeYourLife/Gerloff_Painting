@@ -147,6 +147,7 @@ def super_ajax(request):
             if subcontractor.has_business_license: send_data['has_business_license'] = subcontractor.has_business_license
             if subcontractor.has_w9_form: send_data['has_w9_form'] = subcontractor.has_w9_form
             if subcontractor.is_signed_labor_agreement: send_data['is_signed_labor_agreement'] = True
+            if subcontractor.is_toolbox_required: send_data['is_toolbox_required'] = True
             return HttpResponse(json.dumps(send_data))
         if 'dropbox' in request.GET:
             # dropbox2()
@@ -251,6 +252,7 @@ def super_home(request, super):
         if 'search6' in request.GET: send_data['search6_exists'] = request.GET['search6']
         if 'search7' in request.GET: send_data['search7_exists'] = request.GET['search7']  # unassigned
         if 'search8' in request.GET: send_data['search8_exists'] = request.GET['search8']  # unassigned
+        if 'search9' in request.GET: send_data['search9_exists'] = request.GET['search9']  # unassigned
     if selected_superid == 'ALL' or selected_superid == 'UNASSIGNED':
         send_data['filter_status'] = selected_superid
         send_data['equipment'] = Inventory.objects.filter(is_closed=False).exclude(job_number=None).order_by('job_number')
@@ -273,6 +275,28 @@ def super_home(request, super):
         search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False, is_labor_done=False))
     else:
         selected_super = Employees.objects.get(id=selected_superid)
+        if selected_super == Employees.objects.get(user=request.user):
+            employee = selected_super
+            if employee.job_title.description == "Painter" or employee.job_title.description == "Superintendent" or employee.job_title.description == "Warehouse":
+                toolbox_talks_required = []
+                scheduled_qs = ScheduledToolboxTalks.objects.filter(
+                    date__lte=date.today(),
+                    date__gte=employee.date_added
+                ).filter(
+                    Q(is_all_employees=True) |
+                    Q(scheduledtoolboxtalkemployees__employee=employee)
+                ).distinct().order_by('date')
+
+                for x in scheduled_qs:
+
+                    if CompletedToolboxTalks.objects.filter(employee=employee, master=x).exists():
+                        continue
+
+                    toolbox_talks_required.append({
+                        'item': x.id,
+                    })
+
+                send_data['toolbox_talks_required_count'] = len(toolbox_talks_required)
         send_data['subcontracts_count'] = Subcontracts.objects.filter(is_closed=False,
                                                                       job_number__is_closed=False,
                                                                       job_number__superintendent=selected_super).count()
@@ -301,12 +325,22 @@ def super_home(request, super):
                                                                  is_closed=False,
                                                                  job_number__superintendent=selected_super).order_by(
             'job_number', 'cop_number').count()
+        show_labor_done = request.GET.get('search9') == 'on'
+
         if special == True:
-            search_jobs = JobsFilter2(request.GET,
-                                      queryset=Jobs.objects.filter(is_closed=False, superintendent=selected_super,
-                                                                   is_labor_done=False))
+            base_jobs = Jobs.objects.filter(
+                is_closed=False,
+                superintendent=selected_super
+            )
         else:
-            search_jobs = JobsFilter2(request.GET, queryset=Jobs.objects.filter(is_closed=False, is_labor_done=False))
+            base_jobs = Jobs.objects.filter(
+                is_closed=False
+            )
+
+        if not show_labor_done:
+            base_jobs = base_jobs.filter(is_labor_done=False)
+
+        search_jobs = JobsFilter2(request.GET, queryset=base_jobs)
 
     if any(field in request.GET for field in set(search_jobs.get_fields())) == True:
         send_data['has_filter'] = True

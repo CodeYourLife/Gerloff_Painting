@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_employees %}active{% endblock nav_item_employees %}
-{% block content %}
 
+{% block extra_head %}
 <style>
     nav .active, .collapsible:hover {
         background-color: Salmon;
@@ -71,27 +71,20 @@
         padding: 8px 6px;
     }
 
-    #employees_table th:nth-child(1),
-    #employees_table td:nth-child(1) {
-        width: 60px;
-        white-space: nowrap;
-    }
+#employees_table th:nth-child(1),
+#employees_table td:nth-child(1) {
+    width: auto;
+    white-space: normal;
+    word-break: break-word;
+}
 
-    #employees_table th:nth-child(2),
-    #employees_table td:nth-child(2) {
-        width: auto;
-        white-space: normal;
-        word-break: break-word;
-    }
+#employees_table th:nth-child(2),
+#employees_table td:nth-child(2) {
+    width: 150px;
+    white-space: normal;
+}
 
-    #employees_table th:nth-child(3),
-    #employees_table td:nth-child(3),
-    #employees_table th:nth-child(4),
-    #employees_table td:nth-child(4) {
-        width: 100px;
-        text-align: center;
-        white-space: nowrap;
-    }
+
 
     .language-link {
         color: #007bff;
@@ -133,58 +126,88 @@
             padding: 7px 4px;
         }
 
-        #employees_table th:nth-child(1),
-        #employees_table td:nth-child(1) {
-            width: 48px;
-        }
+#employees_table th:nth-child(1),
+#employees_table td:nth-child(1) {
+    width: 60%;
+}
 
-        #employees_table th:nth-child(3),
-        #employees_table td:nth-child(3),
-        #employees_table th:nth-child(4),
-        #employees_table td:nth-child(4) {
-            width: 88px;
-        }
+#employees_table th:nth-child(2),
+#employees_table td:nth-child(2) {
+    width: 40%;
+}
+
+
     }
 
     @media (max-width: 768px) {
-        .toolbox-form-row {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .toolbox-form-row .topic-input,
-        .toolbox-form-row .btn {
-            width: 100%;
-        }
-
-        .sub-navbar-brand {
-            font-size: 1rem;
-        }
-
-        #employees_table {
-            font-size: 12px;
-        }
-
-        .dataTables_filter {
-            float: none !important;
-            text-align: left !important;
-        }
+    .toolbox-form-row {
+        flex-direction: column;
+        align-items: stretch;
     }
-</style>
 
+    .toolbox-form-row .topic-input {
+        width: 100%;
+        min-width: 0;
+        flex: 0 0 auto;
+    }
+
+    .toolbox-form-row .btn {
+        width: 100%;
+    }
+}
+
+
+.status-cell {
+    text-align: center;
+}
+
+.status-badge {
+    display: inline-block;
+    white-space: normal;
+    line-height: 1.25;
+    padding: 6px 8px;
+    max-width: 170px;
+}
+
+@media (max-width: 768px) {
+    #employees_table {
+        table-layout: fixed;
+    }
+
+    #employees_table th:nth-child(1),
+    #employees_table td:nth-child(1) {
+        width: 60%;
+    }
+
+    #employees_table th:nth-child(2),
+    #employees_table td:nth-child(2) {
+        width: 40%;
+    }
+
+    .status-badge {
+        max-width: 100%;
+        font-size: 11px;
+        padding: 5px 6px;
+    }
+}
+.status-badge {
+    word-break: break-word;
+}
+.modal table {
+    font-size: 12px;
+}
+
+@media (max-width: 768px) {
+    .modal .btn {
+        margin-top: 4px;
+    }
+}
+
+</style>
+{% endblock %}
+{% block content %}
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav">
-            <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'employee_notes' 'AUTO' %}">Employee Notes</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'safety_home' %}">Safety</a></li>
-            <li><a class="nav-item nav-link active" href="{% url 'toolbox_talks_master' %}">Toolbox Master List</a></li>
-        </ul>
-    </div>
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'safety_home' %}">Go Back to Safety Home</a>
 </nav>
 
 <div class="toolbox-page">
@@ -215,39 +238,33 @@
             <table id="employees_table" class="table table-sm display mb-0">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Description</th>
-                        <th>English</th>
-                        <th>Spanish</th>
+                        <th>Toolbox Talk</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     {% for x in toolboxtalks %}
                     <tr>
-                        <td>{{ x.id }}</td>
-                        <td>{{ x.description }}</td>
+                        <td>
+                            <span class="language-link font-weight-bold d-block py-1"
+                                  data-toggle="modal"
+                                  data-target="#toolboxModal{{ x.id }}">
+                                #{{ x.id }} - {{ x.description }}
+                            </span>
+                        </td>
 
-                        {% if x.english == "Need to upload" %}
-                            <td><span class="missing-file">Upload</span></td>
-                        {% else %}
-                            <td>
-                                <span class="language-link"
-                                      onclick="populate_file_form('{{ x.id }}', '{{ x.english }}', 'English')">
-                                    English
+                        <td class="status-cell">
+                            {% if x.status == "NEED TO UPLOAD" %}
+                                <span class="badge badge-danger status-badge">
+                                    NEED TO UPLOAD
                                 </span>
-                            </td>
-                        {% endif %}
-
-                        {% if x.spanish == "Need to upload" %}
-                            <td><span class="missing-file">Upload</span></td>
-                        {% else %}
-                            <td>
-                                <span class="language-link"
-                                      onclick="populate_file_form('{{ x.id }}', '{{ x.spanish }}', 'Spanish')">
-                                    Spanish
+                            {% else %}
+                                <span class="badge badge-info status-badge">
+                                    {{ x.status }}
                                 </span>
-                            </td>
-                        {% endif %}
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -257,14 +274,227 @@
 
 </div>
 
+{% for x in toolboxtalks %}
+<div class="modal fade" id="toolboxModal{{ x.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">{{ x.description }}</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <form method="post"
+                      action="{% url 'toolbox_talks_master' %}"
+                      class="mb-3">
+                    {% csrf_token %}
+
+                    <input type="hidden"
+                           name="replace_next_toolbox_id"
+                           value="{{ x.id }}">
+
+                    <button type="submit"
+                            class="btn btn-danger btn-sm">
+                        Schedule Now
+                    </button>
+                </form>
+
+                <h6 class="font-weight-bold">Files</h6>
+
+                <div class="border rounded p-2 mb-3">
+
+                    <div class="mb-2">
+                        <strong>English:</strong>
+
+                        {% if x.english %}
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-primary ml-2"
+                                    onclick="populate_file_form('{{ x.id }}', '{{ x.english }}', 'English')">
+                                View English
+                            </button>
+                        {% else %}
+                            <span class="badge badge-danger ml-2">Need to Upload</span>
+                        {% endif %}
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-secondary ml-2"
+                                onclick="open_upload_modal('{{ x.id }}', 'English')">
+                            Upload English
+                        </button>
+                    </div>
+
+                    <div>
+                        <strong>Spanish:</strong>
+
+                        {% if x.spanish %}
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-primary ml-2"
+                                    onclick="populate_file_form('{{ x.id }}', '{{ x.spanish }}', 'Spanish')">
+                                View Spanish
+                            </button>
+                        {% else %}
+                            <span class="badge badge-danger ml-2">Need to Upload</span>
+                        {% endif %}
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-secondary ml-2"
+                                onclick="open_upload_modal('{{ x.id }}', 'Spanish')">
+                            Upload Spanish
+                        </button>
+                    </div>
+
+                </div>
+
+               <h6 class="font-weight-bold">Issued History</h6>
+
+{% if x.instances %}
+    <div class="table-responsive mb-3">
+        <table class="table table-sm table-bordered mb-0">
+            <thead class="thead-light">
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for instance in x.instances %}
+                <tr>
+                    <td>{{ instance.date|date:"m/d/Y" }}</td>
+                    <td>{{ instance.description|default:x.description }}</td>
+                    <td>{{ instance.notes|default:"" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="text-muted mb-3">
+        This toolbox talk has not been issued yet.
+    </div>
+{% endif %}
+
+<h6 class="font-weight-bold">Future Dates</h6>
+
+{% if x.future_instances %}
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered mb-0">
+            <thead class="thead-light">
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for instance in x.future_instances %}
+                <tr>
+                    <td>{{ instance.date|date:"m/d/Y" }}</td>
+                    <td>{{ instance.description|default:x.description }}</td>
+                    <td>{{ instance.notes|default:"" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="text-muted">
+        This toolbox talk is not currently scheduled for a future date.
+    </div>
+{% endif %}
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-dismiss="modal">
+                    Close
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+    <div class="modal fade" id="uploadFilesModal" tabindex="-1" role="dialog" aria-labelledby="uploadFilesTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadFilesTitle">Upload Toolbox Talk Files</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+    <div class="border rounded p-3 mb-3 text-center" id="english_drop_zone" style="background:#f8f9fa;">
+        <div class="mb-2"><strong>Drag English File Here</strong></div>
+        <div id="english_drop_name" class="small text-muted">No English file selected</div>
+    </div>
+
+    <div class="border rounded p-3 mb-4 text-center" id="spanish_drop_zone" style="background:#f8f9fa;">
+        <div class="mb-2"><strong>Drag Spanish File Here</strong></div>
+        <div id="spanish_drop_name" class="small text-muted">No Spanish file selected</div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            Browse English File
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" action="{% url 'upload_master_toolbox_file' %}" id="english_upload_form">
+                {% csrf_token %}
+                <input type="hidden" name="toolbox_id" id="upload_english_toolbox_id">
+                <input type="hidden" name="language" value="English">
+                <input type="file" name="upload_file" id="english_upload_file" class="form-control mb-2">
+                <button type="submit" class="btn btn-primary btn-sm">Upload English</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            Browse Spanish File
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" action="{% url 'upload_master_toolbox_file' %}" id="spanish_upload_form">
+                {% csrf_token %}
+                <input type="hidden" name="toolbox_id" id="upload_spanish_toolbox_id">
+                <input type="hidden" name="language" value="Spanish">
+                <input type="file" name="upload_file" id="spanish_upload_file" class="form-control mb-2">
+                <button type="submit" class="btn btn-primary btn-sm">Upload Spanish</button>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Done</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
 <script>
     $(document).ready(function () {
-        $('#employees_table').DataTable({
-            paging: false,
-            autoWidth: false,
-            order: [[0, 'asc']]
-        });
+    $('#employees_table').DataTable({
+        paging: false,
+        autoWidth: false,
+        ordering: false
     });
+});
 
     function populate_file_form(id, file_name, language) {
         select_file.selected_file.value = file_name;
@@ -272,6 +502,69 @@
         select_file.selected_language.value = language;
         select_file.submit();
     }
+    function open_upload_modal(id, language) {
+
+    $('#upload_english_toolbox_id').val(id);
+    $('#upload_spanish_toolbox_id').val(id);
+
+    if (language === 'English') {
+        $('#english_upload_file').focus();
+    }
+
+    if (language === 'Spanish') {
+        $('#spanish_upload_file').focus();
+    }
+
+    $('#uploadFilesModal').modal('show');
+}
+
+function setupDropZone(zoneId, fileInputId, nameLabelId) {
+    var zone = document.getElementById(zoneId);
+    var fileInput = document.getElementById(fileInputId);
+    var nameLabel = document.getElementById(nameLabelId);
+
+    if (!zone || !fileInput || !nameLabel) {
+        return;
+    }
+
+    zone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        zone.style.background = '#e9f5ff';
+        zone.style.borderColor = '#007bff';
+    });
+
+    zone.addEventListener('dragleave', function (e) {
+        e.preventDefault();
+        zone.style.background = '#f8f9fa';
+        zone.style.borderColor = '#dee2e6';
+    });
+
+    zone.addEventListener('drop', function (e) {
+        e.preventDefault();
+
+        zone.style.background = '#f8f9fa';
+        zone.style.borderColor = '#dee2e6';
+
+        if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            nameLabel.innerText = e.dataTransfer.files[0].name;
+        }
+    });
+
+    fileInput.addEventListener('change', function () {
+        if (fileInput.files.length > 0) {
+            nameLabel.innerText = fileInput.files[0].name;
+        } else {
+            nameLabel.innerText = 'No file selected';
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    setupDropZone('english_drop_zone', 'english_upload_file', 'english_drop_name');
+    setupDropZone('spanish_drop_zone', 'spanish_upload_file', 'spanish_drop_name');
+});
+
 </script>
 
 {% endblock %}

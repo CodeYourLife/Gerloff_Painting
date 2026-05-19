@@ -487,63 +487,96 @@ def equipment_add_to_incoming(request, id):  # status = None, Outgoing, Incoming
     return redirect('equipment_batch_outgoing', status='Incoming')
 
 
+
 @login_required(login_url='/accounts/login')
-def equipment_batch_outgoing(request, status):  # status is Outgoing, Incoming
-    jobs = Jobs.objects.filter(is_closed=False)
+def equipment_batch_outgoing(request, status):
+
+    jobs = Jobs.objects.filter(is_closed=False).order_by('job_number')
+
     if request.method == 'POST':
+
         if 'filter_job_name' in request.POST:
-            jobs = Jobs.objects.filter(is_closed=False, job_name__icontains=request.POST['filter_job_name'])
+            jobs = Jobs.objects.filter(
+                is_closed=False,
+                job_name__icontains=request.POST['filter_job_name']
+            ).order_by('job_number')
+
         else:
+
             if status == "Outgoing":
-                for x in Inventory.objects.filter(batch='Outgoing',is_closed=False):
-                    x.job_number = Jobs.objects.get(job_number=request.POST['select_job'])
+
+                selected_job = Jobs.objects.get(
+                    job_number=request.POST['select_job']
+                )
+
+                for x in Inventory.objects.filter(batch='Outgoing', is_closed=False):
+
+                    x.job_number = selected_job
                     x.status = "Checked Out"
                     x.batch = None
                     x.save()
-                    new_note = InventoryNotes.objects.create(inventory_item=x, date=date.today(),
-                                                             user=Employees.objects.get(user=request.user),
-                                                             note="Sent to Job -" + request.POST['inventory_notes'],
-                                                             category="Job", job_number=request.POST['select_job'],
-                                                             job_name=x.job_number.job_name)
-                    new_note.save()
-                for x in Inventory.objects.filter(batch='Incoming',is_closed=False):
-                    x.batch = None
-                    x.save()
+
+                    InventoryNotes.objects.create(
+                        inventory_item=x,
+                        date=date.today(),
+                        user=Employees.objects.get(user=request.user),
+                        note="Sent to Job -" + request.POST['inventory_notes'],
+                        category="Job",
+                        job_number=selected_job.job_number,
+                        job_name=selected_job.job_name
+                    )
+
+                Inventory.objects.filter(
+                    batch='Incoming',
+                    is_closed=False
+                ).update(batch=None)
+
             else:
-                for x in Inventory.objects.filter(batch='Incoming',is_closed=False):
+
+                for x in Inventory.objects.filter(batch='Incoming', is_closed=False):
+
                     x.job_number = None
                     x.status = "Available"
                     x.batch = None
                     x.save()
-                    new_note = InventoryNotes.objects.create(inventory_item=x, date=date.today(),
-                                                             user=Employees.objects.get(user=request.user),
-                                                             note="Returned -" + request.POST['inventory_notes'],
-                                                             category="Returned")
-                    new_note.save()
-                for x in Inventory.objects.filter(batch='Outgoing',is_closed=False):
-                    x.batch = None
-                    x.save()
+
+                    InventoryNotes.objects.create(
+                        inventory_item=x,
+                        date=date.today(),
+                        user=Employees.objects.get(user=request.user),
+                        note="Returned -" + request.POST['inventory_notes'],
+                        category="Returned"
+                    )
+
+                Inventory.objects.filter(
+                    batch='Outgoing',
+                    is_closed=False
+                ).update(batch=None)
+
             return redirect('warehouse_home')
-    status = status
-    available_filter = EquipmentFilter(request.GET, queryset=Inventory.objects.filter(status='Available', batch=None,is_closed=False))
+
     if status == 'Outgoing':
-        available_filter = EquipmentFilter(request.GET,
-                                           queryset=Inventory.objects.filter(status='Available', batch=None,is_closed=False))
-        pending_table = EquipmentTableOutgoing(Inventory.objects.filter(batch='Outgoing',is_closed=False))
-        available_table = EquipmentTableOutgoing(available_filter.qs)
+        pending_items = Inventory.objects.filter(batch='Outgoing', is_closed=False)
+        available_items = Inventory.objects.filter(
+            status='Available',
+            batch=None,
+            is_closed=False
+        )
     else:
-        available_filter = EquipmentFilter2(request.GET,
-                                            queryset=Inventory.objects.filter(status='Checked Out', batch=None,is_closed=False))
-        pending_table = EquipmentTableOutgoing(Inventory.objects.filter(batch='Incoming',is_closed=False))
-        available_table = EquipmentTableIncoming(available_filter.qs)
-    has_filter = any(field in request.GET for field in set(available_filter.get_fields()))
-    send_data = {}
-    send_data['status'] = status
-    send_data['jobs'] = jobs
-    send_data['available_filter'] = available_filter
-    send_data['has_filter'] = has_filter
-    send_data['pending_table'] = pending_table
-    send_data['available_table'] = available_table
+        pending_items = Inventory.objects.filter(batch='Incoming', is_closed=False)
+        available_items = Inventory.objects.filter(
+            status='Checked Out',
+            batch=None,
+            is_closed=False
+        )
+
+    send_data = {
+        'status': status,
+        'jobs': jobs,
+        'pending_items': pending_items,
+        'available_items': available_items,
+    }
+
     return render(request, "equipment_batch_outgoing.html", send_data)
 
 

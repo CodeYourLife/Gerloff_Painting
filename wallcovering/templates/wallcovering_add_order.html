@@ -163,9 +163,9 @@ placeholder="{{ wallcovering.estimated_quantity }}"
     <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
         <strong>Additional Items (glue, trim, etc.)</strong>
 
-        <button type="button" class="btn btn-sm btn-light" id="addExtraItemBtn">
-            + Add Item
-        </button>
+<!--        <button type="button" class="btn btn-sm btn-light" id="addExtraItemBtn">-->
+<!--            + Add Item-->
+<!--        </button>-->
     </div>
 
     <div class="card-body" id="extraItemsContainer">
@@ -244,7 +244,11 @@ placeholder="{{ wallcovering.estimated_quantity }}"
 </div>
 
 {% endfor %}
+
     </div>
+                    <button type="button" class="btn btn-sm btn-warning" id="addExtraItemBtn2">
+            + Add Another Item
+        </button>
 </div>
 
         <button type="submit" class="btn btn-success btn-lg">
@@ -299,7 +303,9 @@ placeholder="{{ wallcovering.estimated_quantity }}"
             <label>Notes</label>
             <textarea name="extra_notes[]" class="form-control" rows="2"></textarea>
         </div>
+
     </div>
+
 </div>
 
 </div>
@@ -318,6 +324,14 @@ $(document).ready(function () {
     });
 
     $('#addExtraItemBtn').on('click', function () {
+
+        $('#noExtraItemsMessage').hide();
+
+        const template = $('#extraItemTemplate').html();
+        $('#extraItemsContainer').append(template);
+    });
+        $('#addExtraItemBtn2').on('click', function () {
+
         $('#noExtraItemsMessage').hide();
 
         const template = $('#extraItemTemplate').html();

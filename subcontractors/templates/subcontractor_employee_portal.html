@@ -44,6 +44,22 @@
     .toolbox-card {
         border-radius: 8px;
     }
+    .toolbox-card .btn {
+    white-space: normal !important;
+    word-break: break-word;
+    line-height: 1.2;
+    padding: 12px 10px;
+    font-size: 15px;
+}
+
+.toolbox-card .card-body {
+    padding: 1rem 0.85rem;
+}
+
+.toolbox-card {
+    margin-left: -4px;
+    margin-right: -4px;
+}
 </style>
 
 <script type="text/javascript" language="javascript"
@@ -156,7 +172,7 @@ window.addEventListener("pageshow", function (event) {
                 </div>
             </div>
         </div>
-
+<!--assigned jobs -->
         <div class="card">
             <div class="card-header" id="headingJobs">
                 <h5 class="mb-0">
@@ -195,101 +211,168 @@ window.addEventListener("pageshow", function (event) {
         </div>
 
         {% if toolbox_allowed %}
-        <div class="card">
-            <div class="card-header" id="headingToolbox">
-                <h5 class="mb-0">
-                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseToolbox"
-                            aria-expanded="false" aria-controls="collapseToolbox">
-                        {% if toolbox_talks_required %}
-                            {{ toolbox_talks_required_count }} Toolbox Talks Required
-                        {% else %}
-                            No Toolbox Talks Required At This Time
-                        {% endif %}
-                    </button>
-                </h5>
-            </div>
 
-            <div id="collapseToolbox" class="collapse" aria-labelledby="headingToolbox" data-parent="#accordion">
-                <div class="card-body">
-                    <form name="select_file" id="select_file" action="{% url 'complete_subcontractor_toolbox_talk' %}" method="post">
-                        {% csrf_token %}
-                        <input type="hidden" id="employee_id" name="employee_id" value="{{ employee_id }}">
-                        <input type="hidden" id="scheduledtalk_id" name="scheduledtalk_id">
+    {% if group_toolbox_talks_count %}
+    <div class="card">
+        <div class="card-header" id="headingGroupToolbox">
+            <h5 class="mb-0">
+                <button class="btn btn-link"
+                        data-toggle="collapse"
+                        data-target="#collapseGroupToolbox"
+                        aria-expanded="false"
+                        aria-controls="collapseGroupToolbox">
+                    {{ group_toolbox_talks_count }} Group Toolbox Talks - Led By Foreman
+                </button>
+            </h5>
+        </div>
 
-                        {% if toolbox_talks_required %}
-                        <div class="container-fluid p-2">
-                            {% for x in toolbox_talks_required %}
-                            <div class="card mb-3 shadow-sm toolbox-card">
-                                <div class="card-body">
+        <div id="collapseGroupToolbox"
+             class="collapse"
+             aria-labelledby="headingGroupToolbox"
+             data-parent="#accordion">
 
-                                    <h6 class="mb-1 font-weight-bold">
-                                        {{ x.description }}
-                                    </h6>
+            <div class="card-body">
 
-                                    <div class="text-muted small mb-2">
-                                        {{ x.date }}
-                                    </div>
+                {% for x in group_toolbox_talks %}
+                    <div class="card mb-3 shadow-sm toolbox-card">
+                        <div class="card-body">
 
-                                    <div class="mt-2">
+                            <h6 class="mb-1 font-weight-bold">
+                                {{ x.description }}
+                            </h6>
 
-                                        {% if x.spanish %}
-                                            <a href="{% url 'subcontractor_toolbox_file' x.item 'Spanish' employee_id %}"
-                                               class="btn btn-block mb-2 {% if x.spanish_viewed %}btn-success{% else %}btn-outline-primary{% endif %}">
-                                                {% if x.spanish_viewed %}
-                                                    ✅ Spanish (Viewed {{ x.spanish_date|date:"m/d/Y" }})
-                                                {% else %}
-                                                    📄 View Spanish
-                                                {% endif %}
-                                            </a>
-                                        {% else %}
-                                            <button type="button"
-                                                    class="btn btn-block btn-outline-secondary mb-2"
-                                                    onclick="alert('Tell your supervisor that no Spanish file has been uploaded for this talk.')">
-                                                📄 View Spanish
-                                            </button>
-                                        {% endif %}
-
-                                        {% if x.english %}
-                                            <a href="{% url 'subcontractor_toolbox_file' x.item 'English' employee_id %}"
-                                               class="btn btn-block mb-2 {% if x.english_viewed %}btn-success{% else %}btn-outline-primary{% endif %}">
-                                                {% if x.english_viewed %}
-                                                    ✅ English (Viewed {{ x.english_date|date:"m/d/Y" }})
-                                                {% else %}
-                                                    📄 View English
-                                                {% endif %}
-                                            </a>
-                                        {% else %}
-                                            <button type="button"
-                                                    class="btn btn-block btn-outline-secondary mb-2"
-                                                    onclick="alert('Tell your supervisor that no English file has been uploaded for this talk.')">
-                                                📄 View English
-                                            </button>
-                                        {% endif %}
-
-                                        <button type="button"
-                                                class="btn btn-block {% if x.can_complete %}btn-danger{% else %}btn-secondary{% endif %}"
-                                                {% if not x.can_complete %}
-                                                    onclick="alert('You need to read the toolbox talk first before marking the course complete.')"
-                                                {% else %}
-                                                    onclick="complete_subcontractor_toolbox('{{ x.item }}')"
-                                                {% endif %}>
-                                            I have read and understand this topic
-                                        </button>
-
-                                    </div>
-
-                                </div>
+                            <div class="text-muted small mb-2">
+                                {{ x.date|date:"m/d/Y" }}
                             </div>
-                            {% endfor %}
+
+                            <div class="text-muted small mb-2">
+                                Job: {{ x.job.job_number }} - {{ x.job.job_name }}
+                            </div>
+
+                            <a class="btn btn-danger btn-block"
+                               href="{% url 'sub_toolbox_complete' subcontractor.id x.scheduled.id x.job.job_number %}?from_employee={{ selected_employee.id }}">
+                                Complete Group Toolbox Talk
+                            </a>
+
                         </div>
-                        {% else %}
-                        <div>No Toolbox Talks To Show</div>
-                        {% endif %}
-                    </form>
-                </div>
+                    </div>
+                {% endfor %}
+
             </div>
         </div>
-        {% endif %}
+    </div>
+    {% endif %}
+
+
+    {% if individual_toolbox_talks_count %}
+    <div class="card">
+        <div class="card-header" id="headingIndividualToolbox">
+            <h5 class="mb-0">
+                <button class="btn btn-link"
+                        data-toggle="collapse"
+                        data-target="#collapseIndividualToolbox"
+                        aria-expanded="false"
+                        aria-controls="collapseIndividualToolbox">
+                    {{ individual_toolbox_talks_count }} Individual Toolbox Talks Required
+                </button>
+            </h5>
+        </div>
+
+        <div id="collapseIndividualToolbox"
+             class="collapse"
+             aria-labelledby="headingIndividualToolbox"
+             data-parent="#accordion">
+
+            <div class="card-body">
+
+                <form name="select_file"
+                      id="select_file"
+                      action="{% url 'complete_subcontractor_toolbox_talk' %}"
+                      method="post">
+                    {% csrf_token %}
+
+                    <input type="hidden" id="employee_id" name="employee_id" value="{{ employee_id }}">
+                    <input type="hidden" id="scheduledtalk_id" name="scheduledtalk_id">
+
+                    <div class="container-fluid p-2">
+
+                        {% for x in individual_toolbox_talks %}
+                        <div class="card mb-3 shadow-sm toolbox-card">
+                            <div class="card-body">
+
+                                <h6 class="mb-1 font-weight-bold">
+                                    {{ x.description }}
+                                </h6>
+
+                                <div class="text-muted small mb-1">
+                                    {{ x.date|date:"m/d/Y" }}
+                                </div>
+
+                                <div class="text-muted small mb-2">
+                                    Job: {{ x.job.job_number }} - {{ x.job.job_name }}
+                                </div>
+
+                                <div class="mt-2">
+
+                                    {% if x.spanish %}
+                                        <a href="{% url 'subcontractor_toolbox_file' x.item 'Spanish' employee_id %}"
+                                           class="btn btn-block mb-2 {% if x.spanish_viewed %}btn-success{% else %}btn-outline-primary{% endif %}">
+                                            {% if x.spanish_viewed %}
+                                                ✅ Spanish (Viewed {{ x.spanish_date|date:"m/d/Y" }})
+                                            {% else %}
+                                                📄 View Spanish
+                                            {% endif %}
+                                        </a>
+                                    {% else %}
+                                        <button type="button"
+                                                class="btn btn-block btn-outline-secondary mb-2"
+                                                onclick="alert('Tell your supervisor that no Spanish file has been uploaded for this talk.')">
+                                            📄 View Spanish
+                                        </button>
+                                    {% endif %}
+
+                                    {% if x.english %}
+                                        <a href="{% url 'subcontractor_toolbox_file' x.item 'English' employee_id %}"
+                                           class="btn btn-block mb-2 {% if x.english_viewed %}btn-success{% else %}btn-outline-primary{% endif %}">
+                                            {% if x.english_viewed %}
+                                                ✅ English (Viewed {{ x.english_date|date:"m/d/Y" }})
+                                            {% else %}
+                                                📄 View English
+                                            {% endif %}
+                                        </a>
+                                    {% else %}
+                                        <button type="button"
+                                                class="btn btn-block btn-outline-secondary mb-2"
+                                                onclick="alert('Tell your supervisor that no English file has been uploaded for this talk.')">
+                                            📄 View English
+                                        </button>
+                                    {% endif %}
+
+                                    <button type="button"
+                                            class="btn btn-block {% if x.can_complete %}btn-danger{% else %}btn-secondary{% endif %}"
+                                            {% if not x.can_complete %}
+                                                onclick="alert('You need to read the toolbox talk first before marking the course complete.')"
+                                            {% else %}
+                                                onclick="complete_subcontractor_toolbox('{{ x.item }}')"
+                                            {% endif %}>
+                                        I have read and understand this topic
+                                    </button>
+
+                                </div>
+
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+{% endif %}
 
     </div>
 </div>

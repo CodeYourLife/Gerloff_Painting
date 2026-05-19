@@ -54,4 +54,27 @@ path('scheduled_toolbox_report/<int:scheduled_id>/', views.scheduled_toolbox_rep
 path('ajax/job-sorted-employees/', views.ajax_job_sorted_employees, name='ajax_job_sorted_employees'),
 path('delete_scheduled_toolbox_talk/', views.delete_scheduled_toolbox_talk, name='delete_scheduled_toolbox_talk'),
 path('toolbox_talks_by_employee/modal/<str:person_type>/<int:person_id>/',views.toolbox_talks_by_employee_modal,name='toolbox_talks_by_employee_modal'),
+path('employee_edit/<int:id>/', views.employee_edit, name='employee_edit'),
+path('reinstate_employee/<int:id>/',views.reinstate_employee,name='reinstate_employee'),
+path('reinstate_subcontractor_employee/<int:id>/',views.reinstate_subcontractor_employee,name='reinstate_subcontractor_employee'),
+path(
+    'toolbox-talks-master/upload-file/',
+    views.upload_master_toolbox_file,
+    name='upload_master_toolbox_file'
+),
+path(
+    'ajax/job-subcontractors/',
+    views.ajax_job_subcontractors,
+    name='ajax_job_subcontractors'
+),
+path(
+    'scheduled-toolbox-talks/<int:scheduled_id>/edit/',
+    views.scheduled_toolbox_talk_edit,
+    name='scheduled_toolbox_talk_edit'
+),
+path(
+    'subcontractors/<int:sub_id>/toggle-delegation/',
+    views.toggle_subcontractor_delegation,
+    name='toggle_subcontractor_delegation'
+),
 ]

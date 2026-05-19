@@ -99,7 +99,7 @@ window.onload = function() {
 var table = $('#equipment_table').DataTable({paging: false})
 };
 function go_to_job(jobnumber){
-alert(jobnumber)
+
 url = "{% url 'job_page' 'ALL' %}"
 url = url.replace('ALL', jobnumber);
 window.location.href = url

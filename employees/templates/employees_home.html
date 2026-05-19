@@ -1,18 +1,11 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_employees %}active{% endblock nav_item_employees %}
-{% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
-<!--    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-    <style type="text/css" class="init">
+
+
+    {% block extra_head %}
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+<style type="text/css" class="init">
         nav .active, .collapsible:hover {
           background-color: Salmon;
         }
@@ -59,65 +52,21 @@
         .active * {
             background-color: white !important;
         }
+            .clickable-row {
+        cursor: pointer;
+    }
+
+    .clickable-row:hover {
+        background-color: #f8f9fa;
+    }
     </style>
-    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
-            data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-    <script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html"
-            async></script>
-    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html"
-            async></script>
-    <script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-    <script type="text/javascript" language="javascript"
-            src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-    <script type="text/javascript" class="init">
-        $(document).ready(function () {
-            var table = $('#employees_table').DataTable({paging:false});
-        })
-         function showEmployeeData2(equipmentid) {
-         var teststring = "{% url 'equipment_page' 9 %}"
-         document.location.href = teststring.replace(9, equipmentid);
-         }
-      function showEmployeeData(employeeId, employeeFirstName, employeeLastName) {
-        $.ajax({
-            method: 'GET',
-            url: '/employees/employees_home',
-            data: {'id': employeeId},
-            success: function (data) {
-                  parsedData = JSON.parse(data);
-                  document.getElementById("title").innerHTML = employeeFirstName + " " + employeeLastName + " Information";
-                  let text = "<table border='1' class='table display'>"
-                  text += "<thead><tr><th class='col'>Category</th><th class='col'>Description</th><th class='col'>Date Expires</th></tr></thead>"
-                  parsedData.certifications.forEach((element) => {
-                    text += "<tr><td>" + element.category + "</td><td>" + element.description + "</td><td>" + element.dateExpires + "</td></tr>";
-                  });
-                  text += "</table>"
-                  document.getElementById("certifications").innerHTML = text;
-                  text = "<table border='1' class='table display'>"
-                  text += "<thead><tr><th class='col'>Supervisor</th><th class='col'>Date</th><th class='col'>Description</th><th class='col'>Job</th></tr></thead>"
-                  parsedData.writeUps.forEach((element) => {
-                    text += "<tr><td>" + element.supervisor + "</td><td>" + element.date + "</td><td style='width: fit-content;'>" + element.description + "</td><td style='width: fit-content;'>" + element.job + "</td></tr>";
-                  });
-                  text += "</table>"
-                  document.getElementById("writeUps").innerHTML = text;
-                  text = "<table border='1' class='table display'>"
-                  text += "<thead><tr><th class='col'>Category</th><th class='col'>Storage Location</th><th class='col'>Date Checked Out</th></tr></thead><tbody>"
-                  parsedData.equipment.forEach((element) => {
-                  text += "<tr onclick=\"showEmployeeData2('" + element.id + "')\">"
-                  text += "<td>" + element.item + "</td><td>" + element.storageLocation + "</td><td>" + element.dateOut + "</td></tr>";
-                  });
-                  document.getElementById("equipment").innerHTML = text;
+    {% endblock %}
 
-            }
-        });
-      }
 
-    </script>
 
-</head>
-<body>
+
+{% block content %}
+
 
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
     <a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
@@ -134,93 +83,180 @@
     </div>
 
 </nav>
-<!-- Modal -->
-<div class="modal fade" id="employee-modal" tabindex="-1" role="dialog" aria-labelledby="title"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="title"></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <ul class="nav nav-pills">
-                    <li>
-                        <a href="#1a" class="active" data-toggle="tab">Equipment</a>
-                    </li>
-                    <li><a href="#2a" data-toggle="tab">Certifications</a>
-                    </li>
-                    <li><a href="#3a" data-toggle="tab">Write Ups</a>
-                    </li>
-                </ul>
-                <div class="tab-content clearfix">
-                    <div class="tab-pane active" id="1a">
-                        <div style="margin-top: 12px" class="table-responsive">
-                            <div id="equipment">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="tab-pane" id="2a">
-                        <div style="margin-top: 12px" class="table-responsive">
-                            <div id="certifications">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="tab-pane" id="3a">
-                        <div style="margin-top: 12px" class="table-responsive">
-                            <div id="writeUps">
-                            </div>
-                        </div>
-                    </div>
+<div class="mt-3 mb-3">
+
+    {% if show_inactive %}
+
+        <a href="{% url 'employees_home' %}"
+           class="btn btn-success">
+            VIEW ACTIVE EMPLOYEES
+        </a>
+
+    {% else %}
+
+        <a href="{% url 'employees_home' %}?inactive=1"
+           class="btn btn-danger">
+            RE-ACTIVATE EMPLOYEES
+        </a>
+
+    {% endif %}
+
+</div>
+<div class="container-fluid mt-3">
+
+    <!-- Gerloff Employees -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <a class="text-dark d-block"
+               data-toggle="collapse"
+               href="#gerloffEmployeesCollapse"
+               role="button"
+               aria-expanded="true"
+               aria-controls="gerloffEmployeesCollapse"
+               style="text-decoration: none;">
+                <strong>Gerloff Employees - {{ employees|length }}</strong>
+            </a>
+        </div>
+
+        <div class="collapse hide" id="gerloffEmployeesCollapse">
+            <div class="card-body">
+
+                <div class="table-responsive">
+                    <table id="employees_table" class="table display">
+                        <thead>
+                        <tr>
+                            <th class="col">Name</th>
+                            <th class="col">Phone</th>
+                            <th class="col">Email</th>
+                            <th class="col">Employer</th>
+                            <th class="col">Job Title</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        {% for employee in employees %}
+                            <tr class="clickable-row"
+                                onclick="window.location='{% url 'employees_page' employee.id %}';">
+                                <td>{{ employee.last_name }}, {{ employee.first_name }}</td>
+                                <td>{{ employee.phone }}</td>
+                                <td>{{ employee.email }}</td>
+                                <td>{{ employee.employment_company }}</td>
+                                <td>{{ employee.job_title }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+
             </div>
         </div>
     </div>
+
+
+    <!-- Subcontractor Employees -->
+    {% for group in subcontractor_groups %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <a class="text-dark d-block"
+                   data-toggle="collapse"
+                   href="#subcontractorCollapse{{ group.subcontractor.id }}"
+                   role="button"
+                   aria-expanded="false"
+                   aria-controls="subcontractorCollapse{{ group.subcontractor.id }}"
+                   style="text-decoration: none;">
+                    <strong>{{ group.subcontractor.company }} - {{ group.count }} employees</strong>
+                </a>
+            </div>
+
+            <div class="collapse" id="subcontractorCollapse{{ group.subcontractor.id }}">
+                <div class="card-body">
+                    <div class="mb-3">
+
+                        <a href="{% url 'subcontractor_employee_management' group.subcontractor.id %}"
+                           class="btn btn-sm btn-primary">
+                            👷 Manage Employees
+                        </a>
+
+                        {% if group.subcontractor.is_toolbox_required %}
+                            <a href="{% url 'toggle_subcontractor_delegation' group.subcontractor.id %}"
+                               class="btn btn-sm btn-warning ml-2">
+                                {% if group.has_delegation %}
+                                    Remove Delegation
+                                {% else %}
+                                    Add Delegation
+                                {% endif %}
+                            </a>
+
+                            <div class="small text-muted mt-2">
+                                {% if group.has_delegation %}
+                                    Delegation is Currently On. Employees will complete toolbox talks individually through the employee portal.
+                                {% else %}
+                                    Delegation is Currently Off. Toolbox talks must currently be completed by a foreman/supervisor.
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                    </div>
+                    {% if group.employees %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered mb-0">
+                                <thead class="thead-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Username</th>
+                                    <th>Toolbox Access</th>
+                                    <th>T&M Access</th>
+                                    <th>Date Enrolled</th>
+                                </tr>
+                                </thead>
+
+                                <tbody>
+                                {% for sub_employee in group.employees %}
+                                    <tr>
+                                        <td>{{ sub_employee.name|default:"" }}</td>
+                                        <td>{{ sub_employee.username|default:"" }}</td>
+                                        <td>
+                                            {% if sub_employee.has_access_to_toolbox %}
+                                                <span class="badge badge-success">Yes</span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">No</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if sub_employee.has_access_to_TM %}
+                                                <span class="badge badge-success">Yes</span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">No</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ sub_employee.date_enrolled|date:"m/d/Y" }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="mb-0 text-muted">No active employees for this subcontractor.</p>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
 </div>
-<div>
-    {% if user.is_superuser %}
-    <div style="margin-top: 12px" class="table-responsive">
-        <table id="employees_table" class="table display">
-            <thead>
-            <tr>
-                <th class="col">ID</th>
-                <th class="col">First Name</th>
-                <th class="col">Middle Name</th>
-                <th class="col">Last Name</th>
-                <th class="col">Phone</th>
-                <th class="col">Email</th>
-                <th class="col">Nickname</th>
-                <th class="col">Employer</th>
-                <th class="col">Job Title</th>
-<!--                <th class="col">Level</th>-->
-            </tr>
-            </thead>
-            <tbody>
-            {% for employee in employees %}
-            <tr onclick="showEmployeeData( '{{ employee.id }}', '{{ employee.first_name }}', '{{ employee.last_name }}' )">
-                <td><a href="{% url 'employees_page' employee.id %}">{{employee.id}}</a></td>
-                <td data-toggle="modal" data-target="#employee-modal">{{employee.first_name}}</td>
-                <td data-toggle="modal" data-target="#employee-modal">{{employee.middle_name}}</td>
-                <td data-toggle="modal" data-target="#employee-modal">{{employee.last_name}}</td>
-                <td>{{employee.phone}}</td>
-                <td>{{employee.email}}</td>
-                <td>{{employee.nickname}}</td>
-                <td style="width: fit-content;">{{employee.employment_company}}</td>
-                <td style="width: fit-content;">{{employee.job_title}}</td>
-<!--                <td>{{employee.level}}</td>-->
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% endif %}
-</div>
-</body>
-</html>
+
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript" class="init">
+        $(document).ready(function () {
+            var table = $('#employees_table').DataTable({paging:false});
+        })
+
+
+
+    </script>
 
 {% endblock %}

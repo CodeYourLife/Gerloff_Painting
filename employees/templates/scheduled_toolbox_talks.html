@@ -81,21 +81,17 @@
             padding-right: 6px;
         }
     }
+    #employees_table tbody tr {
+    cursor: pointer;
+}
+
+#employees_table tbody tr:hover {
+    background-color: rgba(0,0,0,.03);
+}
 </style>
 
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav">
-            <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'employee_notes' 'AUTO' %}">Employee Notes</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'safety_home' %}">Safety</a></li>
-            <li><a class="nav-item nav-link active" href="{% url 'scheduled_toolbox_talks' %}">Scheduled Toolbox Talks</a></li>
-        </ul>
-    </div>
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'safety_home' %}">Go Back to Safety Home</a>
 </nav>
 
 <div class="toolbox-page">
@@ -165,6 +161,9 @@
                     <button type="button" class="btn btn-danger" onclick="deleteScheduledToolboxTalk()">
                                                     Delete
                                                 </button>
+                    <a id="edit_scheduled_btn" href="#" class="btn btn-warning">
+                        Edit
+                    </a>
                     <a id="print_report_btn" href="#" target="_blank" class="btn btn-secondary">
                         Print Report
                     </a>
@@ -239,7 +238,7 @@
     <div class="action-card">
         <form name="create_schedule" action="{% url 'scheduled_toolbox_talks' %}" method="post">
             {% csrf_token %}
-            <input type="submit" name="extend_schedule" class="btn btn-danger" value="Generate Weekly Toolbox Talk Schedule for All Employees" />
+            <input type="submit" name="extend_schedule" class="btn btn-danger" value="Auto Generate Schedule" />
             <small class="form-text text-muted">
                 This will add all toolbox talks to the end of the schedule, one per week, for all employees.
             </small>
@@ -248,9 +247,14 @@
 
     <div class="action-card">
         <form name="custom_assignment" action="{% url 'toolbox_talk_assign' %}">
-            <input type="submit" name="extend_schedule" class="btn btn-danger" value="Custom Toolbox Talk Assignment" />
+            <input type="submit" name="extend_schedule" class="btn btn-danger" value="Schedule a Toolbox Talk" />
+                        <small class="form-text text-muted">
+                Click this to manually assign toolbox talks.
+            </small>
         </form>
     </div>
+
+
 
     <div class="action-card">
         <table id="employees_table" class="table table-sm display mb-0">
@@ -263,10 +267,12 @@
             </thead>
             <tbody>
                 {% for x in toolboxtalks %}
-                <tr>
+                <tr onclick="populate_toolbox_modal('{{ x.Item }}')"
+                    data-toggle="modal"
+                    data-target="#notes-modal">
                     <td>{{ x.description }}</td>
                     <td data-order="{{ x.date|date:'Y-m-d' }}">{{ x.date }}</td>
-                    <td onclick="populate_toolbox_modal('{{ x.Item }}')" data-toggle="modal" data-target="#notes-modal">
+                    <td>
                         {% if x.ratio == "FILES NOT UPLOADED" %}
                             <span class="badge badge-danger">{{ x.ratio }}</span>
                         {% else %}
@@ -295,6 +301,30 @@
     }
 }
 
+function formatPersonLine(element) {
+    let line = "";
+
+    if (element.company) {
+        line += "<strong>" + element.company + "</strong>";
+    }
+
+    if (element.job) {
+        if (line) {
+            line += " - ";
+        }
+        line += element.job;
+    }
+
+    if (element.name) {
+        if (line) {
+            line += " - ";
+        }
+        line += element.name;
+    }
+
+    return line || "";
+}
+
 function populate_toolbox_modal(id) {
     document.getElementById('delete_scheduled_id').value = id;
     document.getElementById('print_report_btn').href = "/employees/scheduled_toolbox_report/" + id + "/";
@@ -314,6 +344,7 @@ function populate_toolbox_modal(id) {
         },
         success: function (data) {
             let parsedData = data;
+
             if (typeof data === "string") {
                 parsedData = JSON.parse(data);
             }
@@ -330,10 +361,11 @@ function populate_toolbox_modal(id) {
 
             modalText.innerHTML += "<b>Assignment Type:</b> " + parsedData.assignment_type + "<br><br>";
             modalText.innerHTML += "<b>People Needed to Complete:</b><br>";
-
+            document.getElementById('edit_scheduled_btn').href =
+                "/employees/scheduled-toolbox-talks/" + id + "/edit/";
             if (parsedData.people && parsedData.people.length > 0) {
                 parsedData.people.forEach(function (element) {
-                    modalText.innerHTML += element.name + "<br>";
+                    modalText.innerHTML += formatPersonLine(element) + "<br>";
                 });
             } else {
                 modalText.innerHTML += "Everyone has completed this Toolbox Talk.<br>";
@@ -344,11 +376,13 @@ function populate_toolbox_modal(id) {
 
             if (parsedData.completed_people && parsedData.completed_people.length > 0) {
                 parsedData.completed_people.forEach(function (element) {
+                    let line = formatPersonLine(element);
+
                     if (element.completed_date) {
-                        completedBox.innerHTML += element.name + " - " + element.completed_date + "<br>";
-                    } else {
-                        completedBox.innerHTML += element.name + "<br>";
+                        line += " - " + element.completed_date;
                     }
+
+                    completedBox.innerHTML += line + "<br>";
                 });
             } else {
                 completedBox.innerHTML = "No completed employees yet.";

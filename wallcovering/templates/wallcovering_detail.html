@@ -20,6 +20,13 @@
     padding: 8px 10px;
     margin-bottom: 10px;
 }
+.status-summary-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #495057;
+    letter-spacing: .3px;
+    margin-bottom: 4px;
+}
 </style>
 {% endblock %}
 
@@ -51,7 +58,7 @@
             <div class="row text-center">
 
                 <div class="col-md-3 mb-2">
-                    <div class="text-muted small">Wallcovering</div>
+                    <div class="status-summary-label">Wallcovering</div>
 
                     {% if wallcovering.wallcovering_status == "Owner Furnished" %}
                         <span class="badge badge-info p-2">Owner Furnished</span>
@@ -123,7 +130,7 @@
                     <div class="row text-center mt-3">
 
                         <div class="col-md-3 mb-2">
-                            <div class="text-muted small">{{ item.description }}</div>
+                            <div class="status-summary-label">{{ item.description }}</div>
 
                             {% if item.status == "Sent to Job" %}
                                 <span class="badge badge-success p-2">

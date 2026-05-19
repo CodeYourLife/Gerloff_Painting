@@ -58,4 +58,19 @@ path(
     views.subcontractor_approvers_management,
     name="subcontractor_approvers_management"
 ),
+path(
+    'subcontractor_employee_reactivate/',
+    views.subcontractor_employee_reactivate,
+    name='subcontractor_employee_reactivate'
+),
+path(
+    'portal/<int:sub_id>/toolbox/<int:scheduled_id>/<str:job_number>/complete/',
+    views.sub_toolbox_complete,
+    name='sub_toolbox_complete'
+),
+path(
+    'portal/<int:sub_id>/toolbox/<int:scheduled_id>/<str:job_number>/delegate/',
+    views.sub_toolbox_delegate,
+    name='sub_toolbox_delegate'
+),
 ]

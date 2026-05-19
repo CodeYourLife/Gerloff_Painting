@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container mt-3">
+
+    <h4>Complete Toolbox Talk</h4>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <strong>
+                {% if scheduled.master %}
+                    {{ scheduled.master.description }}
+                {% else %}
+                    {{ scheduled.description }}
+                {% endif %}
+            </strong>
+            <div class="text-muted">
+                {{ job.job_number }} - {{ job.job_name }}
+            </div>
+        </div>
+    </div>
+<div class="card mb-3">
+    <div class="card-body">
+
+        <div class="font-weight-bold mb-2">
+            Toolbox Talk Files
+        </div>
+
+        {% if english_file %}
+    <button type="button"
+            class="btn btn-block mb-2 {% if english_viewed %}btn-success{% else %}btn-outline-primary{% endif %}"
+            onclick="view_toolbox_file('{{ english_file }}', 'English')">
+        {% if english_viewed %}
+            ✅ English Viewed
+        {% else %}
+            📄 View English
+        {% endif %}
+    </button>
+{% endif %}
+
+{% if spanish_file %}
+    <button type="button"
+            class="btn btn-block mb-2 {% if spanish_viewed %}btn-success{% else %}btn-outline-primary{% endif %}"
+            onclick="view_toolbox_file('{{ spanish_file }}', 'Spanish')">
+        {% if spanish_viewed %}
+            ✅ Spanish Viewed
+        {% else %}
+            📄 View Spanish
+        {% endif %}
+    </button>
+{% endif %}
+
+    </div>
+</div>
+    <form method="post" onsubmit="return validateEmployees()">
+        {% csrf_token %}
+
+        <div id="employeeRows">
+
+            <div class="card mb-2 employee-row">
+                <div class="card-body">
+                    <label>Select or Type Employee Name</label>
+
+                    <select name="employee_select"
+                            class="form-control employee-select mb-2">
+                        <option value=""></option>
+
+                        {% for emp in sub_employees %}
+                            <option value="EMPLOYEE_{{ emp.id }}">
+                                {{ emp.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <div class="form-check">
+                        <input type="checkbox"
+                               class="form-check-input"
+                               name="add_to_employee_list"
+                               value="0"
+                               id="addEmployee0">
+                        <label class="form-check-label" for="addEmployee0">
+                            Add typed name to employee list
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <button type="button" class="btn btn-outline-primary btn-block mb-3" onclick="addEmployeeRow()">
+            Add Another Employee
+        </button>
+
+        <button type="submit" class="btn btn-success btn-block">
+            Complete Toolbox Talk
+        </button>
+
+    </form>
+
+</div>
+<form name="select_file"
+      id="select_file"
+      action="{% url 'sub_toolbox_complete' selected_sub.id scheduled.id job.job_number %}"
+      method="post">
+
+    {% csrf_token %}
+
+    <input type="hidden" id="selected_file" name="selected_file">
+    <input type="hidden" id="selected_id" name="selected_id">
+    <input type="hidden" id="selected_language" name="selected_language">
+    <input type="hidden" id="base_folder" name="base_folder" value="{{ toolbox_base_folder }}">
+    <input type="hidden" name="from_employee" value="{{ from_employee }}">
+</form>
+<div class="modal fade" id="removeDelegationModal" tabindex="-1" role="dialog" aria-labelledby="removeDelegationTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="removeDelegationTitle">
+                    Remove Employee Self-Completion?
+                </h5>
+            </div>
+
+            <div class="modal-body">
+                You have elected to have your employees do toolbox talks themselves for this job.
+                Would you like to remove that feature for future toolbox talks for this job?
+            </div>
+
+            <div class="modal-footer">
+                <form method="post" class="mb-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="remove_delegation" value="1">
+
+                    <button type="submit" class="btn btn-danger">
+                        Yes, Remove
+                    </button>
+                </form>
+
+                <a href="{% url 'portal' selected_sub.id 'ALL' %}"
+                   class="btn btn-secondary">
+                    No, Do Not Remove
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% if ask_remove_delegation %}
+<script>
+$(document).ready(function () {
+    $('#removeDelegationModal').modal({
+        backdrop: 'static',
+        keyboard: false
+    });
+});
+</script>
+{% endif %}
+<script>
+let employeeRowCount = 1;
+
+function addEmployeeRow() {
+
+    let container = document.getElementById("employeeRows");
+
+    let html = `
+        <div class="card mb-2 employee-row">
+            <div class="card-body">
+
+                <label>Select or Type Employee Name</label>
+
+                <select name="employee_select"
+                        class="form-control employee-select mb-2">
+                    <option value=""></option>
+
+                    {% for emp in sub_employees %}
+                        <option value="EMPLOYEE_{{ emp.id }}">
+                            {{ emp.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <div class="form-check">
+                    <input type="checkbox"
+                           class="form-check-input"
+                           name="add_to_employee_list"
+                           value="${employeeRowCount}"
+                           id="addEmployee${employeeRowCount}">
+
+                    <label class="form-check-label"
+                           for="addEmployee${employeeRowCount}">
+                        Add typed name to employee list
+                    </label>
+                </div>
+
+            </div>
+        </div>
+    `;
+
+    container.insertAdjacentHTML("beforeend", html);
+
+    initializeEmployeeSelects();
+
+    employeeRowCount += 1;
+}
+
+function initializeEmployeeSelects() {
+    $('.employee-select').select2({
+        tags: true,
+        width: '100%',
+        placeholder: 'Search or type employee name',
+        allowClear: true
+    });
+}
+
+$(document).ready(function () {
+    initializeEmployeeSelects();
+});
+function view_toolbox_file(language) {
+
+    document.getElementById("selected_file").value = "open";
+
+    document.getElementById("selected_id").value =
+        "{{ scheduled.master.id }}";
+
+    document.getElementById("selected_language").value = language;
+
+    document.getElementById("select_file").submit();
+}
+function view_toolbox_file(fileName, language) {
+    document.getElementById("selected_file").value = fileName;
+    document.getElementById("selected_id").value = "{{ scheduled.master.id }}";
+    document.getElementById("selected_language").value = language;
+    document.getElementById("select_file").submit();
+}
+
+function validateEmployees() {
+
+    let selects = document.getElementsByName("employee_select");
+
+    let hasEmployee = false;
+
+    for (let i = 0; i < selects.length; i++) {
+
+        if (selects[i].value.trim() !== "") {
+            hasEmployee = true;
+            break;
+        }
+    }
+
+    if (!hasEmployee) {
+        alert("Please add at least one employee before completing the toolbox talk.");
+        return false;
+    }
+
+    return true;
+}
+function view_toolbox_file(fileName, language) {
+    document.getElementById("selected_file").value = fileName;
+    document.getElementById("selected_id").value = "{{ toolbox_folder_id }}";
+    document.getElementById("selected_language").value = language;
+    document.getElementById("select_file").submit();
+}
+
+window.addEventListener("pageshow", function (event) {
+
+    const navEntries = performance.getEntriesByType("navigation");
+    const navType = navEntries.length ? navEntries[0].type : "";
+
+    if (event.persisted || navType === "back_forward") {
+        window.location.reload();
+    }
+
+});
+</script>
+
+{% endblock %}

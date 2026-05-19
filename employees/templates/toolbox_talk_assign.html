@@ -107,13 +107,7 @@
 </style>
 
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav">
-            <li><a class="nav-item nav-link" href="{% url 'safety_home' %}">Safety</a></li>
-            <li><a class="nav-item nav-link active" href="#">New Toolbox Talk</a></li>
-        </ul>
-    </div>
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'safety_home' %}">Go Back to Safety Home</a>
 </nav>
 
 <div class="toolbox-wrap">
@@ -158,7 +152,8 @@
                         <select class="form-control" id="existing_talk_id" name="existing_talk_id">
                             <option value="">Please Select</option>
                             {% for x in toolbox_talks %}
-                                <option value="{{ x.id }}">{{ x.description }}</option>
+                                <option value="{{ x.id }}" {% if selected_master_id == x.id|stringformat:"s" %}selected{% endif %}>{{ x.description }}</option>
+
                             {% endfor %}
                         </select>
                     </div>
@@ -204,7 +199,7 @@
                 <div id="customDateSection" style="display:none;">
                     <div class="form-group mb-0">
                         <label for="custom_date">Scheduled Date</label>
-                        <input type="date" class="form-control" id="custom_date" name="custom_date">
+                        <input type="date" class="form-control" id="custom_date" name="custom_date" value="{{ today|date:'Y-m-d' }}">
                     </div>
                 </div>
 
@@ -241,15 +236,10 @@
                         <label class="custom-control-label" for="assignment_type_job">Assign to Job</label>
                     </div>
 
-                    <div class="custom-control custom-radio mb-2">
-                        <input type="radio" id="assignment_type_sub_employees" name="assignment_type" value="sub_employees" class="custom-control-input">
-                        <label class="custom-control-label" for="assignment_type_sub_employees">Assign to Certain Subcontractor Employees</label>
-                    </div>
-
-                    <div class="custom-control custom-radio">
-                        <input type="radio" id="assignment_type_sub_jobs" name="assignment_type" value="sub_jobs" class="custom-control-input">
-                        <label class="custom-control-label" for="assignment_type_sub_jobs">Assign to a Certain Subcontractor Job</label>
-                    </div>
+<!--                    <div class="custom-control custom-radio">-->
+<!--                        <input type="radio" id="assignment_type_sub_jobs" name="assignment_type" value="sub_jobs" class="custom-control-input">-->
+<!--                        <label class="custom-control-label" for="assignment_type_sub_jobs">Assign to a Certain Subcontractor Job</label>-->
+<!--                    </div>-->
                 </div>
 
             </div>
@@ -290,6 +280,21 @@
                         {% endfor %}
                     </select>
                     <small class="form-text text-muted">Tap to select one or more employees.</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card toolbox-card mb-3" id="jobSubcontractorsCard" style="display:none;">
+            <div class="card-header">
+                Subcontractors on This Job
+            </div>
+            <div class="card-body">
+                <div class="form-group mb-0">
+                    <label for="job_subcontractor_ids">Select Subcontractors</label>
+                    <select class="form-control" id="job_subcontractor_ids" name="job_subcontractor_ids" multiple></select>
+                    <small class="form-text text-muted">
+                        Only subcontractors with an active subcontract on the selected job will appear.
+                    </small>
                 </div>
             </div>
         </div>
@@ -356,6 +361,12 @@ $(document).ready(function () {
         placeholder: "Search Toolbox Talks...",
         allowClear: true,
         width: '100%'
+    });
+
+    $('#job_subcontractor_ids').select2({
+    placeholder: "Select subcontractors...",
+    width: '100%',
+    closeOnSelect: false
     });
 
     $('#job_number').select2({
@@ -440,6 +451,7 @@ $(document).ready(function () {
         $('#employeesCard').hide();
         $('#subEmployeesCard').hide();
         $('#subJobsCard').hide();
+        $('#jobSubcontractorsCard').hide();
 
         if (scheduleMode !== 'custom_date') {
             return;
@@ -452,6 +464,7 @@ $(document).ready(function () {
         } else if (assignmentType === 'job') {
             $('#jobCard').show();
             $('#employeesCard').show();
+            $('#jobSubcontractorsCard').show();
         } else if (assignmentType === 'sub_employees') {
             $('#subEmployeesCard').show();
         } else if (assignmentType === 'sub_jobs') {
@@ -611,6 +624,7 @@ $(document).ready(function () {
 
     $('#job_number').change(function () {
         loadEmployeesByJob();
+        loadSubcontractorsByJob();
     });
 
     $('#subcontractor_employee_id').change(function () {
@@ -624,6 +638,65 @@ $(document).ready(function () {
     updateTalkSourceSections();
     updateScheduleSections();
     updateAssignmentSections();
+});
+
+function loadSubcontractorsByJob() {
+    let jobNumber = $('#job_number').val();
+    let $target = $('#job_subcontractor_ids');
+
+    $target.empty();
+
+    if ($target.hasClass("select2-hidden-accessible")) {
+        $target.select2('destroy');
+    }
+
+    $target.select2({
+        placeholder: "Select subcontractors...",
+        width: '100%',
+        closeOnSelect: false
+    });
+
+    if (!jobNumber) {
+        return;
+    }
+
+    $.ajax({
+        url: "{% url 'ajax_job_subcontractors' %}",
+        data: {
+            job_number: jobNumber
+        },
+        success: function (response) {
+            $.each(response.results, function (index, item) {
+                $target.append(
+                    $('<option>', {
+                        value: item.id,
+                        text: item.label
+                    })
+                );
+            });
+
+            if ($target.hasClass("select2-hidden-accessible")) {
+                $target.select2('destroy');
+            }
+
+            $target.select2({
+                placeholder: "Select subcontractors...",
+                width: '100%',
+                closeOnSelect: false
+            });
+        }
+    });
+}
+document.addEventListener("DOMContentLoaded", function () {
+
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get("existing") === "1") {
+
+        // click the existing toolbox talk button
+        document.getElementById("talk_source_existing").click();
+
+    }
 });
 </script>
 {% endblock %}
