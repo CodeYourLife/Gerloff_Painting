@@ -202,7 +202,7 @@ window.addEventListener("pageshow", function (event) {
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseNegativeOne"
                         aria-expanded="false"
                         aria-controls="collapseNegativeOne">
-                    Jobs Assigned To
+                    {{employeeJobs_count}} Jobs Assigned
                 </button>
             </h5>
         </div>
@@ -262,7 +262,7 @@ window.addEventListener("pageshow", function (event) {
                 <h5 class="mb-0">
                     <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false"
                             aria-controls="collapseOne">
-                        Assigned Tools
+                        {{inventory_count}} Assigned Tools
                     </button>
                 </h5>
             </div>
@@ -419,7 +419,7 @@ window.addEventListener("pageshow", function (event) {
                     <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFive"
                             aria-expanded="false"
                             aria-controls="collapseFive">
-                        Write-Ups Received
+                        {{writeups_received_count}} Write-Ups Received
                     </button>
                 </h5>
             </div>
@@ -432,7 +432,7 @@ window.addEventListener("pageshow", function (event) {
                                 <th>Date</th>
                                 <th>Supervisor</th>
                                 <th>Description</th>
-                                <th>Link</th>
+
                             </tr>
                             <tbody>
                             {% for x in writeups_received %}
@@ -440,7 +440,7 @@ window.addEventListener("pageshow", function (event) {
                                 <td>{{x.date}}</td>
                                 <td>{{x.supervisor}}</td>
                                 <td>{{x.description}}</td>
-                                <td><a href="{%  url 'write_ups' x.id %}">View</a></td>
+<!--                                <td><a href="{%  url 'write_ups' x.id %}">View</a></td>-->
                             </tr>
                             {% endfor %}
                             </tbody>
@@ -802,7 +802,7 @@ window.addEventListener("pageshow", function (event) {
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFourteen"
                         aria-expanded="false"
                         aria-controls="collapseFourteen">
-                    Certifications
+                    {{certifications_count}} Certifications
                 </button>
             </h5>
         </div>
@@ -814,7 +814,6 @@ window.addEventListener("pageshow", function (event) {
                         <tr>
                             <th>Category</th>
                             <th>Description</th>
-                            <th>Link</th>
                             <th>Date Received</th>
                             <th>Date Expires</th>
                             <th>Action</th>
@@ -832,7 +831,7 @@ window.addEventListener("pageshow", function (event) {
                             {% else %}
                             <td>{{x.description}}</td>
                             {% endif %}
-                            <td><a href="{%  url 'certifications' x.id %}">View</a></td>
+<!--                            <td><a href="{%  url 'certifications' x.id %}">View</a></td>-->
                             <td>{{x.date_received}} -</td>
                             <td>{{x.date_expires}}</td>
                             <td>{{x.action}}</td>
@@ -854,7 +853,7 @@ window.addEventListener("pageshow", function (event) {
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false"
                         aria-controls="collapseTwo">
-                    Actions Required At This Time!
+                    {{actions_count}} Actions Required At This Time!
                 </button>
             </h5>
         </div>
@@ -867,7 +866,7 @@ window.addEventListener("pageshow", function (event) {
                         <tr>
                             <th>Category</th>
                             <th>Description</th>
-                            <th>Link</th>
+
                             <th>Date Received</th>
                             <th>Date Expires</th>
                             <th>Action</th>
@@ -877,7 +876,7 @@ window.addEventListener("pageshow", function (event) {
                         <tr>
                             <td>{{x.category}} -</td>
                             <td>{{x.description}} -</td>
-                            <td><a href="{%  url 'certifications' x.id %}">View</a></td>
+<!--                            <td><a href="{%  url 'certifications' x.id %}">View</a></td>-->
                             <td>{{x.date_received}}</td>
                             <td>{{x.date_expires}}</td>
                             <td>{{x.action}}</td>

@@ -666,13 +666,16 @@ def my_page(request):
         send_data['respirator_clearance_id'] = RespiratorClearance.objects.get(employee=employee).id
         if not RespiratorClearance.objects.get(employee=employee).approved_for_use:
             send_data['respirator_not_approved'] = "Yes"
-    send_data['employeeJobs'] = EmployeeJob.objects.filter(employee=employee.id)
+    send_data['employeeJobs'] = EmployeeJob.objects.filter(employee=employee.id,job__is_closed=False)
+    send_data['employeeJobs_count'] = EmployeeJob.objects.filter(employee=employee.id,job__is_closed=False).count()
     send_data['employee'] = employee
     send_data['inventory'] = Inventory.objects.filter(assigned_to=employee,is_closed=False)
+    send_data['inventory_count'] = Inventory.objects.filter(assigned_to=employee, is_closed=False).count()
     send_data['assessments_performed'] = EmployeeReview.objects.filter(assessment__reviewer=employee)
     send_data['assessments_received'] = EmployeeReview.objects.filter(employee=employee)
     send_data['writeups_written'] = WriteUp.objects.filter(supervisor=employee)
     send_data['writeups_received'] = WriteUp.objects.filter(employee=employee)
+    send_data['writeups_received_count'] = WriteUp.objects.filter(employee=employee).count()
     send_data['vacation_requests'] = Vacation.objects.filter(employee=employee)
     send_data['production_reports_written'] = DailyReports.objects.filter(foreman=employee)
     send_data['production_reports_received'] = ProductionItems.objects.filter(employee=employee)
@@ -681,8 +684,10 @@ def my_page(request):
     send_data['exams'] = ExamScore.objects.filter(student=employee)
     send_data['mentorship_mentor'] = Mentorship.objects.filter(mentor=employee)
     send_data['mentorship_apprentice'] = Mentorship.objects.filter(apprentice=employee)
-    send_data['certifications'] = Certifications.objects.filter(employee=employee)
+    send_data['certifications'] = Certifications.objects.filter(employee=employee,is_closed=False)
+    send_data['certifications_count'] = Certifications.objects.filter(employee=employee,is_closed=False).count()
     send_data['actions'] = Certifications.objects.filter(employee=employee, action_required=True)
+    send_data['actions_count'] = Certifications.objects.filter(employee=employee, action_required=True).count()
     from django.utils.timezone import now
 
     if employee.job_title.description == "Painter" or employee.job_title.description == "Superintendent" or employee.job_title.description == "Warehouse":

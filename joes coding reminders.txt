@@ -7,3 +7,11 @@ showAlertModal("Copy not supported in this browser");
 showConfirmModal("Are you sure you want to void this change order?", function () {
     document.void_input.submit();
 });
+
+username for gp-webserver = gp-webserver\administrator
+password = HRDCdc!@#
+
+git command on server
+git fetch origin
+git stash
+git rebase origin/master
