@@ -344,7 +344,45 @@ white-space:normal;
         margin-bottom: 2px;
     }
 }
+@media (max-width: 767px) {
 
+    #wallcovering_table thead {
+        display: none;
+    }
+
+    #wallcovering_table,
+    #wallcovering_table tbody,
+    #wallcovering_table tr,
+    #wallcovering_table td {
+        display: block;
+        width: 100% !important;
+    }
+
+    #wallcovering_table tr {
+        margin-bottom: 12px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 8px;
+        background-color: #fff;
+        box-shadow: 0 1px 4px rgba(0,0,0,.12);
+    }
+
+    #wallcovering_table td {
+        border: none;
+        padding: 5px 8px;
+        white-space: normal !important;
+    }
+
+    #wallcovering_table td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 11px;
+        font-weight: bold;
+        color: #666;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+    }
+}
     </style>
 {% endblock %}
 {% block content %}
@@ -935,7 +973,152 @@ white-space:normal;
         </div>
     </div>
 </div>
+<div class="card">
+    <div class="card-header" id="headingWallcovering">
+        <h5 class="mb-0">
+            <button class="btn btn-link"
+                    data-toggle="collapse"
+                    data-target="#collapseWallcovering"
+                    aria-expanded="false"
+                    aria-controls="collapseWallcovering">
+                {{ wallcoverings_count }} Wallcoverings
+            </button>
+        </h5>
+    </div>
 
+    <div id="collapseWallcovering"
+         class="collapse hide"
+         aria-labelledby="headingWallcovering"
+         data-parent="#accordion">
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+                <table id="wallcovering_table" class="display table table-sm">
+
+                    <thead class="colored-header">
+                    <tr>
+                        <th>Code / Pattern</th>
+                        <th>Job</th>
+                        <th>Quantity</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+
+                    {% for wc in wallcoverings %}
+                        <tr>
+
+                            <td data-label="Code / Pattern">
+                                <a class="ticket-link"
+                                   href="{% url 'wallcovering_detail' wc.id %}">
+
+                                    {% if wc.code %}
+                                        {{ wc.code }}
+                                    {% else %}
+                                        WC (No Code)
+                                    {% endif %}
+                                </a>
+
+                                <div class="text-muted small">
+                                    {{ wc.vendor.company_name }} - {{ wc.pattern }}
+                                </div>
+                            </td>
+
+                            <td data-label="Job">
+                                <a href="{% url 'job_page' wc.job_number.job_number %}">
+                                    {{ wc.job_number.job_name }}
+                                </a>
+                            </td>
+
+                            <td data-label="Quantity">
+                                {{ wc.display_quantity }}
+                            </td>
+
+                            <td data-label="Status">
+
+                                {% if wc.is_owner_furnished %}
+                                    <span class="badge badge-info">
+                                        Owner Furnished
+                                    </span>
+                                {% else %}
+
+                                    {% if wc.submittal_status == "Approved" %}
+                                        <span class="badge badge-success d-block mb-1">
+                                            Approved
+                                        </span>
+
+                                    {% elif wc.submittal_status == "Submitted" %}
+                                        <span class="badge badge-primary d-block mb-1">
+                                            Submitted
+                                        </span>
+
+                                    {% else %}
+                                        <span class="badge badge-secondary d-block mb-1">
+                                            Not Submitted
+                                        </span>
+                                    {% endif %}
+
+                                    {% if wc.ordering_status == "Received" %}
+                                        <span class="badge badge-success d-block mb-1">
+                                            Received
+                                        </span>
+
+                                    {% elif wc.ordering_status == "Partially Received" %}
+                                        <span class="badge badge-info d-block mb-1">
+                                            Partially Received
+                                        </span>
+
+                                    {% elif wc.ordering_status == "Ordered" %}
+                                        <span class="badge badge-warning d-block mb-1">
+                                            Ordered
+                                        </span>
+
+                                    {% else %}
+                                        <span class="badge badge-secondary d-block mb-1">
+                                            Not Ordered
+                                        </span>
+                                    {% endif %}
+
+                                    {% if wc.sent_status == "Sent to Job" %}
+                                        <span class="badge badge-success d-block">
+                                            Sent to Job
+                                        </span>
+
+                                    {% elif wc.sent_status == "Partially Sent" %}
+                                        <span class="badge badge-warning d-block">
+                                            Partially Sent
+                                        </span>
+
+                                    {% else %}
+                                        <span class="badge badge-secondary d-block">
+                                            Not Sent
+                                        </span>
+                                    {% endif %}
+
+                                {% endif %}
+                            </td>
+
+                        </tr>
+
+                    {% empty %}
+
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">
+                                No wallcoverings found.
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 
@@ -1014,6 +1197,7 @@ window.onload = function() {
     var table = $('#rentals_table').DataTable({paging: false})
     var table = $('#tickets_table').DataTable({paging: false})
     var table = $('#subcontractors_table').DataTable({paging: false})
+    var table = $('#wallcovering_table').DataTable({paging: false, order: []})
     if ('{{open_button}}'){document.getElementById("jobs_section").style.display = "block";}
     document.getElementById("hide_this").style.display = "none"
 

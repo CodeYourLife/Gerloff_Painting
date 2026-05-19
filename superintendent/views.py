@@ -255,10 +255,21 @@ def super_home(request, super):
         if 'search9' in request.GET: send_data['search9_exists'] = request.GET['search9']  # unassigned
     if selected_superid == 'ALL' or selected_superid == 'UNASSIGNED':
         send_data['filter_status'] = selected_superid
+        send_data['wallcoverings'] = Wallcovering.objects.select_related(
+            "job_number",
+            "vendor"
+        ).filter(
+            job_number__is_closed=False
+        ).order_by(
+            "job_number__job_name",
+            "code"
+        )
+
+        send_data['wallcoverings_count'] = send_data['wallcoverings'].count()
         send_data['equipment'] = Inventory.objects.filter(is_closed=False).exclude(job_number=None).order_by('job_number')
         send_data['equipment_count'] = Inventory.objects.filter(is_closed=False).exclude(job_number=None).count()
-        send_data['rentals'] = Rentals.objects.filter(off_rent_number__isnull=True)
-        send_data['rentals_count'] = Rentals.objects.filter(off_rent_number__isnull=True).count()
+        send_data['rentals'] = Rentals.objects.filter(off_rent_number__isnull=True,is_closed=False)
+        send_data['rentals_count'] = Rentals.objects.filter(off_rent_number__isnull=True,is_closed=False).count()
         send_data['tickets'] = ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=False, is_closed=False)
         send_data['tickets_count'] = ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=False,
                                                                  is_closed=False).count()
@@ -309,15 +320,27 @@ def super_home(request, super):
                                  'subcontractor': x.subcontractor.company,
                                  'total_contract': total_contract, 'percent_complete': percent_complete})
         send_data['subcontracts'] = subcontracts
+        send_data['wallcoverings'] = Wallcovering.objects.select_related(
+            "job_number",
+            "vendor"
+        ).filter(
+            job_number__is_closed=False,
+            job_number__superintendent=selected_super
+        ).order_by(
+            "job_number__job_name",
+            "code"
+        )
+
+        send_data['wallcoverings_count'] = send_data['wallcoverings'].count()
         send_data['equipment'] = Inventory.objects.filter(job_number__superintendent=selected_super,is_closed=False).order_by(
             'job_number', 'inventory_type')
         send_data['equipment_count'] = Inventory.objects.filter(job_number__superintendent=selected_super,is_closed=False).order_by(
             'job_number', 'inventory_type').count()
         send_data['selected_super'] = selected_super
         send_data['rentals'] = Rentals.objects.filter(job_number__superintendent=selected_super,
-                                                      off_rent_number__isnull=True).order_by('job_number')
+                                                      off_rent_number__isnull=True,is_closed=False).order_by('job_number')
         send_data['rentals_count'] = Rentals.objects.filter(job_number__superintendent=selected_super,
-                                                            off_rent_number__isnull=True).order_by('job_number').count()
+                                                            off_rent_number__isnull=True,is_closed=False).order_by('job_number').count()
         send_data['tickets'] = ChangeOrders.objects.filter(is_t_and_m=True, is_ticket_signed=False, is_closed=False,
                                                            job_number__superintendent=selected_super).order_by(
             'job_number', 'cop_number')

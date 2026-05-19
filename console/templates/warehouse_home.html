@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block nav_item_roles %}active{% endblock nav_item_roles %}
+
 {% block extra_head %}
 <style type="text/css" class="init">
 .mobile-card-section {
@@ -558,7 +558,11 @@ function restoreWarehouseAccordion() {
     if (openId) {
         let collapseElement = document.getElementById(openId);
 
-        if (collapseElement && !collapseElement.classList.contains("show")) {
+        if (
+            collapseElement &&
+            collapseElement.closest('.mobile-dashboard-card') &&
+            !collapseElement.classList.contains("show")
+        ) {
             $(collapseElement).collapse('show');
         }
     }
@@ -568,13 +572,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     restoreWarehouseAccordion();
 
-    $('.collapse').on('shown.bs.collapse', function () {
-        localStorage.setItem("openWarehouseAccordion", this.id);
-    });
+    $('.mobile-dashboard-card .collapse').on('shown.bs.collapse', function () {
+    localStorage.setItem("openWarehouseAccordion", this.id);
+});
 
-    $('.collapse').on('hidden.bs.collapse', function () {
-        localStorage.removeItem("openWarehouseAccordion");
-    });
+$('.mobile-dashboard-card .collapse').on('hidden.bs.collapse', function () {
+    localStorage.removeItem("openWarehouseAccordion");
+});
 
 });
 
