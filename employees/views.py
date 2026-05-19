@@ -655,7 +655,11 @@ def my_page(request):
                 )
             return redirect('my_page')
     # Everything else is just data preparation
-
+    if employee.job_title and employee.job_title.description == "Painter":
+        base_template = "painter_base.html"
+    else:
+        base_template = "base.html"
+    send_data['base_template'] = base_template
     if not RespiratorClearance.objects.filter(employee=employee, date_completed__isnull=False).exists():
         send_data['respirator_clearance_required'] = "Yes"
     else:
@@ -749,8 +753,9 @@ def certifications(request, id):
     send_data = {}
     if id != 'ALL':
         selected_cert = Certifications.objects.get(id=id)
-        if selected_cert.category.description=="Respirator Clearance" and RespiratorClearance.objects.filter(certification=selected_cert).exists():
-            return redirect('view_respirator_certification',id=id)
+        if selected_cert.category:
+            if selected_cert.category.description=="Respirator Clearance" and RespiratorClearance.objects.filter(certification=selected_cert).exists():
+                return redirect('view_respirator_certification',id=id)
         else:
             send_data['selected_item'] = Certifications.objects.get(id=id)
             send_data['notes2'] = CertificationNotes.objects.filter(certification__id=id)
@@ -804,45 +809,76 @@ def certifications(request, id):
 
 @login_required(login_url='/accounts/login')
 def new_certification(request):
-    send_data = {}
-    send_data['employees'] = Employees.objects.filter(
-        active=True,
-        job_title__description__in=[
-            "Painter",
-            "Warehouse",
-            "Superintendent"
-        ]
-    )
-    send_data['jobs'] = Jobs.objects.filter(is_closed=False)
-    send_data['categories'] = CertificationCategories.objects.all()
-    send_data['actions'] = CertificationActionRequired.objects.all()
+    send_data = {
+        'employees': Employees.objects.filter(
+            active=True,
+            job_title__description__in=[
+                "Painter",
+                "Warehouse",
+                "Superintendent"
+            ]
+        ).order_by('first_name', 'last_name'),
+        'jobs': Jobs.objects.filter(is_closed=False).order_by('job_name'),
+        'categories': CertificationCategories.objects.all().order_by('description'),
+        'actions': CertificationActionRequired.objects.all().order_by('action'),
+    }
+
     if request.method == 'POST':
-        if 'new_certification_type' in request.POST:
-            if not CertificationCategories.objects.filter(description=request.POST['new_certification_type']).exists():
-                CertificationCategories.objects.create(description = request.POST['new_certification_type'])
-            return redirect('new_certification')
+        selected_category = request.POST.get('select_category')
+        save_new_type = request.POST.get('save_new_certification_type') == 'YES'
+        cert_description = ""
+        category = None
+
+        if selected_category and selected_category.startswith('NEW__'):
+            new_type_description = selected_category.replace('NEW__', '').strip()
+
+            if save_new_type:
+                category, created = CertificationCategories.objects.get_or_create(
+                    description=new_type_description
+                )
+            else:
+                cert_description = new_type_description
+
+        elif selected_category and selected_category != 'please_select':
+            category = CertificationCategories.objects.get(id=selected_category)
+
         else:
-            new_cert = Certifications.objects.create(
-                category=CertificationCategories.objects.get(id=request.POST['select_category']),
-                employee=Employees.objects.get(id=request.POST['select_employee']), note=request.POST['note'])
-            if 'dont_know_end' in request.POST:
-                print("HI")
-            else:
-                new_cert.date_expires = request.POST['end_date']
-            if 'dont_know_start' in request.POST:
-                print("HI")
-            else:
-                new_cert.date_received = request.POST['start_date']
-            if request.POST['select_job'] != 'please_select':
-                new_cert.job = Jobs.objects.get(job_number=request.POST['select_job'])
-            if 'is_action_required' in request.POST:
-                new_cert.action_required = True
-                if request.POST['custom_action'] != "":
-                    new_cert.action = request.POST['custom_action']
-                else:
-                    new_cert.action = CertificationActionRequired.objects.get(id=request.POST['select_action']).action
-            new_cert.save()
-            return redirect('certifications', id=new_cert.id)
+            return redirect('new_certification')
+
+        new_cert = Certifications.objects.create(
+            category=category,
+            employee=Employees.objects.get(id=request.POST.get('select_employee')),
+            description=cert_description,
+            note=request.POST.get('note', '')
+        )
+
+        if 'dont_know_start' not in request.POST and request.POST.get('start_date'):
+            new_cert.date_received = request.POST.get('start_date')
+
+        if 'dont_know_end' not in request.POST and request.POST.get('end_date'):
+            new_cert.date_expires = request.POST.get('end_date')
+
+        selected_job = request.POST.get('select_job')
+        if selected_job and selected_job != 'please_select':
+            new_cert.job = Jobs.objects.get(job_number=selected_job)
+
+        if 'is_action_required' in request.POST:
+            new_cert.action_required = True
+
+            custom_action = request.POST.get('custom_action', '').strip()
+            selected_action = request.POST.get('select_action')
+
+            if custom_action:
+                new_cert.action = custom_action
+            elif selected_action and selected_action != 'please_select' and selected_action != 'custom':
+                new_cert.action = CertificationActionRequired.objects.get(
+                    id=selected_action
+                ).action
+
+        new_cert.save()
+
+        return redirect('certifications', id=new_cert.id)
+
     return render(request, "new_certification.html", send_data)
 
 
@@ -1657,7 +1693,12 @@ def toolbox_talks_by_employee(request):
 
     employees = (
         Employees.objects
-        .filter(active=True)
+        .filter(active=True,
+        job_title__description__in=[
+            "Painter",
+            "Warehouse",
+            "Superintendent"
+        ])
         .select_related('employment_company')
         .order_by('first_name', 'last_name')
     )
@@ -1735,6 +1776,98 @@ def toolbox_talks_by_employee(request):
             'ratio_display': f"{total_completed} out of {total_assigned}",
         })
 
+    subcontractors = (
+        Subcontractors.objects
+        .filter(subcontract__is_closed=False,is_toolbox_required=True)
+        .distinct()
+        .order_by('company')
+    )
+
+    for sub in subcontractors:
+        active_subcontracts = Subcontracts.objects.filter(
+            subcontractor=sub,
+            is_closed=False,
+            job_number__is_closed=False,
+            job_number__is_active=True,
+            job_number__is_labor_done=False,
+        ).select_related('job_number')
+
+        active_jobs = [x.job_number for x in active_subcontracts]
+
+        assigned_count = 0
+        completed_count = 0
+
+        # ALL EMPLOYEE TALKS
+        all_employee_talks = ScheduledToolboxTalks.objects.filter(
+            date__lte=datetime.date.today(),
+            is_all_employees=True,
+        ).order_by('date')
+
+        for scheduled in all_employee_talks:
+            for job in active_jobs:
+                subcontract = active_subcontracts.filter(job_number=job).first()
+
+                if subcontract and SubcontractorEmployeeDelegation.objects.filter(
+                    subcontractor=sub,
+                    subcontract=subcontract
+                ).exists():
+                    continue
+
+                assigned_count += 1
+
+                if CompletedSubToolboxJobTalks.objects.filter(
+                    scheduled=scheduled,
+                    subcontractor=sub,
+                    job=job
+                ).exists():
+                    completed_count += 1
+
+        # SUBCONTRACTOR SPECIFIC TALKS
+        sub_job_talks = ScheduledToolboxTalkSubJobs.objects.filter(
+            subcontractor=sub,
+            scheduled__date__lte=datetime.date.today(),
+        ).select_related(
+            'scheduled',
+            'job',
+            'scheduled__master'
+        )
+
+        for item in sub_job_talks:
+            scheduled = item.scheduled
+            job = item.job
+
+            if job not in active_jobs:
+                continue
+
+            subcontract = active_subcontracts.filter(job_number=job).first()
+
+            if subcontract and SubcontractorEmployeeDelegation.objects.filter(
+                subcontractor=sub,
+                subcontract=subcontract
+            ).exists():
+                continue
+
+            assigned_count += 1
+
+            if CompletedSubToolboxJobTalks.objects.filter(
+                scheduled=scheduled,
+                subcontractor=sub,
+                job=job
+            ).exists():
+                completed_count += 1
+
+        rows.append({
+            'person_type': 'subcontractor',
+            'person_id': sub.id,
+            'name': 'Subcontractor',
+            'employer': sub.company,
+            'ratio_sort_completed': completed_count,
+            'ratio_sort_total': assigned_count,
+            'ratio_display': f"{completed_count} out of {assigned_count}",
+        })
+
+
+
     rows = sorted(
         rows,
         key=lambda x: (
@@ -1801,6 +1934,111 @@ def toolbox_talks_by_employee_modal(request, person_type, person_id):
             .values_list('master_id', flat=True)
             .distinct()
         )
+    elif person_type == 'subcontractor':
+        subcontractor = get_object_or_404(
+            Subcontractors,
+            id=person_id
+        )
+
+        person_name = "Subcontractor"
+        employer_name = subcontractor.company
+        has_access_to_toolbox = True
+
+        completed_talks = []
+        incomplete_talks = []
+
+        active_subcontracts = Subcontracts.objects.filter(
+            subcontractor=subcontractor,
+            is_closed=False,
+            job_number__is_closed=False,
+            job_number__is_active=True,
+            job_number__is_labor_done=False,
+        ).select_related('job_number')
+
+        active_jobs = [x.job_number for x in active_subcontracts]
+
+        # ALL EMPLOYEE TALKS THAT APPLY TO THIS SUBCONTRACTOR
+        all_employee_talks = ScheduledToolboxTalks.objects.filter(
+            date__lte=datetime.date.today(),
+            is_all_employees=True,
+        ).select_related('master').order_by('-date', '-id')
+
+        for scheduled in all_employee_talks:
+            for job in active_jobs:
+                subcontract = active_subcontracts.filter(job_number=job).first()
+
+                if subcontract and SubcontractorEmployeeDelegation.objects.filter(
+                    subcontractor=subcontractor,
+                    subcontract=subcontract
+                ).exists():
+                    continue
+
+                talk_dict = {
+                    'id': scheduled.id,
+                    'title': _get_talk_title(scheduled),
+                    'date': scheduled.date.strftime('%m/%d/%Y') if scheduled.date else '',
+                    'notes': f"Job: {job.job_name}",
+                }
+
+                if CompletedSubToolboxJobTalks.objects.filter(
+                    scheduled=scheduled,
+                    subcontractor=subcontractor,
+                    job=job
+                ).exists():
+                    completed_talks.append(talk_dict)
+                else:
+                    incomplete_talks.append(talk_dict)
+
+        # SUBCONTRACTOR SPECIFIC TALKS
+        sub_job_talks = ScheduledToolboxTalkSubJobs.objects.filter(
+            subcontractor=subcontractor,
+            scheduled__date__lte=datetime.date.today(),
+        ).select_related(
+            'scheduled',
+            'job',
+            'scheduled__master'
+        ).order_by('-scheduled__date', '-scheduled__id')
+
+        for item in sub_job_talks:
+            scheduled = item.scheduled
+            job = item.job
+
+            if job not in active_jobs:
+                continue
+
+            subcontract = active_subcontracts.filter(job_number=job).first()
+
+            if subcontract and SubcontractorEmployeeDelegation.objects.filter(
+                subcontractor=subcontractor,
+                subcontract=subcontract
+            ).exists():
+                continue
+
+            talk_dict = {
+                'id': scheduled.id,
+                'title': _get_talk_title(scheduled),
+                'date': scheduled.date.strftime('%m/%d/%Y') if scheduled.date else '',
+                'notes': f"Job: {job.job_name}",
+            }
+
+            if CompletedSubToolboxJobTalks.objects.filter(
+                scheduled=scheduled,
+                subcontractor=subcontractor,
+                job=job
+            ).exists():
+                completed_talks.append(talk_dict)
+            else:
+                incomplete_talks.append(talk_dict)
+
+        return JsonResponse({
+            'success': True,
+            'person_name': person_name,
+            'employer_name': employer_name,
+            'has_access_to_toolbox': has_access_to_toolbox,
+            'completed_talks': completed_talks,
+            'incomplete_talks': incomplete_talks,
+        })
+
 
     else:
         return JsonResponse({

@@ -1,116 +1,230 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block nav_item_employees %}active{% endblock nav_item_employees %}
-{% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>Trinity GP</title>
-<!--	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
-.active, .collapsible:hover {
-  background-color: Salmon;
-}
 
-	</style>
-  <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-  <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
+{% block extra_head %}
+<style>
+    .cert-card {
+        max-width: 950px;
+        margin: 0 auto;
+    }
 
+    .form-section-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
 
-	</script>
-</head>
-<body>
-  <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
+    .helper-text {
+        font-size: 13px;
+        color: #6c757d;
+    }
+</style>
+{% endblock extra_head %}
+
+{% block sub_nav %}
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'employees_home' %}">Employees</a>
+
     <div id="navbarNavDropdown2">
-      <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
-        <!--            <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>-->
-        <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'safety_home' %}">Safety</a></li>
-        <li><a class="nav-item nav-link active" >NEW CERTIFICATION</a></li>
-    </ul>
-  </div>
-</nav><br>
-	<div style="background-color: powderblue;">
-        <br>
- <form action="{% url 'new_certification' %}" method="post" >
-     	 {% csrf_token %}
-        <input type="text" name="new_certification_type" placeholder="Check Drop Down Menu First" size="30">
-     <input type="submit" name="complete" value="ADD NEW CERTIFICATION TYPE" />
- </form>
-<br>
- <form action="{% url 'new_certification' %}" method="post" >
-     	 {% csrf_token %}
-          			 <label for="select_category">Select Certification Type: </label>
-            <select id="select_category" name="select_category" >
-				<option value="please_select">Please Select</option>
-                {% for x in categories %}
-                <option value={{x.id}}>{{x.description}}</option>
-                {% endfor %}
-            </select>
+        <ul class="sub-nav-list navbar-nav">
+            <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
+            <li><a class="nav-item nav-link" href="{% url 'safety_home' %}">Safety</a></li>
+            <li><span class="nav-item nav-link active">New Certification</span></li>
+        </ul>
+    </div>
+</nav>
+{% endblock sub_nav %}
 
-     <br><br>
-     </div>
-  <br>
-			 <label for="select_employee">Select Employee: </label>
-            <select id="select_employee" name="select_employee" >
-				<option value="please_select">Please Select</option>
-                {% for x in employees %}
-                <option value={{x.id}}>{{x.first_name}} {{x.last_name}}</option>
-                {% endfor %}
-            </select>
-	 		<br><br>
+{% block content %}
+<div class="container mt-4 mb-5">
 
-                   Start date: <input type="date" name="start_date">Don't Know? <input type="checkbox" name="dont_know_start" />
-     <br><br>
-     Expiration date: <input type="date" name="end_date">  Don't Know? <input type="checkbox" name="dont_know_end" />
-     <br><br>
-			 <label for="select_job">Select Job (if applicable): </label>
-            <select id="select_job" name="select_job" >
-				<option value="please_select">Please Select Job</option>
-                {% for x in jobs %}
-                <option value={{x.job_number}}>{{x.job_name}}</option>
-                {% endfor %}
-            </select>
-	 		<br><br>
+    <div class="cert-card">
 
-     <textarea name="note" rows="2" cols="100" placeholder="Notes" ></textarea>
-	 <br>
-<b>Employee Action Required? </b> <input type="checkbox" name="is_action_required" />
-     <br>
-   			 <label for="select_action">Select Action: </label>
-            <select id="select_action" name="select_action" >
-				<option value="please_select">Please Select Action Required</option>
-                <option value="please_select">Custom (Type it in the box)</option>
-                {% for x in actions %}
-                <option value={{x.id}}>{{x.action}}</option>
-                {% endfor %}
-            </select>
-<br>
-     Custom Action: <input type="text" name="custom_action" size="75" />
-     <br>
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-dark text-white">
+                <h4 class="mb-0">New Certification</h4>
+            </div>
+
+            <div class="card-body">
 
 
 
-<input type="submit" name="complete" value="ADD NOW" />
- </form>
-</body>
-</html>
+                <form action="{% url 'new_certification' %}" method="post">
+                    {% csrf_token %}
 
-{% endblock %}
+                    <div class="form-section-title">Certification Details</div>
+
+                    <div class="form-group">
+                        <label for="select_category">Certification Type</label>
+
+                        <select id="select_category" name="select_category" class="form-control">
+                            <option value="please_select">Please Select</option>
+                            {% for x in categories %}
+                                <option value="{{ x.id }}">{{ x.description }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <input type="hidden" name="save_new_certification_type" id="save_new_certification_type" value="NO">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="select_employee">Employee</label>
+                        <select id="select_employee" name="select_employee" class="form-control">
+                            <option value="please_select">Please Select</option>
+                            {% for x in employees %}
+                                <option value="{{ x.id }}">{{ x.first_name }} {{ x.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="start_date">Start Date</label>
+                            <input type="date"
+                                   id="start_date"
+                                   name="start_date"
+                                   class="form-control">
+
+                            <div class="form-check mt-2">
+                                <input type="checkbox"
+                                       name="dont_know_start"
+                                       id="dont_know_start"
+                                       class="form-check-input">
+                                <label for="dont_know_start" class="form-check-label">
+                                    Don’t know start date
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group col-md-6">
+                            <label for="end_date">Expiration Date</label>
+                            <input type="date"
+                                   id="end_date"
+                                   name="end_date"
+                                   class="form-control">
+
+                            <div class="form-check mt-2">
+                                <input type="checkbox"
+                                       name="dont_know_end"
+                                       id="dont_know_end"
+                                       class="form-check-input">
+                                <label for="dont_know_end" class="form-check-label">
+                                    Don’t know expiration date
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="select_job">Job, if applicable</label>
+                        <select id="select_job" name="select_job" class="form-control">
+                            <option value="please_select">Please Select Job</option>
+                            {% for x in jobs %}
+                                <option value="{{ x.job_number }}">{{ x.job_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="note">Notes</label>
+                        <textarea id="note"
+                                  name="note"
+                                  rows="3"
+                                  class="form-control"
+                                  placeholder="Notes"></textarea>
+                    </div>
+
+                    <hr>
+
+                    <div class="form-section-title">Employee Action Required</div>
+
+                    <div class="form-check mb-3">
+                        <input type="checkbox"
+                               name="is_action_required"
+                               id="is_action_required"
+                               class="form-check-input">
+                        <label for="is_action_required" class="form-check-label">
+                            Employee action is required
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="select_action">Select Action</label>
+                        <select id="select_action" name="select_action" class="form-control">
+                            <option value="please_select">Please Select Action Required</option>
+                            <option value="custom">Custom — type it below</option>
+                            {% for x in actions %}
+                                <option value="{{ x.id }}">{{ x.action }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="custom_action">Custom Action</label>
+                        <input type="text"
+                               id="custom_action"
+                               name="custom_action"
+                               class="form-control"
+                               placeholder="Custom action required">
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <input type="submit"
+                               name="complete"
+                               value="Add Certification"
+                               class="btn btn-primary btn-lg">
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock content %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function () {
+    $('#select_category').select2({
+        tags: true,
+        width: '100%',
+        placeholder: 'Please Select',
+        createTag: function (params) {
+            let term = $.trim(params.term);
+
+            if (term === '') {
+                return null;
+            }
+
+            return {
+                id: 'NEW__' + term,
+                text: term,
+                newOption: true
+            };
+        }
+    });
+
+    $('#select_category').on('select2:select', function (e) {
+        let data = e.params.data;
+
+        if (data.newOption || String(data.id).startsWith('NEW__')) {
+            if (confirm('Do you want to save "' + data.text + '" as a certification type to be used again in the future?')) {
+                $('#save_new_certification_type').val('YES');
+            } else {
+                $('#save_new_certification_type').val('NO');
+            }
+        } else {
+            $('#save_new_certification_type').val('NO');
+        }
+    });
+});
+</script>
+{% endblock extra_scripts %}

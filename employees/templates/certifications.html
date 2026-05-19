@@ -17,6 +17,20 @@
   background-color: Salmon;
 }
 
+.dataTables_filter {
+    width: 100%;
+    text-align: center !important;
+    margin-bottom: 15px;
+}
+
+.dataTables_filter label {
+    width: 100%;
+}
+
+.dataTables_filter input {
+    margin-left: 8px !important;
+}
+
 
 	</style>
 	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
@@ -29,7 +43,10 @@
 	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
 	<script type="text/javascript" class="init">
 $(document).ready(function () {
-    var table = $('#certifications_table').DataTable({});
+    $('#certifications_table').DataTable({
+        paging: false,
+        info: false
+    });
 })
 
 	</script>
@@ -48,110 +65,282 @@ $(document).ready(function () {
 		  </ul>
   		</div>
 	</nav><br>
-<form action="{% url 'new_certification' %}">
-    <input type="submit" value="NEW CERTIFICATION - CLICK HERE" />
-</form>
-<br>
+<div class="container mt-4">
+
+    <div class="text-center mb-3">
+        <form action="{% url 'new_certification' %}">
+            <button type="submit" class="btn btn-primary">
+                New Certification
+            </button>
+        </form>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <div class="table-responsive">
+                <table id="certifications_table" class="display table table-striped table-hover w-100">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Certification</th>
+                            <th>View</th>
+                            <th>Date Received</th>
+                            <th>Date Expired</th>
+                            <th>Action Required</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for x in certifications %}
+                        <tr>
+                            <td>{{ x.employee }}</td>
+                            <td>{% if x.category %}{{ x.category }}{% else %}{{x.description}}{% endif %}</td>
+                            <td>
+                                <a href="{% url 'certifications' x.id %}"
+								   class="btn btn-sm btn-outline-primary">
+									View
+								</a>
+                            </td>
+                            <td>{{ x.date_received }}</td>
+                            <td>{{ x.date_expires }}</td>
+                            <td>
+                                {% if x.action_required == True %}
+                                    {{ x.action }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+
+        </div>
+    </div>
 
 
-<div class="demo-html" style="width:90%">
-		<table id="certifications_table" class="display" style="width:90%">
-			<thead>
-				<tr>
-					<th>Employee</th>
-					<th>Certification </th>
-					<th>View</th>
-					<th>Date Received </th>
-					<th>Date Expired</th>
-					<th>Action Required</th>
-				</tr>
-			</thead>
-			<tbody>
-			{% for x in certifications %}
-			<tr><td>{{x.employee}}</td><td>{{x.category}}</td><td><a href = "{% url 'certifications' x.id %}">View</td><td>{{x.date_received}}</td><td>{{x.date_expires}}</td><td>{% if x.action_required == True %}
-				{{x.action}}{% endif %}</td>
-			</tr>
-			{% endfor %}
-			</tbody>
-		</table>
-<div class ="container">
 
 
 {% if selected_item %}
 
 
-<div class ="row">
-	<div class ="col" ><h3><b>Certification - </b> {{selected_item.category}} </h3></div></div>
-	<div class ="row">
-	<div class ="col" ><h3><b>Employee - </b> {{selected_item.employee}} </h3></div></div>
-	<div class ="row">
-	<div class ="col" ><b>Description: - </b>{{selected_item.description}}</div></div>
-	<div class ="row">
-		<div class ="col"><b>Received: </b>{{selected_item.date_received}}</div><div class ="col"><b>Expires: </b>{{selected_item.date_expires}}</div></div>
-	<div class ="row">
-			<div class ="col" ><b>Job: - </b>{{selected_item.job}}</div></div>
-		<div class ="row">
-		<div class ="col"><b>Note: </b>{{selected_item.note}}</div>
-	</div>
-	<br>
-<!--	Notes-->
-	<div style="background-color: powderblue;">
-	<div class ="row"><div class ="col"><h3>NOTES</h3></div></div>
-	{% if notes2 %}
-	{% for y in notes2 %}
-			<div class ="row"><div class ="col"><b>Note: </b>{{y.date}} - {{y.user}} - {{y.note}}</div></div>
-	{% endfor %}
-	{% endif %}
-		 <form action="{% url 'certifications' selected_item.id %}" method="post" >
-			 {% csrf_token %}
-			 <div class ="row"><div class ="col"><input type="text" name="note" size="100" placeholder ='New Note Here' /> <input type="submit" name="new_note" value="ADD NOTE" /></div></div>
-	<br>
-	</div>
-			 <br><hr>
-			 <div class ="row"><div class ="col"><h3>UPDATE RECORD:</h3></div></div>
-<!--	actions required-->
-	<div style="background-color: beige;">
-			 {% if selected_item.action_required == True %}
-			 	<div class ="row"><div class ="col"><h4>CURRENT ACTIONS REQUIRED</h4></div></div>
-			 <br>
-			 <div class ="row"><div class ="col"><b>{{selected_item.action}}</b><input type="text" name="closed_action_note" size="75" placeholder ='Add Note Regarding Completion' /><input type="submit" name="closed_action" value="Completed" /></div></div>
-	{% else %}
-			 <br>
-			 <div class ="row"><div class ="col">
-			 <select id="select_action" name="select_action" >
-				<option value="please_select">Please Select Action Required</option>
-                {% for x in actions %}
-                <option value={{x.id}}>{{x.action}}</option>
-                {% endfor %}
-            </select>
-			 <input type="submit" name="select_action_now" value="Action Required" /></div></div>
+<div class="mt-4 mb-5">
 
-			 <div class ="row"><div class ="col">Or Enter Custom Item:</div></div>
-			 <div class ="row"><div class ="col"><input type="text" name="custom_action" size="75" placeholder ='Custom Action Required' /><input type="submit" name="custom_action_now" value="Add Now" /></div></div>
-	{% endif %}
-			<br><br>
-			</div>
-	<br>
-	<!--	change dates-->
-	<div style="background-color: DarkSalmon;">
-				 	<div class ="row">
-		<div class ="col"><h4>CHANGE DATES</h4></div></div>
-		<br>
-			 <div class ="row"><div class ="col"><input type="date" name="start_date"  /><input type="text" name="start_date_note" size="60" placeholder ='Clarify Date Change' /><input type="submit" name="change_start_date" value="Change Start Date" /></div></div>
-			 <div class ="row"><div class ="col"><input type="date" name="end_date"  /><input type="text" name="end_date_note" size="60" placeholder ='Clarify Date Change' /><input type="submit" name="change_end_date" value="Change End Date" /></div></div>
-	<br>
-	</div>
-	<br><br>
-		<!--	expired-->
-		<div style="background-color: FireBrick;">
-			<div class = "row"><div class ="col"><h4>VOID THIS RECORD</h4></div></div>
-		<br>
-			<div class = "row">
-			 <div class ="col">{% if selected_item.is_closed == False %}<input type="text" name="closed_note" size="100" placeholder ='Add Note To Indicate Why This is Void' /> <input type="submit" name="closed_item" value="Certification No Longer Valid" />{% endif %}</div></div>
-<br>
-	</div>
-	</div>
-		 </form>
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white">
+            <h4 class="mb-0">{% if selected_item.category %}{{ selected_item.category }}{% else %}{{ selected_item.description }}{% endif %}</h4>
+            <div class="small">{{ selected_item.employee }}</div>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Description</strong>
+                    <div>{% if selected_item.category %}{{ selected_item.category }}{% else %}{{ selected_item.description }}{% endif %}</div>
+                </div>
+                <div class="col-md-3">
+                    <strong>Date Received</strong>
+                    <div>{{ selected_item.date_received|default:"-" }}</div>
+                </div>
+                <div class="col-md-3">
+                    <strong>Date Expires</strong>
+                    <div>{{ selected_item.date_expires|default:"-" }}</div>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Job</strong>
+                    <div>{{ selected_item.job|default:"-" }}</div>
+                </div>
+                <div class="col-md-6">
+                    <strong>Note</strong>
+                    <div>{{ selected_item.note|default:"-" }}</div>
+                </div>
+            </div>
+
+            <hr>
+
+            <form action="{% url 'certifications' selected_item.id %}" method="post">
+                {% csrf_token %}
+
+                <h5 class="mb-3">Notes</h5>
+
+                {% if notes2 %}
+                    <div class="list-group mb-3">
+                        {% for y in notes2 %}
+                            <div class="list-group-item">
+                                <div class="small text-muted">
+                                    {{ y.date }} — {{ y.user }}
+                                </div>
+                                <div>{{ y.note }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-muted mb-3">No notes yet.</div>
+                {% endif %}
+
+                <div class="input-group mb-4">
+                    <input type="text"
+                           name="note"
+                           class="form-control"
+                           placeholder="New note here">
+                    <div class="input-group-append">
+                        <input type="submit"
+                               name="new_note"
+                               value="Add Note"
+                               class="btn btn-primary">
+                    </div>
+                </div>
+
+                <hr>
+
+                <h5 class="mb-3">Action Required</h5>
+
+                {% if selected_item.action_required == True %}
+                    <div class="alert alert-warning">
+                        <strong>Current Action:</strong>
+                        {{ selected_item.action }}
+                    </div>
+
+                    <div class="form-row align-items-center mb-4">
+                        <div class="col-md-9 mb-2">
+                            <input type="text"
+                                   name="closed_action_note"
+                                   class="form-control"
+                                   placeholder="Add note regarding completion">
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <input type="submit"
+                                   name="closed_action"
+                                   value="Mark Completed"
+                                   class="btn btn-success btn-block">
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="form-row align-items-center mb-3">
+                        <div class="col-md-9 mb-2">
+                            <select id="select_action"
+                                    name="select_action"
+                                    class="form-control">
+                                <option value="please_select">Please Select Action Required</option>
+                                {% for x in actions %}
+                                    <option value="{{ x.id }}">{{ x.action }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <input type="submit"
+                                   name="select_action_now"
+                                   value="Add Action"
+                                   class="btn btn-warning btn-block">
+                        </div>
+                    </div>
+
+                    <div class="form-row align-items-center mb-4">
+                        <div class="col-md-9 mb-2">
+                            <input type="text"
+                                   name="custom_action"
+                                   class="form-control"
+                                   placeholder="Or enter custom action required">
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <input type="submit"
+                                   name="custom_action_now"
+                                   value="Add Custom"
+                                   class="btn btn-warning btn-block">
+                        </div>
+                    </div>
+                {% endif %}
+
+                <hr>
+
+                <h5 class="mb-3">Change Dates</h5>
+
+                <div class="form-row align-items-center mb-3">
+                    <div class="col-md-3 mb-2">
+                        <label class="mb-1">New Date Received</label>
+                        <input type="date"
+                               name="start_date"
+                               class="form-control">
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label class="mb-1">Reason</label>
+                        <input type="text"
+                               name="start_date_note"
+                               class="form-control"
+                               placeholder="Clarify date change">
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label class="mb-1 d-none d-md-block">&nbsp;</label>
+                        <input type="submit"
+                               name="change_start_date"
+                               value="Change Received Date"
+                               class="btn btn-outline-primary btn-block">
+                    </div>
+                </div>
+
+                <div class="form-row align-items-center mb-4">
+                    <div class="col-md-3 mb-2">
+                        <label class="mb-1">New Expiration Date</label>
+                        <input type="date"
+                               name="end_date"
+                               class="form-control">
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label class="mb-1">Reason</label>
+                        <input type="text"
+                               name="end_date_note"
+                               class="form-control"
+                               placeholder="Clarify date change">
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label class="mb-1 d-none d-md-block">&nbsp;</label>
+                        <input type="submit"
+                               name="change_end_date"
+                               value="Change Expiration"
+                               class="btn btn-outline-primary btn-block">
+                    </div>
+                </div>
+
+                {% if selected_item.is_closed == False %}
+                    <hr>
+
+                    <div class="card border-danger">
+                        <div class="card-header bg-danger text-white">
+                            Void This Record
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">
+                                Use this only if the certification is no longer valid.
+                            </p>
+
+                            <div class="form-row align-items-center">
+                                <div class="col-md-9 mb-2">
+                                    <input type="text"
+                                           name="closed_note"
+                                           class="form-control"
+                                           placeholder="Add note to indicate why this is void">
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <input type="submit"
+                                           name="closed_item"
+                                           value="Void Certification"
+                                           class="btn btn-danger btn-block">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+            </form>
+        </div>
+    </div>
+</div>
+
 {% endif %}
 </div>
 </body>
