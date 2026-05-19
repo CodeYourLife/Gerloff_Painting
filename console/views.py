@@ -241,8 +241,7 @@ def index(request):
         return redirect('my_page')
     if current_employee.job_title.description == "Superintendent":
         return redirect('super_home', super='AUTO')
-    if current_employee.last_name == "Flottman":
-        return redirect('safety_home')
+
     if current_employee.job_title.description == "Warehouse":
         return redirect('warehouse_home')
     send_data = {}
