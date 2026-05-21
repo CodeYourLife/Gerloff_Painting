@@ -25,36 +25,10 @@ font-family: tahoma;
 font-size: 13px;
 }
 
-    nav .active, .collapsible:hover {
-      background-color: Salmon;
-    }
-    .nav-pills a {
-        color: black;
-    }
-    .nav-pills li {
-        padding: 2px;
-    }
-    .nav-pills .active {
-        background-color: #6c757d !important;
-        padding: 5px;
-    }
-    label {
-        margin-left: 10px;
-        margin-right: 10px;
-    }
-    input {
-        margin-left: 10px;
-        margin-right: 10px;
-        padding: 0.375rem 0.75rem;
-        font-size: 1rem;
-        line-height: 1.5;
-        color: #495057;
-        background-color: #fff;
-        background-clip: padding-box;
-        border: 1px solid #ced4da;
-        border-radius: 0.25rem;
-        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
-    }
+
+
+
+
     tr th {
         width: fit-content !important;
     }
@@ -62,9 +36,7 @@ font-size: 13px;
       color : black;
       background-color: white !important;
     }
-    .active * {
-        background-color: white !important;
-    }
+
             .list-items {
     border-bottom: 1px solid black; display: flex; justify-content: space-between;
     }
@@ -129,31 +101,117 @@ float: left !important;
     text-decoration: none;
 }
 
+.job-header-card {
+    background: #f8fbff;
+    border: 1px solid #d8e3ef;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.job-header-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 8px;
+}
+
+.job-header-title h4 {
+    font-size: 1.35rem;
+    margin-bottom: 2px !important;
+}
+
+.job-info-box {
+    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+}
+
+.job-info-label {
+    font-size: .7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 2px;
+    letter-spacing: .03em;
+}
+
+.job-info-box a,
+.job-info-box div,
+.job-info-box span {
+    font-size: .92rem;
+}
+
+.subbed-status {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.subbed-card-button small {
+    font-size: .72rem;
+}
+
+.job-header-edit-button .btn {
+    padding: .2rem .5rem;
+    font-size: .8rem;
+}
+
+@media (max-width: 768px) {
+
+    .job-header-title {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .job-header-edit-button {
+        width: 100%;
+    }
+
+    .job-header-edit-button .btn {
+        width: 100%;
+    }
+
+}
+.subbed-card-button {
+    width: 100%;
+    border: none;
+    background: transparent;
+    text-align: left;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+}
+
+.subbed-card-button:focus {
+    outline: none;
+}
+
+.subbed-yes {
+    background: #f8d7da !important;
+    border-color: #dc3545 !important;
+}
+
+.subbed-yes .job-info-label,
+.subbed-yes .subbed-status,
+.subbed-yes small {
+    color: #721c24 !important;
+}
+
 
 </style>
 
-<!--<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-
 
 {% endblock %}
 
+{% block sub_nav %}
+{% include 'jobs_nav.html' with page_label="Job Detail" %}
+{% endblock %}
+
 {% block content %}
-<!-- nav bar -->
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-
-    <a class="navbar-brand sub-navbar-brand" href="{% url 'jobs_home' %}">Jobs</a>
-
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav ">
-            <li><a class="nav-item nav-link" href="{% url 'jobs_home' %}">Jobs List</a></li>
-             <li><a class="nav-item nav-link" href="{% url 'super_home' 'AUTO' %}">Superintendent View</a></li>
-<!--            <li><a class="nav-item nav-link" href="{% url 'book_new_job' %}">Book New Job</a></li>-->
-            <li><a class="nav-item nav-link active" href="#">{{job.job_name}}</a></li>
-        </ul>
-    </div>
-</nav>
+<div class="container-fluid job-page mt-3 mb-5">
 
 <!-- Modal -->
 <div class="modal fade" id="startdate-modal" tabindex="-1" role="dialog" aria-labelledby="title"
@@ -917,143 +975,309 @@ float: left !important;
 
 
 {% if job.is_closed %}
-<div style="background-color:hsl(0, 0%, 75%);">
-<h4>JOB IS CLOSED. CLOSED JOB NUMBER: {{job.closed_job_number}}</h4>
+<div class="alert alert-secondary mb-3">
+    <strong>JOB IS CLOSED.</strong>
+    Closed Job Number: {{ job.closed_job_number }}
+</div>
 {% endif %}
-<div style="background-color:hsl(202, 64%, 95%);">
-<!--Header info-->
-<div style="margin-left: 12px; margin-right: 12px;">
-<div style="padding-top: 12px;" class="row">
 
-    <div class="col-12 col-md-3 mb-2">
-        <form action="{% url 'update_job_info' job.job_number %}">
-            <input type="submit"
-                   class="btn btn-info btn-sm btn-block"
-                   value="Update Job Information"/>
-        </form>
+<div class="job-header-card mb-3">
+
+    <div class="job-header-title">
+
+    <div>
+        <h4 class="mb-1">{{ job.job_number }} - {{ job.job_name }}</h4>
+
+        <div class="text-muted">
+            {{ job.address }} {{ job.city }} {{ job.state }}
+        </div>
     </div>
 
-    <div class="col-12 col-md-3 mb-2">
-        <form action="{% url 'client_job_info' job.job_number %}">
-            <input type="submit"
-                   class="btn btn-info btn-sm btn-block"
-                   value="View/Change Client Contacts"/>
-        </form>
-    </div>
+    <div class="job-header-edit-button">
 
-    <div class="col-12 col-md-3 mb-2">
-        <form action="{% url 'change_order_new' job.job_number %}">
+        <form action="{% url 'update_job_info' job.job_number %}" class="mb-0">
             <input type="submit"
-                   class="btn btn-info btn-sm btn-block"
-                   value="Add/View Change Orders"/>
+                   class="btn btn-outline-info btn-sm"
+                   value="Edit Job Info"/>
         </form>
-    </div>
 
-    <div class="col-12 col-md-3 mb-2">
-        <form action="{% url 'job_submittals_summary' job.job_number %}">
-            <input type="submit"
-                   class="btn btn-info btn-sm btn-block"
-                   value="Submittal Log"/>
-        </form>
     </div>
 
 </div>
-    <div class="row">
-        <div class="col-sm-4 list-items"><b>Job Name:</b> {{job.job_name}}</div>
-        <div class="col-sm-4 list-items"><b>Job Number:</b> {{job.job_number}}</div>
-        <div class="col-sm-4 list-items"><b>Address:</b> {{job.address}} {{job.city}} {{job.state}}</div>
-    </div>
-    <div class="row">
 
-        <div class="col-sm-4 list-items" data-toggle="modal" data-target="#client-modal"><b>Client:</b> <a href ="#" onclick="showEmployeeData( 'CLIENT','{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');">{{job.client}}</a></div>
-        <div class="col-sm-4 list-items" data-toggle="modal" data-target="#client_pm-modal"><b>GC PM:</b> <a href ="#" onclick="showEmployeeData('PM',  '{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');">{{job.client_Pm}}</a></div>
-        <div class="col-sm-4 list-items" data-toggle="modal" data-target="#client_super-modal"><b>GC Super:</b> <a href ="#" onclick="showEmployeeData( 'SUPERINTENDENT','{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');">{{job.client_Super}}</a></div>
-    </div>
+    <div class="row mt-3">
 
-    <div class="row">
-        <div class="col-sm-4 list-items" id="TEST_YO" data-toggle="modal" data-target="#startdate-modal"><b>Start Date:</b><a href ="#" onclick="populate_start_date_modal('{{job.job_number}}','{{job.start_date}}','{{job.is_active}}',this,2)">{{job.start_date}}</a></div>
-        <div class="col-sm-4 list-items" id="TEST_BRO" data-toggle="modal" data-target="#super-modal" ><b>Gerloff Super:</b><a href = "#" onclick="populate_super_modal('{{job.job_name}}','{{job.superintendent.id}}','{{job.job_number}}','{{job.superintendent.first_name}}',this,2)">{{job.superintendent}}</a></div>
-        <div class="col-sm-4 list-items"><b>Gerloff Estimator:</b> {{job.estimator}}</div>
-    </div>
-    <div class="row">
-
-        <div class="col-sm-4 list-items" data-toggle="modal" data-target="#contract_amount-modal"><b>Contract Amount:</b><a href ='#'>${{contract_amount}}</a>
+        <div class="col-md-4 job-info-box" data-toggle="modal" data-target="#client-modal">
+            <div class="job-info-label">Client</div>
+            <a href="#"
+               onclick="showEmployeeData('CLIENT','{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');">
+                {{ job.client }}
+            </a>
         </div>
-        <div class="col-sm-4 list-items" data-toggle="modal" data-target="#manhours-modal"><b>Hours Used vs. Budgeted:</b> <a href="#">{{man_hours_used}} / {{man_hours_budgeted}}</a>  </div>
-        <div class="col-sm-4 list-items"></div>
-    </div>
 
-
-
-</div>
-</div>
-
-    <div class="row h-100 d-flex align-items-center">
-        {% if has_rentals %}
-        <div style="margin: 5px;" class="col-sm-4">
-            <input class="btn btn-primary btn-sm"  data-toggle="modal" data-target="#off_rent-modal" value="Call Equipment Off-Rent"/>
+        <div class="col-md-4 job-info-box" data-toggle="modal" data-target="#client_pm-modal">
+            <div class="job-info-label">GC PM</div>
+            <a href="#"
+               onclick="showEmployeeData('PM','{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');">
+                {{ job.client_Pm }}
+            </a>
         </div>
-        {% endif %}
 
-        {% if has_equipment %}
-        <div style="margin: 5px;" class="col-sm-4">
-            <form action="{% url 'request_pickup' jobnumber=job.job_number item='ALL' pickup='ALL' status='ALL' %}">{% if pickup_exists %}<input type="submit" class="btn btn-primary btn-sm" value="Change Equipment Pickup"/>{% else %}<input type="submit" class="btn btn-primary btn-sm" value="Request Equipment Pickup"/> {% endif %}
-            </form>
+        <div class="col-md-4 job-info-box" data-toggle="modal" data-target="#client_super-modal">
+            <div class="job-info-label">GC Super</div>
+            <a href="#"
+               onclick="showEmployeeData('SUPERINTENDENT','{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');">
+                {{ job.client_Super }}
+            </a>
         </div>
-        {% endif %}
-        <div style="margin: 5px;" class="col-sm-4">
-            {% if trash_pickup_requested %}
-            <form action="{% url 'request_pickup' jobnumber=job.job_number item='ALL' pickup='ALL' status='ALL' %}"><input type="submit" class="btn btn-primary btn-sm" value="Trash Pickup Already Requested" />
-            </form>
-            {% else %}
-            <form action="{% url 'request_trash_pickup' jobnumber=job.job_number %}"> <input type="submit" class="btn btn-primary btn-sm" value="Request Trash/Paint Pickup" />
-            </form>
-            {% endif %}
+
+        <div class="col-md-4 job-info-box" data-toggle="modal" data-target="#startdate-modal">
+            <div class="job-info-label">Start Date</div>
+            <a href="#"
+               onclick="populate_start_date_modal('{{ job.job_number }}','{{ job.start_date }}','{{ job.is_active }}',this,2)">
+                {{ job.start_date }}
+            </a>
         </div>
-        <div style="margin: 5px;" class="col-sm-4">
+
+        <div class="col-md-4 job-info-box" data-toggle="modal" data-target="#super-modal">
+            <div class="job-info-label">Gerloff Super</div>
+            <a href="#"
+               onclick="populate_super_modal('{{ job.job_name }}','{{ job.superintendent.id }}','{{ job.job_number }}','{{ job.superintendent.first_name }}',this,2)">
+                {{ job.superintendent }}
+            </a>
+        </div>
+
+        <div class="col-md-4 job-info-box">
+            <div class="job-info-label">Estimator</div>
+            {{ job.estimator }}
+        </div>
+
+        <div class="col-md-4 job-info-box" data-toggle="modal" data-target="#contract_amount-modal">
+            <div class="job-info-label">Contract Amount</div>
+            <a href="#">${{ contract_amount }}</a>
+        </div>
+
+        <div class="col-md-4 job-info-box" data-toggle="modal" data-target="#manhours-modal">
+            <div class="job-info-label">Hours Used / Budgeted</div>
+            <a href="#">{{ man_hours_used }} / {{ man_hours_budgeted }}</a>
+        </div>
+
+        <div class="col-md-4 job-info-box {% if job.is_painting_subbed %}subbed-yes{% endif %}">
+
+    <form action="{% url 'activate_sub_job' job.job_number %}" class="mb-0">
+
+        <button type="submit"
+                class="subbed-card-button">
+            <div class="job-info-label">Subbed Out?</div>
+
             {% if job.is_painting_subbed %}
-            <form action="{% url 'activate_sub_job' job.job_number %}"><input type="submit" class="btn btn-danger btn-sm" value="ALREADY SUBBED OUT" />
-            </form>
+                <div class="subbed-status">YES</div>
+                <small>Click to change</small>
             {% else %}
-            <form action="{% url 'activate_sub_job' job.job_number %}"> <input type="submit" class="btn btn-light btn-sm" value="Click to Sub This Job Out" />
-            </form>
+                <div class="subbed-status">NO</div>
+                <small>Click to sub this job out</small>
             {% endif %}
-        </div>
-        <div style="margin: 5px;" class="col-sm-4">
-    {% if job.is_waiting_for_punchlist == True %}
-        {% if job.is_labor_done == True %}
-                <input class="btn btn-dark btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Done {{labor_done_date}}" />
-            {% else %}
-                            <input class="btn btn-danger btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Waiting for Punchlist" />
-         {% endif %}
-    {% else %}
-        {% if job.is_labor_done == True %}
-                            <input class="btn btn-dark btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Done {{labor_done_date}}" />
-        {% else %}
+        </button>
 
-                            <input class="btn btn-success btn-sm" data-toggle="modal" data-target="#labor_close-modal" value="Mark Labor Complete" />
+    </form>
 
-        {% endif %}
-    {% endif %}
-
-        </div>
-        <div style="margin: 5px;" class="col-sm-4">
-            <div id="dropbox_button_hide">
-             <form id="dropbox_button" action="{% url 'job_page' job.job_number %}" target="_blank" >
-                <input type="button" class="btn btn-warning btn-sm"  onclick = "open_dropbox2('{{job.job_number}}')" value="Plans & Work Order" />
-             </form>
-            </div>
-            <div id="dropbox_link_hide"><a id="link" href="#" target="_blank" style="color:red" >CLICK HERE FOR PLANS</a></div>
-        </div>
-
-<!--        <div style="margin: 5px;" class="col-sm-3">-->
-<!--            <form id="" action="" target="_blank" >-->
-<!--                <input type="button" class="btn btn-primary btn-sm"  data-toggle="modal" data-target="#add-employees-modal" value="Add Painter" />-->
-<!--             </form>-->
-<!--        </div>-->
-
+</div>
 
     </div>
+
+</div>
+
+    <div class="card mb-3">
+
+    <div class="card-header font-weight-bold">
+        Quick Actions
+    </div>
+
+    <div class="card-body">
+
+        <div class="row justify-content-center">
+
+            <div class="col-12 col-md-4 col-lg-3 mb-2">
+                <form action="{% url 'client_job_info' job.job_number %}">
+                    <input type="submit"
+                           class="btn btn-info btn-sm btn-block"
+                           value="View/Change Client Contacts"/>
+                </form>
+            </div>
+
+            <div class="col-12 col-md-4 col-lg-3 mb-2">
+                <form action="{% url 'change_order_new' job.job_number %}">
+                    <input type="submit"
+                           class="btn btn-info btn-sm btn-block"
+                           value="Add/View Change Orders"/>
+                </form>
+            </div>
+
+            <div class="col-12 col-md-4 col-lg-3 mb-2">
+                <form action="{% url 'job_submittals_summary' job.job_number %}">
+                    <input type="submit"
+                           class="btn btn-info btn-sm btn-block"
+                           value="Submittal Log"/>
+                </form>
+            </div>
+
+            <div class="col-12 col-md-4 col-lg-3 mb-2">
+
+    <div id="dropbox_button_hide">
+
+        <form id="dropbox_button"
+              action="{% url 'job_page' job.job_number %}"
+              target="_blank"
+              class="mb-0">
+
+            <input type="button"
+                   class="btn btn-info btn-sm btn-block"
+                   onclick="open_dropbox2('{{job.job_number}}')"
+                   value="Plans & Work Order"/>
+
+        </form>
+
+    </div>
+
+    <div id="dropbox_link_hide">
+
+        <a id="link"
+           href="#"
+           target="_blank"
+           class="btn btn-danger btn-sm btn-block">
+            Open Plans
+        </a>
+
+    </div>
+
+</div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card mb-3">
+
+    <div class="card-header font-weight-bold">
+        Field Management
+    </div>
+
+    <div class="card-body">
+
+        <div class="row justify-content-center">
+
+            {% if has_rentals %}
+            <div class="col-12 col-md-4 col-lg-3 mb-2">
+                <input class="btn btn-primary btn-sm btn-block"
+                       data-toggle="modal"
+                       data-target="#off_rent-modal"
+                       value="Call Equipment Off-Rent"/>
+            </div>
+            {% endif %}
+
+            {% if has_equipment %}
+            <div class="col-12 col-md-4 col-lg-3 mb-2">
+
+                <form action="{% url 'request_pickup' jobnumber=job.job_number item='ALL' pickup='ALL' status='ALL' %}"
+                      class="mb-0">
+
+                    {% if pickup_exists %}
+                        <input type="submit"
+                               class="btn btn-secondary btn-sm btn-block"
+                               value="Change Equipment Pickup"/>
+                    {% else %}
+                        <input type="submit"
+                               class="btn btn-primary btn-sm btn-block"
+                               value="Request Equipment Pickup"/>
+                    {% endif %}
+
+                </form>
+
+            </div>
+            {% endif %}
+
+            <div class="col-12 col-md-4 col-lg-3 mb-2">
+
+                {% if trash_pickup_requested %}
+
+                    <form action="{% url 'request_pickup' jobnumber=job.job_number item='ALL' pickup='ALL' status='ALL' %}"
+                          class="mb-0">
+
+                        <input type="submit"
+                               class="btn btn-secondary btn-sm btn-block"
+                               value="Trash Pickup Requested"/>
+
+                    </form>
+
+                {% else %}
+
+                    <form action="{% url 'request_trash_pickup' jobnumber=job.job_number %}"
+                          class="mb-0">
+
+                        <input type="submit"
+                               class="btn btn-primary btn-sm btn-block"
+                               value="Request Trash/Paint Pickup"/>
+
+                    </form>
+
+                {% endif %}
+
+            </div>
+
+            <div class="col-12 col-md-4 col-lg-3 mb-2">
+
+                {% if job.is_waiting_for_punchlist == True %}
+
+                    {% if job.is_labor_done == True %}
+
+                        <input class="btn btn-dark btn-sm btn-block"
+                               data-toggle="modal"
+                               data-target="#labor_close-modal"
+                               value="Done {{ labor_done_date }}" />
+
+                    {% else %}
+
+                        <input class="btn btn-danger btn-sm btn-block"
+                               data-toggle="modal"
+                               data-target="#labor_close-modal"
+                               value="Waiting for Punchlist" />
+
+                    {% endif %}
+
+                {% else %}
+
+                    {% if job.is_labor_done == True %}
+
+                        <input class="btn btn-dark btn-sm btn-block"
+                               data-toggle="modal"
+                               data-target="#labor_close-modal"
+                               value="Done {{ labor_done_date }}" />
+
+                    {% else %}
+
+                        <input class="btn btn-primary btn-sm btn-block"
+                               data-toggle="modal"
+                               data-target="#labor_close-modal"
+                               value="Mark Labor Complete" />
+
+                    {% endif %}
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
+
 
 
 
@@ -1145,7 +1369,7 @@ float: left !important;
                 </div>
             </div>
         </div>
-</div>
+
 
 <!--tickets not done 2-->
 {% if tickets_not_done %}
@@ -1243,7 +1467,7 @@ float: left !important;
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSeven" aria-expanded="false"
                         aria-controls="collapseSeven">
-                    Equipment
+                    {{equipments_count}}- Equipment
                 </button>
             </h5>
         </div>
@@ -1282,7 +1506,7 @@ float: left !important;
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseEight" aria-expanded="false"
                         aria-controls="collapseEight">
-                    Rentals
+                    {{rentals_count}}- Rentals
                 </button>
             </h5>
         </div>
@@ -1450,7 +1674,7 @@ float: left !important;
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseThirteen" aria-expanded="false"
                         aria-controls="collapseThirteen">
-                    Subcontractors
+                    {{subcontracts_count}}- Subcontractors
                 </button>
             </h5>
         </div>
@@ -1756,6 +1980,7 @@ float: left !important;
 
         </div>
     </div>
+</div>
 </div>
 
 {% endblock %}

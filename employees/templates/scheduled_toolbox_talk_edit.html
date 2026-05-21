@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
+{% block nav_item_employees %}active{% endblock nav_item_employees %}
 
-{% block content %}
-
+{% block extra_head %}
 <style>
     .edit-wrap {
         max-width: 900px;
@@ -41,7 +41,8 @@
         }
     }
 </style>
-
+{% endblock %}
+{% block content %}
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
     <a class="navbar-brand sub-navbar-brand" href="{% url 'scheduled_toolbox_talks' %}">
         Go Back to Scheduled Toolbox Talks

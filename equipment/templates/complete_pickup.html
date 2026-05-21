@@ -1,233 +1,406 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block content %}
 {% load render_table from django_tables2 %}
-<!DOCTYPE html>
-<html>
-<head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>Trinity GP</title>
-<!--	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
-    .list-items {
-    border-bottom: 1px solid black; display: flex; justify-content: space-between;
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+
+<style>
+    .pickup-header-card {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        background: #fff;
     }
-	</style>
-	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
-window.onload = function() {
-document.getElementById("hide_this").style.display = "none"
-}
 
-function trash_problem(){
-var notes_section = document.getElementById("trash_problem_note")
-            var name=prompt("Please clarify");
-            if (name!=null){
-                notes_section.value = name;
-            }
-}
+    .pickup-meta {
+        border-bottom: 1px solid #eee;
+        padding: 8px 0;
+    }
 
-function paint_problem(){
-var notes_section = document.getElementById("paint_saved_note")
-            var name=prompt("Please clarify");
-            if (name!=null){
-                notes_section.value = name;
-            }
-}
+    .pickup-item-card {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 12px;
+        background: #fff;
+    }
 
-function missing_explanation(status){
-job_update.notes.value = missing_form.date_note.value
-job_update.status.value = status
-selected_job = '{{selected_request.job_number.job_number}}'
-if (status == 1){job_update.submit();}
-if (status == 2){
-if(selected_job != job_update.current_location.value){alert("This has already been assigned to a different job. Please select that option")}
-if(job_update.current_location.value == "NA"){alert("This equipment is no longer assigned to the job")}
-if(selected_job == job_update.current_location.value){job_update.submit();}
-}
-if (status == 3){
-if(selected_job != job_update.current_location.value){job_update.submit();}
-else {alert("This equipment has not been assigned to a different job")}
-}
-}
+    .pickup-item-title {
+        font-weight: bold;
+        font-size: 1.05rem;
+        color: #007bff;
+        margin-bottom: 10px;
+    }
 
-function populate_title(name){
-document.getElementById("missing_title").innerHTML = name
-}
+    .pickup-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
 
+    .pickup-note-box {
+        background: #f8f9fa;
+        border-left: 4px solid #007bff;
+        padding: 10px;
+        margin-top: 10px;
+    }
 
-	function check_booking_data2(){
-   		alert("Please be patient while this processes. Do not click anything until it is complete.")
-   		document.getElementById("send_now").style.display = "none"
-   		document.getElementById("hide_this").style.display = "block"
-	}
-	</script>
-</head>
-<body>
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Equipment</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'equipment_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'equipment_new' %}">New</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
-	  	<li><a class="nav-item nav-link active" >Complete Equipment Pickup</a></li>
-    </ul>
-  </div>
-</nav>
-	<li><a href="{% url 'job_page' selected_request.job_number.job_number %}"><h3>{{selected_request.job_number}}</h3></a></li>
+    #hide_this {
+        display: none;
+        margin-top: 10px;
+        font-weight: bold;
+        color: red;
+    }
+</style>
+{% endblock %}
 
-<div class="container">
-    <div class="row">
-        <div class="col-sm-4 list-items"><b>Requested By:&nbsp;</b>{{selected_request.requested_by}}</div>
-		<div class="col-sm-4 list-items"><b>Date:&nbsp;</b>{{selected_request.date}}</div>
-        <div class="col-sm-4 list-items"><b>Type:&nbsp;</b>{% if selected_request.all_items == True %}All Items{% else %}Certain Items Only{% endif %}</div>
+{% block sub_nav %}
+{% include 'equipment_nav.html' with page_label="Complete Pickup" %}
+{% endblock %}
 
+{% block content %}
+
+<div class="container mt-3 mb-5">
+
+    <div class="mb-3">
+        <a href="{% url 'job_page' selected_request.job_number.job_number %}">
+            <h3>{{ selected_request.job_number }}</h3>
+        </a>
     </div>
-	<div class="row">
-		 <div class="col-sm-12 list-items">{{selected_request.request_notes}}</div>
-	</div>
-</div>
 
-
-<!-- Modal -->
-<div class="modal fade" id="missing-modal" tabindex="-1" role="dialog" aria-labelledby="title"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="missing_title"></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+    <div class="pickup-header-card">
+        <div class="row">
+            <div class="col-md-4 pickup-meta">
+                <strong>Requested By:</strong><br>
+                {{ selected_request.requested_by }}
             </div>
-            <div class="modal-body">
-                                <form id="missing_form" >
-                                    {% csrf_token %}
-                                    <table>
-                                        <tr>
-                                            <td>
 
-												                                                Please Explain:<br>
-                                                <textarea id="date_note" name="date_note" class="form-control"
-                                                          style="min-width: 100%"></textarea>
+            <div class="col-md-4 pickup-meta">
+                <strong>Date:</strong><br>
+                {{ selected_request.date }}
+            </div>
 
-                                            </td>
-                                        </tr><tr><td>
-										                                                                <button type="button" class="btn btn-primary"
-                                                        onclick="missing_explanation(1)" data-dismiss="modal"> Missing
-                                                </button>
-				<br>
-										</td></tr><tr><td>
-												<button type="button" class="btn btn-primary"
-                                                        onclick="missing_explanation(2)" data-dismiss="modal"> Still On Job
-                                                </button>
-				<br></td></tr><tr><td>
-												<button type="button" class="btn btn-primary"
-                                                        onclick="missing_explanation(3)" data-dismiss="modal"> Already On a Different Job
-                                                </button>
-										</td></tr>
-                                    </table>
-                                </form>
-                            </div>
+            <div class="col-md-4 pickup-meta">
+                <strong>Type:</strong><br>
+                {% if selected_request.all_items %}
+                    All Items
+                {% else %}
+                    Certain Items Only
+                {% endif %}
+            </div>
+        </div>
 
-            <div class="modal-footer">
+        {% if selected_request.request_notes %}
+            <div class="pickup-note-box">
+                <strong>Request Notes:</strong><br>
+                {{ selected_request.request_notes }}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Missing / Other Modal -->
+    <div class="modal fade" id="missing-modal" tabindex="-1" role="dialog" aria-labelledby="missing_title" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="missing_title"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <form id="missing_form">
+                        {% csrf_token %}
+
+                        <input type="hidden" id="modal_form_id">
+                        <input type="hidden" id="modal_current_location">
+
+                        <div class="form-group">
+                            <label for="date_note">Please Explain:</label>
+                            <textarea id="date_note" name="date_note" class="form-control" rows="4"></textarea>
+                        </div>
+
+                        <button type="button" class="btn btn-danger btn-block mb-2"
+                                onclick="missing_explanation(1)"
+                                data-dismiss="modal">
+                            Missing
+                        </button>
+
+                        <button type="button" class="btn btn-warning btn-block mb-2"
+                                onclick="missing_explanation(2)"
+                                data-dismiss="modal">
+                            Still On Job
+                        </button>
+
+                        <button type="button" class="btn btn-primary btn-block"
+                                onclick="missing_explanation(3)"
+                                data-dismiss="modal">
+                            Already On a Different Job
+                        </button>
+                    </form>
+                </div>
 
             </div>
         </div>
     </div>
+
+    {% if items_not_ready %}
+
+        <h4 class="mb-3">Check In These Items</h4>
+
+        {% for x in selected_items %}
+
+            <div class="pickup-item-card">
+
+                <div class="pickup-item-title">
+                    {% if selected_request.all_items %}
+                        <a href="{% url 'equipment_page' x.id %}">
+                            {% if x.number %}#{{ x.number }} - {% endif %}{{ x.item }}
+                        </a>
+                    {% else %}
+                        <a href="{% url 'equipment_page' x.item.id %}">
+                            {% if x.item.number %}#{{ x.item.number }} - {% endif %}{{ x.item.item }}
+                        </a>
+                    {% endif %}
+                </div>
+
+                <div class="pickup-actions">
+
+                    <form action="{% url 'complete_pickup' selected_request.id %}" method="post">
+                        {% csrf_token %}
+                        <input id="check_in{{ x.id }}"
+                               class="btn btn-success btn-sm"
+                               name="check_in{{ x.id }}"
+                               type="submit"
+                               value="Check In">
+                    </form>
+
+                    <form id="missing_form_{{ x.id }}"
+                          action="{% url 'complete_pickup' selected_request.id %}"
+                          method="post">
+                        {% csrf_token %}
+
+                        <input type="hidden" id="notes_{{ x.id }}" name="notes" value="">
+                        <input type="hidden" id="status_{{ x.id }}" name="status" value="">
+                        <input type="hidden" id="missing{{ x.id }}" name="missing{{ x.id }}" value="{{ x.id }}">
+
+                        {% if selected_request.all_items %}
+                            <input type="hidden"
+                                   id="current_location_{{ x.id }}"
+                                   name="current_location"
+                                   value="{{ x.job_number.job_number }}">
+                        {% else %}
+                            {% if x.item.job_number %}
+                                <input type="hidden"
+                                       id="current_location_{{ x.id }}"
+                                       name="current_location"
+                                       value="{{ x.item.job_number.job_number }}">
+                            {% else %}
+                                <input type="hidden"
+                                       id="current_location_{{ x.id }}"
+                                       name="current_location"
+                                       value="NA">
+                            {% endif %}
+                        {% endif %}
+
+                        {% if selected_request.all_items %}
+                            <button type="button"
+                                    data-toggle="modal"
+                                    data-target="#missing-modal"
+                                    class="btn btn-outline-primary btn-sm"
+                                    onclick="populate_modal('{{ x.item|escapejs }}', '{{ x.id }}', document.getElementById('current_location_{{ x.id }}').value)">
+                                Other
+                            </button>
+                        {% else %}
+                            <button type="button"
+                                    data-toggle="modal"
+                                    data-target="#missing-modal"
+                                    class="btn btn-outline-primary btn-sm"
+                                    onclick="populate_modal('{{ x.item.item|escapejs }}', '{{ x.id }}', document.getElementById('current_location_{{ x.id }}').value)">
+                                Other
+                            </button>
+                        {% endif %}
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+        {% if remove_trash %}
+            <div class="pickup-item-card">
+                <div class="pickup-item-title">Remove Trash From Jobsite</div>
+
+                <div class="pickup-actions">
+                    <form action="{% url 'complete_pickup' selected_request.id %}" method="post">
+                        {% csrf_token %}
+                        <input id="trash_done"
+                               class="btn btn-success btn-sm"
+                               name="trash_done"
+                               type="submit"
+                               value="Completed">
+                    </form>
+
+                    <form action="{% url 'complete_pickup' selected_request.id %}" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" id="trash_problem_note" name="trash_problem_note">
+                        <input id="trash_not_done"
+                               class="btn btn-outline-primary btn-sm"
+                               name="trash_not_done"
+                               type="submit"
+                               value="Other"
+                               onclick="trash_problem()">
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if save_paint %}
+            <div class="pickup-item-card">
+                <div class="pickup-item-title">Save Leftover Paint</div>
+
+                <div class="pickup-actions">
+                    <form action="{% url 'complete_pickup' selected_request.id %}" method="post">
+                        {% csrf_token %}
+                        <input id="paint_saved"
+                               class="btn btn-success btn-sm"
+                               name="paint_saved"
+                               type="submit"
+                               value="Completed">
+                    </form>
+
+                    <form action="{% url 'complete_pickup' selected_request.id %}" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" id="paint_saved_note" name="paint_saved_note">
+                        <input id="paint_not_saved"
+                               class="btn btn-outline-primary btn-sm"
+                               name="paint_not_saved"
+                               type="submit"
+                               value="Other"
+                               onclick="paint_problem()">
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="alert alert-warning mt-4">
+            Cannot close this request until all items are addressed.
+        </div>
+
+    {% else %}
+
+        <div class="pickup-header-card">
+            <h4>Complete Pickup Request</h4>
+
+            <form name="job_update"
+                  action="{% url 'complete_pickup' selected_request.id %}"
+                  method="post"
+                  onsubmit="return check_booking_data2();">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="request_notes">Make any notes about this pickup:</label>
+                    <textarea id="request_notes"
+                              name="request_notes"
+                              rows="4"
+                              class="form-control"></textarea>
+                </div>
+
+                <input type="submit"
+                       class="btn btn-primary btn-sm"
+                       id="send_now"
+                       name="send_now"
+                       value="Pickup Request Complete">
+            </form>
+
+            <div id="hide_this">
+                Processing. Please do not click anything.
+            </div>
+        </div>
+
+    {% endif %}
+
 </div>
 
-{% if items_not_ready %}
-	<br>
-	 <b>Check-In These Items </b>
-	<br>
-	<table id="allitems" class="display" style="width:90%">
-		{% for x in selected_items %}
-			<tr>
-			{% if selected_request.all_items == True %}
-			<td><a href="{% url 'equipment_page' x.id %}">#{{x.number}}- {{x.item}}</a></td>
-			{% else %}
-			<td><a href="{% url 'equipment_page' x.item.id %}">#{{x.item.number}}- {{x.item.item}}</a></td>
-			{% endif %}
-			<td> <form id=job_update2 name =job_update2 action="{%  url 'complete_pickup' selected_request.id %}" method="post"  >
-			{% csrf_token %}<input id="check_in{{x.id}}" class="btn btn-success btn-xs" name="check_in{{x.id}}" type="submit" value="Check In"/></form></td>
-			 <form id=job_update name =job_update action="{%  url 'complete_pickup' selected_request.id %}" method="post"  onSubmit = "return check_booking_data()">
-	{% csrf_token %}
-			<input type="hidden" id="notes" name="notes" value=""/>
-				<input type="hidden" id="status" name="status" value=""/>
-				 <input type="hidden" id="missing{{x.id}}" name ="missing{{x.id}}" value={{x.id}} />
-				 {% if selected_request.all_items == True %}
-				 <input type="hidden" id="current_location" name ="current_location" value={{x.job_number.job_number}} />
+{% endblock %}
 
-				 {% else %}
-					 {% if x.item.job_number %}
-					 <input type="hidden" id="current_location" name ="current_location" value='{{x.item.job_number.job_number}}' />
-					 {% else %}
-					 <input type="hidden" id="current_location" name ="current_location" value="NA" />
-					 {% endif %}
-				 {% endif %}
-				 <td>
-				 {% if selected_request.all_items == True %}
-			 <button type="button" data-toggle="modal" data-target="#missing-modal" class="btn btn-primary btn-xs" onclick="populate_title('{{x.item}}')"> OTHER </button>
-				 {% else %}
-				  <button type="button" data-toggle="modal" data-target="#missing-modal" class="btn btn-primary btn-xs" onclick="populate_title('{{x.item.item}}')"> OTHER </button>
-				 {% endif %}
-			 </td>
-			</tr></form>
-			{% endfor %}
-		{% if remove_trash %}
-		<form id="trash_pickup_form" action="{%  url 'complete_pickup' selected_request.id %}" method="post"  >
-			{% csrf_token %}
-		<tr>
-			<td>Remove Trash From Jobsite</td><td> <input id="trash_done" class="btn btn-success btn-xs" name="trash_done" type="submit" value="Completed" /></td><td><input type="hidden" id="trash_problem_note" name="trash_problem_note" ><input id="trash_not_done" class="btn btn-primary btn-xs" name="trash_not_done" type="submit" value="OTHER" onclick="trash_problem()" /></td>
-		</tr>
-		</form>
-		{% endif %}
-		{% if save_paint %}
-		<form id="save_paint_form" action="{%  url 'complete_pickup' selected_request.id %}" method="post"  >
-			{% csrf_token %}
-		<tr>
-			<td>Save Leftover Paint</td><td> <input id="paint_saved" class="btn btn-success btn-xs" name="paint_saved" type="submit" value="Completed" /></td><td><input type="hidden" id="paint_saved_note" name="paint_saved_note" ><input id="paint_not_saved" class="btn btn-primary btn-xs" name="paint_not_saved" type="submit" value="OTHER" onclick="paint_problem()" /></td>
-		</tr>
-		</form>
-		{% endif %}
+{% block extra_scripts %}
+<script>
+    function trash_problem() {
+        var notes_section = document.getElementById("trash_problem_note");
+        var note = prompt("Please clarify");
 
-			</table>
+        if (note !== null) {
+            notes_section.value = note;
+        }
+    }
 
-		 <br><hr><br>
+    function paint_problem() {
+        var notes_section = document.getElementById("paint_saved_note");
+        var note = prompt("Please clarify");
 
+        if (note !== null) {
+            notes_section.value = note;
+        }
+    }
 
-<h4> Cannot Close This Request Until All Items Are Addressed </h4>
-	{% else %}
-		<br>
-	 <b>Provide any notes about this pickup, then click complete </b>
-	<br>
+    function populate_modal(name, itemId, currentLocation) {
+        document.getElementById("missing_title").innerHTML = name;
+        document.getElementById("modal_form_id").value = itemId;
+        document.getElementById("modal_current_location").value = currentLocation;
+    }
 
-		<form name = job_update action="{%  url 'complete_pickup' selected_request.id %}" method="post" onSubmit = "return check_booking_data2()" >
-			{% csrf_token %}
-				 <label for="request_notes"> Make any notes about this pickup: </label> <br>
-                <textarea id="request_notes" name="request_notes" rows="4" style="width: 100%"></textarea>
-		 <br>
+    function missing_explanation(status) {
+        var itemId = document.getElementById("modal_form_id").value;
+        var currentLocation = document.getElementById("modal_current_location").value;
+        var selectedJob = "{{ selected_request.job_number.job_number }}";
 
-		 	<input type="submit" class="btn btn-primary btn-sm" id="send_now" name = "send_now" value="Pickup Request Complete" />
-<div id="hide_this">Processing. Please do not click anything. </div>
-		{% endif %}
+        var form = document.getElementById("missing_form_" + itemId);
+        var notesInput = document.getElementById("notes_" + itemId);
+        var statusInput = document.getElementById("status_" + itemId);
 
+        notesInput.value = document.getElementById("date_note").value;
+        statusInput.value = status;
 
-</body>
-</html>
+        if (status === 1) {
+            form.submit();
+        }
 
+        if (status === 2) {
+            if (selectedJob !== currentLocation) {
+                alert("This has already been assigned to a different job. Please select that option.");
+                return false;
+            }
+
+            if (currentLocation === "NA") {
+                alert("This equipment is no longer assigned to the job.");
+                return false;
+            }
+
+            form.submit();
+        }
+
+        if (status === 3) {
+            if (selectedJob !== currentLocation) {
+                form.submit();
+            } else {
+                alert("This equipment has not been assigned to a different job.");
+                return false;
+            }
+        }
+    }
+
+    function check_booking_data2() {
+        alert("Please be patient while this processes. Do not click anything until it is complete.");
+        document.getElementById("send_now").style.display = "none";
+        document.getElementById("hide_this").style.display = "block";
+        return true;
+    }
+</script>
 {% endblock %}

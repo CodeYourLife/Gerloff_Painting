@@ -2,29 +2,11 @@
 {% extends base_template %}
 {% load static %}
 {% block nav_item_employees %}active{% endblock nav_item_employees %}
-{% block content %}
 
-<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Trinity GP</title>
-<!--<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+{% block extra_head %}
 <style type="text/css" class="init">
-    nav .active, .collapsible:hover {
-      background-color: Salmon;
-    }
-    .nav-pills a {
-        color: black;
-    }
-    .nav-pills li {
-        padding: 2px;
-    }
-    .nav-pills .active {
-        background-color: #6c757d !important;
-        padding: 5px;
-    }
+
+
     .table td {
         overflow-x: hidden;
         text-wrap: nowrap !important;
@@ -61,80 +43,16 @@
 
 </style>
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
 
+{% if employee.job_title.description != "Painter" %}
+{% block sub_nav %}
+{% include 'employees_nav.html' with active_tab="my_page" %}
+{% endblock %}
+{% endif %}
 
-<script type="text/javascript" language="javascript"
-        src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+{% block content %}
 
-<script type="text/javascript" class="init">
-function complete_toolbox(scheduled_id){
-let form = document.getElementById("select_file");
-document.getElementById("selected_file").value = "pumpkin";
-document.getElementById("scheduledtalk_id").value = scheduled_id;
-form.submit();
-}
-</script>
-
-<script>
-function restoreAccordion() {
-    let openId = localStorage.getItem("openAccordion");
-    if (openId) {
-        let collapseElement = document.getElementById(openId);
-        if (collapseElement && !collapseElement.classList.contains("show")) {
-            $(collapseElement).collapse('show');
-        }
-    }
-}
-document.addEventListener("DOMContentLoaded", function () {
-
-    restoreAccordion();
-
-    $('.collapse').on('shown.bs.collapse', function () {
-        localStorage.setItem("openAccordion", this.id);
-    });
-
-    $('.collapse').on('hidden.bs.collapse', function () {
-        localStorage.removeItem("openAccordion");
-    });
-
-});
-
-/* 🔥 THIS is the key for back button */
-window.addEventListener("pageshow", function (event) {
-
-    restoreAccordion();
-
-    if (event.persisted) {
-        // Force browser to revalidate without resubmitting form
-        window.location.href = window.location.href;
-    }
-
-});
-</script>
-
-
-
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav ">
-            {% if employee.job_title.description == "Painter" %}
-            {% else %}
-            {% if user.is_superuser %}
-            <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
-            {% else %}
-            <li><a class="nav-item nav-link" href="{% url 'my_page' %}">Home</a></li>
-            {% endif %}
-            <!--            <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>-->
-            <li><a class="nav-item nav-link active" href="{% url 'my_page' %}">My Page</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'write_ups' 'ALL' %}">Write_Ups</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'safety_home' %}">Safety</a></li>
-            {% endif %}
-        </ul>
-    </div>
-</nav>
 <div style="width: 100%; text-align:center; margin-top: 5px;"><h4>{{employee}}'s Page</h4></div>
 <!--{{employee.}}-->
 <div id="accordion">
@@ -821,12 +739,12 @@ window.addEventListener("pageshow", function (event) {
                         <tbody>
                         {% for x in certifications %}
                         <tr>
-                            <td>{{x.category}}</td>
+                            <td>{% if x.category %}{{x.category}}{% else %}{{x.description}}{% endif %}</td>
                             {% if x.category.description == "Respirator Clearance" %}
                             {% if respirator_not_approved %}
-                            <td>Not Approved For Respirator</td>
+                            <td>Not Approved</td>
                             {% else %}
-                            <td>Approved For Respirator</td>
+                            <td>Approved</td>
                             {% endif %}
                             {% else %}
                             <td>{{x.description}}</td>
@@ -1044,7 +962,54 @@ window.addEventListener("pageshow", function (event) {
 
     </div>
 
+</div>
 
 
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript" class="init">
+function complete_toolbox(scheduled_id){
+let form = document.getElementById("select_file");
+document.getElementById("selected_file").value = "pumpkin";
+document.getElementById("scheduledtalk_id").value = scheduled_id;
+form.submit();
+}
+
+function restoreAccordion() {
+    let openId = localStorage.getItem("openAccordion");
+    if (openId) {
+        let collapseElement = document.getElementById(openId);
+        if (collapseElement && !collapseElement.classList.contains("show")) {
+            $(collapseElement).collapse('show');
+        }
+    }
+}
+document.addEventListener("DOMContentLoaded", function () {
+
+    restoreAccordion();
+
+    $('.collapse').on('shown.bs.collapse', function () {
+        localStorage.setItem("openAccordion", this.id);
+    });
+
+    $('.collapse').on('hidden.bs.collapse', function () {
+        localStorage.removeItem("openAccordion");
+    });
+
+});
+
+/* 🔥 THIS is the key for back button */
+window.addEventListener("pageshow", function (event) {
+
+    restoreAccordion();
+
+    if (event.persisted) {
+        // Force browser to revalidate without resubmitting form
+        window.location.href = window.location.href;
+    }
+
+});
+</script>
 
 {% endblock %}

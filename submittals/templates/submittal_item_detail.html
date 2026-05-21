@@ -121,7 +121,7 @@
 
             </p>
         <div class="mt-3 d-flex gap-2">
-            {% if unlinked_approvals %}
+            {% if unlinked_approvals or not item_has_been_submitted%}
             <a href="{% url 'submittals_new' item.job_number.job_number %}"
                class="btn btn-primary btn-sm mr-2">
                 CLICK TO SUBMIT NOW

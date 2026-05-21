@@ -758,12 +758,12 @@ def certifications(request, id):
     send_data = {}
     if id != 'ALL':
         selected_cert = Certifications.objects.get(id=id)
+        send_data['selected_item'] = Certifications.objects.get(id=id)
+        send_data['notes2'] = CertificationNotes.objects.filter(certification__id=id)
         if selected_cert.category:
             if selected_cert.category.description=="Respirator Clearance" and RespiratorClearance.objects.filter(certification=selected_cert).exists():
                 return redirect('view_respirator_certification',id=id)
-        else:
-            send_data['selected_item'] = Certifications.objects.get(id=id)
-            send_data['notes2'] = CertificationNotes.objects.filter(certification__id=id)
+
     if request.method == 'POST':
         cert = Certifications.objects.get(id=id)
         if 'new_note' in request.POST:
@@ -989,10 +989,12 @@ def safety_home(request):
             if not Certifications.objects.filter(employee=x, category__description="Respirator Clearance").exists():
                 painters_needing_respirator.append({'employee': x.first_name + " " + x.last_name})
     send_data['pending_respirators'] = painters_needing_respirator
+    send_data['pending_respirators_count'] = len(painters_needing_respirator)
     respirators_in_review = []
     for x in RespiratorClearance.objects.filter(date_approved__isnull=True):
         respirators_in_review.append({'employee': x.employee.first_name + " " + x.employee.last_name,'date': x.date_created, 'status': x.certification.action})
     send_data['respirators_in_review'] = respirators_in_review
+    send_data['respirators_in_review_count'] = len(respirators_in_review)
     send_data['safety_inspections'] = (
         JobsiteSafetyInspection.objects
         .select_related('job', 'inspector')

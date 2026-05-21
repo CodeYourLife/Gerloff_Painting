@@ -2,6 +2,23 @@
 {% load static %}
 {% block extra_head %}
 <style>
+    .dataTables_wrapper .dataTables_filter {
+    text-align: center !important;
+    float: none !important;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.dataTables_wrapper .dataTables_filter label {
+    width: 100%;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+    display: inline-block;
+    margin-left: 8px;
+}
+
+
     .equipment-page {
         padding: 10px;
     }
@@ -118,48 +135,18 @@
 
 </style>
 {% endblock %}
+
+{% block sub_nav %}
+{% if status == 'Outgoing' %}
+{% include 'equipment_nav.html' with active_tab="outgoing" %}
+{% else %}
+{% include 'equipment_nav.html' with active_tab="incoming" %}
+{% endif %}
+{% endblock %}
+
 {% block content %}
-<!-- navbar -->
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark mb-3">
-    <a class="navbar-brand sub-navbar-brand" href="#">Equipment</a>
 
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav">
-            <li>
-                <a class="nav-item nav-link" href="{% url 'equipment_home' %}">Home</a>
-            </li>
-            <li>
-                <a class="nav-item nav-link" href="{% url 'equipment_new' %}">New</a>
-            </li>
-
-            {% if status == 'Outgoing' %}
-                <li>
-                    <a class="nav-item nav-link active" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">
-                        Check-Out
-                    </a>
-                </li>
-                <li>
-                    <a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">
-                        Check-In
-                    </a>
-                </li>
-            {% else %}
-                <li>
-                    <a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">
-                        Check-Out
-                    </a>
-                </li>
-                <li>
-                    <a class="nav-item nav-link active" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">
-                        Check-In
-                    </a>
-                </li>
-            {% endif %}
-        </ul>
-    </div>
-</nav>
-
-<div class="equipment-page">
+<div class="container-fluid equipment-page">
 <!-- header -->
     <div class="equipment-header-card">
         {% if status == 'Outgoing' %}
@@ -343,9 +330,8 @@
 
 </div>
 {% endblock %}
+
 {% block extra_scripts %}
-
-
 <script>
     function job_update2() {
         var hidden = document.getElementById("select_job");

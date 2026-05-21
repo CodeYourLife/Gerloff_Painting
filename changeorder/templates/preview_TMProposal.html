@@ -1,9 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
-{% block content %}
 
-
+{% block extra_head %}
 <style>
 .recipient-row {
     border-bottom: 1px solid #eee;
@@ -26,8 +25,13 @@
     backdrop-filter: blur(4px);
 }
 </style>
+{% endblock %}
 
+{% block sub_nav %}
+{% include 'change_order_nav.html' with page_label="Sending Change Order" %}
+{% endblock %}
 
+{% block content %}
 <!--start date modal-->
 <div class="modal fade" id="startdate-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
@@ -59,7 +63,6 @@
         </div>
     </div>
 </div>
-
 
 <div class="container py-4">
 <!--header-->
@@ -312,7 +315,8 @@
     </div>
 
 </div>
-
+{% endblock %}
+{% block extra_scripts %}
 <script>
 
     $(function () {

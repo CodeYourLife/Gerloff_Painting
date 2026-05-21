@@ -1,0 +1,13 @@
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'jobs_home' %}">Jobs</a>
+<div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav ">
+            <li><a class="nav-item nav-link {% if active_tab == 'jobs_home' %}active{% endif %}" href="{% url 'jobs_home' %}">Jobs List</a></li>
+             <li><a class="nav-item nav-link {% if active_tab == 'super_home' %}active{% endif %}" href="{% url 'super_home' 'AUTO' %}">Superintendent View</a></li>
+            <li><a class="nav-item nav-link {% if active_tab == 'jobs_close' %}active{% endif %}" href="{% url 'jobs_ready_to_close' %}">Closeout</a></li>
+          {% if page_label %}
+            <li><span class="nav-item nav-link active">{{ page_label }}</span></li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>

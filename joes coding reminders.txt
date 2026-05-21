@@ -15,3 +15,20 @@ git command on server
 git fetch origin
 git stash
 git rebase origin/master
+
+www.trinity-gp.com
+www.trinitygp.net
+
+{% block extra_head %}{% endblock %}
+
+{% block sub_nav %}
+{% include 'change_order_nav.html' with active_tab="add_new" %}
+{% endblock sub_nav %}
+
+{% block extra_scripts %}{% endblock %}
+
+
+{% block sub_nav %}
+{% include 'change_order_nav.html' with page_label="Select Job for New Change Order" %}
+{% endblock %}
+

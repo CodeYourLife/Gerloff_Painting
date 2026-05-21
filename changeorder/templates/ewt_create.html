@@ -1,4 +1,9 @@
 {% extends "base.html" %}
+{% load static %}
+{% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
+{% block sub_nav %}
+{% include 'change_order_nav.html' with page_label="T&M Ticket" %}
+{% endblock %}
 {% block content %}
 
 <div class="container-fluid mt-4">
@@ -487,14 +492,9 @@
 
     </form>
 
-
-
-
-
-
-
 </div>
-
+{% endblock %}
+{% block extra_scripts %}
 <script>
 let painterCounter = 0;
 let usedCustomPainters = [];
@@ -916,8 +916,12 @@ function removePainter(id, silent=false) {
 
     let customNumber = null;
 
+
     if (customInput) {
-        customNumber = Number(customInput.value);
+        let match = customInput.value.match(/^Painter\s+(\d+)$/);
+        if (match) {
+            customNumber = Number(match[1]);
+        }
     }
 
     // --- Remove visible rows ---

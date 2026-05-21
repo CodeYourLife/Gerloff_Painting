@@ -1,15 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
-{% block content %}
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
-        <style type="text/css" class="init">
+
+{% block extra_head %}
+<style type="text/css" class="init">
 
 .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
 
@@ -18,19 +13,8 @@
     font-size: 13px;
 }
 
-        nav .active, .collapsible:hover {
-          background-color: Salmon;
-        }
-        .nav-pills a {
-            color: black;
-        }
-        .nav-pills li {
-            padding: 2px;
-        }
-        .nav-pills .active {
-            background-color: #6c757d !important;
-            padding: 5px;
-        }
+
+
         label {
             margin-left: 10px;
             margin-right: 10px;
@@ -84,44 +68,14 @@
 
 
     </style>
+{% endblock %}
 
-<!--    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-        <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
-    <script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
-    <script type="text/javascript" class="init">
-        function new_filter_now(){
-    document.getElementById('filter_form').submit();
-}
+{% block sub_nav %}
+{% include 'change_order_nav.html' with page_label="Change Order Email" %}
+{% endblock %}
 
-window.onload = function() {
-    $.fn.dataTable.moment( 'MMM-DD-YYYY' );
-    var table = $('#changeorder_table').DataTable({paging: false,info:false})
-<!--    var table = $('#changeorder_table').DataTable({paging: false, aaSorting:[],columnDefs:[{targets: 5, render: $.fn.dataTable.render.number(',','.',0,'$')}]})-->
-};
-
-    </script>
-</head>
-<body>
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="{% url 'change_order_home' %}">Change Orders</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav ">
-            <li><a class="nav-item nav-link active" href="{% url 'change_order_home' %}">Home</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'change_order_new_select' %}">Add New</a></li>
-        </ul>
-    </div>
-</nav>
+{% block content %}
+<!--I don't think this page is used anywhere-->
 
 <!--filter form-->
 <form class="form-control form-control-sm" id="filter_form" method="get">
@@ -218,6 +172,20 @@ window.onload = function() {
         </tbody>
     </table>
 </div>
-</body>
-</html>
+
+{% endblock %}
+
+{% block extra_scripts %}
+    <script type="text/javascript" class="init">
+        function new_filter_now(){
+    document.getElementById('filter_form').submit();
+}
+
+window.onload = function() {
+    $.fn.dataTable.moment( 'MMM-DD-YYYY' );
+    var table = $('#changeorder_table').DataTable({paging: false,info:false})
+<!--    var table = $('#changeorder_table').DataTable({paging: false, aaSorting:[],columnDefs:[{targets: 5, render: $.fn.dataTable.render.number(',','.',0,'$')}]})-->
+};
+
+    </script>
 {% endblock %}

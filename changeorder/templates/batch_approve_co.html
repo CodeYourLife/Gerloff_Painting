@@ -1,16 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
-{% block content %}
 
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
-        <style type="text/css" class="init">
+ {% block extra_head %}
+<style type="text/css" class="init">
 
 .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
 
@@ -19,19 +13,8 @@
     font-size: 13px;
 }
 
-        nav .active, .collapsible:hover {
-          background-color: Salmon;
-        }
-        .nav-pills a {
-            color: black;
-        }
-        .nav-pills li {
-            padding: 2px;
-        }
-        .nav-pills .active {
-            background-color: #6c757d !important;
-            padding: 5px;
-        }
+
+
         label {
             margin-left: 10px;
             margin-right: 10px;
@@ -96,21 +79,96 @@ input[type=number] {
 }
 
     </style>
+{% endblock %}
 
-<!--    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-        <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
-    <script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
+
+{% block sub_nav %}
+{% include 'change_order_nav.html' with page_label="Approving Change Orders" %}
+{% endblock %}
+
+{% block content %}
+<div class ="container">
+	<div class ="row">
+		<div class ="col"><H2>Formal Change Order</H2></div>
+	</div>
+	<div class ="row">
+		<div class ="col">Job: {{changeorder.job_number.job_number}} {{changeorder.job_number.job_name}}</div>
+	</div>
+</div>
+<hr>
+
+<form id="batch_form" action="{% url 'batch_approve_co' changeorder.id %}" method="post"  enctype="multipart/form-data" onSubmit = "return check_booking_data()">
+	{% csrf_token %}
+<div class ="container">
+	GC Number<input type="text" name="gc_number" id="gc_number" placeholder="GC Number"  onchange = "entered_GC_number()">
+	<br>
+</div>
+<br>
+	<input type="hidden" id="notes" name="notes">
+<div class ="container">
+	Add to billing SOVs?<input type="checkbox" name="approved_for_billing" id="approved_for_billing" >
+	<br>
+</div>
+	<br>
+<div class ="container">
+	Formal Change Order: <input type= "file" name="upload_file" id="upload_file" />
+	<br>
+</div>
+<br>
+<div class ="container" style="background-color:hsla(5, 100%, 92%);">
+	<h4>Select Change Orders</h4>
+	<table id="cop_table" class="display compact nowrap" style="width:100%" >
+	<thead>
+	<tr>
+		<th><b>Item</b></th>
+		<th><b>Amount</b></th>
+		<th><b>Remove</b></th>
+	</tr>
+	</thead>
+	<tbody>
+	  	<tr>
+		<td>
+			<select id="select_cop1" name="select_cop1" onchange="select_cop()">
+			{% if changeorder %}
+				<option value="{{changeorder.id}}">{{changeorder.cop_number}} {{changeorder.description}} - {{changeorder.price}}</option>
+				{% else %}
+				<option value="please_select">Please Select</option>
+				{% endif %}
+			{% for y in allchangeorders %}
+				<option value="{{y.id}}">{{y.cop_number}} {{y.description}} - {{y.price}}</option>
+			{% endfor %}
+			</select>
+		</td>
+		<td><input type="number" name="price1" id="price1" {% if changeorder %}value="{{changeorder.price}}"{% endif %} required step='.01' ></td>
+		<td><button type="button" onclick="delete_row(this)">Delete</button></td>
+		</tr>
+	  	<tr><td><button type="button" onclick="add_cop_row()">Add Another COP </button></td><td></td><td></td></tr>
+	</tbody>
+	</table>
+</div>
+<br><br><hr>
+<div class ="container" style="background-color:hsla(275, 100%, 92%);">
+	<h4>TOTAL PRICE</h4>
+	<table id="totals_table">
+		<thead><th></th><th></th></thead>
+		<tbody>
+			<tr><td style="white-space: nowrap;" width = "40px">Original Contract:</td><td style="white-space: nowrap;" width = "40px"><div id="original_contract">${{originalcontract}}</div></td></tr>
+			<tr><td style="white-space: nowrap;" width = "40px">Change Orders to Date:</td><td style="white-space: nowrap;" width = "40px"><div id="previous_change_orders">${{previous_change_orders}}</div></td></tr>
+			<tr><td style="white-space: nowrap;" width = "40px">Current Contract Amount:</td><td style="white-space: nowrap;" width = "40px"><div id="current_contract_amount">${{current_contract_amount}}</div></td></tr>
+			<tr><td style="white-space: nowrap;" width = "40px">This Change Order:</td><td style="white-space: nowrap;" width = "40px"><div id="this_change_order">${{changeorder.price}}</div></td></tr>
+			<tr><td style="white-space: nowrap;" width = "40px">Total Contract (including this change order):</td><td style="white-space: nowrap;" width = "40px"><div id="total_contract_amount">${{total_contract_amount}}</div></td></tr>
+		</tbody>
+	</table>
+	<hr>
+</div>
+<div class ="container" >
+	<input type="submit" class="btn btn-primary btn-lg" name="Form3" value="PROCESS NOW" />
+</div>
+</form>
+
+{% endblock %}
+
+{% block extra_scripts %}
     <script type="text/javascript" class="init">
 var global_items = 1
 var global_current_contract = {{current_contract_amount}}
@@ -263,105 +321,4 @@ document.addEventListener("DOMContentLoaded", function () {
 
 });
 	</script>
-</head>
-<body>
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="{% url 'change_order_home' %}">Change Orders</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav ">
-            <li><a class="nav-item nav-link" href="{% url 'change_order_home' %}">Home</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'change_order_new_select' %}">Add New</a></li>
-			<li><a class="nav-item nav-link active" href="#">Batch Approve</a></li>
-        </ul>
-    </div>
-</nav>
-<div class ="container">
-	<div class ="row">
-		<div class ="col"><H2>Formal Change Order</H2></div>
-	</div>
-	<div class ="row">
-		<div class ="col">Job: {{changeorder.job_number.job_number}} {{changeorder.job_number.job_name}}</div>
-	</div>
-</div>
-<hr>
-
-<form id="batch_form" action="{% url 'batch_approve_co' changeorder.id %}" method="post"  enctype="multipart/form-data" onSubmit = "return check_booking_data()">
-	{% csrf_token %}
-<div class ="container">
-	GC Number<input type="text" name="gc_number" id="gc_number" placeholder="GC Number"  onchange = "entered_GC_number()">
-	<br>
-</div>
-<br>
-	<input type="hidden" id="notes" name="notes">
-<div class ="container">
-	Add to billing SOVs?<input type="checkbox" name="approved_for_billing" id="approved_for_billing" >
-	<br>
-</div>
-	<br>
-<div class ="container">
-	Formal Change Order: <input type= "file" name="upload_file" id="upload_file" />
-	<br>
-</div>
-<br>
-<div class ="container" style="background-color:hsla(5, 100%, 92%);">
-	<h4>Select Change Orders</h4>
-	<table id="cop_table" class="display compact nowrap" style="width:100%" >
-	<thead>
-	<tr>
-		<th><b>Item</b></th>
-		<th><b>Amount</b></th>
-		<th><b>Remove</b></th>
-	</tr>
-	</thead>
-	<tbody>
-	  	<tr>
-		<td>
-			<select id="select_cop1" name="select_cop1" onchange="select_cop()">
-			{% if changeorder %}
-				<option value="{{changeorder.id}}">{{changeorder.cop_number}} {{changeorder.description}} - {{changeorder.price}}</option>
-				{% else %}
-				<option value="please_select">Please Select</option>
-				{% endif %}
-			{% for y in allchangeorders %}
-				<option value="{{y.id}}">{{y.cop_number}} {{y.description}} - {{y.price}}</option>
-			{% endfor %}
-			</select>
-		</td>
-		<td><input type="number" name="price1" id="price1" {% if changeorder %}value="{{changeorder.price}}"{% endif %} required step='.01' ></td>
-		<td><button type="button" onclick="delete_row(this)">Delete</button></td>
-		</tr>
-	  	<tr><td><button type="button" onclick="add_cop_row()">Add Another COP </button></td><td></td><td></td></tr>
-	</tbody>
-	</table>
-</div>
-<br><br><hr>
-<div class ="container" style="background-color:hsla(275, 100%, 92%);">
-	<h4>TOTAL PRICE</h4>
-	<table id="totals_table">
-		<thead><th></th><th></th></thead>
-		<tbody>
-			<tr><td style="white-space: nowrap;" width = "40px">Original Contract:</td><td style="white-space: nowrap;" width = "40px"><div id="original_contract">${{originalcontract}}</div></td></tr>
-			<tr><td style="white-space: nowrap;" width = "40px">Change Orders to Date:</td><td style="white-space: nowrap;" width = "40px"><div id="previous_change_orders">${{previous_change_orders}}</div></td></tr>
-			<tr><td style="white-space: nowrap;" width = "40px">Current Contract Amount:</td><td style="white-space: nowrap;" width = "40px"><div id="current_contract_amount">${{current_contract_amount}}</div></td></tr>
-			<tr><td style="white-space: nowrap;" width = "40px">This Change Order:</td><td style="white-space: nowrap;" width = "40px"><div id="this_change_order">${{changeorder.price}}</div></td></tr>
-			<tr><td style="white-space: nowrap;" width = "40px">Total Contract (including this change order):</td><td style="white-space: nowrap;" width = "40px"><div id="total_contract_amount">${{total_contract_amount}}</div></td></tr>
-		</tbody>
-	</table>
-	<hr>
-</div>
-<div class ="container" >
-	<input type="submit" class="btn btn-primary btn-lg" name="Form3" value="PROCESS NOW" />
-</div>
-</form>
-
-
-
-<script src=”https://code.jquery.com/jquery-3.2.1.slim.min.js” integrity=”sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN” crossorigin=”anonymous”></script>
-
-<script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js integrity=”sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q” crossorigin=”anonymous”></script>
-
-<script src=”https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js” integrity=”sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl” crossorigin=”anonymous”></script>
-</body>
-</html>
-
 {% endblock %}

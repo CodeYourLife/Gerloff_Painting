@@ -1069,7 +1069,10 @@ def job_page(request, jobnumber):
 
     send_data['equipments'] = Inventory.objects.filter(job_number=selectedjob, is_closed=False).order_by(
         'inventory_type')
+    send_data['equipments_count'] = Inventory.objects.filter(job_number=selectedjob, is_closed=False).order_by(
+        'inventory_type').count()
     send_data['rentals'] = Rentals.objects.filter(job_number=selectedjob, off_rent_number__isnull=True, is_closed=False)
+    send_data['rentals_count'] = Rentals.objects.filter(job_number=selectedjob, off_rent_number__isnull=True, is_closed=False).count()
     send_data['formals'] = selectedjob.formals()
     if Inventory.objects.filter(job_number=selectedjob, is_closed=False).order_by('inventory_type').exists():
         send_data['has_equipment'] = True
@@ -1128,6 +1131,7 @@ def job_page(request, jobnumber):
         subcontracts.append({'id': x.id, 'po_number': x.po_number, 'subcontract':x,'subcontractor': x.subcontractor.company,
                              'total_contract': total_contract, 'percent_complete': percent_complete})
     send_data['subcontracts'] = subcontracts
+    send_data['subcontracts_count'] = len(subcontracts)
     all_notes = JobNotesFilter(request.GET, queryset=JobNotes.objects.filter(job_number=selectedjob))
     send_data['all_notes'] = all_notes
     send_data['filtered_notes'] = all_notes.qs

@@ -1,160 +1,262 @@
 {% extends 'base.html' %}
 {% load static %}
+{% block nav_item_equipment %}active{% endblock nav_item_equipment %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+<style>
+    .equipment-form-page {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .form-card {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 18px;
+        margin-bottom: 18px;
+    }
+
+    .form-card h5 {
+        font-weight: bold;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 8px;
+        margin-bottom: 15px;
+    }
+
+    #hide_this {
+        display: none;
+    }
+
+    @media (max-width: 576px) {
+        .btn-save-equipment {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block sub_nav %}
+{% include 'equipment_nav.html' with page_label="Update Information" %}
+{% endblock %}
+
 {% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>Trinity GP</title>
-<!--	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
 
-	</style>
-	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
+<div class="container equipment-form-page mt-3 mb-5">
 
-$(document).ready(function () {
-    document.getElementById("hide_this").style.display = "none";
-})
+    <h3 class="mb-3">Update Equipment Information</h3>
 
-function show_hidden() {
-  	var x = document.getElementById("hide_this");
-  	var y = document.getElementById("select_vendor");
-  	if (y.value == "add_new"){
-  		x.style.display = "block";}
-  	else {x.style.display = "none"}
-}
-        function check_booking_data() {
-        var y = document.getElementById("select_vendor");
-        var x = document.getElementById("new_vendor");
-            if (y.value =="add_new"){
-            	if(x.value == ""){
-                	alert('Please type vendor name')
-                	return false;
-                }
-			}
+    <form name="equipment_input"
+          action="{% url 'update_equipment' item.id %}"
+          method="post"
+          onsubmit="return check_booking_data()">
+        {% csrf_token %}
 
-            }
+        <div class="form-card">
+            <h5>Equipment Details</h5>
 
-	</script>
-</head>
-<body>
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Equipment</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'equipment_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link active" >UPDATE {{item.item}}</a></li>
-    </ul>
-  </div>
-</nav>
-<div class ="container">
- <form name = equipment_input action="{% url 'update_equipment' item.id %}" method="post"  onSubmit = "return check_booking_data()">
-{% csrf_token %}
-			<label for="inventory_type0">Select Equipment Type</label>
-            <select id="inventory_type0" name="inventory_type0" >
-				<option value = {{item.inventory_type.id}}>{{item.inventory_type.type}}</option>
-                {% for type in inventorytypes %}
-                <option value={{type.id}}>{{type.type}}</option>
-                {% endfor %}
+            <div class="form-group">
+                <label for="inventory_type0">Equipment Type</label>
+                <select id="inventory_type0" name="inventory_type0" class="form-control">
+                    <option value="{{ item.inventory_type.id }}">{{ item.inventory_type.type }}</option>
+                    {% for type in inventorytypes %}
+                        <option value="{{ type.id }}">{{ type.type }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-            </select>
+            <div class="form-group">
+                <label for="item">Item Description</label>
+                <input type="text"
+                       name="item"
+                       id="item"
+                       class="form-control"
+                       value="{{ item.item }}"
+                       required>
+            </div>
 
-	 <br><br>
+            <div class="form-group">
+                <label for="number">Gerloff Number</label>
+                <input type="text"
+                       name="number"
+                       id="number"
+                       class="form-control"
+                       {% if item.number %}
+                           value="{{ item.number }}"
+                       {% else %}
+                           placeholder="GP Number"
+                       {% endif %}>
+            </div>
 
-	 Item Description: <input type= "text" name="item" id="item" value= "{{item.item}}" size="30" required />
-	 <br><br>
-	 {% if item.number %}
-	 Gerloff Number:<input type= "text" name="number" id="number" value= "{{item.number}}" size="30"  />
-	 {% else %}
-	 Gerloff Number:<input type= "text" name="number" id="number" placeholder = "GP Number" size="30"  />
-	 {% endif %}
-	<br><br>
-                    <label for="purchase_date">Date Purchased:</label>
-                    <input type="date" id="purchase_date" name="purchase_date" value="{{format_date}}" required>
+            <div class="form-group">
+                <label for="serial_number">Serial Number</label>
+                <input type="text"
+                       name="serial_number"
+                       id="serial_number"
+                       class="form-control"
+                       {% if item.serial_number is not None %}
+                           value="{{ item.serial_number }}"
+                       {% endif %}>
+            </div>
 
-	 {% if item.purchase_price %}
-	 Purchase Price:<input type= "number" name="purchase_price" id="purchase_price" value= {{item.purchase_price}} size="30" required/>
-	 {% else %}
-	 Purchase Price:<input type= "number" name="purchase_price" id="purchase_price" value= 0 size="30" required/>
-	 {% endif %}
-	<br><br>
-	             <label for="select_vendor">Where did you purchase?</label>
-            <select id="select_vendor" name="select_vendor" onChange="show_hidden()">
-                	 {% if item.purchased_from %}
-				<option value = {{item.purchased_from.id}}>{{item.purchased_from.company_name}}</option>
-				{% endif %}
-				<option value="please_select">Select Vendor</option>
-				<option value="add_new">Add New Below</option>
-				{% if vendors %}
-                {% for vendor in vendors %}
-                <option value={{vendor.id}}>{{vendor.company_name}}</option>
-                {% endfor %}
-                {% endif %}
-            </select>
+            <div class="form-check mb-2">
+                <input type="checkbox"
+                       name="is_labeled"
+                       id="is_labeled"
+                       class="form-check-input"
+                       {% if item.is_labeled %}checked{% endif %}>
+                <label for="is_labeled" class="form-check-label">
+                    Is this item currently labeled with the equipment number?
+                </label>
+            </div>
 
-<br><br>
-	 <div id="hide_this">
-<!--	 <input type = "hidden" id="purchased_from" name="purchased_from" value="new" />-->
-	 Type Vendor Name if Not in List:<input type= "text" name="new_vendor" id="new_vendor" placeholder="" size="30" onChange="check_vendor()"/>
-	</div>
-	 <br><br>
-	 	 {% if item.purchased_by is not None %}
-	 Purchased By:<input type= "text" name="purchased_by" id="purchased_by" value = "{{item.purchased_by}}" size="30" />
-	 	 {% else %}
-	 Purchased By:<input type= "text" name="purchased_by" id="purchased_by" placeholder="" size="30" />
-	 	 {% endif %}
-	<br><br>
-	 {% if item.serial_number is not None %}
-	 Serial Number:<input type= "text" name="serial_number" id="serial_number" value = "{{item.serial_number}}" size="30" />
-	 {% else %}
-	 Serial Number:<input type= "text" name="serial_number" id="serial_number" placeholder="" size="30" />
-	 {% endif %}
+            <div class="form-check">
+                <input type="checkbox"
+                       name="needs_label"
+                       id="needs_label"
+                       class="form-check-input"
+                       {% if item.needs_label %}checked{% endif %}>
+                <label for="needs_label" class="form-check-label">
+                    Does this item require a label?
+                </label>
+            </div>
+        </div>
 
-	<br><br>
-	 	 {% if item.po_number is not None %}
-	 PO Number:<input type= "text" name="po_number" id="po_number" value = "{{item.po_number}}" size="30" />
-	 {% else %}
-	 PO Number:<input type= "text" name="po_number" id="po_number" placeholder="" size="30" />
-	 {% endif %}
+        <div class="form-card">
+            <h5>Purchase Information</h5>
 
-	<br><br>
-	 {% if item.is_labeled == False %}
-	 <input type="checkbox" name ="is_labeled" id="is_labeled"   /> <label for="is_labeled">"Does this have a Gerloff tag?" </label>
-	 {% else %}
-	 <input type="checkbox" name ="is_labeled" id="is_labeled" checked /> <label for="is_labeled">"Does this have a Gerloff tag?" </label>
-	 {% endif %}
+            <div class="form-group">
+                <label for="purchase_date">Date Purchased</label>
+                <input type="date"
+                       id="purchase_date"
+                       name="purchase_date"
+                       class="form-control"
+                       value="{{ format_date }}"
+                       required>
+            </div>
 
-	 	<br><br>
-	 {% if item.needs_label == False %}
-	 <input type="checkbox" name ="needs_label" id="needs_label"   /> <label for="needs_label">"Does this item need a Gerloff tag?" </label>
-	 {% else %}
-	 <input type="checkbox" name ="needs_label" id="needs_label" checked /> <label for="needs_label">"Does this item need a Gerloff tag?" </label>
-	 {% endif %}
-	 <br><br>
-	 Notes about this equipment:<br>
-                                                <textarea id="notes" name="notes" class="form-control"
-                                                          style="min-width: 100%">{{item.notes}}</textarea>
-<br><br>
-Database Id: {{item.id}}
-<br><br>
+            <div class="form-group">
+                <label for="purchase_price">Purchase Price</label>
+                <input type="number"
+                       name="purchase_price"
+                       id="purchase_price"
+                       class="form-control"
+                       {% if item.purchase_price %}
+                           value="{{ item.purchase_price }}"
+                       {% else %}
+                           value="0"
+                       {% endif %}
+                       step="0.01"
+                       required>
+            </div>
 
-<input type="submit" value="Save" />
+            <div class="form-group">
+                <label for="select_vendor">Where did you purchase?</label>
+                <select id="select_vendor"
+                        name="select_vendor"
+                        class="form-control"
+                        onchange="show_hidden()">
+                    {% if item.purchased_from %}
+                        <option value="{{ item.purchased_from.id }}">
+                            {{ item.purchased_from.company_name }}
+                        </option>
+                    {% endif %}
+                    <option value="please_select">Select Vendor</option>
+                    <option value="add_new">Add New Below</option>
+                    {% if vendors %}
+                        {% for vendor in vendors %}
+                            <option value="{{ vendor.id }}">{{ vendor.company_name }}</option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+
+            <div id="hide_this" class="form-group">
+                <label for="new_vendor">Type Vendor Name if Not in List</label>
+                <input type="text"
+                       name="new_vendor"
+                       id="new_vendor"
+                       class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label for="purchased_by">Purchased By</label>
+                <input type="text"
+                       name="purchased_by"
+                       id="purchased_by"
+                       class="form-control"
+                       {% if item.purchased_by is not None %}
+                           value="{{ item.purchased_by }}"
+                       {% endif %}>
+            </div>
+
+            <div class="form-group">
+                <label for="po_number">PO Number</label>
+                <input type="text"
+                       name="po_number"
+                       id="po_number"
+                       class="form-control"
+                       {% if item.po_number is not None %}
+                           value="{{ item.po_number }}"
+                       {% endif %}>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h5>Notes</h5>
+
+            <div class="form-group">
+                <label for="notes">Notes about this equipment</label>
+                <textarea id="notes"
+                          name="notes"
+                          class="form-control"
+                          rows="4">{{ item.notes|default:"" }}</textarea>
+            </div>
+
+            <div class="text-muted">
+                Database ID: {{ item.id }}
+            </div>
+        </div>
+
+        <input type="submit"
+               class="btn btn-primary btn-save-equipment"
+               value="Save Changes">
+
     </form>
 </div>
 
-</body>
-</html>
+{% endblock %}
 
+{% block extra_scripts %}
+<script>
+    $(document).ready(function () {
+        document.getElementById("hide_this").style.display = "none";
+    });
+
+    function show_hidden() {
+        var hiddenBox = document.getElementById("hide_this");
+        var vendorSelect = document.getElementById("select_vendor");
+
+        if (vendorSelect.value == "add_new") {
+            hiddenBox.style.display = "block";
+        } else {
+            hiddenBox.style.display = "none";
+        }
+    }
+
+    function check_booking_data() {
+        var vendorSelect = document.getElementById("select_vendor");
+        var newVendor = document.getElementById("new_vendor");
+
+        if (vendorSelect.value == "add_new") {
+            if (newVendor.value == "") {
+                alert("Please type vendor name");
+                return false;
+            }
+        }
+
+        return true;
+    }
+</script>
 {% endblock %}

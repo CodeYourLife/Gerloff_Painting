@@ -1,5 +1,14 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
+
+{% block sub_nav %}
+{% include 'change_order_nav.html' with page_label="Select PM" %}
+{% endblock %}
+
 {% block content %}
+
 
 <div class="container mt-4">
     <h3>Select PM for Internal Approval</h3>
@@ -86,6 +95,9 @@
     </form>
 </div>
 
+
+{% endblock %}
+{% block extra_scripts %}
 {% if default_approver %}
 <script>
     const dropdown = document.getElementById("approver");
