@@ -1,4 +1,9 @@
 {% extends "base.html" %}
+{% load static %}
+{% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
+{% block sub_nav %}
+{% include 'change_order_nav.html' with page_label="T&M Ticket" %}
+{% endblock %}
 {% block content %}
 
 <div class="container-fluid mt-4">
@@ -734,10 +739,19 @@
 
 
 </div>
-
+{% endblock %}
+{% block extra_scripts %}
 <script>
 let painterCounter = {{ labor_count }};
-let usedCustomPainters = [];
+let usedCustomPainters = [
+{% for group in labor_list %}
+    {% if group.custom_employee %}
+        {% if group.custom_employee|slice:":8" == "Painter " %}
+            {{ group.custom_employee|slice:"8:" }},
+        {% endif %}
+    {% endif %}
+{% endfor %}
+];
 let paintersData = {};
 let editingPainterId = null;
 let editingMaterialId = null;
@@ -1159,9 +1173,11 @@ function removePainter(id, silent=false) {
     let customNumber = null;
 
     if (customInput) {
-        customNumber = Number(customInput.value);
+        let match = customInput.value.match(/^Painter\s+(\d+)$/);
+        if (match) {
+            customNumber = Number(match[1]);
     }
-
+}
     // --- Remove visible rows ---
     document.querySelectorAll(`.painter-group-${id}`)
         .forEach(row => row.remove());
@@ -1794,6 +1810,20 @@ document.getElementById("equipment_master").addEventListener("change", function(
 
 document.getElementById("material_master").addEventListener("change", function() {
     this.classList.remove("is-invalid");
+});
+
+$('#addPainterModal').on('hidden.bs.modal', function () {
+    editingPainterId = null;
+
+    if ($('#modal_employee').hasClass("select2-hidden-accessible")) {
+        $('#modal_employee').select2('destroy');
+    }
+
+    document.getElementById("modal_employee").innerHTML = "";
+    document.getElementById("regular_container").innerHTML = "";
+    document.getElementById("ot_container").innerHTML = "";
+    document.getElementById("toggle_ot").checked = false;
+    document.getElementById("ot_container").style.display = "none";
 });
 
 $('#addSundriesModal').on('shown.bs.modal', function () {

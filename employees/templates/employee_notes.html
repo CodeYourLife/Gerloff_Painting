@@ -1,13 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block content %}
 {% load render_table from django_tables2 %}
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
+
+{% block extra_head %}
     <style type="text/css" class="init">
 
     .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
@@ -17,19 +12,8 @@
             font-size: 13px;
         }
 
-        nav .active, .collapsible:hover {
-          background-color: Salmon;
-        }
-        .nav-pills a {
-            color: black;
-        }
-        .nav-pills li {
-            padding: 2px;
-        }
-        .nav-pills .active {
-            background-color: #6c757d !important;
-            padding: 5px;
-        }
+
+
         label {
             margin-left: 10px;
             margin-right: 10px;
@@ -80,56 +64,15 @@ white-space:normal;
 .table td {
         }
     </style>
-    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd"
-            data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-    <script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html"
-            async></script>
-    <script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html"
-            async></script>
-    <script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-    <script type="text/javascript" language="javascript"
-            src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
-    <script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
-    <script type="text/javascript" class="init">
+{% endblock %}
 
+{% block sub_nav %}
+{% include 'employees_nav.html' with page_label="Employee Activity" %}
+{% endblock %}
 
-window.onload = function() {
-    $.fn.dataTable.moment( 'MMM-DD-YYYY' );
-    var table = $('#jobs_table').DataTable({paging:false, order:[[2,'desc']]})
+{% block content %}
 
-}
-function new_filter_now(){
-    document.getElementById('filter_form').submit();
-}
-    </script>
-
-
-</head>
-<body>
-
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav ">
-            <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
-            <!--            <li><a class="nav-item nav-link" href="{% url 'training' %}">Training</a></li>-->
-            <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
-            <li><a class="nav-item nav-link active" href="{% url 'employee_notes' 'AUTO' %}">Employee Notes</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'safety_home' %}">Safety</a></li>
-        </ul>
-    </div>
-
-</nav>
 
 <form id="filter_form" class="form-control form-control-sm" action="{% url 'employee_notes' 'ALL' %}" method="get">
     <div class="container">
@@ -185,8 +128,18 @@ function new_filter_now(){
 </div>
 
 
+{% endblock %}
+{% block extra_scripts %}
+    <script type="text/javascript" class="init">
 
-</body>
-</html>
 
+window.onload = function() {
+    $.fn.dataTable.moment( 'MMM-DD-YYYY' );
+    var table = $('#jobs_table').DataTable({paging:false, order:[[2,'desc']]})
+
+}
+function new_filter_now(){
+    document.getElementById('filter_form').submit();
+}
+    </script>
 {% endblock %}

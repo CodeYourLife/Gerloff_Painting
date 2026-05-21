@@ -2,8 +2,8 @@
 {% load static %}
 
 {% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
-{% block content %}
 
+{% block extra_head %}
 <style>
 .emailbutton {
     display: none;
@@ -42,7 +42,9 @@
     text-align: center;
 }
 </style>
+{% endblock %}
 
+{% block content %}
 <div class="container py-4">
 
     <!-- Page Header -->
@@ -264,7 +266,8 @@
     </div>
 
 </div>
-
+{% endblock %}
+{% block extra_scripts %}
 <script>
 
 let lastClickedButton = null;

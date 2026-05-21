@@ -1244,6 +1244,7 @@ def price_ewt(request, id):
                    'equipment2': equipment2, 'sundries2': sundries2,'extras2': extras2,'totalextrascost':money(totalextrascost), 'totalmaterialcost': money(totalmaterialcost),
                    'totallaborcost': money(totallaborcost), 'totalequipmentcost': money(totalequipmentcost),'totalsundriescost': money(totalsundriescost)})
 
+#5.20.26 i dont think this is used
 @login_required(login_url='/accounts/login')
 def price_old_ewt(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
@@ -2167,8 +2168,11 @@ def change_order_home(request):
                                                                                          job_number__is_closed=False))
     changeorders = search_cos.qs.order_by('id')
     send_data['supers'] = Employees.objects.filter(job_title__description="Superintendent", active=True)
-
-
+    if 'search2' in request.GET:
+        if request.GET['search2'] != "ALL" and request.GET['search2'] != "UNASSIGNED":
+            super = Employees.objects.filter(id=request.GET['search2']).first()
+            if super:
+                send_data['selected_supername'] = super.first_name + " " + super.last_name
     send_data['changeorders'] = changeorders
     # send_data['changeorders'] = search_cos.qs.order_by('job_number', 'cop_number')
     return render(request, "change_order_home.html", send_data)

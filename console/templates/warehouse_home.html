@@ -153,10 +153,10 @@
 	{% block content %}
 
 	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Warehouse</a>
+		<a class="navbar-brand sub-navbar-brand" href="{% url 'warehouse_home' %}">Warehouse Home</a>
 		<div id="navbarNavDropdown2">
 		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link active" href="#">Home</a></li>
+        <li><a class="nav-item nav-link active" href="{% url 'warehouse_home' %}">Home</a></li>
     </ul>
   </div>
 </nav>

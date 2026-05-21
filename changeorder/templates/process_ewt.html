@@ -1,23 +1,224 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container-fluid mt-4 mb-5">
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>Trinity GP</title>
-<!--	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
+{% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
 
-	</style>
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
+{% block sub_nav %}
+{% include 'change_order_nav.html' with page_label="Extra Work Ticket" %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 mb-5">
+
+<!--header-->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h3 class="mb-2">Extra Work Ticket</h3>
+        <div class="text-muted">
+            {{changeorder.job_number.job_number}} -
+            {{changeorder.job_number.job_name}} -
+            {{changeorder.description}}
+        </div>
+    </div>
+</div>
+<br><br>
+
+<form name="ticket_input" action="{% url 'process_ewt' changeorder.id %}" method="post" onSubmit="return before_post()" >
+{% csrf_token %}
+<div class="row mb-3">
+    <div class="col-12 col-md-4">
+        <label>Week Ending Date</label>
+        <input type="date"
+               class="form-control"
+               name="date_week_ending"
+               value="{{ewtdate}}"
+               required>
+    </div>
+</div>
+
+<div class="form-group">
+    <label>Details of Work Completed</label>
+    <textarea class="form-control"
+              name="ticket_description"
+              rows="3">{% if ewt %}{{ewt.notes}}{% endif %}</textarea>
+</div>
+<hr>
+<br /> <hr>
+
+<h3>LABOR BREAKDOWN</h3>
+<div class="table-responsive">
+	    <table id="labor_breakdown" class="table table-sm table-bordered table-striped">
+		<thead>
+			<tr>
+				<th>Employee Name</th>
+				<th>M</th>
+				<th>T</th>
+				<th>W</th>
+				<th>TH</th>
+				<th>F</th>
+				<th>S</th>
+				<th>S</th>
+				<th>OT?</th>
+				<th>Delete</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% if laboritems %}
+			{% for x in laboritems %}
+			<tr id="row1">
+				<td>
+					<select class="form-control form-control-sm" id="existing_painter" name="existing_painter" >
+				{% if x.employee %}
+					{% for y in employees %} {% if y.id == x.employee_id %}
+                		<option value={{y.id}}>{{y.first_name}} {{y.last_name}}</option>
+					{% endif %}{% endfor %}
+				{% else %}
+						<option value='painter{{x.custom_employee}}'>Painter {{x.custom_employee}}</option>
+				{% endif %}
+            		</select>
+				</td>
+				<td><input type="number" id="monday" name="monday" class="form-control form-control-sm" value ={{x.monday}} ></td>
+				<td><input type="number" id="tuesday" name="tuesday" value ={{x.tuesday}} class="form-control form-control-sm" ></td>
+				<td><input type="number" id="wednesday" name="wednesday" value ={{x.wednesday}} class="form-control form-control-sm" ></td>
+				<td><input type="number" id="thursday" name="thursday" value ={{x.thursday}} class="form-control form-control-sm" ></td>
+				<td><input type="number" id="friday" name="friday" value ={{x.friday}} class="form-control form-control-sm" ></td>
+				<td><input type="number" id="saturday" name="saturday" value ={{x.saturday}} class="form-control form-control-sm" ></td>
+				<td><input type="number" id="sunday" name="sunday" value ={{x.sunday}} class="form-control form-control-sm" ></td>
+				{% if x.master_id == 8 %}
+				<td>OT?
+					<input type='hidden' value='notchecked' name="is_overtime" id="is_overtime" >
+					<input type="checkbox" name="is_overtime" id="is_overtime" value="checked" checked />
+        		{% else %}
+					<td>OT?
+					<input type='hidden' value='notchecked' name="is_overtime" id="is_overtime" >
+					<input type="checkbox" name="is_overtime" id="is_overtime" value="checked"  />
+				{% endif %}
+				</td>
+				<td><button type="button" onclick="delete_row(this)">Delete </button></td>
+			</tr>
+		{% endfor %}
+	{% endif %}
+
+		</tbody>
+	</table>
+</div>
+<button type="button" class="btn btn-outline-warning btn-sm mt-2 w-100 w-md-auto" onclick="add_painter_row()">Add Painter Row </button>
+<br><br><hr>
+<h3>MATERIAL BREAKDOWN</h3>
+<table id="material_breakdown" class="table table-sm table-bordered table-striped">
+	<thead>
+		<tr>
+			<th>Item</th>
+			<th>Description</th>
+			<th>Quantity</th>
+			<th>Units</th>
+			<th>Delete</th>
+		</tr>
+	</thead>
+	<tbody>
+{% if materialitems %}
+	{% for x in materialitems %}
+		<tr>
+			<td>
+				<select class="form-control form-control-sm" id="existing_material" name="existing_material" >
+		{% for y in materials %}  {% if y.id == x.master_id %}
+					<option value={{y.id}}>{{y.item}}</option>
+		{% endif %}
+		{% endfor %}
+				</select>
+			</td>
+			<td><input type="text" name="description" placeholder="description" class="form-control form-control-sm" id="description" value = "{{x.description}}" /></td>
+			<td><input type="number" id="quantity" name = "quantity" class="form-control form-control-sm" value = {{x.quantity}} /></td>
+			<td><input type="text" name="units" placeholder="units" size="10" id="units" value = "{{x.units}}"  /></td>
+			<td><button type="button" onclick="delete_row(this)">Delete </button></td>
+		</tr>
+	{% endfor %}
+ {% endif %}
+	</tbody>
+</table>
+<button type="button" class="btn btn-outline-warning btn-sm mt-2 w-100 w-md-auto" onclick="add_material_row()">Add Material Row </button>
+<br><hr>
+<h3>EQUIPMENT BREAKDOWN</h3>
+<table id="equipment_breakdown" class="table table-sm table-bordered table-striped">
+	<thead>
+		<tr>
+			<th>Item</th>
+			<th>Description</th>
+			<th>Quantity</th>
+			<th>Units</th>
+			<th>Delete</th>
+		</tr>
+	</thead>
+	<tbody>
+{% if equipmentitems %}
+	{% for x in equipmentitems %}
+		<tr>
+			<td>
+				<select class="form-control form-control-sm" id="existing_equipment" name="existing_equipment" >
+		{% for y in equipment %}  {% if y.id == x.master_id %}
+						<option value={{y.id}}>{{y.item}}</option>
+		{% endif %}
+		{% endfor %}
+				</select>
+			</td>
+			<td><input type="text" name="equip_description" class="form-control form-control-sm" id="equip_description" value = "{{x.description}}" /></td>
+			<td><input type="number" id="equip_quantity" name = "equip_quantity" class="form-control form-control-sm" value = {{x.quantity}} /></td>
+			<td><input type="text" name="equip_units" placeholder="units" size="10" id="equip_units" value = "{{x.units}}"  /></td>
+			<td><button type="button" onclick="delete_row(this)">Delete </button></td>
+		</tr>
+
+	{% endfor %}
+ {% endif %}
+	</tbody>
+</table>
+<button type="button" class="btn btn-outline-warning btn-sm mt-2 w-100 w-md-auto" onclick="add_equipment_row()">Add Equipment </button>
+<br><hr>
+<h3>SUNDRIES BREAKDOWN</h3>
+<table id="sundries_breakdown" class="table table-sm table-bordered table-striped">
+	<thead>
+		<tr>
+			<th>Item</th>
+			<th>Description</th>
+			<th>Quantity</th>
+			<th>Units</th>
+			<th>Delete</th>
+		</tr>
+	</thead>
+	<tbody>
+{% if sundriesitems %}
+	{% for x in sundriesitems %}
+		<tr>
+			<td>
+				<select class="form-control form-control-sm" id="existing_sundries" name="existing_sundries" >
+		{% for y in sundries %}  {% if y.id == x.master_id %}
+					<option value={{y.id}}>{{y.item}}</option>
+					{% endif %}
+					{% endfor %}
+				</select>
+			</td>
+			<td><input type="text" name="sundries_description" class="form-control form-control-sm" id="sundries_description" value = "{{x.description}}" /></td>
+			<td><input type="number" id="sundries_quantity" name = "sundries_quantity" class="form-control form-control-sm" value = {{x.quantity}} /></td>
+			<td><input type="text" name="sundries_units" placeholder="units" size="10" id="sundries_units" value = "{{x.units}}"  /></td>
+			<td><button type="button" onclick="delete_row(this)">Delete </button></td>
+		</tr>
+	{% endfor %}
+{% endif %}
+	</tbody>
+</table>
+<button type="button" class="btn btn-outline-warning btn-sm mt-2 w-100 w-md-auto" onclick="add_sundries_row()">Add Sundries </button>
+<br><br>
+<input type="hidden" name="number_painters" value="0" id="number_painters"/>
+<input type="hidden" name="number_materials" value="0" id="number_materials"/>
+<input type="hidden" name="number_equipment" value="0" id="number_equipment"/>
+<input type="hidden" name="number_sundries" value="0" id="number_sundries"/>
+<input type="submit" class="btn btn-outline-primary btn-sm mt-2 w-100 w-md-auto" value="Submit Ticket" />
+<br>
+<br>
+</form>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
 	<script type="text/javascript" class="init">
 
 var row_counter = 1;
@@ -342,217 +543,4 @@ if (elementTypeSelector[i].value =='please_select'){
 }
 
 </script>
-
-<!--header-->
-<div class="card shadow-sm mb-4">
-    <div class="card-body">
-        <h3 class="mb-2">Extra Work Ticket</h3>
-        <div class="text-muted">
-            {{changeorder.job_number.job_number}} -
-            {{changeorder.job_number.job_name}} -
-            {{changeorder.description}}
-        </div>
-    </div>
-</div>
-<br><br>
-
-
-<form name="ticket_input" action="{% url 'process_ewt' changeorder.id %}" method="post" onSubmit="return before_post()" >
-{% csrf_token %}
-<div class="row mb-3">
-    <div class="col-12 col-md-4">
-        <label>Week Ending Date</label>
-        <input type="date"
-               class="form-control"
-               name="date_week_ending"
-               value="{{ewtdate}}"
-               required>
-    </div>
-</div>
-
-<div class="form-group">
-    <label>Details of Work Completed</label>
-    <textarea class="form-control"
-              name="ticket_description"
-              rows="3">{% if ewt %}{{ewt.notes}}{% endif %}</textarea>
-</div>
-<hr>
-<br /> <hr>
-
-<h3>LABOR BREAKDOWN</h3>
-<div class="table-responsive">
-	    <table id="labor_breakdown" class="table table-sm table-bordered table-striped">
-		<thead>
-			<tr>
-				<th>Employee Name</th>
-				<th>M</th>
-				<th>T</th>
-				<th>W</th>
-				<th>TH</th>
-				<th>F</th>
-				<th>S</th>
-				<th>S</th>
-				<th>OT?</th>
-				<th>Delete</th>
-			</tr>
-		</thead>
-		<tbody>
-		{% if laboritems %}
-			{% for x in laboritems %}
-			<tr id="row1">
-				<td>
-					<select class="form-control form-control-sm" id="existing_painter" name="existing_painter" >
-				{% if x.employee %}
-					{% for y in employees %} {% if y.id == x.employee_id %}
-                		<option value={{y.id}}>{{y.first_name}} {{y.last_name}}</option>
-					{% endif %}{% endfor %}
-				{% else %}
-						<option value='painter{{x.custom_employee}}'>Painter {{x.custom_employee}}</option>
-				{% endif %}
-            		</select>
-				</td>
-				<td><input type="number" id="monday" name="monday" class="form-control form-control-sm" value ={{x.monday}} ></td>
-				<td><input type="number" id="tuesday" name="tuesday" value ={{x.tuesday}} class="form-control form-control-sm" ></td>
-				<td><input type="number" id="wednesday" name="wednesday" value ={{x.wednesday}} class="form-control form-control-sm" ></td>
-				<td><input type="number" id="thursday" name="thursday" value ={{x.thursday}} class="form-control form-control-sm" ></td>
-				<td><input type="number" id="friday" name="friday" value ={{x.friday}} class="form-control form-control-sm" ></td>
-				<td><input type="number" id="saturday" name="saturday" value ={{x.saturday}} class="form-control form-control-sm" ></td>
-				<td><input type="number" id="sunday" name="sunday" value ={{x.sunday}} class="form-control form-control-sm" ></td>
-				{% if x.master_id == 8 %}
-				<td>OT?
-					<input type='hidden' value='notchecked' name="is_overtime" id="is_overtime" >
-					<input type="checkbox" name="is_overtime" id="is_overtime" value="checked" checked />
-        		{% else %}
-					<td>OT?
-					<input type='hidden' value='notchecked' name="is_overtime" id="is_overtime" >
-					<input type="checkbox" name="is_overtime" id="is_overtime" value="checked"  />
-				{% endif %}
-				</td>
-				<td><button type="button" onclick="delete_row(this)">Delete </button></td>
-			</tr>
-		{% endfor %}
-	{% endif %}
-
-		</tbody>
-	</table>
-</div>
-<button type="button" class="btn btn-outline-warning btn-sm mt-2 w-100 w-md-auto" onclick="add_painter_row()">Add Painter Row </button>
-<br><br><hr>
-<h3>MATERIAL BREAKDOWN</h3>
-<table id="material_breakdown" class="table table-sm table-bordered table-striped">
-	<thead>
-		<tr>
-			<th>Item</th>
-			<th>Description</th>
-			<th>Quantity</th>
-			<th>Units</th>
-			<th>Delete</th>
-		</tr>
-	</thead>
-	<tbody>
-{% if materialitems %}
-	{% for x in materialitems %}
-		<tr>
-			<td>
-				<select class="form-control form-control-sm" id="existing_material" name="existing_material" >
-		{% for y in materials %}  {% if y.id == x.master_id %}
-					<option value={{y.id}}>{{y.item}}</option>
-		{% endif %}
-		{% endfor %}
-				</select>
-			</td>
-			<td><input type="text" name="description" placeholder="description" class="form-control form-control-sm" id="description" value = "{{x.description}}" /></td>
-			<td><input type="number" id="quantity" name = "quantity" class="form-control form-control-sm" value = {{x.quantity}} /></td>
-			<td><input type="text" name="units" placeholder="units" size="10" id="units" value = "{{x.units}}"  /></td>
-			<td><button type="button" onclick="delete_row(this)">Delete </button></td>
-		</tr>
-	{% endfor %}
- {% endif %}
-	</tbody>
-</table>
-<button type="button" class="btn btn-outline-warning btn-sm mt-2 w-100 w-md-auto" onclick="add_material_row()">Add Material Row </button>
-<br><hr>
-<h3>EQUIPMENT BREAKDOWN</h3>
-<table id="equipment_breakdown" class="table table-sm table-bordered table-striped">
-	<thead>
-		<tr>
-			<th>Item</th>
-			<th>Description</th>
-			<th>Quantity</th>
-			<th>Units</th>
-			<th>Delete</th>
-		</tr>
-	</thead>
-	<tbody>
-{% if equipmentitems %}
-	{% for x in equipmentitems %}
-		<tr>
-			<td>
-				<select class="form-control form-control-sm" id="existing_equipment" name="existing_equipment" >
-		{% for y in equipment %}  {% if y.id == x.master_id %}
-						<option value={{y.id}}>{{y.item}}</option>
-		{% endif %}
-		{% endfor %}
-				</select>
-			</td>
-			<td><input type="text" name="equip_description" class="form-control form-control-sm" id="equip_description" value = "{{x.description}}" /></td>
-			<td><input type="number" id="equip_quantity" name = "equip_quantity" class="form-control form-control-sm" value = {{x.quantity}} /></td>
-			<td><input type="text" name="equip_units" placeholder="units" size="10" id="equip_units" value = "{{x.units}}"  /></td>
-			<td><button type="button" onclick="delete_row(this)">Delete </button></td>
-		</tr>
-
-	{% endfor %}
- {% endif %}
-	</tbody>
-</table>
-<button type="button" class="btn btn-outline-warning btn-sm mt-2 w-100 w-md-auto" onclick="add_equipment_row()">Add Equipment </button>
-<br><hr>
-<h3>SUNDRIES BREAKDOWN</h3>
-<table id="sundries_breakdown" class="table table-sm table-bordered table-striped">
-	<thead>
-		<tr>
-			<th>Item</th>
-			<th>Description</th>
-			<th>Quantity</th>
-			<th>Units</th>
-			<th>Delete</th>
-		</tr>
-	</thead>
-	<tbody>
-{% if sundriesitems %}
-	{% for x in sundriesitems %}
-		<tr>
-			<td>
-				<select class="form-control form-control-sm" id="existing_sundries" name="existing_sundries" >
-		{% for y in sundries %}  {% if y.id == x.master_id %}
-					<option value={{y.id}}>{{y.item}}</option>
-					{% endif %}
-					{% endfor %}
-				</select>
-			</td>
-			<td><input type="text" name="sundries_description" class="form-control form-control-sm" id="sundries_description" value = "{{x.description}}" /></td>
-			<td><input type="number" id="sundries_quantity" name = "sundries_quantity" class="form-control form-control-sm" value = {{x.quantity}} /></td>
-			<td><input type="text" name="sundries_units" placeholder="units" size="10" id="sundries_units" value = "{{x.units}}"  /></td>
-			<td><button type="button" onclick="delete_row(this)">Delete </button></td>
-		</tr>
-	{% endfor %}
-{% endif %}
-	</tbody>
-</table>
-<button type="button" class="btn btn-outline-warning btn-sm mt-2 w-100 w-md-auto" onclick="add_sundries_row()">Add Sundries </button>
-<br><br>
-<input type="hidden" name="number_painters" value="0" id="number_painters"/>
-<input type="hidden" name="number_materials" value="0" id="number_materials"/>
-<input type="hidden" name="number_equipment" value="0" id="number_equipment"/>
-<input type="hidden" name="number_sundries" value="0" id="number_sundries"/>
-<input type="submit" class="btn btn-outline-primary btn-sm mt-2 w-100 w-md-auto" value="Submit Ticket" />
-<br>
-<br>
-</form>
-
-
-
-
-
-</div>
 {% endblock %}

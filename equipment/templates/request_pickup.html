@@ -1,214 +1,441 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block content %}
 {% load render_table from django_tables2 %}
-<!DOCTYPE html>
-<html>
-<head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>Trinity GP</title>
-<!--	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
-    .list-items {
-    border-bottom: 1px solid black; display: flex; justify-content: space-between;
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+
+<style>
+    .pickup-page {
+        max-width: 1100px;
+        margin: 0 auto;
     }
-	</style>
-	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
 
-$(document).ready(function () {
-    document.getElementById("hide_this").style.display = "none"
-})
+    .page-card {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 18px;
+        background: #fff;
+    }
 
-	function check_booking_data(){
-alert("Please be patient until this completes")
-document.getElementById("send_now").style.display = "none"
-    document.getElementById("hide_this").style.display = "block"
-	}
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: bold;
+        margin-bottom: 12px;
+    }
 
-function check_paint_boxes(){
-	save_paint = document.getElementById("save_paint")
-	remove_trash = document.getElementById("remove_trash")
-	if (event.target == save_paint){
-		if(save_paint.checked == true){remove_trash.checked = true}
-	}
-	if (event.target == remove_trash){
-		if (remove_trash.checked == false){save_paint.checked = false}
-	}
-}
-function check_paint_boxes2(){
-	save_paint = document.getElementById("save_paint")
-	remove_trash = document.getElementById("remove_trash")
-	if (event.target == save_paint){
-		if(save_paint.checked == true){
-			remove_trash.checked = true
-		}
-		form5.submit()
-	}
-	if (event.target == remove_trash){
-		if (remove_trash.checked == false){
-		save_paint.checked = false
-		}
-		form5.submit()
-	}
-}
-	</script>
-</head>
-<body>
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Equipment</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'equipment_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'equipment_new' %}">New</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
-	  	<li><a class="nav-item nav-link active" >Request Equipment Pickup</a></li>
-    </ul>
-  </div>
-</nav>
+    .equipment-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 1px solid #eee;
+        padding: 10px 0;
+    }
 
-<h1>{{selected_job}}</h1>
+    .equipment-row:last-child {
+        border-bottom: none;
+    }
 
-{% if existing_request_all %}
-	<h3>There is already an existing request to pickup all equipment from the job.</h3>
-		{% if remove_trash %}
-	{% if save_paint %}
-	<h3>There is also a request to remove the trash, and save the leftover paint</h3>
-	{% else %}
-	<h3>There is also a request to remove the trash</h3>
-	{% endif %}
-	{% endif %}
+    .equipment-name {
+        font-weight: bold;
+    }
 
+    .action-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+    }
 
-		<h3>Would you like to edit this request?</h3>
-	<form name = job_update action="{%  url 'request_pickup' selected_job.job_number 'ALL' existing_request_all.id 'REVISE' %}" method="post" >
-		{% csrf_token %}
-		<input type="submit" class="btn btn-primary btn-lg" name = "revise" value="Yes Revise Order" />
-		<input type="submit" class="btn btn-secondary btn-lg" name = "cancel" value="No Thanks" />
-	</form>
-{% elif existing_request %}
-	<h3>There is already an existing request to pickup the following equipment:</h3>
-	<table id="allitems" class="display" style="width:90%">
-	<tr>{{existing_request.date}}</tr>
-	{% for x in existing_request_items %}
-	<tr><td>#{{x.item.number}}- {{x.item.item}}</td></tr>
-	{% endfor %}
-	</table>
-	{% if remove_trash %}
-	{% if save_paint %}
-	<h3>There is also a request to remove the trash, and save the leftover paint</h3>
-	{% else %}
-	<h3>There is also a request to remove the trash</h3>
-	{% endif %}
-	{% endif %}
-	<h4>Would you like to add on to this request?</h4>
-	<form name = job_update action="{%  url 'request_pickup' selected_job.job_number 'ALL' existing_request.id 'REVISE' %}" method="post" >
-		{% csrf_token %}
-		<input type="submit" class="btn btn-primary btn-lg" name = "revise" value="Yes Revise Order" />
-		<input type="submit" class="btn btn-primary btn-lg" name = "cancel" value="Cancel" />
-	</form>
-{% else %}
-	<h3>Current Equipment Assigned to Job</h3>
-	<table id="allitems" class="display" style="width:90%">
-	{% for x in all_items %}
-	<tr><td>#{{x.number}}- {{x.item}}</td></tr>
-	{% endfor %}
-	</table>
-	{% if not selected_request %}
-		{% if selected_item %}
-		<form name = job_update action="{%  url 'request_pickup' selected_job.job_number selected_item.id 'ALL' 'ADD' %}" method="post"  >
- 		{% else %}
-		<form name = job_update action="{%  url 'request_pickup' selected_job.job_number 'ALL' 'ALL' 'ADD' %}" method="post" >
-		{% endif %}
-		{% csrf_token %}
-		<br>
-			<b>Pickup Trash?  </b><input type="checkbox" id="remove_trash" name="remove_trash" {% if remove_trash %} checked {% endif %} onchange="check_paint_boxes()">
-		<br>
-			<b>Save Leftover Paint?  </b><input type="checkbox" id="save_paint" name="save_paint" {% if save_paint %} checked {% endif %} onchange="check_paint_boxes()">
-	<br>
-		<input type="submit" class="btn btn-primary btn-lg" name = "all_items" value="Pickup All Items From Job" />
-		<input type="submit" class="btn btn-primary btn-lg" name = "this_item_only" value="Pickup Certain Items Only" />
-		</form>
-	{% else %}
-	 	<form name = job_update action="{%  url 'request_pickup' selected_job.job_number 'ALL' selected_request.id 'CHANGE' %}" method="post" >
-		{% csrf_token %}
-					<br>
-<!--			<b>Pickup Trash?  </b><input type="checkbox" id="remove_trash" name="remove_trash" {% if remove_trash %} checked {% endif %} onchange="check_paint_boxes()">-->
-<!--		<br>-->
-<!--			<b>Save Leftover Paint?  </b><input type="checkbox" id="save_paint" name="save_paint" {% if save_paint %} checked {% endif %} onchange="check_paint_boxes()">-->
-<!--<br>-->
+    .option-box {
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 15px;
+    }
 
-		{% if selected_request.all_items == False %}
+    #hide_this {
+        display: none;
+        margin-top: 15px;
+        color: red;
+        font-weight: bold;
+    }
 
-			<input type="submit" class="btn btn-danger btn-sm" name = "change_to_all_items" value="Pickup All Items From Job Instead" />
-		 {% else %}
-			 <input type="submit" class="btn btn-danger btn-sm" name = "change_to_certain_items" value="Pickup Only Certain Items Instead" />
-		 {% endif %}
-		</form>
-		{% if selected_request.all_items == False %}
-		 	<br><hr><br>
- 			{% if available_items %}
-			 	<h3 id="try_this">PLEASE SELECT ITEMS YOU WOULD LIKE PICKED UP </h3>
-				<table id="available_table" class="display" style="width:90%">
-				{% for x in available_items %}
-					<tr><td>#{{x.number}}- {{x.item}}</td><td><a href = "{%  url 'request_pickup' selected_job.job_number x.id selected_request.id 'ITEMADD' %}">Add to Pickup </a></td></tr>
-				{% endfor %}
-				</table>
-			{% endif %}
-			{% if selected_items %}
-			 	<br>
-				<h3>SELECTED ITEMS</h3>
-				<table id="selected_table" class="display" style="width:90%">
-				{% for x in selected_items %}
-				<tr><td><b>#{{x.item.number}}- {{x.item.item}}</b></td><td><a href = "{%  url 'request_pickup' selected_job.job_number x.id selected_request.id 'ITEMREMOVE' %}">Remove from Pickup </a></td></tr>
-				{% endfor %}
-				</table>
-			{% endif %}
-		{% else %}
-		 	<h3>Pickup All Items From the Jobsite!</h3>
-		 {% endif %}
-		<form id="form5" action="{%  url 'request_pickup' selected_job.job_number 'ALL' selected_request.id 'CHANGE' %}" method="post"  onSubmit = "return check_booking_data()">
-		{% csrf_token %}
-		 <br><hr><br>
-		 <label for="request_notes"> Make a note: </label> <br>
-		<textarea id="request_notes" name="request_notes" rows="4" style="width: 100%"></textarea>
-		 <br>
-			<br>
-					<br>
-			<b>Pickup Trash?  </b><input type="checkbox" id="remove_trash" name="remove_trash" {% if remove_trash %} checked {% endif %} onchange="check_paint_boxes2()">
-		<br>
-			<b>Save Leftover Paint?  </b><input type="checkbox" id="save_paint" name="save_paint" {% if save_paint %} checked {% endif %} onchange="check_paint_boxes2()">
-<br>
-		 {% if selected_request.all_items == True %}
-		 	<input type="submit" class="btn btn-primary btn-sm" id="send_now" name = "send_now" value="Send Request Now!" />
-		 {% elif selected_items %}
-		  	<input type="submit" class="btn btn-primary btn-sm" id="send_now" name = "send_now" value="Send Request Now!" />
+    @media (max-width: 576px) {
+        .equipment-row {
+            display: block;
+        }
 
-		 {% elif remove_trash %}
-		  	<input type="submit" class="btn btn-primary btn-sm" id="send_now" name = "send_now" value="Send Request Now!" />
+        .equipment-row a,
+        .equipment-row .btn {
+            margin-top: 8px;
+            width: 100%;
+        }
 
-		{% endif %}
-			<div id="hide_this"><h3>PROCESSING! Please do not click anything until complete!</h3></div>
-			<br>
-			<br>
+        .action-row .btn,
+        .action-row input[type="submit"] {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
 
-		</form>
- 	{% endif %}
- {% endif %}
+{% block sub_nav %}
+{% include 'equipment_nav.html' with page_label="Request Pickup" %}
+{% endblock %}
 
-</body>
-</html>
+{% block content %}
 
+<div class="container pickup-page mt-3 mb-5">
+
+    <h3 class="mb-3">{{ selected_job }}</h3>
+
+    {% if existing_request_all %}
+
+        <div class="page-card">
+            <div class="alert alert-warning mb-3">
+                There is already an existing request to pickup all equipment from this job.
+
+                {% if remove_trash %}
+                    {% if save_paint %}
+                        <br>There is also a request to remove trash and save leftover paint.
+                    {% else %}
+                        <br>There is also a request to remove trash.
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <h5>Would you like to edit this request?</h5>
+
+            <form action="{% url 'request_pickup' selected_job.job_number 'ALL' existing_request_all.id 'REVISE' %}" method="post">
+                {% csrf_token %}
+
+                <div class="action-row">
+                    <input type="submit" class="btn btn-primary" name="revise" value="Yes, Revise Order">
+                    <input type="submit" class="btn btn-secondary" name="cancel" value="No Thanks">
+                </div>
+            </form>
+        </div>
+
+    {% elif existing_request %}
+
+        <div class="page-card">
+            <div class="alert alert-warning">
+                There is already an existing pickup request for this job.
+            </div>
+
+            <div class="section-title">
+                Existing Request — {{ existing_request.date }}
+            </div>
+
+            {% for x in existing_request_items %}
+                <div class="equipment-row">
+                    <div class="equipment-name">
+                        #{{ x.item.number }} - {{ x.item.item }}
+                    </div>
+                </div>
+            {% endfor %}
+
+            {% if remove_trash %}
+                <div class="option-box">
+                    {% if save_paint %}
+                        There is also a request to remove trash and save leftover paint.
+                    {% else %}
+                        There is also a request to remove trash.
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <h5 class="mt-3">Would you like to add on to this request?</h5>
+
+            <form action="{% url 'request_pickup' selected_job.job_number 'ALL' existing_request.id 'REVISE' %}" method="post">
+                {% csrf_token %}
+
+                <div class="action-row">
+                    <input type="submit" class="btn btn-primary" name="revise" value="Yes, Revise Order">
+                    <input type="submit" class="btn btn-secondary" name="cancel" value="Cancel">
+                </div>
+            </form>
+        </div>
+
+    {% else %}
+
+        <div class="page-card">
+            <div class="section-title">Current Equipment Assigned to Job</div>
+
+            {% for x in all_items %}
+                <div class="equipment-row">
+                    <div class="equipment-name">
+                        #{{ x.number }} - {{ x.item }}
+                    </div>
+                </div>
+            {% empty %}
+                <div class="alert alert-info mb-0">
+                    No equipment is currently assigned to this job.
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if not selected_request %}
+
+            <div class="page-card">
+                <div class="section-title">Create Pickup Request</div>
+
+                {% if selected_item %}
+                    <form action="{% url 'request_pickup' selected_job.job_number selected_item.id 'ALL' 'ADD' %}" method="post">
+                {% else %}
+                    <form action="{% url 'request_pickup' selected_job.job_number 'ALL' 'ALL' 'ADD' %}" method="post">
+                {% endif %}
+                    {% csrf_token %}
+
+                    <div class="option-box">
+                        <div class="form-check mb-2">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   id="remove_trash"
+                                   name="remove_trash"
+                                   {% if remove_trash %}checked{% endif %}
+                                   onchange="check_paint_boxes(event)">
+                            <label class="form-check-label" for="remove_trash">
+                                Pickup Trash?
+                            </label>
+                        </div>
+
+                        <div class="form-check">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   id="save_paint"
+                                   name="save_paint"
+                                   {% if save_paint %}checked{% endif %}
+                                   onchange="check_paint_boxes(event)">
+                            <label class="form-check-label" for="save_paint">
+                                Save Leftover Paint?
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="action-row">
+                        <input type="submit" class="btn btn-primary" name="all_items" value="Pickup All Items From Job">
+                        <input type="submit" class="btn btn-outline-primary" name="this_item_only" value="Pickup Certain Items Only">
+                    </div>
+                </form>
+            </div>
+
+        {% else %}
+
+            <div class="page-card">
+                <div class="section-title">Pickup {% if selected_request.all_items == True %}All Items {%else %}Certain Items {% endif %}</div>
+
+                <form action="{% url 'request_pickup' selected_job.job_number 'ALL' selected_request.id 'CHANGE' %}" method="post">
+                    {% csrf_token %}
+
+                    {% if selected_request.all_items == False %}
+                        <input type="submit"
+                               class="btn btn-outline-danger"
+                               name="change_to_all_items"
+                               value="Pickup All Items From Job Instead">
+                    {% else %}
+                        <input type="submit"
+                               class="btn btn-outline-danger"
+                               name="change_to_certain_items"
+                               value="Pickup Only Certain Items Instead">
+                    {% endif %}
+                </form>
+            </div>
+
+            {% if selected_request.all_items == False %}
+
+                {% if available_items %}
+                    <div class="page-card">
+                        <div class="section-title">Available Items</div>
+                        <p class="text-muted">Select items you would like picked up.</p>
+
+                        {% for x in available_items %}
+                            <div class="equipment-row">
+                                <div class="equipment-name">
+                                    #{{ x.number }} - {{ x.item }}
+                                </div>
+
+                                <a class="btn btn-sm btn-outline-primary"
+                                   href="{% url 'request_pickup' selected_job.job_number x.id selected_request.id 'ITEMADD' %}">
+                                    Add to Pickup
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% if selected_items %}
+                    <div class="page-card">
+                        <div class="section-title">Selected Items</div>
+
+                        {% for x in selected_items %}
+                            <div class="equipment-row">
+                                <div class="equipment-name">
+                                    #{{ x.item.number }} - {{ x.item.item }}
+                                </div>
+
+                                <a class="btn btn-sm btn-outline-danger"
+                                   href="{% url 'request_pickup' selected_job.job_number x.id selected_request.id 'ITEMREMOVE' %}">
+                                    Remove
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+            {% else %}
+
+                <div class="page-card">
+                    <div class="alert alert-info mb-0">
+                        This request is set to pickup all items from the jobsite.
+                    </div>
+                </div>
+
+            {% endif %}
+
+            <div class="page-card">
+                <div class="section-title">Finalize Pickup Request</div>
+
+                <form id="form5"
+                      action="{% url 'request_pickup' selected_job.job_number 'ALL' selected_request.id 'CHANGE' %}"
+                      method="post"
+                      onsubmit="return check_booking_data();">
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label for="request_notes">Make a note:</label>
+                        <textarea id="request_notes"
+                                  name="request_notes"
+                                  rows="4"
+                                  class="form-control"></textarea>
+                    </div>
+
+                    <div class="option-box">
+                        <div class="form-check mb-2">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   id="remove_trash"
+                                   name="remove_trash"
+                                   {% if remove_trash %}checked{% endif %}
+                                   onchange="check_paint_boxes2(event)">
+                            <label class="form-check-label" for="remove_trash">
+                                Pickup Trash?
+                            </label>
+                        </div>
+
+                        <div class="form-check">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   id="save_paint"
+                                   name="save_paint"
+                                   {% if save_paint %}checked{% endif %}
+                                   onchange="check_paint_boxes2(event)">
+                            <label class="form-check-label" for="save_paint">
+                                Save Leftover Paint?
+                            </label>
+                        </div>
+                    </div>
+
+                    {% if selected_request.all_items == True %}
+                        <input type="submit"
+                               class="btn btn-primary mt-3"
+                               id="send_now"
+                               name="send_now"
+                               value="Send Request Now">
+                    {% elif selected_items %}
+                        <input type="submit"
+                               class="btn btn-primary mt-3"
+                               id="send_now"
+                               name="send_now"
+                               value="Send Request Now">
+                    {% elif remove_trash %}
+                        <input type="submit"
+                               class="btn btn-primary mt-3"
+                               id="send_now"
+                               name="send_now"
+                               value="Send Request Now">
+                    {% endif %}
+
+                    <div id="hide_this">
+                        PROCESSING! Please do not click anything until complete.
+                    </div>
+                </form>
+            </div>
+
+        {% endif %}
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    $(document).ready(function () {
+        var hideThis = document.getElementById("hide_this");
+        if (hideThis) {
+            hideThis.style.display = "none";
+        }
+    });
+
+    function check_booking_data() {
+        alert("Please be patient until this completes.");
+
+        var sendNow = document.getElementById("send_now");
+        var hideThis = document.getElementById("hide_this");
+
+        if (sendNow) {
+            sendNow.style.display = "none";
+        }
+
+        if (hideThis) {
+            hideThis.style.display = "block";
+        }
+
+        return true;
+    }
+
+    function check_paint_boxes(event) {
+        var save_paint = document.getElementById("save_paint");
+        var remove_trash = document.getElementById("remove_trash");
+
+        if (event.target === save_paint) {
+            if (save_paint.checked === true) {
+                remove_trash.checked = true;
+            }
+        }
+
+        if (event.target === remove_trash) {
+            if (remove_trash.checked === false) {
+                save_paint.checked = false;
+            }
+        }
+    }
+
+    function check_paint_boxes2(event) {
+        var save_paint = document.getElementById("save_paint");
+        var remove_trash = document.getElementById("remove_trash");
+
+        if (event.target === save_paint) {
+            if (save_paint.checked === true) {
+                remove_trash.checked = true;
+            }
+
+            document.getElementById("form5").submit();
+        }
+
+        if (event.target === remove_trash) {
+            if (remove_trash.checked === false) {
+                save_paint.checked = false;
+            }
+
+            document.getElementById("form5").submit();
+        }
+    }
+</script>
 {% endblock %}

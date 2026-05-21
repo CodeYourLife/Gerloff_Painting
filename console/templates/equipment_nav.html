@@ -1,0 +1,15 @@
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'equipment_home' %}">Equipment</a>
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav ">
+            <li><a class="nav-item nav-link {% if active_tab == 'home' %}active{% endif %}" href="{% url 'equipment_home' %}">Home</a></li>
+            <li><a class="nav-item nav-link {% if active_tab == 'new' %}active{% endif %}" href="{% url 'equipment_new' %}">Add New</a></li>
+            <li><a class="nav-item nav-link {% if active_tab == 'outgoing' %}active{% endif %}" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
+            <li><a class="nav-item nav-link {% if active_tab == 'incoming' %}active{% endif %}" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
+          <li><a class="nav-item nav-link {% if active_tab == 'lost' %}active{% endif %}" href="{% url 'closed_equipment_report' %}">Lost</a></li>
+                    {% if page_label %}
+            <li><span class="nav-item nav-link active">{{ page_label }}</span></li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>

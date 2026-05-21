@@ -1,13 +1,8 @@
-<!DOCTYPE html>
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_equipment %}active{% endblock nav_item_equipment %}
-{% block content %}
-<html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
+
+{% block extra_head %}
         <style type="text/css" class="init">
 
                  .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
@@ -17,19 +12,8 @@
     font-size: 13px;
 }
 
-        nav .active, .collapsible:hover {
-          background-color: Salmon;
-        }
-        .nav-pills a {
-            color: black;
-        }
-        .nav-pills li {
-            padding: 2px;
-        }
-        .nav-pills .active {
-            background-color: #6c757d !important;
-            padding: 5px;
-        }
+
+
         .table td {
 
         }
@@ -70,8 +54,7 @@
 .width-200{
     width:200px;
 }
-    </style>
-    <style>
+
 .dataTables_filter {
    float: left !important;
 }
@@ -80,44 +63,38 @@
   .tb th, .tb td { padding: 5px; border: solid 1px #777; }
   .tb th { background-color: lightblue; }
 </style>
-<!--    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
 
-    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-    <script type="text/javascript" class="init">
-window.onload = function() {
-var table = $('#inventory_table').DataTable({paging: false})
-};
+{% block sub_nav %}
+{% include 'equipment_nav.html' with active_tab="home" %}
+{% endblock %}
 
+{% block content %}
+<div class="row mb-3">
 
-function new_filter_now(){
-document.getElementById('filter_form').submit();
-}
-    </script>
-
-
-</head>
-<body>
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="#">Equipment</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav ">
-            <li><a class="nav-item nav-link active" href="{% url 'equipment_home' %}">Home</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'equipment_new' %}">New</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
-        </ul>
+    <div class="col-md-4 mb-2">
+        <a href="{% url 'equipment_new' %}"
+           class="btn btn-success btn-lg btn-block">
+            + Add New Equipment
+        </a>
     </div>
-</nav>
+
+    <div class="col-md-4 mb-2">
+        <a href="{% url 'equipment_batch_outgoing' 'Outgoing' %}"
+           class="btn btn-primary btn-lg btn-block">
+            Check Out Equipment
+        </a>
+    </div>
+
+    <div class="col-md-4 mb-2">
+        <a href="{% url 'equipment_batch_outgoing' 'Incoming' %}"
+           class="btn btn-warning btn-lg btn-block">
+            Check In Equipment
+        </a>
+    </div>
+
+</div>
 
 <form class="form-control form-control-sm" id="filter_form" method="get">
     <div class="container">
@@ -194,7 +171,7 @@ document.getElementById('filter_form').submit();
             {% else %}
                 {% if inventory.job_number.is_closed == True or inventory.job_number.is_labor_done == True %}
                     <td style="background-color:#ffff00"><a href="{% url 'job_page' inventory.job_number.job_number %}">
-                        {{inventory.job_number.job_name}}
+                        {{inventory.job_number.job_name}} [JOB IS DONE!!]
                     </a></td>
                 {% else %}
                     <td><a href="{% url 'job_page' inventory.job_number.job_number %}">
@@ -213,6 +190,19 @@ document.getElementById('filter_form').submit();
         </tbody>
     </table>
 </div>
-</body>
 
+
+{% endblock %}
+
+{% block extra_scripts %}
+    <script type="text/javascript" class="init">
+window.onload = function() {
+var table = $('#inventory_table').DataTable({paging: false})
+};
+
+
+function new_filter_now(){
+document.getElementById('filter_form').submit();
+}
+    </script>
 {% endblock %}

@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
-{% block content %}
 {% load humanize %}
 
+{% block extra_head %}
 <style>
 .recipient-row {
     border-bottom: 1px solid #eee;
@@ -42,7 +42,14 @@
     transform: scale(1.15);
 }
 </style>
+{% endblock %}
 
+{% block sub_nav %}
+{% include 'change_order_nav.html' with page_label="Sending COP Report" %}
+{% endblock %}
+
+
+{% block content %}
 <div class="container py-4">
     <h4 class="mb-2">
         {{job.job_number}} –
@@ -342,7 +349,8 @@
         </form>
     </div>
 </div>
-
+{% endblock %}
+{% block extra_scripts %}
 <script>
 $(function () {
 

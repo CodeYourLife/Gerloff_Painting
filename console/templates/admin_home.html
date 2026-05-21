@@ -1,52 +1,15 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_roles %}active{% endblock nav_item_roles %}
-{% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>Trinity GP</title>
-<!--	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+
+
+{% block extra_head %}
 	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
-$(document).ready(function () {
-    var table = $('#employees_table').DataTable({paging:false});
-    var table = $('#subs_table').DataTable({paging:false});
-    document.getElementById("check_booked_jobs").style.display = "none"
-    document.getElementById("hide_sirius_hours").style.display = "none"
-    document.getElementById("hide_clockshark_hours").style.display = "none"
-    document.getElementById("hide_toolbox_talks").style.display = "none"
-})
+{% endblock %}
 
-function show_check_booked_jobs(){
-document.getElementById("check_booked_jobs").style.display = "block"
-}
+{% block content %}
 
-		function show_sirius_hours(){
-		document.getElementById("hide_sirius_hours").style.display = "block"
-		}
 
-		function show_clockshark_hours(){
-		document.getElementById("hide_clockshark_hours").style.display = "block"
-		}
-		function show_toolbox_talks(){
-		document.getElementById("hide_toolbox_talks").style.display = "block"
-		}
-	</script>
-</head>
-<body>
 {% if user.is_superuser %}
 	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
 		<a class="navbar-brand sub-navbar-brand" href="#">Admin Page</a>
@@ -124,7 +87,7 @@ document.getElementById("check_booked_jobs").style.display = "block"
         </div>
 
     <div class="card">
-        <div class="card-header" id="headingOne" style="background-color:hsla(128,100%, 80%);">
+        <div class="card-header" id="headingOner" style="background-color:hsla(128,100%, 80%);">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapse2" aria-expanded="false"
                         aria-controls="collapse2">
@@ -132,7 +95,7 @@ document.getElementById("check_booked_jobs").style.display = "block"
                 </button>
             </h5>
         </div>
-        <div id="collapse2" class="collapse hide" aria-labelledby="headingOne" data-parent="#accordion">
+        <div id="collapse2" class="collapse hide" aria-labelledby="headingOner" data-parent="#accordion">
             <div class="card-body">
 		<br>
 
@@ -237,6 +200,12 @@ Import Change Orders from Management Console</div>
 </a>
 <br>
 
+<a href = "{% url 'employee_notes' 'AUTO' %}">
+<div style="height:100%;width:100%">
+View Employee Activity on Trinity</div>
+</a>
+<br>
+
 <a href = "{% url 'build_subcontractor_approvers' %}">
 							<div style="height:100%;width:100%">
 								Build Approvers for All Subcontractors	</div>
@@ -272,15 +241,36 @@ Test Email Sent!
         </div>
 </div>
 
-
-
-
-
-
 {% else %}
 <div style="padding-top: 25px">Unauthorized</div>
 {% endif %}
-</body>
-</html>
 
+
+{% endblock %}
+{% block extra_scripts %}
+	<script type="text/javascript" class="init">
+$(document).ready(function () {
+    var table = $('#employees_table').DataTable({paging:false});
+    var table = $('#subs_table').DataTable({paging:false});
+    document.getElementById("check_booked_jobs").style.display = "none"
+    document.getElementById("hide_sirius_hours").style.display = "none"
+    document.getElementById("hide_clockshark_hours").style.display = "none"
+    document.getElementById("hide_toolbox_talks").style.display = "none"
+})
+
+function show_check_booked_jobs(){
+document.getElementById("check_booked_jobs").style.display = "block"
+}
+
+		function show_sirius_hours(){
+		document.getElementById("hide_sirius_hours").style.display = "block"
+		}
+
+		function show_clockshark_hours(){
+		document.getElementById("hide_clockshark_hours").style.display = "block"
+		}
+		function show_toolbox_talks(){
+		document.getElementById("hide_toolbox_talks").style.display = "block"
+		}
+	</script>
 {% endblock %}

@@ -11,19 +11,8 @@
     font-size: 13px;
 }
 
-        nav .active, .collapsible:hover {
-          background-color: Salmon;
-        }
-        .nav-pills a {
-            color: black;
-        }
-        .nav-pills li {
-            padding: 2px;
-        }
-        .nav-pills .active {
-            background-color: #6c757d !important;
-            padding: 5px;
-        }
+
+
         label {
             margin-left: 10px;
             margin-right: 10px;
@@ -344,8 +333,454 @@ table.dataTable {
 }
     </style>
 
-
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
+
+{% block sub_nav %}
+{% include 'change_order_nav.html' with page_label="Change Order Pricing" %}
+{% endblock %}
+
+{% block content %}
+
+<form id="pricing_form" action="{% url 'price_ewt' changeorder.id %}" method="post"  onSubmit = "return check_booking_data()">
+	{% csrf_token %}
+
+  <div class="container-fluid px-3">
+	<div class ="row">
+		<div class ="col"><H2>Gerloff Painting T&M Price Breakdown </H2></div>
+	</div>
+	<div class ="row">
+		<div class ="col">Job: {{changeorder.job_number}}</div>
+		<div class ="col">Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</div>
+	</div>
+	<div class ="row">
+		{% if week_ending %}
+		<input type= "hidden" name="week_ending" id="week_ending" value="{{week_ending}}" />
+		<input type= "hidden" name="completed_by" id="completed_by" value="{{completed_by}}" />
+		<div class ="col">Week Ending Date: {{week_ending}} </div>
+		<div class ="col">Ticket Completed By: {{completed_by}}</div>
+		{% else %}
+		<div class ="col">            <label>Week Ending</label>
+            <input type="date"
+                   name="week_ending"
+                   class="form-control"
+                   required></div>
+		<div class ="col"><label>Ticket Completed By:</label>
+            <input type="text"
+                   name="completed_by"
+                   class="form-control"
+                   required></div>
+		{% endif %}
+	</div>
+<!--	<div class ="row">-->
+<!--		<div class ="col"><p>Work Description: {{notes}}</p></div>-->
+<!--	</div>-->
+  </div>
+<hr>
+
+
+<div class="container-fluid px-3">
+	<label for="notes">Work Description: </label> <br>
+	<textarea id="notes" name="notes" rows="2" cols="100" >{{notes}}</textarea>
+</div>
+	<br>
+	<div class="container-fluid px-3" style="background-color:hsla(5, 100%, 92%);">
+	<h4>Labor</h4>
+	<div class="table-responsive">
+	<table id="labor_breakdown" class="display compact" style="width:100%" >
+	<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Hours</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
+	<tbody>
+		{% if laboritems %}
+	  	{% for x in laboritems %}
+	  	<tr><td>
+		<select id="select_labor{{x.counter}}" name="select_labor{{x.counter}}" onchange="changelabor(event)">
+		<option value="{{x.id}}">{{x.item}}</option>
+		{% for y in employees2 %}
+			<option value="{{y.id}}">{{y.item}}</option>
+		{% endfor %}
+		<option value="custom">Custom</option>
+		</select>
+		</td><td><input type= "text" name="labor_item{{x.counter}}" id="labor_item{{x.counter}}" value="{{x.item}}"  size = "30" required /></td>
+		<td>
+			<input type= "number" step="0.1" name="labor_hours{{x.counter}}" id="labor_hours{{x.counter}}" value="{{x.hours}}" size="7" onchange = "calculatetotal(event)" required /></td>
+		<td>
+			<input type= "number" name="labor_rate{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %} step="0.01" size="7" id="labor_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td>
+		<td><input type= "hidden" name="labor_cost{{x.counter}}" id="labor_cost{{x.counter}}" value="{{x.cost}}" /><div id="labor_cost_desc{{x.counter}}">{{x.cost}}</div>
+			</td>
+			<td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
+		{% endfor %}
+		{% endif %}
+	  	<tr><td><input type = "hidden" name="hidden_labor" id = "hidden_labor" value = "{{laborcount}}" /><button type="button" onclick="add_labor_row()">Add Painter Row </button></td><td></td><td></td><td></td><td></td><td></td></tr>
+	</tbody>
+	</table>
+	</div>
+	</div>
+  	<br>
+	<div class="container-fluid px-3" style="background-color:hsla(75, 100%, 92%);">
+	<h4>Material</h4>
+	<div class="table-responsive">
+		<table id="material_breakdown" class="display compact" style="width:100%">
+		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
+		<tbody>
+		{% if materials %}
+		{% for x in materials %}
+		<tr><td>
+			<select name="material_category{{x.counter}}" id="material_category{{x.counter}}" onchange="changematerial(event)">
+			<option value="{{x.category_id}}">{{x.category}}</option>
+			{% for y in materials2 %}
+				<option value="{{y.id}}">{{y.item}}</option>
+			{% endfor %}
+				<option value="custom">Custom</option>
+			</select></td>
+			<td><input type= "text" name="material_description{{x.counter}}" id="material_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" step="0.1" name="material_quantity{{x.counter}}" id="material_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="material_units{{x.counter}}" id="material_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="material_rate{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %} step="0.01" size="7" id="material_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="material_cost{{x.counter}}" id="material_cost{{x.counter}}" value="{{x.cost}}" /><div id="material_cost_desc{{x.counter}}">{{x.cost}}</div></td>
+	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
+		{% endfor %}
+
+	  {% endif %}
+<!--		<tr><td>Inventory (Originally ${{inventory}})</td><td></td><td>Lump Sum</td><td></td><td></td><td></td><td><input type= "hidden" name="inventory_cost" id="inventory_cost" value="{{inventory}}" size="7" required /><div id="inventory_cost_display">${{inventory}}</div></td></tr>-->
+<tr>
+    <td>Inventory (Originally ${{inventory}})</td>
+    <td id="inventory_units_cell">Lump Sum</td>
+    <td></td>
+	<td></td>
+    <td></td>
+    <td>
+        <input type="number"
+               name="inventory_cost"
+               id="inventory_cost"
+               value="{{inventory}}"
+               step=".01"
+               required
+               oninput="setForceInventory()" />
+    </td>
+    <td></td>
+</tr>
+		<tr><input type = "hidden" name="hidden_material" id = "hidden_material" value = "{{materialcount}}" /><td><button type="button" onclick="add_material_row('material')">Add Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+	</tbody></table>
+	</div>
+	</div>
+    <br>
+	<div class="container-fluid px-3" style="background-color:hsla(135, 100%, 92%);">
+	<h4>Equipment</h4>
+	<div class="table-responsive">
+		<table id="equipment_breakdown" class="display compact" style="width:100%" >
+		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
+		<tbody>
+		{% if equipment %}
+		{% for x in equipment %}
+		<tr><td>
+			<select name="equipment_category{{x.counter}}" id="equipment_category{{x.counter}}" onchange="changeequipment(event)">
+			<option value="{{x.category_id}}">{{x.category}}</option>
+			{% for y in equipment2 %}
+				<option value="{{y.id}}">{{y.item}}</option>
+			{% endfor %}
+				<option value="custom">Custom</option>
+			</select></td>
+
+			<td><input type= "text" name="equipment_description{{x.counter}}" id="equipment_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" step="0.1" name="equipment_quantity{{x.counter}}" id="equipment_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="equipment_units{{x.counter}}" id="equipment_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="equipment_rate{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %} step="0.01" size="7" id="equipment_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="equipment_cost{{x.counter}}" id="equipment_cost{{x.counter}}" value="{{x.cost}}" /><div id="equipment_cost_desc{{x.counter}}">{{x.cost}}</div></td>
+
+	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
+		{% endfor %}
+	  {% endif %}
+
+		<tr><input type = "hidden" name="hidden_equipment" id = "hidden_equipment" value = "{{equipmentcount}}" /><td><button type="button" onclick="add_material_row('equipment')">Add Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+
+	</tbody></table>
+		</div>
+	</div>
+	<br>
+	<div class="container-fluid px-3" style="background-color:hsla(135, 100%, 92%);">
+	<h4>Sundries</h4>
+	<div class="table-responsive">
+		<table id="sundries_breakdown" class="display compact" style="width:100%" >
+		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
+		<tbody>
+		{% if sundries %}
+		{% for x in sundries %}
+		<tr><td>
+			<select name="sundries_category{{x.counter}}" id="sundries_category{{x.counter}}" onchange="changesundries(event)">
+			<option value="{{x.category_id}}">{{x.category}}</option>
+			{% for y in sundries2 %}
+				<option value="{{y.id}}">{{y.item}}</option>
+			{% endfor %}
+				<option value="custom">Custom</option>
+			</select></td>
+
+			<td><input type= "text" name="sundries_description{{x.counter}}" id="sundries_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" step="0.1" name="sundries_quantity{{x.counter}}" id="sundries_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="sundries_units{{x.counter}}" id="sundries_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="sundries_rate{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %} step="0.01" size="7" id="sundries_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="sundries_cost{{x.counter}}" id="sundries_cost{{x.counter}}" value="{{x.cost}}" /><div id="sundries_cost_desc{{x.counter}}">{{x.cost}}</div></td>
+
+	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
+		{% endfor %}
+	  {% endif %}
+
+		<tr><input type = "hidden" name="hidden_sundries" id = "hidden_sundries" value = "{{sundriescount}}" /><td><button type="button" onclick="add_material_row('sundries')">Add Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+
+	</tbody></table>
+	</div>
+	</div>
+    <br>
+	<div class="container-fluid px-3" style="background-color:hsla(205, 100%, 92%);">
+		<h4>Other</h4>
+		<div class="table-responsive">
+	<table id="extras_breakdown" class="display compact" style="width:100%" >
+		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
+		<tbody>
+		{% if extras %}
+		{% for x in extras %}
+		<tr><td>
+
+			<select name="extras_category{{x.counter}}" id="extras_category{{x.counter}}" onchange="changeextras(event)">
+			<option value="{{x.category_id}}">{{x.category}}</option>
+			{% for y in extras2 %}
+				<option value="{{y.id}}">{{y.item}}</option>
+			{% endfor %}
+				<option value="custom">Custom</option>
+			</select></td>
+			<td><input type= "text" name="extras_description{{x.counter}}" id="extras_description{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %}value="{{x.description}}" required /></td>
+			<td><input type= "number" step="0.1" name="extras_quantity{{x.counter}}" id="extras_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td>
+			<td><input type= "text" name="extras_units{{x.counter}}" id="extras_units{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %}size="5" value="{{x.units}}" required /></td>
+			<td><input type="number" name="extras_rate{{x.counter}}" step="0.01" size="7" id="extras_rate{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %}value="{{x.rate}}" onchange="calculatetotal(event)" /></td>
+			<td><input type= "hidden" name="extras_cost{{x.counter}}" id="extras_cost{{x.counter}}" value="{{x.cost}}" /><div id="extras_cost_desc{{x.counter}}">{{x.cost}}</div></td>
+	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
+		{% endfor %}
+	  {% endif %}
+
+		<tr><td><input type = "hidden" name="hidden_extras" id = "hidden_extras" value = "{{extrascount}}" /><button type="button" onclick="add_material_row('extras')">Add Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+	</tbody></table>
+			</div>
+	</div>
+    <br>
+
+<hr>
+	<div class="container-fluid px-3" style="background-color:hsla(275, 100%, 92%);">
+		<h4>TOTAL PRICE</h4>
+
+	<div id="labor_total_summary">Labor Cost: {{totallaborcost}}</div>
+	<div id="material_total_summary">Material Cost: {{totalmaterialcost}}</div>
+	<div id="equipment_total_summary">Equipment Cost: {{totalequipmentcost}}</div>
+	<div id="sundries_total_summary">Sundries Cost: {{totalsundriescost}}</div>
+	<div id="other_total_summary">Other Cost: {{totalextrascost}}</div>
+{% if is_bonded == True %}
+	   <input type= "hidden" name="bond_cost" id="bond_cost" value="{{bond_cost}}" /> <input type= "hidden" name="bond_rate" id="bond_rate" value="{{bond_rate}}" /><div id="bond_total_summary" ><b>Bond Cost:</b> {{bond_cost}}</div>
+{% endif %}
+	 <input type = "hidden" name="final_cost" id = "final_cost" value = "{{totalcost}}" /><div id = "final_cost_display" ><b>Final Cost: {{totalcost}}</b></div>
+	</div>
+	<hr>
+<!--PROPOSAL STATUS-->
+{% if proposal %}
+<div class="container mt-4 p-3 border rounded bg-light">
+
+    <div class="d-flex justify-content-between align-items-start flex-wrap">
+
+        <!-- LEFT SIDE: Status + Badge -->
+        <div>
+            <strong>Proposal Status:</strong>
+
+            <span class="badge ml-2
+                {% if proposal.status == "Draft" %}
+                    badge-secondary
+                {% elif proposal.status == "Pending Approval" %}
+                    badge-warning
+                {% elif proposal.status == "Approved" %}
+                    badge-success
+                {% elif proposal.status == "Sent" %}
+                    badge-primary
+                {% else %}
+                    badge-dark
+                {% endif %}
+            ">
+                {{ proposal.status }}
+            </span>
+        </div>
+
+        <!-- RIGHT SIDE: Dates / Approval Info -->
+        <div class="text-right small text-muted mt-2 mt-md-0">
+
+            {% if proposal.date_sent_for_approval %}
+                <div>
+                    Sent for approval:
+                    {{ proposal.date_sent_for_approval }}
+                </div>
+            {% endif %}
+
+            {% if proposal.date_approved_internally %}
+                <div>
+                    Approved:
+                    {{ proposal.date_approved_internally }}
+                    {% if proposal.approved_by %}
+                        by {{ proposal.approved_by }}
+                    {% endif %}
+                </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% else %}
+
+<!-- No Proposal Yet -->
+<div class="container mt-4 p-3 border rounded bg-light">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <strong>Proposal Status:</strong>
+            <span class="badge badge-secondary ml-2">Draft</span>
+        </div>
+        <div class="small text-muted">
+            No proposal created yet
+        </div>
+    </div>
+</div>
+
+{% endif %}
+
+	<!--BUTTONS-->
+<div class="container mt-3">
+
+    <!-- Always show Cancel -->
+    <button type="submit"
+            name="cancel"
+            value="1"
+            class="btn btn-secondary">
+        Cancel
+    </button>
+
+    {% if proposal %}
+
+        {% if proposal.status == "Draft" %}
+			<button type="submit"
+					name="save_draft"
+					value="1"
+					class="btn btn-info">
+				Save and Send Later
+			</button>
+            <button type="submit"
+                    name="send_for_approval"
+                    value="1"
+                    class="btn btn-warning">
+                Send to PM for Approval
+            </button>
+
+            <button type="submit"
+                    name="send_to_gc"
+                    value="1"
+                    class="btn btn-primary">
+                Send to GC without Approval
+            </button>
+
+        {% elif proposal.status == "Pending Approval" %}
+			<button type="submit"
+					name="save_draft"
+					value="1"
+					class="btn btn-info">
+				Save and Send Later
+			</button>
+				<button type="submit"
+					name="approve"
+					value="1"
+					class="btn btn-success">
+				Approve
+			</button>
+            <button class="btn btn-warning" disabled>
+                Waiting on PM Approval
+            </button>
+
+            <button type="submit"
+                    name="send_to_gc"
+                    value="1"
+                    class="btn btn-primary">
+                Send to GC without Approval
+            </button>
+
+        {% elif proposal.status == "Approved" %}
+
+            <button type="submit"
+                    name="send_for_approval"
+                    value="1"
+                    class="btn btn-warning">
+                Send to PM Again for Approval
+            </button>
+
+            <button type="submit"
+                    name="send_to_gc"
+                    value="1"
+                    class="btn btn-success">
+                Send to GC Now
+            </button>
+
+        {% elif proposal.status == "Sent" %}
+
+            <button type="submit"
+                    name="send_to_gc"
+                    value="1"
+                    class="btn btn-success">
+                Re-Send to GC Now
+            </button>
+			<button type="submit"
+                name="send_for_approval"
+                value="1"
+                class="btn btn-warning">
+            Re-Send to PM for Approval
+        </button>
+        {% endif %}
+
+    {% else %}
+
+        <!-- No proposal exists yet (first time opening page) -->
+        <button type="submit"
+                name="send_for_approval"
+                value="1"
+                class="btn btn-warning">
+            Send to PM for Approval
+        </button>
+
+        <button type="submit"
+                name="send_to_gc"
+                value="1"
+                class="btn btn-primary">
+            Send to GC without Approval
+        </button>
+				<button type="submit"
+					name="save_draft"
+					value="1"
+					class="btn btn-info">
+				Save and Send Later
+			</button>
+
+    {% endif %}
+
+</div>
+<!--<div class="container mt-3">-->
+
+<!--    <button type="submit"-->
+<!--            name="cancel"-->
+<!--            value="1"-->
+<!--            class="btn btn-secondary">-->
+<!--        Cancel-->
+<!--    </button>-->
+
+<!--    {% if proposal.status == "Pending Approval" %}-->
+<!--        <button type="submit"-->
+<!--                name="approve"-->
+<!--                value="1"-->
+<!--                class="btn btn-success">-->
+<!--            Approve-->
+<!--        </button>-->
+<!--    {% endif %}-->
+
+<!--    <button type="submit"-->
+<!--            name="send_now"-->
+<!--            value="1"-->
+<!--            class="btn btn-primary">-->
+<!--        Send Now-->
+<!--    </button>-->
+
+<!--</div>-->
+    </form>
+
+{% endblock %}
+{% block extra_scripts %}
 <script type="text/javascript" class="init">
 
 var laborcount = {{laborcount}}
@@ -1020,464 +1455,4 @@ calculatetotal()
 
 
 	</script>
-{% endblock %}
-{% block content %}
-
-
-
-
-<form id="pricing_form" action="{% url 'price_ewt' changeorder.id %}" method="post"  onSubmit = "return check_booking_data()">
-	{% csrf_token %}
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="{% url 'change_order_home' %}">Change Orders</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav ">
-            <li><a class="nav-item nav-link" href="{% url 'change_order_home' %}">Home</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'change_order_new_select' %}">Add New</a></li>
-			<li><a class="nav-item nav-link active" href="#">Calculating Price</a></li>
-        </ul>
-    </div>
-</nav>
-  <div class="container-fluid px-3">
-	<div class ="row">
-		<div class ="col"><H2>Gerloff Painting T&M Price Breakdown </H2></div>
-	</div>
-	<div class ="row">
-		<div class ="col">Job: {{changeorder.job_number}}</div>
-		<div class ="col">Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</div>
-	</div>
-	<div class ="row">
-		{% if week_ending %}
-		<input type= "hidden" name="week_ending" id="week_ending" value="{{week_ending}}" />
-		<input type= "hidden" name="completed_by" id="completed_by" value="{{completed_by}}" />
-		<div class ="col">Week Ending Date: {{week_ending}} </div>
-		<div class ="col">Ticket Completed By: {{completed_by}}</div>
-		{% else %}
-		<div class ="col">            <label>Week Ending</label>
-            <input type="date"
-                   name="week_ending"
-                   class="form-control"
-                   required></div>
-		<div class ="col"><label>Ticket Completed By:</label>
-            <input type="text"
-                   name="completed_by"
-                   class="form-control"
-                   required></div>
-		{% endif %}
-	</div>
-<!--	<div class ="row">-->
-<!--		<div class ="col"><p>Work Description: {{notes}}</p></div>-->
-<!--	</div>-->
-  </div>
-<hr>
-
-
-<div class="container-fluid px-3">
-	<label for="notes">Work Description: </label> <br>
-	<textarea id="notes" name="notes" rows="2" cols="100" >{{notes}}</textarea>
-</div>
-	<br>
-	<div class="container-fluid px-3" style="background-color:hsla(5, 100%, 92%);">
-	<h4>Labor</h4>
-	<div class="table-responsive">
-	<table id="labor_breakdown" class="display compact" style="width:100%" >
-	<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Hours</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
-	<tbody>
-		{% if laboritems %}
-	  	{% for x in laboritems %}
-	  	<tr><td>
-		<select id="select_labor{{x.counter}}" name="select_labor{{x.counter}}" onchange="changelabor(event)">
-		<option value="{{x.id}}">{{x.item}}</option>
-		{% for y in employees2 %}
-			<option value="{{y.id}}">{{y.item}}</option>
-		{% endfor %}
-		<option value="custom">Custom</option>
-		</select>
-		</td><td><input type= "text" name="labor_item{{x.counter}}" id="labor_item{{x.counter}}" value="{{x.item}}"  size = "30" required /></td>
-		<td>
-			<input type= "number" step="0.1" name="labor_hours{{x.counter}}" id="labor_hours{{x.counter}}" value="{{x.hours}}" size="7" onchange = "calculatetotal(event)" required /></td>
-		<td>
-			<input type= "number" name="labor_rate{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %} step="0.01" size="7" id="labor_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td>
-		<td><input type= "hidden" name="labor_cost{{x.counter}}" id="labor_cost{{x.counter}}" value="{{x.cost}}" /><div id="labor_cost_desc{{x.counter}}">{{x.cost}}</div>
-			</td>
-			<td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
-		{% endfor %}
-		{% endif %}
-	  	<tr><td><input type = "hidden" name="hidden_labor" id = "hidden_labor" value = "{{laborcount}}" /><button type="button" onclick="add_labor_row()">Add Painter Row </button></td><td></td><td></td><td></td><td></td><td></td></tr>
-	</tbody>
-	</table>
-	</div>
-	</div>
-  	<br>
-	<div class="container-fluid px-3" style="background-color:hsla(75, 100%, 92%);">
-	<h4>Material</h4>
-	<div class="table-responsive">
-		<table id="material_breakdown" class="display compact" style="width:100%">
-		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
-		<tbody>
-		{% if materials %}
-		{% for x in materials %}
-		<tr><td>
-			<select name="material_category{{x.counter}}" id="material_category{{x.counter}}" onchange="changematerial(event)">
-			<option value="{{x.category_id}}">{{x.category}}</option>
-			{% for y in materials2 %}
-				<option value="{{y.id}}">{{y.item}}</option>
-			{% endfor %}
-				<option value="custom">Custom</option>
-			</select></td>
-			<td><input type= "text" name="material_description{{x.counter}}" id="material_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" step="0.1" name="material_quantity{{x.counter}}" id="material_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="material_units{{x.counter}}" id="material_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="material_rate{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %} step="0.01" size="7" id="material_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="material_cost{{x.counter}}" id="material_cost{{x.counter}}" value="{{x.cost}}" /><div id="material_cost_desc{{x.counter}}">{{x.cost}}</div></td>
-	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
-		{% endfor %}
-
-	  {% endif %}
-<!--		<tr><td>Inventory (Originally ${{inventory}})</td><td></td><td>Lump Sum</td><td></td><td></td><td></td><td><input type= "hidden" name="inventory_cost" id="inventory_cost" value="{{inventory}}" size="7" required /><div id="inventory_cost_display">${{inventory}}</div></td></tr>-->
-<tr>
-    <td>Inventory (Originally ${{inventory}})</td>
-    <td id="inventory_units_cell">Lump Sum</td>
-    <td></td>
-	<td></td>
-    <td></td>
-    <td>
-        <input type="number"
-               name="inventory_cost"
-               id="inventory_cost"
-               value="{{inventory}}"
-               step=".01"
-               required
-               oninput="setForceInventory()" />
-    </td>
-    <td></td>
-</tr>
-		<tr><input type = "hidden" name="hidden_material" id = "hidden_material" value = "{{materialcount}}" /><td><button type="button" onclick="add_material_row('material')">Add Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-	</tbody></table>
-	</div>
-	</div>
-    <br>
-	<div class="container-fluid px-3" style="background-color:hsla(135, 100%, 92%);">
-	<h4>Equipment</h4>
-	<div class="table-responsive">
-		<table id="equipment_breakdown" class="display compact" style="width:100%" >
-		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
-		<tbody>
-		{% if equipment %}
-		{% for x in equipment %}
-		<tr><td>
-			<select name="equipment_category{{x.counter}}" id="equipment_category{{x.counter}}" onchange="changeequipment(event)">
-			<option value="{{x.category_id}}">{{x.category}}</option>
-			{% for y in equipment2 %}
-				<option value="{{y.id}}">{{y.item}}</option>
-			{% endfor %}
-				<option value="custom">Custom</option>
-			</select></td>
-
-			<td><input type= "text" name="equipment_description{{x.counter}}" id="equipment_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" step="0.1" name="equipment_quantity{{x.counter}}" id="equipment_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="equipment_units{{x.counter}}" id="equipment_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="equipment_rate{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %} step="0.01" size="7" id="equipment_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="equipment_cost{{x.counter}}" id="equipment_cost{{x.counter}}" value="{{x.cost}}" /><div id="equipment_cost_desc{{x.counter}}">{{x.cost}}</div></td>
-
-	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
-		{% endfor %}
-	  {% endif %}
-
-		<tr><input type = "hidden" name="hidden_equipment" id = "hidden_equipment" value = "{{equipmentcount}}" /><td><button type="button" onclick="add_material_row('equipment')">Add Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-
-	</tbody></table>
-		</div>
-	</div>
-	<br>
-	<div class="container-fluid px-3" style="background-color:hsla(135, 100%, 92%);">
-	<h4>Sundries</h4>
-	<div class="table-responsive">
-		<table id="sundries_breakdown" class="display compact" style="width:100%" >
-		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
-		<tbody>
-		{% if sundries %}
-		{% for x in sundries %}
-		<tr><td>
-			<select name="sundries_category{{x.counter}}" id="sundries_category{{x.counter}}" onchange="changesundries(event)">
-			<option value="{{x.category_id}}">{{x.category}}</option>
-			{% for y in sundries2 %}
-				<option value="{{y.id}}">{{y.item}}</option>
-			{% endfor %}
-				<option value="custom">Custom</option>
-			</select></td>
-
-			<td><input type= "text" name="sundries_description{{x.counter}}" id="sundries_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" step="0.1" name="sundries_quantity{{x.counter}}" id="sundries_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="sundries_units{{x.counter}}" id="sundries_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="sundries_rate{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %} step="0.01" size="7" id="sundries_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="sundries_cost{{x.counter}}" id="sundries_cost{{x.counter}}" value="{{x.cost}}" /><div id="sundries_cost_desc{{x.counter}}">{{x.cost}}</div></td>
-
-	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
-		{% endfor %}
-	  {% endif %}
-
-		<tr><input type = "hidden" name="hidden_sundries" id = "hidden_sundries" value = "{{sundriescount}}" /><td><button type="button" onclick="add_material_row('sundries')">Add Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-
-	</tbody></table>
-	</div>
-	</div>
-    <br>
-	<div class="container-fluid px-3" style="background-color:hsla(205, 100%, 92%);">
-		<h4>Other</h4>
-		<div class="table-responsive">
-	<table id="extras_breakdown" class="display compact" style="width:100%" >
-		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
-		<tbody>
-		{% if extras %}
-		{% for x in extras %}
-		<tr><td>
-
-			<select name="extras_category{{x.counter}}" id="extras_category{{x.counter}}" onchange="changeextras(event)">
-			<option value="{{x.category_id}}">{{x.category}}</option>
-			{% for y in extras2 %}
-				<option value="{{y.id}}">{{y.item}}</option>
-			{% endfor %}
-				<option value="custom">Custom</option>
-			</select></td>
-			<td><input type= "text" name="extras_description{{x.counter}}" id="extras_description{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %}value="{{x.description}}" required /></td>
-			<td><input type= "number" step="0.1" name="extras_quantity{{x.counter}}" id="extras_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td>
-			<td><input type= "text" name="extras_units{{x.counter}}" id="extras_units{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %}size="5" value="{{x.units}}" required /></td>
-			<td><input type="number" name="extras_rate{{x.counter}}" step="0.01" size="7" id="extras_rate{{x.counter}}" {% if x.is_job_price %} class="job-highlight"{% endif %}value="{{x.rate}}" onchange="calculatetotal(event)" /></td>
-			<td><input type= "hidden" name="extras_cost{{x.counter}}" id="extras_cost{{x.counter}}" value="{{x.cost}}" /><div id="extras_cost_desc{{x.counter}}">{{x.cost}}</div></td>
-	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
-		{% endfor %}
-	  {% endif %}
-
-		<tr><td><input type = "hidden" name="hidden_extras" id = "hidden_extras" value = "{{extrascount}}" /><button type="button" onclick="add_material_row('extras')">Add Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-	</tbody></table>
-			</div>
-	</div>
-    <br>
-
-<hr>
-	<div class="container-fluid px-3" style="background-color:hsla(275, 100%, 92%);">
-		<h4>TOTAL PRICE</h4>
-
-	<div id="labor_total_summary">Labor Cost: {{totallaborcost}}</div>
-	<div id="material_total_summary">Material Cost: {{totalmaterialcost}}</div>
-	<div id="equipment_total_summary">Equipment Cost: {{totalequipmentcost}}</div>
-	<div id="sundries_total_summary">Sundries Cost: {{totalsundriescost}}</div>
-	<div id="other_total_summary">Other Cost: {{totalextrascost}}</div>
-{% if is_bonded == True %}
-	   <input type= "hidden" name="bond_cost" id="bond_cost" value="{{bond_cost}}" /> <input type= "hidden" name="bond_rate" id="bond_rate" value="{{bond_rate}}" /><div id="bond_total_summary" ><b>Bond Cost:</b> {{bond_cost}}</div>
-{% endif %}
-	 <input type = "hidden" name="final_cost" id = "final_cost" value = "{{totalcost}}" /><div id = "final_cost_display" ><b>Final Cost: {{totalcost}}</b></div>
-	</div>
-	<hr>
-<!--PROPOSAL STATUS-->
-{% if proposal %}
-<div class="container mt-4 p-3 border rounded bg-light">
-
-    <div class="d-flex justify-content-between align-items-start flex-wrap">
-
-        <!-- LEFT SIDE: Status + Badge -->
-        <div>
-            <strong>Proposal Status:</strong>
-
-            <span class="badge ml-2
-                {% if proposal.status == "Draft" %}
-                    badge-secondary
-                {% elif proposal.status == "Pending Approval" %}
-                    badge-warning
-                {% elif proposal.status == "Approved" %}
-                    badge-success
-                {% elif proposal.status == "Sent" %}
-                    badge-primary
-                {% else %}
-                    badge-dark
-                {% endif %}
-            ">
-                {{ proposal.status }}
-            </span>
-        </div>
-
-        <!-- RIGHT SIDE: Dates / Approval Info -->
-        <div class="text-right small text-muted mt-2 mt-md-0">
-
-            {% if proposal.date_sent_for_approval %}
-                <div>
-                    Sent for approval:
-                    {{ proposal.date_sent_for_approval }}
-                </div>
-            {% endif %}
-
-            {% if proposal.date_approved_internally %}
-                <div>
-                    Approved:
-                    {{ proposal.date_approved_internally }}
-                    {% if proposal.approved_by %}
-                        by {{ proposal.approved_by }}
-                    {% endif %}
-                </div>
-            {% endif %}
-
-        </div>
-
-    </div>
-
-</div>
-
-{% else %}
-
-<!-- No Proposal Yet -->
-<div class="container mt-4 p-3 border rounded bg-light">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <strong>Proposal Status:</strong>
-            <span class="badge badge-secondary ml-2">Draft</span>
-        </div>
-        <div class="small text-muted">
-            No proposal created yet
-        </div>
-    </div>
-</div>
-
-{% endif %}
-
-	<!--BUTTONS-->
-<div class="container mt-3">
-
-    <!-- Always show Cancel -->
-    <button type="submit"
-            name="cancel"
-            value="1"
-            class="btn btn-secondary">
-        Cancel
-    </button>
-
-    {% if proposal %}
-
-        {% if proposal.status == "Draft" %}
-			<button type="submit"
-					name="save_draft"
-					value="1"
-					class="btn btn-info">
-				Save and Send Later
-			</button>
-            <button type="submit"
-                    name="send_for_approval"
-                    value="1"
-                    class="btn btn-warning">
-                Send to PM for Approval
-            </button>
-
-            <button type="submit"
-                    name="send_to_gc"
-                    value="1"
-                    class="btn btn-primary">
-                Send to GC without Approval
-            </button>
-
-        {% elif proposal.status == "Pending Approval" %}
-			<button type="submit"
-					name="save_draft"
-					value="1"
-					class="btn btn-info">
-				Save and Send Later
-			</button>
-				<button type="submit"
-					name="approve"
-					value="1"
-					class="btn btn-success">
-				Approve
-			</button>
-            <button class="btn btn-warning" disabled>
-                Waiting on PM Approval
-            </button>
-
-            <button type="submit"
-                    name="send_to_gc"
-                    value="1"
-                    class="btn btn-primary">
-                Send to GC without Approval
-            </button>
-
-        {% elif proposal.status == "Approved" %}
-
-            <button type="submit"
-                    name="send_for_approval"
-                    value="1"
-                    class="btn btn-warning">
-                Send to PM Again for Approval
-            </button>
-
-            <button type="submit"
-                    name="send_to_gc"
-                    value="1"
-                    class="btn btn-success">
-                Send to GC Now
-            </button>
-
-        {% elif proposal.status == "Sent" %}
-
-            <button type="submit"
-                    name="send_to_gc"
-                    value="1"
-                    class="btn btn-success">
-                Re-Send to GC Now
-            </button>
-			<button type="submit"
-                name="send_for_approval"
-                value="1"
-                class="btn btn-warning">
-            Re-Send to PM for Approval
-        </button>
-        {% endif %}
-
-    {% else %}
-
-        <!-- No proposal exists yet (first time opening page) -->
-        <button type="submit"
-                name="send_for_approval"
-                value="1"
-                class="btn btn-warning">
-            Send to PM for Approval
-        </button>
-
-        <button type="submit"
-                name="send_to_gc"
-                value="1"
-                class="btn btn-primary">
-            Send to GC without Approval
-        </button>
-				<button type="submit"
-					name="save_draft"
-					value="1"
-					class="btn btn-info">
-				Save and Send Later
-			</button>
-
-    {% endif %}
-
-</div>
-<!--<div class="container mt-3">-->
-
-<!--    <button type="submit"-->
-<!--            name="cancel"-->
-<!--            value="1"-->
-<!--            class="btn btn-secondary">-->
-<!--        Cancel-->
-<!--    </button>-->
-
-<!--    {% if proposal.status == "Pending Approval" %}-->
-<!--        <button type="submit"-->
-<!--                name="approve"-->
-<!--                value="1"-->
-<!--                class="btn btn-success">-->
-<!--            Approve-->
-<!--        </button>-->
-<!--    {% endif %}-->
-
-<!--    <button type="submit"-->
-<!--            name="send_now"-->
-<!--            value="1"-->
-<!--            class="btn btn-primary">-->
-<!--        Send Now-->
-<!--    </button>-->
-
-<!--</div>-->
-    </form>
-
-
-
-<script src=”https://code.jquery.com/jquery-3.2.1.slim.min.js” integrity=”sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN” crossorigin=”anonymous”></script>
-
-<script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js integrity=”sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q” crossorigin=”anonymous”></script>
-
-<script src=”https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js” integrity=”sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl” crossorigin=”anonymous”></script>
-
 {% endblock %}

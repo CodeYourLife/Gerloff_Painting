@@ -1,122 +1,13 @@
 {% extends 'painter_base.html' %}
 {% load static %}
-{% block nav_item_employees %}active{% endblock nav_item_employees %}
+
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
+
 {% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>Trinity GP</title>
-	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
 
-	</style>
-	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
-    window.onload = function() {
-        show_hidden()
-}
-
-    function show_hidden(){
-        do_you_smoke = document.getElementById('do_you_smoke');
-        hide_smoke = document.getElementById('cigarettes');
-        do_you_have_seizures =document.getElementById('do_you_have_seizures');
-        hide_seizures =document.getElementById('seizures');
-        do_you_have_diabetes =document.getElementById('do_you_have_diabetes');
-        hide_diabetes =document.getElementById('diabetes');
-        if (do_you_smoke.value == "Yes"){hide_smoke.style.display = "block"}
-        else {
-            hide_smoke.style.display = "none"
-            document.getElementById('how_many_cigarettes').value = 0
-            document.getElementById('how_many_years').value = 0
-        }
-        if (do_you_have_seizures.value == "Yes"){hide_seizures.style.display = "block"}
-        else {
-            hide_seizures.style.display = "none"
-            document.getElementById('seizures_year_diagnosed').value = 0
-            document.getElementById('seizures_difficulties').value = ""
-        }
-        if (do_you_have_diabetes.value == "Yes"){hide_diabetes.style.display = "block"}
-        else {
-            hide_diabetes.style.display = "none"
-            document.getElementById('diabetes_year_diagnosed').value = 0
-            document.getElementById('diabetes_difficulties').value = ""
-        }
-    }
-
-    function check_form() {
-        form_completed = "yes"
-        myForm = document.getElementById('employee_form');
-        Array.from(myForm.elements).forEach(element => {
-            if (element.type === 'select-one' && element.value === 'Please Select') {
-                alert(element.labels[0].textContent + " Not Completed");
-                element.scrollIntoView();
-                form_completed = "no";
-                process.exit()
-                return;
-            }
-        })
-        do_you_smoke = document.getElementById('do_you_smoke');
-        if (do_you_smoke.value == "Yes"){
-            if (document.getElementById('how_many_cigarettes').value == 0){
-                form_completed = "no";
-                document.getElementById('how_many_cigarettes').scrollIntoView();
-                alert("How Many Cigarettes Do you Smoke Per Day")
-                return
-            }
-            if (document.getElementById('how_many_years').value == 0){
-                form_completed = "no";
-                document.getElementById('how_many_years').scrollIntoView();
-                alert("How Many Years Have You Smoked?")
-                return
-            }
-        }
-                do_you_smoke = document.getElementById('do_you_smoke');
-        if (do_you_have_seizures.value == "Yes"){
-            if (document.getElementById('seizures_year_diagnosed').value == 0){
-                form_completed = "no";
-                document.getElementById('seizures_year_diagnosed').scrollIntoView();
-                alert("How Many Years Have You Had Seizures")
-                return
-            }
-            if (document.getElementById('seizures_difficulties').value == ""){
-                form_completed = "no";
-                document.getElementById('seizures_difficulties').scrollIntoView();
-                alert("Please Provide More Information About Your Seizures")
-                return
-            }
-        }
-        if (do_you_have_diabetes.value == "Yes"){
-            if (document.getElementById('diabetes_year_diagnosed').value == 0){
-                form_completed = "no";
-                document.getElementById('diabetes_year_diagnosed').scrollIntoView();
-                alert("How Many Years Have You Had Diabetes")
-                return
-            }
-            if (document.getElementById('diabetes_difficulties').value == ""){
-                form_completed = "no";
-                document.getElementById('diabetes_difficulties').scrollIntoView();
-                alert("Please Provide More Information About Your Diabetes")
-                return
-            }
-        }
-
-        if (form_completed == "yes"){myForm.submit()}
-    }
-    </script>
-</head>
-<body>
 <div class="container mt-5">
     <h2>Respirator Clearance Form {{employee.first_name}} {{employee.last_name}} - Section 1 of 6</h2>
     <form id="employee_form" method="POST" action="{% url 'respirator_clearance_section1' %}">
@@ -325,5 +216,100 @@
     </form>
 
 </div>
-</body>
+
+{% endblock %}
+
+{% block extra_scripts %}
+	<script type="text/javascript" class="init">
+    window.onload = function() {
+        show_hidden()
+}
+
+    function show_hidden(){
+        do_you_smoke = document.getElementById('do_you_smoke');
+        hide_smoke = document.getElementById('cigarettes');
+        do_you_have_seizures =document.getElementById('do_you_have_seizures');
+        hide_seizures =document.getElementById('seizures');
+        do_you_have_diabetes =document.getElementById('do_you_have_diabetes');
+        hide_diabetes =document.getElementById('diabetes');
+        if (do_you_smoke.value == "Yes"){hide_smoke.style.display = "block"}
+        else {
+            hide_smoke.style.display = "none"
+            document.getElementById('how_many_cigarettes').value = 0
+            document.getElementById('how_many_years').value = 0
+        }
+        if (do_you_have_seizures.value == "Yes"){hide_seizures.style.display = "block"}
+        else {
+            hide_seizures.style.display = "none"
+            document.getElementById('seizures_year_diagnosed').value = 0
+            document.getElementById('seizures_difficulties').value = ""
+        }
+        if (do_you_have_diabetes.value == "Yes"){hide_diabetes.style.display = "block"}
+        else {
+            hide_diabetes.style.display = "none"
+            document.getElementById('diabetes_year_diagnosed').value = 0
+            document.getElementById('diabetes_difficulties').value = ""
+        }
+    }
+
+    function check_form() {
+        form_completed = "yes"
+        myForm = document.getElementById('employee_form');
+        Array.from(myForm.elements).forEach(element => {
+            if (element.type === 'select-one' && element.value === 'Please Select') {
+                alert(element.labels[0].textContent + " Not Completed");
+                element.scrollIntoView();
+                form_completed = "no";
+                process.exit()
+                return;
+            }
+        })
+        do_you_smoke = document.getElementById('do_you_smoke');
+        if (do_you_smoke.value == "Yes"){
+            if (document.getElementById('how_many_cigarettes').value == 0){
+                form_completed = "no";
+                document.getElementById('how_many_cigarettes').scrollIntoView();
+                alert("How Many Cigarettes Do you Smoke Per Day")
+                return
+            }
+            if (document.getElementById('how_many_years').value == 0){
+                form_completed = "no";
+                document.getElementById('how_many_years').scrollIntoView();
+                alert("How Many Years Have You Smoked?")
+                return
+            }
+        }
+                do_you_smoke = document.getElementById('do_you_smoke');
+        if (do_you_have_seizures.value == "Yes"){
+            if (document.getElementById('seizures_year_diagnosed').value == 0){
+                form_completed = "no";
+                document.getElementById('seizures_year_diagnosed').scrollIntoView();
+                alert("How Many Years Have You Had Seizures")
+                return
+            }
+            if (document.getElementById('seizures_difficulties').value == ""){
+                form_completed = "no";
+                document.getElementById('seizures_difficulties').scrollIntoView();
+                alert("Please Provide More Information About Your Seizures")
+                return
+            }
+        }
+        if (do_you_have_diabetes.value == "Yes"){
+            if (document.getElementById('diabetes_year_diagnosed').value == 0){
+                form_completed = "no";
+                document.getElementById('diabetes_year_diagnosed').scrollIntoView();
+                alert("How Many Years Have You Had Diabetes")
+                return
+            }
+            if (document.getElementById('diabetes_difficulties').value == ""){
+                form_completed = "no";
+                document.getElementById('diabetes_difficulties').scrollIntoView();
+                alert("Please Provide More Information About Your Diabetes")
+                return
+            }
+        }
+
+        if (form_completed == "yes"){myForm.submit()}
+    }
+    </script>
 {% endblock %}

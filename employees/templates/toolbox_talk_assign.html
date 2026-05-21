@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
+{% block nav_item_employees %}active{% endblock nav_item_employees %}
 
-{% block content %}
+{% block extra_head %}
 <style>
     .toolbox-wrap {
         max-width: 980px;
@@ -105,7 +106,9 @@
         }
     }
 </style>
+{% endblock %}
 
+{% block content %}
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
     <a class="navbar-brand sub-navbar-brand" href="{% url 'safety_home' %}">Go Back to Safety Home</a>
 </nav>

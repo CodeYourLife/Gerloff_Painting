@@ -1,16 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
-{% block content %}
 
-
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
-        <style type="text/css" class="init">
+{% block extra_head %}
+<style type="text/css" class="init">
 
 .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
 
@@ -19,19 +12,8 @@
     font-size: 13px;
 }
 
-        nav .active, .collapsible:hover {
-          background-color: Salmon;
-        }
-        .nav-pills a {
-            color: black;
-        }
-        .nav-pills li {
-            padding: 2px;
-        }
-        .nav-pills .active {
-            background-color: #6c757d !important;
-            padding: 5px;
-        }
+
+
         label {
             margin-left: 10px;
             margin-right: 10px;
@@ -96,22 +78,203 @@ input[type=number] {
 }
 
     </style>
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
 
-<!--    <link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-    <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-    <link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-    <script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-        <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
-    <script src="//cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
-    <script type="text/javascript" class="init">
+{% block sub_nav %}
+{% include 'change_order_nav.html' with page_label="T&M PRICING" %}
+{% endblock %}
+
+{% block content %}
+
+  <div class ="container">
+	<div class ="row">
+		<div class ="col"><H2>Gerloff Painting T&M Price Breakdown </H2></div>
+	</div>
+	<div class ="row">
+		<div class ="col">Job: {{changeorder.job_number}}</div>
+		<div class ="col">Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</div>
+	</div>
+	<div class ="row">
+		<div class ="col">Week Ending Date: {{ewt.week_ending}} </div>
+		<div class ="col">Ticket Completed By: {{ewt.completed_by}}</div>
+	</div>
+	<div class ="row">
+		<div class ="col"><p>Work Description: {{ewt.notes}}</p></div>
+	</div>
+  </div>
+<hr>
+
+<form id="pricing_form" action="{% url 'price_ewt' changeorder.id %}" method="post"  onSubmit = "return check_booking_data()">
+	{% csrf_token %}
+<div class ="container">
+	<label for="notes">Description: </label> <br>
+	<textarea id="notes" name="notes" rows="2" cols="100" >{{tmproposal.notes}}</textarea>
+</div>
+	<div class ="container" style="background-color:hsla(5, 100%, 92%);">
+	<h4>Labor Breakdown</h4>
+	<table id="labor_breakdown" class="display compact nowrap" style="width:100%" >
+	<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Hours</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
+	<tbody>
+		{% if laboritems %}
+	  	{% for x in laboritems %}
+	  	<tr><td>
+		<select id="select_labor{{x.counter}}" name="select_labor{{x.counter}}" onchange="changelabor(event)">
+
+		{% for y in employees2 %}
+			<option value="{{y.id}}">{{y.item}}</option>
+		{% endfor %}
+		<option value="custom">Custom</option>
+		<option value="{{x.item.id}}">{{x.category2}}</option>
+		</select>
+		</td><td><input type= "text" name="labor_item{{x.counter}}" id="labor_item{{x.counter}}" value="{{x.item.description}}"  size = "30" required /></td>
+		<td><input type= "number" name="labor_hours{{x.counter}}" id="labor_hours{{x.counter}}" value="{{x.hours}}" size="7" onchange = "calculatetotal(event)" required /></td><td><input type= "number" name="labor_rate{{x.counter}}" size="7" id="labor_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="labor_cost{{x.counter}}" id="labor_cost{{x.counter}}" value="{{x.cost}}" /><div id="labor_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+			<td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
+		{% endfor %}
+		{% endif %}
+	  	<tr><td><input type = "hidden" name="hidden_labor" id = "hidden_labor" value = "{{laborcount}}" /><button type="button" onclick="add_labor_row()">Add Painter Row </button></td><td></td><td></td><td></td><td></td><td></td></tr>
+	</tbody>
+	</table>
+	  </div>
+  	<br>
+	<div class ="container" style="background-color:hsla(75, 100%, 92%);">
+	<h4>Material Breakdown</h4>
+	<table id="material_breakdown" class="display compact nowrap" style="width:100%" >
+		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
+		<tbody>
+		{% if materials %}
+		{% for x in materials %}
+		<tr><td>
+			<select name="material_category{{x.counter}}" id="material_category{{x.counter}}" onchange="changematerial(event)">
+
+			{% for y in materials2 %}
+				<option value="{{y.id}}">{{y.item}}</option>
+			{% endfor %}
+				<option value="custom">Custom</option>
+				<option value="{{x.item.id}}">{{x.category2}}</option>
+			</select></td>
+			<td><input type= "text" name="material_description{{x.counter}}" id="material_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="material_quantity{{x.counter}}" id="material_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="material_units{{x.counter}}" id="material_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="material_rate{{x.counter}}" size="7" id="material_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="material_cost{{x.counter}}" id="material_cost{{x.counter}}" value="{{x.cost}}" /><div id="material_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
+		{% endfor %}
+		<tr><td>Inventory (Originally ${{inventory}})</td><td></td><td>Lump Sum</td><td></td><td></td><td></td><td><input type= "number" name="inventory_cost" id="inventory_cost" value="{{inventory}}" step=".01" size="7" required onchange = "calculatetotal(event)"/>
+<!--			<div id="inventory_cost_display">${{inventory}}</div>-->
+		</td></tr>
+	  {% endif %}
+
+		<tr><input type = "hidden" name="hidden_material" id = "hidden_material" value = "{{materialcount}}" /><td><button type="button" onclick="add_material_row('material')">Add Material Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+	</tbody></table>
+	</div>
+    <br>
+	<div class ="container" style="background-color:hsla(135, 100%, 92%);">
+	<h4>Equipment Breakdown</h4>
+	<table id="equipment_breakdown" class="display compact nowrap" style="width:100%" >
+		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
+		<tbody>
+		{% if equipment %}
+		{% for x in equipment %}
+		<tr><td>
+			<select name="equipment_category{{x.counter}}" id="equipment_category{{x.counter}}" onchange="changeequipment(event)">
+
+			{% for y in equipment2 %}
+				<option value="{{y.id}}">{{y.item}}</option>
+			{% endfor %}
+				<option value="custom">Custom</option>
+				<option value="{{x.item.id}}">{{x.category2}}</option>
+			</select></td>
+
+			<td><input type= "text" name="equipment_description{{x.counter}}" id="equipment_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="equipment_quantity{{x.counter}}" id="equipment_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="equipment_units{{x.counter}}" id="equipment_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="equipment_rate{{x.counter}}" size="7" id="equipment_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="equipment_cost{{x.counter}}" id="equipment_cost{{x.counter}}" value="{{x.cost}}" /><div id="equipment_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+
+	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
+		{% endfor %}
+	  {% endif %}
+
+		<tr><input type = "hidden" name="hidden_equipment" id = "hidden_equipment" value = "{{equipmentcount}}" /><td><button type="button" onclick="add_material_row('equipment')">Add equipment Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+
+	</tbody></table>
+	</div>
+    <br>
+		<div class ="container" style="background-color:hsla(135, 100%, 92%);">
+	<h4>Sundries Breakdown</h4>
+	<table id="sundries_breakdown" class="display compact nowrap" style="width:100%" >
+		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
+		<tbody>
+		{% if sundries %}
+		{% for x in sundries %}
+		<tr><td>
+			<select name="sundries_category{{x.counter}}" id="sundries_category{{x.counter}}" onchange="changesundries(event)">
+
+			{% for y in sundries2 %}
+				<option value="{{y.id}}">{{y.item}}</option>
+			{% endfor %}
+				<option value="custom">Custom</option>
+				<option value="{{x.item.id}}">{{x.category2}}</option>
+			</select></td>
+
+			<td><input type= "text" name="sundries_description{{x.counter}}" id="sundries_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="sundries_quantity{{x.counter}}" id="sundries_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="sundries_units{{x.counter}}" id="sundries_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="sundries_rate{{x.counter}}" size="7" id="sundries_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="sundries_cost{{x.counter}}" id="sundries_cost{{x.counter}}" value="{{x.cost}}" /><div id="sundries_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+
+	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
+		{% endfor %}
+	  {% endif %}
+
+		<tr><input type = "hidden" name="hidden_sundries" id = "hidden_sundries" value = "{{sundriescount}}" /><td><button type="button" onclick="add_material_row('sundries')">Add Sundries Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+
+	</tbody></table>
+	</div>
+    <br>
+	<div class ="container" style="background-color:hsla(205, 100%, 92%);">
+		<h4>Other Adders</h4>
+	<table id="extras_breakdown" class="display compact nowrap" style="width:100%" >
+		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
+		<tbody>
+		{% if extras %}
+		{% for x in extras %}
+		<tr><td>
+
+			<select name="extras_category{{x.counter}}" id="extras_category{{x.counter}}" onchange="changeextras(event)">
+
+			{% for y in extras2 %}
+				<option value="{{y.id}}">{{y.item}}</option>
+			{% endfor %}
+				<option value="custom">Custom</option>
+				<option value="{{x.item.id}}">{{x.category2}}</option>
+			</select></td>
+			<td><input type= "text" name="extras_description{{x.counter}}" id="extras_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="extras_quantity{{x.counter}}" id="extras_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="extras_units{{x.counter}}" id="extras_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="extras_rate{{x.counter}}" size="7" id="extras_rate{{x.counter}}" value="{{x.rate}}"  /></td><td><input type= "hidden" name="extras_cost{{x.counter}}" id="extras_cost{{x.counter}}" value="{{x.cost}}" /><div id="extras_cost_desc{{x.counter}}">${{x.cost}}</div></td>
+	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
+		{% endfor %}
+	  {% endif %}
+
+		<tr><td><input type = "hidden" name="hidden_extras" id = "hidden_extras" value = "{{extrascount}}" /><button type="button" onclick="add_material_row('extras')">Add Extra Item </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+	</tbody></table>
+	</div>
+    <br>
+
+<hr>
+	<div class ="container" style="background-color:hsla(275, 100%, 92%);">
+		<h4>TOTAL PRICE</h4>
+
+		<div id="labor_total_summary">Labor Cost: ${{totallaborcost}}</div>
+	<div id="material_total_summary">Material Cost: ${{totalmaterialcost}}</div>
+	<div id="equipment_total_summary">Equipment Cost: ${{totalequipmentcost}}</div>
+	<div id="sundries_total_summary">Sundries Cost: ${{totalsundriescost}}</div>
+
+	<div id="other_total_summary">Other Cost:${{totalextrascost}}</div>
+{% if is_bonded == True %}
+	   <input type= "hidden" name="bond_cost" id="bond_cost" value="{{bond_cost}}" /> <input type= "hidden" name="bond_rate" id="bond_rate" value="{{bond_rate}}" /><div id="bond_total_summary" ><b>Bond Cost:</b> ${{bond_cost}}</div>
+{% endif %}
+	 <input type = "hidden" name="final_cost" id = "final_cost" value = "{{totalcost}}" /><div id = "final_cost_display" ><b>Final Cost: ${{totalcost}}</b></div>
+	</div>
+	<hr>
+	<div class ="container" >
+	<input type="submit" class="btn btn-secondary btn-lg" name="cancel" value="Cancel" />
+		<input type="submit" class="btn btn-primary btn-lg" name="Form3" value="Send Price Now" />
+
+	</div>
+    </form>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript" class="init">
 
 var laborcount = {{laborcount}}
 var glob_materialcount= {{materialcount}}
@@ -493,210 +656,4 @@ calculatetotal()
 
 
 	</script>
-</head>
-<body>
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="{% url 'change_order_home' %}">Change Orders</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav ">
-            <li><a class="nav-item nav-link" href="{% url 'change_order_home' %}">Home</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'change_order_new_select' %}">Add New</a></li>
-			<li><a class="nav-item nav-link active" href="#">Calculating Price</a></li>
-        </ul>
-    </div>
-</nav>
-  <div class ="container">
-	<div class ="row">
-		<div class ="col"><H2>Gerloff Painting T&M Price Breakdown </H2></div>
-	</div>
-	<div class ="row">
-		<div class ="col">Job: {{changeorder.job_number}}</div>
-		<div class ="col">Change Order #{{changeorder.cop_number}} - {{changeorder.description}}</div>
-	</div>
-	<div class ="row">
-		<div class ="col">Week Ending Date: {{ewt.week_ending}} </div>
-		<div class ="col">Ticket Completed By: {{ewt.completed_by}}</div>
-	</div>
-	<div class ="row">
-		<div class ="col"><p>Work Description: {{ewt.notes}}</p></div>
-	</div>
-  </div>
-<hr>
-
-<form id="pricing_form" action="{% url 'price_ewt' changeorder.id %}" method="post"  onSubmit = "return check_booking_data()">
-	{% csrf_token %}
-<div class ="container">
-	<label for="notes">Description: </label> <br>
-	<textarea id="notes" name="notes" rows="2" cols="100" >{{tmproposal.notes}}</textarea>
-</div>
-	<div class ="container" style="background-color:hsla(5, 100%, 92%);">
-	<h4>Labor Breakdown</h4>
-	<table id="labor_breakdown" class="display compact nowrap" style="width:100%" >
-	<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Hours</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
-	<tbody>
-		{% if laboritems %}
-	  	{% for x in laboritems %}
-	  	<tr><td>
-		<select id="select_labor{{x.counter}}" name="select_labor{{x.counter}}" onchange="changelabor(event)">
-
-		{% for y in employees2 %}
-			<option value="{{y.id}}">{{y.item}}</option>
-		{% endfor %}
-		<option value="custom">Custom</option>
-		<option value="{{x.item.id}}">{{x.category2}}</option>
-		</select>
-		</td><td><input type= "text" name="labor_item{{x.counter}}" id="labor_item{{x.counter}}" value="{{x.item.description}}"  size = "30" required /></td>
-		<td><input type= "number" name="labor_hours{{x.counter}}" id="labor_hours{{x.counter}}" value="{{x.hours}}" size="7" onchange = "calculatetotal(event)" required /></td><td><input type= "number" name="labor_rate{{x.counter}}" size="7" id="labor_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="labor_cost{{x.counter}}" id="labor_cost{{x.counter}}" value="{{x.cost}}" /><div id="labor_cost_desc{{x.counter}}">${{x.cost}}</div></td>
-			<td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
-		{% endfor %}
-		{% endif %}
-	  	<tr><td><input type = "hidden" name="hidden_labor" id = "hidden_labor" value = "{{laborcount}}" /><button type="button" onclick="add_labor_row()">Add Painter Row </button></td><td></td><td></td><td></td><td></td><td></td></tr>
-	</tbody>
-	</table>
-	  </div>
-  	<br>
-	<div class ="container" style="background-color:hsla(75, 100%, 92%);">
-	<h4>Material Breakdown</h4>
-	<table id="material_breakdown" class="display compact nowrap" style="width:100%" >
-		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
-		<tbody>
-		{% if materials %}
-		{% for x in materials %}
-		<tr><td>
-			<select name="material_category{{x.counter}}" id="material_category{{x.counter}}" onchange="changematerial(event)">
-
-			{% for y in materials2 %}
-				<option value="{{y.id}}">{{y.item}}</option>
-			{% endfor %}
-				<option value="custom">Custom</option>
-				<option value="{{x.item.id}}">{{x.category2}}</option>
-			</select></td>
-			<td><input type= "text" name="material_description{{x.counter}}" id="material_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="material_quantity{{x.counter}}" id="material_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="material_units{{x.counter}}" id="material_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="material_rate{{x.counter}}" size="7" id="material_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="material_cost{{x.counter}}" id="material_cost{{x.counter}}" value="{{x.cost}}" /><div id="material_cost_desc{{x.counter}}">${{x.cost}}</div></td>
-	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
-		{% endfor %}
-		<tr><td>Inventory (Originally ${{inventory}})</td><td></td><td>Lump Sum</td><td></td><td></td><td></td><td><input type= "number" name="inventory_cost" id="inventory_cost" value="{{inventory}}" step=".01" size="7" required onchange = "calculatetotal(event)"/>
-<!--			<div id="inventory_cost_display">${{inventory}}</div>-->
-		</td></tr>
-	  {% endif %}
-
-		<tr><input type = "hidden" name="hidden_material" id = "hidden_material" value = "{{materialcount}}" /><td><button type="button" onclick="add_material_row('material')">Add Material Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-	</tbody></table>
-	</div>
-    <br>
-	<div class ="container" style="background-color:hsla(135, 100%, 92%);">
-	<h4>Equipment Breakdown</h4>
-	<table id="equipment_breakdown" class="display compact nowrap" style="width:100%" >
-		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
-		<tbody>
-		{% if equipment %}
-		{% for x in equipment %}
-		<tr><td>
-			<select name="equipment_category{{x.counter}}" id="equipment_category{{x.counter}}" onchange="changeequipment(event)">
-
-			{% for y in equipment2 %}
-				<option value="{{y.id}}">{{y.item}}</option>
-			{% endfor %}
-				<option value="custom">Custom</option>
-				<option value="{{x.item.id}}">{{x.category2}}</option>
-			</select></td>
-
-			<td><input type= "text" name="equipment_description{{x.counter}}" id="equipment_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="equipment_quantity{{x.counter}}" id="equipment_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="equipment_units{{x.counter}}" id="equipment_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="equipment_rate{{x.counter}}" size="7" id="equipment_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="equipment_cost{{x.counter}}" id="equipment_cost{{x.counter}}" value="{{x.cost}}" /><div id="equipment_cost_desc{{x.counter}}">${{x.cost}}</div></td>
-
-	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
-		{% endfor %}
-	  {% endif %}
-
-		<tr><input type = "hidden" name="hidden_equipment" id = "hidden_equipment" value = "{{equipmentcount}}" /><td><button type="button" onclick="add_material_row('equipment')">Add equipment Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-
-	</tbody></table>
-	</div>
-    <br>
-		<div class ="container" style="background-color:hsla(135, 100%, 92%);">
-	<h4>Sundries Breakdown</h4>
-	<table id="sundries_breakdown" class="display compact nowrap" style="width:100%" >
-		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
-		<tbody>
-		{% if sundries %}
-		{% for x in sundries %}
-		<tr><td>
-			<select name="sundries_category{{x.counter}}" id="sundries_category{{x.counter}}" onchange="changesundries(event)">
-
-			{% for y in sundries2 %}
-				<option value="{{y.id}}">{{y.item}}</option>
-			{% endfor %}
-				<option value="custom">Custom</option>
-				<option value="{{x.item.id}}">{{x.category2}}</option>
-			</select></td>
-
-			<td><input type= "text" name="sundries_description{{x.counter}}" id="sundries_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="sundries_quantity{{x.counter}}" id="sundries_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="sundries_units{{x.counter}}" id="sundries_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="sundries_rate{{x.counter}}" size="7" id="sundries_rate{{x.counter}}" value="{{x.rate}}" onchange = "calculatetotal(event)" /></td><td><input type= "hidden" name="sundries_cost{{x.counter}}" id="sundries_cost{{x.counter}}" value="{{x.cost}}" /><div id="sundries_cost_desc{{x.counter}}">${{x.cost}}</div></td>
-
-	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
-		{% endfor %}
-	  {% endif %}
-
-		<tr><input type = "hidden" name="hidden_sundries" id = "hidden_sundries" value = "{{sundriescount}}" /><td><button type="button" onclick="add_material_row('sundries')">Add Sundries Row </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-
-	</tbody></table>
-	</div>
-    <br>
-	<div class ="container" style="background-color:hsla(205, 100%, 92%);">
-		<h4>Other Adders</h4>
-	<table id="extras_breakdown" class="display compact nowrap" style="width:100%" >
-		<thead><tr><th><b>Category</b></th><th><b>Item</b></th><th><b>Quantity</b></th><th><b>Units</b></th><th><b>Rate</b></th><th><b>Cost</b></th><th></th></tr></thead>
-		<tbody>
-		{% if extras %}
-		{% for x in extras %}
-		<tr><td>
-
-			<select name="extras_category{{x.counter}}" id="extras_category{{x.counter}}" onchange="changeextras(event)">
-
-			{% for y in extras2 %}
-				<option value="{{y.id}}">{{y.item}}</option>
-			{% endfor %}
-				<option value="custom">Custom</option>
-				<option value="{{x.item.id}}">{{x.category2}}</option>
-			</select></td>
-			<td><input type= "text" name="extras_description{{x.counter}}" id="extras_description{{x.counter}}" value="{{x.description}}" required /></td><td><input type= "number" name="extras_quantity{{x.counter}}" id="extras_quantity{{x.counter}}" value="{{x.quantity}}" onchange = "calculatetotal(event)" size="10" required /></td><td><input type= "text" name="extras_units{{x.counter}}" id="extras_units{{x.counter}}" size="5" value="{{x.units}}" required /></td><td><input type= "number" name="extras_rate{{x.counter}}" size="7" id="extras_rate{{x.counter}}" value="{{x.rate}}"  /></td><td><input type= "hidden" name="extras_cost{{x.counter}}" id="extras_cost{{x.counter}}" value="{{x.cost}}" /><div id="extras_cost_desc{{x.counter}}">${{x.cost}}</div></td>
-	   <td><button type="button" onclick="delete_row(this)">Delete </button></td></tr>
-		{% endfor %}
-	  {% endif %}
-
-		<tr><td><input type = "hidden" name="hidden_extras" id = "hidden_extras" value = "{{extrascount}}" /><button type="button" onclick="add_material_row('extras')">Add Extra Item </button></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-	</tbody></table>
-	</div>
-    <br>
-
-<hr>
-	<div class ="container" style="background-color:hsla(275, 100%, 92%);">
-		<h4>TOTAL PRICE</h4>
-
-		<div id="labor_total_summary">Labor Cost: ${{totallaborcost}}</div>
-	<div id="material_total_summary">Material Cost: ${{totalmaterialcost}}</div>
-	<div id="equipment_total_summary">Equipment Cost: ${{totalequipmentcost}}</div>
-	<div id="sundries_total_summary">Sundries Cost: ${{totalsundriescost}}</div>
-
-	<div id="other_total_summary">Other Cost:${{totalextrascost}}</div>
-{% if is_bonded == True %}
-	   <input type= "hidden" name="bond_cost" id="bond_cost" value="{{bond_cost}}" /> <input type= "hidden" name="bond_rate" id="bond_rate" value="{{bond_rate}}" /><div id="bond_total_summary" ><b>Bond Cost:</b> ${{bond_cost}}</div>
-{% endif %}
-	 <input type = "hidden" name="final_cost" id = "final_cost" value = "{{totalcost}}" /><div id = "final_cost_display" ><b>Final Cost: ${{totalcost}}</b></div>
-	</div>
-	<hr>
-	<div class ="container" >
-	<input type="submit" class="btn btn-secondary btn-lg" name="cancel" value="Cancel" />
-		<input type="submit" class="btn btn-primary btn-lg" name="Form3" value="Send Price Now" />
-
-	</div>
-    </form>
-
-
-
-<script src=”https://code.jquery.com/jquery-3.2.1.slim.min.js” integrity=”sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN” crossorigin=”anonymous”></script>
-
-<script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js integrity=”sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q” crossorigin=”anonymous”></script>
-
-<script src=”https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js” integrity=”sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl” crossorigin=”anonymous”></script>
-</body>
-</html>
-
 {% endblock %}

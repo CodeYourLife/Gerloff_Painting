@@ -1,27 +1,13 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_employees %}active{% endblock nav_item_employees %}
+
+{% block sub_nav %}
+{% include 'employees_nav.html' with page_label="Edit Employee" %}
+{% endblock %}
+
 {% block content %}
 
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="#">Employees</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav">
-            <li><a class="nav-item nav-link" href="{% url 'employees_home' %}">Home</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'certifications' 'ALL' %}">Certifications</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'add_new_employee' %}">New Employee</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'safety_home' %}">Safety</a></li>
-            <li>
-                <a class="nav-item nav-link active">
-                    Edit {{ employee.first_name }} {{ employee.last_name }}
-                </a>
-            </li>
-        </ul>
-    </div>
-</nav>
-
-<br>
 
 <div class="container-fluid">
 

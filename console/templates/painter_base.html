@@ -12,19 +12,16 @@
 <!--    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}"/>-->
     <link rel="apple-touch-icon" sizes="120x120" href="{% static 'images/apple-touch-icon.png' %}"/>
     <style type="text/css" class="init">
-        .active {
-          background-color: Salmon;
-          color: white;
+        nav .nav-link.active,
+        .collapsible:hover {
+            background-color: Red !important;
+            border-radius: 3px;
+            color: white !important;
         }
 
         .navbar-expand-lg {
-          padding-left: 10px !important;
-          padding-right: 10px !important;
-        }
-        .active, .collapsible:hover {
-          background-color: Red !important;
-          border-radius: 3px;
-          color: white !important;
+            padding-left: 10px !important;
+            padding-right: 10px !important;
         }
 
     </style>
@@ -65,12 +62,9 @@
             <li><a class="nav-item nav-link {% block nav_item_index %}{% endblock nav_item_index %}"
                    href="{% url 'index' %}">Home</a></li>
 
-            {% if user.is_superuser %}
-            <li><a class="nav-item nav-link {% block nav_item_employees %}{% endblock nav_item_employees %}"
-                   href="{% url 'employees_home' %}">Employees</a></li>
-            {% else %}
-            <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
-            {% endif %}
+
+            <li><a class="nav-item nav-link active" href="{% url 'my_page' %}">My Page</a></li>
+
 
             {% if user.is_authenticated %}
             <li>Hello, {{user.first_name}}</li>

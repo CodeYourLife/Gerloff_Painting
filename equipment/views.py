@@ -21,7 +21,7 @@ from media.utilities import MediaUtilities
 from console.misc import Email, get_client_ip, is_internal_ip
 from datetime import datetime
 from employees.models import *
-
+from collections import defaultdict
 
 def complete_pickup(request, pickup):
     send_data = {}
@@ -203,7 +203,7 @@ def request_trash_pickup(request, jobnumber):
                                             error=message2, date=date.today())
                 selected_request = PickupRequest.objects.get(job_number=selected_job, confirmed=True, is_closed=False)
                 selected_request.remove_trash = True
-                selected_request.request_notes = selected_request.request_notes + " Trash Pickup Request Added. " + request.POST['notes']
+                selected_request.request_notes = selected_request.request_notes + " Trash Pickup Request Added. " + str(request.POST['notes'])
                 if 'save_paint' in request.POST:
                     selected_request.save_leftover_paint=True
                 selected_request.save()
@@ -224,7 +224,7 @@ def request_trash_pickup(request, jobnumber):
             if 'pickup_all_equipment' in request.POST:
                 new_request.all_items = True
 
-            message += " Please pickup the trash! " + request.POST['notes'] + ". "
+            message += " Please pickup the trash! " + str(request.POST['notes']) + ". "
 
             if 'save_paint' in request.POST:
                 message += " Please save the leftover paint in our warehouse, until I can review it."
@@ -356,12 +356,12 @@ def request_pickup(request, jobnumber, item, pickup, status):
                 selected_request.save_leftover_paint = True
                 message += " Save leftover paint in our warehouse until i can review. "
             selected_request.save()
+            if selected_request.request_notes is None:
+                selected_request.request_notes = ""
+                selected_request.save()
+            posted_note = request.POST.get('request_notes', '').strip()
             if selected_request.all_items == True:
-                if selected_request.request_notes is None:
-                    selected_request.request_notes = ""
-                    selected_request.save()
-                selected_request.request_notes = selected_request.request_notes + " Pickup All Items. " + request.POST[
-                    'request_notes']
+                selected_request.request_notes = selected_request.request_notes + " Pickup All Items. " + posted_note
                 selected_request.save()
                 message = message + ". Please pickup all items. \n"
             else:
@@ -379,11 +379,9 @@ def request_pickup(request, jobnumber, item, pickup, status):
                     else:
                         tempnote = tempnote + "#:N/A- " + x.item.item + ". \n"
                         message = message + "#:N/A- " + x.item.item + ". \n"
-                selected_request.request_notes = selected_request.request_notes + tempnote + "\n" + request.POST[
-                    'request_notes'] + ". "
+                selected_request.request_notes = selected_request.request_notes + tempnote + "\n" + posted_note + ". "
                 selected_request.save()
-            message = message + "\n Requested by: " + str(selected_request.requested_by) + "\n\n" + request.POST[
-                'request_notes'] + ". "
+            message = message + "\n Requested by: " + str(selected_request.requested_by) + "\n\n" + posted_note + ". "
             recipients = ["warehouse@gerloffpainting.com"]
             if selected_job.superintendent:
                 if selected_job.superintendent.email:
@@ -592,6 +590,21 @@ def equipment_new(request):
     inventoryitems4 = json.dumps(list(InventoryItems4.objects.values('id', 'type__id', 'name').all()),
                                  cls=DjangoJSONEncoder)
     vendors = Vendors.objects.filter(category__category='Equipment Supplier')
+    used_numbers = Inventory.objects.exclude(number__isnull=True) \
+        .exclude(number="") \
+        .values_list('number', flat=True)
+
+    used_numbers = set(str(x).zfill(4) for x in used_numbers if str(x).isdigit())
+
+    new_number = None
+
+    for i in range(1000, 10000):
+        candidate = str(i).zfill(4)
+
+        if candidate not in used_numbers:
+            new_number = candidate
+            break
+
     if request.method == 'POST':
         inventory = Inventory.objects.create(item=request.POST['item'], inventory_type=InventoryType.objects.get(
             id=request.POST['inventory_type0']), purchase_date=request.POST['purchase_date'],
@@ -622,7 +635,7 @@ def equipment_new(request):
     return render(request, "equipment_new.html",
                   {'vendors': vendors, 'inventorytype': inventorytype, 'inventoryitems1': inventoryitems1,
                    'inventoryitems2': inventoryitems2, 'inventoryitems3': inventoryitems3,
-                   'inventoryitems4': inventoryitems4})
+                   'inventoryitems4': inventoryitems4,'new_number': new_number})
 
 
 @login_required(login_url='/accounts/login')
@@ -634,7 +647,7 @@ def get_directory_contents(request, id, value, app):
 def equipment_page(request, id):
     send_data={}
     inventory = Inventory.objects.get(id=id)
-    table = InventoryNotes.objects.filter(inventory_item=inventory).order_by('date')
+    table = InventoryNotes.objects.filter(inventory_item=inventory).order_by('id')
     employees = Employees.objects.filter(active=True)
     vendors = Vendors.objects.filter(category__category="Equipment Repair")
     path = os.path.join(settings.MEDIA_ROOT, "equipment", str(inventory.id))
@@ -651,6 +664,7 @@ def equipment_page(request, id):
         if 'current_status' in request.POST:
             inventory.notes = request.POST['current_status']
             inventory.save()
+            return redirect('equipment_page', inventory.id)
         if 'selected_file' in request.POST:
             return MediaUtilities().getDirectoryContents(id, request.POST['selected_file'], 'equipment')
         if 'search_job' in request.POST:
@@ -674,6 +688,7 @@ def equipment_page(request, id):
                                       note="Returned -" + request.POST['returned_notes'],
                                       category="Returned")
             new_note.save()
+            return redirect('equipment_page', inventory.id)
         if 'returned_employee' in request.POST:
             if inventory.job_number != None:
                 inventory.status = "Checked Out"
@@ -697,6 +712,7 @@ def equipment_page(request, id):
             new_note.save()
             inventory.assigned_to = None
             inventory.save()  # this will update only
+            return redirect('equipment_page', inventory.id)
 
         if 'missing' in request.POST:
             inventory.status = "Missing"  # change field
@@ -709,6 +725,7 @@ def equipment_page(request, id):
                                       note="Missing -" + request.POST['missing_notes'],
                                       category="Missing")
             new_note.save()
+            return redirect('equipment_page', inventory.id)
         if 'select_job' in request.POST:
             inventory.job_number = Jobs.objects.get(job_number=request.POST['select_job'])
             inventory.service_vendor = None
@@ -723,15 +740,41 @@ def equipment_page(request, id):
                                       job_name=Jobs.objects.get(job_number=request.POST['select_job']).job_name,
                                       job_number=request.POST['select_job'])
             new_note.save()
+            return redirect('equipment_page', inventory.id)
         if 'equipment_note' in request.POST:
             new_note = InventoryNotes(inventory_item=inventory, date=date.today(),
                                       user=Employees.objects.get(user=request.user),
                                       note=request.POST['equipment_note'],
                                       category="Misc")
             new_note.save()
+            return redirect('equipment_page', inventory.id)
 
         if 'select_service' in request.POST:
-            inventory.service_vendor = Vendors.objects.get(id=request.POST['select_service'])
+            selected_service = request.POST.get('select_service')
+            if selected_service:
+                if str(selected_service).isdigit():
+                    service_vendor = Vendors.objects.get(id=selected_service)
+                else:
+                    repair_category, created = VendorCategory.objects.get_or_create(
+                        category="Equipment Repair"
+                    )
+
+                    service_vendor, created = Vendors.objects.get_or_create(
+                        company_name=selected_service.strip(),
+                        defaults={
+                            'category': repair_category
+                        }
+                    )
+
+                    if service_vendor.category is None:
+                        service_vendor.category = repair_category
+                        service_vendor.save()
+
+                inventory.service_vendor = service_vendor
+                inventory.job_number = None
+                inventory.assigned_to = None
+                inventory.status = "In Service"
+                inventory.save()
             inventory.job_number = None
             inventory.status = "Service"
             inventory.date_out = date.today()
@@ -741,8 +784,9 @@ def equipment_page(request, id):
                                       user=Employees.objects.get(user=request.user),
                                       note="In Service -" + request.POST['service_notes'],
                                       category="Service",
-                                      job_name=Vendors.objects.get(id=request.POST['select_service']).company_name)
+                                      job_name=service_vendor.company_name)
             new_note.save()
+            return redirect('equipment_page', inventory.id)
 
         if 'select_employee' in request.POST:
             inventory.assigned_to = Employees.objects.get(id=request.POST['select_employee'])
@@ -758,6 +802,7 @@ def equipment_page(request, id):
                                            request.POST['job_notes'],
                                       category="Employee", )
             new_note.save()
+            return redirect('equipment_page', inventory.id)
         if 'upload_file' in request.FILES:
             fileitem = request.FILES['upload_file']
             custom_name = request.POST['file_name']
@@ -774,6 +819,7 @@ def equipment_page(request, id):
             for x in os.listdir(path):
                 if os.path.isfile(os.path.join(path, x)):
                     folder_count += 1
+            return redirect('equipment_page', inventory.id)
     client_ip = get_client_ip(request)
     can_open_folder = is_internal_ip(client_ip)
     send_data['can_open_folder'] = can_open_folder
@@ -809,32 +855,45 @@ def equipment_home(request):
     return render(request, "equipment_home.html", send_data)
 
 
+
 def closed_equipment_report(request):
     send_data = {}
+
     items = Inventory.objects.filter(is_closed=True).order_by('date_out')
-    items_adjust =[]
+
+    inventory_by_super = defaultdict(list)
     inventory_notes = []
-    super_count = []
-    for x in items:
-        last_job=""
-        last_super =""
-        notes=InventoryNotes.objects.filter(inventory_item=x)
-        for y in notes:
-            inventory_notes.append({'id': x.id, 'date': y.date, 'user': y.user, 'note': y.note, 'job_name':y.job_name})
-            if y.job_name:
-                if Jobs.objects.filter(job_name=y.job_name).exists():
-                    last_job = y.job_name
-                    if Jobs.objects.filter(job_number=y.job_number).exists():
-                        last_super = Jobs.objects.get(job_number=y.job_number).superintendent
-        items_adjust.append({'item':x,'last_job':last_job,'last_super':last_super})
-    for z in Employees.objects.all():
-        a =0
-        for x in items_adjust:
-            if str(x.get('last_super')) == str(z):
-                a += 1
-        if a > 0:
-            super_count.append({'Super':str(z),'Count':a})
-    send_data['super_count'] = super_count
-    send_data['item'] = items_adjust
+
+    for item in items:
+        last_job = ""
+        last_super = "No Superintendent Found"
+
+        notes = InventoryNotes.objects.filter(inventory_item=item).order_by('date')
+
+        for note in notes:
+            inventory_notes.append({
+                'id': item.id,
+                'date': note.date,
+                'user': note.user,
+                'note': note.note,
+                'job_name': note.job_name,
+            })
+
+            if note.job_name:
+                last_job = note.job_name
+
+            if note.job_number:
+                job = Jobs.objects.filter(job_number=note.job_number).first()
+                if job and job.superintendent:
+                    last_super = str(job.superintendent)
+
+        inventory_by_super[last_super].append({
+            'item': item,
+            'last_job': last_job,
+            'last_super': last_super,
+        })
+
+    send_data['inventory_by_super'] = dict(inventory_by_super)
     send_data['notes'] = inventory_notes
+
     return render(request, "closed_equipment.html", send_data)

@@ -1,58 +1,137 @@
-<!DOCTYPE html>
 {% extends 'base.html' %}
 {% load static %}
+{% block nav_item_equipment %}active{% endblock nav_item_equipment %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+
+<style>
+    .super-section {
+        margin-bottom: 30px;
+    }
+
+    .super-header {
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    padding: 12px 15px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: #333;
+}
+
+    .equipment-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 12px;
+        background: white;
+    }
+
+    .equipment-title {
+        color: #007bff;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+
+    .equipment-meta {
+        color: #555;
+        margin-top: 4px;
+    }
+
+    .note-line {
+        border-top: 1px solid #eee;
+        padding-top: 6px;
+        margin-top: 6px;
+        font-size: 0.95rem;
+    }
+
+    .job-name {
+        color: red;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block sub_nav %}
+{% include 'equipment_nav.html' with active_tab="lost" %}
+{% endblock %}
+
 {% block content %}
-<html>
-<head>
-    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-    <style type="text/css" class="init">
-        .list-items {
-        border-bottom: 1px solid black; display: flex; justify-content: space-between;
-        }
-    </style>
-    <script src="{% static 'equipment.js' %}"></script>
-    <script type="text/javascript" class="init">
-    </script>
-</head>
 
+<div class="container-fluid mt-3 mb-5">
 
-<body>
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="#">Equipment</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav ">
-            <li><a class="nav-item nav-link" href="{% url 'equipment_home' %}">Home</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'equipment_new' %}">New</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
-            <li><a class="nav-item nav-link active" href="#">Closed Equipment Report</a></li>
-        </ul>
+    <h3 class="mb-4">Lost Equipment by Superintendent</h3>
+
+{% for super, equipment_list in inventory_by_super.items %}
+
+<div class="super-section">
+
+    <button class="btn btn-light btn-block text-left super-header"
+            type="button"
+            data-toggle="collapse"
+            data-target="#superCollapse{{ forloop.counter }}"
+            aria-expanded="false"
+            aria-controls="superCollapse{{ forloop.counter }}">
+        {{ super }} — {{ equipment_list|length }} item{{ equipment_list|length|pluralize }}
+    </button>
+
+    <div class="collapse mt-2" id="superCollapse{{ forloop.counter }}">
+
+        {% for equipment in equipment_list %}
+
+            <div class="equipment-card">
+
+                <div class="equipment-title">
+                    {% if equipment.item.number %}
+                        GP# {{ equipment.item.number }}
+                    {% endif %}
+                    {{ equipment.item.item }}
+                </div>
+
+                <div class="equipment-meta">
+                    <strong>ID:</strong> {{ equipment.item.id }}
+
+                    {% if equipment.last_job %}
+                        <br>
+                        <strong>Last Job:</strong> {{ equipment.last_job }}
+                    {% endif %}
+                </div>
+
+                {% for note in notes %}
+                    {% if note.id == equipment.item.id %}
+                        <div class="note-line">
+                            <strong>{{ note.date }}</strong>
+                            {{ note.user }} — {{ note.note }}
+
+                            {% if note.job_name %}
+                                <span class="job-name">{{ note.job_name }}</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+
+            </div>
+
+        {% endfor %}
+
     </div>
-</nav>
-<h3>Lost Equipment by Super</h3>
 
-{% for x in super_count %}
-<b>{{x.Super}}:</b> {{x.Count}}
-<br>
-{% endfor %}
-<br><br>
-<h3>List of Equipment</h3>
-{% for equipment in item %}
-<b><font color="blue">{% if equipment.item.number %}GP# {{equipment.item.number}}{% endif %} {{equipment.item.item}} </font></b>Id: {{equipment.item.id}}
-{% if equipment.last_job %}
-<br>
-<b><font color="blue">Last Job: </font></b>{{equipment.last_job}}  <b><font color="blue">Super: </font></b>{{equipment.last_super}}</b>
-{% endif %}
-<br>
-{% for note in notes %}
-{% if note.id == equipment.item.id %}
-<b>{{note.date}}</b> {{note.user}} - {{note.note}} {% if note.job_name %} <font color="red"> {{note.job_name}}</font>{% endif %}
-<br>
-{% endif %}
-{% endfor %}
-<br>
-{% endfor %}
-</body>
+</div>
 
-</html>
+{% empty %}
+
+<div class="alert alert-info">
+    No lost equipment found.
+</div>
+
+{% endfor %}
+
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'equipment.js' %}"></script>
 {% endblock %}

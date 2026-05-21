@@ -14,19 +14,8 @@ font-family: tahoma;
 font-size: 13px;
 }
 
-    nav .active, .collapsible:hover {
-      background-color: Salmon;
-    }
-    .nav-pills a {
-        color: black;
-    }
-    .nav-pills li {
-        padding: 2px;
-    }
-    .nav-pills .active {
-        background-color: #6c757d !important;
-        padding: 5px;
-    }
+
+
     label {
         margin-left: 10px;
         margin-right: 10px;
@@ -84,17 +73,12 @@ float: left !important;
 }
 </style>
 {% endblock %}
-{% block content %}
 
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Change Orders</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'change_order_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link active" href="#">Add New</a></li>
-    </ul>
-  </div>
-</nav>
+{% block sub_nav %}
+{% include 'change_order_nav.html' with active_tab="add_new" %}
+{% endblock sub_nav %}
+
+{% block content %}
 
 <h4>Add New Change Order</h4>
 
@@ -110,8 +94,8 @@ float: left !important;
             </select>
 <input type="submit" class="btn btn-primary" value="Add Change Order to This Job" />
 </form>
-
-
+{% endblock %}
+{% block extra_scripts %}
 <script>
 $(document).ready(function() {
 

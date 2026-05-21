@@ -1,234 +1,384 @@
 {% extends 'base.html' %}
 {% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+
+<style>
+    .equipment-form-page {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .form-card {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 18px;
+        margin-bottom: 18px;
+    }
+
+    .form-card h5 {
+        font-weight: bold;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 8px;
+    }
+
+    .dynamic-select-row {
+        margin-top: 12px;
+    }
+
+    #hide_this {
+        display: none;
+    }
+
+    textarea {
+        max-width: 100%;
+    }
+
+    @media (max-width: 576px) {
+        .form-card {
+            padding: 14px;
+        }
+
+        .btn-submit-equipment {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block sub_nav %}
+{% include 'equipment_nav.html' with active_tab="new" %}
+{% endblock %}
+
 {% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-	<title>Trinity GP</title>
-<!--	<link rel="shortcut icon" type="image/png" href="/media/images/favicon.png">-->
-	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
-	<link rel="stylesheet" type="text/css" href="/media/css/site-examples.css?_=8f7cff5ee7757412879aedf3efbfaee01">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-	<style type="text/css" class="init">
 
-	</style>
-	<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
-    var row_counter = 0;
-$(document).ready(function () {
-    document.getElementById("hide_this").style.display = "none";
-})
+<div class="container equipment-form-page mt-3 mb-5">
 
-        window.onload = function() {
-            var today = new Date();
-            var dd = String(today.getDate()).padStart(2, '0');
-            var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
-            var yyyy = today.getFullYear();
-            today = yyyy + '-' + mm + '-' + dd;
-            equipment_input.purchase_date.value = today
-        };
+    <h3 class="mb-3">Add New Equipment</h3>
 
+    <form name="equipment_input"
+          action="{% url 'equipment_new' %}"
+          method="post"
+          onsubmit="return check_booking_data()">
+        {% csrf_token %}
 
-        function check_booking_data() {
-        if (document.getElementById("inventory_type0").value == "please_select"){
-        alert("Please select equipment type")
-        document.getElementById("inventory_type0").scrollIntoView();
-        return false;
-        }
+        <div class="form-card">
+            <h5>Equipment Type</h5>
 
-        var y = document.getElementById("select_vendor");
-        var x = document.getElementById("new_vendor");
-            if (y.value =="add_new"){
-            	if(x.value == ""){
-                	alert('Please type vendor name')
-                	return false;
-                }
-			}
+            <div class="form-group">
+                <label for="inventory_type0">Select Equipment Type</label>
+                <select id="inventory_type0"
+                        name="inventory_type0"
+                        class="form-control"
+                        onchange="add_dropdown(0)">
+                    <option value="please_select">Select Category</option>
+                    {% for type in inventorytype %}
+                        <option value="{{ type.id }}">{{ type.type }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-            }
+            <div id="add_item_here1" class="dynamic-select-row"></div>
+            <div id="add_item_here2" class="dynamic-select-row"></div>
+            <div id="add_item_here3" class="dynamic-select-row"></div>
+            <div id="add_item_here4" class="dynamic-select-row"></div>
+        </div>
 
-function update_vendor() {
+        <div class="form-card">
+            <h5>Item Details</h5>
 
-  	var x = document.getElementById("hide_this");
-  	var y = document.getElementById("select_vendor");
-  	if (y.value == "add_new"){
-  		x.style.display = "block";}
-  	else {x.style.display = "none"}
+            <div class="form-group">
+                <label for="item">Item Description</label>
+                <input type="text"
+                       name="item"
+                       id="item"
+                       class="form-control"
+                       placeholder="Stepladder 6'"
+                       required>
+            </div>
 
-}
+            <div class="form-group">
+                <label for="number">Gerloff Number</label>
+                <input type="text"
+                       name="number"
+                       id="number"
+                       class="form-control"
+                       value={{new_number}}>
+            </div>
 
+            <div class="form-group">
+                <label for="serial_number">Serial Number</label>
+                <input type="text"
+                       name="serial_number"
+                       id="serial_number"
+                       class="form-control">
+            </div>
 
-    function add_dropdown(current_item) {
-    		if (row_counter > 0){
-    		for(let i = current_item+1; i < row_counter+1; i++){
-    			var deleted_item = document.getElementById("inventory_type" + i);
-    			for (const label of deleted_item.labels) {
-    			label.textContent = ""
-    			}
-    			deleted_item.remove();
-				}
-			}
-		row_counter = current_item +1
-    	var item_box = document.getElementById("item")
-    	temp_value = ""
-    	for(let i = 0; i < row_counter; i++){
-    		temp_item = document.getElementById("inventory_type" + i);
-    		temp_item_value = temp_item.options[temp_item.selectedIndex].text
-    		temp_value = temp_value + " " + temp_item_value;
-    		}
-    	item_box.value = temp_value
-    	add_item_dropdown();
-	}
+            <div class="form-check mt-3">
+                <input type="checkbox"
+                       name="is_labeled"
+                       id="is_labeled"
+                       class="form-check-input">
+                <label for="is_labeled" class="form-check-label">
+                    Does this have a Gerloff tag?
+                </label>
+            </div>
+        </div>
 
-	function add_item_dropdown() {
-		var select = document.createElement("select");
-		select.name = "inventory_type" + row_counter;
-		select.id = "inventory_type" + row_counter;
+        <div class="form-card">
+            <h5>Purchase Information</h5>
 
-		if (row_counter == 1){
-		selectedtype = equipment_input.inventory_type0.value;
-		rolodex = JSON.parse("{{inventoryitems1|escapejs}}");
-		select.addEventListener('change',function() {add_dropdown(1);},false);
-		}
-		if (row_counter == 2){
-		selectedtype = equipment_input.inventory_type1.value;
-		rolodex = JSON.parse("{{inventoryitems2|escapejs}}");
-		select.addEventListener('change',function() {add_dropdown(2);},false);
-		}
-				if (row_counter == 3){
-		selectedtype = equipment_input.inventory_type2.value;
-		rolodex = JSON.parse("{{inventoryitems3|escapejs}}");
-		select.addEventListener('change',function() {add_dropdown(3);},false);
-		}
-				if (row_counter == 4){
-		selectedtype = equipment_input.inventory_type3.value;
-		rolodex = JSON.parse("{{inventoryitems4|escapejs}}");
-		select.addEventListener('change',function() {add_dropdown(4);},false);
-		}
-        b=0
-        for(let i =0; i < rolodex.length; i++){
-            if (rolodex[i].type__id == selectedtype){
-                    if (b==0){
-                    	b=1
-						var option = document.createElement("option");
-						option.value ="please_select"
-						option.text="Select Item"
-						select.appendChild(option);
-					}
-                    var option = document.createElement("option");
-                    option.value =rolodex[i].id
-                    option.text=rolodex[i].name
-                    select.appendChild(option);
-            }
-        }
-        if (b==0){
-        	row_counter = row_counter-1
-        	select.remove()}
-        if (b==1){
-        var label = document.createElement("label");
-        label.textContent= "Select Item"
-		document.getElementById('add_item_here' + row_counter).appendChild(label).appendChild(select);
-		}
-         }
+            <div class="form-group">
+                <label for="purchase_date">Date Purchased</label>
+                <input type="date"
+                       id="purchase_date"
+                       name="purchase_date"
+                       class="form-control"
+                       required>
+            </div>
 
-   	function addAttachmentToLocalStorage (event) {
+            <div class="form-group">
+                <label for="purchase_price">Purchase Price</label>
+                <input type="number"
+                       name="purchase_price"
+                       id="purchase_price"
+                       class="form-control"
+                       value="0.00"
+                       step="0.01">
+            </div>
 
-   		//localStorage.setItem("tempxml", xml_content);
-   		//loop over storage items
-   		//for each item, save to disk on the server in a folder path you've chosen
-   		//if the folder path does not exist, the create one
-   		//reach out to server for each of these tasks that involve server folder/file manipulation
-   	}
-	</script>
-</head>
-<body>
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Equipment</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'equipment_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link active" href="{% url 'equipment_new' %}">New</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Outgoing' %}">Check-Out</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'equipment_batch_outgoing' 'Incoming' %}">Check-In</a></li>
-    </ul>
-  </div>
-</nav>
-<div class ="container">
- <form name = equipment_input action="{% url 'equipment_new' %}" method="post"  onSubmit = "return check_booking_data()">
-{% csrf_token %}
-			<label for="inventory_type0">Select Equipment Type</label>
-            <select id="inventory_type0" name="inventory_type0" onChange="add_dropdown(0)">
-				<option value="please_select">Select Category</option>
-                {% for type in inventorytype %}
-                <option value={{type.id}}>{{type.type}}</option>
-                {% endfor %}
+            <div class="form-group">
+                <label for="select_vendor">Where did you purchase?</label>
+                <select id="select_vendor"
+                        name="select_vendor"
+                        class="form-control"
+                        onchange="update_vendor()">
+                    <option value="please_select">Select Vendor</option>
+                    <option value="add_new">Add New Below</option>
+                    {% if vendors %}
+                        {% for vendor in vendors %}
+                            <option value="{{ vendor.id }}">{{ vendor.company_name }}</option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
 
-            </select>
+            <div id="hide_this" class="form-group">
+                <label for="new_vendor">Type Vendor Name if Not in List</label>
+                <input type="text"
+                       name="new_vendor"
+                       id="new_vendor"
+                       class="form-control">
+            </div>
 
-	 <br><br>
-			<div id="add_item_here1"></div>
-	 		<div id="add_item_here2"></div>
-	 		<div id="add_item_here3"></div>
-	 		<div id="add_item_here4"></div>
+            <div class="form-group">
+                <label for="purchased_by">Purchased By</label>
+                <input type="text"
+                       name="purchased_by"
+                       id="purchased_by"
+                       class="form-control">
+            </div>
 
-	 <br><br>
+            <div class="form-group">
+                <label for="po_number">PO Number</label>
+                <input type="text"
+                       name="po_number"
+                       id="po_number"
+                       class="form-control">
+            </div>
 
-	 Item Description: <input type= "text" name="item" id="item" placeholder= "Stepladder 6'" size="30" required />
-	 <br><br>
-	 Gerloff Number:<input type= "text" name="number" id="number" placeholder="Equipment Number" size="30"  />
-	<br><br>
-                    <label for="purchase_date">Date Purchased:</label>
-                    <input type="date" id="purchase_date" name="purchase_date" required>
+            <div class="form-group">
+                <label for="attachment">Attachment</label>
+                <input type="file"
+                       name="attachment"
+                       id="attachment"
+                       class="form-control-file"
+                       onchange="addAttachment(this)"
+                       multiple>
+            </div>
+        </div>
 
-	 Purchase Price:<input type= "number" name="purchase_price" id="purchase_price" value=0.00 size="30" />
-	<br><br>
-	             <label for="select_vendor">Where did you purchase?</label>
-            <select id="select_vendor" name="select_vendor" onchange="update_vendor()" >
-                 <option value="please_select">Select Vendor</option>
-				<option value="add_new">Add New Below</option>
-				{% if vendors %}
-                {% for vendor in vendors %}
-                <option value={{vendor.id}}>{{vendor.company_name}}</option>
-                {% endfor %}
-                {% endif %}
-            </select>
+        <div class="form-card">
+            <h5>Notes</h5>
 
-<br><br>
-	 <div id="hide_this">
-	 Type Vendor Name if Not in List:<input type= "text" name="new_vendor" id="new_vendor" placeholder="" size="30" />
-	 </div>
-		 <br><br>
-	 Purchased By:<input type= "text" name="purchased_by" id="purchased_by" placeholder="" size="30" />
-	<br><br>
-	 Serial Number:<input type= "text" name="serial_number" id="serial_number" placeholder="" size="30" />
-	<br><br>
-	 PO Number:<input type= "text" name="po_number" id="po_number" placeholder="" size="30" />
-	<br><br>
-		 Attachment: <input type= "file" name="po_number" id="po_number" onchange="addAttachment(this)" placeholder="" multiple/>
-	<br><br>
-	<input type="checkbox" name ="is_labeled" id="is_labeled"   /> <label for="is_labeled">"Does this have a Gerloff tag?" </label>
-	 <br><br>
-        <label for="notes">Any notes about this item: </label> <br>
-        <textarea id="notes" name="notes" rows="4" cols="100" ></textarea>
+            <div class="form-group">
+                <label for="notes">Any notes about this item</label>
+                <textarea id="notes"
+                          name="notes"
+                          rows="4"
+                          class="form-control"></textarea>
+            </div>
+        </div>
 
+        <input type="submit"
+               class="btn btn-primary btn-submit-equipment"
+               value="Add New Equipment">
 
-<br><br>
-
-
-<input type="submit" class="btn btn-primary btn-sm" value="Add New Equipment" />
     </form>
 </div>
 
-</body>
-</html>
+{% endblock %}
 
+{% block extra_scripts %}
+<script>
+    var row_counter = 0;
+
+    $(document).ready(function () {
+        document.getElementById("hide_this").style.display = "none";
+    });
+
+    window.onload = function() {
+        var today = new Date();
+        var dd = String(today.getDate()).padStart(2, '0');
+        var mm = String(today.getMonth() + 1).padStart(2, '0');
+        var yyyy = today.getFullYear();
+
+        today = yyyy + '-' + mm + '-' + dd;
+        equipment_input.purchase_date.value = today;
+    };
+
+    function check_booking_data() {
+        if (document.getElementById("inventory_type0").value == "please_select") {
+            alert("Please select equipment type");
+            document.getElementById("inventory_type0").scrollIntoView();
+            return false;
+        }
+
+        var vendorSelect = document.getElementById("select_vendor");
+        var newVendor = document.getElementById("new_vendor");
+
+        if (vendorSelect.value == "add_new") {
+            if (newVendor.value == "") {
+                alert("Please type vendor name");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function update_vendor() {
+        var newVendorBox = document.getElementById("hide_this");
+        var vendorSelect = document.getElementById("select_vendor");
+
+        if (vendorSelect.value == "add_new") {
+            newVendorBox.style.display = "block";
+        } else {
+            newVendorBox.style.display = "none";
+        }
+    }
+
+    function add_dropdown(current_item) {
+        if (row_counter > 0) {
+            for (let i = current_item + 1; i < row_counter + 1; i++) {
+                var deleted_item = document.getElementById("inventory_type" + i);
+
+                if (deleted_item) {
+                    for (const label of deleted_item.labels) {
+                        label.textContent = "";
+                    }
+
+                    deleted_item.remove();
+                }
+            }
+        }
+
+        row_counter = current_item + 1;
+
+        var item_box = document.getElementById("item");
+        var temp_value = "";
+
+        for (let i = 0; i < row_counter; i++) {
+            var temp_item = document.getElementById("inventory_type" + i);
+
+            if (temp_item) {
+                var temp_item_value = temp_item.options[temp_item.selectedIndex].text;
+                temp_value = temp_value + " " + temp_item_value;
+            }
+        }
+
+        item_box.value = temp_value.trim();
+
+        add_item_dropdown();
+    }
+
+    function add_item_dropdown() {
+        var select = document.createElement("select");
+
+        select.name = "inventory_type" + row_counter;
+        select.id = "inventory_type" + row_counter;
+        select.className = "form-control mt-2";
+
+        var selectedtype = "";
+        var rolodex = [];
+
+        if (row_counter == 1) {
+            selectedtype = equipment_input.inventory_type0.value;
+            rolodex = JSON.parse("{{ inventoryitems1|escapejs }}");
+            select.addEventListener('change', function() { add_dropdown(1); }, false);
+        }
+
+        if (row_counter == 2) {
+            selectedtype = equipment_input.inventory_type1.value;
+            rolodex = JSON.parse("{{ inventoryitems2|escapejs }}");
+            select.addEventListener('change', function() { add_dropdown(2); }, false);
+        }
+
+        if (row_counter == 3) {
+            selectedtype = equipment_input.inventory_type2.value;
+            rolodex = JSON.parse("{{ inventoryitems3|escapejs }}");
+            select.addEventListener('change', function() { add_dropdown(3); }, false);
+        }
+
+        if (row_counter == 4) {
+            selectedtype = equipment_input.inventory_type3.value;
+            rolodex = JSON.parse("{{ inventoryitems4|escapejs }}");
+            select.addEventListener('change', function() { add_dropdown(4); }, false);
+        }
+
+        var hasItems = 0;
+
+        for (let i = 0; i < rolodex.length; i++) {
+            if (rolodex[i].type__id == selectedtype) {
+                if (hasItems == 0) {
+                    hasItems = 1;
+
+                    var defaultOption = document.createElement("option");
+                    defaultOption.value = "please_select";
+                    defaultOption.text = "Select Item";
+                    select.appendChild(defaultOption);
+                }
+
+                var option = document.createElement("option");
+                option.value = rolodex[i].id;
+                option.text = rolodex[i].name;
+                select.appendChild(option);
+            }
+        }
+
+        if (hasItems == 0) {
+            row_counter = row_counter - 1;
+            select.remove();
+        }
+
+        if (hasItems == 1) {
+            var wrapper = document.getElementById("add_item_here" + row_counter);
+
+            wrapper.innerHTML = "";
+
+            var label = document.createElement("label");
+            label.textContent = "Select Item";
+
+            wrapper.appendChild(label);
+            wrapper.appendChild(select);
+        }
+    }
+
+    function addAttachmentToLocalStorage(event) {
+        // Placeholder for future attachment handling.
+    }
+</script>
 {% endblock %}

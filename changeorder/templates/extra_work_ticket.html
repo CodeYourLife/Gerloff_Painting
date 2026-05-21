@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block extra_head %}
+{% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
 
+{% block extra_head %}
 <style>
 
 /* ==========================================
@@ -68,25 +69,9 @@ tr th {
    NAVIGATION
 ========================================================== */
 
-nav .active,
-.collapsible:hover {
-    background-color: #dc3545 !important;
-    color: #fff !important;
-    border-radius: 4px;
-}
 
-.nav-pills li {
-    padding: 2px;
-}
 
-.nav-pills a {
-    color: #000;
-}
 
-.nav-pills .active {
-    background-color: #6c757d !important;
-    padding: 5px;
-}
 
 /* ==========================================================
    FORM ELEMENTS
@@ -279,467 +264,13 @@ select {
 }
 
 </style>
-
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-<link rel="stylesheet" href="{% static 'project_styles.css' %}">
-
 {% endblock %}
-{% block extra_scripts %}
 
-<script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-<script src="https://cdn.datatables.net/plug-ins/1.13.7/sorting/datetime-moment.js"></script>
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-
-    /* ==========================================================
-       DATATABLE SAFE INITIALIZATION
-    ========================================================== */
-    const tableIds = ['approved_table', 'pending_table', 'formals_table'];
-
-    tableIds.forEach(id => {
-        const el = document.getElementById(id);
-        if (el && $.fn.DataTable && !$.fn.DataTable.isDataTable('#' + id)) {
-            $('#' + id).DataTable({
-                paging: false,
-                info: false,
-                ordering: false,
-                searching: false
-            });
-        }
-    });
-
-    /* ==========================================================
-       HIDE OPTIONAL SECTIONS
-    ========================================================== */
-    toggleDisplay("hidden_section_add", false);
-    toggleDisplay("hidden_section_change", false);
-
-    /* ==========================================================
-       ALERT MESSAGES (ONLY IF VALUE EXISTS)
-    ========================================================== */
-    showAlertIfValue("{{email_success}}", "Email successfully sent!");
-    showAlertIfValue("{{email_failed}}", "Email failed to send!");
-    showAlertIfValue("{{error_message}}", "{{error_message}}");
-
-    /* ==========================================================
-       DRAG & DROP (MODAL SAFE + MULTI FILE)
-    ========================================================== */
-    const dropArea = document.getElementById("drop-area");
-    const fileInput = document.getElementById("fileElem");
-
-    if (dropArea) {
-
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(event => {
-            dropArea.addEventListener(event, preventDefaults, false);
-        });
-
-        ['dragenter', 'dragover'].forEach(event => {
-            dropArea.addEventListener(event, () => dropArea.classList.add("drag-active"), false);
-        });
-
-        ['dragleave', 'drop'].forEach(event => {
-            dropArea.addEventListener(event, () => dropArea.classList.remove("drag-active"), false);
-        });
-
-        dropArea.addEventListener("drop", function (e) {
-            const files = e.dataTransfer.files;
-            if (files.length) uploadFiles(files);
-        });
-    }
-
-    if (fileInput) {
-        fileInput.addEventListener("change", function () {
-            if (this.files.length) uploadFiles(this.files);
-        });
-    }
-
-});
-
-/* ==========================================================
-   DRAG/DROP HELPERS
-========================================================== */
-
-function preventDefaults(e) {
-    e.preventDefault();
-    e.stopPropagation();
-}
-
-function uploadFiles(files) {
-
-    const formData = new FormData();
-
-    for (let i = 0; i < files.length; i++) {
-        formData.append("upload_file", files[i]);
-    }
-
-    fetch("{% url 'upload_changeorder_file' changeorder.id %}", {
-        method: "POST",
-        headers: {
-            "X-CSRFToken": "{{ csrf_token }}"
-        },
-        body: formData
-    })
-    .then(response => {
-        if (response.ok) {
-            location.reload();
-        } else {
-            alert("Upload failed.");
-        }
-    })
-    .catch(() => alert("Upload error."));
-}
-
-/* ==========================================================
-   SMALL UTILITIES
-========================================================== */
-
-function toggleDisplay(id, show) {
-    const el = document.getElementById(id);
-    if (el) el.style.display = show ? "block" : "none";
-}
-
-function showAlertIfValue(value, message) {
-    if (value && value !== "None" && value !== "") {
-        alert(message);
-    }
-}
-
-/* ==========================================================
-   GENERAL FUNCTIONS
-========================================================== */
-
-function Previous() {
-    window.history.back();
-}
-
-function copyChangeOrderPath() {
-    const input = document.getElementById("changeOrderPath");
-    if (!input) return;
-
-    input.select();
-    input.setSelectionRange(0, 99999);
-
-    try {
-        document.execCommand("copy");
-        showToast("Folder path copied to clipboard");
-       /*alert("Folder path copied to clipboard");*/
-    } catch {
-        showAlertModal("Copy not supported in this browser");
-    }
-}
-
-function copyMCPath() {
-    const input = document.getElementById("MCPath");
-    if (!input) return;
-
-    input.select();
-    input.setSelectionRange(0, 99999);
-
-    try {
-        document.execCommand("copy");
-        showToast("Folder path copied to clipboard");
-    } catch {
-        showAlertModal("Copy not supported in this browser");
-    }
-}
-
-function check_booking_data1() {
-
-    const approved = document.getElementById("is_approved_to_bill");
-    const gcNumber = document.getElementById("gc_number");
-    const note = document.getElementById("approval_note");
-
-    if (!approved || !note) return true;
-
-    if (approved.checked) {
-        if (!gcNumber.value && !note.value) {
-            alert("Provide a GC number or explanation.");
-            return false;
-        }
-    } else {
-        if (!note.value) {
-            alert("You must provide an explanation.");
-            return false;
-        }
-    }
-}
-
-function check_booking_data() {
-    const field = document.getElementById("no_tm_notes");
-    const msg = prompt("Please clarify why you changed this");
-    if (msg && field) field.value = msg;
-}
-
-function void_notes1(id) {
-    const field = document.getElementById(id);
-    const msg = prompt("Please clarify");
-    if (msg && field) field.value = msg;
-}
-
-function prompt_note() {
-    const msg = prompt("Note:");
-    if (msg && document.note_input) {
-        document.note_input.new_note.value = msg;
-        document.note_input.submit();
-    }
-}
-
-function check_paper_ticket() {
-    const fileInput = document.getElementById("upload_file2");
-    if (fileInput && !fileInput.value) {
-        alert("You must upload a copy of the signed ticket");
-        return false;
-    }
-}
-
-/* ==========================================================
-   FILE SELECTION
-========================================================== */
-
-function populate_file_form(fileName) {
-
-    if (document.select_file_form) {
-        document.select_file_form.selected_file.value = fileName;
-        document.select_file_form.submit();
-    }
-}
-
-/* ==========================================================
-   RECIPIENT LOGIC
-========================================================== */
-
-function populate_ticket_recipient() {
-
-    const form = document.select_recipient_form;
-    if (!form) return;
-
-    const selected = form.recipient.value;
-    const addSection = document.getElementById("hidden_section_add");
-    const changeSection = document.getElementById("hidden_section_change");
-
-    if (selected === "please_select" || selected === "add_new") {
-
-        form.recipient_name.value = "";
-        form.recipient_email.value = "";
-        form.recipient_phone.value = "";
-
-        toggleDisplay("hidden_section_add", selected === "add_new");
-        toggleDisplay("hidden_section_change", false);
-
-        return;
-    }
-
-    toggleDisplay("hidden_section_add", false);
-    toggleDisplay("hidden_section_change", false);
-
-    const rolodex = JSON.parse("{{client_list_json|escapejs}}");
-
-    rolodex.forEach(person => {
-        if (person.person_pk == selected) {
-            form.recipient_name.value = person.name;
-            form.recipient_email.value = person.email;
-            form.recipient_phone.value = person.phone;
-        }
-    });
-}
-
-function check_for_new() {
-
-    const form = document.select_recipient_form;
-    if (!form) return;
-
-    const selected = form.recipient.value;
-    const rolodex = JSON.parse("{{client_list_json|escapejs}}");
-
-    if (selected === "please_select") {
-        form.recipient.value = "add_new";
-        toggleDisplay("hidden_section_add", true);
-        return;
-    }
-
-    if (selected === "add_new") return;
-
-    let changed = false;
-
-    rolodex.forEach(person => {
-        if (person.person_pk == selected) {
-            if (form.recipient_name.value !== person.name) changed = true;
-            if (form.recipient_email.value !== person.email) changed = true;
-            if (form.recipient_phone.value !== person.phone) changed = true;
-        }
-    });
-
-    toggleDisplay("hidden_section_change", changed);
-}
-
-function send_ticket_email() {
-
-    const form = document.getElementById("select_recipient_form");
-    if (!form) return false;
-
-    if (form.recipient.value === "please_select") {
-        alert("Change Drop Down Menu");
-        return false;
-    }
-
-    // Show overlay
-    const overlay = document.getElementById("emailSendingOverlay");
-    overlay.style.display = "flex";
-
-    // Disable all buttons to prevent double submit
-    const buttons = form.querySelectorAll("button, input[type='submit']");
-    buttons.forEach(btn => btn.disabled = true);
-
-    return true;  // allow submit
-}
-
-/* ==========================================================
-   YES / NO TOGGLE BUTTONS
-========================================================== */
-
-function toggleButtonPair(yesId, noId, fieldName, value) {
-
-    const yesBtn = document.getElementById(yesId);
-    const noBtn = document.getElementById(noId);
-
-    if (!yesBtn || !noBtn || !document.select_recipient_form) return;
-
-    yesBtn.style.background = value === "Yes" ? "red" : "black";
-    noBtn.style.background = value === "No" ? "red" : "black";
-
-    document.select_recipient_form[fieldName].value = value;
-}
-
-function yes_add() { toggleButtonPair('yes_add_button','no_add_button','add_recipient_form','Yes'); }
-function no_add() { toggleButtonPair('yes_add_button','no_add_button','add_recipient_form','No'); }
-function yes_change() { toggleButtonPair('yes_change_button','no_change_button','change_recipient_form','Yes'); }
-function no_change() { toggleButtonPair('yes_change_button','no_change_button','change_recipient_form','No'); }
-
-function not_coded_yet() {
-    alert("TELL JOE TO CODE THIS")
-}
-
-function submitChangeAmountForm() {
-    const priceInput = document.getElementById("change_amount_price_input");
-    const noteInput = document.getElementById("change_amount_note_input");
-    const formalCoInput = document.getElementById("formal_co_number_input");
-    const informallyApprovedCheckbox = document.getElementById("informally_approved_checkbox");
-    const approvedToBillCheckbox = document.getElementById("approved_to_bill_checkbox");
-
-    const hiddenPrice = document.getElementById("new_price");
-    const hiddenNote = document.getElementById("new_price_note");
-    const hiddenFormalCo = document.getElementById("formal_co_number");
-    const hiddenInformallyApproved = document.getElementById("informally_approved");
-    const hiddenApprovedToBill = document.getElementById("approved_to_bill");
-
-    const form = document.getElementById("change_amount_form");
-
-    if (
-        !priceInput ||
-        !noteInput ||
-        !formalCoInput ||
-        !informallyApprovedCheckbox ||
-        !approvedToBillCheckbox ||
-        !hiddenPrice ||
-        !hiddenNote ||
-        !hiddenFormalCo ||
-        !hiddenInformallyApproved ||
-        !hiddenApprovedToBill ||
-        !form
-    ) {
-        alert("Unable to submit change amount form.");
-        return false;
-    }
-
-    const rawPrice = priceInput.value.trim();
-    const rawNote = noteInput.value.trim();
-    const rawFormalCo = formalCoInput.value.trim();
-    const informallyApproved = informallyApprovedCheckbox.checked;
-    const approvedToBill = approvedToBillCheckbox.checked;
-
-    const originalPriceRaw = (priceInput.dataset.original || "").trim();
-    const originalFormalCo = (formalCoInput.dataset.original || "").trim();
-    const originalInformallyApproved = informallyApprovedCheckbox.dataset.original === "true";
-    const originalApprovedToBill = approvedToBillCheckbox.dataset.original === "true";
-
-    if (rawPrice === "") {
-        alert("Please enter a price.");
-        priceInput.focus();
-        return false;
-    }
-
-    const parsedPrice = parseFloat(rawPrice.replace(/,/g, ""));
-    if (isNaN(parsedPrice)) {
-        alert("Please enter a valid price.");
-        priceInput.focus();
-        return false;
-    }
-
-    const normalizedCurrentPrice = parsedPrice.toFixed(2);
-
-    let normalizedOriginalPrice = "";
-    if (originalPriceRaw !== "") {
-        const parsedOriginalPrice = parseFloat(originalPriceRaw.replace(/,/g, ""));
-        if (!isNaN(parsedOriginalPrice)) {
-            normalizedOriginalPrice = parsedOriginalPrice.toFixed(2);
-        }
-    }
-
-    const priceChanged = normalizedCurrentPrice !== normalizedOriginalPrice;
-    const formalCoChanged = rawFormalCo !== originalFormalCo;
-    const informallyApprovedChanged = informallyApproved !== originalInformallyApproved;
-    const approvedToBillChanged = approvedToBill !== originalApprovedToBill;
-
-    const anythingChanged =
-        priceChanged ||
-        formalCoChanged ||
-        informallyApprovedChanged ||
-        approvedToBillChanged;
-
-    if (rawFormalCo !== "" && !approvedToBill) {
-        alert("Approved To Bill must be checked when a Formal Change Order Number is entered.");
-        approvedToBillCheckbox.focus();
-        return false;
-    }
-
-    if (anythingChanged && rawNote === "") {
-        alert("Please explain this change in the notes field.");
-        noteInput.focus();
-        return false;
-    }
-
-    hiddenPrice.value = normalizedCurrentPrice;
-    hiddenNote.value = rawNote;
-    hiddenFormalCo.value = rawFormalCo;
-    hiddenInformallyApproved.value = informallyApproved ? "on" : "";
-    hiddenApprovedToBill.value = approvedToBill ? "on" : "";
-
-    form.submit();
-}
-
-</script>
-
-
+{% block sub_nav %}
+{% include 'change_order_nav.html' with cop_page_label=changeorder.cop_number %}
 {% endblock %}
-{% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
+
 {% block content %}
-
-
-
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="#">Change Orders</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav ">
-            <li><a class="nav-item nav-link" href="{% url 'change_order_home' %}">Home</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'change_order_new_select' %}">Add New</a></li>
-            <li><a class="nav-item nav-link active" href="#">{{changeorder.job_number}} Change Order:
-                #{{changeorder.cop_number}}</a></li>
-
-        </ul>
-    </div>
-</nav>
 
 <!-- Modal - select email recipient -->
 <div class="modal fade" id="email_approval_modal" tabindex="-1" role="dialog" aria-labelledby="title"
@@ -1890,4 +1421,437 @@ function submitChangeAmountForm() {
         <div>Email Sending – Do Not Click Anything</div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    /* ==========================================================
+       DATATABLE SAFE INITIALIZATION
+    ========================================================== */
+    const tableIds = ['approved_table', 'pending_table', 'formals_table'];
+
+    tableIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && $.fn.DataTable && !$.fn.DataTable.isDataTable('#' + id)) {
+            $('#' + id).DataTable({
+                paging: false,
+                info: false,
+                ordering: false,
+                searching: false
+            });
+        }
+    });
+
+    /* ==========================================================
+       HIDE OPTIONAL SECTIONS
+    ========================================================== */
+    toggleDisplay("hidden_section_add", false);
+    toggleDisplay("hidden_section_change", false);
+
+    /* ==========================================================
+       ALERT MESSAGES (ONLY IF VALUE EXISTS)
+    ========================================================== */
+    showAlertIfValue("{{email_success}}", "Email successfully sent!");
+    showAlertIfValue("{{email_failed}}", "Email failed to send!");
+    showAlertIfValue("{{error_message}}", "{{error_message}}");
+
+    /* ==========================================================
+       DRAG & DROP (MODAL SAFE + MULTI FILE)
+    ========================================================== */
+    const dropArea = document.getElementById("drop-area");
+    const fileInput = document.getElementById("fileElem");
+
+    if (dropArea) {
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(event => {
+            dropArea.addEventListener(event, preventDefaults, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(event => {
+            dropArea.addEventListener(event, () => dropArea.classList.add("drag-active"), false);
+        });
+
+        ['dragleave', 'drop'].forEach(event => {
+            dropArea.addEventListener(event, () => dropArea.classList.remove("drag-active"), false);
+        });
+
+        dropArea.addEventListener("drop", function (e) {
+            const files = e.dataTransfer.files;
+            if (files.length) uploadFiles(files);
+        });
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener("change", function () {
+            if (this.files.length) uploadFiles(this.files);
+        });
+    }
+
+});
+
+/* ==========================================================
+   DRAG/DROP HELPERS
+========================================================== */
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+function uploadFiles(files) {
+
+    const formData = new FormData();
+
+    for (let i = 0; i < files.length; i++) {
+        formData.append("upload_file", files[i]);
+    }
+
+    fetch("{% url 'upload_changeorder_file' changeorder.id %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert("Upload failed.");
+        }
+    })
+    .catch(() => alert("Upload error."));
+}
+
+/* ==========================================================
+   SMALL UTILITIES
+========================================================== */
+
+function toggleDisplay(id, show) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = show ? "block" : "none";
+}
+
+function showAlertIfValue(value, message) {
+    if (value && value !== "None" && value !== "") {
+        alert(message);
+    }
+}
+
+/* ==========================================================
+   GENERAL FUNCTIONS
+========================================================== */
+
+function Previous() {
+    window.history.back();
+}
+
+function copyChangeOrderPath() {
+    const input = document.getElementById("changeOrderPath");
+    if (!input) return;
+
+    input.select();
+    input.setSelectionRange(0, 99999);
+
+    try {
+        document.execCommand("copy");
+        showToast("Folder path copied to clipboard");
+       /*alert("Folder path copied to clipboard");*/
+    } catch {
+        showAlertModal("Copy not supported in this browser");
+    }
+}
+
+function copyMCPath() {
+    const input = document.getElementById("MCPath");
+    if (!input) return;
+
+    input.select();
+    input.setSelectionRange(0, 99999);
+
+    try {
+        document.execCommand("copy");
+        showToast("Folder path copied to clipboard");
+    } catch {
+        showAlertModal("Copy not supported in this browser");
+    }
+}
+
+function check_booking_data1() {
+
+    const approved = document.getElementById("is_approved_to_bill");
+    const gcNumber = document.getElementById("gc_number");
+    const note = document.getElementById("approval_note");
+
+    if (!approved || !note) return true;
+
+    if (approved.checked) {
+        if (!gcNumber.value && !note.value) {
+            alert("Provide a GC number or explanation.");
+            return false;
+        }
+    } else {
+        if (!note.value) {
+            alert("You must provide an explanation.");
+            return false;
+        }
+    }
+}
+
+function check_booking_data() {
+    const field = document.getElementById("no_tm_notes");
+    const msg = prompt("Please clarify why you changed this");
+    if (msg && field) field.value = msg;
+}
+
+function void_notes1(id) {
+    const field = document.getElementById(id);
+    const msg = prompt("Please clarify");
+    if (msg && field) field.value = msg;
+}
+
+function prompt_note() {
+    const msg = prompt("Note:");
+    if (msg && document.note_input) {
+        document.note_input.new_note.value = msg;
+        document.note_input.submit();
+    }
+}
+
+function check_paper_ticket() {
+    const fileInput = document.getElementById("upload_file2");
+    if (fileInput && !fileInput.value) {
+        alert("You must upload a copy of the signed ticket");
+        return false;
+    }
+}
+
+/* ==========================================================
+   FILE SELECTION
+========================================================== */
+
+function populate_file_form(fileName) {
+
+    if (document.select_file_form) {
+        document.select_file_form.selected_file.value = fileName;
+        document.select_file_form.submit();
+    }
+}
+
+/* ==========================================================
+   RECIPIENT LOGIC
+========================================================== */
+
+function populate_ticket_recipient() {
+
+    const form = document.select_recipient_form;
+    if (!form) return;
+
+    const selected = form.recipient.value;
+    const addSection = document.getElementById("hidden_section_add");
+    const changeSection = document.getElementById("hidden_section_change");
+
+    if (selected === "please_select" || selected === "add_new") {
+
+        form.recipient_name.value = "";
+        form.recipient_email.value = "";
+        form.recipient_phone.value = "";
+
+        toggleDisplay("hidden_section_add", selected === "add_new");
+        toggleDisplay("hidden_section_change", false);
+
+        return;
+    }
+
+    toggleDisplay("hidden_section_add", false);
+    toggleDisplay("hidden_section_change", false);
+
+    const rolodex = JSON.parse("{{client_list_json|escapejs}}");
+
+    rolodex.forEach(person => {
+        if (person.person_pk == selected) {
+            form.recipient_name.value = person.name;
+            form.recipient_email.value = person.email;
+            form.recipient_phone.value = person.phone;
+        }
+    });
+}
+
+function check_for_new() {
+
+    const form = document.select_recipient_form;
+    if (!form) return;
+
+    const selected = form.recipient.value;
+    const rolodex = JSON.parse("{{client_list_json|escapejs}}");
+
+    if (selected === "please_select") {
+        form.recipient.value = "add_new";
+        toggleDisplay("hidden_section_add", true);
+        return;
+    }
+
+    if (selected === "add_new") return;
+
+    let changed = false;
+
+    rolodex.forEach(person => {
+        if (person.person_pk == selected) {
+            if (form.recipient_name.value !== person.name) changed = true;
+            if (form.recipient_email.value !== person.email) changed = true;
+            if (form.recipient_phone.value !== person.phone) changed = true;
+        }
+    });
+
+    toggleDisplay("hidden_section_change", changed);
+}
+
+function send_ticket_email() {
+
+    const form = document.getElementById("select_recipient_form");
+    if (!form) return false;
+
+    if (form.recipient.value === "please_select") {
+        alert("Change Drop Down Menu");
+        return false;
+    }
+
+    // Show overlay
+    const overlay = document.getElementById("emailSendingOverlay");
+    overlay.style.display = "flex";
+
+    // Disable all buttons to prevent double submit
+    const buttons = form.querySelectorAll("button, input[type='submit']");
+    buttons.forEach(btn => btn.disabled = true);
+
+    return true;  // allow submit
+}
+
+/* ==========================================================
+   YES / NO TOGGLE BUTTONS
+========================================================== */
+
+function toggleButtonPair(yesId, noId, fieldName, value) {
+
+    const yesBtn = document.getElementById(yesId);
+    const noBtn = document.getElementById(noId);
+
+    if (!yesBtn || !noBtn || !document.select_recipient_form) return;
+
+    yesBtn.style.background = value === "Yes" ? "red" : "black";
+    noBtn.style.background = value === "No" ? "red" : "black";
+
+    document.select_recipient_form[fieldName].value = value;
+}
+
+function yes_add() { toggleButtonPair('yes_add_button','no_add_button','add_recipient_form','Yes'); }
+function no_add() { toggleButtonPair('yes_add_button','no_add_button','add_recipient_form','No'); }
+function yes_change() { toggleButtonPair('yes_change_button','no_change_button','change_recipient_form','Yes'); }
+function no_change() { toggleButtonPair('yes_change_button','no_change_button','change_recipient_form','No'); }
+
+function not_coded_yet() {
+    alert("TELL JOE TO CODE THIS")
+}
+
+function submitChangeAmountForm() {
+    const priceInput = document.getElementById("change_amount_price_input");
+    const noteInput = document.getElementById("change_amount_note_input");
+    const formalCoInput = document.getElementById("formal_co_number_input");
+    const informallyApprovedCheckbox = document.getElementById("informally_approved_checkbox");
+    const approvedToBillCheckbox = document.getElementById("approved_to_bill_checkbox");
+
+    const hiddenPrice = document.getElementById("new_price");
+    const hiddenNote = document.getElementById("new_price_note");
+    const hiddenFormalCo = document.getElementById("formal_co_number");
+    const hiddenInformallyApproved = document.getElementById("informally_approved");
+    const hiddenApprovedToBill = document.getElementById("approved_to_bill");
+
+    const form = document.getElementById("change_amount_form");
+
+    if (
+        !priceInput ||
+        !noteInput ||
+        !formalCoInput ||
+        !informallyApprovedCheckbox ||
+        !approvedToBillCheckbox ||
+        !hiddenPrice ||
+        !hiddenNote ||
+        !hiddenFormalCo ||
+        !hiddenInformallyApproved ||
+        !hiddenApprovedToBill ||
+        !form
+    ) {
+        alert("Unable to submit change amount form.");
+        return false;
+    }
+
+    const rawPrice = priceInput.value.trim();
+    const rawNote = noteInput.value.trim();
+    const rawFormalCo = formalCoInput.value.trim();
+    const informallyApproved = informallyApprovedCheckbox.checked;
+    const approvedToBill = approvedToBillCheckbox.checked;
+
+    const originalPriceRaw = (priceInput.dataset.original || "").trim();
+    const originalFormalCo = (formalCoInput.dataset.original || "").trim();
+    const originalInformallyApproved = informallyApprovedCheckbox.dataset.original === "true";
+    const originalApprovedToBill = approvedToBillCheckbox.dataset.original === "true";
+
+    if (rawPrice === "") {
+        alert("Please enter a price.");
+        priceInput.focus();
+        return false;
+    }
+
+    const parsedPrice = parseFloat(rawPrice.replace(/,/g, ""));
+    if (isNaN(parsedPrice)) {
+        alert("Please enter a valid price.");
+        priceInput.focus();
+        return false;
+    }
+
+    const normalizedCurrentPrice = parsedPrice.toFixed(2);
+
+    let normalizedOriginalPrice = "";
+    if (originalPriceRaw !== "") {
+        const parsedOriginalPrice = parseFloat(originalPriceRaw.replace(/,/g, ""));
+        if (!isNaN(parsedOriginalPrice)) {
+            normalizedOriginalPrice = parsedOriginalPrice.toFixed(2);
+        }
+    }
+
+    const priceChanged = normalizedCurrentPrice !== normalizedOriginalPrice;
+    const formalCoChanged = rawFormalCo !== originalFormalCo;
+    const informallyApprovedChanged = informallyApproved !== originalInformallyApproved;
+    const approvedToBillChanged = approvedToBill !== originalApprovedToBill;
+
+    const anythingChanged =
+        priceChanged ||
+        formalCoChanged ||
+        informallyApprovedChanged ||
+        approvedToBillChanged;
+
+    if (rawFormalCo !== "" && !approvedToBill) {
+        alert("Approved To Bill must be checked when a Formal Change Order Number is entered.");
+        approvedToBillCheckbox.focus();
+        return false;
+    }
+
+    if (anythingChanged && rawNote === "") {
+        alert("Please explain this change in the notes field.");
+        noteInput.focus();
+        return false;
+    }
+
+    hiddenPrice.value = normalizedCurrentPrice;
+    hiddenNote.value = rawNote;
+    hiddenFormalCo.value = rawFormalCo;
+    hiddenInformallyApproved.value = informallyApproved ? "on" : "";
+    hiddenApprovedToBill.value = approvedToBill ? "on" : "";
+
+    form.submit();
+}
+
+</script>
 {% endblock %}

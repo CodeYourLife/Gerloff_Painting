@@ -1,22 +1,11 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_employees %}active{% endblock nav_item_employees %}
-{% block content %}
 
+{% block extra_head %}
 <style>
-    nav .active, .collapsible:hover {
-        background-color: Salmon;
-    }
-    .nav-pills a {
-        color: black;
-    }
-    .nav-pills li {
-        padding: 2px;
-    }
-    .nav-pills .active {
-        background-color: #6c757d !important;
-        padding: 5px;
-    }
+
+
     .table td {
         overflow-x: hidden;
         white-space: normal;
@@ -89,7 +78,8 @@
     background-color: rgba(0,0,0,.03);
 }
 </style>
-
+{% endblock %}
+{% block content %}
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
     <a class="navbar-brand sub-navbar-brand" href="{% url 'safety_home' %}">Go Back to Safety Home</a>
 </nav>
@@ -286,11 +276,14 @@
     </div>
 
 </div>
+{% endblock %}
 
+{% block extra_scripts %}
 <script>
     $(document).ready(function () {
         $('#employees_table').DataTable({
             paging: false,
+            info: false,
             order: [[1, 'asc']]
         });
     });
