@@ -989,7 +989,11 @@ float: left !important;
         <h4 class="mb-1">{{ job.job_number }} - {{ job.job_name }}</h4>
 
         <div class="text-muted">
-            {{ job.address }} {{ job.city }} {{ job.state }}
+            <a href="http://maps.apple.com/?q={{ job.address|urlencode }}%20{{ job.city|urlencode }}%20{{ job.state|urlencode }}"
+               target="_blank"
+               class="text-muted">
+                {{ job.address }} {{ job.city }} {{ job.state }}
+            </a>
         </div>
     </div>
 
