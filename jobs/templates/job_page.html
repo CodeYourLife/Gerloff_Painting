@@ -986,7 +986,7 @@ float: left !important;
     <div class="job-header-title">
 
     <div>
-        <h4 class="mb-1">{{ job.job_number }} - {{ job.job_name }}</h4>
+        <h4 class="mb-1">{{ job.job_number }} - {{ job.job_name }}{% if job.is_work_order_done == False %}<b>[NEEDS WORK ORDER]</b>{% endif %}</h4>
 
         <div class="text-muted">
             <a href="http://maps.apple.com/?q={{ job.address|urlencode }}%20{{ job.city|urlencode }}%20{{ job.state|urlencode }}"
@@ -1052,8 +1052,8 @@ float: left !important;
         </div>
 
         <div class="col-md-4 job-info-box">
-            <div class="job-info-label">Estimator</div>
-            {{ job.estimator }}
+            <div class="job-info-label">Gerloff Estimator / PM</div>
+            {{ job.estimator }} / {{job.project_manager}}
         </div>
 
         <div class="col-md-4 job-info-box" data-toggle="modal" data-target="#contract_amount-modal">

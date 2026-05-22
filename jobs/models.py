@@ -58,6 +58,8 @@ class Jobs(models.Model):
     job_name = models.CharField(null=True, max_length=250)
     estimator = models.ForeignKey(
         Employees, on_delete=models.PROTECT, null=True, blank=True, related_name='estimator')
+    project_manager = models.ForeignKey(
+        Employees, on_delete=models.PROTECT, null=True, blank=True, related_name='project_manager')
     foreman = models.ForeignKey(Employees, on_delete=models.PROTECT, null=True, blank=True,
                                 related_name='foreman')  # we still need to code the foreman
     superintendent = models.ForeignKey(

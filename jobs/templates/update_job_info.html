@@ -417,6 +417,18 @@ function changed_super(){
                 {% endif %}
             </div>
         </div>
+                <hr>
+        <div class ="row">
+            <div class="col-sm-6">
+                <label for="is_work_order_done"><b>Is Work Order Done?</b> </label>
+
+                {% if selectedjob.is_work_order_done == True %}
+                <input type="checkbox" name ="is_work_order_done" id="is_work_order_done" checked />
+                {% else %}
+                <input type="checkbox" name ="is_work_order_done" id="is_work_order_done" />
+                {% endif %}
+            </div>
+        </div>
         <hr>
         <div class ="row">
             <div class="col-sm-6">
@@ -703,6 +715,18 @@ function changed_super(){
         <label for="select_gpestimator"><b>Please select Gerloff Estimator</b></label>
         <select class="form-control" id="select_gpestimator" name="select_gpestimator" >
             <option value="{{selectedjob.estimator.id}}">{{selectedjob.estimator}}</option>
+            {% if estimators %}
+            {% for employee in estimators %}
+            <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
+            {% endfor %}
+            {% endif %}
+        </select>
+    <br /> <hr>
+    </div>
+        <div class ="container">
+        <label for="select_project_manager"><b>Please select Gerloff Project Manager</b></label>
+        <select class="form-control" id="select_project_manager" name="select_project_manager" >
+            <option value="{{selectedjob.project_manager.id}}">{{selectedjob.project_manager}}</option>
             {% if estimators %}
             {% for employee in estimators %}
             <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
