@@ -414,6 +414,21 @@ function clicked_duplicate(){
 
                 </div>
     <br>
+        <!--#GP PM-->
+                <div class ="container">
+                    <label for="select_project_manager">{% if project_manager %} Selected GP Project Manager was {{project_manager}} {% else %} Couldn't Find GP PM {{project_manager_name}} {% endif %}</label>
+                    <select class="form-control" id="select_project_manager" name="select_project_manager" >
+                        {% if project_manager %} <option value="{{project_manager.id}}">{{project_manager}}</option>{% else %} <option value="please_select">Please Select</option>{% endif %}
+                        {% if all_employees %}
+                        {% for employee in all_employees %}
+                        <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+
+
+                </div>
+    <br>
                 <div class ="container">
                     <input type="submit" class="btn btn-primary btn-sm" name="book_job" value="Book Job Now" />
                 </div>

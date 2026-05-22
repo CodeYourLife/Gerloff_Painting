@@ -695,7 +695,7 @@ white-space:normal;
                                     {% endif %}>
 
                                     <a class="job-card-link" href="{% url 'job_page' job.job_number %}">
-                                        {{ job.job_name }}
+                                        {{ job.job_name }}{% if job.is_work_order_done == False %}<b>[NEEDS WORK ORDER]</b>{% endif %}
                                     </a>
 
                                     <div class="job-badges">

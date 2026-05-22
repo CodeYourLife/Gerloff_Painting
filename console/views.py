@@ -3,7 +3,7 @@ from accounts.models import *
 from changeorder.models import *
 from console.misc import createfolder, Email
 from console.models import *
-from datetime import datetime,date
+from datetime import datetime,date,timedelta
 from dateutil.parser import parse as parse_date
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from django.contrib import messages
@@ -249,6 +249,8 @@ def index(request):
     for x in Jobs.objects.filter(is_closed=False, is_active=False, is_labor_done=False):
         if x.next_two_weeks() == True:
             next_two_weeks += 1
+    send_data['needs_work_order_now'] = Jobs.objects.filter(is_work_order_done=False, is_closed=False,start_date__lt=date.today()+ timedelta(days=21)).count()
+    send_data['needs_work_order'] = Jobs.objects.filter(is_work_order_done=False, is_closed=False,).count()
     send_data['missing'] = Inventory.objects.filter(status="Missing", is_closed=False).count()
     send_data['checked_out'] = Inventory.objects.filter(job_number__is_closed=False, is_closed=False).count()
     send_data['closed_job'] = Inventory.objects.filter(job_number__is_closed=True, is_closed=False).count()

@@ -160,6 +160,10 @@ def update_job_info(request, jobnumber):
             selectedjob.is_painting_subbed = True
         else:
             selectedjob.is_painting_subbed = False
+        if 'is_work_order_done' in request.POST:
+            selectedjob.is_work_order_done = True
+        else:
+            selectedjob.is_work_order_done = False
         if 'is_wage_rate' in request.POST:
             selectedjob.is_wage_scale = True
         else:
@@ -309,6 +313,8 @@ def update_job_info(request, jobnumber):
                     send_data['email_not_sent'] = email_sent
         if selectedjob.estimator.id != request.POST['select_gpestimator']:
             selectedjob.estimator = Employees.objects.get(id=request.POST['select_gpestimator'])
+        if selectedjob.project_manager.id != request.POST['select_project_manager']:
+            selectedjob.project_manager = Employees.objects.get(id=request.POST['select_project_manager'])
         if 'has_paint' in request.POST:
             selectedjob.has_paint = True
         else:
@@ -590,6 +596,25 @@ def upload_new_job(request):
                 send_data['estimator'] = Employees.objects.filter(first_name=sheet_obj.cell(row=39, column=2).value).first()
             else:
                 send_data['estimator_name'] = sheet_obj.cell(row=39, column=2).value
+            project_manager_name = sheet_obj.cell(row=251, column=2).value
+
+            if project_manager_name:
+
+                split_name = project_manager_name.strip().split(" ", 1)
+
+                first_name = split_name[0]
+
+                last_name = split_name[1] if len(split_name) > 1 else ""
+
+                employee = Employees.objects.filter(
+                    first_name__iexact=first_name,
+                    last_name__iexact=last_name
+                ).first()
+
+                if employee:
+                    send_data['project_manager'] = employee
+                else:
+                    send_data['project_manager_name'] = project_manager_name
             send_data['all_clients'] = Clients.objects.all()
             send_data['all_employees'] = Employees.objects.exclude(job_title__description="Painter")
             send_data['data'] = json.dumps(list(ClientEmployees.objects.values('name', 'id', 'person_pk')),
@@ -623,6 +648,7 @@ def upload_new_job(request):
                 client_pm.save()
 
             gp_estimator = Employees.objects.get(id=request.POST['select_gpestimator'])
+            gp_project_manager = Employees.objects.get(id=request.POST['select_project_manager'])
             job_number = sheet_obj.cell(row=25, column=2).value
             job_name = sheet_obj.cell(row=38, column=2).value
             address = sheet_obj.cell(row=40, column=2).value
@@ -656,7 +682,7 @@ def upload_new_job(request):
                                       insurance_status=insurance_status, client=client, start_date=start_date,
                                       status="Open", booked_date=date.today(), client_Pm=client_pm,
                                       booked_by=request.user.first_name + " " + request.user.last_name,
-                                      estimator=gp_estimator)
+                                      estimator=gp_estimator,project_manager=gp_project_manager)
 
             if request.POST['select_super'] != "not_sure":
                 if 'duplicate' in request.POST:
@@ -767,7 +793,7 @@ def jobs_home(request):
     request_get = request.GET.copy()
 
     # Default view: Active + Punchlist
-    if not any(k in request_get for k in ['search2', 'search3', 'search4', 'search5', 'search7']):
+    if not any(k in request_get for k in ['search2', 'search3', 'search4', 'search5', 'search7', 'search6','search8']):
         request_get['search4'] = 'on'
         request_get['search5'] = 'on'
 
@@ -793,7 +819,25 @@ def jobs_home(request):
         if 'search7' in request_get:
             send_data['search7_exists'] = request_get['search7']
 
-    search_jobs = JobsFilter(request_get, queryset=Jobs.objects.all())
+        if 'search6' in request_get:
+            send_data['search6_exists'] = request_get['search6']
+        if 'search8' in request_get:
+            send_data['search8_exists'] = request_get['search8']
+
+    jobs_queryset = Jobs.objects.all()
+
+    if 'search6' in request_get:
+        jobs_queryset = jobs_queryset.filter(
+            is_work_order_done=False,
+            is_closed=False,
+            start_date__lte=date.today() + timedelta(days=21)
+        )
+    elif 'search8' in request_get:
+        jobs_queryset = jobs_queryset.filter(
+            is_work_order_done=False,
+            is_closed=False,
+            )
+    search_jobs = JobsFilter(request_get, queryset=jobs_queryset)
     send_data['search_jobs'] = search_jobs
     send_data['jobstable'] = search_jobs.qs.order_by('start_date')
 

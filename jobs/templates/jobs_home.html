@@ -433,6 +433,30 @@ window.onload = function() {
             <input type="checkbox" class="form-check-input" id="search5" name="search5" {% if search5_exists %} checked {% endif %} onchange="new_filter_now()">
             <label class="form-check-label" for="search5">Show Active & Upcoming Jobs </label>
         </div>
+        <div class="form-check">
+    <input type="checkbox"
+           class="form-check-input"
+           id="search6"
+           name="search6"
+           {% if search6_exists %} checked {% endif %}
+           onchange="new_filter_now()">
+
+    <label class="form-check-label" for="search6">
+        Need Work Order Now - Job Starts Soon
+    </label>
+</div>
+            <div class="form-check">
+    <input type="checkbox"
+           class="form-check-input"
+           id="search8"
+           name="search8"
+           {% if search8_exists %} checked {% endif %}
+           onchange="new_filter_now()">
+
+    <label class="form-check-label" for="search8">
+        Need Work Order
+    </label>
+</div>
         </div>
     </form>
 
@@ -449,23 +473,14 @@ window.onload = function() {
             <th scope="col">Super</th>
             <th scope="col">Contract Amount</th>
             <th scope="col">Address</th>
+            <th scope="col">Estimator / PM</th>
         </tr>
         </thead>
         <tbody>
         {% for x in jobstable %}
         <tr onclick="populate_start_date_modal('{{x.job_number}}','{{x.start_date}}','{{x.is_active}}',this,1)">
-<!--        {% if x.is_labor_done == True %}
 
-        <tr style="background-color:hsla(0,0%, 32%);" onclick="populate_start_date_modal('{{x.job_number}}','{{x.start_date}}','{{x.is_active}}',this,1)">
- {% elif x.is_waiting_for_punchlist == True %}
-                <tr style="background-color:hsla(0,0%, 65%);" onclick="populate_start_date_modal('{{x.job_number}}','{{x.start_date}}','{{x.is_active}}',this,1)">
-                {% else %}
-            <tr onclick="populate_start_date_modal('{{x.job_number}}','{{x.start_date}}','{{x.is_active}}',this,1)">
-            {% endif %}-->
-                <!--<td style="white-space: nowrap;" width = "20px" onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_number}}{% if x.is_active %}[A]{% endif %}</a></td>-->
-
-           <!--<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_job('{{x.job_number}}')"><a href="#">{% if x.is_labor_done == True %}<b>[DONE]</b>{% elif x.is_waiting_for_punchlist == True %}<b>[PUNCH]</b>{% endif %}{{x.job_name}}{% if x.is_painting_subbed == True %}<b>[SUB]</b>{% endif %}</a></td>-->
-            <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_number}} {{x.job_name}}{% if x.is_painting_subbed == True %}<b>[SUB]</b>{% endif %}</a></td>
+            <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_number}} {{x.job_name}}{% if x.is_painting_subbed == True %}<b>[SUB]</b>{% endif %}{% if x.is_work_order_done == False %}<b>[NEEDS WORK ORDER]</b>{% endif %}</a></td>
 <td>
     {% if x.is_closed %}
     <span class="badge badge-dark">Closed</span>
@@ -481,7 +496,8 @@ window.onload = function() {
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px" >{{x.client}}</td>
                 <td data-toggle="modal" data-target="#super-modal" onclick="populate_super_modal('{{x.job_name}}','{{x.superintendent.id}}','{{x.job_number}}','{{x.superintendent.first_name}}',this,1)"><a href="#">{{x.superintendent.first_name}}</a></td>
                 <td>{% if x.contract_amount %}{{x.contract_amount}}{% else %}T and M{% endif %}</td>
-            <td>{{x.address}}-{{x.city}}-{{x.state}}</td>
+            <td style="white-space:nowrap" >{{x.address}}-{{x.city}}-{{x.state}}</td>
+            <td style="white-space:nowrap" >{{x.estimator}} /{{x.project_manager}}</td>
             </tr>
         {% endfor %}
         </tbody>
