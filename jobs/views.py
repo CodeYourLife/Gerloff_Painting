@@ -1831,3 +1831,48 @@ def jobs_ready_to_close(request):
     return render(request, 'jobs_ready_to_close.html', {
         'jobstable': jobstable,
     })
+
+
+@csrf_exempt
+def complete_work_order(request):
+
+    if request.method != "POST":
+        return JsonResponse({
+            "success": False,
+            "error": "Tell Joe that this work order failed to post to Trinity - POST required"
+        })
+
+    secret = request.headers.get("X-Excel-Secret")
+
+    if secret != "GerloffWorkOrder2026":
+        return JsonResponse({
+            "success": False,
+            "error": "Tell Joe that this work order failed to post to Trinity - Unauthorized"
+        })
+
+    job_number = request.POST.get("job_number")
+
+    if not job_number:
+        return JsonResponse({
+            "success": False,
+            "error": "Tell Joe that this work order failed to post to Trinity - Missing job number"
+        })
+
+    try:
+
+        job = Jobs.objects.get(job_number=job_number)
+
+        job.is_work_order_done = True
+        job.save()
+
+        return JsonResponse({
+            "success": True,
+            "message": "This work order was successfully updated in Trinity: " + str(job.job_number)
+        })
+
+    except Jobs.DoesNotExist:
+
+        return JsonResponse({
+            "success": False,
+            "error": "Tell Joe that this work order failed to post to Trinity - Job not found"
+        })
