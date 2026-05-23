@@ -20,4 +20,6 @@ urlpatterns = [
     path('close_job/<job_number>', views.close_job, name='close_job'),
     path('jobs_ready_to_close', views.jobs_ready_to_close, name='jobs_ready_to_close'),
     path('complete-work-order/', views.complete_work_order, name='complete_work_order'),
+    path('import_super_from_mc/', views.import_super_from_mc, name='import_super_from_mc'),
+    path('import_pm_from_mc/', views.import_pm_from_mc, name='import_pm_from_mc'),
 ]

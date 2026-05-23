@@ -1920,3 +1920,167 @@ def complete_work_order(request):
             "success": False,
             "error": "Tell Joe that this work order failed to post to Trinity - Job not found"
         })
+
+@csrf_exempt
+def import_super_from_mc(request):
+
+    if request.method != "POST":
+        return JsonResponse({
+            "success": False,
+            "error": "Tell Joe that this failed to post to Trinity - POST required"
+        })
+
+    secret = request.headers.get("X-Excel-Secret")
+
+    if secret != "GerloffWorkOrder2026":
+        return JsonResponse({
+            "success": False,
+            "error": "Tell Joe that this failed to post to Trinity - Unauthorized"
+        })
+
+    job_number = request.POST.get("job_number", "").strip()
+    super_name = request.POST.get("super_name", "").strip()
+
+    if not job_number:
+        return JsonResponse({
+            "success": False,
+            "error": "Tell Joe that this failed to post to Trinity - Missing job number"
+        })
+
+    if not super_name:
+        return JsonResponse({
+            "success": False,
+            "error": "Tell Joe that this failed to post to Trinity - Missing superintendent name"
+        })
+
+    try:
+        job = Jobs.objects.get(job_number=job_number)
+
+        name_parts = super_name.split()
+
+        is_subcontractor = False
+
+        if name_parts and name_parts[-1].lower() == "subcontractor":
+            is_subcontractor = True
+            name_parts = name_parts[:-1]
+
+        if len(name_parts) < 2:
+            return JsonResponse({
+                "success": False,
+                "error": "Tell Joe that this failed to post to Trinity - Superintendent name must include first and last name"
+            })
+
+        first_name = name_parts[0]
+        last_name = name_parts[-1]
+
+        employee = Employees.objects.filter(
+            first_name__iexact=first_name,
+            last_name__iexact=last_name
+        ).first()
+
+        if not employee:
+            return JsonResponse({
+                "success": False,
+                "error": "Tell Joe that this failed to post to Trinity - Superintendent not found: " + super_name
+            })
+
+        job.superintendent = employee
+        job.is_painting_subbed = is_subcontractor
+        job.save()
+
+        return JsonResponse({
+            "success": True,
+            "message": "Job updated in Trinity: "
+                       + str(job.job_number)
+                       + " - Superintendent: "
+                       + employee.first_name
+                       + " "
+                       + employee.last_name
+                       + " - Painting Subbed: "
+                       + str(job.is_painting_subbed)
+        })
+
+    except Jobs.DoesNotExist:
+        return JsonResponse({
+            "success": False,
+            "error": "Tell Joe that this failed to post to Trinity - Job not found"
+        })
+
+
+@csrf_exempt
+def import_pm_from_mc(request):
+
+    if request.method != "POST":
+        return JsonResponse({
+            "success": False,
+            "error": "Tell Joe that this failed to post to Trinity - POST required"
+        })
+
+    secret = request.headers.get("X-Excel-Secret")
+
+    if secret != "GerloffWorkOrder2026":
+        return JsonResponse({
+            "success": False,
+            "error": "Tell Joe that this failed to post to Trinity - Unauthorized"
+        })
+
+    job_number = request.POST.get("job_number", "").strip()
+    pm_name = request.POST.get("pm_name", "").strip()
+
+    if not job_number:
+        return JsonResponse({
+            "success": False,
+            "error": "Tell Joe that this failed to post to Trinity - Missing job number"
+        })
+
+    if not pm_name:
+        return JsonResponse({
+            "success": False,
+            "error": "Tell Joe that this failed to post to Trinity - Missing PM name"
+        })
+
+    try:
+
+        job = Jobs.objects.get(job_number=job_number)
+
+        name_parts = pm_name.split()
+
+        if len(name_parts) < 2:
+            return JsonResponse({
+                "success": False,
+                "error": "Tell Joe that this failed to post to Trinity - PM name must include first and last name"
+            })
+
+        first_name = name_parts[0]
+        last_name = name_parts[-1]
+
+        employee = Employees.objects.filter(
+            first_name__iexact=first_name,
+            last_name__iexact=last_name
+        ).first()
+
+        if not employee:
+            return JsonResponse({
+                "success": False,
+                "error": "Tell Joe that this failed to post to Trinity - PM not found: " + pm_name
+            })
+
+        job.project_manager = employee
+        job.save()
+
+        return JsonResponse({
+            "success": True,
+            "message": "Job updated in Trinity: "
+                       + str(job.job_number)
+                       + " - PM: "
+                       + employee.first_name
+                       + " "
+                       + employee.last_name
+        })
+
+    except Jobs.DoesNotExist:
+
+        return JsonResponse({
+            "success": False,
+            "error": "Tell Joe that this failed to post to Trinity - Job not found"
+        })

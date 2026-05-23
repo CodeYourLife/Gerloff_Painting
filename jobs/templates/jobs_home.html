@@ -480,7 +480,10 @@ window.onload = function() {
         {% for x in jobstable %}
         <tr onclick="populate_start_date_modal('{{x.job_number}}','{{x.start_date}}','{{x.is_active}}',this,1)">
 
-            <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px"  onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_number}} {{x.job_name}}{% if x.is_painting_subbed == True %}<b>[SUB]</b>{% endif %}{% if x.is_work_order_done == False %}<b>[NEEDS WORK ORDER]</b>{% endif %}</a></td>
+            <td style="white-space: normal; max-width: 250px;"
+    onclick="go_to_job('{{x.job_number}}')">
+
+    <a href="#"><a href="#">{{x.job_number}} {{x.job_name}}{% if x.is_painting_subbed == True %}<b>[SUB]</b>{% endif %}{% if x.is_work_order_done == False %}<b>[NEEDS WORK ORDER]</b>{% endif %}</a></td>
 <td>
     {% if x.is_closed %}
     <span class="badge badge-dark">Closed</span>
@@ -496,7 +499,7 @@ window.onload = function() {
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px" >{{x.client}}</td>
                 <td data-toggle="modal" data-target="#super-modal" onclick="populate_super_modal('{{x.job_name}}','{{x.superintendent.id}}','{{x.job_number}}','{{x.superintendent.first_name}}',this,1)"><a href="#">{{x.superintendent.first_name}}</a></td>
                 <td>{% if x.contract_amount %}{{x.contract_amount}}{% else %}T and M{% endif %}</td>
-            <td style="white-space:nowrap" >{{x.address}}-{{x.city}}-{{x.state}}</td>
+            <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">{{x.address}}-{{x.city}}-{{x.state}}</td>
             <td style="white-space:nowrap" >{{x.estimator}} /{{x.project_manager}}</td>
             </tr>
         {% endfor %}
