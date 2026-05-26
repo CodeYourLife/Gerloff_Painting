@@ -8,6 +8,7 @@ from dateutil.parser import parse as parse_date
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import never_cache
 from django.contrib.auth.models import User, auth
 from django.db import transaction
 from django.http import HttpResponse
@@ -351,6 +352,7 @@ def index(request):
 
 
 @login_required(login_url='/accounts/login')
+@never_cache
 def warehouse_home(request):
     send_data = {}
     if Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).exists():
