@@ -10,7 +10,65 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
     <title>Trinity GP</title>
         <style type="text/css" class="init">
+        .mobile-card {
+    border: 1px solid #d6d6d6;
+    border-left: 6px solid #dc3545;
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 16px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    text-align: left;
+}
 
+.mobile-card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.mobile-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.mobile-card-row span {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.mobile-card-row strong {
+    text-align: right;
+    max-width: 65%;
+}
+
+.mobile-card .btn {
+    margin-top: 10px;
+}
+
+@media (max-width: 576px) {
+    .mobile-card {
+        padding: 12px;
+        margin-bottom: 18px;
+    }
+
+    .mobile-card-row {
+        display: block;
+    }
+
+    .mobile-card-row strong {
+        display: block;
+        max-width: 100%;
+        text-align: left;
+        margin-top: 2px;
+    }
+}
 
         .nav-pills a {
             color: white;
@@ -489,7 +547,7 @@ Showing Invoice Information for {{last_saturday}} - {{this_friday}}
 </div>
 
     <div id="subToolboxCollapse" class="collapse" aria-labelledby="subToolboxHeading">
-        <div class="card-body">
+        <div class="card-body bg-light">
 
             {% for talk in toolbox_talks_required %}
             <div class="mobile-card">

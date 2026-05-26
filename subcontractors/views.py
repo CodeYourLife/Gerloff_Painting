@@ -20,6 +20,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import get_template, render_to_string
 from django.urls import reverse
 from django.views.decorators.http import require_POST
+from django.views.decorators.cache import never_cache
 from django.utils.timezone import now
 from employees.models import *
 import datetime
@@ -3391,7 +3392,7 @@ def remove_subcontractor_employee_job(request):
 
 
 
-
+@never_cache
 def subcontractor_employee_portal(request, employee_id):
     selected_employee = get_object_or_404(Subcontractor_Employees, id=employee_id)
 
@@ -4248,7 +4249,7 @@ def subcontractor_employee_reactivate(request):
 
     return JsonResponse({"error": "Invalid request"}, status=400)
 
-
+@never_cache
 def sub_toolbox_complete(request, sub_id, scheduled_id, job_number):
     selected_sub = get_object_or_404(Subcontractors, id=sub_id)
     scheduled = get_object_or_404(ScheduledToolboxTalks, id=scheduled_id)
