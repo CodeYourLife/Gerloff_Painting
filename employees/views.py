@@ -16,6 +16,7 @@ from django.utils.timezone import now
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
+from django.views.decorators.cache import never_cache
 from employees.models import *
 from employees.models import Employees, ToolboxTalks, ScheduledToolboxTalks,ScheduledToolboxTalkEmployees
 from equipment.models import Inventory
@@ -628,13 +629,11 @@ def toolbox_file(request, scheduled_id, language):
     )
 
 @login_required(login_url='/accounts/login')
+@never_cache
 def my_page(request):
-
     employee = Employees.objects.get(user=request.user)
     send_data = {}
-
     if request.method == 'POST':
-
         if 'nickname' in request.POST:
             employee.nickname = request.POST['nickname']
             employee.phone = request.POST['phone']
@@ -642,17 +641,24 @@ def my_page(request):
             employee.save()
 
         if request.POST.get('selected_file') == "pumpkin":
-
             selected_talk = ScheduledToolboxTalks.objects.get(
                 id=request.POST['scheduledtalk_id']
             )
 
-            if selected_talk.link_has_been_viewed(employee):
-                CompletedToolboxTalks.objects.create(
+            has_viewed = ViewedToolboxTalks.objects.filter(
+                employee=employee,
+                master=selected_talk
+            ).exists()
+
+            if has_viewed:
+                CompletedToolboxTalks.objects.get_or_create(
                     employee=employee,
-                    date=date.today(),
-                    master=selected_talk
+                    master=selected_talk,
+                    defaults={
+                        'date': date.today()
+                    }
                 )
+
             return redirect('my_page')
     # Everything else is just data preparation
     if employee.job_title and employee.job_title.description == "Painter":
