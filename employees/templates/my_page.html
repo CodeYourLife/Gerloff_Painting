@@ -830,7 +830,7 @@
             <div class="card-body">
                 <form name = "select_file" id = "select_file" action="{% url 'my_page' %}" method="post">
                      {% csrf_token %}
-                    <input type="hidden" id="selected_file" name="selected_file" value="pumpkin">
+                    <input type="hidden" id="selected_file" name="selected_file" value="">
                     <input type="hidden" id="selected_id" name="selected_id" >
                     <input type="hidden" id="selected_language" name="selected_language" >
                     <input type="hidden" id="scheduledtalk_id" name="scheduledtalk_id" >
@@ -854,7 +854,7 @@
 <!-- Spanish -->
 {% if x.spanish %}
     <a href="{% url 'toolbox_file' x.item 'Spanish' %}"
-       class="btn btn-block mb-2
+       class="toolbox-pdf-link btn btn-block mb-2
               {% if x.spanish_viewed %}
                   btn-success
               {% else %}
@@ -878,7 +878,7 @@
 <!-- English -->
 {% if x.english %}
     <a href="{% url 'toolbox_file' x.item 'English' %}"
-       class="btn btn-block mb-2
+       class="toolbox-pdf-link btn btn-block mb-2
               {% if x.english_viewed %}
                   btn-success
               {% else %}
@@ -898,7 +898,7 @@
     </button>
 {% endif %}
 
-<button type="button"
+<button type="submit"
         class="btn btn-block
                {% if x.can_complete %}
                    btn-danger
@@ -906,9 +906,9 @@
                    btn-secondary
                {% endif %}"
         {% if not x.can_complete %}
-            onclick="alert('You need to read the toolbox talk first before marking the course complete.')"
+            onclick="alert('You need to read the toolbox talk first before marking the course complete.'); return false;"
         {% else %}
-            onclick="complete_toolbox('{{ x.item }}')"
+            onclick="return complete_toolbox('{{ x.item }}')"
         {% endif %}>
     I have read and understand this topic
 </button>
@@ -970,21 +970,25 @@
 {% block extra_scripts %}
 <script type="text/javascript" class="init">
 function complete_toolbox(scheduled_id){
-let form = document.getElementById("select_file");
-document.getElementById("selected_file").value = "pumpkin";
-document.getElementById("scheduledtalk_id").value = scheduled_id;
-form.submit();
+    localStorage.setItem("openAccordion", "collapseSixteen");
+
+    document.getElementById("selected_file").value = "pumpkin";
+    document.getElementById("scheduledtalk_id").value = scheduled_id;
+
+    return true;
 }
 
 function restoreAccordion() {
     let openId = localStorage.getItem("openAccordion");
+
     if (openId) {
         let collapseElement = document.getElementById(openId);
         if (collapseElement && !collapseElement.classList.contains("show")) {
-            $(collapseElement).collapse('show');
+            $('#' + openId).collapse('show');
         }
     }
 }
+
 document.addEventListener("DOMContentLoaded", function () {
 
     restoreAccordion();
@@ -993,21 +997,11 @@ document.addEventListener("DOMContentLoaded", function () {
         localStorage.setItem("openAccordion", this.id);
     });
 
-    $('.collapse').on('hidden.bs.collapse', function () {
-        localStorage.removeItem("openAccordion");
+    document.querySelectorAll(".toolbox-pdf-link").forEach(function(link) {
+        link.addEventListener("click", function () {
+            localStorage.setItem("openAccordion", "collapseSixteen");
+        });
     });
-
-});
-
-/* 🔥 THIS is the key for back button */
-window.addEventListener("pageshow", function (event) {
-
-    restoreAccordion();
-
-    if (event.persisted) {
-        // Force browser to revalidate without resubmitting form
-        window.location.href = window.location.href;
-    }
 
 });
 </script>
