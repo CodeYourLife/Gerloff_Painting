@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.contrib.auth.models import User, auth
 from django.db import transaction
+from django.db.models import Max
 from django.http import HttpResponse
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
@@ -20,6 +21,7 @@ from employees.models import *
 from employees.views import get_scheduled_toolbox_folder, get_uploaded_toolbox_file
 from jobs.models import *
 from jobs.models import Jobs
+from jobs.views import subtract_months
 from openpyxl import load_workbook
 from pathlib import Path
 from rentals.models import *
@@ -252,6 +254,35 @@ def index(request):
             next_two_weeks += 1
     send_data['needs_work_order_now'] = Jobs.objects.filter(is_work_order_done=False, is_closed=False,start_date__lt=date.today()+ timedelta(days=21)).count()
     send_data['needs_work_order'] = Jobs.objects.filter(is_work_order_done=False, is_closed=False,).count()
+    last_clockshark_import = (
+        ClockSharkTimeEntry.objects
+        .filter(hours_adjust_note="AUTO IMPORT")
+        .aggregate(last_import=Max("synced_at"))
+    )["last_import"]
+
+    send_data["last_clockshark_import"] = last_clockshark_import
+    end_date = timezone.localdate()
+    start_date = subtract_months(end_date, 4)
+
+    unmatched_jobs_count = (
+        ClockSharkTimeEntry.objects
+        .filter(
+            job__isnull=True,
+            work_day__gte=start_date,
+            work_day__lte=end_date,
+        )
+        .exclude(job_name__isnull=True)
+        .exclude(job_name="")
+        .exclude(job_name="Gerloff Painting Inc")
+        .exclude(job_name="Sick Leave")
+        .exclude(job_name="Requested Day Off")
+        .values("job_name")
+        .distinct()
+        .count()
+    )
+
+    send_data["unmatched_jobs_count"] = unmatched_jobs_count
+
     send_data['missing'] = Inventory.objects.filter(status="Missing", is_closed=False).count()
     send_data['checked_out'] = Inventory.objects.filter(job_number__is_closed=False, is_closed=False).count()
     send_data['closed_job'] = Inventory.objects.filter(job_number__is_closed=True, is_closed=False).count()

@@ -22,4 +22,19 @@ urlpatterns = [
     path('complete-work-order/', views.complete_work_order, name='complete_work_order'),
     path('import_super_from_mc/', views.import_super_from_mc, name='import_super_from_mc'),
     path('import_pm_from_mc/', views.import_pm_from_mc, name='import_pm_from_mc'),
+    path(
+            "clockshark/unmapped-jobs/",
+            views.clockshark_unmapped_jobs,
+            name="clockshark_unmapped_jobs"
+        ),
+    path(
+        "clockshark/map-job/",
+        views.clockshark_map_job,
+        name="clockshark_map_job"
+    ),
+    path(
+        "clockshark/job/<str:job_number>/weekly/",
+        views.clockshark_job_weekly_hours,
+        name="clockshark_job_weekly_hours"
+    ),
 ]

@@ -211,6 +211,15 @@
             <div class="card-body" style="height: 135px;">
                 <div class="card-text">
                     <div style="display: flex"><b>{{need_to_be_closed}}</b> -Jobs Need to be Closed</div>
+                    <div style="display: flex"><a href="{% url 'clockshark_unmapped_jobs' %}"><b>{{unmatched_jobs_count}}</b> -Unmatched ClockShark Jobs</a></div>
+                    <div style="display: flex">
+                        <b>Last Import:</b>&nbsp;
+                        {% if last_clockshark_import %}
+                            {{ last_clockshark_import|date:"m/d/Y" }}
+                        {% else %}
+                            Never
+                        {% endif %}
+                    </div>
                 </div>
             </div>
             <div class="card-footer">

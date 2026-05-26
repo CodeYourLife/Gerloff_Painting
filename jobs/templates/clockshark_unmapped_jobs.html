@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    ClockShark Unmapped Jobs
+{% endblock %}
+
+{% block extra_head %}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+
+    <style>
+        .page-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .job-row {
+            cursor: pointer;
+        }
+
+        .job-row:hover {
+            background-color: #f8f9fa;
+        }
+
+        .summary-box {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f8f9fa;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+        }
+
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .clockshark-job-name {
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .clockshark-job-name:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 767px) {
+            .desktop-table {
+                display: none;
+            }
+
+            .mobile-card {
+                display: block;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .desktop-table {
+                display: block;
+            }
+
+            .mobile-card {
+                display: none;
+            }
+        }
+
+        .unmatched-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: white;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid mt-3 mb-5">
+    <div class="page-container">
+
+        <h4 class="mb-2">Unmapped ClockShark Jobs</h4>
+
+        <div class="summary-box">
+            Showing records from
+            <strong>{{ start_date|date:"m/d/Y" }}</strong>
+            to
+            <strong>{{ end_date|date:"m/d/Y" }}</strong>.
+            <br>
+            These are ClockShark time entries that are not currently linked to a Trinity job.
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span>&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if unmatched_jobs %}
+
+            <div class="desktop-table">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-hover bg-white">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>ClockShark Job Name</th>
+                                <th class="text-center">Records</th>
+                                <th class="text-center">Most Recent Record</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in unmatched_jobs %}
+                                <tr class="job-row"
+                                    data-clockshark-job-name="{{ row.job_name }}">
+                                    <td>
+                                        <span class="clockshark-job-name">
+                                            {{ row.job_name }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        {{ row.record_count }}
+                                    </td>
+                                    <td class="text-center">
+                                        {{ row.most_recent_record|date:"m/d/Y" }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="mobile-card">
+                {% for row in unmatched_jobs %}
+                    <div class="unmatched-card job-row"
+                         data-clockshark-job-name="{{ row.job_name }}">
+                        <div class="clockshark-job-name mb-1">
+                            {{ row.job_name }}
+                        </div>
+
+                        <div>
+                            <strong>Records:</strong> {{ row.record_count }}
+                        </div>
+
+                        <div>
+                            <strong>Most Recent:</strong> {{ row.most_recent_record|date:"m/d/Y" }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+        {% else %}
+            <div class="alert alert-success">
+                No unmapped ClockShark jobs found for this date range.
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+
+
+<!-- Map Job Modal -->
+<div class="modal fade" id="mapJobModal" tabindex="-1" role="dialog" aria-labelledby="mapJobModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <form method="post" action="{% url 'clockshark_map_job' %}" class="modal-content">
+            {% csrf_token %}
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="mapJobModalLabel">
+                    Map ClockShark Job
+                </h5>
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span>&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <input type="hidden" name="clockshark_job_name" id="clocksharkJobNameInput">
+
+                <div class="alert alert-info">
+                    You are mapping:
+                    <br>
+                    <strong id="clocksharkJobNameDisplay"></strong>
+                </div>
+
+                <div class="form-group">
+                    <label for="jobSelect">
+                        Select Trinity Job
+                    </label>
+
+                    <select name="job_number" id="jobSelect" class="form-control" required>
+                        <option value="">Select Job</option>
+                    </select>
+
+                    <small class="form-text text-muted" id="jobSearchStatus">
+                        Currently showing open jobs only.
+                    </small>
+                </div>
+
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="searchClosedJobsBtn">
+                    Search Closed Jobs
+                </button>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    Cancel
+                </button>
+
+                <button type="submit" class="btn btn-primary">
+                    Link ClockShark Job
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{ open_jobs_json|json_script:"open-jobs-data" }}
+{{ all_jobs_json|json_script:"all-jobs-data" }}
+
+{% endblock %}
+
+
+{% block extra_scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+
+    <script>
+        const openJobs = JSON.parse(document.getElementById("open-jobs-data").textContent);
+        const allJobs = JSON.parse(document.getElementById("all-jobs-data").textContent);
+
+        function populateJobSelect(jobList) {
+            const jobSelect = $("#jobSelect");
+
+            jobSelect.empty();
+            jobSelect.append(new Option("Select Job", "", true, false));
+
+            jobList.forEach(function(job) {
+                const option = new Option(job.label, job.job_number, false, false);
+                jobSelect.append(option);
+            });
+
+            jobSelect.trigger("change");
+        }
+
+        function initializeSelect2() {
+            $("#jobSelect").select2({
+                width: "100%",
+                dropdownParent: $("#mapJobModal"),
+                placeholder: "Search for a job",
+                allowClear: true
+            });
+        }
+
+        $(document).ready(function() {
+            initializeSelect2();
+
+            $(".job-row").on("click", function() {
+                const clocksharkJobName = $(this).data("clockshark-job-name");
+
+                $("#clocksharkJobNameInput").val(clocksharkJobName);
+                $("#clocksharkJobNameDisplay").text(clocksharkJobName);
+
+                populateJobSelect(openJobs);
+
+                $("#jobSearchStatus").text("Currently showing open jobs only.");
+                $("#searchClosedJobsBtn").text("Search Closed Jobs");
+
+                $("#mapJobModal").modal("show");
+            });
+
+            $("#searchClosedJobsBtn").on("click", function() {
+                populateJobSelect(allJobs);
+
+                $("#jobSearchStatus").text("Now showing open and closed jobs.");
+                $(this).text("Showing All Jobs");
+            });
+
+            $("#mapJobModal").on("hidden.bs.modal", function() {
+                $("#clocksharkJobNameInput").val("");
+                $("#clocksharkJobNameDisplay").text("");
+                $("#jobSelect").val("").trigger("change");
+            });
+        });
+    </script>
+{% endblock %}

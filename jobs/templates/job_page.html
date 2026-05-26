@@ -874,7 +874,23 @@ float: left !important;
             <!-- Body -->
             <div class="modal-body">
                 <div class="container-fluid">
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="p-3 border rounded bg-light d-flex justify-content-between align-items-center flex-wrap">
+                                <div class="mb-2 mb-md-0">
+                                    <h6 class="mb-1">Employee Hours</h6>
+                                    <small class="text-muted">
+                                        View ClockShark hours broken down by week and employee.
+                                    </small>
+                                </div>
 
+                                <a href="{% url 'clockshark_job_weekly_hours' job.job_number %}"
+                                   class="btn btn-info btn-sm px-3">
+                                    View Employee Hours
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Summary Row -->
                     <div class="row mb-3">
                         <div class="col-md-6">
