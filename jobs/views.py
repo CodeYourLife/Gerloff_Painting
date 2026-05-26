@@ -1,53 +1,48 @@
+from changeorder.models import ChangeOrders
 from changeorder.models import ClientJobRoles, ChangeOrders
-from console.models import *
+from collections import defaultdict
 from console.misc import Email, send_safety_inspection_email
-
+from console.models import *
 from datetime import date
 from dateutil.parser import parse as parse_date
-
-from decimal import Decimal
-
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db import transaction
 from django.db.models import Q, Max, Count
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.dateparse import parse_datetime
-from django.conf import settings
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
-
+from django.utils.dateparse import parse_datetime
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django_tables2 import RequestConfig
-
+from employees.forms import JobsiteSafetyInspectionForm
 from employees.models import *
 from employees.models import Employees
-from employees.forms import JobsiteSafetyInspectionForm
+from equipment.filters import JobsFilter
 from equipment.models import Inventory
 from equipment.tables import JobsTable
-from equipment.filters import JobsFilter
-from submittals.models import *
+from jobs.filters import JobNotesFilter
+from jobs.JobMisc import start_date_change, gerloff_super_change
 from jobs.models import *
 from jobs.models import ClockSharkTimeEntry, Jobs
-from jobs.JobMisc import start_date_change, gerloff_super_change
-from jobs.filters import JobNotesFilter
+from jobs.models import Jobs
 from rentals.models import Rentals
 from subcontractors.models import *
 from submittals.models import *
+from submittals.models import *
 from wallcovering.models import Wallcovering, Packages, OutgoingItem, OrderItems
-
 import csv
 import json
+import openpyxl
 import os
 import os.path
-import openpyxl
 import requests
-from decimal import Decimal, InvalidOperation
-from django.contrib import messages
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
 
-from jobs.models import Jobs
-from changeorder.models import ChangeOrders
+
 
 
 @login_required(login_url='/accounts/login')
@@ -2084,3 +2079,253 @@ def import_pm_from_mc(request):
             "success": False,
             "error": "Tell Joe that this failed to post to Trinity - Job not found"
         })
+
+
+def subtract_months(original_date, months):
+    """
+    Simple helper so we don't need another package.
+    Returns a date roughly X calendar months before original_date.
+    """
+    month = original_date.month - months
+    year = original_date.year
+
+    while month <= 0:
+        month += 12
+        year -= 1
+
+    # Keep day valid for shorter months.
+    day = min(original_date.day, 28)
+
+    return date(year, month, day)
+
+
+def clockshark_unmapped_jobs(request):
+    end_date = timezone.localdate()
+    start_date = subtract_months(end_date, 4)
+
+    unmatched_jobs = (
+        ClockSharkTimeEntry.objects
+        .filter(
+            job__isnull=True,
+            work_day__gte=start_date,
+            work_day__lte=end_date,
+        )
+        .exclude(job_name__isnull=True)
+        .exclude(job_name="")
+        .exclude(job_name="Gerloff Painting Inc")
+        .exclude(job_name="Sick Leave")
+        .exclude(job_name="Requested Day Off")
+        .values("job_name")
+        .annotate(
+            record_count=Count("id"),
+            most_recent_record=Max("work_day"),
+        )
+        .order_by("job_name")
+    )
+
+    open_jobs = Jobs.objects.filter(is_closed=False).order_by("job_number")
+    all_jobs = Jobs.objects.all().order_by("job_number")
+
+    open_jobs_json = [
+        {
+            "job_number": job.job_number,
+            "job_name": job.job_name or "",
+            "label": f"{job.job_number} - {job.job_name}",
+        }
+        for job in open_jobs
+    ]
+
+    all_jobs_json = [
+        {
+            "job_number": job.job_number,
+            "job_name": job.job_name or "",
+            "is_closed": job.is_closed,
+            "label": f"{job.job_number} - {job.job_name}" + (" (Closed)" if job.is_closed else ""),
+        }
+        for job in all_jobs
+    ]
+
+    send_data = {
+        "unmatched_jobs": unmatched_jobs,
+        "start_date": start_date,
+        "end_date": end_date,
+        "open_jobs_json": open_jobs_json,
+        "all_jobs_json": all_jobs_json,
+    }
+
+    return render(request, "clockshark_unmapped_jobs.html", send_data)
+
+
+@require_POST
+def clockshark_map_job(request):
+    clockshark_job_name = request.POST.get("clockshark_job_name", "").strip()
+    job_number = request.POST.get("job_number", "").strip()
+
+    if not clockshark_job_name:
+        messages.error(request, "Missing ClockShark job name.")
+        return redirect("clockshark_unmapped_jobs")
+
+    if not job_number:
+        messages.error(request, "Please select a Trinity job.")
+        return redirect("clockshark_unmapped_jobs")
+
+    job = get_object_or_404(Jobs, job_number=job_number)
+
+    with transaction.atomic():
+        ClockSharkJobMap.objects.update_or_create(
+            clockshark_job_name=clockshark_job_name,
+            defaults={
+                "job": job,
+            }
+        )
+
+        updated_count = ClockSharkTimeEntry.objects.filter(
+            job__isnull=True,
+            job_name=clockshark_job_name,
+        ).update(
+            job=job
+        )
+
+        if not job.is_active:
+            job.is_active = True
+            job.save(update_fields=["is_active"])
+
+    messages.success(
+        request,
+        f"{updated_count} ClockShark time entries were linked to {job.job_number} - {job.job_name}."
+    )
+
+    return redirect("clockshark_unmapped_jobs")
+
+
+
+from django.shortcuts import render, get_object_or_404
+from django.utils import timezone
+
+
+
+
+def clockshark_job_weekly_hours(request, job_number):
+    job = get_object_or_404(Jobs, job_number=job_number)
+
+    entries = (
+        ClockSharkTimeEntry.objects
+        .filter(job=job)
+        .exclude(work_day__isnull=True)
+        .order_by(
+            "-work_day",
+            "employee_last_name",
+            "employee_first_name",
+            "clock_in"
+        )
+    )
+
+    weeks_dict = defaultdict(lambda: {
+        "week_start": None,
+        "week_end": None,
+        "employees": {}
+    })
+
+    detail_json = {}
+
+    for entry in entries:
+        work_day = entry.work_day
+
+        # Monday = 0, Sunday = 6
+        week_start = work_day - timezone.timedelta(days=work_day.weekday())
+        week_end = week_start + timezone.timedelta(days=6)
+
+        week_key = week_start.strftime("%Y-%m-%d")
+
+        weeks_dict[week_key]["week_start"] = week_start
+        weeks_dict[week_key]["week_end"] = week_end
+
+        first_name = entry.employee_first_name or ""
+        last_name = entry.employee_last_name or ""
+        employee_name = f"{first_name} {last_name}".strip()
+
+        if not employee_name:
+            employee_name = "Unknown Employee"
+
+        employee_key = employee_name.lower().replace(" ", "_")
+
+        effective_hours = entry.hours_adjust if entry.hours_adjust is not None else entry.hours
+
+        if effective_hours is None:
+            effective_hours = Decimal("0.00")
+
+        if employee_key not in weeks_dict[week_key]["employees"]:
+            detail_key = f"{week_key}_{employee_key}"
+
+            weeks_dict[week_key]["employees"][employee_key] = {
+                "employee_name": employee_name,
+                "total_hours": Decimal("0.00"),
+                "detail_key": detail_key,
+            }
+
+            detail_json[detail_key] = {
+                "employee_name": employee_name,
+                "week_start": week_start.strftime("%m/%d/%Y"),
+                "week_end": week_end.strftime("%m/%d/%Y"),
+                "entries": []
+            }
+
+        weeks_dict[week_key]["employees"][employee_key]["total_hours"] += effective_hours
+
+        clock_in_display = ""
+        clock_out_display = ""
+
+        if entry.clock_in:
+            clock_in_display = timezone.localtime(entry.clock_in).strftime("%m/%d/%Y %I:%M %p")
+
+        if entry.clock_out:
+            clock_out_display = timezone.localtime(entry.clock_out).strftime("%m/%d/%Y %I:%M %p")
+
+        detail_json[weeks_dict[week_key]["employees"][employee_key]["detail_key"]]["entries"].append({
+            "work_day_sort": work_day.strftime("%Y-%m-%d"),
+            "day_name": work_day.strftime("%a"),
+            "clock_in": clock_in_display,
+            "clock_out": clock_out_display,
+            "hours": str(effective_hours.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
+            "regular_hours": str(entry.hours) if entry.hours is not None else "",
+            "hours_adjust": str(entry.hours_adjust) if entry.hours_adjust is not None else "",
+        })
+    for detail_key, detail_data in detail_json.items():
+        detail_data["entries"] = sorted(
+            detail_data["entries"],
+            key=lambda x: x["work_day_sort"]
+        )
+    weeks = []
+
+    for week_key, week_data in weeks_dict.items():
+        employees = []
+
+        for employee_key, employee_data in week_data["employees"].items():
+            employee_data["total_hours"] = employee_data["total_hours"].quantize(
+                Decimal("0.01"),
+                rounding=ROUND_HALF_UP
+            )
+            employees.append(employee_data)
+
+        employees = sorted(employees, key=lambda x: x["employee_name"])
+
+        week_total = Decimal("0.00")
+        for employee in employees:
+            week_total += employee["total_hours"]
+
+        weeks.append({
+            "week_start": week_data["week_start"],
+            "week_end": week_data["week_end"],
+            "employees": employees,
+            "week_total": week_total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+        })
+
+    weeks = sorted(weeks, key=lambda x: x["week_start"], reverse=True)
+
+    send_data = {
+        "job": job,
+        "weeks": weeks,
+        "detail_json": detail_json,
+    }
+
+    return render(request, "clockshark_job_weekly_hours.html", send_data)

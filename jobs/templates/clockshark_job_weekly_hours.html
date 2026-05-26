@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    ClockShark Hours - {{ job.job_number }}
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .page-container {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    .week-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-bottom: 18px;
+        background: white;
+    }
+
+    .week-header {
+    background: #17a2b8;
+    color: white;
+    border-bottom: 1px solid #138496;
+    padding: 12px 15px;
+    border-radius: 8px 8px 0 0;
+    }
+
+.week-header .text-muted {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+    .employee-row {
+        cursor: pointer;
+    }
+
+    .employee-row:hover {
+        background-color: #f8f9fa;
+    }
+
+    .employee-name-link {
+        color: #007bff;
+        font-weight: bold;
+    }
+
+    .employee-name-link:hover {
+        text-decoration: underline;
+    }
+
+    .mobile-employee-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 8px;
+        cursor: pointer;
+    }
+
+    .mobile-employee-card:hover {
+        background: #f8f9fa;
+    }
+
+    @media (max-width: 767px) {
+        .desktop-table {
+            display: none;
+        }
+
+        .mobile-cards {
+            display: block;
+        }
+    }
+
+    @media (min-width: 768px) {
+        .desktop-table {
+            display: block;
+        }
+
+        .mobile-cards {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid mt-3 mb-5">
+    <div class="page-container">
+
+        <div class="mb-3">
+            <h4 class="mb-1">
+                ClockShark Hours
+            </h4>
+
+            <div class="text-muted">
+                {{ job.job_number }} - {{ job.job_name }}
+            </div>
+        </div>
+
+        {% if weeks %}
+
+            {% for week in weeks %}
+                <div class="week-card">
+
+                    <div class="week-header d-flex justify-content-between align-items-center flex-wrap">
+                        <div>
+                            <strong>
+                                {{ week.week_start|date:"m/d/Y" }}
+                                -
+                                {{ week.week_end|date:"m/d/Y" }}
+                            </strong>
+                        </div>
+
+                        <div class="text-muted">
+                            Week Total:
+                            <strong>{{ week.week_total }}</strong>
+                            hours
+                        </div>
+                    </div>
+
+                    <div class="p-2">
+
+                        <div class="desktop-table">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover mb-0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Employee</th>
+                                            <th class="text-right">Hours</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {% for employee in week.employees %}
+                                            <tr class="employee-row"
+                                                data-detail-key="{{ employee.detail_key }}">
+                                                <td>
+                                                    <span class="employee-name-link">
+                                                        {{ employee.employee_name }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-right">
+                                                    {{ employee.total_hours }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="mobile-cards">
+                            {% for employee in week.employees %}
+                                <div class="mobile-employee-card employee-row"
+                                     data-detail-key="{{ employee.detail_key }}">
+                                    <div class="employee-name-link">
+                                        {{ employee.employee_name }}
+                                    </div>
+
+                                    <div>
+                                        <strong>Hours:</strong> {{ employee.total_hours }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                    </div>
+                </div>
+            {% endfor %}
+
+        {% else %}
+            <div class="alert alert-info">
+                No ClockShark time entries found for this job.
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+
+
+<!-- Employee Detail Modal -->
+<div class="modal fade" id="employeeHoursModal" tabindex="-1" role="dialog" aria-labelledby="employeeHoursModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="employeeHoursModalLabel">
+                        Employee Hours
+                    </h5>
+
+                    <div class="text-muted small" id="modalWeekDates"></div>
+                </div>
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span>&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Day</th>
+                                <th>Clock In</th>
+                                <th>Clock Out</th>
+                                <th class="text-right">Hours</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="employeeHoursTableBody">
+                        </tbody>
+
+                        <tfoot>
+                            <tr>
+                                <th colspan="3" class="text-right">Total</th>
+                                <th class="text-right" id="modalTotalHours"></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    Close
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{{ detail_json|json_script:"clockshark-detail-data" }}
+
+{% endblock %}
+
+
+{% block extra_scripts %}
+<script>
+    const clocksharkDetails = JSON.parse(
+        document.getElementById("clockshark-detail-data").textContent
+    );
+
+    function escapeHtml(value) {
+        if (value === null || value === undefined) {
+            return "";
+        }
+
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    $(document).ready(function() {
+
+        $(".employee-row").on("click", function() {
+            const detailKey = $(this).data("detail-key");
+            const detail = clocksharkDetails[detailKey];
+
+            if (!detail) {
+                return;
+            }
+
+            $("#employeeHoursModalLabel").text(detail.employee_name);
+            $("#modalWeekDates").text(detail.week_start + " - " + detail.week_end);
+
+            let rowsHtml = "";
+            let totalHours = 0;
+
+            detail.entries.forEach(function(entry) {
+                const hours = parseFloat(entry.hours || "0");
+                totalHours += hours;
+
+                let hoursDisplay = entry.hours;
+
+                if (entry.hours_adjust) {
+                    hoursDisplay = entry.hours_adjust + " adjusted";
+                }
+
+                rowsHtml += `
+                    <tr>
+                        <td>${escapeHtml(entry.day_name)}</td>
+                        <td>${escapeHtml(entry.clock_in)}</td>
+                        <td>${escapeHtml(entry.clock_out)}</td>
+                        <td class="text-right">${escapeHtml(hoursDisplay)}</td>
+                    </tr>
+                `;
+            });
+
+            $("#employeeHoursTableBody").html(rowsHtml);
+            $("#modalTotalHours").text(totalHours.toFixed(2));
+
+            $("#employeeHoursModal").modal("show");
+        });
+
+    });
+</script>
+{% endblock %}
