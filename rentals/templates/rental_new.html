@@ -1,342 +1,619 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_rentals %}active{% endblock nav_item_rentals %}
-{% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-
-	<style type="text/css" class="init">
-
-	</style>
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
-
- function check_data() {
-
-            if (rental_input.select_company.value =="add_new"){
-                if (rental_input.new_client.value ==""){
-                    alert('Please enter the new company name')
-                    rental_input.new_client.scrollIntoView();
-                    return false;
-                }
-                if (rental_input.new_pm.value ==""){
-                    alert('Please enter a contact for the new company')
-                    rental_input.new_pm.scrollIntoView();
-                    return false;
-                }
-            }
-            if (rental_input.select_pm.value == "add_new"){
-                if (rental_input.new_pm.value ==""){
-                alert('Please enter the new reps name')
-                rental_input.new_pm.scrollIntoView();
-                return false;
-                }
-            }
-
-            if (rental_input.select_company.value == "please_select"){
-                    alert('Please select vendor')
-                    rental_input.select_company.scrollIntoView();
-                    return false;
-            }
-            if (rental_input.select_job.value == "please_select"){
-                    alert('Please select job')
-                    rental_input.select_job.scrollIntoView();
-                    return false;
-            }
- }
-function filter_estimators() {
-            if (rental_input.select_company.value == "please_select"){
-            document.getElementById("rep_info").style.display = "none"
-            document.getElementById("vendor_info").style.display = "none"
-            return
-            }
-            if (rental_input.select_company.value != "add_new"){
-                rental_input.new_pm.value =""
-                document.getElementById("vendor_info").style.display = "block"
-                document.getElementById("vendor_title").innerHTML = "Vendor Info:"
-                let selectedcompany = rental_input.select_company.value
-                let rolodex = JSON.parse("{{data|escapejs}}");
-                for(let i = rental_input.select_pm.options.length; i >= 0; i--) {
-                    rental_input.select_pm.remove(i);
-                }
-                rental_input.select_pm.options[0] = new Option("No Rep Helped Me","no_rep");
-                rental_input.select_pm.options[1] = new Option("Add New Rep","add_new");
-                let b=2
-                for(let i =0; i < rolodex.length; i++){
-                    if (rolodex[i].company == selectedcompany){
-                        rental_input.select_pm.options[b] = new Option(rolodex[i].name,rolodex[i].id);
-                        b=b+1
-                    }
-                }
-                $.ajax({
-                method: 'GET',
-                url: '/rentals/rental_ajax',
-                data: {'vendor_id':rental_input.select_company.value},
-                success: function (data) {
-                    parsedData = JSON.parse(data);
-                    rental_input.new_client.value = parsedData.name
-                    rental_input.new_client_phone.value = parsedData.phone
-                    rental_input.new_client_bid_email.value = parsedData.email
-                }})
-
-            }
-            else{
-                document.getElementById("vendor_info").style.display = "block"
-                document.getElementById("vendor_title").innerHTML = "New Vendor:"
-                rental_input.new_client.placeholder = "New Vendor Name"
-                rental_input.new_client_phone.placeholder = "New Vendor Phone"
-                rental_input.new_client_bid_email.placeholder = "New Vendor Email"
-                for(let i = rental_input.select_pm.options.length; i >= 0; i--) {
-                    rental_input.select_pm.remove(i);
-                }
-                rental_input.select_pm.options[0] = new Option("Add New Rep","add_new");
-                document.getElementById("rep_info").style.display = "block"
-                                    rental_input.new_pm_phone.value = ""
-                    rental_input.new_pm_email.value = ""
-                    rental_input.new_pm.value = ""
-                rental_input.new_pm.placeholder = "New Rep Name"
-                rental_input.new_pm_phone.placeholder = "New Rep Phone"
-                rental_input.new_pm_email.placeholder = "New Rep Email"
-            }
- }
 
 
-
-function clear_client() {
-                rental_input.select_company.value = "add_new";
-                rental_input.select_pm.value = "add_new";
-        }
-
-        function clear_select_pm() {
-                rental_input.select_pm.value = "add_new";
-        }
-
-window.onload = function() {
-document.getElementById("rep_info").style.display = "none"
-document.getElementById("vendor_info").style.display = "none"
-}
-function change_rep(){
-if (rental_input.select_pm.value == "no_rep"){document.getElementById("rep_info").style.display = "none"}
-else if (rental_input.select_pm.value == "add_new"){
-document.getElementById("rep_info").style.display = "block"
-document.getElementById("more_rep_info").innerHTML = "Enter New Below:"
-                    rental_input.new_pm_phone.value = ""
-                    rental_input.new_pm_email.value = ""
-                    rental_input.new_pm.value = ""
-                    rental_input.new_pm_phone.placeholder = "New Rep Phone"
-                    rental_input.new_pm_email.placeholder = "New Rep Email"
-                    rental_input.new_pm.placeholder = "New Rep Name"
-}
-else {
-document.getElementById("rep_info").style.display = "block"
-document.getElementById("more_rep_info").innerHTML = "Rep Info:"
-            $.ajax({
-                method: 'GET',
-                url: '/rentals/rental_ajax',
-                data: {'rep_id':rental_input.select_pm.value},
-                success: function (data) {
-                    parsedData = JSON.parse(data);
-                    rental_input.new_pm_phone.value = parsedData.phone
-                    rental_input.new_pm_email.value = parsedData.email
-                    rental_input.new_pm.value = parsedData.name
-                }})
-}
-}
-
-	</script>
+{% block extra_head %}
     <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-</head>
-<body>
-    <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-        <a class="navbar-brand sub-navbar-brand" href="#">Rentals</a>
-        <div id="navbarNavDropdown2">
-          <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'rentals_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link active" href="{% url 'rental_new' 'ALL' %}">New</a></li>
-    </ul>
-  </div>
-</nav>
+    <style>
+        .rental-page {
+            padding-top: 24px;
+            padding-bottom: 40px;
+        }
 
+        .rental-header-card {
+            border-left: 5px solid #007bff;
+        }
 
+        .rental-card {
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 1rem;
+        }
 
-    <div class ="container"> <!#pick client>
-         <form name = "job_search" action="{% url 'rental_new' 'ALL' %}" method="post" >
-{% csrf_token %}
-        <div class = "row">
-            <div class ="col-sm-6">
-                Search Job: <input type="text" name="search_job" ><input type="submit" class="btn btn-primary btn-sm" value="Search"/>
+        .rental-card .card-header {
+            background: #f8f9fa;
+            font-weight: 700;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .section-help {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        .required-label::after {
+            content: " *";
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .rental-submit-bar {
+            position: sticky;
+            bottom: 0;
+            background: #ffffff;
+            border-top: 1px solid #dee2e6;
+            padding: 12px 0;
+            z-index: 5;
+        }
+
+        .select2-container .select2-selection--single {
+            height: 38px;
+            border: 1px solid #ced4da;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 36px;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+        }
+
+        @media (max-width: 575.98px) {
+            .rental-page {
+                padding-top: 12px;
+            }
+
+            .rental-card .card-body {
+                padding: 1rem;
+            }
+
+            .rental-submit-bar input[type="submit"] {
+                width: 100%;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block sub_nav %}
+{% include 'rentals_nav.html' with active_tab="add_new" %}
+{% endblock %}
+
+{% block content %}
+
+<div class="container rental-page">
+
+    <div class="card rental-card rental-header-card mb-4">
+        <div class="card-body">
+            <h4 class="mb-1">Add New Rental</h4>
+            <div class="section-help">
+                Enter the job, vendor, rental item, pricing, and on-rent date.
             </div>
         </div>
-        </form>
-         <form name = "rental_input" id= "rental_input" action="{% url 'rental_new' 'ALL' %}" method="post"  onSubmit = "return check_data()">
-{% csrf_token %}
-            <div class = "row">
-        <div class ="col-sm-6">
-             <label for="select_job">Select Job</label><select id="select_job" name="select_job" >
-            <option value="please_select">Select Job</option>
-            {% if jobs %}
-            {% for job in jobs %}
-            <option value={{job.job_number}}>{{job.job_number}} {{job.job_name}}</option>
-            {% endfor %}
-            {% endif %}
-            </select>
-
-        </div>
     </div>
-        <div class ="row" style="height: 50px">
-            <div class ="col-sm-12">
-                <label>Please select vendor</label>
-                <select class="form-control" id="select_company" name="select_company" onChange="filter_estimators()" >
-                    <option value="please_select">Please Select</option>
-                    <option value="add_new">Add New</option>
-                    {% if vendors %}
-                    {% for vendor in vendors %}
-                    <option value={{vendor.id}}>{{vendor.company_name}}</option>
+
+    <form name="rental_input"
+          id="rental_input"
+          action="{% url 'rental_new' 'ALL' %}"
+          method="post"
+          onsubmit="return check_data()">
+
+        {% csrf_token %}
+
+<!-- Job / Vendor -->
+<div class="card rental-card">
+    <div class="card-header">
+        Job and Vendor
+    </div>
+
+    <div class="card-body">
+
+        <div class="form-group">
+            <label class="required-label" for="select_job">Select Job</label>
+
+            <select id="select_job"
+                    name="select_job"
+                    class="form-control searchable-job">
+                <option value="please_select">Select Job</option>
+
+                {% if jobs %}
+                    {% for job in jobs %}
+                        <option value="{{ job.job_number }}">
+                            {{ job.job_number }} {{ job.job_name }}
+                        </option>
                     {% endfor %}
-                    {% endif %}
-                </select>
-            </div>
+                {% endif %}
+            </select>
         </div>
 
-	    <div class="content" id="vendor_info">
-            <div class ="row" style="margin-top: 40px">
-                <div class ="col-sm-12" id="vendor_title"> Enter New Vendor below: </div>
-            </div>
-            <div class ="row" style="margin-top: 22px" >
-                <div class ="col-sm-12">
-                    <input class="form-control" type= "text" id= "new_client" name="new_client" placeholder="company name" size="30" />
-                </div>
-            </div>
-            <div class ="row" style="margin-top: 22px" >
-                <div class ="col-sm-12">
-                    <input class="form-control" type= "tel" id="new_client_phone" name="new_client_phone" placeholder="phone Number" size="30"/>
-                </div>
-            </div>
-            <div class ="row" style="margin-top: 22px" >
-                <div class ="col-sm-12">
-                    <input class="form-control" type= "email" id="new_client_bid_email" name="new_client_bid_email" placeholder="email" size="30"/>
-                </div>
-            </div>
-        </div>
-    </div> <!pick client>
-<br>
-    <div class ="container">
-            <div class = "row">
-                <div class ="col-sm-12">
-                    <label for="select_pm">Did a Specific Rep Help You?</label>
-                    <select class="form-control" id="select_pm" name="select_pm" onChange="change_rep()">
-                            <option value="no_rep">"No Rep Helped Me"</option>
-                             <option value="add_new">"add New"</option>
-                    </select>
-                </div>
-            </div>
-	        <div class="content" id="rep_info">
-                <div class ="row" style="margin-top: 22px">
-                    <div class ="col-sm-12" id="more_rep_info">Enter New below: </div>
-                </div>
-                <div class ="row" style="margin-top: 22px">
-                    <div class ="col-sm-12">
-                        <input  type= "text" id="new_pm" name="new_pm" class="form-control" placeholder="office pm name" size="30" />
-                    </div>
-                </div>
+        <div class="form-group">
+            <label class="required-label" for="select_company">Please Select Vendor</label>
 
-                <div class ="row">
-                    <div class ="col-sm-12">
-                        <input style="margin-top: 22px" class="form-control" type= "tel" id="new_pm_phone" name="new_pm_phone" placeholder="phone Number" size="30"/>
-                    </div>
-                </div>
-                <div class ="row">
-                    <div class ="col-sm-12">
-                        <input style="margin-top: 22px" class="form-control" type= "email" id="new_pm_email" name="new_pm_email" placeholder="email" size="30"/>
-                    </div>
-                </div>
-            </div>
-    </div>
-<br><br>
-<div class ="container">
+            <select class="form-control searchable-vendor"
+                    id="select_company"
+                    name="select_company"
+                    onchange="filter_estimators()">
+                <option value="please_select">Please Select</option>
+                <option value="add_new">Add New Vendor</option>
 
-<br><br>
-    <div class = "row">
-        <div class ="col-sm-12">
-            <label class="required" for="item">Item:</label>
-            <input type="text" name="item" size="50" maxlength="250" placeholder = "40' Boom, 19' Scissor, Etc." required id="item">
+                {% if vendors %}
+                    {% for vendor in vendors %}
+                        <option value="{{ vendor.id }}">
+                            {{ vendor.company_name }}
+                        </option>
+                    {% endfor %}
+                {% endif %}
+            </select>
         </div>
-    </div>
-            <br><br>
-    <div class = "row">
-        <div class ="col-sm-12">
-            <label for="purchase_order">Purchase order #</label><input type="text" name="purchase_order"  maxlength="250" id="purchase_order">
-        </div>
-    </div>
-            <br><br>
-    <div class = "row">
-        <div class ="col-sm-12">
-                         <label for="day_price">Daily Price</label>
-                            <input type="text" name="day_price"  maxlength="250" id="day_price">
-        </div>
-    </div>
-    <br><br>
-    <div class = "row">
-        <div class ="col-sm-12">
-                         <label for="week_price">Weekly Price</label>
-                            <input type="text" name="week_price"  maxlength="250" id="week_price">
-        </div>
-    </div>
-    <br><br>
-    <div class = "row">
-        <div class ="col-sm-12">
-                         <label for="month_price">Monthly Price</label>
-                            <input type="text" name="month_price"  maxlength="250" id="month_price">
-        </div>
-    </div>
-    <br><br>
-    <div class = "row">
-        <div class ="col-sm-12">
-                        <label for="on_rent_date">On rent date:</label>
-                            <input type="date" name="on_rent_date" size="10" id="on_rent_date" required>
-        </div>
-    </div>
-    <br><br>
-    <div class = "row">
-        <div class ="col-sm-12">
-        <label for="notes">Any Notes About The Rental:</label> <br>
-        <textarea id="notes" name="notes" rows="4" cols="100" ></textarea>
-        </div>
-    </div>
-<br><br>
-    <div class = "row">
-        <div class ="col-sm-12">
-     <input type="submit"  class="btn btn-primary btn-sm"  value="Add New Rental" />
 
+        <!-- Existing Vendor Info -->
+        <div class="border rounded p-3 mt-3 bg-light d-none" id="existing_vendor_info">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
+        <h6 class="font-weight-bold mb-2 mb-md-0">
+            Selected Vendor Info
+        </h6>
+
+        <a href="#"
+           id="goToVendorManagement"
+           class="btn btn-outline-primary btn-sm d-none">
+            Manage This Vendor
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-2 mb-md-0">
+            <strong>Vendor:</strong>
+            <div id="existing_vendor_name" class="text-muted"></div>
+        </div>
+
+        <div class="col-md-4 mb-2 mb-md-0">
+            <strong>Phone:</strong>
+            <div id="existing_vendor_phone" class="text-muted"></div>
+        </div>
+
+        <div class="col-md-4">
+            <strong>Email:</strong>
+            <div id="existing_vendor_email" class="text-muted"></div>
         </div>
     </div>
 </div>
+
+        <!-- Add New Vendor Fields -->
+        <div class="border rounded p-3 mt-3 bg-light d-none" id="vendor_info">
+            <h6 class="font-weight-bold mb-3" id="vendor_title">
+                New Vendor
+            </h6>
+
+            <div class="form-group">
+                <label for="new_client">Vendor Name</label>
+                <input class="form-control"
+                       type="text"
+                       id="new_client"
+                       name="new_client"
+                       placeholder="Vendor name">
+            </div>
+
+            <div class="form-group">
+                <label for="new_client_phone">Vendor Phone</label>
+                <input class="form-control"
+                       type="tel"
+                       id="new_client_phone"
+                       name="new_client_phone"
+                       placeholder="Vendor phone">
+            </div>
+
+            <div class="form-group mb-0">
+                <label for="new_client_bid_email">Vendor Email</label>
+                <input class="form-control"
+                       type="email"
+                       id="new_client_bid_email"
+                       name="new_client_bid_email"
+                       placeholder="Vendor email">
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Rep -->
+<div class="card rental-card">
+    <div class="card-header">
+        Vendor Representative
+    </div>
+
+    <div class="card-body">
+
+        <div class="form-group mb-0">
+            <label for="select_pm">Did a Specific Rep Help You?</label>
+
+            <select class="form-control"
+                    id="select_pm"
+                    name="select_pm"
+                    onchange="change_rep()">
+                <option value="no_rep">No</option>
+            </select>
+        </div>
+
+        <div class="border rounded p-3 mt-3 bg-light d-none" id="rep_info">
+            <h6 class="font-weight-bold mb-3" id="more_rep_info">
+                New Rep
+            </h6>
+
+            <div class="form-group">
+                <label for="new_pm">Rep Name</label>
+                <input type="text"
+                       id="new_pm"
+                       name="new_pm"
+                       class="form-control"
+                       placeholder="Rep name">
+            </div>
+
+            <div class="form-group">
+                <label for="new_pm_phone">Rep Phone</label>
+                <input class="form-control"
+                       type="tel"
+                       id="new_pm_phone"
+                       name="new_pm_phone"
+                       placeholder="Rep phone">
+            </div>
+
+            <div class="form-group mb-0">
+                <label for="new_pm_email">Rep Email</label>
+                <input class="form-control"
+                       type="email"
+                       id="new_pm_email"
+                       name="new_pm_email"
+                       placeholder="Rep email">
+            </div>
+        </div>
+
+    </div>
+</div>
+        <!-- Rental Details -->
+        <div class="card rental-card">
+            <div class="card-header">
+                Rental Details
+            </div>
+
+            <div class="card-body">
+
+                <div class="form-group">
+                    <label class="required-label" for="item">Item</label>
+                    <input class="form-control"
+                           type="text"
+                           name="item"
+                           maxlength="250"
+                           placeholder="40' Boom, 19' Scissor, etc."
+                           required
+                           id="item">
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-0">
+                            <label>Purchase Order #</label>
+
+                            <div class="form-control bg-light text-muted">
+                                Auto-assigned when rental is saved
+                            </div>
+
+                            <small class="form-text text-muted">
+                                Trinity will assign the next TR purchase order number automatically.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-0">
+                            <label class="required-label" for="on_rent_date">On Rent Date</label>
+                            <input class="form-control"
+                                   type="date"
+                                   name="on_rent_date"
+                                   id="on_rent_date"
+                                   required>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Pricing -->
+        <div class="card rental-card">
+            <div class="card-header">
+                Pricing
+            </div>
+
+            <div class="card-body">
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group mb-md-0">
+                            <label for="day_price">Daily Price</label>
+                            <input class="form-control"
+                                   type="text"
+                                   name="day_price"
+                                   maxlength="250"
+                                   id="day_price"
+                                   placeholder="Daily price">
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="form-group mb-md-0">
+                            <label for="week_price">Weekly Price</label>
+                            <input class="form-control"
+                                   type="text"
+                                   name="week_price"
+                                   maxlength="250"
+                                   id="week_price"
+                                   placeholder="Weekly price">
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="form-group mb-0">
+                            <label for="month_price">Monthly Price</label>
+                            <input class="form-control"
+                                   type="text"
+                                   name="month_price"
+                                   maxlength="250"
+                                   id="month_price"
+                                   placeholder="Monthly price">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="card rental-card">
+            <div class="card-header">
+                Notes
+            </div>
+
+            <div class="card-body">
+                <div class="form-group mb-0">
+                    <label for="notes">Any Notes About The Rental</label>
+                    <textarea class="form-control"
+                              id="notes"
+                              name="notes"
+                              rows="4"
+                              placeholder="Add any delivery instructions, contact details, or rental notes here."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="rental-submit-bar">
+            <div class="d-flex justify-content-end">
+                <input type="submit"
+                       class="btn btn-primary"
+                       value="Add New Rental">
+            </div>
+        </div>
+
     </form>
 
-                <script>
-var coll = document.getElementsByClassName("collapsible");
-var i;
-
-for (i = 0; i < coll.length; i++) {
-  coll[i].addEventListener("click", function() {
-    this.classList.toggle("active");
-    var content = this.nextElementSibling;
-    if (content.style.display === "block") {
-      content.style.display = "none";
-    } else {
-      content.style.display = "block";
-    }
-  });
-}
-</script>
-</body>
-</html>
+</div>
 
 {% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript" class="init">
+
+$(document).ready(function () {
+    $('.searchable-job').select2({
+        width: '100%',
+        placeholder: 'Search for a job'
+    });
+
+    $('.searchable-vendor').select2({
+        width: '100%',
+        placeholder: 'Search for a vendor'
+    });
+
+    resetVendorSections();
+    resetRepSection();
+});
+
+const vendorData = JSON.parse("{{ vendor_data|escapejs }}");
+
+function getSelectedVendor() {
+    const selectedVendorId = rental_input.select_company.value;
+
+    return vendorData.find(function (vendor) {
+        return String(vendor.id) === String(selectedVendorId);
+    });
+}
+
+function resetVendorSections() {
+    document.getElementById("vendor_info").classList.add("d-none");
+    document.getElementById("existing_vendor_info").classList.add("d-none");
+    document.getElementById("goToVendorManagement").classList.add("d-none");
+    document.getElementById("goToVendorManagement").href = "#";
+    rental_input.new_client.value = "";
+    rental_input.new_client_phone.value = "";
+    rental_input.new_client_bid_email.value = "";
+
+    rental_input.new_client.required = false;
+    rental_input.new_client_phone.required = false;
+    rental_input.new_client_bid_email.required = false;
+
+    document.getElementById("existing_vendor_name").innerHTML = "";
+    document.getElementById("existing_vendor_phone").innerHTML = "";
+    document.getElementById("existing_vendor_email").innerHTML = "";
+}
+
+function resetRepSection() {
+    document.getElementById("rep_info").classList.add("d-none");
+
+    rental_input.new_pm.value = "";
+    rental_input.new_pm_phone.value = "";
+    rental_input.new_pm_email.value = "";
+
+    rental_input.new_pm.required = false;
+    rental_input.new_pm_phone.required = false;
+    rental_input.new_pm_email.required = false;
+
+    while (rental_input.select_pm.options.length > 0) {
+        rental_input.select_pm.remove(0);
+    }
+
+    rental_input.select_pm.options[0] = new Option("No", "no_rep");
+}
+
+function filter_estimators() {
+    const selectedVendor = rental_input.select_company.value;
+
+    resetVendorSections();
+    resetRepSection();
+
+    if (selectedVendor === "please_select") {
+        return;
+    }
+
+    if (selectedVendor === "add_new") {
+        document.getElementById("vendor_info").classList.remove("d-none");
+        document.getElementById("vendor_title").innerHTML = "New Vendor";
+
+        rental_input.new_client.placeholder = "Vendor Name";
+        rental_input.new_client_phone.placeholder = "Vendor Phone";
+        rental_input.new_client_bid_email.placeholder = "Vendor Email";
+
+        rental_input.new_client.required = true;
+
+        rental_input.select_pm.options[0] = new Option("No", "no_rep");
+        rental_input.select_pm.options[1] = new Option("Yes", "add_new");
+
+        return;
+    }
+
+    const vendor = getSelectedVendor();
+
+    if (!vendor) {
+        return;
+    }
+
+    document.getElementById("existing_vendor_info").classList.remove("d-none");
+
+    document.getElementById("existing_vendor_name").innerHTML = vendor.company_name || "-";
+    document.getElementById("existing_vendor_phone").innerHTML = vendor.company_phone || "-";
+    document.getElementById("existing_vendor_email").innerHTML = vendor.company_email || "-";
+    const manageVendorButton = document.getElementById("goToVendorManagement");
+
+    manageVendorButton.href =
+        "{% url 'vendor_management' %}?category_id={{ equipment_rental_category.id }}&vendor_id=" + vendor.id;
+
+    manageVendorButton.classList.remove("d-none");
+    rental_input.select_pm.options[0] = new Option("No", "no_rep");
+    rental_input.select_pm.options[1] = new Option("Add New Rep", "add_new");
+
+    let optionIndex = 2;
+
+    vendor.contacts.forEach(function (contact) {
+        rental_input.select_pm.options[optionIndex] = new Option(
+            contact.name,
+            contact.id
+        );
+        optionIndex++;
+    });
+}
+
+function change_rep() {
+    const selectedRep = rental_input.select_pm.value;
+
+    document.getElementById("rep_info").classList.add("d-none");
+
+    rental_input.new_pm.value = "";
+    rental_input.new_pm_phone.value = "";
+    rental_input.new_pm_email.value = "";
+
+    rental_input.new_pm.required = false;
+    rental_input.new_pm_phone.required = false;
+    rental_input.new_pm_email.required = false;
+
+    if (selectedRep === "no_rep") {
+        return;
+    }
+
+    if (selectedRep === "add_new") {
+        document.getElementById("rep_info").classList.remove("d-none");
+        document.getElementById("more_rep_info").innerHTML = "New Rep";
+
+        rental_input.new_pm.placeholder = "Rep Name";
+        rental_input.new_pm_phone.placeholder = "Rep Phone";
+        rental_input.new_pm_email.placeholder = "Rep Email";
+
+        rental_input.new_pm.required = true;
+
+        return;
+    }
+
+    const vendor = getSelectedVendor();
+
+    if (!vendor) {
+        return;
+    }
+
+    const selectedContact = vendor.contacts.find(function (contact) {
+        return String(contact.id) === String(selectedRep);
+    });
+
+    if (!selectedContact) {
+        return;
+    }
+
+    document.getElementById("rep_info").classList.remove("d-none");
+    document.getElementById("more_rep_info").innerHTML = "Selected Rep Info";
+
+    rental_input.new_pm.value = selectedContact.name || "";
+    rental_input.new_pm_phone.value = selectedContact.phone || "";
+    rental_input.new_pm_email.value = selectedContact.email || "";
+}
+
+function check_data() {
+    if (rental_input.select_job.value === "please_select") {
+        alert("Please select job");
+        rental_input.select_job.scrollIntoView();
+        return false;
+    }
+
+    if (rental_input.select_company.value === "please_select") {
+        alert("Please select vendor");
+        rental_input.select_company.scrollIntoView();
+        return false;
+    }
+
+    if (rental_input.select_company.value === "add_new") {
+        if (rental_input.new_client.value.trim() === "") {
+            alert("Please enter the new vendor name");
+            rental_input.new_client.scrollIntoView();
+            return false;
+        }
+
+        if (rental_input.select_pm.value === "add_new") {
+            if (rental_input.new_pm.value.trim() === "") {
+                alert("Please enter the new rep name");
+                rental_input.new_pm.scrollIntoView();
+                return false;
+            }
+        }
+    }
+
+    if (rental_input.select_company.value !== "add_new") {
+        if (rental_input.select_pm.value === "add_new") {
+            if (rental_input.new_pm.value.trim() === "") {
+                alert("Please enter the new rep name");
+                rental_input.new_pm.scrollIntoView();
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+</script>
+    {% endblock %}

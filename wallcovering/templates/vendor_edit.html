@@ -22,19 +22,7 @@
                            value="{{ vendor.company_name|default:'' }}">
                 </div>
 
-                <div class="form-group">
-                    <label>Category</label>
-                    <select name="category" class="form-control">
-                        <option value="">Please Select</option>
 
-                        {% for category in vendor_categories %}
-                            <option value="{{ category.id }}"
-                                {% if vendor.category.id == category.id %}selected{% endif %}>
-                                {{ category.category }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
 
                 <div class="form-group">
                     <label>Company Phone</label>
@@ -45,7 +33,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Company Email</label>
+                    <label>Email Address for Orders</label>
                     <input type="email"
                            name="company_email"
                            class="form-control"

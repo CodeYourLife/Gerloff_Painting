@@ -1,14 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_subs %}active{% endblock nav_item_subs %}
-{% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
-        <style type="text/css" class="init">
+
+{% block extra_head %}
+<style type="text/css" class="init">
 
 .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
 
@@ -78,9 +73,103 @@ input[type=number] {
   -moz-appearance: textfield;
 }
     </style>
-
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
 
+{% block sub_nav %}
+    {% include 'subcontractors_nav.html' with page_label="New Invoice" %}
+{% endblock %}
+
+{% block content %}
+
+<h2>NEW INVOICE FOR JOB: {{subcontract.job_number}} - {{subcontract.subcontractor}} PO# {{subcontract.po_number}}</h2>
+<br>
+
+
+ <form action="{% url 'subcontractor_invoice_new' subcontract.id %}" id="invoicing_form" method="post" onSubmit="return check_form()" >
+{% csrf_token %}
+
+	 <h3>Pay App Number: {{next_number}}</h3>
+	 <br>
+	 <div class="container">
+        <label for="subcontract_note">Provide any notes about this invoice: </label> <br>
+        <textarea id="subcontract_note" name="subcontract_note" rows="2" cols="100" ></textarea>
+		 </div>
+<br>
+
+<div class="demo-html" style="width:90%">
+		<table id="job_table" class="display" style="width:90%">
+			<thead>
+				<tr>
+					<th>Description</th>
+					<th>Ordered Qnty</th>
+					<th>Ordered $</th>
+					<th>Billed Qnty</th>
+					<th>Billed $</th>
+					<th>Current Qnty</th>
+					<th>Current $</th>
+					<th>Total Percentage</th>
+					<th>Note</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% if items %}
+				{% for item in items %}
+				<tr>
+					<!--1 --> <td>{{item.SOV_description}}</td>
+					{% if item.SOV_is_lump_sum == True %}
+
+					<!--2 --><td style="white-space: nowrap;">1 Lump Sum</td>
+					<!--3 --><td style="background-color:hsl(121, 67%, 87%);white-space: nowrap;" ><input type="hidden" id="quantity_ordered{{item.id}}" value="1 Lump Sum" /><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>
+					{% if item.is_approved %}
+					<!--4 --><td style="white-space: nowrap;"><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.total_cost}}" />{% widthratio item.quantity_billed 1 100 %}%</td>
+					<!--5 --><td style="background-color:hsl(121, 67%, 87%);"><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
+					<!--6 --><td></td>
+					<!--7 --><td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
+					<!--8 --><td><div id="percentage{{item.id}}" >{% widthratio item.total_billed item.total_cost 100 %}%</div></td>
+					{% else %}
+					<!--4 thru 8 --><td></td><td></td><td>Not Approved</td><td></td><td></td>
+					{% endif %}
+					{% else %}
+					<!--2 --><td style="background-color:hsl(0, 67%, 87%);white-space: nowrap;"><input type="hidden" id="SOV_rate{{item.id}}" value="{{item.SOV_rate}}" /><input type="hidden" id="quantity_ordered{{item.id}}" value="{{item.SOV_total_ordered}}" />{{item.SOV_total_ordered}} {{item.SOV_unit}}</td>
+					<!--3 --><td><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>
+					{% if item.is_approved %}
+					<!--4 --><td style="background-color:hsl(0, 67%, 87%);white-space: nowrap;"><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.quantity_billed}}" />{{item.quantity_billed}} {{item.SOV_unit}}</td>
+					<!--5 --><td><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
+					<!--6 --><td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
+					<!--7 --><td><input type="hidden" id="current_total{{item.id}}" value="" /></td>
+					<!--8 --><td><div id="percentage{{item.id}}" >{% widthratio item.quantity_billed item.SOV_total_ordered 100 %}%</div></td>
+					{% else %}
+					<!--4 thru 8 --><td></td><td></td><td>Not Approved</td><td></td><td></td>
+					{% endif %}
+					{% endif %}
+					{% if item.is_approved %}
+					<!--9 --><td><input type="text"  name="note{{item.id}}" size="40" /></td>
+					{% else %}
+					<td></td>
+					<!--9 -->{% endif %}
+
+				</tr>
+				{% endfor %}
+				{% endif %}
+			</tbody>
+		</table>
+</div>
+ <div id="previously_billed"></div>
+ <br>
+<div id="invoice_total"></div>
+	 <br>
+<div id="total_to_date"></div>
+	 <br>
+ <div id="total_contract"></div>
+	 <br>
+<input type="submit" name="Form3" class="btn btn-primary btn-sm" value="Send Invoice for Approval" />
+    </form>
+
+
+{% endblock %}
+
+{% block extra_scripts %}
     <script type="text/javascript" class="init">
 $(document).ready(function () {
     var table = $('#job_table').DataTable({paging:false, info:false, searching:false, ordering:false});
@@ -200,107 +289,4 @@ function check_form(){
 
 
 	</script>
-</head>
-<body>
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="{% url 'subcontractor_home' %}">Subcontractors</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'subcontractor_home' %}">Subcontractor Home</a></li>
-		 <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
-         <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
-			  <li><a class="nav-item nav-link" href="{% url 'subcontractor_payments' %}">Payments</a></li>
-		<li><a class="nav-item nav-link active" href="#">NEW INVOICE -{{subcontract.job_number}} {{subcontract.subcontractor}} {{subcontract.po_number}}</a></li>
-    </ul>
-  </div>
-</nav>
-<h2>NEW INVOICE FOR JOB: {{subcontract.job_number}} - {{subcontract.subcontractor}} PO# {{subcontract.po_number}}</h2>
-<br>
-
-
- <form action="{% url 'subcontractor_invoice_new' subcontract.id %}" id="invoicing_form" method="post" onSubmit="return check_form()" >
-{% csrf_token %}
-
-	 <h3>Pay App Number: {{next_number}}</h3>
-	 <br>
-	 <div class="container">
-        <label for="subcontract_note">Provide any notes about this invoice: </label> <br>
-        <textarea id="subcontract_note" name="subcontract_note" rows="2" cols="100" ></textarea>
-		 </div>
-<br>
-
-<div class="demo-html" style="width:90%">
-		<table id="job_table" class="display" style="width:90%">
-			<thead>
-				<tr>
-					<th>Description</th>
-					<th>Ordered Qnty</th>
-					<th>Ordered $</th>
-					<th>Billed Qnty</th>
-					<th>Billed $</th>
-					<th>Current Qnty</th>
-					<th>Current $</th>
-					<th>Total Percentage</th>
-					<th>Note</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% if items %}
-				{% for item in items %}
-				<tr>
-					<!--1 --> <td>{{item.SOV_description}}</td>
-					{% if item.SOV_is_lump_sum == True %}
-
-					<!--2 --><td style="white-space: nowrap;">1 Lump Sum</td>
-					<!--3 --><td style="background-color:hsl(121, 67%, 87%);white-space: nowrap;" ><input type="hidden" id="quantity_ordered{{item.id}}" value="1 Lump Sum" /><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>
-					{% if item.is_approved %}
-					<!--4 --><td style="white-space: nowrap;"><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.total_cost}}" />{% widthratio item.quantity_billed 1 100 %}%</td>
-					<!--5 --><td style="background-color:hsl(121, 67%, 87%);"><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
-					<!--6 --><td></td>
-					<!--7 --><td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
-					<!--8 --><td><div id="percentage{{item.id}}" >{% widthratio item.total_billed item.total_cost 100 %}%</div></td>
-					{% else %}
-					<!--4 thru 8 --><td></td><td></td><td>Not Approved</td><td></td><td></td>
-					{% endif %}
-					{% else %}
-					<!--2 --><td style="background-color:hsl(0, 67%, 87%);white-space: nowrap;"><input type="hidden" id="SOV_rate{{item.id}}" value="{{item.SOV_rate}}" /><input type="hidden" id="quantity_ordered{{item.id}}" value="{{item.SOV_total_ordered}}" />{{item.SOV_total_ordered}} {{item.SOV_unit}}</td>
-					<!--3 --><td><input type="hidden" id="total_cost{{item.id}}" value="{{item.total_cost}}" />${{item.total_cost}}</td>
-					{% if item.is_approved %}
-					<!--4 --><td style="background-color:hsl(0, 67%, 87%);white-space: nowrap;"><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.quantity_billed}}" />{{item.quantity_billed}} {{item.SOV_unit}}</td>
-					<!--5 --><td><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
-					<!--6 --><td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
-					<!--7 --><td><input type="hidden" id="current_total{{item.id}}" value="" /></td>
-					<!--8 --><td><div id="percentage{{item.id}}" >{% widthratio item.quantity_billed item.SOV_total_ordered 100 %}%</div></td>
-					{% else %}
-					<!--4 thru 8 --><td></td><td></td><td>Not Approved</td><td></td><td></td>
-					{% endif %}
-					{% endif %}
-					{% if item.is_approved %}
-					<!--9 --><td><input type="text"  name="note{{item.id}}" size="40" /></td>
-					{% else %}
-					<td></td>
-					<!--9 -->{% endif %}
-
-				</tr>
-				{% endfor %}
-				{% endif %}
-			</tbody>
-		</table>
-</div>
- <div id="previously_billed"></div>
- <br>
-<div id="invoice_total"></div>
-	 <br>
-<div id="total_to_date"></div>
-	 <br>
- <div id="total_contract"></div>
-	 <br>
-<input type="submit" name="Form3" class="btn btn-primary btn-sm" value="Send Invoice for Approval" />
-    </form>
-
-
-</body>
-</html>
-
 {% endblock %}

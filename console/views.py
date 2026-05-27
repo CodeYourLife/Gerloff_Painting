@@ -6,8 +6,10 @@ from console.models import *
 from datetime import datetime,date,timedelta
 from dateutil.parser import parse as parse_date
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import ForeignKey
 from django.views.decorators.cache import never_cache
 from django.contrib.auth.models import User, auth
 from django.db import transaction
@@ -1753,3 +1755,322 @@ def export_jobs_ar_closed_csv(request):
         ])
 
     return response
+
+
+def reassign_vendor_foreign_keys(old_vendor, new_vendor):
+    """
+    Move all known Vendors foreign keys from old_vendor to new_vendor.
+    Also moves all VendorContacts from old_vendor to new_vendor.
+    """
+
+    Rentals.objects.filter(company=old_vendor).update(company=new_vendor)
+
+    Wallcovering.objects.filter(vendor=old_vendor).update(vendor=new_vendor)
+
+    Inventory.objects.filter(purchased_from=old_vendor).update(purchased_from=new_vendor)
+
+    Inventory.objects.filter(service_vendor=old_vendor).update(service_vendor=new_vendor)
+
+    Orders.objects.filter(vendor=old_vendor).update(vendor=new_vendor)
+
+    # Important: move the vendor contacts too
+    VendorContact.objects.filter(company=old_vendor).update(company=new_vendor)
+
+
+def reassign_vendor_contact_foreign_keys(old_contact, new_contact):
+    """
+    Move all known VendorContact foreign keys from old_contact to new_contact.
+    """
+
+    Rentals.objects.filter(rep=old_contact).update(rep=new_contact)
+
+
+def clear_vendor_contact_foreign_keys(contact):
+    """
+    Clear VendorContact foreign keys before deleting a contact.
+    Right now, only Rentals.rep points to VendorContact and it is nullable.
+    """
+
+    Rentals.objects.filter(rep=contact).update(rep=None)
+
+def get_vendor_reference_counts(vendor):
+    return {
+        "rentals": Rentals.objects.filter(company=vendor).count(),
+        "wallcoverings": Wallcovering.objects.filter(vendor=vendor).count(),
+        "inventory_purchased_from": Inventory.objects.filter(purchased_from=vendor).count(),
+        "inventory_service_vendor": Inventory.objects.filter(service_vendor=vendor).count(),
+        "orders": Orders.objects.filter(vendor=vendor).count(),
+        "vendor_contacts": VendorContact.objects.filter(company=vendor).count(),
+    }
+
+
+def get_vendor_contact_reference_counts(contact):
+    return {
+        "rentals": Rentals.objects.filter(rep=contact).count(),
+    }
+
+def vendor_management(request):
+    send_data = {}
+
+    categories = VendorCategory.objects.all().order_by('category')
+    send_data['categories'] = categories
+
+    selected_category_id = request.GET.get('category_id') or request.POST.get('category_id')
+    selected_vendor_id = request.GET.get('vendor_id') or request.POST.get('vendor_id')
+
+    selected_category = None
+    selected_vendor = None
+    vendors = Vendors.objects.none()
+    vendor_contacts = VendorContact.objects.none()
+
+    if selected_category_id:
+        selected_category = VendorCategory.objects.get(id=selected_category_id)
+        vendors = Vendors.objects.filter(category=selected_category).order_by('company_name')
+
+    if selected_vendor_id:
+        selected_vendor = Vendors.objects.get(id=selected_vendor_id)
+        vendor_contacts = VendorContact.objects.filter(company=selected_vendor).order_by('name')
+
+    send_data['selected_category'] = selected_category
+    send_data['selected_category_id'] = selected_category_id
+    send_data['vendors'] = vendors
+    send_data['selected_vendor'] = selected_vendor
+    send_data['selected_vendor_id'] = selected_vendor_id
+    send_data['vendor_contacts'] = vendor_contacts
+
+    if request.method == "POST":
+        action = request.POST.get('action')
+
+        # ------------------------------------------------------------
+        # OPTION 1: MERGE VENDORS
+        # ------------------------------------------------------------
+        if action == "merge_vendors":
+            old_vendor_id = request.POST.get('old_vendor_id')
+            new_vendor_id = request.POST.get('new_vendor_id')
+
+            if not old_vendor_id or not new_vendor_id:
+                messages.error(request, "Please select both vendors.")
+                return redirect(f"{request.path}?category_id={selected_category_id}")
+
+            if old_vendor_id == new_vendor_id:
+                messages.error(request, "You cannot merge a vendor into itself.")
+                return redirect(f"{request.path}?category_id={selected_category_id}")
+
+            old_vendor = Vendors.objects.get(id=old_vendor_id)
+            new_vendor = Vendors.objects.get(id=new_vendor_id)
+
+            conflicts = vendor_conflicts(old_vendor, new_vendor)
+
+            # If user has not confirmed yet, show conflicts first.
+            if request.POST.get('confirm_merge') != "YES" and conflicts:
+                send_data['old_vendor_reference_counts'] = get_vendor_reference_counts(old_vendor)
+                send_data['vendor_merge_conflicts'] = conflicts
+                send_data['merge_old_vendor'] = old_vendor
+                send_data['merge_new_vendor'] = new_vendor
+                return render(request, 'vendor_management.html', send_data)
+
+            old_vendor_name = old_vendor.company_name
+            new_vendor_name = new_vendor.company_name
+            with transaction.atomic():
+                reassign_vendor_foreign_keys(old_vendor, new_vendor)
+                old_vendor.delete()
+
+            messages.success(
+                request,
+                f"{old_vendor_name} was merged into {new_vendor_name}."
+            )
+
+            return redirect(f"{request.path}?category_id={selected_category_id}")
+
+        # ------------------------------------------------------------
+        # OPTION 2: UPDATE VENDOR
+        # ------------------------------------------------------------
+        elif action == "update_vendor":
+            vendor_id = request.POST.get('vendor_id')
+
+            vendor = Vendors.objects.get(id=vendor_id)
+            vendor.company_name = request.POST.get('company_name', '').strip()
+            vendor.company_phone = request.POST.get('company_phone', '').strip()
+            vendor.company_email = request.POST.get('company_email', '').strip()
+
+            new_category_id = request.POST.get('vendor_category')
+            if new_category_id:
+                vendor.category = VendorCategory.objects.get(id=new_category_id)
+
+            vendor.save()
+
+            messages.success(request, "Vendor information was updated.")
+
+            return redirect(
+                f"{request.path}?category_id={vendor.category.id}&vendor_id={vendor.id}"
+            )
+
+        # ------------------------------------------------------------
+        # ADD / UPDATE VENDOR CONTACT
+        # ------------------------------------------------------------
+        elif action == "save_vendor_contact":
+            vendor_id = request.POST.get('vendor_id')
+            contact_id = request.POST.get('contact_id')
+
+            vendor = Vendors.objects.get(id=vendor_id)
+
+            contact_name = request.POST.get('contact_name', '').strip()
+            contact_phone = request.POST.get('contact_phone', '').strip()
+            contact_email = request.POST.get('contact_email', '').strip()
+
+            if not contact_name:
+                messages.error(request, "Contact name is required.")
+                return redirect(
+                    f"{request.path}?category_id={vendor.category.id}&vendor_id={vendor.id}"
+                )
+
+            if contact_id == "add_new":
+                VendorContact.objects.create(
+                    company=vendor,
+                    name=contact_name,
+                    phone=contact_phone,
+                    email=contact_email
+                )
+                messages.success(request, "Vendor contact was added.")
+            else:
+                contact = VendorContact.objects.get(id=contact_id, company=vendor)
+                contact.name = contact_name
+                contact.phone = contact_phone
+                contact.email = contact_email
+                contact.save()
+                messages.success(request, "Vendor contact was updated.")
+
+            return redirect(
+                f"{request.path}?category_id={vendor.category.id}&vendor_id={vendor.id}"
+            )
+
+        # ------------------------------------------------------------
+        # DELETE VENDOR CONTACT
+        # ------------------------------------------------------------
+        elif action == "delete_vendor_contact":
+            vendor_id = request.POST.get('vendor_id')
+            contact_id = request.POST.get('contact_id')
+
+            vendor = Vendors.objects.get(id=vendor_id)
+            contact = VendorContact.objects.get(id=contact_id, company=vendor)
+
+            with transaction.atomic():
+                clear_vendor_contact_foreign_keys(contact)
+                contact.delete()
+
+            messages.success(request, "Vendor contact was deleted.")
+
+            return redirect(
+                f"{request.path}?category_id={vendor.category.id}&vendor_id={vendor.id}"
+            )
+
+        # ------------------------------------------------------------
+        # MERGE VENDOR CONTACTS
+        # ------------------------------------------------------------
+        elif action == "merge_vendor_contacts":
+            vendor_id = request.POST.get('vendor_id')
+            old_contact_id = request.POST.get('old_contact_id')
+            new_contact_id = request.POST.get('new_contact_id')
+
+            vendor = Vendors.objects.get(id=vendor_id)
+
+            if not old_contact_id or not new_contact_id:
+                messages.error(request, "Please select both contacts.")
+                return redirect(
+                    f"{request.path}?category_id={vendor.category.id}&vendor_id={vendor.id}"
+                )
+
+            if old_contact_id == new_contact_id:
+                messages.error(request, "You cannot merge a contact into itself.")
+                return redirect(
+                    f"{request.path}?category_id={vendor.category.id}&vendor_id={vendor.id}"
+                )
+
+            old_contact = VendorContact.objects.get(id=old_contact_id, company=vendor)
+            new_contact = VendorContact.objects.get(id=new_contact_id, company=vendor)
+
+            conflicts = vendor_contact_conflicts(old_contact, new_contact)
+
+            if request.POST.get('confirm_merge') != "YES" and conflicts:
+                send_data['old_contact_reference_counts'] = get_vendor_contact_reference_counts(old_contact)
+                send_data['contact_merge_conflicts'] = conflicts
+                send_data['merge_old_contact'] = old_contact
+                send_data['merge_new_contact'] = new_contact
+                return render(request, 'vendor_management.html', send_data)
+
+            old_contact_name = old_contact.name
+            new_contact_name = new_contact.name
+            with transaction.atomic():
+                reassign_vendor_contact_foreign_keys(old_contact, new_contact)
+                old_contact.delete()
+
+            messages.success(
+                request,
+                f"{old_contact_name} was merged into {new_contact_name}."
+            )
+
+            return redirect(
+                f"{request.path}?category_id={vendor.category.id}&vendor_id={vendor.id}"
+            )
+
+    return render(request, 'vendor_management.html', send_data)
+
+def vendor_conflicts(old_vendor, new_vendor):
+    conflicts = []
+
+    if (old_vendor.company_name or "") != (new_vendor.company_name or ""):
+        conflicts.append({
+            "field": "Company Name",
+            "old_value": old_vendor.company_name,
+            "new_value": new_vendor.company_name,
+        })
+
+    if (old_vendor.company_phone or "") != (new_vendor.company_phone or ""):
+        conflicts.append({
+            "field": "Phone",
+            "old_value": old_vendor.company_phone,
+            "new_value": new_vendor.company_phone,
+        })
+
+    if (old_vendor.company_email or "") != (new_vendor.company_email or ""):
+        conflicts.append({
+            "field": "Email",
+            "old_value": old_vendor.company_email,
+            "new_value": new_vendor.company_email,
+        })
+
+    if old_vendor.category != new_vendor.category:
+        conflicts.append({
+            "field": "Category",
+            "old_value": old_vendor.category,
+            "new_value": new_vendor.category,
+        })
+
+    return conflicts
+
+
+def vendor_contact_conflicts(old_contact, new_contact):
+    conflicts = []
+
+    if (old_contact.name or "") != (new_contact.name or ""):
+        conflicts.append({
+            "field": "Name",
+            "old_value": old_contact.name,
+            "new_value": new_contact.name,
+        })
+
+    if (old_contact.phone or "") != (new_contact.phone or ""):
+        conflicts.append({
+            "field": "Phone",
+            "old_value": old_contact.phone,
+            "new_value": new_contact.phone,
+        })
+
+    if (old_contact.email or "") != (new_contact.email or ""):
+        conflicts.append({
+            "field": "Email",
+            "old_value": old_contact.email,
+            "new_value": new_contact.email,
+        })
+
+    return conflicts

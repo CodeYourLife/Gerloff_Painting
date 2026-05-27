@@ -1,887 +1,1101 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_jobs %}active{% endblock nav_item_jobs %}
-{% block content %}
-<!-- Include all compiled plugins (below), or include individual files as needed-->
 
 
-<head>
-
+{% block extra_head %}
 	<style type="text/css" class="init">
 
 	</style>
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" class="init">
-   $( ".book_new_job" ).addClass("active");
+{% endblock %}
 
-var startdate = "{{startdate}}"
-        function check_booking_data() {
-            if (booking_input.job_name.value ==""){
-                alert('Please enter a job name')
-                booking_input.job_name.scrollIntoView();
-                return false;
-            }
-            if (booking_input.address.value ==""){
-                booking_input.address.scrollIntoView();
-                alert('Please enter address')
-                return false;
-            }
-            if (booking_input.city.value ==""){
-                booking_input.state.scrollIntoView();
-                alert('Please enter city')
-                return false;
-            }
-            if (booking_input.state.value ==""){
-                booking_input.state.scrollIntoView();
-                alert('Please enter state')
-                return false;
-            }
-            if (booking_input.t_m_nte_amount.value != ""){
-                if (booking_input.is_t_m_job2.checked == false){
-                    booking_input.is_t_m_job2.scrollIntoView();
-                    alert("need to check box")
-                    return false;
-                }
-            }
-            if (booking_input.contract_status.value == "contract_please_select"){
-                booking_input.contract_status.scrollIntoView();
-                alert("please select the contract status")
-                return false;
-            }
-            if (booking_input.insurance_status.value == "coi_please_select"){
-                booking_input.insurance_status.scrollIntoView();
-                alert("please select the insurance status")
-                return false;
-            }
-            if (booking_input.select_gpestimator.value == "please_select"){
-                booking_input.select_gpestimator.scrollIntoView();
-                alert("please select the Gerloff Painting Estimator")
-                return false;
-            }
-            if (booking_input.select_company.value == "please_select"){
-                booking_input.select_company.scrollIntoView();
-                alert("please select the client name")
-                return false;
-            }
+{% block sub_nav %}
+{% include 'jobs_nav.html' with page_label="Updated Job Details" %}
+{% endblock %}
 
-            if (booking_input.select_company.value == "add_new"){
-                if (booking_input.new_client.value == ""){
-                    booking_input.new_client.scrollIntoView();
-                    alert("please type the new client name")
-                    return false;
-                }
-                if (booking_input.select_pm.value == "not_sure"){
-                    booking_input.select_pm.scrollIntoView();
-                    alert("For a new company, you have to enter a PM for that company")
-                    return false;
-                }
-            }
-            if (booking_input.select_pm.value == "please_select"){
-                    booking_input.select_pm.scrollIntoView();
-                    alert("Please select PM")
-                    return false;
-                }
-            if (booking_input.select_super.value == "please_select"){
-                    booking_input.select_super.scrollIntoView();
-                    alert("Please select client superintendent")
-                    return false;
-                }
-            if (booking_input.select_pm.value == "add_new"){
-                if (booking_input.new_pm.value == ""){
-                    booking_input.select_pm.scrollIntoView();
-                    alert("enter pm name")
-                    return false;
-                }
-            }
-            if (booking_input.select_super.value == "add_new"){
-                if (booking_input.new_super.value == ""){
-                    booking_input.new_super.scrollIntoView();
-                    alert("enter super name")
-                    return false;
-                }
-            }
-            if (has_paint2.checked == false){
-                if (has_wallcovering2.checked == false){
-                    booking_input.has_paint2.scrollIntoView();
-                    alert("You need to pick at least one scope item")
-                    return false;
-                }
-            }
-
-            if (booking_input.date_note.value == ""){
-                if (booking_input.start_date.value != startdate){
-                booking_input.date_note.scrollIntoView();
-                alert("please clarify how you established the start date")
-                return false;
-                }
-            }
-            if (booking_input.is_t_m_job2.checked==false){
-                if (booking_input.contract_amount.value == ""){
-                    booking_input.contract_amount.scrollIntoView();
-                    alert("please enter a contract amount")
-                    return false;
-                }
-                if (booking_input.has_paint2.checked == true){
-                    if (booking_input.painting_budget.value == ""){
-                        booking_input.painting_budget.scrollIntoView();
-                        alert("please enter a painting budget amount")
-                        return false;
-                    }
-                }
-                if (booking_input.has_wallcovering2.checked == true){
-                    if (booking_input.wallcovering_budget.value == ""){
-                        booking_input.wallcovering_budget.scrollIntoView();
-                        alert("please enter a wallcovering budget amount")
-                        return false;
-                    }
-                }
-            }
-                if (booking_input.is_t_m_job2.checked==true){
-                if (booking_input.contract_amount.value != ""){
-                    booking_input.contract_amount.scrollIntoView();
-                    alert("Can't be T&M and have a contract amount!")
-                    return false;
-                }
-                }
-            if(Number(booking_input.wallcovering_budget.value) + Number(booking_input.painting_budget.value) != Number(booking_input.contract_amount.value)){
-                alert("Budget amounts must equal contract amount")
-                return false;
-            }
-
-
-            if (booking_input.is_wage_rate.checked == true){
-                if (booking_input.spray_scale.value == "" && booking_input.brush_role.value == ""){
-                    alert("Uncheck wage rate button")
-                    booking_input.is_wage_rate.scrollIntoView();
-                     return false;
-                }
-            } else {
-            if (booking_input.spray_scale.value != "" || booking_input.brush_role.value != ""){
-                    alert("Check wage rate button")
-                    booking_input.is_wage_rate.scrollIntoView();
-                     return false;
-                }
-            }
-
-
-            if (booking_input.wallcovering_budget.value != ""){
-                if (booking_input.has_wallcovering2.checked==false){
-                    booking_input.has_wallcovering2.checked= true;
-                    alert("clicked wallcovering scope button")
-                }
-            }
-        }
-
-function hide_contract_amount(){
-    if (booking_input.is_t_m_job2.checked==true){
-        booking_input.contract_amount.value = "";
-        booking_input.painting_budget.value = "";
-        booking_input.wallcovering_budget.value = "";
-        booking_input.contract_amount.style.display ="none";
-        booking_input.painting_budget.style.display ="none";
-        booking_input.wallcovering_budget.style.display ="none";
-    }
-    else {
-        booking_input.contract_amount.style.display ="block";
-        booking_input.painting_budget.style.display ="block";
-        booking_input.wallcovering_budget.style.display ="block";
-    }
-}
-
-function changed_client() {
-    if (booking_input.select_company.value == "please_select") {
-        document.getElementById("client_info").style.display = "none"
-        return;
-    }
-else if (booking_input.select_company.value == "add_new") {
-        document.getElementById("client_info").style.display = "block"
-        booking_input.new_client.value = ""
-        booking_input.new_client_phone.value = ""
-        booking_input.new_client_bid_email.value = ""
-                booking_input.new_client.placeholder = "Company Name"
-        booking_input.new_client_phone.placeholder = "Company Phone"
-        booking_input.new_client_bid_email.placeholder = "Company Email"
-        return;
-    }
-    else {
-        document.getElementById("client_info").style.display = "block"
-        booking_input.new_pm.value =""
-        booking_input.new_super.value =""
-        booking_input.new_pm_phone.value =""
-        booking_input.new_super_phone.value =""
-        booking_input.new_pm_email.value =""
-        booking_input.new_super_email.value =""
-        $.ajax({
-        method: 'GET',
-        url: '/rentals/rental_ajax',
-        data: {'client_id':booking_input.select_company.value},
-        success: function (data) {
-            parsedData = JSON.parse(data);
-            booking_input.new_client_phone.value = parsedData.phone
-            booking_input.new_client_bid_email.value = parsedData.email
-            booking_input.new_client.value = parsedData.name
-        }})
-        let selectedcompany = booking_input.select_company.value
-        let rolodex = JSON.parse("{{data|escapejs}}");
-        //console.log(selectedcompany)
-        //alert()
-        for(let i = booking_input.select_pm.options.length; i >= 0; i--) {
-            booking_input.select_pm.remove(i);
-        }
-        for(let i = booking_input.select_super.options.length; i >= 0; i--) {
-            booking_input.select_super.remove(i);
-        }
-        booking_input.select_pm.options[0] = new Option("Please Select","please_select");
-        booking_input.select_super.options[0] = new Option("not sure","not_sure");
-        booking_input.select_pm.options[1] = new Option("Add New","add_new");
-        booking_input.select_super.options[1] = new Option("Add New","add_new");
-        let b=2
-        for(let i =0; i < rolodex.length; i++){
-            if (rolodex[i].id == selectedcompany){
-                booking_input.select_pm.options[b] = new Option(rolodex[i].name,rolodex[i].person_pk);
-                booking_input.select_super.options[b] = new Option(rolodex[i].name,rolodex[i].person_pk);
-                b=b+1
-            }
-        }
-        document.getElementById("pm_info").style.display = "none"
-        document.getElementById("super_info").style.display = "none"
-    }
- }
-
-        function clicked_paint(){
-            if (booking_input.has_paint2.checked==false){
-                booking_input.painting_budget.value = ""
-                alert("cleared paint budget")
-            }
-        }
-
-        function clicked_wc(){
-            if (booking_input.has_wallcovering2.checked==false){
-                booking_input.wallcovering_budget.value = ""
-                alert("cleared wallcovering budget")
-            }
-        }
-        function clicked_paintbudget(){
-            if (booking_input.painting_budget.value != ""){
-                if (booking_input.has_paint2.checked==false){
-                    booking_input.has_paint2.checked = true;
-                    alert("clicked paint scope button")
-                }
-            }
-        }
-       function clicked_wcbudget(){
-            if (booking_input.wallcovering_budget.value != ""){
-                if (booking_input.has_wallcovering2.checked==false){
-                    booking_input.has_wallcovering2.checked= true;
-                    alert("clicked wallcovering scope button")
-                }
-            }
-        }
-
-        window.onload = function() {
-            if ("{{email_sent}}"){alert("Email Was Sent")}
-            if ("{{email_not_sent}}"){alert("Email Was Not Sent")}
-            if ("{{error_message}}"){alert("{{error_message}}")}
-            var today = new Date();
-            var dd = String(today.getDate()).padStart(2, '0');
-            var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
-            var yyyy = today.getFullYear();
-            today = startdate;
-            booking_input.start_date.value = today
-            if ('{{subcontract_open_error}}'){alert("Cannot close this job because there are open subcontracts")}
-            document.getElementById("pm_info").style.display = "block"
-            document.getElementById("client_info").style.display = "block"
-            if (booking_input.select_super.value == "not_sure") {document.getElementById("super_info").style.display = "none"}
-            else {document.getElementById("super_info").style.display = "block"}
-        };
-
-function changed_pm(){
-
-    if (booking_input.select_pm.value == "please_select") {
-        document.getElementById("pm_info").style.display = "none"
-        return;
-    }
-    else if (booking_input.select_pm.value == "add_new") {
-        document.getElementById("pm_info").style.display = "block"
-        booking_input.new_pm.value = ""
-        booking_input.new_pm.placeholder = "Name"
-        booking_input.new_pm_phone.value = ""
-        booking_input.new_pm_phone.placeholder = "Phone"
-        booking_input.new_pm_email.value = ""
-        booking_input.new_pm_email.placeholder = "Email"
-        return;
-    }
-    else {
-        document.getElementById("pm_info").style.display = "block"
-        $.ajax({
-        method: 'GET',
-        url: '/rentals/rental_ajax',
-        data: {'client_pm_id':booking_input.select_pm.value},
-        success: function (data) {
-            parsedData = JSON.parse(data);
-            booking_input.new_pm_phone.value = parsedData.phone
-            booking_input.new_pm_email.value = parsedData.email
-            booking_input.new_pm.value = parsedData.name
-        }})
-    }
-}
-function changed_super(){
-    if (booking_input.select_super.value == "not_sure") {
-        document.getElementById("super_info").style.display = "none"
-        return;
-    }
-    else if (booking_input.select_super.value == "add_new") {
-        document.getElementById("super_info").style.display = "block"
-        booking_input.new_super.value = ""
-        booking_input.new_super.placeholder = "Name"
-        booking_input.new_super_phone.value = ""
-        booking_input.new_super_phone.placeholder = "Phone"
-        booking_input.new_super_email.value = ""
-        booking_input.new_super_email.placeholder = "Email"
-        return;
-    }
-    else {
-        document.getElementById("super_info").style.display = "block"
-        $.ajax({
-        method: 'GET',
-        url: '/rentals/rental_ajax',
-        data: {'client_pm_id':booking_input.select_super.value},
-        success: function (data) {
-            parsedData = JSON.parse(data);
-            booking_input.new_super_phone.value = parsedData.phone
-            booking_input.new_super_email.value = parsedData.email
-            booking_input.new_super.value = parsedData.name
-        }})
-    }
-}
-
-    </script>
-
-</head>
-
-<body>
-<form name = booking_input action="{% url 'update_job_info' selectedjob.job_number %}" method="post" class="form-group" onSubmit = "return check_booking_data()">
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="{% url 'jobs_home' %}">Jobs</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav ">
-            <li><a class="nav-item nav-link" href="{% url 'jobs_home' %}">Jobs List</a></li>
-             <li><a class="nav-item nav-link" href="{% url 'super_home' 'AUTO' %}">Superintendent View</a></li>
-<!--            <li><a class="nav-item nav-link" href="{% url 'book_new_job' %}">Book New Job</a></li>-->
-            <li><a class="nav-item nav-link active" href="#">Update Job Info</a></li>
-        </ul>
+{% block content %}
+{% if error_message %}
+    <div class="alert alert-danger">
+        {{ error_message }}
     </div>
-</nav>
+{% endif %}
 
-<div style="padding-top: 50px" class="row align-items-center justify-content-center align-middle">
-    {% csrf_token %}
-    <div class = "container">
-        <div class ="row">
-            <div class="col-sm-12">
-                <h3>{{selectedjob.job_number}}</h3>
-            </div>
-        </div>
-        <div class = "row">
-             <div class="col-sm-12">
-                 <a href="{% url 'job_page' selectedjob.job_number %}">Click Here to Go Back To Job</a>
-             </div>
-        </div>
-        <div class ="row">
-            <div class="col-sm-12">
-                <input class="form-control" type="text" name="job_name" value = "{{selectedjob.job_name}}" size="100" id="job_name"/><br />
-            </div>
-        </div>
-        <div class ="row">
-            <div class="col-sm-12">
-                <input class="form-control" type="text" name="address" value = "{{selectedjob.address}}" size="100" id="address" /><br />
-            </div>
-        </div>
-        <div class ="row">
-            <div class="col-sm-6">
-                <input class="form-control" type="text" name="city" value = {{selectedjob.city}} id="city"/><br />
-            </div>
-            <div class="col-sm-6">
-                <input class="form-control" type="text" name="state" value = {{selectedjob.state}} id="state" maxlength="2" /><br />
-            </div>
-        </div>
-        <!#city state>
-        <hr>
-        <div class ="row">
-            <div class="col-sm-6">
-                <label for="is_painting_subbed"><b>Is the Entire Paint Job Subbed Out?</b> </label>
 
-                {% if selectedjob.is_painting_subbed == True %}
-                <input type="checkbox" name ="is_painting_subbed" id="is_painting_subbed" checked />
-                {% else %}
-                <input type="checkbox" name ="is_painting_subbed" id="is_painting_subbed" />
-                {% endif %}
-            </div>
-        </div>
-                <hr>
-        <div class ="row">
-            <div class="col-sm-6">
-                <label for="is_work_order_done"><b>Is Work Order Done?</b> </label>
+<div style="padding-top: 50px" class="container">
 
-                {% if selectedjob.is_work_order_done == True %}
-                <input type="checkbox" name ="is_work_order_done" id="is_work_order_done" checked />
-                {% else %}
-                <input type="checkbox" name ="is_work_order_done" id="is_work_order_done" />
-                {% endif %}
-            </div>
+    <div class="row mb-3">
+        <div class="col-sm-12">
+            <a href="{% url 'job_page' selectedjob.job_number %}"
+               class="btn btn-primary">
+                Go Back To Job
+            </a>
         </div>
-        <hr>
-        <div class ="row">
-            <div class="col-sm-6">
-                <label for="on_base2"><b>Security Clearance Required?</b> </label>
+    </div>
 
-                {% if selectedjob.is_on_base == True %}
-                <input type="checkbox" name ="on_base2" id="on_base2" checked />
-                {% else %}
-                <input type="checkbox" name ="on_base2" id="on_base2" />
-                {% endif %}
-            </div>
+    <div class="row mb-3">
+        <div class="col-sm-12">
+            <h3>{{ selectedjob.job_number }}</h3>
         </div>
-        <div class ="row">
-            <div class="col-sm-6">
-                <label for="off_hours"><b>Job is Off Hours?</b> </label>
+    </div>
 
-                {% if selectedjob.is_off_hours == True %}
-                <input type="checkbox" name ="off_hours" id="off_hours" checked />
-                {% else %}
-                <input type="checkbox" name ="off_hours" id="off_hours" />
-                {% endif %}
-            </div>
-        </div>
-        <hr>
-        <div class ="row">
-            <div class="col-sm-6">
-                <label for="is_wage_rate"><b>Are there wage rates for this job?</b> </label>
-                {% if selectedjob.is_wage_scale == True %}
+    <!-- 1. Basic Job Info -->
+    <form action="{% url 'update_job_info' selectedjob.job_number %}" method="post" class="mb-4">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="basic_info">
 
-             <input type="checkbox" name ="is_wage_rate" id="is_wage_rate"  checked/>
-                {% else %}
-            <input type="checkbox" name ="is_wage_rate" id="is_wage_rate" />
-            {% endif %}
+        <div class="card">
+            <div class="card-header font-weight-bold">
+                1. Job Name / Address
             </div>
-        </div>
-        <div class ="row">
-                <div class="col-sm-6">
-                    <label for="spray_scale"><b>Spray</b></label>
-                {% if selectedjob.spray_scale is None %}
-                <input style="margin-top: 22px" class="form-control" type= "text" name="spray_scale" id="spray_scale" placeholder = "Spray" size="30"/><br />
-                {% else %}
-                <input style="margin-top: 22px" class="form-control" type= "text" name="spray_scale" id="spray_scale" value = "{{selectedjob.spray_scale}}" size="30"/><br />
-                {% endif %}
-                    </div>
+
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="job_name">Job Name</label>
+                    <input class="form-control"
+                           type="text"
+                           name="job_name"
+                           value="{{ selectedjob.job_name }}"
+                           id="job_name"
+                           required>
+                </div>
+
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <input class="form-control"
+                           type="text"
+                           name="address"
+                           value="{{ selectedjob.address }}"
+                           id="address">
+                </div>
+
+                <div class="row">
                     <div class="col-sm-6">
-                        <label for="brush_role"><b>Brush/Roll</b> </label>
-                {% if selectedjob.brush_role is None %}
-                <input style="margin-top: 22px" class="form-control" type= "text" id="brush_role" name="brush_role" placeholder = "Brush & Roll" size="30"/><br />
-                {% else %}
-                <input style="margin-top: 22px" class="form-control" type= "text" id="brush_role" name="brush_role" value = "{{selectedjob.brush_role}}" size="30"/><br />
-                {% endif %}
+                        <div class="form-group">
+                            <label for="city">City</label>
+                            <input class="form-control"
+                                   type="text"
+                                   name="city"
+                                   value="{{ selectedjob.city }}"
+                                   id="city">
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="state">State</label>
+                            <input class="form-control"
+                                   type="text"
+                                   name="state"
+                                   value="{{ selectedjob.state }}"
+                                   id="state"
+                                   maxlength="2">
+                        </div>
+                    </div>
                 </div>
 
+                <button type="submit" class="btn btn-primary btn-sm">
+                    Save Job Info
+                </button>
             </div>
-        <!on base / scale>
-        <hr>
-    </div>
-    <div class ="container">
-        <div class ="row">
-            <div class ="col-sm-6">
-                <label for="contract_status"><b>Contract status</b></label>
-                <select id="contract_status" class="form-control" name="contract_status" >
-                    {% if selectedjob.contract_status == "1" %}
-                   <option value="1">Contract Received</option>#1
-                     {% elif selectedjob.contract_status == "2" %}
-                    <option value="2">Contract not Received Yet</option> #2
-                    {% elif selectedjob.contract_status == "3" %}
-                    <option value="3">Contract not Required</option>#3
-                    {% endif %}
-
-                    <option value="1">Contract Received</option>#1
-                    <option value="2">Contract not Received Yet</option> #2
-                    <option value="3">Contract not Required</option>#3
-                </select>
-            </div>
-            <div class ="col-sm-6">
-                <label for="insurance_status"><b>coi status</b></label>
-                <select id="insurance_status" class="form-control" name="insurance_status" >
-                    {% if selectedjob.insurance_status == "1" %}
-                    <option value="1">coi Received</option>
-                     {% elif selectedjob.insurance_status == "2" %}
-                     <option value="2">coi not Received Yet</option>
-                    {% elif selectedjob.insurance_status == "3" %}
-                     <option value="3">coi not Required</option>
-                    {% endif %}
-                    <option value="1">coi Received</option>
-                    <option value="2">coi not Received Yet</option>
-                    <option value="3">coi not Required</option>
-                </select>
-            </div>
-            <div class ="col-lg"></div>
         </div>
-    </div> <!#contract status and coi>
-    <hr>
-    <br>
-    <div class ="container">
-    <div class ="row">
-         <div class ="col-sm-12">
-             <label for="has_submittals"><b>Does this job require submittals?</b> </label>
-            {% if selectedjob.submittals_needed == True %}
-             <input type="checkbox" name ="has_submittals" id="has_submittals" checked/>
-             {% else %}
-             <input type="checkbox" name ="has_submittals" id="has_submittals"/>
-             {% endif %}
-         </div>
-    </div>
-    <div class ="row">
-         <div class ="col-sm-12">
-            <label for="is_bonded"><b>Does this job require a bond?</b> </label>
-             {% if selectedjob.is_bonded == True %}
-            <input type="checkbox" name ="is_bonded" id="is_bonded" checked/>
-             {% else %}
-             <input type="checkbox" name ="is_bonded" id="is_bonded" />
-             {% endif %}
-         </div>
-    </div>
-    </div>
-    <br /> <hr>
+    </form>
 
-    <div class ="container" style="background-color:hsla(128,100%, 80%);"> <!#pick client>
-                    <div class ="row" style="height: 50px">
-                        <div class ="col-sm-12">
-                            <label><b>Please select company</b></label>
-                            <select class="form-control" id="select_company" name="select_company" onChange="changed_client()" >
-                                <option value="{{selectedjob.client.id}}"><b>{{selectedjob.client}}</b></option>
-                                <option value="add_new">Add New</option>
-                                {% if allclients %}
-                                {% for client in allclients %}
-                                    <option value="{{client.id}}">{{client.company}}</option>
-                                {% endfor %}
-                                {% endif %}
+    <!-- 2. Job Requirements -->
+    <form action="{% url 'update_job_info' selectedjob.job_number %}" method="post" class="mb-4">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="job_requirements">
+
+        <div class="card">
+            <div class="card-header font-weight-bold">
+                2. Job Requirements
+            </div>
+
+            <div class="card-body">
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           name="is_work_order_done"
+                           id="is_work_order_done"
+                           {% if selectedjob.is_work_order_done %}checked{% endif %}>
+                    <label class="form-check-label" for="is_work_order_done">
+                        Is Work Order Done?
+                    </label>
+                </div>
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           name="on_base2"
+                           id="on_base2"
+                           {% if selectedjob.is_on_base %}checked{% endif %}>
+                    <label class="form-check-label" for="on_base2">
+                        Is a Security Clearance Required?
+                    </label>
+                </div>
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           name="off_hours"
+                           id="off_hours"
+                           {% if selectedjob.is_off_hours %}checked{% endif %}>
+                    <label class="form-check-label" for="off_hours">
+                        Is Work to be Done Off-Hours?
+                    </label>
+                </div>
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           name="has_submittals"
+                           id="has_submittals"
+                           {% if selectedjob.submittals_needed %}checked{% endif %}>
+                    <label class="form-check-label" for="has_submittals">
+                        Does this job require submittals?
+                    </label>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           name="is_bonded"
+                           id="is_bonded"
+                           {% if selectedjob.is_bonded %}checked{% endif %}>
+                    <label class="form-check-label" for="is_bonded">
+                        Does this job require a bond?
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sm">
+                    Save Requirements
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- 3. Wage Rates -->
+    <form action="{% url 'update_job_info' selectedjob.job_number %}" method="post" class="mb-4">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="wage_rates">
+
+        <div class="card">
+            <div class="card-header font-weight-bold">
+                3. Wage Rates
+            </div>
+
+            <div class="card-body">
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           name="is_wage_rate"
+                           id="is_wage_rate"
+                           {% if selectedjob.is_wage_scale %}checked{% endif %}>
+                    <label class="form-check-label" for="is_wage_rate">
+                        Are there wage rates for this job?
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="spray_scale">Spray Rate</label>
+                            <input class="form-control"
+                                   type="text"
+                                   name="spray_scale"
+                                   id="spray_scale"
+                                   value="{{ selectedjob.spray_scale|default:'' }}">
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="brush_role">Brush/Roll Rate</label>
+                            <input class="form-control"
+                                   type="text"
+                                   name="brush_role"
+                                   id="brush_role"
+                                   value="{{ selectedjob.brush_role|default:'' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sm">
+                    Save Wage Rates
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- 4. Contract / COI Status -->
+    <form action="{% url 'update_job_info' selectedjob.job_number %}" method="post" class="mb-4">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="contract_coi_status">
+
+        <div class="card">
+            <div class="card-header font-weight-bold">
+                4. Contract / COI Status
+            </div>
+
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="contract_status">Contract Status</label>
+                            <select id="contract_status" class="form-control" name="contract_status">
+                                <option value="1" {% if selectedjob.contract_status == "1" %}selected{% endif %}>
+                                    Contract Received
+                                </option>
+                                <option value="2" {% if selectedjob.contract_status == "2" %}selected{% endif %}>
+                                    Contract not Received Yet
+                                </option>
+                                <option value="3" {% if selectedjob.contract_status == "3" %}selected{% endif %}>
+                                    Contract not Required
+                                </option>
                             </select>
                         </div>
                     </div>
-<br />
-                <div id="client_info" class="content" style="background-color:hsla(128,100%, 90%);">
-                    <div class ="row" style="margin-top: 22px" >
-                        <div class ="col-sm-12">  
-                            <input class="form-control" type= "text" name="new_client" value="{{selectedjob.client.company}}" size="30" />
-                        </div>
-                    </div>
-                    <div class ="row" style="margin-top: 22px" >
-                        <div class ="col-sm-12">
-                            {% if selectedjob.client.phone == "" %}
-                            <input class="form-control" type= "tel" name="new_client_phone" placeholder="Phone" size="30"/>
-                            {% else %}
-                            <input class="form-control" type= "tel" name="new_client_phone" value="{{selectedjob.client.phone}}" size="30"/>
-                            {% endif %}
 
-                        </div>
-                    </div>
-                    <div class ="row" style="margin-top: 22px" >
-                        <div class ="col-sm-12">
-
-                            {% if selectedjob.client.bid_email == "" %}
-
-                            <input class="form-control" type= "email" name="new_client_bid_email" placeholder="Email" size="30"/>
-                            {% else %}
-                            <input class="form-control" type= "email" name="new_client_bid_email" value="{{selectedjob.client.bid_email}}" size="30"/>
-                            {% endif %}
-
-                        </div>
-                    </div>
-                </div>
-            </div> <!pick client>
-    <br /><br /><br />
-    <div class ="container" style="background-color:hsla(0,100%, 80%);"><! pick pm>
-                    <div class = "row">
-                        <div class ="col-sm-12">
-                            <label for="select_pm"><b>Please select the PM for {{selectedjob.client}}</b></label>
-                            <select class="form-control" id="select_pm" name="select_pm" onchange="changed_pm()" >
-
-                                <option value="{{selectedjob.client_Pm.person_pk}}">{{selectedjob.client_Pm}}</option>
-                                <option value="add_new">Add New</option>
-                                                                {% if pms_filter %}
-                                {% for client in pms_filter %}
-                                    <option value="{{client.person_pk}}">{{client.name}}</option>
-                                {% endfor %}
-                                {% endif %}
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="insurance_status">COI Status</label>
+                            <select id="insurance_status" class="form-control" name="insurance_status">
+                                <option value="1" {% if selectedjob.insurance_status == "1" %}selected{% endif %}>
+                                    COI Received
+                                </option>
+                                <option value="2" {% if selectedjob.insurance_status == "2" %}selected{% endif %}>
+                                    COI not Received Yet
+                                </option>
+                                <option value="3" {% if selectedjob.insurance_status == "3" %}selected{% endif %}>
+                                    COI not Required
+                                </option>
                             </select>
                         </div>
                     </div>
-    <br />
-	    <div id="pm_info" class="content" style="background-color:hsla(0,100%, 90%);">
-                    <div class ="row" style="margin-top: 22px">
-                        <div class ="col-sm-12">
-                            <input  type= "text" name="new_pm" class="form-control" value="{{selectedjob.client_Pm.name}}" size="30" />
-                        </div>
-                    </div>
-
-                    <div class ="row">
-                        <div class ="col-sm-12">
-                            {% if selectedjob.client_Pm.phone == ""  %}
-                            <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" placeholder="Phone" size="30"/>
-                            {% else %}
-                            <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" value="{{selectedjob.client_Pm.phone}}" size="30"/>
-                            {% endif %}
-
-                        </div>
-                    </div>
-                    <div class ="row">
-                        <div class ="col-sm-12">
-                            {% if selectedjob.client_Pm.email == "" %}
-                            <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" placeholder="Email" size="30"/>
-                            {% else %}
-                            <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" value="{{selectedjob.client_Pm.email}}" size="30"/>
-                            {% endif %}
-
-                        </div>
-                    </div>
-        </div>
-    </div>
-    <br />
-    <div class ="container" style="background-color:hsla(202,100%, 80%);"><!pick super>
-        <div class = "row">
-                        <div class ="col-sm-12">
-                            <label for="select_super"><b>Please select the Superintendent for {{selectedjob.client}}</b></label>
-                            <select class="form-control" id="select_super" name="select_super" onchange="changed_super()" >
-                            {% if selectedjob.client_Super != Null %}
-                             <option value="{{selectedjob.client_Super.person_pk}}">{{selectedjob.client_Super}}</option>
-                            {% endif %}
-                                <option value="not_sure">"Not Sure"</option>
-                                <option value="add_new">Add New</option>
-
-                                {% if pms_filter %}
-                                {% for client in pms_filter %}
-                                    <option value="{{client.person_pk}}">{{client.name}}</option>
-                                {% endfor %}
-                                {% endif %}
-                            </select>
-                        </div>
-                    </div>
-        <br />
-	<div id="super_info" class="content" style="background-color:hsla(202,100%, 90%);">
-
-                    <div class ="row" style="margin-top: 22px">
-                        <div class ="col-sm-12">
-                            {% if selectedjob.client_Super != Null %}
-                            <input type= "text" name="new_super" class="form-control" value="{{selectedjob.client_Super.name}}" size="30" />
-                            {% else %}
-                            <input type= "text" name="new_super" class="form-control" placeholder="superintendent name" size="30" />
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class ="row">
-                        <div class ="col-sm-12">
-
-                            {% if selectedjob.client_Super != Null and selectedjob.client_Super.phone != "" %}
-                            <input style="margin-top: 22px" class="form-control" type= "tel" name="new_super_phone" value="{{selectedjob.client_Super.phone}}" size="30"/>
-                        {% else %}
-                            <input style="margin-top: 22px" class="form-control" type= "tel" name="new_super_phone" placeholder="phone Number" size="30"/>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class ="row">
-                        <div class ="col-sm-12">
-                            {% if selectedjob.client_Super != Null and selectedjob.client_Super.email != "" %}
-                            <input style="margin-top: 22px" class="form-control" type= "email" name="new_super_email" value="{{selectedjob.client_Super.email}}" size="30"/>
-                        {% else %}
-                            <input style="margin-top: 22px" class="form-control" type= "email" name="new_super_email" placeholder="email" size="30"/>
-                            {% endif %}
-                        </div>
-                    </div>
-        </div>
-    </div>
-    <br> <br>
-    <div class ="container">
-        <label for="select_gpsuper"><b>Please select Gerloff superintendent</b></label>
-        <select class="form-control" id="select_gpsuper" name="select_gpsuper" >
-            {% if selectedjob.superintendent != Null %}
-            <option value="{{selectedjob.superintendent.id}}">{{selectedjob.superintendent}}</option>
-            {% else %}
-            <option value="not_sure">not sure</option>
-            {% endif %}
-            {% if superintendents %}
-            {% for employee in superintendents %}
-            <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
-            {% endfor %}
-            {% endif %}
-        </select>
-    <br>
-    </div>
-    <div class ="container">
-        <label for="select_gpestimator"><b>Please select Gerloff Estimator</b></label>
-        <select class="form-control" id="select_gpestimator" name="select_gpestimator" >
-            <option value="{{selectedjob.estimator.id}}">{{selectedjob.estimator}}</option>
-            {% if estimators %}
-            {% for employee in estimators %}
-            <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
-            {% endfor %}
-            {% endif %}
-        </select>
-    <br /> <hr>
-    </div>
-        <div class ="container">
-        <label for="select_project_manager"><b>Please select Gerloff Project Manager</b></label>
-        <select class="form-control" id="select_project_manager" name="select_project_manager" >
-            <option value="{{selectedjob.project_manager.id}}">{{selectedjob.project_manager}}</option>
-            {% if estimators %}
-            {% for employee in estimators %}
-            <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
-            {% endfor %}
-            {% endif %}
-        </select>
-    <br /> <hr>
-    </div>
-    <div class ="container">
-        <div class ="row">
-            <div class ="col-sm-12"><b>Please select the scopes of work this project includes:</b></div>
-        </div>
-        <div class ="row">
-            <div class ="col-sm-6">
-
-                <label for="has_paint2">Painting </label>
-                {% if selectedjob.has_paint == True %}
-                <input type="checkbox" name ="has_paint" id="has_paint2"  onClick="clicked_paint()" checked />
-                {% else %}
-                 <input type="checkbox" name ="has_paint" id="has_paint2"  onClick="clicked_paint()" />
-                {% endif %}
-                <br />
-            </div>
-            <div class ="col-sm-6">
-                <label for="has_wallcovering2">Wallcovering</label>
-                {% if selectedjob.has_wallcovering == True %}
-                <input type="checkbox" name ="has_wallcovering" id="has_wallcovering2" onclick="clicked_wc()" checked/>
-                {% else %}
-                 <input type="checkbox" name ="has_wallcovering" id="has_wallcovering2" onclick="clicked_wc()"/>
-                {% endif %}
-            </div>
-        </div>
-            <div class ="row">
-                 <div class ="col-sm-12">
-                     <label for="has_special_paint"><b>Does this job have special paint that has to be ordered?</b></label>
-                                            {% if selectedjob.special_paint_needed == True %}
-                <input type="checkbox" name ="has_special_paint" id="has_special_paint" checked/>
-                {% else %}
-                 <input type="checkbox" name ="has_special_paint" id="has_special_paint" />
-                {% endif %}
-
-                 </div>
-            </div>
-    </div>
-    <br /> <hr>
-
-    <div class ="container">
-        <div class ="row">
-            <div class ="col-sm-12">
-                <label for="start_date"><b>Start date:</b></label>
-                <input class="form-control" type="date" id="start_date" name="start_date" value = "{{selectedjob.start_date}}">
-            </div>
-        </div>
-        <div class ="row">
-            <div class = "col-12">
-                <label for="date_note"><b>Please clarify how you got this date: </b></label>
-                <br>
-                <textarea class="form-control" id="date_note" name="date_note" rows="4" cols="50" ></textarea>
-            </div>
-        </div>
-    </div>
-    <br /> <hr>
-    <div class ="container">
-    <label for="email_job_note"><b>Summarize the job scope:</b> </label> <br>
-        {% if selectedjob.notes is None %}
-    <textarea class="form-control" id="email_job_note" name="email_job_note" rows="4" cols="100" ></textarea>
-        {% else %}
-    <textarea class="form-control" id="email_job_note" name="email_job_note" rows="4" cols="100" >{{selectedjob.notes}}</textarea>
-        {% endif %}
-    <hr>
-    </div>
-                        <hr>
-    <div class ="container">
-        <div class ="row">
-            <div class="col-sm-6"><b>Is this a T&M Job?</b></div>
-            <div class ="col-sm-6">
-                {% if selectedjob.is_t_m_job == True %}
-                <input type="checkbox" name ="is_t_m_job" id="is_t_m_job2" onClick= "hide_contract_amount()" checked />
-            {% else %}
-                <input type="checkbox" name ="is_t_m_job" id="is_t_m_job2" onClick= "hide_contract_amount()" />
-                 {% endif %}
-            </div>
-        </div>
-        <br>
-        <div class ="row"> <div class="col-sm-6"><b>NTE Amount</b></div>
-                <div class="col-sm-6">
-                <input class="form-control" type="number" id ="t_m_nte_amount" name="t_m_nte_amount" value = {{selectedjob.t_m_nte_amount}} step="0.01" size="30" />
                 </div>
-            </div>
-            <div class ="col-lg"></div>
-    </div>
-    <br>
-    <div class ="container" id = "contract_amount_section">
-        <div class ="row">
-            <div class ="col-sm-6"><b>PO Number:</b> </div>
-            {% if selectedjob.po_number is None %}
-            <div class ="col-sm-6"> <input class="form-control" type= "text" name="po_number" placeholder="PO Number" size="30" id="po_number"/>     <br /> </div>
-            {% else %}
-            <div class ="col-sm-6"> <input class="form-control" type= "text" name="po_number" value = "{{selectedjob.po_number}}" size="30" id="po_number"/>     <br /> </div>
-            {% endif %}
-        </div>
-        <div class ="row">
-            <div class ="col-sm-6"><b>Total Contract Amount: </b></div>
-            <div class ="col-sm-6"> <input class="form-control" type= "number" name="contract_amount" value = "{{selectedjob.contract_amount}}" $$" size="30" step="0.01" id="contract_amount"/>     <br /> </div>
-        </div>
-    </div>
-    <div class ="container" id = "contract_amount_section2">
-        <div class ="row">
-            <div class ="col-sm-6"><b>Painting Budget:</b> </div>
-            <div class ="col-sm-6"> <input class="form-control" type= "number" name="painting_budget" value = "{{selectedjob.painting_budget}}" size="30" id="painting_budget" step="0.01" onchange = "clicked_paintbudget()"/> <br /> </div>
-        </div>
-        <div class ="row">
-            <div class ="col-sm-6"><b>Wallcovering Budget:</b> </div>
-            <div class ="col-sm-6"> <input class="form-control" type= "number" name="wallcovering_budget" id="wallcovering_budget" value = "{{selectedjob.wallcovering_budget}}" size="30" step="0.01" onchange = "clicked_wcbudget()"/> <br /> </div>
-        </div>
-    </div>
-    <br /> <hr>
-    <div class ="container" id = "close_job">
-        <div class ="row">
-<!--            <div class ="col-sm-6">
-                <label for="is_closed"><b>Close Job? </b></label>
-                {% if selectedjob.is_closed == True %}
-                <input type="checkbox" name ="is_closed" id="is_closed"  checked />
-                {% else %}
-                 <input type="checkbox" name ="is_closed" id="is_closed"  />
-                {% endif %}
 
-                 </div>-->
-                <div class ="col-sm-6">
-                <b>Closed Job Number:</b> {{selectedjob.closed_job_number}}
+                <button type="submit" class="btn btn-primary btn-sm">
+                    Save Status
+                </button>
+            </div>
+        </div>
+    </form>
+
+
+    <!-- 5 / 6. Change Company or Add New Company -->
+    <form action="{% url 'update_job_info' selectedjob.job_number %}"
+          method="post"
+          class="mb-4"
+          id="changeCompanyForm">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="change_company">
+
+        <div class="card">
+            <div class="card-header font-weight-bold">
+                5 / 6. Change Company
+            </div>
+
+            <div class="card-body">
+
+                <div class="form-group">
+                    <label for="select_company">Please Select Company</label>
+
+                    <select class="form-control searchable-company"
+                            id="select_company"
+                            name="select_company"
+                            required>
+                        <option value="{{ selectedjob.client.id }}" selected>
+                            {{ selectedjob.client }}
+                        </option>
+
+                        <option value="add_new">Add New Company</option>
+
+                        {% for client in allclients %}
+                            {% if client.id != selectedjob.client.id %}
+                                <option value="{{ client.id }}">
+                                    {{ client.company }}
+                                </option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
                 </div>
-            <div class ="col-sm-6">
+
+                <!-- Add New Company Section -->
+                <div class="border rounded p-3 mt-3 d-none" id="addNewCompanySection">
+                    <h6 class="font-weight-bold mb-3">Add New Company</h6>
+
+                    <div class="form-group">
+                        <label for="new_client">Company Name</label>
+                        <input class="form-control"
+                               type="text"
+                               name="new_client"
+                               id="new_client"
+                               placeholder="Company Name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="new_client_phone">Company Phone</label>
+                        <input class="form-control"
+                               type="tel"
+                               name="new_client_phone"
+                               id="new_client_phone"
+                               placeholder="Company Phone">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="new_client_bid_email">Company Email</label>
+                        <input class="form-control"
+                               type="email"
+                               name="new_client_bid_email"
+                               id="new_client_bid_email"
+                               placeholder="Company Email">
+                    </div>
+
+                    <hr>
+
+                    <h6 class="font-weight-bold mb-3">Primary PM</h6>
+
+                    <div class="form-group">
+                        <label for="new_company_pm_name">PM Name</label>
+                        <input class="form-control"
+                               type="text"
+                               name="new_company_pm_name"
+                               id="new_company_pm_name"
+                               placeholder="PM Name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="new_company_pm_email">PM Email</label>
+                        <input class="form-control"
+                               type="email"
+                               name="new_company_pm_email"
+                               id="new_company_pm_email"
+                               placeholder="PM Email">
+                    </div>
+                </div>
+
+                <!-- Existing Company Client Employee Section -->
+                <div class="form-group mt-3 d-none" id="clientEmployeeSection">
+                    <label for="select_client_employee">
+                        Please Select Client Employee
+                    </label>
+
+                    <select class="form-control"
+                            id="select_client_employee"
+                            name="select_client_employee">
+                        <option value="">Select a company first</option>
+                    </select>
+
+                    <small class="form-text text-muted" id="clientEmployeeHelp">
+                        This employee must have an email address before the company can be changed.
+                    </small>
+                </div>
+                    <div class="border rounded p-3 mt-3 d-none" id="missingClientEmployeeEmailSection">
+                        <h6 class="font-weight-bold mb-3">Email Address Required</h6>
+
+                        <p class="text-muted mb-2">
+                            The selected client employee does not have an email address on file.
+                            Please enter one before changing the company.
+                        </p>
+
+                        <div class="form-group mb-0">
+                            <label for="existing_client_employee_email">Email Address</label>
+                            <input class="form-control"
+                                   type="email"
+                                   name="existing_client_employee_email"
+                                   id="existing_client_employee_email"
+                                   placeholder="Email Address">
+                        </div>
+                    </div>
+                <div class="border rounded p-3 mt-3 d-none" id="newClientEmployeeSection">
+                    <h6 class="font-weight-bold mb-3">Add New Client Employee</h6>
+
+                    <div class="form-group">
+                        <label for="new_client_employee_name">Name</label>
+                        <input class="form-control"
+                               type="text"
+                               name="new_client_employee_name"
+                               id="new_client_employee_name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="new_client_employee_email">Email Address</label>
+                        <input class="form-control"
+                               type="email"
+                               name="new_client_employee_email"
+                               id="new_client_employee_email">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sm mt-3">
+                    Save Company Change
+                </button>
+
             </div>
         </div>
+    </form>
 
-    </div>
-    <br />
-    <div class ="container">
-        <input type="submit" class="btn btn-primary btn-sm" value="Save" /></div>
+    <!-- 7. Change PM -->
+    <form action="{% url 'update_job_info' selectedjob.job_number %}"
+      method="post"
+      class="mb-4"
+      id="changePmForm">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="change_pm">
+
+        <div class="card">
+            <div class="card-header font-weight-bold">
+                7. Change PM
+            </div>
+
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="select_pm">Please Select the PM for {{ selectedjob.client }}</label>
+                    <select class="form-control" id="select_pm" name="select_pm">
+                        {% if selectedjob.client_Pm %}
+                            <option value="{{ selectedjob.client_Pm.person_pk }}">
+                                {{ selectedjob.client_Pm }}
+                            </option>
+                        {% endif %}
+
+                        <option value="add_new">Add New</option>
+
+                        {% for client in pms_filter %}
+                            <option value="{{ client.person_pk }}">
+                                {{ client.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="new_pm">PM Name</label>
+                    <input class="form-control"
+                           type="text"
+                           name="new_pm"
+                           id="new_pm"
+                           value="{{ selectedjob.client_Pm.name|default:'' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="new_pm_phone">PM Phone</label>
+                    <input class="form-control"
+                           type="tel"
+                           name="new_pm_phone"
+                           id="new_pm_phone"
+                           value="{{ selectedjob.client_Pm.phone|default:'' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="new_pm_email">PM Email</label>
+                    <input class="form-control"
+                           type="email"
+                           name="new_pm_email"
+                           id="new_pm_email"
+                           value="{{ selectedjob.client_Pm.email|default:'' }}">
+                </div>
+                <small class="form-text text-muted">
+                    Email address is required before saving a PM.
+                </small>
+                <button type="submit" class="btn btn-primary btn-sm">
+                    Save PM
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- 8. Change Super -->
+    <form action="{% url 'update_job_info' selectedjob.job_number %}"
+      method="post"
+      class="mb-4"
+      id="changeSuperForm">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="change_super">
+
+        <div class="card">
+            <div class="card-header font-weight-bold">
+                8. Change Superintendent
+            </div>
+
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="select_super">Please Select the Superintendent for {{ selectedjob.client }}</label>
+                    <select class="form-control" id="select_super" name="select_super">
+                        {% if selectedjob.client_Super %}
+                            <option value="{{ selectedjob.client_Super.person_pk }}">
+                                {{ selectedjob.client_Super }}
+                            </option>
+                        {% endif %}
+
+                        <option value="not_sure">Not Sure</option>
+                        <option value="add_new">Add New</option>
+
+                        {% for client in pms_filter %}
+                            <option value="{{ client.person_pk }}">
+                                {{ client.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="new_super">Superintendent Name</label>
+                    <input class="form-control"
+                           type="text"
+                           name="new_super"
+                           id="new_super"
+                           value="{{ selectedjob.client_Super.name|default:'' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="new_super_phone">Superintendent Phone</label>
+                    <input class="form-control"
+                           type="tel"
+                           name="new_super_phone"
+                           id="new_super_phone"
+                           value="{{ selectedjob.client_Super.phone|default:'' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="new_super_email">Superintendent Email</label>
+                    <input class="form-control"
+                           type="email"
+                           name="new_super_email"
+                           id="new_super_email"
+                           value="{{ selectedjob.client_Super.email|default:'' }}">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sm">
+                    Save Superintendent
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- 9. Change Estimator -->
+    <form action="{% url 'update_job_info' selectedjob.job_number %}" method="post" class="mb-4">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="change_estimator">
+
+        <div class="card">
+            <div class="card-header font-weight-bold">
+                9. Change Estimator
+            </div>
+
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="select_gpestimator">Please Select Gerloff Estimator</label>
+                    <select class="form-control" id="select_gpestimator" name="select_gpestimator">
+                        {% if selectedjob.estimator %}
+                            <option value="{{ selectedjob.estimator.id }}">
+                                {{ selectedjob.estimator }}
+                            </option>
+                        {% endif %}
+
+                        {% for employee in estimators %}
+                            <option value="{{ employee.id }}">
+                                {{ employee.first_name }} {{ employee.last_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sm">
+                    Save Estimator
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- 10. T&M Job -->
+    <form action="{% url 'update_job_info' selectedjob.job_number %}" method="post" class="mb-4">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="tm_job">
+
+        <div class="card">
+            <div class="card-header font-weight-bold">
+                10. T&amp;M Job
+            </div>
+
+            <div class="card-body">
+                <div class="form-check mb-3">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           name="is_t_m_job"
+                           id="is_t_m_job"
+                           {% if selectedjob.is_t_m_job %}checked{% endif %}>
+                    <label class="form-check-label" for="is_t_m_job">
+                        Is this a T&amp;M Job?
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label for="t_m_nte_amount">NTE Amount</label>
+                    <input class="form-control"
+                           type="number"
+                           id="t_m_nte_amount"
+                           name="t_m_nte_amount"
+                           value="{{ selectedjob.t_m_nte_amount|default:'' }}"
+                           step="0.01">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sm">
+                    Save T&amp;M Info
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- 11. PO Number -->
+    <form action="{% url 'update_job_info' selectedjob.job_number %}" method="post" class="mb-4">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="po_number">
+
+        <div class="card">
+            <div class="card-header font-weight-bold">
+                11. PO Number
+            </div>
+
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="po_number">PO Number</label>
+                    <input class="form-control"
+                           type="text"
+                           name="po_number"
+                           id="po_number"
+                           value="{{ selectedjob.po_number|default:'' }}">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sm">
+                    Save PO Number
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- 12. Total Contract Amount -->
+    <form action="{% url 'update_job_info' selectedjob.job_number %}" method="post" class="mb-4">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="contract_amount">
+
+        <div class="card">
+            <div class="card-header font-weight-bold">
+                12. Total Contract Amount
+            </div>
+
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="contract_amount">Total Contract Amount</label>
+                    <input class="form-control"
+                           type="number"
+                           name="contract_amount"
+                           id="contract_amount"
+                           value="{{ selectedjob.contract_amount|default:'' }}"
+                           step="0.01">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sm">
+                    Save Contract Amount
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- 13. Scope / Budgets -->
+    <form action="{% url 'update_job_info' selectedjob.job_number %}" method="post" class="mb-4">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="scope_budgets">
+
+        <div class="card">
+            <div class="card-header font-weight-bold">
+                13. Scope / Budgets
+            </div>
+
+            <div class="card-body">
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           name="has_paint"
+                           id="has_paint"
+                           {% if selectedjob.has_paint %}checked{% endif %}>
+                    <label class="form-check-label" for="has_paint">
+                        Painting
+                    </label>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           name="has_wallcovering"
+                           id="has_wallcovering"
+                           {% if selectedjob.has_wallcovering %}checked{% endif %}>
+                    <label class="form-check-label" for="has_wallcovering">
+                        Wallcovering
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label for="painting_budget">Painting Budget</label>
+                    <input class="form-control"
+                           type="number"
+                           name="painting_budget"
+                           id="painting_budget"
+                           value="{{ selectedjob.painting_budget|default:'' }}"
+                           step="0.01">
+                </div>
+
+                <div class="form-group">
+                    <label for="wallcovering_budget">Wallcovering Budget</label>
+                    <input class="form-control"
+                           type="number"
+                           name="wallcovering_budget"
+                           id="wallcovering_budget"
+                           value="{{ selectedjob.wallcovering_budget|default:'' }}"
+                           step="0.01">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sm">
+                    Save Scope / Budgets
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- 14. Job Scope Summary -->
+    <form action="{% url 'update_job_info' selectedjob.job_number %}" method="post" class="mb-5">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="job_scope">
+
+        <div class="card">
+            <div class="card-header font-weight-bold">
+                14. Job Scope Summary
+            </div>
+
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="email_job_note">Summarize the Job Scope</label>
+                    <textarea class="form-control"
+                              id="email_job_note"
+                              name="email_job_note"
+                              rows="4">{{ selectedjob.notes|default:'' }}</textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sm">
+                    Save Job Scope
+                </button>
+            </div>
+        </div>
+    </form>
 
 </div>
 
-</form>
-<script src=”https://code.jquery.com/jquery-3.2.1.slim.min.js” integrity=”sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN” crossorigin=”anonymous”></script>
-
-<script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js integrity=”sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q” crossorigin=”anonymous”></script>
-
-<script src=”https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js” integrity=”sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl” crossorigin=”anonymous”></script>
+{% endblock %}
 
 
+{% block extra_scripts %}
 <script>
+    $(document).ready(function () {
+
+        const originalCompanyId = "{{ selectedjob.client.id }}";
+
+        $('.searchable-company').select2({
+            width: '100%',
+            placeholder: 'Search for a company'
+        });
+
+        function resetAddNewCompanySection() {
+            $('#addNewCompanySection').addClass('d-none');
+
+            $('#new_client').prop('required', false).val('');
+            $('#new_client_phone').prop('required', false).val('');
+            $('#new_client_bid_email').prop('required', false).val('');
+
+            $('#new_company_pm_name').prop('required', false).val('');
+            $('#new_company_pm_email').prop('required', false).val('');
+        }
+
+        function resetClientEmployeeSection() {
+    $('#clientEmployeeSection').addClass('d-none');
+
+    $('#select_client_employee').empty();
+    $('#select_client_employee').append(
+        '<option value="">Select a company first</option>'
+    );
+    $('#select_client_employee').prop('required', false);
+
+    $('#missingClientEmployeeEmailSection').addClass('d-none');
+    $('#existing_client_employee_email').prop('required', false).val('');
+
+    $('#newClientEmployeeSection').addClass('d-none');
+    $('#new_client_employee_name').prop('required', false).val('');
+    $('#new_client_employee_email').prop('required', false).val('');
+}
+
+        function showPmAndSuperSections() {
+            $('#changePmForm').removeClass('d-none');
+            $('#changeSuperForm').removeClass('d-none');
+        }
+
+        function hidePmAndSuperSections() {
+            $('#changePmForm').addClass('d-none');
+            $('#changeSuperForm').addClass('d-none');
+        }
+
+        function loadClientEmployees(clientId) {
+            const employeeSelect = $('#select_client_employee');
+
+            employeeSelect.empty();
+            employeeSelect.append('<option value="">Loading employees...</option>');
+
+            $('#clientEmployeeSection').removeClass('d-none');
+            employeeSelect.prop('required', true);
+
+            $('#newClientEmployeeSection').addClass('d-none');
+            $('#new_client_employee_name').prop('required', false).val('');
+            $('#new_client_employee_email').prop('required', false).val('');
+
+            $.ajax({
+                method: 'GET',
+                url: "{% url 'get_client_employees_ajax' %}",
+                data: {
+                    client_id: clientId
+                },
+                success: function (data) {
+                    employeeSelect.empty();
+
+                    employeeSelect.append(
+                        '<option value="">Please Select Client Employee</option>'
+                    );
+
+                    employeeSelect.append(
+                        '<option value="add_new">Add New Client Employee</option>'
+                    );
+
+                    if (data.success && data.employees.length > 0) {
+                        data.employees.forEach(function (employee) {
+                            let label = employee.name;
+
+                            if (employee.email) {
+                                label += ' - ' + employee.email;
+                            } else {
+                                label += ' - NO EMAIL ON FILE';
+                            }
+
+                            employeeSelect.append(
+                                $('<option></option>')
+                                    .val(employee.person_pk)
+                                    .text(label)
+                                    .attr('data-has-email', employee.has_email)
+                            );
+                        });
+                    }
+                }
+            });
+        }
+
+        $('#select_company').on('change', function () {
+            const selectedCompanyId = $(this).val();
+
+            resetAddNewCompanySection();
+            resetClientEmployeeSection();
+
+            if (selectedCompanyId === 'add_new') {
+                $('#addNewCompanySection').removeClass('d-none');
+
+                $('#new_client').prop('required', true);
+                $('#new_company_pm_name').prop('required', true);
+                $('#new_company_pm_email').prop('required', true);
+
+                hidePmAndSuperSections();
+                return;
+            }
+
+            if (selectedCompanyId && selectedCompanyId !== originalCompanyId) {
+                hidePmAndSuperSections();
+                loadClientEmployees(selectedCompanyId);
+                return;
+            }
+
+            showPmAndSuperSections();
+        });
+
+        $('#select_client_employee').on('change', function () {
+    const selectedValue = $(this).val();
+    const selectedOption = $('#select_client_employee option:selected');
+    const hasEmail = selectedOption.attr('data-has-email');
+
+    $('#missingClientEmployeeEmailSection').addClass('d-none');
+    $('#existing_client_employee_email').prop('required', false).val('');
+
+    $('#newClientEmployeeSection').addClass('d-none');
+    $('#new_client_employee_name').prop('required', false).val('');
+    $('#new_client_employee_email').prop('required', false).val('');
+
+    if (selectedValue === 'add_new') {
+        $('#newClientEmployeeSection').removeClass('d-none');
+        $('#new_client_employee_name').prop('required', true);
+        $('#new_client_employee_email').prop('required', true);
+        return;
+    }
+
+    if (selectedValue && hasEmail !== 'true') {
+        $('#missingClientEmployeeEmailSection').removeClass('d-none');
+        $('#existing_client_employee_email').prop('required', true);
+    }
+});
+
+        $('#changeCompanyForm').on('submit', function (e) {
+            const selectedCompanyId = $('#select_company').val();
+
+            if (selectedCompanyId === 'add_new') {
+                const companyName = $('#new_client').val().trim();
+                const pmName = $('#new_company_pm_name').val().trim();
+                const pmEmail = $('#new_company_pm_email').val().trim();
+
+                if (!companyName) {
+                    alert('Company name is required.');
+                    e.preventDefault();
+                    return false;
+                }
+
+                if (!pmName || !pmEmail) {
+                    alert('PM Name and PM Email are required when adding a new company.');
+                    e.preventDefault();
+                    return false;
+                }
+
+                return true;
+            }
+
+            if (selectedCompanyId === originalCompanyId) {
+                alert('Please select a different company before saving.');
+                e.preventDefault();
+                return false;
+            }
+
+            const selectedEmployee = $('#select_client_employee').val();
+
+            if (!selectedEmployee) {
+                alert('Please select a client employee.');
+                e.preventDefault();
+                return false;
+            }
+
+            if (selectedEmployee === 'add_new') {
+                const newName = $('#new_client_employee_name').val().trim();
+                const newEmail = $('#new_client_employee_email').val().trim();
+
+                if (!newName || !newEmail) {
+                    alert('New client employee name and email address are required.');
+                    e.preventDefault();
+                    return false;
+                }
+            } else {
+                const selectedOption = $('#select_client_employee option:selected');
+                const hasEmail = selectedOption.attr('data-has-email');
+
+                if (hasEmail !== 'true') {
+                    const existingEmail = $('#existing_client_employee_email').val().trim();
+
+                    if (!existingEmail) {
+                        alert('Please enter an email address for the selected client employee.');
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+            }
+        });
+
+        resetAddNewCompanySection();
+        resetClientEmployeeSection();
+        showPmAndSuperSections();
+
+    });
+
+
+    $(document).ready(function () {
+
+        $('#select_pm').on('change', function () {
+            const selectedPm = $(this).val();
+
+            $('#new_pm').val('');
+            $('#new_pm_phone').val('');
+            $('#new_pm_email').val('');
+
+            if (selectedPm === 'add_new') {
+                $('#new_pm').attr('placeholder', 'PM Name');
+                $('#new_pm_phone').attr('placeholder', 'PM Phone');
+                $('#new_pm_email').attr('placeholder', 'PM Email');
+
+                $('#new_pm').prop('required', true);
+                $('#new_pm_email').prop('required', true);
+
+                return;
+            }
+
+            $('#new_pm').prop('required', false);
+            $('#new_pm_email').prop('required', true);
+
+            if (!selectedPm) {
+                return;
+            }
+
+            $.ajax({
+                method: 'GET',
+                url: "{% url 'get_client_employee_ajax' %}",
+                data: {
+                    person_pk: selectedPm
+                },
+                success: function (data) {
+                    if (data.success) {
+                        $('#new_pm').val(data.name);
+                        $('#new_pm_phone').val(data.phone);
+                        $('#new_pm_email').val(data.email);
+
+                        if (!data.email) {
+                            $('#new_pm_email').attr(
+                                'placeholder',
+                                'Email required before saving'
+                            );
+                            $('#new_pm_email').focus();
+                        }
+                    } else {
+                        alert(data.error || 'Could not load PM information.');
+                    }
+                }
+            });
+        });
+
+        $('#changePmForm').on('submit', function (e) {
+            const selectedPm = $('#select_pm').val();
+            const pmName = $('#new_pm').val().trim();
+            const pmEmail = $('#new_pm_email').val().trim();
+
+            if (!selectedPm) {
+                alert('Please select a PM.');
+                e.preventDefault();
+                return false;
+            }
+
+            if (selectedPm === 'add_new' && !pmName) {
+                alert('Please enter the PM name.');
+                e.preventDefault();
+                return false;
+            }
+
+            if (!pmEmail) {
+                alert('Please enter an email address for the PM.');
+                e.preventDefault();
+                return false;
+            }
+        });
+
+    });
+
 
 </script>
 
-</body>
-
 {% endblock %}
-

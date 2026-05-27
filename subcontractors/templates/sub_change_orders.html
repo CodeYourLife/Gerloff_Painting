@@ -1,14 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_subs %}active{% endblock nav_item_subs %}
-{% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
-        <style type="text/css" class="init">
+
+{% block extra_head %}
+<style type="text/css" class="init">
 
 .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
 
@@ -67,36 +62,14 @@
         }
 
     </style>
-
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-    <script type="text/javascript" class="init">
-        $(document).ready(function () {
-            var table = $('#sub_table').DataTable({paging: false});
-        })
+{% endblock %}
 
-function go_to_subcontract(subcontract_id){
-hidden_form.subcontract_id.value=subcontract_id
-hidden_form.submit()
-}
+{% block sub_nav %}
+    {% include 'subcontractors_nav.html' with page_label="Subcontractor Change Orders" %}
+{% endblock %}
 
-    </script>
-</head>
-<body>
-
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="{% url 'subcontractor_home' %}">Subcontractors</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'subcontractor_home' %}">Subcontractor Home</a></li>
-		 <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
-         <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
-              <li><a class="nav-item nav-link" href="{% url 'subcontractor_payments' %}">Payments</a></li>
-              <li><a class="nav-item nav-link active" href="#">Unapproved Change Orders</a></li>
-    </ul>
-  </div>
-
-</nav>
+{% block content %}
 
 <form id= "hidden_form" action = "{% url 'subcontracts_home' %}" method = "post">
     <input type="hidden" name="subcontract_id" id="subcontract_id" />
@@ -130,21 +103,25 @@ hidden_form.submit()
             <td>${{x.SOV_rate}}</td>
 
             <td>{{x.notes}}</td>
-<!--            <td onclick="go_to_job('{{x.job_number}}')"><a href="#">{{x.job_name}}</a></td>-->
-<!--            <td style="white-space:nowrap" data-toggle="modal" data-target="#show_contact_info-modal" onclick="populate_contact_info('{{x.subcontractor_id}}')"><a href="#">{{x.subcontractor}}</td>-->
-<!--            {% if x.po_number %}-->
-<!--            <td onclick="go_to_subcontract('{{x.id}}')" ><a href="#">{{x.po_number}}</a></td>-->
-<!--            {% else %}-->
-<!--            <td onclick="go_to_subcontract('{{x.id}}')" ><a href="#">GoTo PO</a></td>-->
-<!--            {% endif %}-->
-<!--            <td>{{x.percent_complete}}</td>-->
-<!--            <td>${{x.retainage}}</td>-->
+
         </tr>
         {% endfor %}
         </tbody>
     </table>
 </div>
-</body>
-</html>
 
+{% endblock %}
+
+{% block extra_scripts %}
+    <script type="text/javascript" class="init">
+        $(document).ready(function () {
+            var table = $('#sub_table').DataTable({paging: false});
+        })
+
+function go_to_subcontract(subcontract_id){
+hidden_form.subcontract_id.value=subcontract_id
+hidden_form.submit()
+}
+
+    </script>
 {% endblock %}

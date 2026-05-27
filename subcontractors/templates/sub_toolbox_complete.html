@@ -1,4 +1,9 @@
 {% extends 'base.html' %}
+
+{% block sub_nav %}
+    {% include 'portal_nav.html' with selected_sub=selected_sub page_label='Group Toolbox Talk' %}
+{% endblock %}
+
 {% block content %}
 
 <div class="container mt-3">

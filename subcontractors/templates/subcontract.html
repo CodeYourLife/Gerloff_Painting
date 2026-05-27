@@ -1,414 +1,151 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
+
 {% block nav_item_subs %}active{% endblock nav_item_subs %}
-{% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
-        <style type="text/css" class="init">
-        .nav-pills a {
-            color: white;
-            background-color: black !important;
-        }
-        .nav-pills li {
-            padding: 2px;
-        }
-        .nav-pills .active {
-            color: white;
-            background-color: red !important;
-            padding: 5px;
-        }
-.colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
 
-.dataTables_wrapper {
-    font-family: tahoma;
-    font-size: 13px;
-}
-
-
-
-        label {
-            margin-left: 10px;
-            margin-right: 10px;
-        }
-        input {
-            margin-left: 10px;
-            margin-right: 10px;
-            padding: 0.375rem 0.75rem;
-            font-size: 1rem;
-            line-height: 1.5;
-            color: #495057;
-            background-color: #fff;
-            background-clip: padding-box;
-            border: 1px solid #ced4da;
-            border-radius: 0.25rem;
-            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
-        }
-        tr th {
-            width: fit-content !important;
-        }
-        .tab-content * {
-          color : black;
-          background-color: white !important;
-        }
-        .active * {
-            background-color: white !important;
-        }
-                .list-items {
-        border-bottom: 1px solid black; display: flex; justify-content: space-between;
-        }
-        .text-wrap{
-    white-space:normal;
-}
-.width-200{
-    width:200px;
-}
-.dataTables_filter {
-   float: left !important;
-}
-.tb { border-collapse: collapse; width:300px; }
-
-.tb th, .tb td { padding: 5px; border: solid 1px #777; }
-.tb th { background-color: lightblue; }
-
-.table td {
-        }
-
-/* Chrome, Safari, Edge, Opera */
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-/* Firefox */
-input[type=number] {
-  -moz-appearance: textfield;
-}
-    </style>
-
+{% block extra_head %}
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-    <script type="text/javascript" class="init">
-$(document).ready(function () {
-    if ('{{edit_row}}'){var table = $('#sub_table').DataTable({paging: false, searching: false, ordering: false});}
-    else{
-    var table = $('#sub_table').DataTable({paging: false, ordering: false, searching: false,columnDefs:[{targets: 3, render: $.fn.dataTable.render.number(',','.',0,'$')}]});
+<style type="text/css" class="init">
+    .page-wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1rem;
     }
-<!--    var table = $('#invoice_table').DataTable({paging: false, ordering: false, searching: false,columnDefs:[{targets: [2,3], render: $.fn.dataTable.render.number(',','.',0,'$')}]});-->
-    var table = $('#invoice_table').DataTable({paging: false, ordering: false, searching: false,columnDefs:[{targets: [2,3], render: $.fn.dataTable.render.number(',','.',2,'$')}]});
-    document.getElementById("hide_retainage").style.display="none"
-    if ('{{subcontract.is_retainage}}' == "True"){
-    document.getElementById("hide_retainage").style.display="block"
+
+    .page-title {
+        text-align: center;
+        margin-bottom: 1rem;
     }
-})
 
-function check_data(){
-    if (form2.add_new.value == "please_select"){
-        alert("Please select new approver")
-        return false
+    .page-title h5,
+    .page-title h6 {
+        margin-bottom: 0.25rem;
     }
-}
 
-function edit_row(id){
-	document.getElementById("edit_existing_item").value = id
-}
+    .action-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
 
-function delete_row(id){
-	document.getElementById("delete_existing_item").value = id
-}
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
 
-var number_items = 0
+    .summary-card {
+        border: 1px solid #ddd;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        background: #fff;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    }
 
-function selected_wallcovering(event){
-    current_row = event.currentTarget.id.substr(19,event.currentTarget.id.length)
-    description = document.getElementById("item_description" + current_row)
-    quantity = document.getElementById("item_quantity" + current_row)
-    unit = document.getElementById("item_unit" + current_row)
-    rolodex = JSON.parse("{{wallcovering_json|escapejs}}");
-    for(let i =0; i < rolodex.length; i++){
-        if (rolodex[i].id == event.currentTarget.value){
-            description.value = "Install " + rolodex[i].code
-            quantity.value = rolodex[i].quantity_ordered
-            unit.value = rolodex[i].estimated_unit
+    .summary-card span {
+        display: block;
+        color: #6c757d;
+        font-size: 0.85rem;
+    }
+
+    .summary-card strong {
+        font-size: 1rem;
+    }
+
+    .nav-pills a {
+        color: #fff;
+        background-color: #000 !important;
+    }
+
+    .nav-pills li {
+        padding: 2px;
+    }
+
+    .nav-pills .active {
+        color: #fff;
+        background-color: red !important;
+        padding: 5px;
+    }
+
+    .dataTables_wrapper {
+        font-family: tahoma, sans-serif;
+        font-size: 13px;
+    }
+
+    .dataTables_filter {
+        float: left !important;
+    }
+
+    .table-responsive-clean {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    #sub_table,
+    #invoice_table {
+        width: 100% !important;
+    }
+
+    #sub_table th,
+    #sub_table td,
+    #invoice_table th,
+    #invoice_table td {
+        vertical-align: top;
+        white-space: normal;
+    }
+
+    .new-item-card {
+        border: 1px solid #ddd;
+        border-left: 5px solid #007bff;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+        background: #fff;
+    }
+
+    .new-item-card .form-control,
+    .modal .form-control {
+        margin-bottom: 0.5rem;
+    }
+
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+
+    @media (max-width: 576px) {
+        .page-wrap {
+            padding: 0.75rem;
+        }
+
+        .action-row .btn {
+            width: 100%;
+        }
+
+        .modal-dialog {
+            margin: 0.5rem;
         }
     }
-}
+</style>
+{% endblock %}
 
-function delete_selected(event){
-    document.getElementById(event.currentTarget.value).remove()
-}
+{% block sub_nav %}
+    {% include 'subcontractors_nav.html' with page_label="View Contract" %}
+{% endblock %}
 
+{% block content %}
 
-function new_lump_sum(){
-
-    number_items = number_items+1
-    hidden_items = document.getElementById("hidden_number_items")
-    add_new_here = document.getElementById("new_item_here")
-    hidden_items.value = number_items
-    var x = document.createElement('div')
-    x.setAttribute("name", "new_item_here" + number_items)
-    x.setAttribute("id", "new_item_here" + number_items)
-    add_new_here.appendChild(x)
-    add_new_here = document.getElementById("new_item_here" + number_items)
-    var hidden_input = document.createElement("input");
-    hidden_input.setAttribute("type", "hidden");
-    hidden_input.setAttribute("name", "item_type" + number_items);
-    hidden_input.setAttribute("value", "Lump Sum")
-    add_new_here.appendChild(hidden_input);
-    if ("{{wallcovering_json}}"){
-        rolodex = JSON.parse("{{wallcovering_json|escapejs}}");
-        var select = document.createElement("select");
-        select.name = "wallcovering_number" + number_items;
-        select.id = "wallcovering_number" + number_items;
-        var option = document.createElement("option");
-        option.value ='no_wc_selected'
-        option.text='None'
-        select.appendChild(option);
-        for(let i =0; i < rolodex.length; i++){
-            option = document.createElement("option");
-            option.value =rolodex[i].id
-            option.text=rolodex[i].code
-            select.appendChild(option);
-        }
-        var label = document.createElement("label");
-        label.textContent= "Select WC: "
-        add_new_here.appendChild(label).appendChild(select);
-    }
-
-        x = document.createElement("INPUT");
-        x.setAttribute("type", "text");
-        x.setAttribute("name", "item_description" + number_items)
-        x.setAttribute("id", "item_description" + number_items)
-        x.setAttribute("placeholder", "Install WC9")
-        x.setAttribute("size", 50)
-        add_new_here.appendChild(x)
-        document.getElementById("item_description" + number_items).required = true;
-        add_new_here.appendChild(document.createTextNode(" $"))
-        x = document.createElement("INPUT");
-        x.setAttribute("type", "number");
-        x.setAttribute("name", "item_price" + number_items)
-        x.setAttribute("id", "item_price" + number_items)
-        x.setAttribute("placeholder", "10.50")
-        x.setAttribute("step", "0.01")
-        x.setAttribute("size", 7)
-        add_new_here.appendChild(x)
-        document.getElementById("item_price" + number_items).required = true;
-        add_new_here.appendChild(document.createElement('br'))
-        x = document.createElement("INPUT")
-        x.setAttribute("type", "text");
-        x.setAttribute("placeholder", "NOTE - Includes Glue, etc.")
-        x.setAttribute("name", "item_notes" + number_items)
-        x.setAttribute("id", "item_notes" + number_items)
-        x.setAttribute("size", 75)
-        add_new_here.appendChild(x)
-        x = document.createElement("button");
-        x.setAttribute("onclick", "delete_selected(event)");
-        x.setAttribute("type", "button");
-        x.setAttribute("class", "btn btn-dark");
-        x.setAttribute("value", "new_item_here" + number_items);
-        x.appendChild(document.createTextNode("Delete"))
-        add_new_here.appendChild(x)
-        x = document.createElement("button");
-        x.setAttribute("value", "new_item_here" + number_items);
-        x.setAttribute("class", "btn btn-primary");
-        x.setAttribute("name", "added_row");
-        x.appendChild(document.createTextNode("Add Now"))
-        add_new_here.appendChild(x)
-        add_new_here.appendChild(document.createElement('br'))
-        add_new_here.appendChild(document.createElement('hr'))
-}
-function new_per_unit(){
-    number_items = number_items+1
-    hidden_items = document.getElementById("hidden_number_items")
-    add_new_here = document.getElementById("new_item_here")
-    hidden_items.value = number_items
-    var x = document.createElement('div')
-    x.setAttribute("name", "new_item_here" + number_items)
-    x.setAttribute("id", "new_item_here" + number_items)
-    add_new_here.appendChild(x)
-    add_new_here = document.getElementById("new_item_here" + number_items)
-    var hidden_input = document.createElement("input");
-    hidden_input.setAttribute("type", "hidden");
-    hidden_input.setAttribute("name", "item_type" + number_items);
-    hidden_input.setAttribute("value", "Per Unit");
-    add_new_here.appendChild(hidden_input);
-
-    if ("{{wallcovering_json}}"){
-        rolodex = JSON.parse("{{wallcovering_json|escapejs}}");
-        var select = document.createElement("select");
-        select.name = "wallcovering_number" + number_items;
-        select.id = "wallcovering_number" + number_items;
-        select.addEventListener('change',function() {selected_wallcovering(event);},false);
-        var option = document.createElement("option");
-        option.value ='no_wc_selected'
-        option.text='None'
-        select.appendChild(option);
-        for(let i =0; i < rolodex.length; i++){
-            option = document.createElement("option");
-            option.value =rolodex[i].id
-            option.text=rolodex[i].code
-            select.appendChild(option);
-        }
-        var label = document.createElement("label");
-        label.textContent= "Select WC: "
-        add_new_here.appendChild(label).appendChild(select);
-    }
-        x = document.createElement("INPUT");
-        x.setAttribute("type", "text");
-        x.setAttribute("name", "item_description" + number_items)
-        x.setAttribute("id", "item_description" + number_items)
-        x.setAttribute("placeholder", "Install WC9")
-        x.setAttribute("size", 30)
-        add_new_here.appendChild(x)
-        document.getElementById("item_description" + number_items).required = true;
-        x = document.createElement("INPUT");
-        x.setAttribute("type", "number");
-        x.setAttribute("name", "item_quantity" + number_items)
-        x.setAttribute("id", "item_quantity" + number_items)
-        x.setAttribute("placeholder", "100")
-        x.setAttribute("size", 7)
-        add_new_here.appendChild(x)
-        document.getElementById("item_quantity" + number_items).required = true;
-        x = document.createElement("INPUT");
-        x.setAttribute("type", "text");
-        x.setAttribute("name", "item_unit" + number_items)
-        x.setAttribute("id", "item_unit" + number_items)
-        x.setAttribute("placeholder", "yard")
-        x.setAttribute("size", 7)
-        add_new_here.appendChild(x)
-        document.getElementById("item_unit" + number_items).required = true;
-        add_new_here.appendChild(document.createTextNode(" $"))
-        x = document.createElement("INPUT");
-        x.setAttribute("type", "number");
-        x.setAttribute("name", "item_price" + number_items)
-        x.setAttribute("id", "item_price" + number_items)
-        x.setAttribute("placeholder", "10.50")
-        x.setAttribute("step", "0.01")
-        x.setAttribute("size", 7)
-        add_new_here.appendChild(x)
-        document.getElementById("item_price" + number_items).required = true;
-        add_new_here.appendChild(document.createElement('br'))
-        x = document.createElement("INPUT")
-        x.setAttribute("type", "text");
-        x.setAttribute("placeholder", "NOTES - Includes Glue, etc.")
-        x.setAttribute("name", "item_notes" + number_items)
-        x.setAttribute("id", "item_notes" + number_items)
-        x.setAttribute("size", 75)
-        add_new_here.appendChild(x)
-        x = document.createElement("button");
-        x.setAttribute("onclick", "delete_selected(event)");
-        x.setAttribute("type", "button");
-        x.setAttribute("value", "new_item_here" + number_items);
-        x.setAttribute("class", "btn btn-dark");
-        x.appendChild(document.createTextNode("Cancel"))
-        add_new_here.appendChild(x)
-        x = document.createElement("button");
-        x.setAttribute("value", "new_item_here" + number_items);
-        x.setAttribute("class", "btn btn-primary");
-        x.setAttribute("name", "added_row");
-        x.appendChild(document.createTextNode("Add Now"))
-        add_new_here.appendChild(x)
-        add_new_here.appendChild(document.createElement('br'))
-        add_new_here.appendChild(document.createElement('hr'))
-
-}
-function populate_contact_info(subcontractor_id){
-        contact_info_form.notes.value=""
-contact_info_form.insurance.value=""
-contact_info_form.email.value=""
-contact_info_form.phone.value=""
-contact_info_form.contact.value=""
-        $.ajax({
-        method: 'GET',
-        url: '/superintendent/super_ajax',
-        data: {'subcontractor_id':subcontractor_id},
-        success: function (data) {
-           parsedData = JSON.parse(data);
-            contact_info_form.subcontractor_id.value = subcontractor_id
-           text = "<table border='1' class='table display'>";
-           if (parsedData.contact){
-                text += "<tr><td>Contact: " + parsedData.contact + "</td></tr>";
-                contact_info_form.contact.value = parsedData.contact}
-                else {text += "<tr><td>Contact: None</td></tr>";}
-           if (parsedData.phone){
-                text += "<tr><td><a href='tel:" + parsedData.phone + "'>Phone: " + parsedData.phone + "</a></td></tr>";
-                contact_info_form.phone.value = parsedData.phone}
-                else {text += "<tr><td>Phone: None</td></tr>";}
-           if (parsedData.email){
-                text += "<tr><td><a href='mailto: " + parsedData.email + "'>Email: " + parsedData.email + "</a></td></tr>";
-                contact_info_form.email.value = parsedData.email}
-                else {text += "<tr><td>Email: None</td></tr>";}
-           if (parsedData.insurance){
-                text += "<tr><td>Insurance Expires: " + parsedData.insurance + "</td></tr>";
-                contact_info_form.insurance.value = parsedData.insurance}
-                else {text += "<tr><td>Insurance: None</td></tr>";}
-           if (parsedData.notes){
-                text += "<tr><td>Notes: " + parsedData.notes + "</td></tr>";
-                contact_info_form.notes.value = parsedData.notes}
-           document.getElementById("show_contact_info_title").innerHTML = parsedData.company
-            document.getElementById("contact_info_title").innerHTML = parsedData.company
-            text += "</table>";
-            document.getElementById("contact_info_here").innerHTML = text;
-        }
-        })
-        }
-function show_retainage(){
-if (subcontract_info_form.is_retainage.checked){document.getElementById("hide_retainage").style.display="block"}
-else{document.getElementById("hide_retainage").style.display="none"}
-}
-function add_note(){
-    	var name=prompt("New Note");
-    	if (name!=null){
-    	    notes_form.new_note.value=name
-    	    notes_form.submit()
-   		}
-}
-
-function sorry(){
-        alert("Can't release retainage if there is a pending invoice. You can go into the invoice and manually lower the retainage though")
-}
-
-function add_note2(){
-
-    	release_retainage_form.retainage_released.value = Number(release_retainage_form.retainage_released.value)
-    	if (release_retainage_form.retainage_released.value == 0){
-    	alert("Can't be Zero")
-    	return false;
-    	}
-    	else{
-            if (release_retainage_form.retainage_released.value > Number("{{retainage_to_release}}")){
-                alert("Cannot release more than what we held")
-                return false;
-            }
-    	}
-    	var name=prompt("New Note");
-    	if (name!=null){
-    	    release_retainage_form.new_note.value=name
-   		}
-}
-
-	</script>
-</head>
-<body>
-    <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-        <a class="navbar-brand sub-navbar-brand" href="{% url 'subcontractor_home' %}">Subcontractors</a>
-        <div id="navbarNavDropdown2">
-          <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'subcontractor_home' %}">Subcontractor Home</a></li>
-		 <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
-         <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
-		<li><a class="nav-item nav-link" href="{% url 'subcontractor_payments' %}">Payments</a></li>
-              <li><a class="nav-item nav-link active" href="#">View Contract</a></li>
-    </ul>
-  </div>
-</nav>
-<!-- Modal -->
-<div class="modal fade" id="show_contact_info-modal" tabindex="-1" role="dialog" aria-labelledby="title"
-     aria-hidden="true">
+<!-- Contact Summary Modal -->
+<div class="modal fade" id="show_contact_info-modal" tabindex="-1" role="dialog" aria-labelledby="show_contact_info_title" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -417,71 +154,81 @@ function add_note2(){
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
+
             <div class="modal-body">
-                        <div style="margin-top: 12px" class="table-responsive">
-                            <div id="contact_info_here">
-                            </div>
-                        </div>
+                <div class="table-responsive" id="contact_info_here"></div>
             </div>
+
             <div class="modal-footer">
-                <button class="btn btn-primary" data-toggle="modal" data-target="#contact_info-modal" data-dismiss="modal"> Change Information </button>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#contact_info-modal" data-dismiss="modal">
+                    Change Information
+                </button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
-<!-- Modal -->
-<div class="modal fade" id="contact_info-modal" tabindex="-1" role="dialog" aria-labelledby="title"
-     aria-hidden="true">
+
+<!-- Edit Contact Modal -->
+<div class="modal fade" id="contact_info-modal" tabindex="-1" role="dialog" aria-labelledby="contact_info_title" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="contact_info_title"></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                                <form class="form-control form-control-sm" id="contact_info_form" action="{% url 'subcontractor_home' %}" method="post" >
-                                {% csrf_token %}
-									<input type="hidden" name="go_back_to_subcontract" id="go_back_to_subcontract" value="{{subcontract.id}}"/>
-                                <table>
-                                    <tr><td>
-                                        <input type="hidden" name="subcontractor_id" id="subcontractor_id" />
-                                        <input type="text" name ="contact" id="contact" placeholder = "Contact"/>
-                                    </td></tr>
-                                    <tr><td>
-                                        <input type="text" name ="phone" id="phone" placeholder = "phone"/>
-                                    </td></tr>
-                                    <tr><td>
-                                        <input type="email" name ="email" id="email" placeholder = "email"/>
-                                    </td></tr>
-                                    <tr><td>
-                                        <input type="date" name ="insurance" id="insurance" />
-                                    <label for="insurance">Insurance Expiration</label>
-                                    </td></tr>
-                                    <tr><td>
-                                    <textarea id="notes" name="notes" class="form-control" style="min-width: 100%">Notes</textarea>
-                                    </td></tr>
-                                    <tr><td>
-                                    <input type="checkbox" id="is_inactive" name="is_inactive"  />
-                                    <label for="is_inactive">Inactive</label>
-                                    </td></tr>
-                                </td></tr></table>
+            <form id="contact_info_form" action="{% url 'subcontractor_home' %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="go_back_to_subcontract" value="{{ subcontract.id }}">
+                <input type="hidden" name="subcontractor_id" id="contact_subcontractor_id">
 
-                            </div>
-            <div class="modal-footer">
-                <input type="submit" class="btn btn-primary" value="Save Changes" />
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                </form>
-            </div>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="contact_info_title"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="contact">Contact</label>
+                        <input type="text" name="contact" id="contact" class="form-control" placeholder="Contact">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="text" name="phone" id="phone" class="form-control" placeholder="Phone">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" name="email" id="email" class="form-control" placeholder="Email">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="insurance">Insurance Expiration</label>
+                        <input type="date" name="insurance" id="insurance" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contact_notes">Notes</label>
+                        <textarea id="contact_notes" name="notes" class="form-control" rows="3" placeholder="Notes"></textarea>
+                    </div>
+
+                    <div class="form-check">
+                        <input type="checkbox" id="is_inactive" name="is_inactive" class="form-check-input">
+                        <label for="is_inactive" class="form-check-label">Inactive</label>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <input type="submit" class="btn btn-primary" value="Save Changes">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-<!-- Modal -->
-<div class="modal fade" id="subcontract_info-modal" tabindex="-1" role="dialog" aria-labelledby="title"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
+
+<!-- Subcontract Info Modal -->
+<div class="modal fade" id="subcontract_info-modal" tabindex="-1" role="dialog" aria-labelledby="subcontract_info_title" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="subcontract_info_title">Subcontract Info</h5>
@@ -489,129 +236,140 @@ function add_note2(){
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
+
             <div class="modal-body">
-                                       <ul class="nav nav-pills">
+                <ul class="nav nav-pills mb-3">
                     <li>
-                        <a href="#7a" class="active" data-toggle="tab">- Main Info -</a>
+                        <a href="#main-info-tab" class="active" data-toggle="tab">Main Info</a>
                     </li>
-                    <li><a href="#8a" data-toggle="tab">- Invoice Approvers -</a>
+                    <li>
+                        <a href="#approvers-tab" data-toggle="tab">Invoice Approvers</a>
                     </li>
-
                 </ul>
+
                 <div class="tab-content clearfix">
-                    <div class="tab-pane active" id="7a">
-                <form class="form-control form-control-sm" id="subcontract_info_form" action="{% url 'subcontract' subcontract.id %}" method="post" >
-                                {% csrf_token %}
-                                <table>
-                                    <tr><td>
-                                        <a href="{% url 'job_page' subcontract.job_number.job_number %}"><b>Job:</b> {{subcontract.job_number}}</a>
-                                    </td></tr>
-                                    <tr>
-										<td data-toggle="modal" data-target="#show_contact_info-modal" data-dismiss="modal" onclick="populate_contact_info('{{subcontract.subcontractor.id}}')"><a href="#"><b>Vendor:</b>{{subcontract.subcontractor}}</a>
-                                    </td></tr>
-                                    <tr><td><b>Total Contract: </b>${{total_contract}}</td></tr>
-                                    <tr><td><b>Total Billed: </b>${{total_billed}}</td></tr>
-                                    <tr><td><b>% Complete: </b>{{percent_complete}}</td></tr>
-                                    <tr><td>
-										{% if subcontract.po_number != "" %}
-										<input type="text" size="10" name ="po_number" id="po_number" value = "{{subcontract.po_number}}"/><label for="po_number" >PO #</label>
-                                        {% else %}
-										<input type="text" name ="po_number" id="po_number" placeholder = "PO Number"/>
-										{% endif %}
-                                    </td></tr>
-                                    <tr><td>
-                                        <input type="date" name ="issued_date" id="issued_date" value="{{subcontract_date}}"/>
-                                    <label for="issued_date">Date Issued</label>
-                                    </td></tr>
-                                    <tr><td>
-										{% if subcontract.is_retainage %}
-                                    <input type="checkbox" onclick="show_retainage()" id="is_retainage" name="is_retainage" checked />
-										{% else %}
-										<input type="checkbox" onclick="show_retainage()" id="is_retainage" name="is_retainage"  />
-										{% endif %}
-                                    <label for="is_retainage">Hold Retainage?</label>
-                                    </td></tr>
-										<tr><td>
-                                        <div id="hide_retainage">
-											{% if subcontract.retainage_percentage %}
-										<input type="number" size='7' name ="retainage_percentage" id="retainage_percentage" step="0.01" max="1" value = "{{subcontract.retainage_percentage}}"/>
-											{% else %}
-											<input type="number" size='7' name ="retainage_percentage" id="retainage_percentage" step="0.01" max="1" value = 0 />
-											{% endif %}
-											<label for="retainage_percentage" >Retainage Amt.</label>
-                                        </div>
-                                    </td></tr>
-                                    <tr><td>
-                                    {% if is_entire_paint_job %}
-                                    <input type="checkbox" id="is_entire_paint_job" name="is_entire_paint_job" checked />
-										{% else %}
-										<input type="checkbox" id="is_entire_paint_job" name="is_entire_paint_job" />
-										{% endif %}
-                                        <label for="is_entire_paint_job">Entire Paint Job?</label>
-                                    </td></tr>
-									<tr><td>
-                                        {% if subcontract.is_closed %}
-										<input type="checkbox" id="is_closed" name="is_closed" checked />
-                                        {% else %}
-                                        <input type="checkbox" id="is_closed" name="is_closed"  />
-                                        {% endif %}
-                                        <label for="is_closed" >Close This Contract</label>
-									</td></tr>
-                                </table>
-                    <input type="submit" name="change_header" class= "btn btn-primary btn-sm" value="Save Changes" />
-                    </form>
-                </div>
+                    <div class="tab-pane active" id="main-info-tab">
+                        <form id="subcontract_info_form" action="{% url 'subcontract' subcontract.id %}" method="post">
+                            {% csrf_token %}
 
-                    <div class="tab-pane" id="8a">
-                                <table>
-                                    <form class="form-control form-control-sm" id="form1" action="{% url 'subcontract' subcontract.id %}" method="post" >
-                                    {% csrf_token %}
-                                    {% for x in approvers %}
-                                    <tr><td>{% if x.employee %}{{x.employee}}{% elif x.job_description %}{{x.job_description}}{% endif %}</td><td><input type="submit" class= "btn btn-danger btn-sm" name="deleteapprover{{x.id}}" value="Delete"></td></tr>
-                                    {% endfor %}
-                                    </form>
-                                    <tr><td>
-                                    <form class="form-control form-control-sm" id="form2" action="{% url 'subcontract' subcontract.id %}" method="post" onSubmit ="return check_data()">
-                                        {% csrf_token %}
-                                        <select id="add_new" name="add_new" >
-                                    <option value="please_select">Select Approver</option>
-                                        <option value="Superintendent">Superintendent</option>
-						            {% for x in employees %}
-                                    <option value={{x.id}}>{{x.first_name}} {{x.last_name}}</option>
-						            {% endfor %}
-                                    </select></td>
-                                    <td><input type="submit" class= "btn btn-primary btn-sm" name="add_new_approver" value="Add New"></td>
-                                    </tr>
-                                    </form>
-
-                                </table>
-<!--</form>-->
-                         </div></div>
+                            <div class="mb-2">
+                                <a href="{% url 'job_page' subcontract.job_number.job_number %}">
+                                    <strong>Job:</strong> {{ subcontract.job_number }}
+                                </a>
                             </div>
+
+                            <div class="mb-2">
+                                <a href="#" data-toggle="modal" data-target="#show_contact_info-modal" data-dismiss="modal" onclick="populate_contact_info('{{ subcontract.subcontractor.id }}')">
+                                    <strong>Vendor:</strong> {{ subcontract.subcontractor }}
+                                </a>
+                            </div>
+
+                            <div class="mb-2"><strong>Total Contract:</strong> ${{ total_contract }}</div>
+                            <div class="mb-2"><strong>Total Billed:</strong> ${{ total_billed }}</div>
+                            <div class="mb-3"><strong>% Complete:</strong> {{ percent_complete }}</div>
+
+                            <div class="form-group">
+                                <label for="po_number">PO #</label>
+                                <input type="text" name="po_number" id="po_number" class="form-control" value="{{ subcontract.po_number }}" placeholder="PO Number">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="issued_date">Date Issued</label>
+                                <input type="date" name="issued_date" id="issued_date" class="form-control" value="{{ subcontract_date }}">
+                            </div>
+
+                            <div class="form-check mb-2">
+                                <input type="checkbox" onclick="show_retainage()" id="is_retainage" name="is_retainage" class="form-check-input" {% if subcontract.is_retainage %}checked{% endif %}>
+                                <label for="is_retainage" class="form-check-label">Hold Retainage?</label>
+                            </div>
+
+                            <div id="hide_retainage" class="form-group">
+                                <label for="retainage_percentage">Retainage Amt.</label>
+                                <input type="number" name="retainage_percentage" id="retainage_percentage" class="form-control" step="0.01" max="1" value="{{ subcontract.retainage_percentage|default:0 }}">
+                            </div>
+
+                            <div class="form-check mb-2">
+                                <input type="checkbox" id="is_entire_paint_job" name="is_entire_paint_job" class="form-check-input" {% if is_entire_paint_job %}checked{% endif %}>
+                                <label for="is_entire_paint_job" class="form-check-label">Entire Paint Job?</label>
+                            </div>
+
+                            <div class="form-check mb-3">
+                                <input type="checkbox" id="is_closed" name="is_closed" class="form-check-input" {% if subcontract.is_closed %}checked{% endif %}>
+                                <label for="is_closed" class="form-check-label">Close This Contract</label>
+                            </div>
+
+                            <input type="submit" name="change_header" class="btn btn-primary btn-sm" value="Save Changes">
+                        </form>
+                    </div>
+
+                    <div class="tab-pane" id="approvers-tab">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <tbody>
+                                {% for x in approvers %}
+                                    <tr>
+                                        <td>
+                                            {% if x.employee %}
+                                                {{ x.employee }}
+                                            {% elif x.job_description %}
+                                                {{ x.job_description }}
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-right">
+                                            <form action="{% url 'subcontract' subcontract.id %}" method="post" class="mb-0">
+                                                {% csrf_token %}
+                                                <input type="submit" class="btn btn-danger btn-sm" name="deleteapprover{{ x.id }}" value="Delete">
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="2" class="text-muted">No approvers assigned.</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <form id="form2" action="{% url 'subcontract' subcontract.id %}" method="post" onsubmit="return check_data()" class="form-inline">
+                            {% csrf_token %}
+                            <select id="add_new" name="add_new" class="form-control mr-2 mb-2">
+                                <option value="please_select">Select Approver</option>
+                                <option value="Superintendent">Superintendent</option>
+                                {% for x in employees %}
+                                    <option value="{{ x.id }}">{{ x.first_name }} {{ x.last_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <input type="submit" class="btn btn-primary btn-sm mb-2" name="add_new_approver" value="Add New">
+                        </form>
+                    </div>
+                </div>
+            </div>
+
             <div class="modal-footer">
-
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-
             </div>
         </div>
     </div>
 </div>
-<!-- Modal -->
-<div class="modal fade" id="notes-modal" tabindex="-1" role="dialog" aria-labelledby="title"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
+
+<!-- Notes Modal -->
+<div class="modal fade" id="notes-modal" tabindex="-1" role="dialog" aria-labelledby="notes_title" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="notes_title">Notes</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="notes_form" action="{% url 'subcontract' subcontract.id %}" method="post"  >
-                    {% csrf_token %}
-                    <input type="hidden" name="new_note" id="new_note">
-                    <div class="card shadow-sm mb-4">
+            <form id="notes_form" action="{% url 'subcontract' subcontract.id %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="new_note" id="notes_new_note">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="notes_title">Notes</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="card shadow-sm">
                         <div class="card-header bg-light">
                             <strong>Notes</strong>
                         </div>
@@ -620,266 +378,580 @@ function add_note2(){
                             {% if notes %}
                                 <ul class="list-group list-group-flush">
                                     {% for note in notes %}
-                                    <li class="list-group-item">
-
-                                        <div class="d-flex justify-content-between align-items-center">
+                                        <li class="list-group-item">
                                             <small class="text-muted">
-                                                {{ note.date|date:"m/d/Y" }}
-                                                • {{ note.user }}
-                                                {% if note.invoice %}
-                                                    • Invoice #{{ note.invoice.pay_app_number }}
-                                                {% endif %}
+                                                {{ note.date|date:"m/d/Y" }} • {{ note.user }}
+                                                {% if note.invoice %}• Invoice #{{ note.invoice.pay_app_number }}{% endif %}
                                             </small>
-                                        </div>
-
-                                        <div class="mt-2">
-                                            {{ note.note }}
-                                        </div>
-
-                                    </li>
+                                            <div class="mt-2">{{ note.note }}</div>
+                                        </li>
                                     {% endfor %}
                                 </ul>
                             {% else %}
-                                <div class="p-3 text-muted">
-                                    No notes yet.
-                                </div>
+                                <div class="p-3 text-muted">No notes yet.</div>
                             {% endif %}
                         </div>
                     </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" onclick = "add_note()" data-dismiss="modal">Add New Note</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Exit</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Modal -->
-<div class="modal fade" id="retainage-modal" tabindex="-1" role="dialog" aria-labelledby="title"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="retainage_title">Retainage Release</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="release_retainage_form" action="{% url 'subcontract' subcontract.id %}" method="post" onSubmit = "return add_note2()" >
-                    {% csrf_token %}
-                    <br>
-                    <input type="hidden" name="new_note" id="new_note">
-                    <b>Total Retainage Held:</b> ${{retainage_to_release}}
-                    <br>
-                    <b>Amount to Release Now:</b><input type="number" step="0.01" name="retainage_released" id="retainage_released" value="{{retainage_to_release}}" />
-            </div>
-            <div class="modal-footer">
-                <input type="submit" class="btn btn-primary" value="Release Now" />
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Exit</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+                </div>
 
-
-<div class="container">
-    <div class ="row">
-        <div class="col-sm-12">
-        <div style="text-align:center">
-            <b>{{subcontract.job_number.job_number}} {{subcontract.job_number.job_name}}</b>
-            <br>
-            <b>{{subcontract.job_number}} - {{subcontract.subcontractor}} - PO#{{subcontract.po_number}}</b>
-        </div>
-        </div>
-    </div>
-    <div class ="row">
-        <div class="col-sm-3" align="center"></div>
-        <div class="col-sm-3" align="center"><button class="btn btn-info" data-toggle="modal" data-target="#subcontract_info-modal" >View PO Details</button></div>
-        <div class="col-sm-3" align="center"><button class="btn btn-warning" data-toggle="modal" data-target="#notes-modal" >Notes</button></div>
-    <div class="col-sm-3" align="center"></div>
-    </div>
-</div>
-
-
-
-	<hr>
-<form action="{% url 'subcontract' subcontract.id %}" method="post"  >
-    {% csrf_token %}
-    <input type="hidden" id="hidden_number_items" name="number_items" value={{number_items}} />
-	<input type="hidden" id="edit_existing_item" name="edit_existing_item" value="None Selected" />
-	<input type="hidden" id="delete_existing_item" name="delete_existing_item" value="None Selected" />
-	<br>
-	<div class="demo-html" style="width:90%">
-		<table id="sub_table" class="display" style="width:90%">
-			<thead>
-				<tr>
-					<th>Date</th>
-                    <th>Description</th>
-					<th>Quantity</th>
-					<th>Unit</th>
-					<th>Price</th>
-					<th>Billed Prior</th>
-                    <th>Total Pending</th>
-                    <th>Approved</th>
-					<th>Notes</th>
-					<th>Edit</th>
-				</tr>
-			</thead>
-			<tbody>
-			{% for x in items %}
-			{% if edit_row and x.id|slugify == edit_row|slugify %}
-			<tr>
-				<td>{{x.date}}</td>
-                <td><input type="hidden" id="item_edited" name="item_edited" value={{x.id}} /><input type= "text" name="SOV_description" id="SOV_description" value="{{x.SOV_description}}" size="30" required /></td>
-					{% if x.SOV_is_lump_sum == True %}
-					<td>1</td>
-					<td>Lump Sum</td>
-					{% else %}
-					<td><input type= "number" name="SOV_total_ordered" id="SOV_total_ordered" value={{x.SOV_total_ordered}} size="10" required /></td>
-					<td>{{x.SOV_unit}}</td>
-					{% endif %}
-					{% if invoiced_already %}
-					<td>{{x.SOV_rate}}</td>
-					{% else %}
-					<td><input name="SOV_rate" id="SOV_rate" type= "number" step="0.01" value={{x.SOV_rate}} size="10" required /></td>
-					{% endif %}
-					<td>{{x.percentage}}%</td>
-                <td>{{x.percentage2}}%</td>
-                    {% if x.is_approved %}
-                    <td><input name="is_approved" id="is_approved" type= "checkbox" checked /></td>
-                    {% else %}
-                    <td><input name="is_approved" id="is_approved" type= "checkbox" /></td>
-                    {% endif %}
-					<td><textarea name="notes" id="notes" cols="50" rows="2" >{{x.notes}}</textarea></td>
-					{% if invoiced_already %}
-					<td> <button name="save_now" class="btn btn-success" >Save</button></td>
-					{% else %}
-					<td> <button name="save_now" class="btn btn-success" >Save</button><button name="delete_now" class="btn btn-dark" onclick="delete_row({{x.id}})">Delete Row</button></td>
-					{% endif %}
-				</tr>
-			{% else %}
-				<tr>
-                    <td>{{x.date}}</td>
-					<td>{{x.SOV_description}}</td>
-					{% if x.SOV_is_lump_sum == True %}
-					<td>1</td>
-					<td>Lump Sum</td>
-					{% else %}
-					<td>{{x.SOV_total_ordered}}</td>
-					<td>{{x.SOV_unit}}</td>
-					{% endif %}
-					<td>{{x.SOV_rate}}</td>
-					<td>{{x.percentage}}%</td>
-                    <td>{{x.percentage2}}%</td>
-                    {% if x.is_approved %}
-                    <td>Yes</td>
-                    {% else %}
-                    <td>No</td>
-                    {% endif %}
-					<td>{{x.notes}}</td>
-					{% if edit_row %}
-					<td></td>
-					{% else %}
-					<td> {% if job_open %}<button class="btn btn-success" name="edit_now" onclick="edit_row({{x.id}})">Edit Item</button>{% endif %}</td>
-					{% endif %}
-				</tr>
-			{% endif %}
-			{% endfor %}
-			</tbody>
-		</table>
-	</div>
-	<div id="new_item_here" name="new_item_here" /></div>
-    <br>
- 	{% if job_open %}<button type="button" name="new_item" class="btn btn-primary" onclick="new_lump_sum()">New Lump Sum Item</button>
-    <button type="button" name="new_item" class="btn btn-primary" onclick="new_per_unit()">New Item - Per Unit</button>
-    {% else %} JOB IS CLOSED {% endif %}
-	<br><br>
-</form>
-<br>
-<hr>
-
-
-<h3>INVOICING SUMMARY</h3>
-<!--    <div class="row h-100 d-flex align-items-center">-->
-<div class ="d-flex flex-row">
-     <div class="p-2">
-<!--        <div style="margin: 5px;" class="col-sm-4">-->
-            <form action="{% url 'subcontractor_invoice_new' subcontract.id %}" method="post"  >
-            {% csrf_token %}
-            {% if job_open %}
-                <input type="submit" name="Form3" class="btn btn-success btn-sm" value="NEW INVOICE" />{% endif %}
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="add_note()">Add New Note</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Exit</button>
+                </div>
             </form>
         </div>
+    </div>
+</div>
 
-          <div class="p-2">
-<!--        <div style="margin: 5px;" class="col-sm-4">-->
-              {% if job_open %}
-              {% if is_invoice_pending %}
-            <button class="btn btn-secondary btn-sm" onclick="sorry()" >RELEASE RETAINAGE</button>
-              {% else %}
-              <button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#retainage-modal" >RELEASE RETAINAGE</button>
-              {% endif %}
-              {% endif %}
+<!-- Retainage Modal -->
+<div class="modal fade" id="retainage-modal" tabindex="-1" role="dialog" aria-labelledby="retainage_title" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="release_retainage_form" action="{% url 'subcontract' subcontract.id %}" method="post" onsubmit="return add_note2()">
+                {% csrf_token %}
+                <input type="hidden" name="new_note" id="release_new_note">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="retainage_title">Retainage Release</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-2"><strong>Total Retainage Held:</strong> ${{ retainage_to_release }}</div>
+                    <div class="form-group">
+                        <label for="retainage_released"><strong>Amount to Release Now</strong></label>
+                        <input type="number" step="0.01" name="retainage_released" id="retainage_released" class="form-control" value="{{ retainage_to_release }}">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <input type="submit" class="btn btn-primary" value="Release Now">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Exit</button>
+                </div>
+            </form>
         </div>
+    </div>
 </div>
-<br>
 
-<div class="demo-html" style="width:90%">
-		<table id="invoice_table" class="display" style="width:90%">
-			<thead>
-			<tr>
-				<th>Date</th>
-				<th>Invoice #</th>
-				<th>Amount</th>
-				<th>Retainage</th>
-                <th>Total Pay</th>
-				<th>Status</th>
-			</tr>
-			</thead>
-			<tbody>
-			{% if invoices %}
-			{% for x in invoices %}
-			<tr>
-			<td>{{x.invoice.date}}</td>
-			<td><a href = "{% url 'subcontract_invoices' subcontract.id x.invoice.id %}">{{x.invoice.pay_app_number}}</a></td>
-			<td>{{x.invoice.final_amount}}</td>
-            <td>{{x.retainage}}</td>
-			<td>${{x.total_pay_amount}}</td>
-			{% if x.invoice.processed == True %}
-                <td>Paid</td>
-            {% elif x.invoice.is_sent == True %}
-				<td>Approved</td>
-			{% else %}
-				<td>Pending</td>
+<div class="page-wrap">
+    <div class="page-title">
+        <h5>{{ subcontract.job_number.job_number }} {{ subcontract.job_number.job_name }}</h5>
+        <h6>{{ subcontract.job_number }} - {{ subcontract.subcontractor }} - PO#{{ subcontract.po_number }}</h6>
+    </div>
+
+    <div class="action-row">
+        <button type="button" class="btn btn-info" data-toggle="modal" data-target="#subcontract_info-modal">View PO Details</button>
+        <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#notes-modal">Notes</button>
+    </div>
+
+    <hr>
+
+    <form action="{% url 'subcontract' subcontract.id %}" method="post">
+        {% csrf_token %}
+        <input type="hidden" id="hidden_number_items" name="number_items" value="{{ number_items }}">
+        <input type="hidden" id="edit_existing_item" name="edit_existing_item" value="None Selected">
+        <input type="hidden" id="delete_existing_item" name="delete_existing_item" value="None Selected">
+
+        <div class="table-responsive-clean">
+            <table id="sub_table" class="display table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Quantity</th>
+                        <th>Unit</th>
+                        <th>Price</th>
+                        <th>Billed Prior</th>
+                        <th>Total Pending</th>
+                        <th>Approved</th>
+                        <th>Notes</th>
+                        <th>Edit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for x in items %}
+                        {% if edit_row and x.id|slugify == edit_row|slugify %}
+                            <tr>
+                                <td>{{ x.date }}</td>
+                                <td>
+                                    <input type="hidden" id="item_edited" name="item_edited" value="{{ x.id }}">
+                                    <input type="text" name="SOV_description" id="SOV_description" value="{{ x.SOV_description }}" class="form-control form-control-sm" required>
+                                </td>
+
+                                {% if x.SOV_is_lump_sum %}
+                                    <td>1</td>
+                                    <td>Lump Sum</td>
+                                {% else %}
+                                    <td>
+                                        <input type="number" name="SOV_total_ordered" id="SOV_total_ordered" value="{{ x.SOV_total_ordered }}" class="form-control form-control-sm" required>
+                                    </td>
+                                    <td>{{ x.SOV_unit }}</td>
+                                {% endif %}
+
+                                {% if invoiced_already %}
+                                    <td>{{ x.SOV_rate }}</td>
+                                {% else %}
+                                    <td>
+                                        <input name="SOV_rate" id="SOV_rate" type="number" step="0.01" value="{{ x.SOV_rate }}" class="form-control form-control-sm" required>
+                                    </td>
+                                {% endif %}
+
+                                <td>{{ x.percentage }}%</td>
+                                <td>{{ x.percentage2 }}%</td>
+                                <td>
+                                    <input name="is_approved" id="is_approved" type="checkbox" {% if x.is_approved %}checked{% endif %}>
+                                </td>
+                                <td>
+                                    <textarea name="notes" id="item_notes" class="form-control form-control-sm" rows="2">{{ x.notes }}</textarea>
+                                </td>
+                                <td>
+                                    <button name="save_now" class="btn btn-success btn-sm">Save</button>
+                                    {% if not invoiced_already %}
+                                        <button name="delete_now" class="btn btn-dark btn-sm mt-1" onclick="delete_row({{ x.id }})">Delete Row</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td>{{ x.date }}</td>
+                                <td>{{ x.SOV_description }}</td>
+
+                                {% if x.SOV_is_lump_sum %}
+                                    <td>1</td>
+                                    <td>Lump Sum</td>
+                                {% else %}
+                                    <td>{{ x.SOV_total_ordered }}</td>
+                                    <td>{{ x.SOV_unit }}</td>
+                                {% endif %}
+
+                                <td>{{ x.SOV_rate }}</td>
+                                <td>{{ x.percentage }}%</td>
+                                <td>{{ x.percentage2 }}%</td>
+                                <td>{% if x.is_approved %}Yes{% else %}No{% endif %}</td>
+                                <td>{{ x.notes }}</td>
+                                <td>
+                                    {% if not edit_row and job_open %}
+                                        <button class="btn btn-success btn-sm" name="edit_now" onclick="edit_row({{ x.id }})">Edit Item</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div id="new_item_here" class="mt-3"></div>
+
+        {% if job_open %}
+            <div class="action-row justify-content-start mt-3">
+                <button type="button" name="new_item" class="btn btn-primary" onclick="new_lump_sum()">New Lump Sum Item</button>
+                <button type="button" name="new_item" class="btn btn-primary" onclick="new_per_unit()">New Item - Per Unit</button>
+            </div>
+        {% else %}
+            <div class="alert alert-warning mt-3">JOB IS CLOSED</div>
+        {% endif %}
+    </form>
+
+    <hr>
+
+    <h3>Invoicing Summary</h3>
+
+    <div class="action-row justify-content-start">
+        {% if job_open %}
+            <form action="{% url 'subcontractor_invoice_new' subcontract.id %}" method="post" class="mb-0">
+                {% csrf_token %}
+                <input type="submit" name="Form3" class="btn btn-success btn-sm" value="NEW INVOICE">
+            </form>
+
+            {% if is_invoice_pending %}
+                <button type="button" class="btn btn-secondary btn-sm" onclick="sorry()">RELEASE RETAINAGE</button>
+            {% else %}
+                <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#retainage-modal">RELEASE RETAINAGE</button>
             {% endif %}
-			</tr>
-			{% endfor %}
-			{% endif %}
-			</tbody>
-		</table>
+        {% endif %}
+    </div>
+
+    <div class="table-responsive-clean">
+        <table id="invoice_table" class="display table table-sm table-striped">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Invoice #</th>
+                    <th>Amount</th>
+                    <th>Retainage</th>
+                    <th>Total Pay</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for x in invoices %}
+                    <tr>
+                        <td>{{ x.invoice.date }}</td>
+                        <td>
+                            <a href="{% url 'subcontract_invoices' subcontract.id x.invoice.id %}">
+                                {{ x.invoice.pay_app_number }}
+                            </a>
+                        </td>
+                        <td>{{ x.invoice.final_amount }}</td>
+                        <td>{{ x.retainage }}</td>
+                        <td>${{ x.total_pay_amount }}</td>
+                        <td>
+                            {% if x.invoice.processed %}
+                                Paid
+                            {% elif x.invoice.is_sent %}
+                                Approved
+                            {% else %}
+                                Pending
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="summary-grid">
+        <div class="summary-card">
+            <span>Prior Billed</span>
+            <strong>${{ total_billed }}</strong>
+        </div>
+        <div class="summary-card">
+            <span>Total Currently Pending</span>
+            <strong>${{ total_pending|floatformat:2|intcomma }}</strong>
+        </div>
+        <div class="summary-card">
+            <span>Total Billed and Pending</span>
+            <strong>${{ total_billed_and_pending|floatformat:2|intcomma }}</strong>
+        </div>
+        <div class="summary-card">
+            <span>Total Contract</span>
+            <strong>${{ total_contract }}</strong>
+        </div>
+        <div class="summary-card">
+            <span>Prior Retainage</span>
+            <strong>${{ total_retainage|floatformat:2|intcomma }}</strong>
+        </div>
+        <div class="summary-card">
+            <span>Retainage Pending</span>
+            <strong>${{ total_retainage_pending|floatformat:2|intcomma }}</strong>
+        </div>
+        <div class="summary-card">
+            <span>Total Retainage</span>
+            <strong>${{ final_retainage|floatformat:2|intcomma }}</strong>
+        </div>
+    </div>
 </div>
 
-<br><hr>
-{% load humanize %}
+{% endblock %}
 
-<div id="total_to_date"><b>Prior Billed:</b> ${{total_billed}}</div>
-	 <br>
-<div id="total_pending"><b>Total Currently Pending:</b> ${{total_pending|floatformat:2|intcomma }}</div>
-	 <br>
-    <div id="total_billed_and_pending"><b>Total Billed and Pending:</b> ${{total_billed_and_pending|floatformat:2|intcomma }}</div>
-	 <br>
- <div id="total_contract"><b>Total Contract:</b> ${{total_contract}}</div>
-	  <br>
- <div id="prior_retainage"><b>Prior Retainage:</b> ${{total_retainage|floatformat:2|intcomma }}</div>
-	  <br>
-     <div id="pending_retainage"><b>Retainage Pending:</b> ${{total_retainage_pending|floatformat:2|intcomma }}</div>
-	  <br>
-	 <div id="retainage_total"><b>Total Retainage:</b> ${{final_retainage|floatformat:2|intcomma }}</div>
-	 <br>
-</body>
-</html>
+{% block extra_scripts %}
+<script type="text/javascript" class="init">
+$(document).ready(function () {
+    if ('{{ edit_row }}') {
+        $('#sub_table').DataTable({
+            paging: false,
+            searching: false,
+            ordering: false,
+            info: false
+        });
+    } else {
+        $('#sub_table').DataTable({
+            paging: false,
+            ordering: false,
+            searching: false,
+            info: false,
+            columnDefs: [
+                { targets: 4, render: $.fn.dataTable.render.number(',', '.', 2, '$') }
+            ]
+        });
+    }
 
+    $('#invoice_table').DataTable({
+        paging: false,
+        ordering: false,
+        searching: false,
+        info: false,
+        columnDefs: [
+            { targets: [2, 3], render: $.fn.dataTable.render.number(',', '.', 2, '$') }
+        ]
+    });
+
+    document.getElementById('hide_retainage').style.display = 'none';
+
+    if ('{{ subcontract.is_retainage }}' === 'True') {
+        document.getElementById('hide_retainage').style.display = 'block';
+    }
+});
+
+function check_data() {
+    const addNew = document.getElementById('add_new');
+
+    if (addNew.value === 'please_select') {
+        alert('Please select new approver');
+        return false;
+    }
+}
+
+function edit_row(id) {
+    document.getElementById('edit_existing_item').value = id;
+}
+
+function delete_row(id) {
+    document.getElementById('delete_existing_item').value = id;
+}
+
+let number_items = 0;
+
+function selected_wallcovering(event) {
+    const current_row = event.currentTarget.id.replace('wallcovering_number', '');
+    const description = document.getElementById('item_description' + current_row);
+    const quantity = document.getElementById('item_quantity' + current_row);
+    const unit = document.getElementById('item_unit' + current_row);
+    const rolodex = JSON.parse('{{ wallcovering_json|escapejs }}');
+
+    for (let i = 0; i < rolodex.length; i++) {
+        if (rolodex[i].id == event.currentTarget.value) {
+            description.value = 'Install ' + rolodex[i].code;
+            quantity.value = rolodex[i].quantity_ordered;
+            unit.value = rolodex[i].estimated_unit;
+        }
+    }
+}
+
+function delete_selected(event) {
+    document.getElementById(event.currentTarget.value).remove();
+}
+
+function add_wallcovering_select(container, rowNumber, includeChangeEvent) {
+    if (!'{{ wallcovering_json }}') {
+        return;
+    }
+
+    const rolodex = JSON.parse('{{ wallcovering_json|escapejs }}');
+    const formGroup = document.createElement('div');
+    formGroup.className = 'form-group';
+
+    const label = document.createElement('label');
+    label.textContent = 'Select WC';
+    label.setAttribute('for', 'wallcovering_number' + rowNumber);
+    formGroup.appendChild(label);
+
+    const select = document.createElement('select');
+    select.name = 'wallcovering_number' + rowNumber;
+    select.id = 'wallcovering_number' + rowNumber;
+    select.className = 'form-control';
+
+    let option = document.createElement('option');
+    option.value = 'no_wc_selected';
+    option.text = 'None';
+    select.appendChild(option);
+
+    for (let i = 0; i < rolodex.length; i++) {
+        option = document.createElement('option');
+        option.value = rolodex[i].id;
+        option.text = rolodex[i].code;
+        select.appendChild(option);
+    }
+
+    if (includeChangeEvent) {
+        select.addEventListener('change', selected_wallcovering, false);
+    }
+
+    formGroup.appendChild(select);
+    container.appendChild(formGroup);
+}
+
+function add_input(container, type, name, id, placeholder, required, step) {
+    const input = document.createElement('input');
+    input.type = type;
+    input.name = name;
+    input.id = id;
+    input.placeholder = placeholder;
+    input.className = 'form-control';
+
+    if (required) {
+        input.required = true;
+    }
+
+    if (step) {
+        input.step = step;
+    }
+
+    container.appendChild(input);
+    return input;
+}
+
+function add_new_item_container(itemType) {
+    number_items += 1;
+
+    document.getElementById('hidden_number_items').value = number_items;
+
+    const newItemsContainer = document.getElementById('new_item_here');
+    const card = document.createElement('div');
+    card.name = 'new_item_here' + number_items;
+    card.id = 'new_item_here' + number_items;
+    card.className = 'new-item-card';
+
+    const title = document.createElement('strong');
+    title.textContent = itemType + ' Item';
+    card.appendChild(title);
+
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'item_type' + number_items;
+    hiddenInput.value = itemType;
+    card.appendChild(hiddenInput);
+
+    newItemsContainer.appendChild(card);
+    return card;
+}
+
+function add_new_item_buttons(container) {
+    const buttonRow = document.createElement('div');
+    buttonRow.className = 'd-flex flex-wrap gap-2';
+
+    let button = document.createElement('button');
+    button.onclick = delete_selected;
+    button.type = 'button';
+    button.value = 'new_item_here' + number_items;
+    button.className = 'btn btn-dark btn-sm mr-2';
+    button.appendChild(document.createTextNode('Cancel'));
+    buttonRow.appendChild(button);
+
+    button = document.createElement('button');
+    button.value = 'new_item_here' + number_items;
+    button.className = 'btn btn-primary btn-sm';
+    button.name = 'added_row';
+    button.appendChild(document.createTextNode('Add Now'));
+    buttonRow.appendChild(button);
+
+    container.appendChild(buttonRow);
+}
+
+function new_lump_sum() {
+    const card = add_new_item_container('Lump Sum');
+
+    add_wallcovering_select(card, number_items, false);
+    add_input(card, 'text', 'item_description' + number_items, 'item_description' + number_items, 'Install WC9', true);
+    add_input(card, 'number', 'item_price' + number_items, 'item_price' + number_items, '10.50', true, '0.01');
+    add_input(card, 'text', 'item_notes' + number_items, 'item_notes' + number_items, 'NOTE - Includes Glue, etc.', false);
+    add_new_item_buttons(card);
+}
+
+function new_per_unit() {
+    const card = add_new_item_container('Per Unit');
+
+    add_wallcovering_select(card, number_items, true);
+    add_input(card, 'text', 'item_description' + number_items, 'item_description' + number_items, 'Install WC9', true);
+    add_input(card, 'number', 'item_quantity' + number_items, 'item_quantity' + number_items, '100', true);
+    add_input(card, 'text', 'item_unit' + number_items, 'item_unit' + number_items, 'yard', true);
+    add_input(card, 'number', 'item_price' + number_items, 'item_price' + number_items, '10.50', true, '0.01');
+    add_input(card, 'text', 'item_notes' + number_items, 'item_notes' + number_items, 'NOTES - Includes Glue, etc.', false);
+    add_new_item_buttons(card);
+}
+
+function populate_contact_info(subcontractor_id) {
+    document.getElementById('contact_notes').value = '';
+    document.getElementById('insurance').value = '';
+    document.getElementById('email').value = '';
+    document.getElementById('phone').value = '';
+    document.getElementById('contact').value = '';
+
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: { subcontractor_id: subcontractor_id },
+        success: function (data) {
+            const parsedData = JSON.parse(data);
+            document.getElementById('contact_subcontractor_id').value = subcontractor_id;
+
+            let text = "<table class='table table-sm table-bordered'>";
+
+            if (parsedData.contact) {
+                text += '<tr><td><strong>Contact:</strong> ' + parsedData.contact + '</td></tr>';
+                document.getElementById('contact').value = parsedData.contact;
+            } else {
+                text += '<tr><td><strong>Contact:</strong> None</td></tr>';
+            }
+
+            if (parsedData.phone) {
+                text += "<tr><td><a href='tel:" + parsedData.phone + "'><strong>Phone:</strong> " + parsedData.phone + '</a></td></tr>';
+                document.getElementById('phone').value = parsedData.phone;
+            } else {
+                text += '<tr><td><strong>Phone:</strong> None</td></tr>';
+            }
+
+            if (parsedData.email) {
+                text += "<tr><td><a href='mailto:" + parsedData.email + "'><strong>Email:</strong> " + parsedData.email + '</a></td></tr>';
+                document.getElementById('email').value = parsedData.email;
+            } else {
+                text += '<tr><td><strong>Email:</strong> None</td></tr>';
+            }
+
+            if (parsedData.insurance) {
+                text += '<tr><td><strong>Insurance Expires:</strong> ' + parsedData.insurance + '</td></tr>';
+                document.getElementById('insurance').value = parsedData.insurance;
+            } else {
+                text += '<tr><td><strong>Insurance:</strong> None</td></tr>';
+            }
+
+            if (parsedData.notes) {
+                text += '<tr><td><strong>Notes:</strong> ' + parsedData.notes + '</td></tr>';
+                document.getElementById('contact_notes').value = parsedData.notes;
+            }
+
+            document.getElementById('show_contact_info_title').innerHTML = parsedData.company;
+            document.getElementById('contact_info_title').innerHTML = parsedData.company;
+
+            text += '</table>';
+            document.getElementById('contact_info_here').innerHTML = text;
+        }
+    });
+}
+
+function show_retainage() {
+    const isRetainage = document.getElementById('is_retainage').checked;
+    document.getElementById('hide_retainage').style.display = isRetainage ? 'block' : 'none';
+}
+
+function add_note() {
+    const note = prompt('New Note');
+
+    if (note !== null) {
+        document.getElementById('notes_new_note').value = note;
+        document.getElementById('notes_form').submit();
+    }
+}
+
+function sorry() {
+    alert("Can't release retainage if there is a pending invoice. You can go into the invoice and manually lower the retainage though");
+}
+
+function add_note2() {
+    const releaseInput = document.getElementById('retainage_released');
+    const releaseAmount = Number(releaseInput.value);
+    const maxRetainage = Number('{{ retainage_to_release }}');
+
+    releaseInput.value = releaseAmount;
+
+    if (releaseAmount === 0) {
+        alert("Can't be Zero");
+        return false;
+    }
+
+    if (releaseAmount > maxRetainage) {
+        alert('Cannot release more than what we held');
+        return false;
+    }
+
+    const note = prompt('New Note');
+
+    if (note !== null) {
+        document.getElementById('release_new_note').value = note;
+    }
+}
+</script>
 {% endblock %}

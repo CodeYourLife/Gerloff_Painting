@@ -1,61 +1,189 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block nav_item_subs %}active{% endblock nav_item_subs %}
-{% block content %}
-<!DOCTYPE html>
-<html>
-<head>
 
-	<style type="text/css" class="init">
-
-	</style>
+{% block extra_head %}
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-	<script type="text/javascript" class="init">
 
+<style type="text/css" class="init">
+    .subcontractor-form-wrap {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 24px 12px;
+    }
 
-	</script>
-</head>
-<body>
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="{% url 'subcontractor_home' %}">Subcontractors</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'subcontractor_home' %}">Subcontractor Home</a></li>
-		 <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
-        <li><a class="nav-item nav-link active" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
-         <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
-			  <li><a class="nav-item nav-link" href="{% url 'subcontractor_payments' %}">Payments</a></li>
-    </ul>
-  </div>
-</nav>
+    .subcontractor-form-card {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        background: #fff;
+    }
 
-<br>
-<form action="{% url 'subcontractor_new' %}" method="post"  >
-{% csrf_token %}
+    .subcontractor-form-header {
+        border-bottom: 1px solid #e5e5e5;
+        padding: 18px 22px;
+        background: #f8f9fa;
+        border-radius: 10px 10px 0 0;
+    }
 
-<label for="subcontractor">Company Name: </label><input type= "text" name="subcontractor" id="subcontractor" placeholder="ACME Painting" size="50" required />
-<br><br>
-<label for="contact">Contact Person: </label><input type= "text" name="contact" id="contact" placeholder="John Doe" size="50" />
-<br><br>
-<label for="phone">Phone Number: </label><input type= "text" name="phone" id="phone" placeholder="" size="30" required />
-<br><br>
-<label for="email">Email: </label><input type= "email" name="email" id="email" placeholder="" size="50" required />
-<br><br>
-                    <label for="insurance_expire_date">Insurance Expire Date: </label>
-                    <input type="date" id="insurance_expire_date" name="insurance_expire_date">
-<br><br>
-<input type="checkbox" name ="is_signed_labor_agreement" id="is_signed_labor_agreement" /> <label for="is_signed_labor_agreement"> Do we have a signed labor agreement? </label>
-<br><br>
-	        <label for="notes">Type Any Notes About This Company: </label> <br>
-        <textarea id="notes" name="notes" rows="4" cols="100" ></textarea>
-<br><br>
-<input type="submit" name="Form1" value="Enter New Company" />
-    </form>
+    .subcontractor-form-header h4 {
+        margin-bottom: 4px;
+        font-weight: 700;
+    }
 
+    .subcontractor-form-body {
+        padding: 22px;
+    }
 
+    .required-label::after {
+        content: " *";
+        color: #dc3545;
+        font-weight: bold;
+    }
 
+    .form-help-text {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
 
+    @media (max-width: 576px) {
+        .subcontractor-form-wrap {
+            padding: 12px;
+        }
 
-</body>
-</html>
+        .subcontractor-form-body {
+            padding: 16px;
+        }
+
+        .subcontractor-form-header {
+            padding: 16px;
+        }
+
+        .form-action-buttons .btn {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block sub_nav %}
+    {% include 'subcontractors_nav.html' with page_label="New Subcontractor" %}
+{% endblock %}
+
+{% block content %}
+
+<div class="subcontractor-form-wrap">
+    <div class="subcontractor-form-card">
+
+        <div class="subcontractor-form-header">
+            <h4>Add New Subcontractor</h4>
+            <div class="text-muted">
+                Enter the company information and contact details below.
+            </div>
+        </div>
+
+        <form action="{% url 'subcontractor_new' %}" method="post">
+            {% csrf_token %}
+
+            <div class="subcontractor-form-body">
+
+                <div class="form-group">
+                    <label for="subcontractor" class="required-label">Company Name</label>
+                    <input type="text"
+                           name="subcontractor"
+                           id="subcontractor"
+                           placeholder="ACME Painting"
+                           class="form-control"
+                           required>
+                </div>
+
+                <div class="form-group">
+                    <label for="contact">Contact Person</label>
+                    <input type="text"
+                           name="contact"
+                           id="contact"
+                           placeholder="John Doe"
+                           class="form-control">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="phone" class="required-label">Phone Number</label>
+                        <input type="text"
+                               name="phone"
+                               id="phone"
+                               placeholder="757-555-1234"
+                               class="form-control"
+                               required>
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        <label for="email" class="required-label">Email</label>
+                        <input type="email"
+                               name="email"
+                               id="email"
+                               placeholder="name@example.com"
+                               class="form-control"
+                               required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="insurance_expire_date">Insurance Expire Date</label>
+                    <input type="date"
+                           id="insurance_expire_date"
+                           name="insurance_expire_date"
+                           class="form-control">
+                    <div class="form-help-text mt-1">
+                        Leave blank if you do not have the current certificate yet.
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               name="is_signed_labor_agreement"
+                               id="is_signed_labor_agreement"
+                               class="custom-control-input">
+                        <label for="is_signed_labor_agreement" class="custom-control-label">
+                            Signed labor agreement is on file
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Notes About This Company</label>
+                    <textarea id="notes"
+                              name="notes"
+                              rows="4"
+                              class="form-control"
+                              placeholder="Type any notes about this company..."></textarea>
+                </div>
+
+                <hr>
+
+                <div class="form-action-buttons d-flex flex-column flex-sm-row justify-content-between">
+                    <a href="{% url 'subcontractor_home' %}" class="btn btn-secondary">
+                        Cancel
+                    </a>
+
+                    <input type="submit"
+                           name="Form1"
+                           value="Add Subcontractor"
+                           class="btn btn-primary">
+                </div>
+
+            </div>
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript" class="init">
+</script>
 {% endblock %}

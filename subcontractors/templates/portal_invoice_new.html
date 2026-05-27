@@ -1,10 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block nav_item_subs %}active{% endblock nav_item_subs %}
-
-{% block content %}
-
+{% block extra_head %}
 <style>
     .invoice-page {
         max-width: 1200px;
@@ -209,25 +206,13 @@
         }
     }
 </style>
+{% endblock %}
 
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark mb-3">
-    <a class="navbar-brand sub-navbar-brand" href="#">{{ subcontract.subcontractor }}</a>
+{% block sub_nav %}
+    {% include 'portal_nav.html' with selected_sub=subcontract.subcontractor  page_label='New Invoice' %}
+{% endblock %}
 
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav">
-            <li>
-                <a class="nav-item nav-link" href="{% url 'portal' subcontract.subcontractor.id 'ALL' %}">
-                    My Contracts
-                </a>
-            </li>
-            <li>
-                <a class="nav-item nav-link active" href="#">
-                    New Invoice
-                </a>
-            </li>
-        </ul>
-    </div>
-</nav>
+{% block content %}
 
 <div class="invoice-page">
 
@@ -378,7 +363,8 @@
 
     </form>
 </div>
-
+{% endblock %}
+{% block extra_scripts %}
 <script>
     var global_to_date = 0;
     var global_total_contract = 0;

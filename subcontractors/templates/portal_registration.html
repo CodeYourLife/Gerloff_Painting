@@ -1,115 +1,165 @@
 {% extends 'base.html' %}
-{% block content %}
 {% load static %}
-<!DOCTYPE html>
-<html>
-<head>
 
-	<style type="text/css" class="init">
+{% block content %}
 
-	</style>
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
-function validate(){
-	value = event.target.value;
-	if (value != null && value != ""){
-		document.getElementById('submitBtn').removeAttribute('disabled')
-	}
-	else {
-		document.getElementById('submitBtn').setAttribute('disabled', true);
-	}
-}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-sm-10 col-md-6 col-lg-5">
 
-function verify_password(){
-	if (registration_form2.username.value == ""){
-	alert("Please enter a username")
-	return false;
-	}
-	if (registration_form2.password.value == ""){
-	alert("Please enter a password")
-	return false;
-	}
-	if (registration_form2.password.value != registration_form2.password2.value){
-	alert("Passwords must match!")
-	return false;
-	}
-	registration_form2.submit()
-}
+            {% if enter_pin %}
 
-	</script>
-</head>
-<body>
+                <form action="{% url 'connect' %}" method="post" id="registration_form" class="form-group">
+                    {% csrf_token %}
 
+                    <h4 class="text-center mb-3">Subcontractor Registration</h4>
 
-<div style="padding-top: 20%" class="container">
-	<div class="row h-100 d-flex align-items-center justify-content-center">
-		<div class="col-6">
-			{% if enter_pin %}
-				<br>
-			<form action = "{% url 'connect' %}" method = "post" id="registration_form" class="form-group">
-			{% csrf_token %}
-			<label for="pin">PIN</label>
-				<input id="pin" oninput="validate(event)" type="number" name = "pin" placeholder="Subcontractor PIN" class="form-control">
-				<small id="pinHelp" class="form-text text-muted">Please enter your PIN.</small>
-				<input type="submit" id="submitBtn" disabled name = "pin_entered" class="btn btn-primary btn-sm" value="Submit" >
-				<div class="text-danger">{{message}}</div>
-			</form>
-			{% elif register_now %}
-						<form action = "{% url 'connect' %}" method = "post" id="registration_form2" class="form-group">
-{% csrf_token %}
-				<input type="hidden" name="selected_sub" value="{{selected_sub.id}}">
-				<label for="username">Username</label>
-				<input id="username" type="text" name = "new_username" placeholder="Username" class="form-control">
-				<label for="password">Password</label>
-				<input id="password" type="text" name = "password" placeholder="Password" class="form-control">
-				<label for="password2">Re-Enter Password</label>
-				<input id="password2" type="text" placeholder="Re-Enter Password" class="form-control">
-				<button type="button" class="btn btn-primary btn-sm" onclick="verify_password()" >Submit</button>
-				<div class="text-danger">{{message}}</div>
-						</form>
-			{% else %}
-						<form action = "{% url 'connect' %}" method = "post" id="registration_form3" class="form-group">
-{% csrf_token %}
-				<div style="text-align:center"><h4>Subcontractors</h4>
-					<br>
-					<input type="submit" name="enter_pin" class="btn btn-secondary btn-sm" value="Click Here to Register" >
-					<br>
-						</form>
-					Or Sign In Below
-					<br><br>
-			<form action = "{% url 'connect' %}" method = "post" id="registration_form4" class="form-group">
-				{% csrf_token %}
-						<label for="username">Username:</label>
-						<br>
+                    <label for="pin">PIN</label>
+                    <input id="pin"
+                           oninput="validate(event)"
+                           type="number"
+                           name="pin"
+                           placeholder="Subcontractor PIN"
+                           class="form-control">
 
-				<input type="hidden" name="login_now" value="True">
-				<input type="username" name="username" id="username" placeholder="Username">
-						<br>
-						<label for="password">Password:</label>
-						<br>
-					<input type="password" name="password" id="password" placeholder="Password">
+                    <small id="pinHelp" class="form-text text-muted">
+                        Please enter your PIN.
+                    </small>
 
-						<div class="text-danger">{{message}}</div>
-						<br>
-						<input type="submit" class="btn btn-primary btn-sm" value="Sign In" >
-			</form>
-				</div>
-			{% endif %}
+                    <input type="submit"
+                           id="submitBtn"
+                           disabled
+                           name="pin_entered"
+                           class="btn btn-primary btn-sm mt-3"
+                           value="Submit">
 
-		</div>
-	</div>
+                    <div class="text-danger mt-2">{{ message }}</div>
+                </form>
+
+            {% elif register_now %}
+
+                <form action="{% url 'connect' %}" method="post" id="registration_form2" class="form-group">
+                    {% csrf_token %}
+
+                    <input type="hidden" name="selected_sub" value="{{ selected_sub.id }}">
+
+                    <h4 class="text-center mb-3">Create Account</h4>
+
+                    <label for="new_username">Username</label>
+                    <input id="new_username"
+                           type="text"
+                           name="new_username"
+                           placeholder="Username"
+                           class="form-control">
+
+                    <label for="new_password" class="mt-2">Password</label>
+                    <input id="new_password"
+                           type="password"
+                           name="password"
+                           placeholder="Password"
+                           class="form-control">
+
+                    <label for="new_password2" class="mt-2">Re-Enter Password</label>
+                    <input id="new_password2"
+                           type="password"
+                           placeholder="Re-Enter Password"
+                           class="form-control">
+
+                    <button type="button"
+                            class="btn btn-primary btn-sm mt-3"
+                            onclick="verify_password()">
+                        Submit
+                    </button>
+
+                    <div class="text-danger mt-2">{{ message }}</div>
+                </form>
+
+            {% else %}
+
+                <div class="text-center">
+                    <h4>Subcontractors</h4>
+
+                    <form action="{% url 'connect' %}" method="post" id="registration_form3" class="form-group mb-4">
+                        {% csrf_token %}
+
+                        <input type="submit"
+                               name="enter_pin"
+                               class="btn btn-secondary btn-sm"
+                               value="Click Here to Register">
+                    </form>
+
+                    <div class="mb-3">Or Sign In Below</div>
+                </div>
+
+                <form action="{% url 'connect' %}" method="post" id="registration_form4" class="form-group">
+                    {% csrf_token %}
+
+                    <input type="hidden" name="login_now" value="True">
+
+                    <label for="login_username">Username:</label>
+                    <input type="text"
+                           name="username"
+                           id="login_username"
+                           placeholder="Username"
+                           class="form-control">
+
+                    <label for="login_password" class="mt-2">Password:</label>
+                    <input type="password"
+                           name="password"
+                           id="login_password"
+                           placeholder="Password"
+                           class="form-control">
+
+                    <div class="text-danger mt-2">{{ message }}</div>
+
+                    <input type="submit"
+                           class="btn btn-primary btn-sm mt-3"
+                           value="Sign In">
+                </form>
+
+            {% endif %}
+
+        </div>
+    </div>
 </div>
 
+{% endblock %}
 
+{% block extra_scripts %}
+<script type="text/javascript" class="init">
 
-</form>
-</body>
-</html>
+function validate(event) {
+    const value = event.target.value;
 
+    if (value !== null && value !== "") {
+        document.getElementById('submitBtn').removeAttribute('disabled');
+    } else {
+        document.getElementById('submitBtn').setAttribute('disabled', true);
+    }
+}
+
+function verify_password() {
+    const username = document.getElementById("new_username").value;
+    const password = document.getElementById("new_password").value;
+    const password2 = document.getElementById("new_password2").value;
+
+    if (username === "") {
+        alert("Please enter a username");
+        return false;
+    }
+
+    if (password === "") {
+        alert("Please enter a password");
+        return false;
+    }
+
+    if (password !== password2) {
+        alert("Passwords must match!");
+        return false;
+    }
+
+    document.getElementById("registration_form2").submit();
+}
+
+</script>
 {% endblock %}

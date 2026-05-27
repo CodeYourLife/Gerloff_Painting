@@ -1,0 +1,11 @@
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'portal' selected_sub.id 'ALL' %}">{{selected_sub}}</a>
+    <div id="navbarNavDropdown2">
+      <ul class="sub-nav-list navbar-nav ">
+        <li><a class="nav-item nav-link {% if active_tab == 'home' %}active{% endif %}" href="{% url 'portal' selected_sub.id 'ALL' %}">Home</a></li>
+        {% if page_label %}
+        <li><span class="nav-item nav-link active">{{ page_label }}</span></li>
+        {% endif %}
+    </ul>
+  </div>
+</nav>
