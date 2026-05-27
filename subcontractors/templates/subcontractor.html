@@ -1,36 +1,27 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_subs %}active{% endblock nav_item_subs %}
-{% block content %}
-<!DOCTYPE html>
-<html>
-<head>
 
-	<style type="text/css" class="init">
+{% block extra_head %}
+<style type="text/css" class="init">
 
 	</style>
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
+
+{% block sub_nav %}
+    {% include 'subcontractors_nav.html' with active_tab="home" %}
+{% endblock %}
+
+{% block content %}
+
+
+
+{% endblock %}
+
+{% block extra_scripts %}
 	<script type="text/javascript" class="init">
 
 
 	</script>
-</head>
-<body>
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="{% url 'subcontractor_home' %}">Subcontractors</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link active" href="{% url 'subcontractor_home' %}">Subcontractor Home</a></li>
-		 <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
-         <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
-			  <li><a class="nav-item nav-link" href="{% url 'subcontractor_payments' %}">Payments</a></li>
-    </ul>
-  </div>
-</nav>
-
-
-</body>
-</html>
-
 {% endblock %}

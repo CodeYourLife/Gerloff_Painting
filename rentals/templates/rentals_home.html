@@ -1,14 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_rentals %}active{% endblock nav_item_rentals %}
-{% block content %}
+
 {% load render_table from django_tables2 %}
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
+{% block extra_head %}
         <style type="text/css" class="init">
 
                  .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
@@ -71,40 +66,14 @@
   .tb th { background-color: lightblue; }
 </style>
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-    <script type="text/javascript" class="init">
-window.onload = function() {
-var table = $('#equipment_table').DataTable({paging: false})
-};
-function go_to_job(jobnumber){
+{% endblock %}
 
-url = "{% url 'job_page' 'ALL' %}"
-url = url.replace('ALL', jobnumber);
-window.location.href = url
-}
-function go_to_rental(rental_id){
-url = "{% url 'rental_page' 3 "YES" %}"
-url = url.replace(3, rental_id);
-window.location.href = url
-}
+{% block sub_nav %}
+{% include 'rentals_nav.html' with active_tab="rentals_home" %}
+{% endblock %}
 
-function new_filter_now(){
-document.getElementById('filter_form').submit();
-}
+{% block content %}
 
-    </script>
-</head>
-<body>
-
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">Rentals</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link active" href="{% url 'rentals_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'rental_new' 'ALL' %}">New</a></li>
-    </ul>
-  </div>
-
-</nav>
 
     <form class="form-control form-control-sm" id="filter_form" method="get">
     <div class="container">
@@ -160,7 +129,30 @@ document.getElementById('filter_form').submit();
         </tbody>
     </table>
 </div>
-</body>
-</html>
 
+
+{% endblock %}
+
+{% block extra_scripts %}
+    <script type="text/javascript" class="init">
+window.onload = function() {
+var table = $('#equipment_table').DataTable({paging: false})
+};
+function go_to_job(jobnumber){
+
+url = "{% url 'job_page' 'ALL' %}"
+url = url.replace('ALL', jobnumber);
+window.location.href = url
+}
+function go_to_rental(rental_id){
+url = "{% url 'rental_page' 3 "YES" %}"
+url = url.replace(3, rental_id);
+window.location.href = url
+}
+
+function new_filter_now(){
+document.getElementById('filter_form').submit();
+}
+
+    </script>
 {% endblock %}

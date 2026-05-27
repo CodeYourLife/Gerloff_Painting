@@ -1,10 +1,8 @@
 {% extends 'painter_base.html' %}
 {% load static %}
 
-{% block content %}
-
+{% block extra_head %}
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-
 <style type="text/css">
 
 
@@ -44,46 +42,9 @@
     margin-right: -4px;
 }
 </style>
+{% endblock %}
 
-<script type="text/javascript" language="javascript"
-        src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-
-<script type="text/javascript">
-function complete_subcontractor_toolbox(scheduled_id) {
-    document.getElementById("scheduledtalk_id").value = scheduled_id;
-    document.getElementById("select_file").submit();
-}
-
-function restoreAccordion() {
-    let openId = localStorage.getItem("openAccordion");
-    if (openId) {
-        let collapseElement = document.getElementById(openId);
-        if (collapseElement && !collapseElement.classList.contains("show")) {
-            $(collapseElement).collapse('show');
-        }
-    }
-}
-
-document.addEventListener("DOMContentLoaded", function () {
-    restoreAccordion();
-
-    $('.collapse').on('shown.bs.collapse', function () {
-        localStorage.setItem("openAccordion", this.id);
-    });
-
-    $('.collapse').on('hidden.bs.collapse', function () {
-        localStorage.removeItem("openAccordion");
-    });
-});
-
-window.addEventListener("pageshow", function (event) {
-    restoreAccordion();
-
-    if (event.persisted) {
-        window.location.href = window.location.href;
-    }
-});
-</script>
+{% block content %}
 
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
     <a class="navbar-brand sub-navbar-brand" href="#">Subcontractor Portal</a>
@@ -360,4 +321,46 @@ window.addEventListener("pageshow", function (event) {
     </div>
 </div>
 
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript" language="javascript"
+        src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+
+<script type="text/javascript">
+function complete_subcontractor_toolbox(scheduled_id) {
+    document.getElementById("scheduledtalk_id").value = scheduled_id;
+    document.getElementById("select_file").submit();
+}
+
+function restoreAccordion() {
+    let openId = localStorage.getItem("openAccordion");
+    if (openId) {
+        let collapseElement = document.getElementById(openId);
+        if (collapseElement && !collapseElement.classList.contains("show")) {
+            $(collapseElement).collapse('show');
+        }
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    restoreAccordion();
+
+    $('.collapse').on('shown.bs.collapse', function () {
+        localStorage.setItem("openAccordion", this.id);
+    });
+
+    $('.collapse').on('hidden.bs.collapse', function () {
+        localStorage.removeItem("openAccordion");
+    });
+});
+
+window.addEventListener("pageshow", function (event) {
+    restoreAccordion();
+
+    if (event.persisted) {
+        window.location.href = window.location.href;
+    }
+});
+</script>
 {% endblock %}

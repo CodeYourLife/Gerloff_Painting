@@ -1,14 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_jobs %}active{% endblock nav_item_jobs %}
-{% block content %}
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
+
+{% block extra_head %}
         <style type="text/css" class="init">
 
 .badge {
@@ -95,184 +90,15 @@
 
     </style>
 
+{% endblock %}
+
+{% block sub_nav %}
+{% include 'jobs_nav.html' with active_tab="jobs_home" %}
+{% endblock %}
+
+{% block content %}
 
 
-    <script type="text/javascript" class="init">
-
-var original_start_date = "Test"
-
-function new_filter_now(){
-    document.getElementById('filter_form').submit();
-}
-
-function go_to_job(jobnumber){
-    url = "{% url 'job_page' 'ALL' %}"
-    url = url.replace('ALL', jobnumber);
-    window.location.href = url
-}
-
-// function compare_start_dates(originaldate){
-//     let dateObject = new Date(Date.parse(originaldate))
-//     alert(dateObject.toISOString().split('T')[0])
-//     original_start_date = dateObject.toISOString().split('T')[0]
-// }
-
-function check_if_start_date_changed(){
-    if (original_start_date != pmform2.start_date.value){
-        confirm_date_button.style.display = "none"
-        pmform2.confirm_date.checked = true
-    }
-    else {
-        confirm_date_button.style.display = "block"
-        pmform2.confirm_date.checked = false
-    }
-
-}
-
-function change_start(){
-    $.ajax({
-        method: 'GET',
-        url: '/superintendent/super_ajax',
-        data: {'confirm_date':pmform2.confirm_date.checked, 'notify':pmform2.notify_super.checked,'job_number':pmform2.job_number.value, 'start_date': pmform2.start_date.value,'is_active':pmform2.is_active.checked,'notes':pmform2.date_note.value,'row':pmform2.row_number.value},
-        success: function (data) {
-            parsedData = JSON.parse(data);
-            if (parsedData.email_sent){alert("Email Sent")}
-            else {alert("Email Not Sent")}
-            table = document.getElementById("jobs_table");
-            rows= table.rows;
-            sorted = "true"
-            for (i = 2; i < (rows.length - 1); i++) {
-                greater = moment(table.rows[i].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
-                lesser = moment(table.rows[i-1].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
-                if (greater < lesser){
-                    sorted = "false";
-                    break;
-                }
-            }
-            var clicked_row = Number(pmform2.row_number.value)
-            table.rows[clicked_row].cells[2].innerHTML = "<a href='#' >" + parsedData.new_date + "</a>"
-            if (sorted == "false"){return}
-            newdate =moment(table.rows[clicked_row].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
-            for (i = 1; i < (rows.length - 1); i++) {
-                if (i != pmform2.row_number.value){
-                    existingdate = moment(table.rows[i].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
-                    if (newdate > existingdate){break;}
-                }
-            }
-            for (j = i; j < (rows.length - 1); j++) {
-                if (j != pmform2.row_number.value){
-                    existingdate = moment(table.rows[j].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
-                    if (newdate < existingdate){break;}
-                }
-            }
-            rows[clicked_row].parentNode.insertBefore(rows[clicked_row],rows[j]);
-        }
-    })
-}
-
-function submit_new_super(){
-    $.ajax({
-        method: 'GET',
-        url: '/superintendent/super_ajax',
-        data: {'job_number':pmform3.job_number.value, 'select_super':pmform3.select_super.value},
-        success: function (data) {
-            parsedData = JSON.parse(data);
-            if (parsedData.email_sent){alert("Email Sent")}
-            else {alert("Email Not Sent")}
-            var table = $('#jobs_table').DataTable()
-            table.cell(pmform3.row_number.value,4).data(parsedData.super_first_name)
-       }
-    })
-}
-
-function populate_super_modal(jobname,superid,jobnumber,firstname,x,origin){
-    pmform3.select_super.value=superid
-    var table = $('#jobs_table').DataTable()
-    pmform3.row_number.value=table.row(x).index()
-    document.getElementById("title3").innerHTML = jobname
-    pmform3.job_number.value=jobnumber
-    pmform3.first_name.value=firstname
-}
-
-function populate_start_date_modal(jobnumber,startdate,is_active,x,origin){
-    original_start_date = pmform2.start_date.value
-    confirm_date_button.style.display = "block"
-    pmform2.confirm_date.checked = false
-    $.ajax({
-        method: 'GET',
-        url: '/superintendent/super_ajax',
-        data: {'job_number':jobnumber,'build_notes': "True"},
-        success: function (data) {
-            parsedData = JSON.parse(data);
-            let text = "<table border='1' class='table display'>"
-            text += "<thead><tr><th>Date</th><th>User</th><th>Note</th></tr></thead>"
-            parsedData.notes.forEach((element) => {
-                text += "<tr><td>" + element.date + "</td><td>" + element.user + "</td><td>" + element.note + "</td></tr>";
-            })
-            text += "</table>"
-            document.getElementById("notes_tab").innerHTML = text;
-            adjusted_date = parsedData.start_date
-            document.getElementById("title2").innerHTML = parsedData.job_name
-            pmform2.date_note.value=""
-            pmform2.start_date.value=adjusted_date
-            var table = $('#jobs_table').DataTable()
-            pmform2.row_number.value=x.rowIndex
-            pmform2.job_number.value=jobnumber
-            if (parsedData.is_active == true){
-                pmform2.is_active.checked = true
-                pmform2.confirm_date.checked = false
-                pmform2.notify_super.checked = false
-                document.getElementById("start_date_input").style.display = "none"
-                document.getElementById("confirm_date_button").style.display = "none"
-                document.getElementById("notify_super_button").style.display = "none"
-            }
-            else{
-                pmform2.is_active.checked = false
-                document.getElementById("start_date_input").style.display = "block"
-                document.getElementById("confirm_date_button").style.display = "block"
-                document.getElementById("notify_super_button").style.display = "block"
-            }
-        }
-    })
-
-}
-
-function active_button_changed(){
-    if(pmform2.is_active.checked == true){
-        pmform2.confirm_date.checked = false
-        pmform2.notify_super.checked = false
-        document.getElementById("start_date_input").style.display = "none"
-        document.getElementById("confirm_date_button").style.display = "none"
-        document.getElementById("notify_super_button").style.display = "none"
-    }
-    else{
-        document.getElementById("start_date_input").style.display = "block"
-        document.getElementById("confirm_date_button").style.display = "block"
-        document.getElementById("notify_super_button").style.display = "block"
-    }
-}
-
-window.onload = function() {
-    $.fn.dataTable.moment( 'MMM-DD-YYYY' );
-    var table = $('#jobs_table').DataTable({paging: false, aaSorting:[],columnDefs:[{targets: 5, render: $.fn.dataTable.render.number(',','.',0,'$')}]})
-};
-
-</script>
-</head>
-<body>
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-
-    <a class="navbar-brand sub-navbar-brand" href="{% url 'jobs_home' %}">Jobs</a>
-
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav ">
-            <li><a class="nav-item nav-link active" href="{% url 'jobs_home' %}">Jobs List</a></li>
-             <li><a class="nav-item nav-link" href="{% url 'super_home' 'AUTO' %}">Superintendent View</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'jobs_ready_to_close' %}">Jobs Being Closed</a></li>
-<!--            <li><a class="nav-item nav-link" href="{% url 'book_new_job' %}">Book New Job</a></li>-->
-        </ul>
-    </div>
-</nav>
 
 <!-- Modal -->
 <div class="modal fade" id="startdate-modal" tabindex="-1" role="dialog" aria-labelledby="title"
@@ -507,7 +333,172 @@ window.onload = function() {
     </table>
 </div>
 
-<script>
+
+
+
+{% endblock %}
+
+{% block extra_scripts %}
+    <script type="text/javascript" class="init">
+
+var original_start_date = "Test"
+
+function new_filter_now(){
+    document.getElementById('filter_form').submit();
+}
+
+function go_to_job(jobnumber){
+    url = "{% url 'job_page' 'ALL' %}"
+    url = url.replace('ALL', jobnumber);
+    window.location.href = url
+}
+
+// function compare_start_dates(originaldate){
+//     let dateObject = new Date(Date.parse(originaldate))
+//     alert(dateObject.toISOString().split('T')[0])
+//     original_start_date = dateObject.toISOString().split('T')[0]
+// }
+
+function check_if_start_date_changed(){
+    if (original_start_date != pmform2.start_date.value){
+        confirm_date_button.style.display = "none"
+        pmform2.confirm_date.checked = true
+    }
+    else {
+        confirm_date_button.style.display = "block"
+        pmform2.confirm_date.checked = false
+    }
+
+}
+
+function change_start(){
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'confirm_date':pmform2.confirm_date.checked, 'notify':pmform2.notify_super.checked,'job_number':pmform2.job_number.value, 'start_date': pmform2.start_date.value,'is_active':pmform2.is_active.checked,'notes':pmform2.date_note.value,'row':pmform2.row_number.value},
+        success: function (data) {
+            parsedData = JSON.parse(data);
+            if (parsedData.email_sent){alert("Email Sent")}
+            else {alert("Email Not Sent")}
+            table = document.getElementById("jobs_table");
+            rows= table.rows;
+            sorted = "true"
+            for (i = 2; i < (rows.length - 1); i++) {
+                greater = moment(table.rows[i].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+                lesser = moment(table.rows[i-1].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+                if (greater < lesser){
+                    sorted = "false";
+                    break;
+                }
+            }
+            var clicked_row = Number(pmform2.row_number.value)
+            table.rows[clicked_row].cells[2].innerHTML = "<a href='#' >" + parsedData.new_date + "</a>"
+            if (sorted == "false"){return}
+            newdate =moment(table.rows[clicked_row].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+            for (i = 1; i < (rows.length - 1); i++) {
+                if (i != pmform2.row_number.value){
+                    existingdate = moment(table.rows[i].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+                    if (newdate > existingdate){break;}
+                }
+            }
+            for (j = i; j < (rows.length - 1); j++) {
+                if (j != pmform2.row_number.value){
+                    existingdate = moment(table.rows[j].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
+                    if (newdate < existingdate){break;}
+                }
+            }
+            rows[clicked_row].parentNode.insertBefore(rows[clicked_row],rows[j]);
+        }
+    })
+}
+
+function submit_new_super(){
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'job_number':pmform3.job_number.value, 'select_super':pmform3.select_super.value},
+        success: function (data) {
+            parsedData = JSON.parse(data);
+            if (parsedData.email_sent){alert("Email Sent")}
+            else {alert("Email Not Sent")}
+            var table = $('#jobs_table').DataTable()
+            table.cell(pmform3.row_number.value,4).data(parsedData.super_first_name)
+       }
+    })
+}
+
+function populate_super_modal(jobname,superid,jobnumber,firstname,x,origin){
+    pmform3.select_super.value=superid
+    var table = $('#jobs_table').DataTable()
+    pmform3.row_number.value=table.row(x).index()
+    document.getElementById("title3").innerHTML = jobname
+    pmform3.job_number.value=jobnumber
+    pmform3.first_name.value=firstname
+}
+
+function populate_start_date_modal(jobnumber,startdate,is_active,x,origin){
+    original_start_date = pmform2.start_date.value
+    confirm_date_button.style.display = "block"
+    pmform2.confirm_date.checked = false
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'job_number':jobnumber,'build_notes': "True"},
+        success: function (data) {
+            parsedData = JSON.parse(data);
+            let text = "<table border='1' class='table display'>"
+            text += "<thead><tr><th>Date</th><th>User</th><th>Note</th></tr></thead>"
+            parsedData.notes.forEach((element) => {
+                text += "<tr><td>" + element.date + "</td><td>" + element.user + "</td><td>" + element.note + "</td></tr>";
+            })
+            text += "</table>"
+            document.getElementById("notes_tab").innerHTML = text;
+            adjusted_date = parsedData.start_date
+            document.getElementById("title2").innerHTML = parsedData.job_name
+            pmform2.date_note.value=""
+            pmform2.start_date.value=adjusted_date
+            var table = $('#jobs_table').DataTable()
+            pmform2.row_number.value=x.rowIndex
+            pmform2.job_number.value=jobnumber
+            if (parsedData.is_active == true){
+                pmform2.is_active.checked = true
+                pmform2.confirm_date.checked = false
+                pmform2.notify_super.checked = false
+                document.getElementById("start_date_input").style.display = "none"
+                document.getElementById("confirm_date_button").style.display = "none"
+                document.getElementById("notify_super_button").style.display = "none"
+            }
+            else{
+                pmform2.is_active.checked = false
+                document.getElementById("start_date_input").style.display = "block"
+                document.getElementById("confirm_date_button").style.display = "block"
+                document.getElementById("notify_super_button").style.display = "block"
+            }
+        }
+    })
+
+}
+
+function active_button_changed(){
+    if(pmform2.is_active.checked == true){
+        pmform2.confirm_date.checked = false
+        pmform2.notify_super.checked = false
+        document.getElementById("start_date_input").style.display = "none"
+        document.getElementById("confirm_date_button").style.display = "none"
+        document.getElementById("notify_super_button").style.display = "none"
+    }
+    else{
+        document.getElementById("start_date_input").style.display = "block"
+        document.getElementById("confirm_date_button").style.display = "block"
+        document.getElementById("notify_super_button").style.display = "block"
+    }
+}
+
+window.onload = function() {
+    $.fn.dataTable.moment( 'MMM-DD-YYYY' );
+    var table = $('#jobs_table').DataTable({paging: false, aaSorting:[],columnDefs:[{targets: 5, render: $.fn.dataTable.render.number(',','.',0,'$')}]})
+};
+
     var coll = document.getElementsByClassName("collapsible");
     var i;
     for (i = 0; i < coll.length; i++) {
@@ -521,9 +512,6 @@ window.onload = function() {
         }
       });
     }
+
 </script>
-
-</body>
-</html>
-
 {% endblock %}

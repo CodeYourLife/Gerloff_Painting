@@ -1,4 +1,9 @@
 {% extends 'base.html' %}
+{% load static %}
+{% block nav_item_subs %}active{% endblock nav_item_subs %}
+{% block sub_nav %}
+    {% include 'subcontractors_nav.html' with active_tab="approvers" %}
+{% endblock %}
 
 {% block content %}
 
@@ -144,19 +149,7 @@
                         {% endfor %}
                     </tbody>
                 </table>
-
-<!--
-                <form method="post" class="mb-4">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="remove_employee_from_all_standard">
-                    <input type="hidden" name="employee_id" value="{{ selected_employee.id }}">
-                    <input type="hidden" name="redirect_url" value="{{ request.get_full_path }}">
-                    <button class="btn btn-outline-danger btn-sm">
-                        REMOVE FROM ALL
-                    </button>
-                </form>
--->
-
+            
 
                 <h5>Section 2 - Subcontractor Approvers</h5>
 

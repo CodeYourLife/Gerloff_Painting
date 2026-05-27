@@ -1,33 +1,18 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_jobs %}active{% endblock nav_item_jobs %}
+
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
+
+{% block sub_nav %}
+{% include 'jobs_nav.html' with page_label="Upload Job" %}
+{% endblock %}
+
 {% block content %}
 
-
-
-<head>
-
-  <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-
-  <script>    $( ".book_new_job" ).addClass("active");  </script>
-    <script type="text/javascript">
-
-    </script>
-
-</head>
-
-  <body>
-    <div>
-    <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-        <a style="padding-left: 14px;" class="navbar-brand sub-navbar-brand" href="#">Active Jobs</a>
-        <div id="navbarNavDropdown2">
-          <ul class="sub-nav-list navbar-nav ">
-              <li><a class="nav-item nav-link" href="{% url 'jobs_home' %}">Home</a></li>
-              <li><a class="nav-item nav-link" href="{% url 'super_home' 'AUTO' %}">Superintendent View</a></li>
-              <li><a class="nav-item nav-link active" href="#">Upload New Job</a></li>
-          </ul>
-        </div>
-      </nav>
 					<form name = add_file action="{% url 'upload_new_job' %}" method="post" enctype="multipart/form-data">
         			{% csrf_token %}
 					<!--Attachment: <input type= "file" name="upload_file" id="upload_file" onchange="addAttachment(this)" placeholder="" multiple/>-->
@@ -41,14 +26,12 @@
 
 				</form>
 
-<script src=”https://code.jquery.com/jquery-3.2.1.slim.min.js” integrity=”sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN” crossorigin=”anonymous”></script>
 
-<script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js integrity=”sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q” crossorigin=”anonymous”></script>
-
-<script src=”https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js” integrity=”sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl” crossorigin=”anonymous”></script>
-</div>  
-</body>
-
-</div>
 {% endblock %}
 
+{% block extra_scripts %}
+  <script>    $( ".book_new_job" ).addClass("active");  </script>
+    <script type="text/javascript">
+
+    </script>
+{% endblock %}

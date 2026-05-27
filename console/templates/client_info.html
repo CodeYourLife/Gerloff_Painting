@@ -77,8 +77,8 @@
 		<a class="navbar-brand sub-navbar-brand" href="{% url 'admin_home' %}">Admin Page</a>
 		<div id="navbarNavDropdown2">
 		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'admin_home' %}">Home</a></li>
-        <li><a class="nav-item nav-link active" href="#">Client Info</a></li>
+        <li><a class="nav-item nav-link" href="{% url 'vendor_management' %}">Vendor Management</a></li>
+             <li><a class="nav-item nav-link active" href="{% url 'client_info' 'ALL' %}">Client Management</a></li>
     </ul>
   </div>
 </nav>
@@ -122,28 +122,29 @@
     </div>
 </div>
 
-<form name="form1" id="form1" action="{% url 'client_info' 'ALL' %}" method="post">
-    {% csrf_token %}
-    <br>
-    {% if search_client_word %}
-    <input type="text" name="search_client" id="search_client" size="40" value="{{search_client_word}}" onchange="search_now(1)" />
-    {% else %}
-    <input type="text" name="search_client" id="search_client" size="40" placeholder = "Type Client Name to Search" onchange="search_now(1)" />
-    {% endif %}
-    <br>
-    </form>
+
 <form name="form2" id="form2" action="{% url 'client_info' 'ALL' %}" method="post">
     {% csrf_token %}
-                        <select id="select_client" name="select_client" onchange="search_now(2)">
-                        {% if selected_client %}
-                            <option value="{{selected_client.id}}">{{selected_client.company}}</option>
-                        {% else %}
-                            <option value="please_select">Select Client</option>
-						{% endif %}
-                            {% for x in clients %}
-                        <option value={{x.id}}>{{x.company}}</option>
-						{% endfor %}
-                    </select>
+<div class="row">
+    <div class="col-12 col-md-6 col-lg-4">
+        <label for="select_client">Select Client</label>
+
+        <select class="form-control searchable-client"
+                id="select_client"
+                name="select_client"
+                onchange="search_now(2)">
+            {% if selected_client %}
+                <option value="{{ selected_client.id }}">{{ selected_client.company }}</option>
+            {% else %}
+                <option value="please_select">Select Client</option>
+            {% endif %}
+
+            {% for x in clients %}
+                <option value="{{ x.id }}">{{ x.company }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
 </form>
 <br>
 {% if selected_client %}
@@ -189,20 +190,26 @@
 
 <form name="form3" id="form3" action="{% url 'client_info' selected_client.id %}" method="post">
     {% csrf_token %}
+
 <br>
-    Select a project for job-specific employee roles<br>
-        {% if search_job_word %}
-    <input type="text" name="search_job" id="search_job" size="40" value="{{search_job_word}}" onchange="search_now(3)" />
-    {% else %}
-    <input type="text" name="search_job" id="search_job" size="40" placeholder = "Type Job Name to Search" onchange="search_now(3)" />
-    {% endif %}
-<br>
-     <select id="select_job" name="select_job" onchange="search_now(3)">
+<div class="row">
+    <div class="col-12 col-md-6 col-lg-4">
+        <label for="select_job">Job</label>
+
+        <select id="select_job"
+                name="select_job"
+                class="form-control searchable-job"
+                onchange="search_now(3)">
             <option value="please_select">Select a job</option>
-                            {% for x in jobs %}
-                        <option value={{x.job_number}}>{{x.job_name}}</option>
-						{% endfor %}
-         </select>
+
+            {% for x in jobs %}
+                <option value="{{ x.job_number }}">
+                    {{ x.job_number }} - {{ x.job_name }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
     </form>
 <br>
     <br>
@@ -310,6 +317,17 @@ function search_now(formnumber){
 window.onload = function() {
     var table = $('#jobs_table').DataTable({paging: false, info:false, ordering:false, searching:false})
 };
-
+    $(document).ready(function () {
+        $('.searchable-client').select2({
+            width: '100%',
+            placeholder: 'Search for a client'
+        });
+    });
+    $(document).ready(function () {
+    $('.searchable-job').select2({
+        width: '100%',
+        placeholder: 'Search for a job'
+    });
+});
 </script>
 {% endblock %}

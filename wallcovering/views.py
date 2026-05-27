@@ -1387,33 +1387,20 @@ def vendor_edit(request, vendor_id=None):
 
     if vendor_id:
         vendor = get_object_or_404(Vendors, id=vendor_id)
-        page_title = "Edit Vendor"
+        page_title = "Edit Wallcovering Vendor"
     else:
         vendor = None
-        page_title = "Add Vendor"
+        page_title = "Add Wallcovering Vendor"
 
     if request.method == "POST":
-        company_name = request.POST.get("company_name", "").strip()
-        category_id = request.POST.get("category")
-        company_phone = request.POST.get("company_phone", "").strip()
-        company_email = request.POST.get("company_email", "").strip()
-
-        category = None
-        if category_id:
-            category = get_object_or_404(
-                VendorCategory,
-                id=category_id,
-                category__in=allowed_categories
-            )
-
-        if vendor is None:
-            vendor = Vendors()
-
-        vendor.company_name = company_name
-        vendor.category = category
-        vendor.company_phone = company_phone
-        vendor.company_email = company_email
-        vendor.save()
+        if vendor:
+            company_name = request.POST.get("company_name", "").strip()
+            company_phone = request.POST.get("company_phone", "").strip()
+            company_email = request.POST.get("company_email", "").strip()
+            vendor.company_name = company_name
+            vendor.company_phone = company_phone
+            vendor.company_email = company_email
+            vendor.save()
 
         return redirect("wallcovering_home")
 

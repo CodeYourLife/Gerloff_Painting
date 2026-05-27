@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_jobs %}active{% endblock nav_item_jobs %}
-{% block content %}
 
+{% block extra_head %}
 <style type="text/css" class="init">
 .badge {
     font-size: 11px;
@@ -73,68 +73,14 @@ tr th {
     float: left !important;
 }
 </style>
-
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
 
-<script type="text/javascript">
-function go_to_job(jobnumber){
-    let url = "{% url 'job_page' 'ALL' %}";
-    url = url.replace('ALL', jobnumber);
-    window.location.href = url;
-}
+{% block sub_nav %}
+{% include 'jobs_nav.html' with active_tab="jobs_close" %}
+{% endblock %}
 
-function rowClick(e, jobnumber) {
-    // if clicked inside a button or link, do nothing
-    if (e.target.closest('a, button, textarea')) {
-        return;
-    }
-    go_to_job(jobnumber);
-}
-
-function openClosingNoteModal(e, jobId) {
-    if (e) {
-        e.stopPropagation();
-        e.preventDefault();
-    }
-
-    $('#closingNoteModal' + jobId).modal('show');
-}
-
-function testModal(e, jobId) {
-    if (e) {
-        e.stopPropagation();
-        e.preventDefault();
-    }
-
-    alert('button clicked for modal ' + jobId);
-
-    const modalEl = document.getElementById('closingNoteModal' + jobId);
-    console.log('modal element:', modalEl);
-    console.log('jquery exists:', typeof $);
-    console.log('bootstrap modal fn:', $.fn.modal);
-
-    $('#closingNoteModal' + jobId).modal('show');
-}
-
-window.onload = function() {
-    $('#jobs_table').DataTable({
-        paging: false,
-        ordering: false,
-        searching: false,
-        info: false
-    });
-};
-</script>
-
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="{% url 'jobs_home' %}">Jobs</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav">
-            <li><a class="nav-item nav-link" href="{% url 'jobs_home' %}">Jobs List</a></li>
-            <li><a class="nav-item nav-link active" href="#">Jobs Being Closed</a></li>
-        </ul>
-    </div>
-</nav>
+{% block content %}
 
 <div class="table-responsive">
     <table id="jobs_table" class="display table table-sm">
@@ -250,4 +196,56 @@ window.onload = function() {
     </div>
 </div>
 {% endfor %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+function go_to_job(jobnumber){
+    let url = "{% url 'job_page' 'ALL' %}";
+    url = url.replace('ALL', jobnumber);
+    window.location.href = url;
+}
+
+function rowClick(e, jobnumber) {
+    // if clicked inside a button or link, do nothing
+    if (e.target.closest('a, button, textarea')) {
+        return;
+    }
+    go_to_job(jobnumber);
+}
+
+function openClosingNoteModal(e, jobId) {
+    if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+    }
+
+    $('#closingNoteModal' + jobId).modal('show');
+}
+
+function testModal(e, jobId) {
+    if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+    }
+
+    alert('button clicked for modal ' + jobId);
+
+    const modalEl = document.getElementById('closingNoteModal' + jobId);
+    console.log('modal element:', modalEl);
+    console.log('jquery exists:', typeof $);
+    console.log('bootstrap modal fn:', $.fn.modal);
+
+    $('#closingNoteModal' + jobId).modal('show');
+}
+
+window.onload = function() {
+    $('#jobs_table').DataTable({
+        paging: false,
+        ordering: false,
+        searching: false,
+        info: false
+    });
+};
+</script>
 {% endblock %}

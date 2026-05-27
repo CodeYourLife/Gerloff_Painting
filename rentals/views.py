@@ -16,7 +16,7 @@ from employees.models import *
 from django.http import HttpResponse
 from console.misc import Email
 from equipment.filters import RentalsFilter
-
+from wallcovering.views import get_next_po_number
 
 # Create your views here.
 
@@ -42,54 +42,121 @@ def rental_new(request, jobnumber):
     if jobnumber == "ALL":
         jobs = Jobs.objects.filter(is_closed=False).order_by('job_name')
     else:
-        jobs = Jobs.objects.filter(job_number=id).order_by('job_name')
-    vendors = Vendors.objects.filter(category__category="Equipment Rental")
-    pms_json = json.dumps(list(VendorContact.objects.values('name', 'id', 'company')), cls=DjangoJSONEncoder)
-    if request.method == 'POST':
-        if 'search_job' in request.POST:
-            jobs = Jobs.objects.filter(is_closed=False, job_name__icontains=request.POST['search_job']).order_by(
-                'job_name')
-            return render(request, "rental_new.html", {'jobs': jobs, 'vendors': vendors, 'data': pms_json})
-        else:
-            if request.POST['select_company'] == 'add_new':
-                vendor = Vendors.objects.create(company_name=request.POST['new_client'],
-                                                category=VendorCategory.objects.get(category="Equipment Rental"),
-                                                company_phone=request.POST['new_client_phone'],
-                                                company_email=request.POST['new_client_bid_email'])
-            else:
-                vendor = Vendors.objects.get(id=request.POST['select_company'])
-                vendor.company_name = request.POST['new_client']
-                vendor.company_phone = request.POST['new_client_phone']
-                vendor.company_email = request.POST['new_client_bid_email']
-                vendor.save()
-            rental = Rentals.objects.create(company=vendor,
-                                            job_number=Jobs.objects.get(job_number=request.POST['select_job']),
-                                            item=request.POST['item'], on_rent_date=request.POST['on_rent_date'],
-                                            notes=request.POST['notes'])
-            if request.POST['select_pm'] != 'no_rep':
-                if request.POST['select_pm'] == 'add_new':
-                    rental.rep = VendorContact.objects.create(company=vendor, name=request.POST['new_pm'],
-                                                              email=request.POST['new_pm_email'],
-                                                              phone=request.POST['new_pm_phone'])
-                else:
-                    rental.rep = VendorContact.objects.get(id=request.POST['select_pm'])
-                    rental.rep.name = request.POST['new_pm']
-                    rental.rep.phone = request.POST['new_pm_phone']
-                    rental.rep.email = request.POST['new_pm_email']
-                    rental.rep.save()
+        jobs = Jobs.objects.filter(job_number=jobnumber).order_by('job_name')
 
-            if request.POST['purchase_order'] != '': rental.purchase_order = request.POST['purchase_order']
-            if request.POST['notes'] != '': rental.notes = request.POST['notes']
-            if request.POST['day_price'] != '': rental.day_price = request.POST['day_price']
-            if request.POST['week_price'] != '': rental.week_price = request.POST['week_price']
-            if request.POST['month_price'] != '': rental.month_price = request.POST['month_price']
-            rental.save()
-            RentalNotes.objects.create(rental=rental, date=date.today(), user=Employees.objects.get(user=request.user),
-                                       note="New Rental Added. " + request.POST['notes'])
-            createfolder("rentals/" + str(rental.id))
-            return redirect("rental_page", id=rental.id, reverse='NO')
-    else:
-        return render(request, "rental_new.html", {'jobs': jobs, 'vendors': vendors, 'data': pms_json})
+    vendors = Vendors.objects.filter(
+        category__category="Equipment Rental"
+    ).order_by("company_name")
+
+    vendor_data = []
+
+    for vendor in vendors:
+        vendor_data.append({
+            "id": vendor.id,
+            "company_name": vendor.company_name or "",
+            "company_phone": vendor.company_phone or "",
+            "company_email": vendor.company_email or "",
+            "contacts": [
+                {
+                    "id": contact.id,
+                    "name": contact.name or "",
+                    "phone": contact.phone or "",
+                    "email": contact.email or "",
+                }
+                for contact in VendorContact.objects.filter(company=vendor).order_by("name")
+            ]
+        })
+
+    equipment_rental_category = VendorCategory.objects.get(category="Equipment Rental")
+
+    if request.method == 'POST':
+
+        selected_company = request.POST.get('select_company', '')
+        selected_job = request.POST.get('select_job', '')
+        selected_rep = request.POST.get('select_pm', 'no_rep')
+
+        if selected_company == 'add_new':
+            equipment_rental_category = VendorCategory.objects.get(
+                category="Equipment Rental"
+            )
+
+            vendor = Vendors.objects.create(
+                company_name=request.POST.get('new_client', '').strip(),
+                category=equipment_rental_category,
+                company_phone=request.POST.get('new_client_phone', '').strip(),
+                company_email=request.POST.get('new_client_bid_email', '').strip()
+            )
+
+        else:
+            vendor = Vendors.objects.get(id=selected_company)
+
+            # Do NOT overwrite existing vendor info here.
+            # Existing vendor info is only displayed on the page.
+
+        po_number_int = get_next_po_number()
+        po_number = f"TR{po_number_int}"
+
+        rental = Rentals.objects.create(
+            company=vendor,
+            job_number=Jobs.objects.get(job_number=selected_job),
+            item=request.POST.get('item', '').strip(),
+            on_rent_date=request.POST.get('on_rent_date'),
+            notes=request.POST.get('notes', '').strip(),
+            purchase_order=po_number
+        )
+
+        if selected_rep != 'no_rep':
+
+            if selected_rep == 'add_new':
+                rental.rep = VendorContact.objects.create(
+                    company=vendor,
+                    name=request.POST.get('new_pm', '').strip(),
+                    email=request.POST.get('new_pm_email', '').strip(),
+                    phone=request.POST.get('new_pm_phone', '').strip()
+                )
+
+            else:
+                rep = VendorContact.objects.get(
+                    id=selected_rep,
+                    company=vendor
+                )
+
+                # This allows the page to populate rep info and save any edits.
+                rep.name = request.POST.get('new_pm', rep.name).strip()
+                rep.phone = request.POST.get('new_pm_phone', rep.phone).strip()
+                rep.email = request.POST.get('new_pm_email', rep.email).strip()
+                rep.save()
+
+                rental.rep = rep
+
+        if request.POST.get('day_price', '').strip() != '':
+            rental.day_price = request.POST.get('day_price').strip()
+
+        if request.POST.get('week_price', '').strip() != '':
+            rental.week_price = request.POST.get('week_price').strip()
+
+        if request.POST.get('month_price', '').strip() != '':
+            rental.month_price = request.POST.get('month_price').strip()
+
+        rental.save()
+
+        RentalNotes.objects.create(
+            rental=rental,
+            date=date.today(),
+            user=Employees.objects.get(user=request.user),
+            note="New Rental Added. " + request.POST.get('notes', '').strip()
+        )
+
+        createfolder("rentals/" + str(rental.id))
+
+        return redirect("rental_page", id=rental.id, reverse='NO')
+
+    return render(request, "rental_new.html", {
+        'jobs': jobs,
+        'vendors': vendors,
+        'vendor_data': json.dumps(vendor_data, cls=DjangoJSONEncoder),
+        'equipment_rental_category': equipment_rental_category,
+    })
 
 
 def rental_ajax(request):

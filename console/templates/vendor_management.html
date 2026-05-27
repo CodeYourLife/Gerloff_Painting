@@ -1,0 +1,562 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+
+<style>
+    .vendor-page {
+        padding-top: 24px;
+        padding-bottom: 40px;
+    }
+
+    .vendor-card {
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        margin-bottom: 1rem;
+    }
+
+    .vendor-card .card-header {
+        background: #f8f9fa;
+        font-weight: 700;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .section-help {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .conflict-table th {
+        background: #f8f9fa;
+    }
+
+    @media (max-width: 575.98px) {
+        .vendor-page {
+            padding-top: 12px;
+        }
+
+        .vendor-card .card-body {
+            padding: 1rem;
+        }
+
+        .btn-block-mobile {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+
+
+{% block content %}
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'admin_home' %}">Admin Home</a>
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav ">
+            <li><a class="nav-item nav-link active" href="{% url 'vendor_management' %}">Vendor Management</a></li>
+             <li><a class="nav-item nav-link" href="{% url 'client_info' 'ALL' %}">Client Management</a></li>
+        </ul>
+    </div>
+</nav>
+
+
+<div class="container vendor-page">
+
+    <div class="card vendor-card">
+        <div class="card-body">
+            <h4 class="mb-1">Vendor Management</h4>
+            <div class="section-help">
+                Select a category, merge duplicate vendors, edit vendor information, and manage vendor contacts.
+            </div>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+{% if not selected_vendor %}
+    <!-- Category Selection -->
+    <div class="card vendor-card">
+
+        <div class="card-header">
+            Step 1 - Select Vendor Category
+        </div>
+
+        <div class="card-body">
+            <form method="get">
+                <div class="form-group">
+                    <label for="category_id">Vendor Category</label>
+
+                    <select class="form-control"
+                            name="category_id"
+                            id="category_id"
+                            onchange="this.form.submit()">
+                        <option value="">Please Select</option>
+
+                        {% for category in categories %}
+                            <option value="{{ category.id }}"
+                                {% if selected_category_id|stringformat:"s" == category.id|stringformat:"s" %}selected{% endif %}>
+                                {{ category.category }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endif %}
+    {% if selected_category %}
+
+        <!-- Merge Vendor Conflicts -->
+        {% if vendor_merge_conflicts %}
+            <div class="card vendor-card border-warning">
+                <div class="card-header bg-warning">
+                    Vendor Merge Conflicts
+                </div>
+
+                <div class="card-body">
+                    <p>
+                        You are merging
+                        <strong>{{ merge_old_vendor.company_name }}</strong>
+                        into
+                        <strong>{{ merge_new_vendor.company_name }}</strong>.
+                    </p>
+
+                    <div class="alert alert-info">
+                        <strong>References that will be moved:</strong><br>
+                        Rentals: {{ old_vendor_reference_counts.rentals }}<br>
+                        Wallcoverings: {{ old_vendor_reference_counts.wallcoverings }}<br>
+                        Inventory Purchased From: {{ old_vendor_reference_counts.inventory_purchased_from }}<br>
+                        Inventory Service Vendor: {{ old_vendor_reference_counts.inventory_service_vendor }}<br>
+                        Orders: {{ old_vendor_reference_counts.orders }}<br>
+                        Vendor Contacts: {{ old_vendor_reference_counts.vendor_contacts }}<br>
+                    </div>
+
+                    <table class="table table-sm table-bordered conflict-table">
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Vendor Being Removed</th>
+                                <th>Vendor Being Kept</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for conflict in vendor_merge_conflicts %}
+                                <tr>
+                                    <td>{{ conflict.field }}</td>
+                                    <td>{{ conflict.old_value|default:"" }}</td>
+                                    <td>{{ conflict.new_value|default:"" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="merge_vendors">
+                        <input type="hidden" name="category_id" value="{{ selected_category.id }}">
+                        <input type="hidden" name="old_vendor_id" value="{{ merge_old_vendor.id }}">
+                        <input type="hidden" name="new_vendor_id" value="{{ merge_new_vendor.id }}">
+                        <input type="hidden" name="confirm_merge" value="YES">
+
+                        <button type="submit" class="btn btn-warning btn-sm">
+                            Confirm Merge Anyway
+                        </button>
+
+                        <a href="{% url 'vendor_management' %}?category_id={{ selected_category.id }}"
+                           class="btn btn-secondary btn-sm">
+                            Cancel
+                        </a>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+        {% if not selected_vendor %}
+        <!-- Option 1 - Combine Companies -->
+        <div class="card vendor-card">
+            <div class="card-header">
+                Option 1 - Combine Companies
+            </div>
+
+            <div class="card-body">
+                <p class="section-help">
+                    Use this when the same vendor was entered twice. All foreign keys will be moved from the vendor being removed to the vendor being kept.
+                </p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="merge_vendors">
+                    <input type="hidden" name="category_id" value="{{ selected_category.id }}">
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="old_vendor_id">Vendor to Remove</label>
+                                <select class="form-control" name="old_vendor_id" id="old_vendor_id" required>
+                                    <option value="">Please Select</option>
+
+                                    {% for vendor in vendors %}
+                                        <option value="{{ vendor.id }}">
+                                            {{ vendor.company_name }} - {{ vendor.company_phone|default:"No Phone" }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="new_vendor_id">Vendor to Keep</label>
+                                <select class="form-control" name="new_vendor_id" id="new_vendor_id" required>
+                                    <option value="">Please Select</option>
+
+                                    {% for vendor in vendors %}
+                                        <option value="{{ vendor.id }}">
+                                            {{ vendor.company_name }} - {{ vendor.company_phone|default:"No Phone" }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger btn-sm">
+                        Combine Companies
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+        <!-- Option 2 - Select Vendor -->
+        <div class="card vendor-card">
+            <div class="card-header">
+                Option 2 - Edit Vendor
+            </div>
+
+            <div class="card-body">
+                <form method="get">
+                    <input type="hidden" name="category_id" value="{{ selected_category.id }}">
+
+                    <div class="form-group">
+                        <label for="vendor_id">Select Vendor</label>
+
+                        <select class="form-control"
+                                id="vendor_id"
+                                name="vendor_id"
+                                onchange="this.form.submit()">
+                            <option value="">Please Select</option>
+
+                            {% for vendor in vendors %}
+                                <option value="{{ vendor.id }}"
+                                    {% if selected_vendor_id|stringformat:"s" == vendor.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ vendor.company_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if selected_vendor %}
+
+            <!-- Edit Vendor Info -->
+            <div class="card vendor-card">
+                <div class="card-header">
+                    Edit Vendor Information
+                </div>
+
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_vendor">
+                        <input type="hidden" name="category_id" value="{{ selected_category.id }}">
+                        <input type="hidden" name="vendor_id" value="{{ selected_vendor.id }}">
+
+                        <div class="form-group">
+                            <label for="company_name">Company Name</label>
+                            <input class="form-control"
+                                   type="text"
+                                   name="company_name"
+                                   id="company_name"
+                                   value="{{ selected_vendor.company_name|default:'' }}"
+                                   required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="company_phone">Phone</label>
+                            <input class="form-control"
+                                   type="text"
+                                   name="company_phone"
+                                   id="company_phone"
+                                   value="{{ selected_vendor.company_phone|default:'' }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="company_email">Email</label>
+                            <input class="form-control"
+                                   type="email"
+                                   name="company_email"
+                                   id="company_email"
+                                   value="{{ selected_vendor.company_email|default:'' }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Category</label>
+                            <div class="form-control bg-light text-muted">
+                                {{ selected_vendor.category.category|default:"No Category" }}
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            Save Vendor
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Contact Merge Conflicts -->
+            {% if contact_merge_conflicts %}
+                <div class="card vendor-card border-warning">
+                    <div class="card-header bg-warning">
+                        Contact Merge Conflicts
+                    </div>
+
+                    <div class="card-body">
+                        <p>
+                            You are merging
+                            <strong>{{ merge_old_contact.name }}</strong>
+                            into
+                            <strong>{{ merge_new_contact.name }}</strong>.
+                        </p>
+
+                        <div class="alert alert-info">
+                            <strong>References that will be moved:</strong><br>
+                            Rentals: {{ old_contact_reference_counts.rentals }}
+                        </div>
+
+                        <table class="table table-sm table-bordered conflict-table">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Contact Being Removed</th>
+                                    <th>Contact Being Kept</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for conflict in contact_merge_conflicts %}
+                                    <tr>
+                                        <td>{{ conflict.field }}</td>
+                                        <td>{{ conflict.old_value|default:"" }}</td>
+                                        <td>{{ conflict.new_value|default:"" }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="merge_vendor_contacts">
+                            <input type="hidden" name="category_id" value="{{ selected_category.id }}">
+                            <input type="hidden" name="vendor_id" value="{{ selected_vendor.id }}">
+                            <input type="hidden" name="old_contact_id" value="{{ merge_old_contact.id }}">
+                            <input type="hidden" name="new_contact_id" value="{{ merge_new_contact.id }}">
+                            <input type="hidden" name="confirm_merge" value="YES">
+
+                            <button type="submit" class="btn btn-warning btn-sm">
+                                Confirm Merge Anyway
+                            </button>
+
+                            <a href="{% url 'vendor_management' %}?category_id={{ selected_category.id }}&vendor_id={{ selected_vendor.id }}"
+                               class="btn btn-secondary btn-sm">
+                                Cancel
+                            </a>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Edit / Add Contact -->
+            <div class="card vendor-card">
+                <div class="card-header">
+                    Edit / Add Vendor Contact
+                </div>
+
+                <div class="card-body">
+                    <form method="post" id="contactForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="save_vendor_contact">
+                        <input type="hidden" name="category_id" value="{{ selected_category.id }}">
+                        <input type="hidden" name="vendor_id" value="{{ selected_vendor.id }}">
+
+                        <div class="form-group">
+                            <label for="contact_id">Vendor Contact</label>
+                            <select class="form-control" name="contact_id" id="contact_id">
+                                <option value="add_new">Add New</option>
+
+                                {% for contact in vendor_contacts %}
+                                    <option value="{{ contact.id }}"
+                                            data-name="{{ contact.name|default:'' }}"
+                                            data-phone="{{ contact.phone|default:'' }}"
+                                            data-email="{{ contact.email|default:'' }}">
+                                        {{ contact.name }} - {{ contact.email|default:"No Email" }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contact_name">Name</label>
+                            <input class="form-control"
+                                   type="text"
+                                   name="contact_name"
+                                   id="contact_name"
+                                   required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contact_phone">Phone</label>
+                            <input class="form-control"
+                                   type="text"
+                                   name="contact_phone"
+                                   id="contact_phone">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contact_email">Email</label>
+                            <input class="form-control"
+                                   type="email"
+                                   name="contact_email"
+                                   id="contact_email">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            Save Contact
+                        </button>
+
+                        <button type="submit"
+                                class="btn btn-danger btn-sm"
+                                onclick="return submitDeleteContact();">
+                            Delete Contact
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Combine Vendor Contacts -->
+            <div class="card vendor-card">
+                <div class="card-header">
+                    Combine Vendor Contacts
+                </div>
+
+                <div class="card-body">
+                    <p class="section-help">
+                        Use this when the same person was entered twice. All foreign keys will be moved from the contact being removed to the contact being kept.
+                    </p>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="merge_vendor_contacts">
+                        <input type="hidden" name="category_id" value="{{ selected_category.id }}">
+                        <input type="hidden" name="vendor_id" value="{{ selected_vendor.id }}">
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="old_contact_id">Contact to Remove</label>
+                                    <select class="form-control" name="old_contact_id" id="old_contact_id" required>
+                                        <option value="">Please Select</option>
+
+                                        {% for contact in vendor_contacts %}
+                                            <option value="{{ contact.id }}">
+                                                {{ contact.name }} - {{ contact.email|default:"No Email" }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="new_contact_id">Contact to Keep</label>
+                                    <select class="form-control" name="new_contact_id" id="new_contact_id" required>
+                                        <option value="">Please Select</option>
+
+                                        {% for contact in vendor_contacts %}
+                                            <option value="{{ contact.id }}">
+                                                {{ contact.name }} - {{ contact.email|default:"No Email" }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            Combine Contacts
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        {% endif %}
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function clearContactForm() {
+        document.getElementById("contact_name").value = "";
+        document.getElementById("contact_phone").value = "";
+        document.getElementById("contact_email").value = "";
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        var contactSelect = document.getElementById("contact_id");
+
+        if (contactSelect) {
+            clearContactForm();
+
+            contactSelect.addEventListener("change", function () {
+                var selectedOption = contactSelect.options[contactSelect.selectedIndex];
+
+                if (contactSelect.value === "add_new") {
+                    clearContactForm();
+                    return;
+                }
+
+                document.getElementById("contact_name").value = selectedOption.dataset.name || "";
+                document.getElementById("contact_phone").value = selectedOption.dataset.phone || "";
+                document.getElementById("contact_email").value = selectedOption.dataset.email || "";
+            });
+        }
+    });
+
+    function submitDeleteContact() {
+        var contactSelect = document.getElementById("contact_id");
+
+        if (!contactSelect || contactSelect.value === "add_new") {
+            alert("Please select an existing contact to delete.");
+            return false;
+        }
+
+        if (!confirm("Are you sure you want to delete this vendor contact? Any references to this contact will be cleared first.")) {
+            return false;
+        }
+
+        document.querySelector('#contactForm input[name="action"]').value = "delete_vendor_contact";
+        return true;
+    }
+</script>
+{% endblock %}

@@ -1,14 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block nav_item_subs %}active{% endblock nav_item_subs %}
-{% block content %}
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
+
+{% block extra_head %}
         <style type="text/css" class="init">
         .mobile-card {
     border: 1px solid #d6d6d6;
@@ -201,92 +195,15 @@
 
 
     </style>
-
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
 
-    <script type="text/javascript" class="init">
-        $(document).ready(function () {
-            var table = $('#sub_table').DataTable({paging: false, searching: false, ordering:false});
-            var table = $('#sub2_table').DataTable({
-    paging: false,
-    searching: false,
-    ordering: false,
-    info: false
-});
+{% block sub_nav %}
+    {% include 'portal_nav.html' with selected_sub=selected_sub active_tab='home' %}
+{% endblock %}
 
+{% block content %}
 
-            document.getElementById("hide_this").style.display = "none"
-        })
-function populate_invoices_modal(invoice_id){
-    $.ajax({
-        method: 'GET',
-        url: '/superintendent/super_ajax',
-        data: {'invoice_id':invoice_id},
-        success: function (data) {
-           parsedData = JSON.parse(data);
-            let text = "<table border='1' class='table display'>"
-<!--            text += "<thead><tr><th>Item</th><th>Billed</th></tr></thead>"-->
-<!--            parsedData.sovs.forEach((element) => {-->
-<!--                if (element.unit == "Lump Sum"){-->
-<!--                text += "<tr><td>" + element.item + "</td><td>$" + element.quantity +"</td></tr>";-->
-<!--                }-->
-<!--                else{-->
-<!--                text += "<tr><td>" + element.item + " " + element.unit + "</td><td>" + element.quantity + " " + element.unit + "</td></tr>";-->
-<!--                }-->
-<!--            })-->
-
-			text += "<thead><tr><th>Item</th><th>Original</th><th>Final</th></tr></thead>"
-            parsedData.sovs.forEach((element) => {
-                if (element.unit == "Lump Sum"){
-                	text += "<tr><td>" + element.item + "</td><td>$" + element.original +"</td><td>$" + element.billed +"</td></tr>";
-                }
-                else{
-                	text += "<tr><td>" + element.item + "</td><td>" + element.original + " " + element.unit + "</td><td>" + element.billed + " " + element.unit + "</td></tr>";
-                }
-            })
-            text += "</table>"
-            document.getElementById("invoice_info").innerHTML = text;
-			text=""
-			text = "<table border='1' class='table display'>"
-			text += "<thead><tr><th>Date</th><th>User</th><th>Note</th></tr></thead>"
-            parsedData.notes.forEach((element) => {
-                text += "<tr><td>" + element.date + "</td><td>" + element.user +"</td><td>" + element.note +"</td></tr>";
-            })
-            text += "</table>"
-            document.getElementById("invoice_notes_info").innerHTML = text;
-            document.getElementById("title3").innerHTML = "Invoice #" + parsedData.invoice_number;
-        }
-    })
-}
-function check_pending(){
-if ('{{pending_invoices_exist}}'){
-alert("You cannot enter new invoice because you have one pending")
-return false;
-}
-}
-function check_pending2(){
-if ('{{pending_invoices_exist}}'){
-	alert("You cannot enter new invoice because you have one pending")
-	return false;
-}
-document.getElementById("retainage_request").style.display = "none"
-document.getElementById("Form3").style.display = "none"
-document.getElementById("hide_this").style.display = "block"
-}
-
-    </script>
-</head>
-<body>
-
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="#">{{selected_sub}}</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'portal' selected_sub.id 'ALL' %}">My Contracts</a></li>
-    </ul>
-  </div>
-
-</nav>
 <div class="modal fade" id="invoices-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -706,7 +623,79 @@ Showing Invoice Information for {{last_saturday}} - {{this_friday}}
 </div>
 </div>
 {% endif %}
-</body>
-</html>
 
+
+{% endblock %}
+{% block extra_scripts %}
+    <script type="text/javascript" class="init">
+        $(document).ready(function () {
+            var table = $('#sub_table').DataTable({paging: false, searching: false, ordering:false});
+            var table = $('#sub2_table').DataTable({
+    paging: false,
+    searching: false,
+    ordering: false,
+    info: false
+});
+
+
+            document.getElementById("hide_this").style.display = "none"
+        })
+function populate_invoices_modal(invoice_id){
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'invoice_id':invoice_id},
+        success: function (data) {
+           parsedData = JSON.parse(data);
+            let text = "<table border='1' class='table display'>"
+<!--            text += "<thead><tr><th>Item</th><th>Billed</th></tr></thead>"-->
+<!--            parsedData.sovs.forEach((element) => {-->
+<!--                if (element.unit == "Lump Sum"){-->
+<!--                text += "<tr><td>" + element.item + "</td><td>$" + element.quantity +"</td></tr>";-->
+<!--                }-->
+<!--                else{-->
+<!--                text += "<tr><td>" + element.item + " " + element.unit + "</td><td>" + element.quantity + " " + element.unit + "</td></tr>";-->
+<!--                }-->
+<!--            })-->
+
+			text += "<thead><tr><th>Item</th><th>Original</th><th>Final</th></tr></thead>"
+            parsedData.sovs.forEach((element) => {
+                if (element.unit == "Lump Sum"){
+                	text += "<tr><td>" + element.item + "</td><td>$" + element.original +"</td><td>$" + element.billed +"</td></tr>";
+                }
+                else{
+                	text += "<tr><td>" + element.item + "</td><td>" + element.original + " " + element.unit + "</td><td>" + element.billed + " " + element.unit + "</td></tr>";
+                }
+            })
+            text += "</table>"
+            document.getElementById("invoice_info").innerHTML = text;
+			text=""
+			text = "<table border='1' class='table display'>"
+			text += "<thead><tr><th>Date</th><th>User</th><th>Note</th></tr></thead>"
+            parsedData.notes.forEach((element) => {
+                text += "<tr><td>" + element.date + "</td><td>" + element.user +"</td><td>" + element.note +"</td></tr>";
+            })
+            text += "</table>"
+            document.getElementById("invoice_notes_info").innerHTML = text;
+            document.getElementById("title3").innerHTML = "Invoice #" + parsedData.invoice_number;
+        }
+    })
+}
+function check_pending(){
+if ('{{pending_invoices_exist}}'){
+alert("You cannot enter new invoice because you have one pending")
+return false;
+}
+}
+function check_pending2(){
+if ('{{pending_invoices_exist}}'){
+	alert("You cannot enter new invoice because you have one pending")
+	return false;
+}
+document.getElementById("retainage_request").style.display = "none"
+document.getElementById("Form3").style.display = "none"
+document.getElementById("hide_this").style.display = "block"
+}
+
+    </script>
 {% endblock %}

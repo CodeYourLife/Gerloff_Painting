@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
-{% block content %}
+{% block nav_item_subs %}active{% endblock nav_item_subs %}
+{% block extra_head %}
 <style>
  .select2-results__option {
     font-size: 13px;
@@ -9,15 +10,21 @@
     font-size: 13px;
 }
 </style>
+{% endblock %}
+{% block sub_nav %}
 {% if user.is_active %}
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand" href="{% url 'employees_home' %}">Go Back</a>
-</nav>
+
+    {% include 'subcontractors_nav.html' with page_label="Employee Management" %}
+
+
 {% else %}
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand" href="{% url 'portal' selected_sub.id 'ALL' %}">Go Back Home</a>
-</nav>
+
+    {% include 'portal_nav.html' with selected_sub=selected_sub page_label='Employee Management' %}
+
 {% endif %}
+{% endblock %}
+
+{% block content %}
 
 
 <div class="container mt-3">

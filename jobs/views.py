@@ -111,253 +111,368 @@ def change_gpsuper(request, jobnumber, previous):
                   {'jobs': jobs, 'previous_page': previous_page, 'employees': employees})
 
 
+def get_client_employees_ajax(request):
+    client_id = request.GET.get('client_id')
+
+    if not client_id:
+        return JsonResponse({
+            'success': False,
+            'employees': []
+        })
+
+    employees = ClientEmployees.objects.filter(
+        id_id=client_id,
+        is_active=True
+    ).order_by('name')
+
+    employee_list = []
+
+    for employee in employees:
+        employee_list.append({
+            'person_pk': employee.person_pk,
+            'name': employee.name,
+            'email': employee.email or '',
+            'has_email': bool(employee.email),
+        })
+
+    return JsonResponse({
+        'success': True,
+        'employees': employee_list
+    })
+
+
+
+
+
+def get_client_employee_ajax(request):
+    person_pk = request.GET.get('person_pk')
+
+    if not person_pk:
+        return JsonResponse({
+            'success': False,
+            'error': 'Missing client employee.'
+        })
+
+    try:
+        client_employee = ClientEmployees.objects.get(person_pk=person_pk)
+    except ClientEmployees.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Client employee not found.'
+        })
+
+    return JsonResponse({
+        'success': True,
+        'name': client_employee.name or '',
+        'phone': client_employee.phone or '',
+        'email': client_employee.email or '',
+    })
+
 @login_required(login_url='/accounts/login')
 def update_job_info(request, jobnumber):
     send_data = {}
+
     selectedjob = Jobs.objects.get(job_number=jobnumber)
     send_data['selectedjob'] = selectedjob
+
     allclients = Clients.objects.order_by('company')
     send_data['allclients'] = allclients
+
     pms = ClientEmployees.objects.values('name', 'id', 'person_pk')
-    estimators = Employees.objects.exclude(job_title__description='Painter')
-    send_data['estimators'] = estimators
-    superintendents = Employees.objects.exclude(job_title__description='Painter')
-    send_data['superintendents'] = superintendents
-    notes = JobNotes.objects.filter(job_number=jobnumber)
-    # send_employees = Employees.objects.filter(job_title="Superintendent")[0:2000]
-    send_data['notes'] = notes
     prices_json = json.dumps(list(pms), cls=DjangoJSONEncoder)
     send_data['data'] = prices_json
+
+    estimators = Employees.objects.exclude(job_title__description='Painter')
+    send_data['estimators'] = estimators
+
+    superintendents = Employees.objects.exclude(job_title__description='Painter')
+    send_data['superintendents'] = superintendents
+
+    notes = JobNotes.objects.filter(job_number=jobnumber)
+    send_data['notes'] = notes
+
     selectedclient = Clients.objects.get(id=selectedjob.client.id)
-    pms_filter = ClientEmployees.objects.filter(id=selectedclient.id,is_active=True).order_by('name')
+    pms_filter = ClientEmployees.objects.filter(
+        id=selectedclient.id,
+        is_active=True
+    ).order_by('name')
     send_data['pms_filter'] = pms_filter
-    startdate = selectedjob.start_date.strftime("%Y") + "-" + selectedjob.start_date.strftime(
-        "%m") + "-" + selectedjob.start_date.strftime("%d")
+
+    if selectedjob.start_date:
+        startdate = selectedjob.start_date.strftime("%Y-%m-%d")
+    else:
+        startdate = ""
     send_data['startdate'] = startdate
+
+    def checkbox_value(name):
+        return name in request.POST
+
+    def blank_to_none(value):
+        value = request.POST.get(value, "").strip()
+        return value if value != "" else None
+
     if request.method == 'POST':
-        if selectedjob.job_name != request.POST['job_name']:
-            selectedjob.job_name = request.POST['job_name']
-        if selectedjob.address != request.POST['address']:
-            selectedjob.address = request.POST['address']
-        if selectedjob.city != request.POST['city']:
-            selectedjob.city = request.POST['city']
-        if selectedjob.state != request.POST['state']:
-            selectedjob.state = request.POST['state']
-        if 'off_hours' in request.POST:
-            selectedjob.is_off_hours = True
-        else:
-            selectedjob.is_off_hours = False
-        if 'on_base2' in request.POST:
-            selectedjob.is_on_base = True
-        else:
-            selectedjob.is_on_base = False
-        if 'is_painting_subbed' in request.POST:
-            selectedjob.is_painting_subbed = True
-        else:
-            selectedjob.is_painting_subbed = False
-        if 'is_work_order_done' in request.POST:
-            selectedjob.is_work_order_done = True
-        else:
-            selectedjob.is_work_order_done = False
-        if 'is_wage_rate' in request.POST:
-            selectedjob.is_wage_scale = True
-        else:
-            selectedjob.is_wage_scale = False
-        if request.POST['brush_role'] == "":
-            if selectedjob.brush_role is not None:
-                selectedjob.brush_role = None
-        else:
-            if selectedjob.brush_role != request.POST['brush_role']:
-                selectedjob.brush_role = request.POST['brush_role']
-        if request.POST['spray_scale'] == "":
-            if selectedjob.spray_scale is not None:
-                selectedjob.spray_scale = None
-        else:
-            if selectedjob.spray_scale != request.POST['spray_scale']:
-                selectedjob.spray_scale = request.POST['spray_scale']
-        # if 'is_closed' in request.POST:
-        #     if selectedjob.is_closed == False:
-        #         if Inventory.objects.filter(job_number=selectedjob, is_closed=False).exists():
-        #             message = "Job: " + selectedjob.job_name + " is closed. The following equipment is assigned to the job and must be returned immediately!\n "
-        #             recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com",
-        #                           "warehouse@gerloffpainting.com", "joe@gerloffpainting.com"]
-        #             if selectedjob.superintendent.email is None:
-        #                 message = message + "\n No email address for " + str(selectedjob.superintendent)
-        #             else:
-        #                 recipients.append(selectedjob.superintendent.email)
-        #             for x in Inventory.objects.filter(job_number=selectedjob, is_closed=False):
-        #                 if x.number:
-        #                     message = message + "\n -" + x.item + " GP Number #" + x.number
-        #                 else:
-        #                     message = message + "\n -" + x.item + " -No GP Number! "
-        #             check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
-        #             sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
-        #             try:
-        #                 Email.sendEmail("Closed Job - " + selectedjob.job_name, message,
-        #                                 recipients, False,sender)
-        #                 success = True
-        #             except:
-        #                 send_data['error_message'] = "Email Failed to send. Please let warehouse know. " + message
-        #         if Subcontracts.objects.filter(is_closed=False, job_number=selectedjob).exists():
-        #             message = "Job: " + selectedjob.job_name + " cannot be closed. The following subcontracts are still open!\n "
-        #             recipients = ["admin1@gerloffpainting.com", "admin2@gerloffpainting.com",
-        #                           "joe@gerloffpainting.com"]
-        #             for x in Subcontracts.objects.filter(is_closed=False, job_number=selectedjob):
-        #                 if x.po_number:
-        #                     message += "\n -" + x.subcontractor.company + " - PO# " + x.po_number + "! "
-        #                 else:
-        #                     message += "\n -" + x.subcontractor.company + " - PO# N/A!"
-        #             check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
-        #             sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
-        #             try:
-        #                 Email.sendEmail("Closed Job Error- " + selectedjob.job_name, message,
-        #                                 recipients, False,sender)
-        #                 success = True
-        #             except:
-        #                 send_data['error_message'] = "Email Failed to send. Please note that the job can't be closed because there are open subcontractors"
-        #             send_data['subcontract_open_error'] = True
-        #             send_data['open_subcontracts'] = message
-        #         else:
-        #             selectedjob.is_closed = True
-        # else:
-        #     selectedjob.is_closed = False
-        if 'is_t_m_job' in request.POST:
-            selectedjob.is_t_m_job = True
-        else:
-            selectedjob.is_t_m_job = False
-        if request.POST['t_m_nte_amount'] == "":
-            if selectedjob.t_m_nte_amount is not None:
-                selectedjob.t_m_nte_amount = None
-        else:
-            if selectedjob.t_m_nte_amount != request.POST['t_m_nte_amount']:
-                selectedjob.t_m_nte_amount = request.POST['t_m_nte_amount']
-        if selectedjob.contract_status != request.POST['contract_status']:
-            selectedjob.contract_status = request.POST['contract_status']
-        if selectedjob.insurance_status != request.POST['insurance_status']:
-            selectedjob.insurance_status = request.POST['insurance_status']
-        if 'has_submittals' in request.POST:
-            selectedjob.submittals_needed = True
-        else:
-            selectedjob.submittals_needed = False
-        if 'is_bonded' in request.POST:
-            selectedjob.is_bonded = True
-        else:
-            selectedjob.is_bonded = False
-        if request.POST['select_company'] == 'add_new':
-            client = Clients.objects.create(company=request.POST['new_client'],
-                                            bid_email=request.POST['new_client_bid_email'],
-                                            phone=request.POST['new_client_phone'])
-            selectedjob.client = client
+        section = request.POST.get('section')
+
+        # 1 - job_name, address, city, state
+        if section == "basic_info":
+            selectedjob.job_name = request.POST.get('job_name', '').strip()
+            selectedjob.address = request.POST.get('address', '').strip()
+            selectedjob.city = request.POST.get('city', '').strip()
+            selectedjob.state = request.POST.get('state', '').strip().upper()
             selectedjob.save()
-        elif selectedjob.client.id != request.POST['select_company']:
-            selectedjob.client = Clients.objects.get(id=request.POST['select_company'])
+
+        # 2 - work order, security clearance, off-hours, submittals, bond
+        elif section == "job_requirements":
+            selectedjob.is_work_order_done = checkbox_value('is_work_order_done')
+            selectedjob.is_on_base = checkbox_value('on_base2')
+            selectedjob.is_off_hours = checkbox_value('off_hours')
+            selectedjob.submittals_needed = checkbox_value('has_submittals')
+            selectedjob.is_bonded = checkbox_value('is_bonded')
             selectedjob.save()
-        selectedjob.client.company = request.POST['new_client']
-        selectedjob.client.bid_email = request.POST['new_client_bid_email']
-        selectedjob.client.phone = request.POST['new_client_phone']
-        selectedjob.client.save()
-        if request.POST['select_pm'] == 'add_new':
-            client_pm = ClientEmployees.objects.create(id=selectedjob.client, name=request.POST['new_pm'],
-                                                       phone=request.POST['new_pm_phone'],
-                                                       email=request.POST['new_pm_email'])
-            selectedjob.client_Pm = client_pm
-        else:
-            if selectedjob.client_Pm.person_pk != request.POST['select_pm']:
-                selectedjob.client_Pm = ClientEmployees.objects.get(person_pk=request.POST['select_pm'])
-        selectedjob.client_Pm.name = request.POST['new_pm']
-        selectedjob.client_Pm.phone = request.POST['new_pm_phone']
-        selectedjob.client_Pm.email = request.POST['new_pm_email']
-        selectedjob.client_Pm.save()
-        if request.POST['select_super'] == 'add_new':
-            client_super = ClientEmployees.objects.create(id=selectedjob.client, name=request.POST['new_super'],
-                                                          phone=request.POST['new_super_phone'],
-                                                          email=request.POST['new_super_email'])
-            selectedjob.client_Super = client_super
-        elif request.POST['select_super'] == 'not_sure':
-            if selectedjob.client_Super is not None:
+
+        # 3 - wage rates, spray and brush/roll rates
+        elif section == "wage_rates":
+            selectedjob.is_wage_scale = checkbox_value('is_wage_rate')
+            selectedjob.spray_scale = request.POST.get('spray_scale', '').strip()
+            selectedjob.brush_role = request.POST.get('brush_role', '').strip()
+            selectedjob.save()
+
+        # 4 - contract status and coi status
+        elif section == "contract_coi_status":
+            selectedjob.contract_status = request.POST.get('contract_status')
+            selectedjob.insurance_status = request.POST.get('insurance_status')
+            selectedjob.save()
+
+        # 5 - select new company / create new company
+        elif section == "select_new_company":
+            new_client_name = request.POST.get('new_client', '').strip()
+            new_client_phone = request.POST.get('new_client_phone', '').strip()
+            new_client_bid_email = request.POST.get('new_client_bid_email', '').strip()
+
+            if new_client_name:
+                client = Clients.objects.create(
+                    company=new_client_name,
+                    phone=new_client_phone,
+                    bid_email=new_client_bid_email
+                )
+                selectedjob.client = client
+                selectedjob.save()
+
+        # 6 - change company
+        elif section == "change_company":
+            selected_company = request.POST.get('select_company')
+
+            if not selected_company:
+                send_data['error_message'] = "Please select a company."
+                return render(request, 'update_job_info.html', send_data)
+
+            # Add New Company
+            if selected_company == "add_new":
+                new_client_name = request.POST.get('new_client', '').strip()
+                new_client_phone = request.POST.get('new_client_phone', '').strip()
+                new_client_bid_email = request.POST.get('new_client_bid_email', '').strip()
+
+                new_company_pm_name = request.POST.get('new_company_pm_name', '').strip()
+                new_company_pm_email = request.POST.get('new_company_pm_email', '').strip()
+
+                if not new_client_name:
+                    send_data['error_message'] = "Company name is required."
+                    return render(request, 'update_job_info.html', send_data)
+
+                if not new_company_pm_name:
+                    send_data['error_message'] = "PM Name is required."
+                    return render(request, 'update_job_info.html', send_data)
+
+                if not new_company_pm_email:
+                    send_data['error_message'] = "PM Email is required."
+                    return render(request, 'update_job_info.html', send_data)
+
+                new_client = Clients.objects.create(
+                    company=new_client_name,
+                    phone=new_client_phone,
+                    bid_email=new_client_bid_email
+                )
+
+                client_employee = ClientEmployees.objects.create(
+                    id=new_client,
+                    name=new_company_pm_name,
+                    email=new_company_pm_email
+                )
+
+                selectedjob.client = new_client
+                selectedjob.client_Pm = client_employee
                 selectedjob.client_Super = None
-        else:
-            if selectedjob.client_Super is not None:
-                if selectedjob.client_Super.person_pk != request.POST['select_super']:
-                    selectedjob.client_Super = ClientEmployees.objects.get(person_pk=request.POST['select_super'])
+                selectedjob.save()
+
+            # Change to Existing Company
             else:
-                selectedjob.client_Super = ClientEmployees.objects.get(person_pk=request.POST['select_super'])
-            selectedjob.client_Super.name = request.POST['new_super']
-            selectedjob.client_Super.phone = request.POST['new_super_phone']
-            selectedjob.client_Super.email = request.POST['new_super_email']
-            selectedjob.client_Super.save()
-        if request.POST['select_gpsuper'] == 'not_sure':
-            if selectedjob.superintendent is not None:
-                selectedjob.superintendent = None
-        else:
-            if selectedjob.superintendent is not None:
-                if str(selectedjob.superintendent.id) != str(request.POST['select_gpsuper']):
-                    email_sent = gerloff_super_change(selectedjob,
-                                                      Employees.objects.get(id=request.POST['select_gpsuper']),
-                                                      Employees.objects.get(user=request.user))
-                    if email_sent:
-                        send_data['email_sent'] = email_sent
-                    else:
-                        send_data['email_not_sent'] = email_sent
-            else:
-                email_sent = gerloff_super_change(selectedjob, Employees.objects.get(id=request.POST['select_gpsuper']),
-                                                  Employees.objects.get(user=request.user))
-                if email_sent:
-                    send_data['email_sent'] = email_sent
+                new_client = Clients.objects.get(id=selected_company)
+
+                if new_client.id == selectedjob.client.id:
+                    send_data['error_message'] = "Please select a different company."
+                    return render(request, 'update_job_info.html', send_data)
+
+                selected_client_employee = request.POST.get('select_client_employee')
+
+                if selected_client_employee == "add_new":
+                    new_employee_name = request.POST.get('new_client_employee_name', '').strip()
+                    new_employee_email = request.POST.get('new_client_employee_email', '').strip()
+
+                    if not new_employee_name:
+                        send_data['error_message'] = "Please enter a name for the new client employee."
+                        return render(request, 'update_job_info.html', send_data)
+
+                    if not new_employee_email:
+                        send_data['error_message'] = "Please enter an email address for the new client employee."
+                        return render(request, 'update_job_info.html', send_data)
+
+                    client_employee = ClientEmployees.objects.create(
+                        id=new_client,
+                        name=new_employee_name,
+                        email=new_employee_email
+                    )
+
                 else:
-                    send_data['email_not_sent'] = email_sent
-        if selectedjob.estimator.id != request.POST['select_gpestimator']:
-            selectedjob.estimator = Employees.objects.get(id=request.POST['select_gpestimator'])
-        if selectedjob.project_manager.id != request.POST['select_project_manager']:
-            selectedjob.project_manager = Employees.objects.get(id=request.POST['select_project_manager'])
-        if 'has_paint' in request.POST:
-            selectedjob.has_paint = True
-        else:
-            selectedjob.has_paint = False
-        if 'has_wallcovering' in request.POST:
-            selectedjob.has_wallcovering = True
-        else:
-            selectedjob.has_wallcovering = False
-        if 'has_special_paint' in request.POST:
-            selectedjob.special_paint_needed = True
-        else:
-            selectedjob.special_paint_needed = False
+                    if not selected_client_employee:
+                        send_data['error_message'] = "Please select a client employee."
+                        return render(request, 'update_job_info.html', send_data)
 
-        if startdate != request.POST['start_date']:
-            email_sent = start_date_change(selectedjob, request.POST['start_date'], 3, request.POST['date_note'],
-                                           Employees.objects.get(user=request.user), True, True)
-            if email_sent:
-                send_data['email_sent'] = email_sent
+                    client_employee = ClientEmployees.objects.get(
+                        person_pk=selected_client_employee,
+                        id=new_client
+                    )
+
+                    if not client_employee.email:
+                        existing_client_employee_email = request.POST.get(
+                            'existing_client_employee_email',
+                            ''
+                        ).strip()
+
+                        if not existing_client_employee_email:
+                            send_data['error_message'] = (
+                                f"{client_employee.name} does not have an email address. "
+                                "Please enter an email address before changing the company."
+                            )
+                            return render(request, 'update_job_info.html', send_data)
+
+                        client_employee.email = existing_client_employee_email
+                        client_employee.save()
+
+                selectedjob.client = new_client
+                selectedjob.client_Pm = client_employee
+                selectedjob.client_Super = None
+                selectedjob.save()
+
+        # 7 - change PM
+        elif section == "change_pm":
+            select_pm = request.POST.get('select_pm')
+            new_pm_name = request.POST.get('new_pm', '').strip()
+            new_pm_phone = request.POST.get('new_pm_phone', '').strip()
+            new_pm_email = request.POST.get('new_pm_email', '').strip()
+
+            if not select_pm:
+                send_data['error_message'] = "Please select a PM."
+                return render(request, 'update_job_info.html', send_data)
+
+            if not new_pm_email:
+                send_data['error_message'] = "PM email address is required."
+                return render(request, 'update_job_info.html', send_data)
+
+            if select_pm == 'add_new':
+                if not new_pm_name:
+                    send_data['error_message'] = "PM name is required."
+                    return render(request, 'update_job_info.html', send_data)
+
+                client_pm = ClientEmployees.objects.create(
+                    id=selectedjob.client,
+                    name=new_pm_name,
+                    phone=new_pm_phone,
+                    email=new_pm_email
+                )
+
+                selectedjob.client_Pm = client_pm
+
             else:
-                send_data['email_not_sent'] = email_sent
-        if selectedjob.notes != request.POST['email_job_note']:
-            selectedjob.notes = request.POST['email_job_note']
-        if request.POST['po_number'] == "":
-            if selectedjob.po_number is not None:
-                selectedjob.po_number = None
-        else:
-            if selectedjob.po_number != request.POST['po_number']:
-                selectedjob.po_number = request.POST['po_number']
-        if request.POST['contract_amount'] == "":
-            if selectedjob.contract_amount is not None:
-                selectedjob.contract_amount = None
-        else:
-            if selectedjob.contract_amount != request.POST['contract_amount']:
-                selectedjob.contract_amount = request.POST['contract_amount']
-        if request.POST['painting_budget'] == "":
-            if selectedjob.painting_budget is not None:
-                selectedjob.painting_budget = None
-        else:
-            if selectedjob.painting_budget != request.POST['painting_budget']:
-                selectedjob.painting_budget = request.POST['painting_budget']
+                client_pm = ClientEmployees.objects.get(
+                    person_pk=select_pm,
+                    id=selectedjob.client
+                )
 
-        if request.POST['wallcovering_budget'] == "":
-            if selectedjob.wallcovering_budget is not None:
-                selectedjob.wallcovering_budget = None
-        else:
-            if selectedjob.wallcovering_budget != request.POST['wallcovering_budget']:
-                selectedjob.wallcovering_budget = request.POST['wallcovering_budget']
-        selectedjob.save()
+                # This lets you fill in a missing email from the existing input.
+                client_pm.name = new_pm_name or client_pm.name
+                client_pm.phone = new_pm_phone
+                client_pm.email = new_pm_email
+                client_pm.save()
+
+                selectedjob.client_Pm = client_pm
+
+            selectedjob.save()
+
+        # 8 - change super
+        elif section == "change_super":
+            select_super = request.POST.get('select_super')
+
+            if select_super == 'not_sure':
+                selectedjob.client_Super = None
+
+            elif select_super == 'add_new':
+                client_super = ClientEmployees.objects.create(
+                    id=selectedjob.client,
+                    name=request.POST.get('new_super', '').strip(),
+                    phone=request.POST.get('new_super_phone', '').strip(),
+                    email=request.POST.get('new_super_email', '').strip()
+                )
+                selectedjob.client_Super = client_super
+
+            elif select_super:
+                selectedjob.client_Super = ClientEmployees.objects.get(person_pk=select_super)
+
+                selectedjob.client_Super.name = request.POST.get('new_super', selectedjob.client_Super.name).strip()
+                selectedjob.client_Super.phone = request.POST.get('new_super_phone', selectedjob.client_Super.phone).strip()
+                selectedjob.client_Super.email = request.POST.get('new_super_email', selectedjob.client_Super.email).strip()
+                selectedjob.client_Super.save()
+
+            selectedjob.save()
+
+        # 9 - change estimator
+        elif section == "change_estimator":
+            select_gpestimator = request.POST.get('select_gpestimator')
+            if select_gpestimator:
+                selectedjob.estimator = Employees.objects.get(id=select_gpestimator)
+                selectedjob.save()
+
+        # 10 - is T&M job and NTE amount
+        elif section == "tm_job":
+            selectedjob.is_t_m_job = checkbox_value('is_t_m_job')
+            selectedjob.t_m_nte_amount = blank_to_none('t_m_nte_amount')
+            selectedjob.save()
+
+        # 11 - PO number
+        elif section == "po_number":
+            selectedjob.po_number = blank_to_none('po_number')
+            selectedjob.save()
+
+        # 12 - total contract amount
+        elif section == "contract_amount":
+            selectedjob.contract_amount = blank_to_none('contract_amount')
+            selectedjob.save()
+
+        # 13 - paint and wallcovering checks, budgets
+        elif section == "scope_budgets":
+            selectedjob.has_paint = checkbox_value('has_paint')
+            selectedjob.has_wallcovering = checkbox_value('has_wallcovering')
+            selectedjob.painting_budget = blank_to_none('painting_budget')
+            selectedjob.wallcovering_budget = blank_to_none('wallcovering_budget')
+            selectedjob.save()
+
+        # 14 - summarize job scope
+        elif section == "job_scope":
+            selectedjob.notes = request.POST.get('email_job_note', '').strip()
+            selectedjob.save()
+
+        return redirect('update_job_info', jobnumber=selectedjob.job_number)
+
     return render(request, 'update_job_info.html', send_data)
 
 
@@ -541,6 +656,9 @@ def audit_MC_open_jobs(request):
                     else:
                         needs_to_be_closed.append({'job_number': x.job_number, 'job_name': x.job_name})
                         x.is_closed = True
+                        x.was_previously_closed = True
+                        x.previously_closed_date = date.today()
+                        x.ar_closed_date = date.today()
                         x.save()
     send_data['closed_but_subs']= closed_but_subs
     send_data['closed_but_equipment'] =closed_but_equipment
@@ -713,6 +831,11 @@ def upload_new_job(request):
                 Wallcovering.objects.create(
                     job_number=job,
                     pattern="Default at Booking-Please Complete",
+                )
+            if job.special_paint_needed:
+                Wallcovering.objects.create(
+                    job_number=job,
+                    pattern="Default at Booking-Please Complete for Special Paint",
                 )
             temp_note = "New Job Booked By: " + request.user.first_name + " " + request.user.last_name
             if sheet_obj.cell(row=37, column=2).value: temp_note = temp_note + ": " + sheet_obj.cell(row=37,
@@ -1752,6 +1875,8 @@ def close_job(request, job_number):
     job.closed_job_number = next_number
     job.ar_closed_date = date.today()
     job.cumulative_costs_at_closing = cumulative_costs
+    job.was_previously_closed = True
+    job.previously_closed_date = date.today()
     job.save()
     JobNotes.objects.create(job_number=job,
                             note=f"Job Closed. Closed Job Number {job.closed_job_number}",

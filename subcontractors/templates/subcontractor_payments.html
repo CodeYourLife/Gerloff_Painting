@@ -1,14 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_subs %}active{% endblock nav_item_subs %}
-{% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
-        <style type="text/css" class="init">
+
+{% block extra_head %}
+<style type="text/css" class="init">
 
 .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
 
@@ -67,57 +62,15 @@
         }
 
     </style>
-
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-    <script type="text/javascript" class="init">
+{% endblock %}
 
+{% block sub_nav %}
+    {% include 'subcontractors_nav.html' with active_tab="payments" %}
+{% endblock %}
 
-$(document).ready(function () {
+{% block content %}
 
-  var table = $('#payments_table').DataTable({ordering:false, pageLength: 50});
-  if ("{{error_message}}"){alert("{{error_message}}")}
-})
-
-
-function populate_super_modal(payment_id){
-    var print_url = "{% url 'subcontractor_payment_print' 999999 %}";
-    print_url = print_url.replace('999999', payment_id);
-    document.getElementById("payment_print_button").href = print_url;
-    $.ajax({
-        method: 'GET',
-        url: '/superintendent/super_ajax',
-        data: {'payment_id':payment_id},
-        success: function (data) {
-           parsedData = JSON.parse(data);
-            let text = "<table border='1' class='table display'>"
-            text += "<thead><tr><th>Job</th><th>Pay App #</th><th>Amt</th></tr></thead>"
-            parsedData.invoices.forEach((element) => {
-                text += "<tr><td>" + element.job + "</td><td><a href=\"{% url 'subcontract_invoices' 123 456 %}\">" + element.number + "</a></td><td>$" + element.amount + "</td></tr>";
-                text=text.replace(123,element.contract_id)
-                text=text.replace(456,element.id)
-            })
-            text += "</table>"
-            document.getElementById("notes_tab").innerHTML = text;
-        }
-    })
-}
-
-
-	</script>
-</head>
-<body>
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="{% url 'subcontractor_home' %}">Subcontractors</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link" href="{% url 'subcontractor_home' %}">Subcontractor Home</a></li>
-		 <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
-         <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
-		<li><a class="nav-item nav-link active" href="#">Payments</a></li>
-    </ul>
-  </div>
-</nav>
 <div class="modal fade" id="super-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -180,7 +133,42 @@ function populate_super_modal(payment_id){
     </table>
 </div>
 
-</body>
-</html>
+{% endblock %}
 
+{% block extra_scripts %}
+<script type="text/javascript" class="init">
+
+
+$(document).ready(function () {
+
+  var table = $('#payments_table').DataTable({ordering:false, pageLength: 50});
+  if ("{{error_message}}"){alert("{{error_message}}")}
+})
+
+
+function populate_super_modal(payment_id){
+    var print_url = "{% url 'subcontractor_payment_print' 999999 %}";
+    print_url = print_url.replace('999999', payment_id);
+    document.getElementById("payment_print_button").href = print_url;
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'payment_id':payment_id},
+        success: function (data) {
+           parsedData = JSON.parse(data);
+            let text = "<table border='1' class='table display'>"
+            text += "<thead><tr><th>Job</th><th>Pay App #</th><th>Amt</th></tr></thead>"
+            parsedData.invoices.forEach((element) => {
+                text += "<tr><td>" + element.job + "</td><td><a href=\"{% url 'subcontract_invoices' 123 456 %}\">" + element.number + "</a></td><td>$" + element.amount + "</td></tr>";
+                text=text.replace(123,element.contract_id)
+                text=text.replace(456,element.id)
+            })
+            text += "</table>"
+            document.getElementById("notes_tab").innerHTML = text;
+        }
+    })
+}
+
+
+	</script>
 {% endblock %}

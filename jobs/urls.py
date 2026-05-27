@@ -37,4 +37,14 @@ urlpatterns = [
         views.clockshark_job_weekly_hours,
         name="clockshark_job_weekly_hours"
     ),
+path(
+    'get-client-employees-ajax/',
+    views.get_client_employees_ajax,
+    name='get_client_employees_ajax'
+),
+path(
+    'get-client-employee-ajax/',
+    views.get_client_employee_ajax,
+    name='get_client_employee_ajax'
+),
 ]

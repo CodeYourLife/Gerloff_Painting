@@ -1,14 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_subs %}active{% endblock nav_item_subs %}
-{% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>Trinity GP</title>
-        <style type="text/css" class="init">
+
+{% block extra_head %}
+<style type="text/css" class="init">
 
         .nav-pills a {
             color: white;
@@ -80,231 +75,27 @@
         }
 
     </style>
-
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
-    <script type="text/javascript" class="init">
+{% endblock %}
 
+{% block sub_nav %}
+    {% include 'subcontractors_nav.html' with active_tab="home" %}
+{% endblock %}
 
-$(document).ready(function () {
-    var table = $('#sub_table').DataTable({paging: false,searching:false,info:false});
-    var table = $('#weekly_status_table').DataTable({paging: false,searching:false,info:false});
-    var table = $('#all_invoices_table').DataTable({paging: false,searching:false,info:false,columnDefs:[{targets: 2, render: $.fn.dataTable.render.number(',','.',0,'$')}]});
-    var table = $('#my_invoices_table').DataTable({paging: false,searching:false,info:false,columnDefs:[{targets: 2, render: $.fn.dataTable.render.number(',','.',0,'$')}]});
-    var table = $('#approved_invoices_table').DataTable({paging: false,searching:false,info:false,columnDefs:[{targets: [2,3], render: $.fn.dataTable.render.number(',','.',0,'$')}]});
-    var table = $('#late_invoices_table').DataTable({paging: false,searching:false,info:false});
-    if("{{failed}}"){alert("Auto Emails to Superintendents Didn't Work. Please let them know to approve their invoices")}
-    if("{{success}}"){alert("Auto Emails Were Sent to the Superintendents Successfully")}
-})
+{% block content %}
+<div class="container-fluid mb-3">
+    <div class="d-flex flex-column flex-sm-row justify-content-center justify-content-sm-start">
+        <a href="{% url 'subcontractor_new' %}"
+           class="btn btn-primary btn-sm mb-2 mb-sm-0 mr-sm-2">
+            Add New Company
+        </a>
 
-function check_function(){
-	var name=prompt("Add Note");
-	if (name!=null){
-		all_invoices_entered_form.invoice_notes.value = name;
-    }
-    alert("Please do not click anything, until you get a message that the emails were sent successfully")
-}
-
-function populate_contact_info(subcontractor_id){
-    contact_info_form.notes.value=""
-    contact_info_form2.insurance.value=""
-    contact_info_form.email.value=""
-    contact_info_form.phone.value=""
-    contact_info_form.contact.value=""
-    $.ajax({
-        method: 'GET',
-        url: '/superintendent/super_ajax',
-        data: {'subcontractor_id':subcontractor_id},
-        success: function (data) {
-            parsedData = JSON.parse(data);
-            contact_info_form.subcontractor_id.value = subcontractor_id
-            contact_info_form2.subcontractor_id.value = subcontractor_id
-            text = "<table border='1' class='table display'>";
-            if (parsedData.contact){
-                text += "<tr><td>Contact: " + parsedData.contact + "</td></tr>";
-                contact_info_form.contact.value = parsedData.contact}
-            else {text += "<tr><td>Contact: None</td></tr>";}
-            if (parsedData.phone){
-                text += "<tr><td><a href='tel:" + parsedData.phone + "'>Phone: " + parsedData.phone + "</a></td></tr>";
-                contact_info_form.phone.value = parsedData.phone}
-            else {text += "<tr><td>Phone: None</td></tr>";}
-            if (parsedData.email){
-                text += "<tr><td><a href='mailto: " + parsedData.email + "'>Email: " + parsedData.email + "</a></td></tr>";
-                contact_info_form.email.value = parsedData.email}
-            else {text += "<tr><td>Email: None</td></tr>";}
-            if (parsedData.insurance){
-                text += "<tr><td>Insurance Expires: " + parsedData.insurance + "</td></tr>";
-                contact_info_form2.insurance.value = parsedData.insurance
-            if (parsedData.has_workers_comp){
-                text2 = "Workers Comp?: Yes     "
-                contact_info_form2.has_workers_comp.checked = true;
-            }
-            else{
-                text2 = "Workers Comp?: No     "
-                contact_info_form2.has_workers_comp.checked = false;
-            }
-            if (parsedData.has_auto_insurance){
-                text2 += "Auto Coverage?: Yes"
-                contact_info_form2.has_auto_insurance.checked = true;
-            }
-            else{
-                text2 += "Auto Coverage?: No"
-                contact_info_form2.has_auto_insurance.checked = false;
-            }
-            text += "<tr><td>" + text2 + "</td></tr>";
-            }
-            else {text += "<tr><td>Insurance: None</td></tr>";}
-            if (parsedData.has_business_license){
-                contact_info_form2.has_business_license.checked = true;
-                if (parsedData.business_license_expiration_date){
-                    text += "<tr><td>Business License?: Yes   Expires: " + parsedData.business_license_expiration_date + "</td></tr>";
-                    contact_info_form2.business_license_expiration_date.value = parsedData.business_license_expiration_date;
-                }
-                else {
-                    text += "<tr><td>Business License?: Yes   Expires: ? </td></tr>";
-                }
-            }
-            else{
-                text += "<tr><td>Business License?: No</td></tr>";
-                contact_info_form2.has_business_license.checked = false;
-            }
-            if (parsedData.has_w9_form){
-                contact_info_form2.has_w9_form.checked = true;
-                if (parsedData.w9_form_date){
-                    text += "<tr><td>W9 Form?: Yes   Dated: " + parsedData.w9_form_date + "</td></tr>";
-                    contact_info_form2.w9_form_date.value = parsedData.w9_form_date;
-                }
-                else {
-                    text += "<tr><td>W9 Form?: Yes   Dated: ?</td></tr>";
-                }
-            }
-            else{
-                text += "<tr><td>W9 Form?: No</td></tr>";
-                contact_info_form2.has_w9_form.checked = false;
-            }
-            if (parsedData.notes){
-                text += "<tr><td>Notes: " + parsedData.notes + "</td></tr>";
-                contact_info_form.notes.value = parsedData.notes
-            }
-            else{contact_info_form.notes.placeholder = "Enter Any Notes About Subcontractor"}
-
-            if (parsedData.is_signed_labor_agreement){
-                text += "<tr><td>Independent Contractor Agreement?: Yes</td></tr>";
-                contact_info_form2.is_signed_labor_agreement.checked = true;
-            }
-            else{
-                text += "<tr><td>Independent Contractor Agreement?: No</td></tr>";
-                contact_info_form2.is_signed_labor_agreement.checked = false;
-            }
-            if (parsedData.is_toolbox_required){
-                text += "<tr><td>Toolbox Required?: Yes</td></tr>";
-                contact_info_form.is_toolbox_required.checked = true;
-            }
-            else{
-                text += "<tr><td>Toolbox Required?: No</td></tr>";
-                contact_info_form.is_toolbox_required.checked = false;
-            }
-
-            document.getElementById("show_contact_info_title").innerHTML = parsedData.company
-            document.getElementById("contact_info_title").innerHTML = parsedData.company
-            text += "</table>";
-            document.getElementById("contact_info_here").innerHTML = text;
-            text2=""
-            parsedData.approvers.forEach((element) => {
-                text2 += "<br>" + element.approver;
-            })
-            text2 +="<br><br><a style='color:blue;' href = \"{% url 'subcontractor_approvers' '9a3' %}\">Click Here to Change Approvers</a>"
-            text2= text2.replace('9a3', parsedData.id);
-            document.getElementById("subcontractor_approvers").innerHTML = text2;
-        }
-    })
-}
-
-function populate_active_contracts_modal(subcontractor_id){
-    $.ajax({
-        method: 'GET',
-        url: '/superintendent/super_ajax',
-        data: {'active_contracts':'active_contracts','subcontractor_id':subcontractor_id},
-        success: function (data) {
-           parsedData = JSON.parse(data);
-            let text = "<table border='1' class='table display' >"
-            text += "<thead><tr><th>Job</th><th>PO#</th><th>%</th></tr></thead>"
-            parsedData.active_contracts.forEach((element) => {
-                if (element.po_number != ""){
-                text += "<tr><td><a href=\"{% url 'job_page' 12334 %}\">" + element.job_name + "</a></td><td><a href=\"{% url 'subcontract' 45665 %}\">" + element.po_number + "</a></td><td>" + element.percent_complete + "</td></tr>";
-                }
-                else {text += "<tr><td><a href=\"{% url 'job_page' 12334 %}\">" + element.job_name + "</a></td><td><a href=\"{% url 'subcontract' 45665 %}\">TBD</a></td><td>" + element.percent_complete + "</td></tr>";}
-                text=text.replace(12334,element.job_number)
-                text=text.replace(45665,element.id)
-            })
-            text += "</table>"
-            document.getElementById("active_contracts_title").innerHTML = parsedData.company
-            document.getElementById("active_contracts_info").innerHTML = text;
-        }
-    })
-
-}
-function populate_pending_invoices_modal(subcontractor_id){
-    $.ajax({
-        method: 'GET',
-        url: '/superintendent/super_ajax',
-        data: {'pending_invoices':'pending_invoices','subcontractor_id':subcontractor_id},
-        success: function (data) {
-           parsedData = JSON.parse(data);
-            let text = "<table border='1' class='table display' >"
-            text += "<thead><tr><th>Job</th><th>Invoice #</th><th>Pay Date</th></tr></thead>"
-
-            parsedData.pending_invoices.forEach((element) => {
-                text += "<tr><td><a href=\"{% url 'job_page' 123 %}\">" + element.job_name + "</a></td><td><a href=\"{% url 'subcontract_invoices' 456 789 %}\">" + element.pay_app_number + "</a></td><td>" + element.date + "</td></tr>";
-                text=text.replace(123,element.job_number)
-                text=text.replace(456,element.subcontract_id)
-                text=text.replace(789,element.id)
-            })
-            text += "</table>"
-            document.getElementById("active_contracts_title").innerHTML = parsedData.company + " Pending Invoices"
-            document.getElementById("active_contracts_info").innerHTML = text;
-        }
-    })
-
-}
-function populate_pending_approvals_modal(invoice_id){
-
-    $.ajax({
-        method: 'GET',
-        url: '/superintendent/super_ajax',
-        data: {'pending_approvals':'pending_approvals','selected_invoice_id':invoice_id},
-        success: function (data) {
-
-           parsedData = JSON.parse(data);
-            let text = "<table border='1' class='table display' >"
-            text += "<thead><tr><th>Reviewer</th><th>Approved?</th><th>Made Changes?</th></tr></thead>"
-            parsedData.approval_status.forEach((element) => {
-
-                text += "<tr><td>" + element.employee + "</td><td>" + element.approved + "</td><td>" + element.changes + "</td></tr>";
-            })
-            text += "</table>"
-            document.getElementById("active_contracts_title").innerHTML = "Invoice Approvals"
-            document.getElementById("active_contracts_info").innerHTML = text;
-        }
-    })
-
-}
-	</script>
-</head>
-<body>
-	<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-		<a class="navbar-brand sub-navbar-brand" href="{% url 'subcontractor_home' %}">Subcontractors</a>
-		<div id="navbarNavDropdown2">
-		  <ul class="sub-nav-list navbar-nav ">
-        <li><a class="nav-item nav-link active" href="{% url 'subcontractor_home' %}">Subcontractor Home</a></li>
-		 <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
-        <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
-         <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
-              <li><a class="nav-item nav-link" href="{% url 'subcontractor_payments' %}">Payments</a></li>
-              <li><a class="nav-item nav-link" href="{% url 'subcontractor_approvers_management' %}">Approvers</a></li>
-    </ul>
-  </div>
-</nav>
-
+        <a href="{% url 'subcontracts_new' %}"
+           class="btn btn-success btn-sm">
+            Add New Contract
+        </a>
+    </div>
+</div>
 <!-- Modal -->
 <div class="modal fade" id="active_contracts-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
@@ -467,31 +258,6 @@ function populate_pending_approvals_modal(invoice_id){
         </div>
     </div>
 </div>
-
-
-<!--&lt;!&ndash; Modal &ndash;&gt;-->
-<!--<div class="modal fade" id="contact_info-modal" tabindex="-1" role="dialog" aria-labelledby="title"-->
-<!--     aria-hidden="true">-->
-<!--    <div class="modal-dialog" role="document">-->
-<!--        <div class="modal-content">-->
-<!--            <div class="modal-header">-->
-<!--                <h5 class="modal-title" id="contact_info_title"></h5>-->
-<!--                <button type="button" class="close" data-dismiss="modal" aria-label="Close">-->
-<!--                    <span aria-hidden="true">&times;</span>-->
-<!--                </button>-->
-<!--            </div>-->
-<!--            <div class="modal-body">-->
-<!--                                -->
-
-<!--                            </div>-->
-<!--            <div class="modal-footer">-->
-<!--                -->
-<!--                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>-->
-<!--                </form>-->
-<!--            </div>-->
-<!--        </div>-->
-<!--    </div>-->
-<!--</div>-->
 
 <div id="accordion">
 <!--    #subcontractor list-->
@@ -722,7 +488,213 @@ function populate_pending_approvals_modal(invoice_id){
 </div>
 {% endif %}
 
-</body>
-</html>
+{% endblock %}
+{% block extra_scripts %}
+<script type="text/javascript" class="init">
 
+
+$(document).ready(function () {
+    var table = $('#sub_table').DataTable({paging: false,searching:false,info:false});
+    var table = $('#weekly_status_table').DataTable({paging: false,searching:false,info:false});
+    var table = $('#all_invoices_table').DataTable({paging: false,searching:false,info:false,columnDefs:[{targets: 2, render: $.fn.dataTable.render.number(',','.',0,'$')}]});
+    var table = $('#my_invoices_table').DataTable({paging: false,searching:false,info:false,columnDefs:[{targets: 2, render: $.fn.dataTable.render.number(',','.',0,'$')}]});
+    var table = $('#approved_invoices_table').DataTable({paging: false,searching:false,info:false,columnDefs:[{targets: [2,3], render: $.fn.dataTable.render.number(',','.',0,'$')}]});
+    var table = $('#late_invoices_table').DataTable({paging: false,searching:false,info:false});
+    if("{{failed}}"){alert("Auto Emails to Superintendents Didn't Work. Please let them know to approve their invoices")}
+    if("{{success}}"){alert("Auto Emails Were Sent to the Superintendents Successfully")}
+})
+
+function check_function(){
+	var name=prompt("Add Note");
+	if (name!=null){
+		all_invoices_entered_form.invoice_notes.value = name;
+    }
+    alert("Please do not click anything, until you get a message that the emails were sent successfully")
+}
+
+function populate_contact_info(subcontractor_id){
+    contact_info_form.notes.value=""
+    contact_info_form2.insurance.value=""
+    contact_info_form.email.value=""
+    contact_info_form.phone.value=""
+    contact_info_form.contact.value=""
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'subcontractor_id':subcontractor_id},
+        success: function (data) {
+            parsedData = JSON.parse(data);
+            contact_info_form.subcontractor_id.value = subcontractor_id
+            contact_info_form2.subcontractor_id.value = subcontractor_id
+            text = "<table border='1' class='table display'>";
+            if (parsedData.contact){
+                text += "<tr><td>Contact: " + parsedData.contact + "</td></tr>";
+                contact_info_form.contact.value = parsedData.contact}
+            else {text += "<tr><td>Contact: None</td></tr>";}
+            if (parsedData.phone){
+                text += "<tr><td><a href='tel:" + parsedData.phone + "'>Phone: " + parsedData.phone + "</a></td></tr>";
+                contact_info_form.phone.value = parsedData.phone}
+            else {text += "<tr><td>Phone: None</td></tr>";}
+            if (parsedData.email){
+                text += "<tr><td><a href='mailto: " + parsedData.email + "'>Email: " + parsedData.email + "</a></td></tr>";
+                contact_info_form.email.value = parsedData.email}
+            else {text += "<tr><td>Email: None</td></tr>";}
+            if (parsedData.insurance){
+                text += "<tr><td>Insurance Expires: " + parsedData.insurance + "</td></tr>";
+                contact_info_form2.insurance.value = parsedData.insurance
+            if (parsedData.has_workers_comp){
+                text2 = "Workers Comp?: Yes     "
+                contact_info_form2.has_workers_comp.checked = true;
+            }
+            else{
+                text2 = "Workers Comp?: No     "
+                contact_info_form2.has_workers_comp.checked = false;
+            }
+            if (parsedData.has_auto_insurance){
+                text2 += "Auto Coverage?: Yes"
+                contact_info_form2.has_auto_insurance.checked = true;
+            }
+            else{
+                text2 += "Auto Coverage?: No"
+                contact_info_form2.has_auto_insurance.checked = false;
+            }
+            text += "<tr><td>" + text2 + "</td></tr>";
+            }
+            else {text += "<tr><td>Insurance: None</td></tr>";}
+            if (parsedData.has_business_license){
+                contact_info_form2.has_business_license.checked = true;
+                if (parsedData.business_license_expiration_date){
+                    text += "<tr><td>Business License?: Yes   Expires: " + parsedData.business_license_expiration_date + "</td></tr>";
+                    contact_info_form2.business_license_expiration_date.value = parsedData.business_license_expiration_date;
+                }
+                else {
+                    text += "<tr><td>Business License?: Yes   Expires: ? </td></tr>";
+                }
+            }
+            else{
+                text += "<tr><td>Business License?: No</td></tr>";
+                contact_info_form2.has_business_license.checked = false;
+            }
+            if (parsedData.has_w9_form){
+                contact_info_form2.has_w9_form.checked = true;
+                if (parsedData.w9_form_date){
+                    text += "<tr><td>W9 Form?: Yes   Dated: " + parsedData.w9_form_date + "</td></tr>";
+                    contact_info_form2.w9_form_date.value = parsedData.w9_form_date;
+                }
+                else {
+                    text += "<tr><td>W9 Form?: Yes   Dated: ?</td></tr>";
+                }
+            }
+            else{
+                text += "<tr><td>W9 Form?: No</td></tr>";
+                contact_info_form2.has_w9_form.checked = false;
+            }
+            if (parsedData.notes){
+                text += "<tr><td>Notes: " + parsedData.notes + "</td></tr>";
+                contact_info_form.notes.value = parsedData.notes
+            }
+            else{contact_info_form.notes.placeholder = "Enter Any Notes About Subcontractor"}
+
+            if (parsedData.is_signed_labor_agreement){
+                text += "<tr><td>Independent Contractor Agreement?: Yes</td></tr>";
+                contact_info_form2.is_signed_labor_agreement.checked = true;
+            }
+            else{
+                text += "<tr><td>Independent Contractor Agreement?: No</td></tr>";
+                contact_info_form2.is_signed_labor_agreement.checked = false;
+            }
+            if (parsedData.is_toolbox_required){
+                text += "<tr><td>Toolbox Required?: Yes</td></tr>";
+                contact_info_form.is_toolbox_required.checked = true;
+            }
+            else{
+                text += "<tr><td>Toolbox Required?: No</td></tr>";
+                contact_info_form.is_toolbox_required.checked = false;
+            }
+
+            document.getElementById("show_contact_info_title").innerHTML = parsedData.company
+            document.getElementById("contact_info_title").innerHTML = parsedData.company
+            text += "</table>";
+            document.getElementById("contact_info_here").innerHTML = text;
+            text2=""
+            parsedData.approvers.forEach((element) => {
+                text2 += "<br>" + element.approver;
+            })
+            text2 +="<br><br><a style='color:blue;' href = \"{% url 'subcontractor_approvers' '9a3' %}\">Click Here to Change Approvers</a>"
+            text2= text2.replace('9a3', parsedData.id);
+            document.getElementById("subcontractor_approvers").innerHTML = text2;
+        }
+    })
+}
+
+function populate_active_contracts_modal(subcontractor_id){
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'active_contracts':'active_contracts','subcontractor_id':subcontractor_id},
+        success: function (data) {
+           parsedData = JSON.parse(data);
+            let text = "<table border='1' class='table display' >"
+            text += "<thead><tr><th>Job</th><th>PO#</th><th>%</th></tr></thead>"
+            parsedData.active_contracts.forEach((element) => {
+                if (element.po_number != ""){
+                text += "<tr><td><a href=\"{% url 'job_page' 12334 %}\">" + element.job_name + "</a></td><td><a href=\"{% url 'subcontract' 45665 %}\">" + element.po_number + "</a></td><td>" + element.percent_complete + "</td></tr>";
+                }
+                else {text += "<tr><td><a href=\"{% url 'job_page' 12334 %}\">" + element.job_name + "</a></td><td><a href=\"{% url 'subcontract' 45665 %}\">TBD</a></td><td>" + element.percent_complete + "</td></tr>";}
+                text=text.replace(12334,element.job_number)
+                text=text.replace(45665,element.id)
+            })
+            text += "</table>"
+            document.getElementById("active_contracts_title").innerHTML = parsedData.company
+            document.getElementById("active_contracts_info").innerHTML = text;
+        }
+    })
+
+}
+function populate_pending_invoices_modal(subcontractor_id){
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'pending_invoices':'pending_invoices','subcontractor_id':subcontractor_id},
+        success: function (data) {
+           parsedData = JSON.parse(data);
+            let text = "<table border='1' class='table display' >"
+            text += "<thead><tr><th>Job</th><th>Invoice #</th><th>Pay Date</th></tr></thead>"
+
+            parsedData.pending_invoices.forEach((element) => {
+                text += "<tr><td><a href=\"{% url 'job_page' 123 %}\">" + element.job_name + "</a></td><td><a href=\"{% url 'subcontract_invoices' 456 789 %}\">" + element.pay_app_number + "</a></td><td>" + element.date + "</td></tr>";
+                text=text.replace(123,element.job_number)
+                text=text.replace(456,element.subcontract_id)
+                text=text.replace(789,element.id)
+            })
+            text += "</table>"
+            document.getElementById("active_contracts_title").innerHTML = parsedData.company + " Pending Invoices"
+            document.getElementById("active_contracts_info").innerHTML = text;
+        }
+    })
+
+}
+function populate_pending_approvals_modal(invoice_id){
+
+    $.ajax({
+        method: 'GET',
+        url: '/superintendent/super_ajax',
+        data: {'pending_approvals':'pending_approvals','selected_invoice_id':invoice_id},
+        success: function (data) {
+
+           parsedData = JSON.parse(data);
+            let text = "<table border='1' class='table display' >"
+            text += "<thead><tr><th>Reviewer</th><th>Approved?</th><th>Made Changes?</th></tr></thead>"
+            parsedData.approval_status.forEach((element) => {
+
+                text += "<tr><td>" + element.employee + "</td><td>" + element.approved + "</td><td>" + element.changes + "</td></tr>";
+            })
+            text += "</table>"
+            document.getElementById("active_contracts_title").innerHTML = "Invoice Approvals"
+            document.getElementById("active_contracts_info").innerHTML = text;
+        }
+    })
+
+}
+	</script>
 {% endblock %}

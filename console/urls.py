@@ -22,4 +22,9 @@ urlpatterns = [
     path('job_prices/<job_number>', views.job_prices, name='job_prices'),
     path('export_jobs_ar_closed_csv', views.export_jobs_ar_closed_csv, name='export_jobs_ar_closed_csv'),
     path('grant_web_access/<int:id>/', views.grant_web_access, name='grant_web_access_with_id'),
+    path(
+        'vendor-management/',
+        views.vendor_management,
+        name='vendor_management'
+    ),
 ]

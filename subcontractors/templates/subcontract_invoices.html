@@ -233,22 +233,7 @@
 {% endblock %}
 
 {% block sub_nav %}
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="{% url 'subcontractor_home' %}">
-        Subcontractors
-    </a>
-
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav">
-            <li><a class="nav-item nav-link" href="{% url 'subcontractor_home' %}">Subcontractor Home</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'subcontractor_new' %}">Add New Company</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'subcontracts_new' %}">Add New Contract</a></li>
-            <li><a class="nav-item nav-link" href="{% url 'subcontractor_payments' %}">Payments</a></li>
-            <li><a class="nav-item nav-link active" href="#">View Invoice</a></li>
-        </ul>
-    </div>
-</nav>
+    {% include 'subcontractors_nav.html' with page_label="View Invoice" %}
 {% endblock %}
 
 {% block content %}

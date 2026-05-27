@@ -1,0 +1,12 @@
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'rentals_home' %}">Rentals</a>
+<div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav ">
+            <li><a class="nav-item nav-link {% if active_tab == 'rentals_home' %}active{% endif %}" href="{% url 'rentals_home' %}">Active Rentals</a></li>
+             <li><a class="nav-item nav-link {% if active_tab == 'add_new' %}active{% endif %}" href="{% url 'rental_new' 'ALL' %}">Add New</a></li>
+          {% if page_label %}
+            <li><span class="nav-item nav-link active">{{ page_label }}</span></li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
