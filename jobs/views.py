@@ -11,9 +11,11 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction
+from django.http import HttpResponse
 from django.db.models import Q, Max, Count
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import csrf_exempt
@@ -31,6 +33,7 @@ from jobs.models import *
 from jobs.models import ClockSharkTimeEntry, Jobs
 from jobs.models import Jobs
 from rentals.models import Rentals
+import shutil
 from subcontractors.models import *
 from submittals.models import *
 from submittals.models import *
@@ -41,7 +44,7 @@ import openpyxl
 import os
 import os.path
 import requests
-
+import uuid
 
 
 
@@ -139,9 +142,6 @@ def get_client_employees_ajax(request):
         'success': True,
         'employees': employee_list
     })
-
-
-
 
 
 def get_client_employee_ajax(request):
@@ -677,6 +677,29 @@ def audit_MC_open_jobs(request):
 @login_required(login_url='/accounts/login')
 def upload_new_job(request):
     if request.method == 'POST':
+
+        if 'server_file_path' in request.POST:
+            print(request.POST['server_file_path'])
+            secret = request.headers.get("X-Excel-Secret")
+
+            if secret != "GerloffWorkOrder2026":
+                return HttpResponse("Unauthorized", status=401)
+
+            server_file_path = request.POST.get("server_file_path", "").strip()
+
+            if not os.path.exists(server_file_path):
+                return HttpResponse(f"File not found: {server_file_path}", status=404)
+
+            allowed_root = r"\\gp2022\company\jobs\job_uploads"
+
+            if not server_file_path.lower().startswith(allowed_root.lower()):
+                return HttpResponse("Invalid file path", status=403)
+
+            temp_path = os.path.join(settings.MEDIA_ROOT, "job_upload", "Temp.xlsx")
+
+            shutil.copyfile(server_file_path, temp_path)
+
+            return HttpResponse("OK")
         if 'upload_file' in request.FILES:
             fileitem = request.FILES['upload_file']
             fn = os.path.basename(fileitem.name)
@@ -684,7 +707,8 @@ def upload_new_job(request):
             open(fn2, 'wb').write(fileitem.file.read())
             send_data = {}
 
-            wb_obj = openpyxl.load_workbook(filename=request.FILES['upload_file'].file)
+            # wb_obj = openpyxl.load_workbook(filename=request.FILES['upload_file'].file)
+            wb_obj = openpyxl.load_workbook(fn2)
             sheet_obj = wb_obj["Data"]
             client_name = sheet_obj.cell(row=16, column=2).value
             pm_name = sheet_obj.cell(row=19, column=2).value
@@ -734,7 +758,23 @@ def upload_new_job(request):
                                            cls=DjangoJSONEncoder)
             return render(request, 'job_upload.html', send_data)
         if 'book_job' in request.POST:
-            wb_obj = openpyxl.load_workbook(os.path.join(settings.MEDIA_ROOT, "job_upload", "Temp.xlsx"))
+            # upload_token = request.POST.get("upload_token")
+
+            temp_path = os.path.join(settings.MEDIA_ROOT, "job_upload", "Temp.xlsx")
+
+            print("BOOK JOB TEMP PATH:", temp_path)
+            print("BOOK JOB EXISTS:", os.path.exists(temp_path))
+            print("BOOK JOB EXTENSION:", os.path.splitext(temp_path)[1])
+
+            wb_obj = openpyxl.load_workbook(temp_path)
+
+            # upload_path = os.path.join(
+            #     settings.MEDIA_ROOT,
+            #     "job_upload",
+            #     f"{upload_token}.xlsx"
+            # )
+            #
+            # wb_obj = openpyxl.load_workbook(upload_path)
             sheet_obj = wb_obj["Data"]
 
             if request.POST['select_company'] == 'add_new':
@@ -767,6 +807,7 @@ def upload_new_job(request):
             address = sheet_obj.cell(row=40, column=2).value
             city = sheet_obj.cell(row=41, column=2).value
             state = sheet_obj.cell(row=256, column=2).value
+            booked_by = sheet_obj.cell(row=27, column=2).value
             if sheet_obj.cell(row=42, column=2).value == "Yes":
                 is_on_base = True
             else:
@@ -794,7 +835,7 @@ def upload_new_job(request):
                                       is_on_base=is_on_base, is_t_m_job=is_t_m_job, contract_status=contract_status,
                                       insurance_status=insurance_status, client=client, start_date=start_date,
                                       booked_date=date.today(), client_Pm=client_pm,
-                                      booked_by=request.user.first_name + " " + request.user.last_name,
+                                      booked_by=booked_by,
                                       estimator=gp_estimator,project_manager=gp_project_manager)
 
             if request.POST['select_super'] != "not_sure":
@@ -857,13 +898,15 @@ def upload_new_job(request):
             check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
             sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
             try:
+                # Email.sendEmail("New Job - " + job.job_name, email_body,
+                #                 ['admin1@gerloffpainting.com', 'admin2@gerloffpainting.com', 'joe@gerloffpainting.com'],
+                #                 False,sender)
                 Email.sendEmail("New Job - " + job.job_name, email_body,
-                                ['admin1@gerloffpainting.com', 'admin2@gerloffpainting.com', 'joe@gerloffpainting.com'],
-                                False,sender)
+                                ['joe@gerloffpainting.com'],
+                                False, sender)
                 success = True
             except:
                 success = False
-
 
             job_state = "Virginia"
             if job.state == "NC":
@@ -901,7 +944,7 @@ def upload_new_job(request):
                     notes="Created at Booking",
                 )
 
-            return render(request, "upload_new_job.html")
+            return redirect('job_page', jobnumber=job.job_number)
     return render(request, "upload_new_job.html")
 
 
@@ -2323,13 +2366,6 @@ def clockshark_map_job(request):
     return redirect("clockshark_unmapped_jobs")
 
 
-
-from django.shortcuts import render, get_object_or_404
-from django.utils import timezone
-
-
-
-
 def clockshark_job_weekly_hours(request, job_number):
     job = get_object_or_404(Jobs, job_number=job_number)
 
@@ -2454,3 +2490,171 @@ def clockshark_job_weekly_hours(request, job_number):
     }
 
     return render(request, "clockshark_job_weekly_hours.html", send_data)
+
+
+@csrf_exempt
+def upload_new_job_from_excel(request):
+    if request.method != "POST":
+        return JsonResponse({
+            "success": False,
+            "error": "POST required"
+        }, status=405)
+
+    secret = request.headers.get("X-Excel-Secret")
+
+    if secret != "GerloffWorkOrder2026":
+        return JsonResponse({
+            "success": False,
+            "error": "Unauthorized"
+        }, status=401)
+
+    if "upload_file" not in request.FILES:
+        return JsonResponse({
+            "success": False,
+            "error": "Missing upload_file"
+        }, status=400)
+
+    fileitem = request.FILES["upload_file"]
+
+    upload_token = uuid.uuid4().hex
+    upload_dir = os.path.join(settings.MEDIA_ROOT, "job_upload")
+    os.makedirs(upload_dir, exist_ok=True)
+
+    upload_path = os.path.join(upload_dir, f"{upload_token}.xlsx")
+
+    with open(upload_path, "wb") as destination:
+        for chunk in fileitem.chunks():
+            destination.write(chunk)
+
+    review_url = request.build_absolute_uri(
+        reverse("upload_new_job_review", kwargs={"upload_token": upload_token})
+    )
+
+    return JsonResponse({
+        "success": True,
+        "review_url": review_url
+    })
+
+@login_required
+def upload_new_job_review(request):
+    upload_path = os.path.join(
+        settings.MEDIA_ROOT,
+        "job_upload",
+        "Temp.xlsx"
+    )
+
+    if not os.path.exists(upload_path):
+        return render(request, "upload_new_job.html", {
+            "error": "Upload file was not found."
+        })
+
+    wb_obj = openpyxl.load_workbook(upload_path)
+    sheet_obj = wb_obj["Data"]
+
+    client_name = sheet_obj.cell(row=16, column=2).value
+    pm_name = sheet_obj.cell(row=19, column=2).value
+
+    send_data = {}
+    send_data["job_name"] = sheet_obj.cell(row=38, column=2).value
+    send_data["job_number"] = sheet_obj.cell(row=25, column=2).value
+    send_data["new_client"] = client_name
+    send_data["new_pm_name"] = sheet_obj.cell(row=19, column=2).value
+    send_data["new_pm_phone"] = sheet_obj.cell(row=20, column=2).value
+    send_data["new_pm_email"] = sheet_obj.cell(row=21, column=2).value
+    send_data["new_super_name"] = sheet_obj.cell(row=22, column=2).value
+    send_data["new_super_phone"] = sheet_obj.cell(row=23, column=2).value
+    send_data["new_super_email"] = sheet_obj.cell(row=24, column=2).value
+
+    if Clients.objects.filter(company=client_name).exists():
+        send_data["client"] = Clients.objects.filter(company=client_name).first()
+        send_data["pms_filter"] = ClientEmployees.objects.filter(
+            id=send_data["client"],
+            is_active=True
+        ).order_by("name")
+
+        if ClientEmployees.objects.filter(
+            name=pm_name,
+            id__company=client_name,
+            is_active=True
+        ).exists():
+            send_data["pm"] = ClientEmployees.objects.filter(
+                name=pm_name,
+                id__company=client_name
+            ).first()
+
+        super_name = sheet_obj.cell(row=22, column=2).value
+
+        if ClientEmployees.objects.filter(
+            name=super_name,
+            id__company=client_name,
+            is_active=True
+        ).exists():
+            send_data["super"] = ClientEmployees.objects.filter(
+                name=super_name,
+                id__company=client_name
+            ).first()
+
+    if Employees.objects.filter(first_name=sheet_obj.cell(row=39, column=2).value).exists():
+        send_data["estimator"] = Employees.objects.filter(
+            first_name=sheet_obj.cell(row=39, column=2).value
+        ).first()
+    else:
+        send_data["estimator_name"] = sheet_obj.cell(row=39, column=2).value
+
+    project_manager_name = sheet_obj.cell(row=251, column=2).value
+
+    if project_manager_name:
+        split_name = project_manager_name.strip().split(" ", 1)
+        first_name = split_name[0]
+        last_name = split_name[1] if len(split_name) > 1 else ""
+
+        employee = Employees.objects.filter(
+            first_name__iexact=first_name,
+            last_name__iexact=last_name
+        ).first()
+
+        if employee:
+            send_data["project_manager"] = employee
+        else:
+            send_data["project_manager_name"] = project_manager_name
+
+    send_data["all_clients"] = Clients.objects.all()
+    send_data["all_employees"] = Employees.objects.exclude(job_title__description="Painter")
+    send_data["data"] = json.dumps(
+        list(ClientEmployees.objects.values("name", "id", "person_pk")),
+        cls=DjangoJSONEncoder
+    )
+
+    return render(request, "job_upload.html", send_data)
+
+@csrf_exempt
+def upload_new_job_path_from_excel(request):
+    if request.method != "POST":
+        return HttpResponse("POST required", status=405)
+
+    secret = request.headers.get("X-Excel-Secret")
+
+    if secret != "GerloffWorkOrder2026":
+        return HttpResponse("Unauthorized", status=401)
+
+    server_file_path = request.POST.get("server_file_path", "").strip()
+
+    if not server_file_path:
+        return HttpResponse("Missing server_file_path", status=400)
+
+    if not os.path.exists(server_file_path):
+        return HttpResponse("File not found: " + server_file_path, status=404)
+
+    allowed_root = r"\\gp2022\company\jobs"
+
+    if not server_file_path.lower().startswith(allowed_root.lower()):
+        return HttpResponse("Invalid file path: " + server_file_path, status=403)
+
+    temp_dir = os.path.join(settings.MEDIA_ROOT, "job_upload")
+    os.makedirs(temp_dir, exist_ok=True)
+
+    temp_path = os.path.join(temp_dir, "Temp.xlsx")
+
+    shutil.copyfile(server_file_path, temp_path)
+
+    return HttpResponse("OK")

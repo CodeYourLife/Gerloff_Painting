@@ -47,4 +47,19 @@ path(
     views.get_client_employee_ajax,
     name='get_client_employee_ajax'
 ),
+path(
+    "upload-from-excel/",
+    views.upload_new_job_from_excel,
+    name="upload_new_job_from_excel"
+),
+path(
+    'upload_new_job_path_from_excel/',
+    views.upload_new_job_path_from_excel,
+    name='upload_new_job_path_from_excel'
+),
+path(
+    'upload-new-job-review/',
+    views.upload_new_job_review,
+    name='upload_new_job_review'
+),
 ]

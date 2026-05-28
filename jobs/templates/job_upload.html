@@ -1,10 +1,247 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_item_jobs %}active{% endblock nav_item_jobs %}
+
+{% block sub_nav %}
+{% include 'jobs_nav.html' with page_label="Job Upload" %}
+{% endblock %}
+
 {% block content %}
+<form name = booking_input action="{% url 'upload_new_job' %}" method="post" class="form-group" onSubmit = "return check_booking_data()">
+    {% csrf_token %}
+    <input type="hidden" name="upload_token" value="{{ upload_token }}">
+<!--	#Job Name-->
+<div class="container">
+    <div class="col-10">
 
+                <div class ="row">
+                    <div class="col-sm-12">
+                        <h3>{{job_name}} - {{job_number}}</h3>
+                    </div>
+                </div>
+        </div>
+    </div>
+<!--#Select Client Drop Down-->
+<div class ="container" style="background-color:hsla(128,100%, 80%);"> <!#pick client>
+            <div class ="row" style="height: 50px">
+                <div class ="col-sm-12">
+
+                        <label>{% if client %} Selected Company was {{client}} {% else %} Couldn't Find Company: {{new_client}} {% endif %}</label>
+                    <select class="form-control" id="select_company" name="select_company" onChange="changed_client()" >
+                        {% if client %}<option value="{{client.id}}">{{client}}</option>{% else %} <option value="please_select">Please Select</option>{% endif %}
+                        <option value="add_new">Add New</option>
+                        {% if all_clients %}
+                        {% for client in all_clients %}
+                            <option value="{{client.id}}">{{client.company}}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+            </div>
+
+<br><br>
+<!--#Client Email and Phone-->
+
+<div id="client_info" class="content" style="background-color:hsla(128,100%, 90%);">
+
+            <div class ="row" style="margin-top: 22px" >
+                <div class ="col-sm-12">
+                    {% if client %}
+                    <input class="form-control" type= "text" name="new_client" value = '{{client.company}}' size="30" />
+                    {% else %}
+                    <input class="form-control" type= "text" name="new_client" placeholder="Company Name" size="30" />
+                    {% endif %}
+                </div>
+            </div>
+            <div class ="row" style="margin-top: 22px" >
+                <div class ="col-sm-12">
+                    {% if client and client.phone != "" %}
+                    <input class="form-control" type= "tel" name="new_client_phone" value = '{{client.phone}}' size="30"/>
+               {% else %}
+                    <input class="form-control" type= "tel" name="new_client_phone" placeholder="Phone" size="30"/>
+                    {% endif %}
+                </div>
+            </div>
+            <div class ="row" style="margin-top: 22px" >
+                <div class ="col-sm-12">
+                    {% if client and client.bid_email != "" %}
+                    <input class="form-control" type= "email" name="new_client_bid_email" value = '{{client.bid_email}}' size="30"/>
+                                      {% else %}
+                    <input class="form-control" type= "email" name="new_client_bid_email" placeholder='Email' size="30"/>
+                    {% endif %}
+                </div>
+            </div>
+</div>
+</div> <!pick client>
+<br><br>
+<!--#Select PM Drop Down-->
+<div class ="container" style="background-color:hsla(0,100%, 80%);">
+                    <div class = "row">
+                        <div class ="col-sm-12">
+                            <label for="select_pm">{% if pm %} Selected GC PM was {{pm}} {% else %} Couldn't Find GC PM: {{new_pm_name}} {% endif %}</label>
+                            <select class="form-control" id="select_pm" name="select_pm" onchange="changed_pm()">
+                                {% if pm %} <option value="{{pm.person_pk}}">{{pm}}</option>{% else %} <option value="please_select">Please Select</option>{% endif %}
+                                <option value="add_new">Add New</option>
+                                {% if pms_filter %}
+                                {% for client in pms_filter %}
+                                    <option value="{{client.person_pk}}">{{client.name}}</option>
+                                {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+                    </div>
+
+	<br>
+<!--#PM Email and Phone-->
+
+        <div id="pm_info" class="content" style="background-color:hsla(0,100%, 90%);" >
+
+                    <div class ="row" style="margin-top: 22px">
+                        <div class ="col-sm-12">
+                            {% if pm %}
+                            <input  type= "text" name="new_pm" id="new_pm" class="form-control" value="{{pm.name}}" size="30" />
+                        {% else %}
+                            <input  type= "text" name="new_pm" id="new_pm" class="form-control" placeholder="Name" size="30" />
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class ="row">
+                        <div class ="col-sm-12">
+                            {% if pm and pm.phone != "" %}
+                            <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" id="new_pm_phone" value="{{pm.phone}}" size="30"/>
+                                                {% else %}
+                            <input  type= "text" name="new_pm_phone" id="new_pm_phone" class="form-control" placeholder="Phone" size="30" />
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class ="row">
+                        <div class ="col-sm-12">
+                            {% if pm and pm.email != "" %}
+                            <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" id="new_pm_email" value="{{pm.email}}" size="30"/>
+                                                                        {% else %}
+                            <input  type= "text" name="new_pm_email" id="new_pm_email" class="form-control" placeholder="Email" size="30" />
+                            {% endif %}
+                        </div>
+                    </div>
+    </div>
+    </div>
+<br>
+<!--    #Super Drop Down-->
+<div class = "container" style="background-color:hsla(202,100%, 80%);">
+                    <div class = "row">
+                        <div class ="col-sm-12">
+
+                            <label for="select_pm">{% if super %} Selected GC Super was {{super}} {% elif new_super_name != None %} Couldn't Find GC Superintendent: {{new_super_name}} {% else %} Do Not Know GC Super Yet! {% endif %}</label>
+                            <select class="form-control" id="select_super" name="select_super" onchange="changed_super()">
+                                {% if super %} <option value="{{super.person_pk}}">{{super}}</option>{% elif new_super_name != None %} <option value="please_select">Please Select</option>{% endif %}
+                                <option value="not_sure">Don't Know Yet</option>
+                                <option value="add_new">Add New</option>
+                                {% if pms_filter %}
+                                {% for client in pms_filter %}
+                                    <option value="{{client.person_pk}}">{{client.name}}</option>
+                                {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+                    </div>
+
+<!--#Super Email and Phone-->
+
+	<div id="super_info" class="content" style="background-color:hsla(202,100%, 90%);">
+
+                       <div class ="row" style="margin-top: 22px">
+                        <div class ="col-sm-12">
+                            <label for="duplicate">Click Here if Same Person as PM Above </label>
+                              <input type="checkbox" name ="duplicate" id="duplicate"  onClick="clicked_duplicate()" />
+                        </div>
+                    </div>
+                    <div class ="row" style="margin-top: 22px">
+                        <div class ="col-sm-12">
+                            {% if super %}
+                            <input type= "text" name="new_super" id="new_super" class="form-control" value="{{super.name}}" size="30" />
+                                             {% else %}
+                            <input type= "text" name="new_super" id="new_super" class="form-control" placeholder="Name" size="30" />
+                        {% endif %}
+                        </div>
+
+                    </div>
+                    <div class ="row">
+                        <div class ="col-sm-12">
+                            {% if super and super.phone != "" %}
+                            <input style="margin-top: 22px" class="form-control" type= "tel" name="new_super_phone" id="new_super_phone" value="{{super.phone}}" size="30"/>
+                                            {% else %}
+                            <input style="margin-top: 22px" class="form-control" type= "tel" name="new_super_phone" id="new_super_phone" placeholder="Phone" size="30"/>
+                        {% endif %}
+                        </div>
+                    </div>
+                    <div class ="row">
+                        <div class ="col-sm-12">
+                            {% if super and super.email != "" %}
+                            <input style="margin-top: 22px" class="form-control" type= "email" name="new_super_email" id="new_super_email" value="{{super.email}}" size="30"/>
+                                            {% else %}
+                            <input style="margin-top: 22px" class="form-control" type= "email" name="new_super_email" id="new_super_email" placeholder="Email" size="30"/>
+                        {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+                <br>
+<!--#GP Estimator-->
+<div class ="container">
+                    <label for="select_gpestimator">{% if estimator %} Selected GP Estimator was {{estimator}} {% else %} Couldn't Find GP Estimator {{estimator_name}} {% endif %}</label>
+                    <select class="form-control" id="select_gpestimator" name="select_gpestimator" >
+                        {% if estimator %} <option value="{{estimator.id}}">{{estimator}}</option>{% else %} <option value="please_select">Please Select</option>{% endif %}
+                        {% if all_employees %}
+                        {% for employee in all_employees %}
+                        <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+
+
+                </div>
+    <br>
+<!--#GP PM-->
+<div class ="container">
+    <label for="select_project_manager">{% if project_manager %} Selected GP Project Manager was {{project_manager}} {% else %} Couldn't Find GP PM {{project_manager_name}} {% endif %}</label>
+    <select class="form-control" id="select_project_manager" name="select_project_manager" >
+        {% if project_manager %} <option value="{{project_manager.id}}">{{project_manager}}</option>{% else %} <option value="please_select">Please Select</option>{% endif %}
+        {% if all_employees %}
+        {% for employee in all_employees %}
+        <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
+        {% endfor %}
+        {% endif %}
+    </select>
+
+
+</div>
+<br>
+<div class ="container">
+    <input type="submit" class="btn btn-primary btn-sm" name="book_job" value="Book Job Now" />
+</div>
+
+
+    </form>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }
+  });
+}
+</script>
 <script type="text/javascript" class="init">
-
 
 function changed_client() {
 
@@ -206,262 +443,6 @@ function clicked_duplicate(){
 
     </script>
 
-</head>
 
-  <body>
-    <div>
-    <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-        <a style="padding-left: 14px;" class="navbar-brand sub-navbar-brand" href="#">Active Jobs</a>
-        <div id="navbarNavDropdown2">
-          <ul class="sub-nav-list navbar-nav ">
-              <li><a class="nav-item nav-link" href="{% url 'jobs_home' %}">Home</a></li>
-              <li><a class="nav-item nav-link" href="{% url 'super_home' 'AUTO' %}">Superintendent View</a></li>
-              <li><a class="nav-item nav-link active" href="#">Uploading Job Info</a></li>
-          </ul>
-        </div>
-      </nav>
-<!--<div style="padding-top: 50px" class="row align-items-center justify-content-center align-middle">-->
-<!--	#Job Name-->
-    <div class="container">
-    <div class="col-10">
-            <form name = booking_input action="{% url 'upload_new_job' %}" method="post" class="form-group" onSubmit = "return check_booking_data()">
-                {% csrf_token %}
-                <div class ="row">
-                    <div class="col-sm-12">
-                        <h3>{{job_name}} - {{job_number}}</h3>
-                    </div>
-                </div>
-        </div>
-    </div>
-<!--#Select Client Drop Down-->
-        <div class ="container" style="background-color:hsla(128,100%, 80%);"> <!#pick client>
-                    <div class ="row" style="height: 50px">
-                        <div class ="col-sm-12">
-
-                                <label>{% if client %} Selected Company was {{client}} {% else %} Couldn't Find Company: {{new_client}} {% endif %}</label>
-                            <select class="form-control" id="select_company" name="select_company" onChange="changed_client()" >
-                                {% if client %}<option value="{{client.id}}">{{client}}</option>{% else %} <option value="please_select">Please Select</option>{% endif %}
-                                <option value="add_new">Add New</option>
-                                {% if all_clients %}
-                                {% for client in all_clients %}
-                                    <option value="{{client.id}}">{{client.company}}</option>
-                                {% endfor %}
-                                {% endif %}
-                            </select>
-                        </div>
-                    </div>
-
-<br><br>
-<!--#Client Email and Phone-->
-
-        <div id="client_info" class="content" style="background-color:hsla(128,100%, 90%);">
-
-                    <div class ="row" style="margin-top: 22px" >
-                        <div class ="col-sm-12">  
-                            {% if client %}
-                            <input class="form-control" type= "text" name="new_client" value = '{{client.company}}' size="30" />
-                            {% else %}
-                            <input class="form-control" type= "text" name="new_client" placeholder="Company Name" size="30" />
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class ="row" style="margin-top: 22px" >
-                        <div class ="col-sm-12">
-                            {% if client and client.phone != "" %}
-                            <input class="form-control" type= "tel" name="new_client_phone" value = '{{client.phone}}' size="30"/>
-                       {% else %}
-                            <input class="form-control" type= "tel" name="new_client_phone" placeholder="Phone" size="30"/>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class ="row" style="margin-top: 22px" >
-                        <div class ="col-sm-12">
-                            {% if client and client.bid_email != "" %}
-                            <input class="form-control" type= "email" name="new_client_bid_email" value = '{{client.bid_email}}' size="30"/>
-                                              {% else %}
-                            <input class="form-control" type= "email" name="new_client_bid_email" placeholder='Email' size="30"/>
-                            {% endif %}
-                        </div>
-                    </div>
-    </div>
-</div> <!pick client>
-        <br><br>
-<!--#Select PM Drop Down-->
-    <div class ="container" style="background-color:hsla(0,100%, 80%);">
-                    <div class = "row">
-                        <div class ="col-sm-12">
-                            <label for="select_pm">{% if pm %} Selected GC PM was {{pm}} {% else %} Couldn't Find GC PM: {{new_pm_name}} {% endif %}</label>
-                            <select class="form-control" id="select_pm" name="select_pm" onchange="changed_pm()">
-                                {% if pm %} <option value="{{pm.person_pk}}">{{pm}}</option>{% else %} <option value="please_select">Please Select</option>{% endif %}
-                                <option value="add_new">Add New</option>
-                                {% if pms_filter %}
-                                {% for client in pms_filter %}
-                                    <option value="{{client.person_pk}}">{{client.name}}</option>
-                                {% endfor %}
-                                {% endif %}
-                            </select>
-                        </div>
-                    </div>
-
-	<br>
-<!--#PM Email and Phone-->
-
-        <div id="pm_info" class="content" style="background-color:hsla(0,100%, 90%);" >
-
-                    <div class ="row" style="margin-top: 22px">
-                        <div class ="col-sm-12">
-                            {% if pm %}
-                            <input  type= "text" name="new_pm" id="new_pm" class="form-control" value="{{pm.name}}" size="30" />
-                        {% else %}
-                            <input  type= "text" name="new_pm" id="new_pm" class="form-control" placeholder="Name" size="30" />
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <div class ="row">
-                        <div class ="col-sm-12">
-                            {% if pm and pm.phone != "" %}
-                            <input style="margin-top: 22px" class="form-control" type= "tel" name="new_pm_phone" id="new_pm_phone" value="{{pm.phone}}" size="30"/>
-                                                {% else %}
-                            <input  type= "text" name="new_pm_phone" id="new_pm_phone" class="form-control" placeholder="Phone" size="30" />
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class ="row">
-                        <div class ="col-sm-12">
-                            {% if pm and pm.email != "" %}
-                            <input style="margin-top: 22px" class="form-control" type= "email" name="new_pm_email" id="new_pm_email" value="{{pm.email}}" size="30"/>
-                                                                        {% else %}
-                            <input  type= "text" name="new_pm_email" id="new_pm_email" class="form-control" placeholder="Email" size="30" />
-                            {% endif %}
-                        </div>
-                    </div>
-    </div>
-    </div>
-<br>
-<!--    #Super Drop Down-->
-    <div class = "container" style="background-color:hsla(202,100%, 80%);">
-                    <div class = "row">
-                        <div class ="col-sm-12">
-
-                            <label for="select_pm">{% if super %} Selected GC Super was {{super}} {% elif new_super_name != None %} Couldn't Find GC Superintendent: {{new_super_name}} {% else %} Do Not Know GC Super Yet! {% endif %}</label>
-                            <select class="form-control" id="select_super" name="select_super" onchange="changed_super()">
-                                {% if super %} <option value="{{super.person_pk}}">{{super}}</option>{% elif new_super_name != None %} <option value="please_select">Please Select</option>{% endif %}
-                                <option value="not_sure">Don't Know Yet</option>
-                                <option value="add_new">Add New</option>
-                                {% if pms_filter %}
-                                {% for client in pms_filter %}
-                                    <option value="{{client.person_pk}}">{{client.name}}</option>
-                                {% endfor %}
-                                {% endif %}
-                            </select>
-                        </div>
-                    </div>
-
-<!--#Super Email and Phone-->
-
-	<div id="super_info" class="content" style="background-color:hsla(202,100%, 90%);">
-
-                       <div class ="row" style="margin-top: 22px">
-                        <div class ="col-sm-12">
-                            <label for="duplicate">Click Here if Same Person as PM Above </label>
-                              <input type="checkbox" name ="duplicate" id="duplicate"  onClick="clicked_duplicate()" />
-                        </div>
-                    </div>
-                    <div class ="row" style="margin-top: 22px">
-                        <div class ="col-sm-12">
-                            {% if super %}
-                            <input type= "text" name="new_super" id="new_super" class="form-control" value="{{super.name}}" size="30" />
-                                             {% else %}
-                            <input type= "text" name="new_super" id="new_super" class="form-control" placeholder="Name" size="30" />
-                        {% endif %}
-                        </div>
-
-                    </div>
-                    <div class ="row">
-                        <div class ="col-sm-12">
-                            {% if super and super.phone != "" %}
-                            <input style="margin-top: 22px" class="form-control" type= "tel" name="new_super_phone" id="new_super_phone" value="{{super.phone}}" size="30"/>
-                                            {% else %}
-                            <input style="margin-top: 22px" class="form-control" type= "tel" name="new_super_phone" id="new_super_phone" placeholder="Phone" size="30"/>
-                        {% endif %}
-                        </div>
-                    </div>
-                    <div class ="row">
-                        <div class ="col-sm-12">
-                            {% if super and super.email != "" %}
-                            <input style="margin-top: 22px" class="form-control" type= "email" name="new_super_email" id="new_super_email" value="{{super.email}}" size="30"/>
-                                            {% else %}
-                            <input style="margin-top: 22px" class="form-control" type= "email" name="new_super_email" id="new_super_email" placeholder="Email" size="30"/>
-                        {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-                <br>
-<!--#GP Estimator-->
-                <div class ="container">
-                    <label for="select_gpestimator">{% if estimator %} Selected GP Estimator was {{estimator}} {% else %} Couldn't Find GP Estimator {{estimator_name}} {% endif %}</label>
-                    <select class="form-control" id="select_gpestimator" name="select_gpestimator" >
-                        {% if estimator %} <option value="{{estimator.id}}">{{estimator}}</option>{% else %} <option value="please_select">Please Select</option>{% endif %}
-                        {% if all_employees %}
-                        {% for employee in all_employees %}
-                        <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
-                        {% endfor %}
-                        {% endif %}
-                    </select>
-
-
-                </div>
-    <br>
-        <!--#GP PM-->
-                <div class ="container">
-                    <label for="select_project_manager">{% if project_manager %} Selected GP Project Manager was {{project_manager}} {% else %} Couldn't Find GP PM {{project_manager_name}} {% endif %}</label>
-                    <select class="form-control" id="select_project_manager" name="select_project_manager" >
-                        {% if project_manager %} <option value="{{project_manager.id}}">{{project_manager}}</option>{% else %} <option value="please_select">Please Select</option>{% endif %}
-                        {% if all_employees %}
-                        {% for employee in all_employees %}
-                        <option value={{employee.id}}>{{employee.first_name}} {{employee.last_name}}</option>
-                        {% endfor %}
-                        {% endif %}
-                    </select>
-
-
-                </div>
-    <br>
-                <div class ="container">
-                    <input type="submit" class="btn btn-primary btn-sm" name="book_job" value="Book Job Now" />
-                </div>
-            </form>
-<!--</div>-->
-
-
-<script src=”https://code.jquery.com/jquery-3.2.1.slim.min.js” integrity=”sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN” crossorigin=”anonymous”></script>
-
-<script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js integrity=”sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q” crossorigin=”anonymous”></script>
-
-<script src=”https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js” integrity=”sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl” crossorigin=”anonymous”></script>
-
-
-<script>
-var coll = document.getElementsByClassName("collapsible");
-var i;
-
-for (i = 0; i < coll.length; i++) {
-  coll[i].addEventListener("click", function() {
-    this.classList.toggle("active");
-    var content = this.nextElementSibling;
-    if (content.style.display === "block") {
-      content.style.display = "none";
-    } else {
-      content.style.display = "block";
-    }
-  });
-}
-</script>
-  </div>
-</body>
-
-</div>
 {% endblock %}
 
