@@ -793,7 +793,7 @@ def upload_new_job(request):
                                       state=state,
                                       is_on_base=is_on_base, is_t_m_job=is_t_m_job, contract_status=contract_status,
                                       insurance_status=insurance_status, client=client, start_date=start_date,
-                                      status="Open", booked_date=date.today(), client_Pm=client_pm,
+                                      booked_date=date.today(), client_Pm=client_pm,
                                       booked_by=request.user.first_name + " " + request.user.last_name,
                                       estimator=gp_estimator,project_manager=gp_project_manager)
 
