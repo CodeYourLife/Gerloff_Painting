@@ -1265,7 +1265,8 @@ def upload_sirius(form, excel_file,notes):
 
             created += 1
 
-def upload_clockshark(form, excel_file,notes):
+#old as of 6.2.26, i changed it to .csv functionality
+def upload_clockshark_old(form, excel_file,notes):
     print("PUMPKIN")
     wb = openpyxl.load_workbook(excel_file)
     sheet = wb.active
@@ -1398,6 +1399,222 @@ def upload_clockshark(form, excel_file,notes):
                         # message.append({'message': "skipped " + clockshark_id + " row" + str(a)})
                         print("skipped " + clockshark_id + " row" + str(a))
     # return message
+
+def parse_clockshark_datetime(value):
+    """
+    Handles Excel datetime values and common CSV datetime strings.
+    Adjust formats if ClockShark exports a different date format.
+    """
+    if not value:
+        return None
+
+    if isinstance(value, datetime.datetime):
+        return value
+
+    value = str(value).strip()
+
+    formats = [
+        "%m/%d/%Y %I:%M %p",
+        "%m/%d/%Y %I:%M:%S %p",
+        "%m/%d/%Y %H:%M",
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d %H:%M",
+    ]
+
+    for fmt in formats:
+        try:
+            return datetime.datetime.strptime(value, fmt)
+        except ValueError:
+            pass
+
+    raise ValueError(f"Could not parse datetime: {value}")
+
+
+def get_clockshark_rows(uploaded_file):
+    """
+    Returns rows from either CSV or Excel as a list of tuples/lists.
+    Skips the header row.
+    """
+    filename = uploaded_file.name.lower()
+
+    if filename.endswith(".csv"):
+        decoded_file = uploaded_file.read().decode("utf-8-sig").splitlines()
+        reader = csv.reader(decoded_file)
+        rows = list(reader)
+        return rows[1:]  # skip header
+
+    wb = openpyxl.load_workbook(uploaded_file, data_only=True)
+    sheet = wb.active
+    return list(sheet.iter_rows(min_row=2, values_only=True))
+
+def upload_clockshark(form, excel_file, notes):
+    print("PUMPKIN")
+
+    rows = get_clockshark_rows(excel_file)
+
+    created = 0
+    skipped = 0
+    a = 0
+    oldest_date = None
+    newest_date = None
+
+    with transaction.atomic():
+        for row in rows:
+            (
+                first_name,
+                last_name,
+                ignore,
+                ignore,
+                job_name,
+                job_number,
+                ignore,
+                ignore,
+                start_raw,
+                end_raw,
+                lunch,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+                ignore,
+            ) = row
+
+            start_raw = parse_clockshark_datetime(start_raw)
+
+            if not start_raw:
+                continue
+
+            if a == 0:
+                oldest_date = start_raw
+                newest_date = start_raw
+            else:
+                newest_date = start_raw
+
+            a += 1
+
+        if oldest_date and timezone.is_naive(oldest_date):
+            oldest_date = timezone.make_aware(oldest_date, timezone.get_current_timezone())
+        message = []
+        if newest_date and timezone.is_naive(newest_date):
+            newest_date = timezone.make_aware(newest_date, timezone.get_current_timezone())
+
+        if not oldest_date or not newest_date:
+            print("No valid ClockShark dates found.")
+            return
+
+        oldest_day = oldest_date.date()
+        newest_day = newest_date.date()
+        print(str(ClockSharkTimeEntry.objects.filter(work_day__gte=oldest_day,
+                                                     work_day__lte=newest_day).count()) + " entries deleted")
+
+        ClockSharkTimeEntry.objects.filter(
+            work_day__gte=oldest_day,
+            work_day__lte=newest_day
+        ).delete()
+        with transaction.atomic():
+            for row in rows:  # 24
+                (
+                    employee_first_name,
+                    employee_last_name,
+                    ignore,
+                    ignore,
+                    job_name,
+                    job_number,
+                    ignore,
+                    ignore,
+                    start_raw,
+                    end_raw,
+                    lunch,
+                    ignore,
+                    ignore,
+                    ignore,
+                    ignore,
+                    ignore,
+                    ignore,
+                    ignore,
+                    minutes,
+                    ignore,
+                    ignore,
+                    ignore,
+                    ignore,
+                    ignore,
+                ) = row
+                a=a+1
+                if job_number:
+                    job_number=str(job_number).strip()
+                    job_number=job_number[:5]
+                if job_name:
+                    job_name = str(job_name).strip()
+                    if job_name.endswith("*"):
+                        job_name = job_name[:-1]
+                else:
+                    job_name = ""
+                if lunch in (None, "", 0):
+                    lunch = Decimal("0")
+                else:
+                    lunch = Decimal(str(lunch))
+                if minutes in (None, ""):
+                    minutes = Decimal("0")
+                else:
+                    minutes = Decimal(str(minutes))
+                clock_in_time = parse_clockshark_datetime(start_raw)
+                clock_out_time = parse_clockshark_datetime(end_raw)
+                job = Jobs.objects.filter(job_number=job_number).first()
+                work_day = None
+
+                if clock_in_time:
+                    work_day = clock_in_time.date()
+                elif clock_out_time:
+                    work_day = clock_out_time.date()
+
+                if not work_day:
+                    print("skipped row with no work day: " + str(a))
+                    continue
+
+                clockshark_id = f"{employee_first_name}|{employee_last_name}|{job_name}|{work_day}"
+                if clock_in_time and timezone.is_naive(clock_in_time):
+                    clock_in_time = timezone.make_aware(clock_in_time, timezone.get_current_timezone())
+                if clock_out_time and timezone.is_naive(clock_out_time):
+                    clock_out_time = timezone.make_aware(clock_out_time, timezone.get_current_timezone())
+
+                if job:
+                    if not job.is_active:
+                        if not JobNotes.objects.filter(job_number=job,
+                                                       note__contains="Changed Status to Active").exists():
+                            job.is_active = True
+                            job.save()
+                            JobNotes.objects.create(job_number=job,
+                                                    note="Changed Status to Active From Clock Shark Import",
+                                                    type="auto_start_date_note",
+                                                    user=Employees.objects.filter().first(), date=date.today())
+                else:
+                    # message.append({'message': "couldn't find " + job_name + " row: " + str(a)})
+                    print("couldn't find " + job_name + " row: " + str(a))
+                if work_day < date.today():
+                    ClockSharkTimeEntry.objects.create(clockshark_id=clockshark_id, job_name=job_name,
+                                                       employee_first_name=employee_first_name,
+                                                       employee_last_name=employee_last_name, work_day=work_day,
+                                                       clock_in=clock_in_time, job=job, clock_out=clock_out_time,
+                                                       hours=minutes / 60, hours_adjust_note="AUTO IMPORT",lunch=lunch)
+                else:
+                    if clock_in_time and clock_out_time:
+                        ClockSharkTimeEntry.objects.create(lunch=lunch,clockshark_id=clockshark_id, job_name=job_name,
+                                                           employee_first_name=employee_first_name,
+                                                           employee_last_name=employee_last_name, work_day=work_day,
+                                                           clock_in=clock_in_time,job=job, clock_out=clock_out_time, hours=minutes/60, hours_adjust_note="AUTO IMPORT")
+                    else:
+                        # message.append({'message': "skipped " + clockshark_id + " row" + str(a)})
+                        print("skipped " + clockshark_id + " row" + str(a))
+    # return message
+
 
 def upload_toolbox_talk(form, excel_file,notes):
     wb = openpyxl.load_workbook(excel_file)
