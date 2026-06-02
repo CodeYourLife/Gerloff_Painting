@@ -6,6 +6,7 @@ from console.models import *
 from datetime import datetime,date,timedelta
 from dateutil.parser import parse as parse_date
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from difflib import SequenceMatcher
 from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -42,6 +43,9 @@ import openpyxl
 import os
 import os.path
 import random
+import re
+
+
 
 
 @login_required(login_url='/accounts/login')
@@ -127,6 +131,7 @@ def client_job_info(request, id):
     send_data['people'] = people
 
     return render(request, 'client_job_info.html', send_data)
+
 @login_required(login_url='/accounts/login')
 def client_info(request, id):
     send_data = {}
@@ -2291,3 +2296,288 @@ def vendor_contact_conflicts(old_contact, new_contact):
         })
 
     return conflicts
+
+def client_cleanup_report(request):
+    send_data = {}
+
+    def normalize_text(value):
+        if not value:
+            return ""
+
+        value = value.lower().strip()
+
+        replacements = {
+            "&": "and",
+            ".": "",
+            ",": "",
+            ";": "",
+            "'": "",
+            '"': "",
+            " inc": "",
+            " incorporated": "",
+            " llc": "",
+            " ltd": "",
+            " co": "",
+            " company": "",
+            " corporation": "",
+            " corp": "",
+            " the ": " ",
+        }
+
+        for old, new in replacements.items():
+            value = value.replace(old, new)
+
+        value = " ".join(value.split())
+        return value
+
+    def similarity(a, b):
+        return SequenceMatcher(None, a, b).ratio()
+
+    # --------------------------------------------------
+    # 1. Duplicate client company names only
+    # --------------------------------------------------
+
+    clients = list(
+        Clients.objects
+        .filter(company__isnull=False)
+        .exclude(company="")
+        .order_by("company")
+    )
+
+    duplicate_clients = []
+    normalized_client_map = {}
+
+    for client in clients:
+        normalized_name = normalize_text(client.company)
+
+        if normalized_name in normalized_client_map:
+            duplicate_clients.append({
+                "client_1": normalized_client_map[normalized_name],
+                "client_2": client,
+                "reason": "Normalized company name matches exactly",
+            })
+        else:
+            normalized_client_map[normalized_name] = client
+
+    # --------------------------------------------------
+    # 2. Duplicate / similar ClientEmployees
+    # --------------------------------------------------
+
+    client_employees = list(
+        ClientEmployees.objects
+        .select_related("id")
+        .filter(name__isnull=False)
+        .exclude(name="")
+        .order_by("id__company", "name")
+    )
+
+    duplicate_client_employees = []
+    similar_client_employees = []
+
+    normalized_employee_map = {}
+
+    for employee in client_employees:
+        normalized_name = normalize_text(employee.name)
+        key = f"{employee.id_id}|{normalized_name}"
+
+        if key in normalized_employee_map:
+            duplicate_client_employees.append({
+                "employee_1": normalized_employee_map[key],
+                "employee_2": employee,
+                "reason": "Same client and same normalized employee name",
+            })
+        else:
+            normalized_employee_map[key] = employee
+
+    employees_by_client = {}
+
+    for employee in client_employees:
+        employees_by_client.setdefault(employee.id_id, []).append(employee)
+
+    for client_id, employees in employees_by_client.items():
+        for i in range(len(employees)):
+            employee_1 = employees[i]
+            employee_1_normalized = normalize_text(employee_1.name)
+
+            for j in range(i + 1, len(employees)):
+                employee_2 = employees[j]
+                employee_2_normalized = normalize_text(employee_2.name)
+
+                if not employee_1_normalized or not employee_2_normalized:
+                    continue
+
+                if employee_1_normalized == employee_2_normalized:
+                    continue
+
+                score = similarity(employee_1_normalized, employee_2_normalized)
+
+                if score >= 0.88:
+                    similar_client_employees.append({
+                        "employee_1": employee_1,
+                        "employee_2": employee_2,
+                        "score": round(score * 100, 1),
+                    })
+
+    # --------------------------------------------------
+    # 3. Bad employee names
+    # --------------------------------------------------
+
+    bad_name_employees = []
+
+    good_name_regex = re.compile(r"^[A-Za-z\s'.-]+$")
+    multiple_person_characters = [";", ",", "/", "&", " and "]
+
+    for employee in client_employees:
+        name = employee.name.strip()
+        name_lower = f" {name.lower()} "
+
+        reasons = []
+
+        for bad_character in multiple_person_characters:
+            if bad_character in name_lower:
+                reasons.append(f"Contains '{bad_character.strip()}'")
+
+        if not good_name_regex.match(name):
+            reasons.append("Contains characters other than letters, spaces, apostrophes, hyphens, or periods")
+
+        if reasons:
+            bad_name_employees.append({
+                "employee": employee,
+                "reasons": reasons,
+            })
+
+    send_data["duplicate_clients"] = duplicate_clients
+    send_data["duplicate_client_employees"] = duplicate_client_employees
+    send_data["similar_client_employees"] = similar_client_employees
+    send_data["bad_name_employees"] = bad_name_employees
+
+    send_data["duplicate_clients_count"] = len(duplicate_clients)
+    send_data["duplicate_client_employees_count"] = len(duplicate_client_employees)
+    send_data["similar_client_employees_count"] = len(similar_client_employees)
+    send_data["bad_name_employees_count"] = len(bad_name_employees)
+
+    return render(request, "client_cleanup_report.html", send_data)
+
+def client_merge_review(request, client_1_id, client_2_id):
+    client_1 = get_object_or_404(Clients, id=client_1_id)
+    client_2 = get_object_or_404(Clients, id=client_2_id)
+
+    client_1_employees = ClientEmployees.objects.filter(id=client_1).order_by("name")
+    client_2_employees = ClientEmployees.objects.filter(id=client_2).order_by("name")
+
+    if request.method == "POST":
+        keep_client_id = request.POST.get("keep_client_id")
+
+        if str(client_1.id) == str(keep_client_id):
+            keep_client = client_1
+            merge_client = client_2
+        else:
+            keep_client = client_2
+            merge_client = client_1
+
+        with transaction.atomic():
+            # Move active client employees from the duplicate company to the company being kept
+            for employee in ClientEmployees.objects.filter(id=merge_client, is_active=True).order_by("name"):
+                employee.id = keep_client
+                employee.save()
+
+            # Move jobs from the duplicate company to the company being kept
+            for job in Jobs.objects.filter(client=merge_client):
+                job.client = keep_client
+                job.save()
+
+            # Delete the duplicate company
+            merged_company_name = merge_client.company
+            kept_company_name = keep_client.company
+
+            merge_client.delete()
+
+        messages.success(
+            request,
+            f"{merged_company_name} was merged into {kept_company_name}."
+        )
+
+        return redirect("client_cleanup_report")
+
+    return render(request, "client_merge_review.html", {
+        "client_1": client_1,
+        "client_2": client_2,
+        "client_1_employees": client_1_employees,
+        "client_2_employees": client_2_employees,
+    })
+
+def client_employee_merge_review(request, employee_1_id, employee_2_id):
+    employee_1 = get_object_or_404(
+        ClientEmployees.objects.select_related("id"),
+        person_pk=employee_1_id
+    )
+    employee_2 = get_object_or_404(
+        ClientEmployees.objects.select_related("id"),
+        person_pk=employee_2_id
+    )
+
+    def default_value(value_1, value_2):
+        value_1 = value_1 or ""
+        value_2 = value_2 or ""
+
+        if value_1 and not value_2:
+            return value_1
+
+        if value_2 and not value_1:
+            return value_2
+
+        return value_1
+
+    if request.method == "POST":
+        keep_employee_id = request.POST.get("keep_employee_id")
+
+        if str(employee_1.person_pk) == str(keep_employee_id):
+            keep_employee = employee_1
+            merge_employee = employee_2
+        else:
+            keep_employee = employee_2
+            merge_employee = employee_1
+
+        final_name = request.POST.get("final_name", "").strip()
+        final_phone = request.POST.get("final_phone", "").strip()
+        final_email = request.POST.get("final_email", "").strip()
+        final_title = request.POST.get("final_title", "").strip()
+
+        with transaction.atomic():
+            keep_employee.name = final_name
+            keep_employee.phone = final_phone
+            keep_employee.email = final_email
+            keep_employee.title = final_title
+            keep_employee.is_active = True
+            keep_employee.save()
+
+            Jobs.objects.filter(client_Pm=merge_employee).update(client_Pm=keep_employee)
+            Jobs.objects.filter(client_Super=merge_employee).update(client_Super=keep_employee)
+
+            ClientJobRoles.objects.filter(employee=merge_employee).update(employee=keep_employee)
+            TempRecipients.objects.filter(person=merge_employee).update(person=keep_employee)
+            TempRecipientsCOPList.objects.filter(person=merge_employee).update(person=keep_employee)
+
+            merged_employee_name = merge_employee.name
+            kept_employee_name = keep_employee.name
+
+            merge_employee.delete()
+
+        messages.success(
+            request,
+            f"{merged_employee_name} was merged into {kept_employee_name}."
+        )
+
+        return redirect("client_cleanup_report")
+
+    send_data = {
+        "employee_1": employee_1,
+        "employee_2": employee_2,
+
+        "default_name": default_value(employee_1.name, employee_2.name),
+        "default_phone": default_value(employee_1.phone, employee_2.phone),
+        "default_email": default_value(employee_1.email, employee_2.email),
+        "default_title": default_value(employee_1.title, employee_2.title),
+    }
+
+    return render(request, "client_employee_merge_review.html", send_data)

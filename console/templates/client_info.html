@@ -122,6 +122,10 @@
     </div>
 </div>
 
+<a href="{% url 'client_cleanup_report' %}"
+   class="btn btn-warning btn-sm">
+    Client Cleanup Report
+</a>
 
 <form name="form2" id="form2" action="{% url 'client_info' 'ALL' %}" method="post">
     {% csrf_token %}

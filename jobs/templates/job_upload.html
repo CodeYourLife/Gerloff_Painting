@@ -243,6 +243,33 @@ for (i = 0; i < coll.length; i++) {
 </script>
 <script type="text/javascript" class="init">
 
+function validatePersonName(field, label) {
+    // Allows letters, spaces, apostrophes, hyphens, and periods only
+    let nameRegex = /^[A-Za-z\s'.-]+$/;
+
+    if (field && field.value.trim() !== "" && !nameRegex.test(field.value.trim())) {
+        field.scrollIntoView();
+        field.focus();
+        alert(label + " can only contain one person's name. Do not list multiple people, just pick one person.");
+        return false;
+    }
+
+    return true;
+}
+
+function hasMultiplePeopleCharacters(value) {
+    return value.includes(";") || value.includes(",") || value.includes("/") ;
+}
+
+function validateSingleContactField(field, label) {
+    if (field && hasMultiplePeopleCharacters(field.value)) {
+        field.scrollIntoView();
+        field.focus();
+        alert(label + " can only contain one person. Please remove commas and semicolons.");
+        return false;
+    }
+    return true;
+}
 function changed_client() {
 
     if (booking_input.select_company.value == "please_select") {
@@ -351,7 +378,7 @@ if ('{{super}}'){
                 }
             if (booking_input.select_pm.value == "add_new"){
                 if (booking_input.new_pm.value == ""){
-                    booking_input.select_pm.scrollIntoView();
+                    booking_input.new_pm.scrollIntoView();
                     alert("enter pm name")
                     return false;
                 }
@@ -363,6 +390,30 @@ if ('{{super}}'){
                     return false;
                 }
             }
+                        // Prevent users from entering multiple GC PMs or GC Supers
+            if (!validatePersonName(booking_input.new_pm, "GC PM name")) {
+                return false;
+            }
+            if (!validateSingleContactField(booking_input.new_pm_phone, "GC PM phone")) {
+                return false;
+            }
+            if (!validateSingleContactField(booking_input.new_pm_email, "GC PM email")) {
+                return false;
+            }
+
+            if (booking_input.select_super.value != "not_sure") {
+                if (!validatePersonName(booking_input.new_super, "GC Super name")) {
+                    return false;
+                }
+                if (!validateSingleContactField(booking_input.new_super_phone, "GC Super phone")) {
+                    return false;
+                }
+                if (!validateSingleContactField(booking_input.new_super_email, "GC Super email")) {
+                    return false;
+                }
+            }
+
+
         }
 function changed_pm(){
 
