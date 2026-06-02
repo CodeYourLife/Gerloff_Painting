@@ -184,21 +184,14 @@ def client_info(request, id):
         if 'combine_people_now' in request.POST:
             person1 = ClientEmployees.objects.get(person_pk=request.POST['select_person1'])
             person2 = ClientEmployees.objects.get(person_pk=request.POST['select_person2'])
-            for x in Jobs.objects.filter(client_Pm=person1):
-                x.client_Pm = person2
-                x.save()
-            for x in Jobs.objects.filter(client_Submittal_Contact=person1):
-                x.client_Submittal_Contact = person2
-                x.save()
-            for x in Jobs.objects.filter(client_Super=person1):
-                x.client_Super = person2
-                x.save()
-            for x in ClientJobRoles.objects.filter(employee=person1):
-                x.employee = person2
-                x.save()
-            for x in TempRecipients.objects.filter(person=person1):
-                x.person = person2
-                x.save()
+
+            Jobs.objects.filter(client_Pm=person1).update(client_Pm=person2)
+            Jobs.objects.filter(client_Super=person1).update(client_Super=person2)
+
+            ClientJobRoles.objects.filter(employee=person1).update(employee=person2)
+            TempRecipients.objects.filter(person=person1).update(person=person2)
+            TempRecipientsCOPList.objects.filter(person=person1).update(person=person2)
+
             person1.delete()
         if 'people_form' in request.POST:
             for x in request.POST:
