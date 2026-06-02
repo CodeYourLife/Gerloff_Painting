@@ -259,7 +259,7 @@ def index(request):
     last_clockshark_import = (
         ClockSharkTimeEntry.objects
         .filter(hours_adjust_note="AUTO IMPORT")
-        .aggregate(last_import=Max("synced_at"))
+        .aggregate(last_import=Max("work_day"))
     )["last_import"]
 
     send_data["last_clockshark_import"] = last_clockshark_import
