@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid mt-4 mb-5">
+
+    <div class="row mb-3">
+        <div class="col-12">
+            <a href="{% url 'client_cleanup_report' %}" class="btn btn-sm btn-outline-secondary mb-2">
+                Back to Cleanup Report
+            </a>
+
+            <h3>Merge Client Employees</h3>
+            <p class="text-muted">
+                Review both records and choose the correct information before merging.
+            </p>
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="card mb-4 border-danger">
+            <div class="card-header bg-danger text-white font-weight-bold">
+                Choose Employee Record to Keep
+            </div>
+
+            <div class="card-body">
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+                        <label class="border rounded p-3 d-block h-100">
+                            <input type="radio"
+                                   name="keep_employee_id"
+                                   value="{{ employee_1.person_pk }}"
+                                   checked>
+                            Keep this record
+
+                            <hr>
+
+                            <h5>{{ employee_1.name }}</h5>
+                            <div><strong>Client:</strong> {{ employee_1.id.company }}</div>
+                            <div><strong>Person PK:</strong> {{ employee_1.person_pk }}</div>
+                            <div><strong>Phone:</strong> {{ employee_1.phone|default:"" }}</div>
+                            <div><strong>Email:</strong> {{ employee_1.email|default:"" }}</div>
+                            <div><strong>Title:</strong> {{ employee_1.title|default:"" }}</div>
+                            <div><strong>Active:</strong> {{ employee_1.is_active }}</div>
+                        </label>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="border rounded p-3 d-block h-100">
+                            <input type="radio"
+                                   name="keep_employee_id"
+                                   value="{{ employee_2.person_pk }}">
+                            Keep this record
+
+                            <hr>
+
+                            <h5>{{ employee_2.name }}</h5>
+                            <div><strong>Client:</strong> {{ employee_2.id.company }}</div>
+                            <div><strong>Person PK:</strong> {{ employee_2.person_pk }}</div>
+                            <div><strong>Phone:</strong> {{ employee_2.phone|default:"" }}</div>
+                            <div><strong>Email:</strong> {{ employee_2.email|default:"" }}</div>
+                            <div><strong>Title:</strong> {{ employee_2.title|default:"" }}</div>
+                            <div><strong>Active:</strong> {{ employee_2.is_active }}</div>
+                        </label>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+
+        <div class="card mb-4">
+            <div class="card-header font-weight-bold">
+                Final Information
+            </div>
+
+            <div class="card-body">
+
+                <div class="form-group">
+                    <label for="final_name">Name</label>
+                    <select name="final_name" id="final_name" class="form-control">
+                        {% if employee_1.name %}
+                            <option value="{{ employee_1.name }}"
+                                    {% if default_name == employee_1.name %}selected{% endif %}>
+                                {{ employee_1.name }}
+                            </option>
+                        {% endif %}
+
+                        {% if employee_2.name and employee_2.name != employee_1.name %}
+                            <option value="{{ employee_2.name }}"
+                                    {% if default_name == employee_2.name %}selected{% endif %}>
+                                {{ employee_2.name }}
+                            </option>
+                        {% endif %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="final_phone">Phone</label>
+                    <select name="final_phone" id="final_phone" class="form-control">
+                        <option value="">Blank</option>
+
+                        {% if employee_1.phone %}
+                            <option value="{{ employee_1.phone }}"
+                                    {% if default_phone == employee_1.phone %}selected{% endif %}>
+                                {{ employee_1.phone }}
+                            </option>
+                        {% endif %}
+
+                        {% if employee_2.phone and employee_2.phone != employee_1.phone %}
+                            <option value="{{ employee_2.phone }}"
+                                    {% if default_phone == employee_2.phone %}selected{% endif %}>
+                                {{ employee_2.phone }}
+                            </option>
+                        {% endif %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="final_email">Email</label>
+                    <select name="final_email" id="final_email" class="form-control">
+                        <option value="">Blank</option>
+
+                        {% if employee_1.email %}
+                            <option value="{{ employee_1.email }}"
+                                    {% if default_email == employee_1.email %}selected{% endif %}>
+                                {{ employee_1.email }}
+                            </option>
+                        {% endif %}
+
+                        {% if employee_2.email and employee_2.email != employee_1.email %}
+                            <option value="{{ employee_2.email }}"
+                                    {% if default_email == employee_2.email %}selected{% endif %}>
+                                {{ employee_2.email }}
+                            </option>
+                        {% endif %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="final_title">Title</label>
+                    <select name="final_title" id="final_title" class="form-control">
+                        <option value="">Blank</option>
+
+                        {% if employee_1.title %}
+                            <option value="{{ employee_1.title }}"
+                                    {% if default_title == employee_1.title %}selected{% endif %}>
+                                {{ employee_1.title }}
+                            </option>
+                        {% endif %}
+
+                        {% if employee_2.title and employee_2.title != employee_1.title %}
+                            <option value="{{ employee_2.title }}"
+                                    {% if default_title == employee_2.title %}selected{% endif %}>
+                                {{ employee_2.title }}
+                            </option>
+                        {% endif %}
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-danger">
+                    Merge Client Employees
+                </button>
+
+            </div>
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

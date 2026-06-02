@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid mt-4 mb-5">
+
+    <div class="row mb-3">
+        <div class="col-12">
+            <a href="{% url 'client_cleanup_report' %}" class="btn btn-sm btn-outline-secondary mb-2">
+                Back to Cleanup Report
+            </a>
+
+            <h3>Merge Client Companies</h3>
+            <p class="text-muted">
+                Review both companies before merging. Choose which company should remain.
+            </p>
+        </div>
+    </div>
+
+    <form method="post">
+    {% csrf_token %}
+
+    <div class="card mb-4 border-danger">
+        <div class="card-header bg-danger text-white font-weight-bold">
+            Choose Company to Keep
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+                    <div class="border rounded p-3 h-100">
+                        <h5>{{ client_1.company }}</h5>
+                        <div><strong>ID:</strong> {{ client_1.id }}</div>
+                        <div><strong>Phone:</strong> {{ client_1.phone|default:"" }}</div>
+                        <div><strong>Email:</strong> {{ client_1.bid_email|default:"" }}</div>
+                        <div><strong>Address:</strong> {{ client_1.address|default:"" }}</div>
+                        <div><strong>City:</strong> {{ client_1.city|default:"" }}</div>
+                        <div><strong>State:</strong> {{ client_1.state|default:"" }}</div>
+                        <div><strong>Vendor Code:</strong> {{ client_1.vendor_code|default:"" }}</div>
+                        <div><strong>Active:</strong> {{ client_1.is_active }}</div>
+
+                        <hr>
+
+                        <button type="submit"
+                                name="keep_client_id"
+                                value="{{ client_1.id }}"
+                                class="btn btn-danger btn-block">
+                            Keep {{ client_1.company }} and Merge {{ client_2.company }}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <div class="border rounded p-3 h-100">
+                        <h5>{{ client_2.company }}</h5>
+                        <div><strong>ID:</strong> {{ client_2.id }}</div>
+                        <div><strong>Phone:</strong> {{ client_2.phone|default:"" }}</div>
+                        <div><strong>Email:</strong> {{ client_2.bid_email|default:"" }}</div>
+                        <div><strong>Address:</strong> {{ client_2.address|default:"" }}</div>
+                        <div><strong>City:</strong> {{ client_2.city|default:"" }}</div>
+                        <div><strong>State:</strong> {{ client_2.state|default:"" }}</div>
+                        <div><strong>Vendor Code:</strong> {{ client_2.vendor_code|default:"" }}</div>
+                        <div><strong>Active:</strong> {{ client_2.is_active }}</div>
+
+                        <hr>
+
+                        <button type="submit"
+                                name="keep_client_id"
+                                value="{{ client_2.id }}"
+                                class="btn btn-danger btn-block">
+                            Keep {{ client_2.company }} and Merge {{ client_1.company }}
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</form>
+
+
+    <div class="row">
+
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header font-weight-bold">
+                    Employees for {{ client_1.company }}
+                </div>
+                <div class="card-body">
+
+                    {% if client_1_employees %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Title</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for employee in client_1_employees %}
+                                    <tr>
+                                        <td>{{ employee.name }}</td>
+                                        <td>{{ employee.phone|default:"" }}</td>
+                                        <td>{{ employee.email|default:"" }}</td>
+                                        <td>{{ employee.title|default:"" }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No employees listed.</p>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header font-weight-bold">
+                    Employees for {{ client_2.company }}
+                </div>
+                <div class="card-body">
+
+                    {% if client_2_employees %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Title</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for employee in client_2_employees %}
+                                    <tr>
+                                        <td>{{ employee.name }}</td>
+                                        <td>{{ employee.phone|default:"" }}</td>
+                                        <td>{{ employee.email|default:"" }}</td>
+                                        <td>{{ employee.title|default:"" }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No employees listed.</p>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+</script>
+
+{% endblock %}

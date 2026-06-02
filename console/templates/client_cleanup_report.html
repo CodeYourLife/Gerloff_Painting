@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+		<a class="navbar-brand sub-navbar-brand" href="{% url 'admin_home' %}">Admin Page</a>
+		<div id="navbarNavDropdown2">
+		  <ul class="sub-nav-list navbar-nav ">
+        <li><a class="nav-item nav-link" href="{% url 'vendor_management' %}">Vendor Management</a></li>
+             <li><a class="nav-item nav-link" href="{% url 'client_info' 'ALL' %}">Client Management</a></li>
+              <li><a class="nav-item nav-link active" href="#">Cleanup Report</a></li>
+    </ul>
+  </div>
+</nav>
+<div class="container-fluid mt-4 mb-5">
+
+    <div class="row mb-3">
+        <div class="col-12">
+            <h3>Client Cleanup Report</h3>
+            <p class="text-muted mb-0">
+                This page only reports possible issues. It does not change anything.
+            </p>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+
+        <div class="col-md-3 mb-2">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <h4 class="mb-0">{{ duplicate_clients_count }}</h4>
+                    <small>Duplicate Clients</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-2">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <h4 class="mb-0">{{ similar_clients_count }}</h4>
+                    <small>Similar Clients</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-2">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <h4 class="mb-0">{{ duplicate_client_employees_count }}</h4>
+                    <small>Duplicate Client Employees</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-2">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <h4 class="mb-0">{{ bad_name_employees_count }}</h4>
+                    <small>Bad Employee Names</small>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+<!-- Duplicate Clients -->
+<div class="card mb-3">
+    <div class="card-header bg-danger text-white font-weight-bold">
+        Duplicate Client Companies - {{ duplicate_clients_count }}
+    </div>
+    <div class="card-body">
+
+        {% if duplicate_clients %}
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered table-striped">
+                    <thead>
+                    <tr>
+                        <th>Client 1</th>
+                        <th>Client 2</th>
+                        <th>Reason</th>
+                        <th style="width: 120px;">Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in duplicate_clients %}
+                        <tr>
+                            <td>
+                                {{ item.client_1.company }}
+                                <br>
+                                <small class="text-muted">ID: {{ item.client_1.id }}</small>
+                            </td>
+                            <td>
+                                {{ item.client_2.company }}
+                                <br>
+                                <small class="text-muted">ID: {{ item.client_2.id }}</small>
+                            </td>
+                            <td>{{ item.reason }}</td>
+                            <td>
+                                <a href="{% url 'client_merge_review' item.client_1.id item.client_2.id %}"
+                                   class="btn btn-sm btn-outline-danger btn-block">
+                                    Merge
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted mb-0">No duplicate clients found.</p>
+        {% endif %}
+
+    </div>
+</div>
+
+
+<!-- Duplicate Client Employees -->
+<div class="card mb-3">
+    <div class="card-header bg-danger text-white font-weight-bold">
+        Duplicate Client Employees - {{ duplicate_client_employees_count }}
+    </div>
+    <div class="card-body">
+
+        {% if duplicate_client_employees %}
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered table-striped">
+                    <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Employee 1</th>
+                        <th>Employee 2</th>
+                        <th>Reason</th>
+                        <th style="width: 120px;">Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in duplicate_client_employees %}
+                        <tr>
+                            <td>{{ item.employee_1.id.company }}</td>
+                            <td>
+                                {{ item.employee_1.name }}
+                                <br>
+                                <small class="text-muted">Person PK: {{ item.employee_1.person_pk }}</small>
+                            </td>
+                            <td>
+                                {{ item.employee_2.name }}
+                                <br>
+                                <small class="text-muted">Person PK: {{ item.employee_2.person_pk }}</small>
+                            </td>
+                            <td>{{ item.reason }}</td>
+                            <td>
+                                <a href="{% url 'client_employee_merge_review' item.employee_1.person_pk item.employee_2.person_pk %}"
+                                   class="btn btn-sm btn-outline-danger btn-block">
+                                    Merge
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted mb-0">No duplicate client employees found.</p>
+        {% endif %}
+
+    </div>
+</div>
+
+<!-- Similar Client Employees -->
+<div class="card mb-3">
+    <div class="card-header bg-warning font-weight-bold">
+        Similar Client Employees - {{ similar_client_employees_count }}
+    </div>
+    <div class="card-body">
+
+        {% if similar_client_employees %}
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered table-striped">
+                    <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Employee 1</th>
+                        <th>Employee 2</th>
+                        <th>Similarity</th>
+                        <th style="width: 120px;">Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in similar_client_employees %}
+                        <tr>
+                            <td>{{ item.employee_1.id.company }}</td>
+                            <td>
+                                {{ item.employee_1.name }}
+                                <br>
+                                <small class="text-muted">
+                                    Phone: {{ item.employee_1.phone|default:"" }}
+                                    <br>
+                                    Email: {{ item.employee_1.email|default:"" }}
+                                    <br>
+                                    Person PK: {{ item.employee_1.person_pk }}
+                                </small>
+                            </td>
+                            <td>
+                                {{ item.employee_2.name }}
+                                <br>
+                                <small class="text-muted">
+                                    Phone: {{ item.employee_2.phone|default:"" }}
+                                    <br>
+                                    Email: {{ item.employee_2.email|default:"" }}
+                                    <br>
+                                    Person PK: {{ item.employee_2.person_pk }}
+                                </small>
+                            </td>
+                            <td>{{ item.score }}%</td>
+                            <td>
+                                <a href="{% url 'client_employee_merge_review' item.employee_1.person_pk item.employee_2.person_pk %}"
+                                   class="btn btn-sm btn-outline-danger btn-block">
+                                    Merge
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted mb-0">No similar client employees found.</p>
+        {% endif %}
+
+    </div>
+</div>
+
+    <!-- Bad Names -->
+    <div class="card mb-3">
+        <div class="card-header bg-dark text-white font-weight-bold">
+            Client Employees With Possible Multiple Names / Bad Characters - {{ bad_name_employees_count }}
+        </div>
+        <div class="card-body">
+
+            {% if bad_name_employees %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-striped">
+                        <thead>
+                        <tr>
+                            <th>Client</th>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Reason</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for item in bad_name_employees %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'client_info' id=item.employee.id.id %}"
+                                       class="font-weight-bold">
+                                        {{ item.employee.id.company }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {{ item.employee.name }}
+                                    <br>
+                                    <small class="text-muted">Person PK: {{ item.employee.person_pk }}</small>
+                                </td>
+                                <td>{{ item.employee.phone|default:"" }}</td>
+                                <td>{{ item.employee.email|default:"" }}</td>
+                                <td>
+                                    {% for reason in item.reasons %}
+                                        <div>{{ reason }}</div>
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">No bad employee names found.</p>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

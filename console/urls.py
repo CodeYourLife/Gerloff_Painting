@@ -27,4 +27,16 @@ urlpatterns = [
         views.vendor_management,
         name='vendor_management'
     ),
+    path("client_cleanup_report", views.client_cleanup_report, name="client_cleanup_report"),
+    path(
+        "client_merge_review/<int:client_1_id>/<int:client_2_id>",
+        views.client_merge_review,
+        name="client_merge_review"
+    ),
+
+    path(
+        "client_employee_merge_review/<int:employee_1_id>/<int:employee_2_id>",
+        views.client_employee_merge_review,
+        name="client_employee_merge_review"
+    ),
 ]
