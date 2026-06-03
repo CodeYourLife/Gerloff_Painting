@@ -135,6 +135,19 @@
             margin: 0.5rem;
         }
     }
+    .item-action-badge {
+    font-size: 75%;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0.25em 0.4em;
+    border-radius: 0.25rem;
+    vertical-align: baseline;
+}
+    .editing-row-highlight {
+    outline: 3px solid #ffc107;
+    outline-offset: -3px;
+    background-color: #fff3cd !important;
+}
 </style>
 {% endblock %}
 
@@ -537,7 +550,7 @@
                 <tbody>
                     {% for x in items %}
                         {% if edit_row and x.id|slugify == edit_row|slugify %}
-                            <tr>
+                            <tr id="editing_item_row">
                                 <td>{{ x.date }}</td>
                                 <td>
                                     <input type="hidden" id="item_edited" name="item_edited" value="{{ x.id }}">
@@ -611,7 +624,11 @@
                                 <td>{{ x.notes }}</td>
                                 <td>
                                     {% if not edit_row and job_open %}
-                                        <button class="btn btn-success btn-sm" name="edit_now" onclick="edit_row({{ x.id }})">Edit Item</button>
+                                        <button class="btn btn-success btn-xs item-action-badge"
+                                                name="edit_now"
+                                                onclick="edit_row({{ x.id }})">
+                                            Edit Item
+                                        </button>
                                     {% endif %}
                                     {% if x.change_order_status %}
                                         <div class="mt-1">
@@ -794,6 +811,16 @@ $(document).ready(function () {
 
     if ('{{ subcontract.is_retainage }}' === 'True') {
         document.getElementById('hide_retainage').style.display = 'block';
+    }
+    const editingRow = document.getElementById("editing_item_row");
+
+    if (editingRow) {
+        editingRow.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+
+        editingRow.classList.add("editing-row-highlight");
     }
 });
 
