@@ -260,7 +260,7 @@
 
                                     {% if x.spanish %}
                                         <a href="{% url 'subcontractor_toolbox_file' x.item 'Spanish' employee_id %}"
-                                           class="btn btn-block mb-2 {% if x.spanish_viewed %}btn-success{% else %}btn-outline-primary{% endif %}">
+                                            class="toolbox-pdf-link btn btn-block mb-2 {% if x.spanish_viewed %}btn-success{% else %}btn-outline-primary{% endif %}">
                                             {% if x.spanish_viewed %}
                                                 ✅ Spanish (Viewed {{ x.spanish_date|date:"m/d/Y" }})
                                             {% else %}
@@ -277,7 +277,7 @@
 
                                     {% if x.english %}
                                         <a href="{% url 'subcontractor_toolbox_file' x.item 'English' employee_id %}"
-                                           class="btn btn-block mb-2 {% if x.english_viewed %}btn-success{% else %}btn-outline-primary{% endif %}">
+                                             class="toolbox-pdf-link btn btn-block mb-2 {% if x.english_viewed %}btn-success{% else %}btn-outline-primary{% endif %}">
                                             {% if x.english_viewed %}
                                                 ✅ English (Viewed {{ x.english_date|date:"m/d/Y" }})
                                             {% else %}
@@ -294,11 +294,7 @@
 
                                     <button type="button"
                                             class="btn btn-block {% if x.can_complete %}btn-danger{% else %}btn-secondary{% endif %}"
-                                            {% if not x.can_complete %}
-                                                onclick="alert('You need to read the toolbox talk first before marking the course complete.')"
-                                            {% else %}
-                                                onclick="complete_subcontractor_toolbox('{{ x.item }}')"
-                                            {% endif %}>
+                                            onclick="check_subcontractor_employee_toolbox_can_complete('{{ x.item }}')">
                                         I have read and understand this topic
                                     </button>
 
@@ -329,8 +325,38 @@
 
 <script type="text/javascript">
 function complete_subcontractor_toolbox(scheduled_id) {
+    localStorage.setItem("openAccordion", "collapseIndividualToolbox");
+
     document.getElementById("scheduledtalk_id").value = scheduled_id;
     document.getElementById("select_file").submit();
+}
+
+function check_subcontractor_employee_toolbox_can_complete(scheduled_id) {
+    localStorage.setItem("openAccordion", "collapseIndividualToolbox");
+
+    fetch("{% url 'ajax_check_subcontractor_employee_toolbox_can_complete' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+            "employee_id": "{{ employee_id }}",
+            "scheduled_id": scheduled_id
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.can_complete === true) {
+            complete_subcontractor_toolbox(scheduled_id);
+        } else {
+            alert("You need to read the toolbox talk first before marking the course complete.");
+        }
+    })
+    .catch(error => {
+        console.error("Subcontractor employee toolbox completion check failed:", error);
+        alert("Could not verify completion status. Please try again.");
+    });
 }
 
 function restoreAccordion() {
@@ -353,6 +379,13 @@ document.addEventListener("DOMContentLoaded", function () {
     $('.collapse').on('hidden.bs.collapse', function () {
         localStorage.removeItem("openAccordion");
     });
+
+    document.querySelectorAll(".toolbox-pdf-link").forEach(function(link) {
+        link.addEventListener("click", function () {
+            localStorage.setItem("openAccordion", "collapseIndividualToolbox");
+        });
+    });
+
 });
 
 window.addEventListener("pageshow", function (event) {

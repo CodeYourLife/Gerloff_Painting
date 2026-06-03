@@ -77,4 +77,9 @@ path(
     views.toggle_subcontractor_delegation,
     name='toggle_subcontractor_delegation'
 ),
+path(
+    "ajax/check-toolbox-can-complete/",
+    views.ajax_check_toolbox_can_complete,
+    name="ajax_check_toolbox_can_complete"
+),
 ]

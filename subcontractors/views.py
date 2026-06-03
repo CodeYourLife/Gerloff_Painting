@@ -4518,3 +4518,83 @@ def sub_toolbox_delegate(request, sub_id, scheduled_id, job_number):
         'subcontract': subcontract,
         'employees': employees,
     })
+
+
+@require_POST
+def ajax_check_sub_toolbox_can_complete(request):
+    sub_id = request.POST.get("sub_id")
+    scheduled_id = request.POST.get("scheduled_id")
+    job_number = request.POST.get("job_number")
+
+    if not sub_id or not scheduled_id or not job_number:
+        return JsonResponse({
+            "can_complete": False,
+            "error": "Missing required information."
+        })
+
+    try:
+        selected_sub = Subcontractors.objects.get(id=sub_id)
+        scheduled = ScheduledToolboxTalks.objects.get(id=scheduled_id)
+        job = Jobs.objects.get(job_number=job_number)
+    except Subcontractors.DoesNotExist:
+        return JsonResponse({
+            "can_complete": False,
+            "error": "Subcontractor not found."
+        })
+    except ScheduledToolboxTalks.DoesNotExist:
+        return JsonResponse({
+            "can_complete": False,
+            "error": "Toolbox talk not found."
+        })
+    except Jobs.DoesNotExist:
+        return JsonResponse({
+            "can_complete": False,
+            "error": "Job not found."
+        })
+
+    can_complete = ViewedSubToolboxJobTalks.objects.filter(
+        scheduled=scheduled,
+        subcontractor=selected_sub,
+        job=job
+    ).exists()
+
+    return JsonResponse({
+        "can_complete": can_complete
+    })
+
+
+@require_POST
+def ajax_check_subcontractor_employee_toolbox_can_complete(request):
+    employee_id = request.POST.get("employee_id")
+    scheduled_id = request.POST.get("scheduled_id")
+
+    if not employee_id or not scheduled_id:
+        return JsonResponse({
+            "can_complete": False,
+            "error": "Missing employee or scheduled toolbox talk."
+        })
+
+    try:
+        selected_employee = Subcontractor_Employees.objects.get(id=employee_id)
+    except Subcontractor_Employees.DoesNotExist:
+        return JsonResponse({
+            "can_complete": False,
+            "error": "Subcontractor employee not found."
+        })
+
+    try:
+        scheduled = ScheduledToolboxTalks.objects.get(id=scheduled_id)
+    except ScheduledToolboxTalks.DoesNotExist:
+        return JsonResponse({
+            "can_complete": False,
+            "error": "Toolbox talk not found."
+        })
+
+    can_complete = ViewedSubToolboxTalks.objects.filter(
+        employee=selected_employee,
+        master=scheduled
+    ).exists()
+
+    return JsonResponse({
+        "can_complete": can_complete
+    })

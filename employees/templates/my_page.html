@@ -898,18 +898,15 @@
     </button>
 {% endif %}
 
-<button type="submit"
+<button type="button"
         class="btn btn-block
                {% if x.can_complete %}
                    btn-danger
                {% else %}
                    btn-secondary
                {% endif %}"
-        {% if not x.can_complete %}
-            onclick="alert('You need to read the toolbox talk first before marking the course complete.'); return false;"
-        {% else %}
-            onclick="return complete_toolbox('{{ x.item }}')"
-        {% endif %}>
+        id="complete-btn-{{ x.item }}"
+        onclick="return check_can_complete_toolbox('{{ x.item }}')">
     I have read and understand this topic
 </button>
 
@@ -969,6 +966,7 @@
 
 {% block extra_scripts %}
 <script type="text/javascript" class="init">
+
 function complete_toolbox(scheduled_id){
     localStorage.setItem("openAccordion", "collapseSixteen");
 
@@ -976,6 +974,37 @@ function complete_toolbox(scheduled_id){
     document.getElementById("scheduledtalk_id").value = scheduled_id;
 
     return true;
+}
+
+function check_can_complete_toolbox(scheduled_id) {
+    localStorage.setItem("openAccordion", "collapseSixteen");
+
+    fetch("{% url 'ajax_check_toolbox_can_complete' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+            "scheduled_id": scheduled_id
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.can_complete === true) {
+            document.getElementById("selected_file").value = "pumpkin";
+            document.getElementById("scheduledtalk_id").value = scheduled_id;
+            document.getElementById("select_file").submit();
+        } else {
+            alert("You need to read the toolbox talk first before marking the course complete.");
+        }
+    })
+    .catch(error => {
+        console.error("Toolbox completion check failed:", error);
+        alert("Could not verify completion status. Please try again.");
+    });
+
+    return false;
 }
 
 function restoreAccordion() {
@@ -1004,6 +1033,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
 });
+
 </script>
 
 {% endblock %}

@@ -73,4 +73,14 @@ path(
     views.sub_toolbox_delegate,
     name='sub_toolbox_delegate'
 ),
+path(
+    "ajax/check-sub-toolbox-can-complete/",
+    views.ajax_check_sub_toolbox_can_complete,
+    name="ajax_check_sub_toolbox_can_complete"
+),
+path(
+    "ajax/check-subcontractor-employee-toolbox-can-complete/",
+    views.ajax_check_subcontractor_employee_toolbox_can_complete,
+    name="ajax_check_subcontractor_employee_toolbox_can_complete"
+),
 ]
