@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block nav_item_changeorder %}active{% endblock nav_item_changeorder %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-warning">
+            <strong>Approve Linked Subcontract Items</strong>
+        </div>
+
+        <div class="card-body">
+
+            <h5>
+                {{ selectedjob.job_number }} - {{ selectedjob.job_name }}
+            </h5>
+
+            <p class="text-muted">
+                The following subcontract items are linked to approved change orders but are not yet approved on the subcontract.
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+
+                {% for group in grouped_subcontracts %}
+
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <strong>{{ group.subcontract.subcontractor.company }}</strong>
+                            {% if group.subcontract.po_number %}
+                                - PO #{{ group.subcontract.po_number }}
+                            {% endif %}
+                        </div>
+
+                        <div class="card-body p-0">
+
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px;">Approve</th>
+                                            <th>COP</th>
+                                            <th>Description</th>
+                                            <th>Qty</th>
+                                            <th>Unit</th>
+                                            <th>Rate</th>
+                                            <th>Notes</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {% for item in group.items %}
+                                            <tr>
+                                                <td class="text-center">
+                                                    <input type="checkbox"
+                                                           name="approve_item"
+                                                           value="{{ item.id }}"
+                                                           checked>
+                                                </td>
+
+                                                <td>
+                                                    <a href="{% url 'extra_work_ticket' item.change_order.id %}">
+                                                        COP #{{ item.change_order.cop_number }}
+                                                    </a>
+                                                </td>
+
+                                                <td>{{ item.SOV_description }}</td>
+
+                                                {% if item.SOV_is_lump_sum %}
+                                                    <td>1</td>
+                                                    <td>Lump Sum</td>
+                                                {% else %}
+                                                    <td>{{ item.SOV_total_ordered }}</td>
+                                                    <td>{{ item.SOV_unit }}</td>
+                                                {% endif %}
+
+                                                <td>${{ item.SOV_rate }}</td>
+                                                <td>{{ item.notes }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+
+                {% empty %}
+
+                    <div class="alert alert-success">
+                        There are no subcontract items waiting for approval.
+                    </div>
+
+                {% endfor %}
+
+                {% if grouped_subcontracts %}
+                    <div class="d-flex flex-wrap mt-3">
+
+                        <button type="submit"
+                                name="approve_selected"
+                                class="btn btn-primary mr-2 mb-2">
+                            Approve Selected
+                        </button>
+
+                        <button type="submit"
+                                name="approve_all"
+                                class="btn btn-success mr-2 mb-2">
+                            APPROVE ALL
+                        </button>
+
+                        <a href="{% url 'extra_work_ticket' changeorder.id %}"
+                           class="btn btn-secondary mb-2">
+                            Skip For Now
+                        </a>
+
+                    </div>
+                {% endif %}
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

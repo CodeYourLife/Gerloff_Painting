@@ -83,10 +83,10 @@
         <tr>
             <th>Subcontractor</th>
             <th>Job</th>
-            <th>PO#</th>
+            <th>Item</th>
             <th>Amount</th>
             <th>Notes</th>
-
+            <th>COP Status</th>
         </tr>
         </thead>
         <tbody>
@@ -94,16 +94,52 @@
         <tr>
             <td>{{x.subcontract.subcontractor}}</td>
             <td>{{x.subcontract.job_number}}</td>
-            {% if x.subcontract.po_number %}
-            <td onclick="go_to_subcontract('{{x.subcontract.id}}')" ><a href="#">{{x.subcontract.po_number}}</a></td>
-            {% else %}
-            <td onclick="go_to_subcontract('{{x.subcontract.id}}')" ><a href="#">GoTo PO</a></td>
-            {% endif %}
+            <td onclick="go_to_subcontract('{{x.subcontract.id}}')" ><a href="#">{{x.SOV_description}}</a></td>
+<!--            {% if x.subcontract.po_number %}-->
+<!--            <td onclick="go_to_subcontract('{{x.subcontract.id}}')" ><a href="#">{{x.SOV_description}}</a></td>-->
+<!--            {% else %}-->
+<!--            <td onclick="go_to_subcontract('{{x.subcontract.id}}')" ><a href="#">GoTo PO</a></td>-->
+<!--            {% endif %}-->
 
             <td>${{x.SOV_rate}}</td>
 
             <td>{{x.notes}}</td>
 
+            <td>
+                {% if x.change_order %}
+                    <a href="{% url 'extra_work_ticket' x.change_order.id %}"
+                       class="badge
+                            {% if x.change_order.status == 'Approved' %}
+                                badge-success
+                            {% elif x.change_order.status == 'Informal Approval' %}
+                                badge-info
+                            {% elif x.change_order.status == 'Sent to GC' %}
+                                badge-primary
+                            {% elif x.change_order.status == 'PM Review' %}
+                                badge-warning
+                            {% elif x.change_order.status == 'Proposal in Progress' %}
+                                badge-warning
+                            {% elif x.change_order.status == 'Ticket Signed' %}
+                                badge-info
+                            {% elif x.change_order.status == 'Ticket Not Completed' %}
+                                badge-danger
+                            {% elif x.change_order.status == 'Ticket Not Signed' %}
+                                badge-danger
+                            {% elif x.change_order.status == 'Internal' %}
+                                badge-secondary
+                            {% elif x.change_order.status == 'Voided' %}
+                                badge-dark
+                            {% else %}
+                                badge-secondary
+                            {% endif %}
+                       "
+                       style="text-decoration:none;">
+                        COP #{{ x.change_order.cop_number }} - {{ x.change_order.status }}
+                    </a>
+                {% else %}
+                    <span class="badge badge-light">No COP Linked</span>
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
         </tbody>

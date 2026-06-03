@@ -382,6 +382,8 @@ class SubcontractItems(models.Model):
     notes = models.CharField(null=True, max_length=2050, blank=True)
     date = models.DateField()
     is_approved = models.BooleanField(default=True)
+    change_order = models.ForeignKey(
+        ChangeOrders, on_delete=models.PROTECT, null=True, blank=True)
 
     def __str__(self):
         return f"{self.subcontract} {self.SOV_description}"

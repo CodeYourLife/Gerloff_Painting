@@ -272,6 +272,105 @@ select {
 
 {% block content %}
 
+<!-- Modal - Link Change Order to Subcontractor -->
+<div class="modal fade" id="linkSubcontractorModal" tabindex="-1" role="dialog" aria-labelledby="linkSubcontractorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+
+            <form method="post"
+                  action="{% url 'link_changeorder_to_subcontract_items' changeorder.id %}"
+                  onsubmit="return validateLinkSubcontractorForm()">
+                {% csrf_token %}
+
+                <input type="hidden" id="link_hidden_number_items" name="number_items" value="0">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="linkSubcontractorModalLabel">
+                        Link to Subcontractor
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="form-group">
+                        <label for="link_subcontract_select">Subcontract</label>
+                        <select id="link_subcontract_select"
+                                name="subcontract_id"
+                                class="form-control"
+                                onchange="loadLinkSubcontractItems()"
+                                required>
+                            <option value="">Please Select Subcontract</option>
+
+                            {% for subcontract in job_subcontracts %}
+                                <option value="{{ subcontract.id }}">
+                                    {{ subcontract.subcontractor.company }}
+                                    {% if subcontract.po_number %}
+                                        - PO #{{ subcontract.po_number }}
+                                    {% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div id="link_item_section" style="display:none;">
+
+                        <hr>
+
+                        <div class="form-group">
+                            <label for="link_existing_item_select">Subcontract Item</label>
+                            <select id="link_existing_item_select"
+                                    class="form-control"
+                                    onchange="handleLinkItemSelection()">
+                                <option value="">Please Select Item</option>
+                            </select>
+                        </div>
+
+                        <div id="link_selected_existing_items" class="mb-3"></div>
+
+                        <div id="link_add_new_options" style="display:none;" class="border rounded p-3 bg-light mb-3">
+                            <div class="font-weight-bold mb-2">
+                                Add New Subcontract Item
+                            </div>
+
+                            <button type="button"
+                                    class="btn btn-primary btn-sm"
+                                    onclick="linkNewLumpSum()">
+                                New Lump Sum Item
+                            </button>
+
+                            <button type="button"
+                                    class="btn btn-primary btn-sm"
+                                    onclick="linkNewPerUnit()">
+                                New Item - Per Unit
+                            </button>
+                        </div>
+
+                        <div id="link_new_item_here"></div>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">
+                        Save Link
+                    </button>
+
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
 <!-- Modal - select email recipient -->
 <div class="modal fade" id="email_approval_modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
@@ -1392,7 +1491,19 @@ select {
         {% endif %}
     </button>
 </form>
-
+{% if linked_subcontract %}
+    <a href="{% url 'subcontract' linked_subcontract.id %}"
+       class="btn btn-success btn-sm m-1">
+        Linked to Sub
+    </a>
+{% else %}
+    <button type="button"
+            class="btn btn-secondary btn-sm m-1"
+            data-toggle="modal"
+            data-target="#linkSubcontractorModal">
+        Link to Subcontractor
+    </button>
+{% endif %}
 </div>
 
 </div>
@@ -1853,5 +1964,285 @@ function submitChangeAmountForm() {
     form.submit();
 }
 
+let linkNumberItems = 0;
+let linkSubcontractItems = [];
+
+function loadLinkSubcontractItems() {
+    const subcontractSelect = document.getElementById("link_subcontract_select");
+    const subcontractId = subcontractSelect.value;
+    const section = document.getElementById("link_item_section");
+
+    document.getElementById("link_selected_existing_items").innerHTML = "";
+    document.getElementById("link_new_item_here").innerHTML = "";
+    document.getElementById("link_hidden_number_items").value = 0;
+    linkNumberItems = 0;
+
+    if (!subcontractId) {
+        section.style.display = "none";
+        return;
+    }
+
+    fetch("{% url 'ajax_subcontract_items_for_changeorder' %}?subcontract_id=" + subcontractId)
+        .then(response => response.json())
+        .then(data => {
+            linkSubcontractItems = data.items || [];
+
+            section.style.display = "block";
+            populateLinkExistingItemDropdown();
+        })
+        .catch(() => {
+            alert("Unable to load subcontract items.");
+        });
+}
+
+function populateLinkExistingItemDropdown() {
+    const select = document.getElementById("link_existing_item_select");
+
+    select.innerHTML = "";
+
+    let option = document.createElement("option");
+    option.value = "";
+    option.text = "Please Select Item";
+    select.appendChild(option);
+
+    for (let i = 0; i < linkSubcontractItems.length; i++) {
+        option = document.createElement("option");
+        option.value = linkSubcontractItems[i].id;
+        option.text = linkSubcontractItems[i].description;
+        select.appendChild(option);
+    }
+
+    option = document.createElement("option");
+    option.value = "add_new";
+    option.text = "Add New";
+    select.appendChild(option);
+}
+
+function handleLinkItemSelection() {
+    const select = document.getElementById("link_existing_item_select");
+    const selectedValue = select.value;
+    const selectedText = select.options[select.selectedIndex].text;
+    const addNewOptions = document.getElementById("link_add_new_options");
+
+    addNewOptions.style.display = "none";
+
+    if (!selectedValue) {
+        return;
+    }
+
+    if (selectedValue === "add_new") {
+        addNewOptions.style.display = "block";
+        select.value = "";
+        return;
+    }
+
+    addSelectedExistingItem(selectedValue, selectedText);
+    select.value = "";
+}
+
+function addSelectedExistingItem(itemId, itemText) {
+    const container = document.getElementById("link_selected_existing_items");
+
+    if (document.getElementById("linked_existing_item_" + itemId)) {
+        alert("That item has already been selected.");
+        return;
+    }
+
+    const pill = document.createElement("div");
+    pill.id = "linked_existing_item_" + itemId;
+    pill.className = "border rounded p-2 mb-2 d-flex justify-content-between align-items-center bg-light";
+
+    const text = document.createElement("span");
+    text.innerText = itemText;
+
+    const hidden = document.createElement("input");
+    hidden.type = "hidden";
+    hidden.name = "existing_subcontract_item_id";
+    hidden.value = itemId;
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "btn btn-dark btn-sm";
+    removeButton.innerText = "Remove";
+    removeButton.onclick = function () {
+        pill.remove();
+    };
+
+    pill.appendChild(text);
+    pill.appendChild(hidden);
+    pill.appendChild(removeButton);
+
+    container.appendChild(pill);
+}
+
+function linkAddInput(container, type, name, id, placeholder, required, step) {
+    const input = document.createElement("input");
+    input.type = type;
+    input.name = name;
+    input.id = id;
+    input.placeholder = placeholder;
+    input.className = "form-control mb-2";
+
+    if (required) {
+        input.required = true;
+    }
+
+    if (step) {
+        input.step = step;
+    }
+
+    container.appendChild(input);
+    return input;
+}
+
+function linkAddNewItemContainer(itemType) {
+    linkNumberItems += 1;
+
+    document.getElementById("link_hidden_number_items").value = linkNumberItems;
+
+    const newItemsContainer = document.getElementById("link_new_item_here");
+
+    const card = document.createElement("div");
+    card.id = "link_new_item_here" + linkNumberItems;
+    card.className = "border rounded p-3 mb-3 bg-white";
+
+    const title = document.createElement("strong");
+    title.innerText = itemType + " Item";
+    card.appendChild(title);
+
+    const hiddenInput = document.createElement("input");
+    hiddenInput.type = "hidden";
+    hiddenInput.name = "item_type" + linkNumberItems;
+    hiddenInput.value = itemType;
+    card.appendChild(hiddenInput);
+
+    newItemsContainer.appendChild(card);
+
+    return card;
+}
+
+function linkAddNewItemButtons(container) {
+    const buttonRow = document.createElement("div");
+    buttonRow.className = "d-flex flex-wrap";
+
+    const cancelButton = document.createElement("button");
+    cancelButton.type = "button";
+    cancelButton.className = "btn btn-dark btn-sm mr-2";
+    cancelButton.innerText = "Cancel";
+    cancelButton.onclick = function () {
+        container.remove();
+    };
+
+    buttonRow.appendChild(cancelButton);
+    container.appendChild(buttonRow);
+}
+
+function linkNewLumpSum() {
+    const card = linkAddNewItemContainer("Lump Sum");
+
+    linkAddInput(
+        card,
+        "text",
+        "item_description" + linkNumberItems,
+        "item_description" + linkNumberItems,
+        "Install WC9",
+        true
+    );
+
+    linkAddInput(
+        card,
+        "number",
+        "item_price" + linkNumberItems,
+        "item_price" + linkNumberItems,
+        "10.50",
+        true,
+        "0.01"
+    );
+
+    linkAddInput(
+        card,
+        "text",
+        "item_notes" + linkNumberItems,
+        "item_notes" + linkNumberItems,
+        "NOTE - Includes Glue, etc.",
+        false
+    );
+
+    linkAddNewItemButtons(card);
+
+    document.getElementById("link_add_new_options").style.display = "none";
+}
+
+function linkNewPerUnit() {
+    const card = linkAddNewItemContainer("Per Unit");
+
+    linkAddInput(
+        card,
+        "text",
+        "item_description" + linkNumberItems,
+        "item_description" + linkNumberItems,
+        "Install WC9",
+        true
+    );
+
+    linkAddInput(
+        card,
+        "number",
+        "item_quantity" + linkNumberItems,
+        "item_quantity" + linkNumberItems,
+        "100",
+        true,
+        "0.01"
+    );
+
+    linkAddInput(
+        card,
+        "text",
+        "item_unit" + linkNumberItems,
+        "item_unit" + linkNumberItems,
+        "yard",
+        true
+    );
+
+    linkAddInput(
+        card,
+        "number",
+        "item_price" + linkNumberItems,
+        "item_price" + linkNumberItems,
+        "10.50",
+        true,
+        "0.01"
+    );
+
+    linkAddInput(
+        card,
+        "text",
+        "item_notes" + linkNumberItems,
+        "item_notes" + linkNumberItems,
+        "NOTES - Includes Glue, etc.",
+        false
+    );
+
+    linkAddNewItemButtons(card);
+
+    document.getElementById("link_add_new_options").style.display = "none";
+}
+function validateLinkSubcontractorForm() {
+    const subcontractId = document.getElementById("link_subcontract_select").value;
+    const existingItems = document.querySelectorAll("input[name='existing_subcontract_item_id']");
+    const numberItems = Number(document.getElementById("link_hidden_number_items").value);
+
+    if (!subcontractId) {
+        alert("Please select a subcontract.");
+        return false;
+    }
+
+    if (existingItems.length === 0 && numberItems === 0) {
+        alert("Please select an existing item or add a new subcontract item.");
+        return false;
+    }
+
+    return true;
+}
 </script>
 {% endblock %}

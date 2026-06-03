@@ -144,6 +144,70 @@
 
 {% block content %}
 
+<!-- Link Subcontract Item to COP Modal -->
+<div class="modal fade" id="linkCopModal" tabindex="-1" role="dialog" aria-labelledby="linkCopModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <form method="post" action="{% url 'subcontract' subcontract.id %}">
+                {% csrf_token %}
+
+                <input type="hidden" name="link_cop_item_id" id="link_cop_item_id">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="linkCopModalLabel">
+                        Link Item to COP
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="mb-2">
+                        <strong>Subcontract Item:</strong>
+                        <div id="link_cop_item_description" class="text-muted"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="link_cop_changeorder_id">Select COP</label>
+                        <select name="link_cop_changeorder_id"
+                                id="link_cop_changeorder_id"
+                                class="form-control"
+                                required>
+                            <option value="">Please Select COP</option>
+
+                            {% for co in change_orders_for_linking %}
+                                <option value="{{ co.id }}">
+                                    COP #{{ co.cop_number }} - {{ co.description }} - {{ co.status }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit"
+                            name="link_cop_now"
+                            class="btn btn-primary">
+                        Save Link
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
 <!-- Contact Summary Modal -->
 <div class="modal fade" id="show_contact_info-modal" tabindex="-1" role="dialog" aria-labelledby="show_contact_info_title" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -508,8 +572,22 @@
                                 </td>
                                 <td>
                                     <button name="save_now" class="btn btn-success btn-sm">Save</button>
+
                                     {% if not invoiced_already %}
-                                        <button name="delete_now" class="btn btn-dark btn-sm mt-1" onclick="delete_row({{ x.id }})">Delete Row</button>
+                                        <button name="delete_now"
+                                                class="btn btn-dark btn-sm mt-1"
+                                                onclick="delete_row({{ x.id }})">
+                                            Delete Row
+                                        </button>
+                                    {% endif %}
+                                    {% if not x.change_order_status %}
+                                    <button type="button"
+                                            class="btn btn-secondary btn-sm mt-1"
+                                            data-toggle="modal"
+                                            data-target="#linkCopModal"
+                                            onclick="populateLinkCopModal('{{ x.id }}', '{{ x.SOV_description|escapejs }}')">
+                                        Link to COP
+                                    </button>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -534,6 +612,39 @@
                                 <td>
                                     {% if not edit_row and job_open %}
                                         <button class="btn btn-success btn-sm" name="edit_now" onclick="edit_row({{ x.id }})">Edit Item</button>
+                                    {% endif %}
+                                    {% if x.change_order_status %}
+                                        <div class="mt-1">
+                                            <a href="{% url 'extra_work_ticket' x.change_order_id %}"
+                                               class="badge
+                                                    {% if x.change_order_status == 'Approved' %}
+                                                        badge-success
+                                                    {% elif x.change_order_status == 'Informal Approval' %}
+                                                        badge-info
+                                                    {% elif x.change_order_status == 'Sent to GC' %}
+                                                        badge-primary
+                                                    {% elif x.change_order_status == 'PM Review' %}
+                                                        badge-warning
+                                                    {% elif x.change_order_status == 'Proposal in Progress' %}
+                                                        badge-warning
+                                                    {% elif x.change_order_status == 'Ticket Signed' %}
+                                                        badge-info
+                                                    {% elif x.change_order_status == 'Ticket Not Completed' %}
+                                                        badge-danger
+                                                    {% elif x.change_order_status == 'Ticket Not Signed' %}
+                                                        badge-danger
+                                                    {% elif x.change_order_status == 'Internal' %}
+                                                        badge-secondary
+                                                    {% elif x.change_order_status == 'Voided' %}
+                                                        badge-dark
+                                                    {% else %}
+                                                        badge-secondary
+                                                    {% endif %}
+                                               "
+                                               style="text-decoration:none;">
+                                                CO #{{ x.change_order_number }} - {{ x.change_order_status }}
+                                            </a>
+                                        </div>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -952,6 +1063,11 @@ function add_note2() {
     if (note !== null) {
         document.getElementById('release_new_note').value = note;
     }
+}
+
+function populateLinkCopModal(itemId, itemDescription) {
+    document.getElementById("link_cop_item_id").value = itemId;
+    document.getElementById("link_cop_item_description").innerText = itemDescription;
 }
 </script>
 {% endblock %}
