@@ -1297,6 +1297,9 @@ def subcontract(request, id):
     send_data = {}
     subcontract = Subcontracts.objects.get(id=id)
     current_job = subcontract.job_number
+    send_data["change_orders_for_linking"] = ChangeOrders.objects.filter(
+    job_number=subcontract.job_number
+).order_by("-cop_number")
     send_data['approvers']=Subcontract_Approvers.objects.filter(subcontract=subcontract)
     send_data['employees']=Employees.objects.all()
     if not current_job.is_closed:
@@ -1317,6 +1320,14 @@ def subcontract(request, id):
     items = []
     number_items = 0
     for x in SubcontractItems.objects.filter(subcontract=subcontract).order_by('id'):
+        change_order_id = None
+        change_order_status = None
+        change_order_number = None
+
+        if x.change_order:
+            change_order_id = x.change_order.id
+            change_order_status = x.change_order.status()
+            change_order_number = x.change_order.cop_number
         number_items = number_items + 1
         totalcost = float(x.total_cost())
         totalbilled = float(x.total_billed())
@@ -1337,7 +1348,8 @@ def subcontract(request, id):
              'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
              'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
              'notes': x.notes, 'quantity_billed': float(x.quantity_billed()),
-             'total_billed': round(x.total_billed(), 2), 'total_cost': round(x.total_cost(), 2)})
+             'total_billed': round(x.total_billed(), 2), 'total_cost': round(x.total_cost(), 2),'change_order_status': change_order_status,
+            'change_order_number': change_order_number,'change_order_id': change_order_id,})
     send_data['items'] = items
     send_data['number_items'] = number_items
     send_data['notes'] = SubcontractNotes.objects.filter(subcontract=subcontract).order_by('id')
@@ -1361,6 +1373,7 @@ def subcontract(request, id):
             if x[0:14] == 'deleteapprover':
                 item_number = x[14:len(x)]
                 Subcontract_Approvers.objects.get(id=item_number).delete()
+                return redirect('subcontract', id=id)
             if x == 'add_new_approver':
                 if request.POST['add_new'] == 'Superintendent':
                     if not Subcontract_Approvers.objects.filter(subcontract=subcontract,
@@ -1372,6 +1385,37 @@ def subcontract(request, id):
                     if not Subcontract_Approvers.objects.filter(subcontract=subcontract,
                                                                   employee=employee).exists():
                         Subcontract_Approvers.objects.create(subcontract=subcontract, employee=employee)
+                return redirect('subcontract', id=id)
+        if "link_cop_now" in request.POST:
+            item_id = request.POST.get("link_cop_item_id")
+            changeorder_id = request.POST.get("link_cop_changeorder_id")
+
+            item = SubcontractItems.objects.get(
+                id=item_id,
+                subcontract=subcontract
+            )
+
+            changeorder = ChangeOrders.objects.get(
+                id=changeorder_id,
+                job_number=subcontract.job_number
+            )
+
+            item.change_order = changeorder
+            item.save()
+
+            SubcontractNotes.objects.create(
+                subcontract=subcontract,
+                date=date.today(),
+                user=Employees.objects.get(user=request.user),
+                note=f"Item {item.SOV_description} linked to COP #{changeorder.cop_number}."
+            )
+
+            messages.success(
+                request,
+                f"Item linked to COP #{changeorder.cop_number}."
+            )
+
+            return redirect("subcontract", id=subcontract.id)
         if 'retainage_percentage' in request.POST:
             if 'is_entire_paint_job' in request.POST:
                 subcontract.is_entire_paint_job = True

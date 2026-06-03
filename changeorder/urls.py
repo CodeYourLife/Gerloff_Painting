@@ -30,5 +30,20 @@ urlpatterns = [
     path('select_pm_approval/<int:id>/', views.select_pm_approval, name='select_pm_approval'),
     path('change_order_new_select', views.change_order_new_select, name='change_order_new_select'),
     path('send_cop_report/<job_number>', views.send_cop_report, name='send_cop_report'),
+path(
+    "changeorder/ajax/subcontract-items/",
+    views.ajax_subcontract_items_for_changeorder,
+    name="ajax_subcontract_items_for_changeorder"
+),
 
+path(
+    "changeorder/<int:id>/link-subcontract-items/",
+    views.link_changeorder_to_subcontract_items,
+    name="link_changeorder_to_subcontract_items"
+),
+path(
+    "changeorder/<int:id>/approve-linked-subcontract-items/",
+    views.approve_linked_subcontract_items,
+    name="approve_linked_subcontract_items"
+),
 ]

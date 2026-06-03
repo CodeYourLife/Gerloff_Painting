@@ -27,6 +27,7 @@ from jobs.models import Jobs, JobCharges, ClientEmployees, Email_Errors,JobNotes
 from media.utilities import MediaUtilities
 from media.utilities import MediaUtilities
 from .models import ChangeOrders
+from subcontractors.models import *
 from wallcovering.filters import ChangeOrderFilter
 from wallcovering.tables import ChangeOrderTable
 from xhtml2pdf import pisa
@@ -185,6 +186,8 @@ def batch_approve_co(request, id):
     changeordersjson = allchangeorders.values()
     send_data['changeordersjson'] = json.dumps(list(changeordersjson), cls=DjangoJSONEncoder)
     if request.method == 'POST':
+        approved_cop_ids = []
+        selected_cop = changeorder
         send_email = False
         gc_number_exists = False
         approved_for_billing = False
@@ -221,6 +224,7 @@ def batch_approve_co(request, id):
                         'notes'] + ". Approved price: " + str(request.POST['price' + item_number])
                     selected_cop.approval_explanation = approval_explanation
                 selected_cop.save()
+                approved_cop_ids.append(selected_cop.id)
                 if selected_cop.is_approved_to_bill:
                     send_email = True
                     email_message += f"COP {selected_cop.cop_number}-{selected_cop.description}-${selected_cop.price}. "
@@ -246,6 +250,15 @@ def batch_approve_co(request, id):
             except:
                 messages.error(request,
                     "There was a problem sending the email to Bridgette. Please tell her it is approved.")
+        if approved_cop_ids:
+            pending_sub_items = SubcontractItems.objects.filter(
+                change_order_id__in=approved_cop_ids,
+                is_approved=False
+            ).exists()
+
+            if pending_sub_items:
+                return redirect('approve_linked_subcontract_items', id=selected_cop.id)
+
         return redirect('extra_work_ticket', id=selected_cop.id)
     return render(request, 'batch_approve_co.html', send_data)
 
@@ -2195,7 +2208,19 @@ def extra_work_ticket(request, id):
     errors.delete()
     changeorder = ChangeOrders.objects.get(id=id)
     send_data['changeorder'] = changeorder
+    linked_subcontract_item = (
+        SubcontractItems.objects
+        .filter(change_order=changeorder)
+        .select_related("subcontract", "subcontract__subcontractor")
+        .first()
+    )
 
+    send_data["linked_subcontract_item"] = linked_subcontract_item
+
+    if linked_subcontract_item:
+        send_data["linked_subcontract"] = linked_subcontract_item.subcontract
+    else:
+        send_data["linked_subcontract"] = None
     job = changeorder.job_number
 
 
@@ -2629,6 +2654,9 @@ def extra_work_ticket(request, id):
     send_data['formals'] = job.formals()
     send_data['approved'] = ChangeOrders.objects.filter(job_number=job, is_approved=True, is_closed=False)
     send_data['pending'] = ChangeOrders.objects.filter(job_number=job, is_approved=False, is_closed=False)
+    send_data['job_subcontracts']=Subcontracts.objects.filter(
+    job_number=changeorder.job_number,
+).select_related("subcontractor").order_by("subcontractor__company")
     ewt = EWT.objects.filter(change_order=changeorder).first()
     if ewt:
         send_data['EWT'] = ewt
@@ -4040,3 +4068,246 @@ def send_cop_report(request,job_number):
             'changeorders':changeorders,
         }
     )
+
+
+
+def ajax_subcontract_items_for_changeorder(request):
+    subcontract_id = request.GET.get("subcontract_id")
+
+    items = SubcontractItems.objects.filter(
+        subcontract_id=subcontract_id,
+        is_closed=False
+    ).order_by("SOV_description")
+
+    data = []
+
+    for item in items:
+        if item.SOV_is_lump_sum:
+            description = f"{item.SOV_description} - Lump Sum - ${item.SOV_rate}"
+        else:
+            description = (
+                f"{item.SOV_description} - "
+                f"{item.SOV_total_ordered} {item.SOV_unit} @ ${item.SOV_rate}"
+            )
+
+        data.append({
+            "id": item.id,
+            "description": description,
+        })
+
+    return JsonResponse({
+        "items": data
+    })
+
+
+def link_changeorder_to_subcontract_items(request, id):
+    changeorder = get_object_or_404(ChangeOrders, id=id)
+
+    if request.method != "POST":
+        return redirect("extra_work_ticket", id=changeorder.id)
+
+    subcontract_id = request.POST.get("subcontract_id")
+
+    if not subcontract_id:
+        messages.error(request, "Please select a subcontract.")
+        return redirect("extra_work_ticket", id=changeorder.id)
+
+    subcontract = get_object_or_404(
+        Subcontracts,
+        id=subcontract_id,
+        job_number=changeorder.job_number
+    )
+
+    subcontract.is_closed = False
+    subcontract.save()
+
+    existing_item_ids = request.POST.getlist("existing_subcontract_item_id")
+
+    for item_id in existing_item_ids:
+        if not item_id:
+            continue
+
+        item = SubcontractItems.objects.filter(
+            id=item_id,
+            subcontract=subcontract
+        ).first()
+
+        if item:
+            item.change_order = changeorder
+            item.save()
+
+            subcontract_notes = (
+                f"Item {item.SOV_description} linked to "
+                f"Change Order #{changeorder.cop_number}."
+            )
+
+            SubcontractNotes.objects.create(
+                subcontract=subcontract,
+                date=date.today(),
+                user=Employees.objects.get(user=request.user),
+                note=subcontract_notes
+            )
+
+    number_items = int(request.POST.get("number_items", 0))
+
+    for x in range(1, number_items + 1):
+
+        item_type = request.POST.get("item_type" + str(x))
+
+        if not item_type:
+            continue
+
+        description = request.POST.get("item_description" + str(x), "").strip()
+        notes = request.POST.get("item_notes" + str(x), "").strip()
+        price = request.POST.get("item_price" + str(x), "0")
+
+        if not description:
+            continue
+
+        if item_type == "Per Unit":
+            item = SubcontractItems.objects.create(
+                subcontract=subcontract,
+                SOV_description=description,
+                SOV_unit=request.POST.get("item_unit" + str(x), ""),
+                SOV_total_ordered=request.POST.get("item_quantity" + str(x), 0),
+                SOV_rate=price,
+                notes=notes,
+                date=date.today(),
+                change_order=changeorder,
+                is_approved=False,
+            )
+
+        else:
+            item = SubcontractItems.objects.create(
+                subcontract=subcontract,
+                SOV_description=description,
+                SOV_is_lump_sum=True,
+                SOV_unit="Lump Sum",
+                SOV_total_ordered=price,
+                SOV_rate=price,
+                notes=notes,
+                date=date.today(),
+                change_order=changeorder,
+                is_approved=False,
+            )
+
+        subcontract_notes = (
+            f"Item {item.SOV_description} added to "
+            f"{subcontract.subcontractor.company} PO#{subcontract.po_number} "
+            f"for job {subcontract.job_number.job_number} {subcontract.job_number.job_name}. "
+            f"Item linked to COP#{changeorder.cop_number}."
+        )
+
+        SubcontractNotes.objects.create(
+            subcontract=subcontract,
+            date=date.today(),
+            user=Employees.objects.get(user=request.user),
+            note=subcontract_notes
+        )
+
+        subject = f"Job {subcontract.job_number.job_number} - PO#{subcontract.po_number} - Changed"
+        body = subcontract_notes
+        recipients = ["admin2@gerloffpainting.com", "bridgette@gerloffpainting.com"]
+        check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+        sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+
+        try:
+            Email.sendEmail(subject, body, recipients, False, sender)
+            messages.success(request, "Email Successfully Sent")
+        except:
+            messages.error(
+                request,
+                f"There was an error sending email. Please tell Viktoria that you {subcontract_notes}"
+            )
+
+    messages.success(request, "Change order linked to subcontract item(s).")
+    return redirect("extra_work_ticket", id=changeorder.id)
+
+
+def approve_linked_subcontract_items(request, id):
+    changeorder = ChangeOrders.objects.get(id=id)
+    selectedjob = changeorder.job_number
+
+    pending_items = (
+        SubcontractItems.objects
+        .filter(
+            change_order__job_number=selectedjob,
+            change_order__is_approved=True,
+            is_approved=False
+        )
+        .select_related(
+            "subcontract",
+            "subcontract__subcontractor",
+            "change_order"
+        )
+        .order_by(
+            "subcontract__subcontractor__company",
+            "subcontract__po_number",
+            "change_order__cop_number",
+            "id"
+        )
+    )
+
+    if request.method == "POST":
+
+        if "approve_all" in request.POST:
+            items_to_approve = pending_items
+        else:
+            selected_item_ids = request.POST.getlist("approve_item")
+            items_to_approve = pending_items.filter(id__in=selected_item_ids)
+
+        approved_count = 0
+
+        for item in items_to_approve:
+            item.is_approved = True
+            item.save()
+
+            SubcontractNotes.objects.create(
+                subcontract=item.subcontract,
+                date=date.today(),
+                user=Employees.objects.get(user=request.user),
+                note=(
+                    f"Item {item.SOV_description} approved. "
+                    f"Linked to COP #{item.change_order.cop_number}."
+                )
+            )
+
+            approved_count += 1
+
+        if approved_count:
+            messages.success(request, f"{approved_count} subcontract item(s) approved.")
+        else:
+            messages.error(request, "No subcontract items were selected.")
+            return redirect("approve_linked_subcontract_items", id=changeorder.id)
+
+        still_pending = pending_items.filter(is_approved=False).exists()
+
+        if still_pending:
+            messages.warning(
+                request,
+                "Some linked subcontract items are still not approved."
+            )
+            return redirect("approve_linked_subcontract_items", id=changeorder.id)
+
+        return redirect("extra_work_ticket", id=changeorder.id)
+
+    grouped_subcontracts = {}
+
+    for item in pending_items:
+        subcontract = item.subcontract
+
+        if subcontract.id not in grouped_subcontracts:
+            grouped_subcontracts[subcontract.id] = {
+                "subcontract": subcontract,
+                "items": []
+            }
+
+        grouped_subcontracts[subcontract.id]["items"].append(item)
+
+    send_data = {
+        "changeorder": changeorder,
+        "selectedjob": selectedjob,
+        "grouped_subcontracts": grouped_subcontracts.values(),
+    }
+
+    return render(request, "approve_linked_subcontract_items.html", send_data)
