@@ -57,7 +57,7 @@
 
     </div>
 </div>
-    <form method="post" onsubmit="return validateEmployees()">
+    <form method="post" id="complete_toolbox_form" onsubmit="return check_sub_toolbox_can_complete()">
         {% csrf_token %}
 
         <div id="employeeRows">
@@ -259,6 +259,41 @@ function validateEmployees() {
 
     return true;
 }
+
+function check_sub_toolbox_can_complete() {
+
+    if (!validateEmployees()) {
+        return false;
+    }
+
+    fetch("{% url 'ajax_check_sub_toolbox_can_complete' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+            "sub_id": "{{ selected_sub.id }}",
+            "scheduled_id": "{{ scheduled.id }}",
+            "job_number": "{{ job.job_number }}"
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.can_complete === true) {
+            document.getElementById("complete_toolbox_form").submit();
+        } else {
+            alert("You need to view the toolbox talk before marking it complete.");
+        }
+    })
+    .catch(error => {
+        console.error("Subcontractor toolbox completion check failed:", error);
+        alert("Could not verify completion status. Please try again.");
+    });
+
+    return false;
+}
+
 function view_toolbox_file(fileName, language) {
     document.getElementById("selected_file").value = fileName;
     document.getElementById("selected_id").value = "{{ toolbox_folder_id }}";

@@ -6,6 +6,7 @@ from datetime import date, timedelta, datetime
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction
 from django.db.models import Q, Max
@@ -15,8 +16,9 @@ from django.template.loader import get_template
 from django.utils.timezone import now
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.cache import never_cache
+
 from employees.models import *
 from employees.models import Employees, ToolboxTalks, ScheduledToolboxTalks,ScheduledToolboxTalkEmployees
 from equipment.models import Inventory
@@ -3606,3 +3608,37 @@ def scheduled_toolbox_talk_edit(request, scheduled_id):
     }
 
     return render(request, 'scheduled_toolbox_talk_edit.html', context)
+
+
+@login_required
+@require_POST
+def ajax_check_toolbox_can_complete(request):
+    scheduled_id = request.POST.get("scheduled_id")
+
+    if not scheduled_id:
+        return JsonResponse({
+            "can_complete": False,
+            "error": "Missing scheduled toolbox talk ID."
+        })
+
+    try:
+        employee = Employees.objects.get(user=request.user)
+    except Employees.DoesNotExist:
+        return JsonResponse({
+            "can_complete": False,
+            "error": "Employee not found."
+        })
+
+    try:
+        scheduled_talk = ScheduledToolboxTalks.objects.get(id=scheduled_id)
+    except ScheduledToolboxTalks.DoesNotExist:
+        return JsonResponse({
+            "can_complete": False,
+            "error": "Toolbox talk not found."
+        })
+
+    can_complete = scheduled_talk.link_has_been_viewed(employee)
+
+    return JsonResponse({
+        "can_complete": can_complete
+    })

@@ -424,7 +424,7 @@
 <!-- Spanish -->
 {% if x.spanish %}
     <a href="{% url 'toolbox_file' x.item 'Spanish' %}"
-       class="btn btn-block mb-2
+   class="toolbox-pdf-link btn btn-block mb-2
               {% if x.spanish_viewed %}
                   btn-success
               {% else %}
@@ -448,7 +448,7 @@
 <!-- English -->
 {% if x.english %}
     <a href="{% url 'toolbox_file' x.item 'English' %}"
-       class="btn btn-block mb-2
+   class="toolbox-pdf-link btn btn-block mb-2
               {% if x.english_viewed %}
                   btn-success
               {% else %}
@@ -475,11 +475,7 @@
                {% else %}
                    btn-secondary
                {% endif %}"
-        {% if not x.can_complete %}
-            onclick="alert('You need to read the toolbox talk first before marking the course complete.')"
-        {% else %}
-            onclick="complete_toolbox('{{ x.item }}')"
-        {% endif %}>
+        onclick="check_can_complete_toolbox('{{ x.item }}')">
     I have read and understand this topic
 </button>
 
@@ -539,17 +535,48 @@
 
 {% endblock %}
 
-	{% block extra_scripts %}
-	<script type="text/javascript" class="init">
+{% block extra_scripts %}
+<script type="text/javascript" class="init">
 window.onload = function() {
-    if ("{{error_message}}"){alert("{{error_message}}")}
+    if ("{{error_message}}"){
+        alert("{{error_message}}")
+    }
 }
 
 function complete_toolbox(scheduled_id){
-let form = document.getElementById("select_file");
-document.getElementById("selected_file").value = "pumpkin";
-document.getElementById("scheduledtalk_id").value = scheduled_id;
-form.submit();
+    localStorage.setItem("openWarehouseAccordion", "toolboxTalksCollapse");
+
+    let form = document.getElementById("select_file");
+    document.getElementById("selected_file").value = "pumpkin";
+    document.getElementById("scheduledtalk_id").value = scheduled_id;
+    form.submit();
+}
+
+function check_can_complete_toolbox(scheduled_id) {
+    localStorage.setItem("openWarehouseAccordion", "toolboxTalksCollapse");
+
+    fetch("{% url 'ajax_check_toolbox_can_complete' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+            "scheduled_id": scheduled_id
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.can_complete === true) {
+            complete_toolbox(scheduled_id);
+        } else {
+            alert("You need to read the toolbox talk first before marking the course complete.");
+        }
+    })
+    .catch(error => {
+        console.error("Toolbox completion check failed:", error);
+        alert("Could not verify completion status. Please try again.");
+    });
 }
 
 function restoreWarehouseAccordion() {
@@ -573,12 +600,18 @@ document.addEventListener("DOMContentLoaded", function () {
     restoreWarehouseAccordion();
 
     $('.mobile-dashboard-card .collapse').on('shown.bs.collapse', function () {
-    localStorage.setItem("openWarehouseAccordion", this.id);
-});
+        localStorage.setItem("openWarehouseAccordion", this.id);
+    });
 
-$('.mobile-dashboard-card .collapse').on('hidden.bs.collapse', function () {
-    localStorage.removeItem("openWarehouseAccordion");
-});
+    $('.mobile-dashboard-card .collapse').on('hidden.bs.collapse', function () {
+        localStorage.removeItem("openWarehouseAccordion");
+    });
+
+    document.querySelectorAll(".toolbox-pdf-link").forEach(function(link) {
+        link.addEventListener("click", function () {
+            localStorage.setItem("openWarehouseAccordion", "toolboxTalksCollapse");
+        });
+    });
 
 });
 
@@ -591,7 +624,5 @@ window.addEventListener("pageshow", function (event) {
     }
 
 });
-
-	</script>
-
+</script>
 {% endblock %}
