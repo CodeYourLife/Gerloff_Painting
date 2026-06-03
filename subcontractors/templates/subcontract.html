@@ -663,39 +663,6 @@
                                             </a>
                                         </div>
                                     {% endif %}
-                                    {% if x.change_order_status %}
-                                        <div class="mt-1">
-                                            <a href="{% url 'extra_work_ticket' x.change_order_id %}"
-                                               class="badge
-                                                    {% if x.change_order_status == 'Approved' %}
-                                                        badge-success
-                                                    {% elif x.change_order_status == 'Informal Approval' %}
-                                                        badge-info
-                                                    {% elif x.change_order_status == 'Sent to GC' %}
-                                                        badge-primary
-                                                    {% elif x.change_order_status == 'PM Review' %}
-                                                        badge-warning
-                                                    {% elif x.change_order_status == 'Proposal in Progress' %}
-                                                        badge-warning
-                                                    {% elif x.change_order_status == 'Ticket Signed' %}
-                                                        badge-info
-                                                    {% elif x.change_order_status == 'Ticket Not Completed' %}
-                                                        badge-danger
-                                                    {% elif x.change_order_status == 'Ticket Not Signed' %}
-                                                        badge-danger
-                                                    {% elif x.change_order_status == 'Internal' %}
-                                                        badge-secondary
-                                                    {% elif x.change_order_status == 'Voided' %}
-                                                        badge-dark
-                                                    {% else %}
-                                                        badge-secondary
-                                                    {% endif %}
-                                               "
-                                               style="text-decoration:none;">
-                                                CO #{{ x.change_order_number }} - {{ x.change_order_status }}
-                                            </a>
-                                        </div>
-                                    {% endif %}
                                 </td>
                             </tr>
                         {% endif %}
