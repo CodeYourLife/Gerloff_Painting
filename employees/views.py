@@ -30,7 +30,7 @@ import os
 import shutil
 from subcontractors.models import *
 from xhtml2pdf import pisa
-
+from dateutil.relativedelta import relativedelta
 
 
 @login_required(login_url='/accounts/login')
@@ -668,12 +668,81 @@ def my_page(request):
     else:
         base_template = "base.html"
     send_data['base_template'] = base_template
-    if not RespiratorClearance.objects.filter(employee=employee, date_completed__isnull=False).exists():
-        send_data['respirator_clearance_required'] = "Yes"
+
+    today = date.today()
+
+    # External respirator certification:
+    # category is Respirator Clearance,
+    # no attached RespiratorClearance record,
+    # and expiration date is still valid.
+    external_resp_cert = Certifications.objects.filter(
+        employee=employee,
+        is_closed=False,
+        category__description="Respirator Clearance",
+        date_expires__gte=today
+    ).exclude(
+        respiratorclearance__isnull=False
+    ).order_by("-date_expires").first()
+
+    # Trinity respirator clearance:
+    # completed through the Trinity questionnaire,
+    # approved for use,
+    # and the attached Certification is not expired.
+    trinity_resp_clearance = RespiratorClearance.objects.filter(
+        employee=employee,
+        date_completed__isnull=False,
+        approved_for_use=True,
+        certification__is_closed=False,
+        certification__date_expires__gte=today
+    ).order_by("-certification__date_expires", "-date_completed", "-id").first()
+
+    pending_trinity_resp_clearance = RespiratorClearance.objects.filter(
+        employee=employee,
+        date_completed__isnull=False,
+        approved_for_use=False,
+        certification__is_closed=False
+    ).order_by("-date_completed", "-id").first()
+
+    # Expired Trinity clearance, for display purposes only.
+    expired_trinity_resp_clearance = RespiratorClearance.objects.filter(
+        employee=employee,
+        date_completed__isnull=False,
+        approved_for_use=True,
+        certification__is_closed=False,
+        certification__date_expires__lt=today
+    ).order_by("-certification__date_expires", "-date_completed", "-id").first()
+
+    # Expired external cert, for display purposes only.
+    expired_external_resp_cert = Certifications.objects.filter(
+        employee=employee,
+        is_closed=False,
+        category__description="Respirator Clearance",
+        date_expires__lt=today
+    ).exclude(
+        respiratorclearance__isnull=False
+    ).order_by("-date_expires").first()
+
+    if external_resp_cert:
+        send_data["respirator_clearance_required"] = False
+        send_data["external_respirator_cert"] = external_resp_cert
+
+    elif trinity_resp_clearance:
+        send_data["respirator_clearance_required"] = False
+        send_data["respirator_clearance_id"] = trinity_resp_clearance.id
+
+    elif pending_trinity_resp_clearance:
+        send_data["respirator_clearance_required"] = False
+        send_data["respirator_not_approved"] = "Yes"
+        send_data["respirator_clearance_id"] = pending_trinity_resp_clearance.id
+
     else:
-        send_data['respirator_clearance_id'] = RespiratorClearance.objects.get(employee=employee).id
-        if not RespiratorClearance.objects.get(employee=employee).approved_for_use:
-            send_data['respirator_not_approved'] = "Yes"
+        send_data["respirator_clearance_required"] = "Yes"
+
+        if expired_trinity_resp_clearance:
+            send_data["expired_respirator_cert"] = expired_trinity_resp_clearance.certification
+
+        elif expired_external_resp_cert:
+            send_data["expired_respirator_cert"] = expired_external_resp_cert
     send_data['employeeJobs'] = EmployeeJob.objects.filter(employee=employee.id,job__is_closed=False)
     send_data['employeeJobs_count'] = EmployeeJob.objects.filter(employee=employee.id,job__is_closed=False).count()
     send_data['employee'] = employee
@@ -698,7 +767,7 @@ def my_page(request):
     send_data['actions_count'] = Certifications.objects.filter(employee=employee, action_required=True).count()
     from django.utils.timezone import now
 
-    if employee.job_title.description == "Painter" or employee.job_title.description == "Superintendent" or employee.job_title.description == "Warehouse":
+    if employee.job_title and employee.job_title.description in ["Painter", "Superintendent", "Warehouse"]:
 
         toolbox_talks_required = []
 
@@ -779,7 +848,7 @@ def certifications(request, id):
                                               user=Employees.objects.get(user=request.user),
                                               note=request.POST['note'])
         if 'closed_item' in request.POST:
-            cert.is_closed == False
+            cert.is_closed = False
             CertificationNotes.objects.create(certification=cert, date=date.today(),
                                               user=Employees.objects.get(user=request.user),
                                               note="Cert closed." + request.POST['closed_note'])
@@ -815,7 +884,21 @@ def certifications(request, id):
                                               note="Expiration Date Changed to: " + cert.date_expires + "- " +
                                                    request.POST['end_date_note'])
         cert.save()
-    send_data['certifications'] = Certifications.objects.filter(is_closed=False)
+    certifications_list = Certifications.objects.filter(is_closed=False)
+
+    for cert in certifications_list:
+        if cert.category and cert.category.description == "Respirator Clearance":
+            if RespiratorClearance.objects.filter(certification=cert).exists():
+                cert.display_description = "Respirator Certification [Trinity]"
+            else:
+                cert.display_description = "Respirator Certification [External]"
+        else:
+            if cert.category:
+                cert.display_description = cert.category
+            else:
+                cert.display_description = cert.description
+
+    send_data['certifications'] = certifications_list
     send_data['actions'] = CertificationActionRequired.objects.all()
     return render(request, "certifications.html", send_data)
 
@@ -1395,10 +1478,13 @@ def respirator_clearance_base(request):
     send_data = {}
     employee = Employees.objects.get(user=request.user)
     send_data['employee'] = employee
-    if RespiratorClearance.objects.filter(employee=employee).exists():
+
+    main = get_current_resp_clearance(employee)
+
+    if main:
         send_data['started_at_base'] = True
         send_data['respirator_clearance0'] = True
-        main = RespiratorClearance.objects.get(employee=employee)
+
         if RespiratorClearance1.objects.filter(main=main).exists():
             send_data['respirator_clearance1'] = True
         if RespiratorClearance2.objects.filter(main=main).exists():
@@ -1411,35 +1497,59 @@ def respirator_clearance_base(request):
             send_data['respirator_clearance5'] = True
         if RespiratorClearance6.objects.filter(main=main).exists():
             send_data['respirator_clearance6'] = True
+
     return render(request, 'respirator_clearance_base.html', send_data)
 
 def respirator_clearance_section0(request):
-    #basic employee info
     send_data = {}
     employee = Employees.objects.get(user=request.user)
     send_data['employee'] = employee
+
     if request.method == 'POST':
-        if not RespiratorClearance.objects.filter(employee=employee).exists():
-            rc = RespiratorClearance(employee = employee,date_created=date.today())
-            rc.save()
-            RespiratorNotes.objects.create(employee=employee, date=date.today(), main=rc,
-                                           note="Respirator Clearance Form Started")
-            new_cert = Certifications.objects.create(employee=employee, category=CertificationCategories.objects.get(
-                description="Respirator Clearance"),description="Respirator Clearance", action_required=True, action="Need to Complete Application")
-            CertificationNotes.objects.create(certification=new_cert, date=date.today(), user=employee,
-                                              note="Respirator Clearance Form Started")
-            rc.certification = new_cert
-            rc.save()
+        rc = get_current_resp_clearance(employee)
+
+        if not rc:
+            new_cert = Certifications.objects.create(
+                employee=employee,
+                category=CertificationCategories.objects.get(description="Respirator Clearance"),
+                description="Respirator Clearance",
+                action_required=True,
+                action="Need to Complete Application"
+            )
+
+            rc = RespiratorClearance.objects.create(
+                employee=employee,
+                date_created=date.today(),
+                certification=new_cert
+            )
+
+            RespiratorNotes.objects.create(
+                employee=employee,
+                date=date.today(),
+                main=rc,
+                note="Respirator Clearance Form Started"
+            )
+
+            CertificationNotes.objects.create(
+                certification=new_cert,
+                date=date.today(),
+                user=employee,
+                note="Respirator Clearance Form Started"
+            )
+
         employee.gender = request.POST.get('gender')
         employee.height = request.POST.get('height')
         employee.weight = request.POST.get('weight')
         employee.phone = request.POST.get('phone')
         employee.birth_date = request.POST.get('birth_date')
         employee.save()
+
         if request.POST['next_page'] == 'back_to_base':
             return redirect('respirator_clearance_base')
+
         if request.POST['next_page'] == 'next_page':
             return redirect('respirator_clearance_section1')
+
     return render(request, 'respirator_clearance_section0.html', send_data)
 
 
@@ -1449,7 +1559,10 @@ def respirator_clearance_section1(request):
     send_data = {}
     employee = Employees.objects.get(user=request.user)
     send_data['employee'] = employee
-    main = RespiratorClearance.objects.get(employee=employee)
+    main = get_current_resp_clearance(employee)
+
+    if not main:
+        return redirect('respirator_clearance_section0')
     if not RespiratorClearance1.objects.filter(main=main).exists():
         RespiratorClearance1.objects.create(main=main)
     part1 = RespiratorClearance1.objects.get(main=main)
@@ -1472,7 +1585,10 @@ def respirator_clearance_section2(request):
     send_data = {}
     employee = Employees.objects.get(user=request.user)
     send_data['employee'] = employee
-    main = RespiratorClearance.objects.get(employee=employee)
+    main = get_current_resp_clearance(employee)
+
+    if not main:
+        return redirect('respirator_clearance_section0')
     if not RespiratorClearance2.objects.filter(main=main).exists():
         RespiratorClearance2.objects.create(main=main)
     part1 = RespiratorClearance2.objects.get(main=main)
@@ -1493,7 +1609,10 @@ def respirator_clearance_section3(request):
     send_data = {}
     employee = Employees.objects.get(user=request.user)
     send_data['employee'] = employee
-    main = RespiratorClearance.objects.get(employee=employee)
+    main = get_current_resp_clearance(employee)
+
+    if not main:
+        return redirect('respirator_clearance_section0')
     if not RespiratorClearance3.objects.filter(main=main).exists():
         RespiratorClearance3.objects.create(main=main)
     part1 = RespiratorClearance3.objects.get(main=main)
@@ -1515,7 +1634,10 @@ def respirator_clearance_section4(request):
     send_data = {}
     employee = Employees.objects.get(user=request.user)
     send_data['employee'] = employee
-    main = RespiratorClearance.objects.get(employee=employee)
+    main = get_current_resp_clearance(employee)
+
+    if not main:
+        return redirect('respirator_clearance_section0')
     if not RespiratorClearance4.objects.filter(main=main).exists():
         RespiratorClearance4.objects.create(main=main)
     part1 = RespiratorClearance4.objects.get(main=main)
@@ -1536,7 +1658,10 @@ def respirator_clearance_section5(request):
     send_data = {}
     employee = Employees.objects.get(user=request.user)
     send_data['employee'] = employee
-    main = RespiratorClearance.objects.get(employee=employee)
+    main = get_current_resp_clearance(employee)
+
+    if not main:
+        return redirect('respirator_clearance_section0')
     if not RespiratorClearance5.objects.filter(main=main).exists():
         RespiratorClearance5.objects.create(main=main)
     part1 = RespiratorClearance5.objects.get(main=main)
@@ -1557,7 +1682,10 @@ def respirator_clearance_section6(request):
     send_data = {}
     employee = Employees.objects.get(user=request.user)
     send_data['employee'] = employee
-    main = RespiratorClearance.objects.get(employee=employee)
+    main = get_current_resp_clearance(employee)
+
+    if not main:
+        return redirect('respirator_clearance_section0')
     if not RespiratorClearance6.objects.filter(main=main).exists():
         RespiratorClearance6.objects.create(main=main)
     part1 = RespiratorClearance6.objects.get(main=main)
@@ -2100,9 +2228,30 @@ def view_respirator_certification(request,id):
     if request.method == 'POST':
         if 'note' in request.POST:
             CertificationNotes.objects.create(certification=selected_cert,date=date.today(), user=Employees.objects.get(user=request.user), note=request.POST['note'])
+        elif 'change_expiration_date' in request.POST:
+            old_expiration_date = selected_cert.date_expires
+            new_expiration_date = request.POST.get('expiration_date')
+
+            selected_cert.date_expires = new_expiration_date
+            selected_cert.save()
+
+            CertificationNotes.objects.create(
+                certification=selected_cert,
+                date=date.today(),
+                user=Employees.objects.get(user=request.user),
+                note=(
+                        "Expiration date changed from "
+                        + (old_expiration_date.strftime("%m/%d/%Y") if old_expiration_date else "None")
+                        + " to "
+                        + new_expiration_date
+                )
+            )
+
+            return redirect('view_respirator_certification', id=selected_cert.id)
         else:
             if request.POST['submit_status'] == 'Approved':
                 selected_cert.date_received = date.today()
+                selected_cert.date_expires = date.today() + relativedelta(years=1)
                 selected_cert.action_required=False
                 selected_cert.action=""
                 selected_cert.save()
@@ -2131,8 +2280,26 @@ def view_respirator_certification(request,id):
     if selected_respirator_cert.approved_for_use:
         send_data['approved_for_use'] = 'True'
     send_data['certification'] = selected_respirator_cert
+    send_data['selected_cert'] = selected_cert
     send_data['certification_id'] = selected_cert.id
     send_data['notes'] = CertificationNotes.objects.filter(certification=selected_cert)
+
+    respirator_sections = [
+        ("Section 1", RespiratorClearance1.objects.filter(main=selected_respirator_cert).exists()),
+        ("Section 2", RespiratorClearance2.objects.filter(main=selected_respirator_cert).exists()),
+        ("Section 3", RespiratorClearance3.objects.filter(main=selected_respirator_cert).exists()),
+        ("Section 4", RespiratorClearance4.objects.filter(main=selected_respirator_cert).exists()),
+        ("Section 5", RespiratorClearance5.objects.filter(main=selected_respirator_cert).exists()),
+        ("Section 6", RespiratorClearance6.objects.filter(main=selected_respirator_cert).exists()),
+    ]
+
+    sections_completed = sum(1 for section_name, is_complete in respirator_sections if is_complete)
+    total_sections = len(respirator_sections)
+
+    send_data["respirator_sections"] = respirator_sections
+    send_data["sections_completed"] = sections_completed
+    send_data["total_sections"] = total_sections
+
     if not selected_respirator_cert.date_completed:
         send_data['not_completed_yet']=True
         #return redirect('certifications', id='ALL')
@@ -3642,3 +3809,15 @@ def ajax_check_toolbox_can_complete(request):
     return JsonResponse({
         "can_complete": can_complete
     })
+
+
+def get_current_resp_clearance(employee):
+    return (
+        RespiratorClearance.objects
+        .filter(
+            employee=employee,
+            date_completed__isnull=True,
+        )
+        .order_by("-date_created", "-id")
+        .first()
+    )

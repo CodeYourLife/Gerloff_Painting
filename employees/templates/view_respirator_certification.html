@@ -53,7 +53,64 @@
 <br>
 
 {% if not_completed_yet %}
-    <b>Respirator Application Not Completed Yet</b>
+    <div class="container mt-4" style="max-width: 800px;">
+        <div class="card border-warning">
+            <div class="card-header bg-warning font-weight-bold">
+                Respirator Application Not Completed Yet
+            </div>
+
+            <div class="card-body">
+                <p>
+                    <b>Employee:</b> {{ certification.employee }}
+                </p>
+
+                <p>
+                    <b>Date Started:</b>
+                    {% if certification.date_created %}
+                        {{ certification.date_created }}
+                    {% else %}
+                        Not Available
+                    {% endif %}
+                </p>
+
+                <p>
+                    <b>Progress:</b>
+                    {{ sections_completed }} of {{ total_sections }} sections completed
+                </p>
+
+                <div class="progress mb-3" style="height: 24px;">
+                    <div class="progress-bar"
+                         role="progressbar"
+                         style="width: {% widthratio sections_completed total_sections 100 %}%;">
+                        {% widthratio sections_completed total_sections 100 %}%
+                    </div>
+                </div>
+
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Section</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for section_name, is_complete in respirator_sections %}
+                            <tr>
+                                <td>{{ section_name }}</td>
+                                <td>
+                                    {% if is_complete %}
+                                        <span class="badge badge-success">Completed</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">Not Completed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 {% else %}
 <div class="demo-html" style="width:90%">
     <!--    	<div style="background-color: powderblue;">-->
@@ -61,6 +118,48 @@
     <br>
     <div class ="row"><div class ="col"><b>Questionnaire Completion Date:</b> {{certification.date_completed}}</div></div>
     <br>
+    <br>
+{% if approved_for_use %}
+<div class="card border-warning mb-3">
+    <div class="card-header bg-warning font-weight-bold">
+        Respirator Certification Expiration
+    </div>
+
+    <div class="card-body">
+        <p>
+            <b>Current Expiration Date:</b>
+            {% if selected_cert.date_expires %}
+                {{ selected_cert.date_expires }}
+            {% else %}
+                <span class="text-danger">No expiration date entered</span>
+            {% endif %}
+        </p>
+
+        <form method="POST" action="{% url 'view_respirator_certification' certification_id %}">
+            {% csrf_token %}
+
+            <div class="form-row align-items-end">
+                <div class="col-md-6 mb-2">
+                    <label for="expiration_date">New Expiration Date</label>
+                    <input type="date"
+                           name="expiration_date"
+                           id="expiration_date"
+                           class="form-control"
+                           required>
+                </div>
+
+                <div class="col-md-6 mb-2">
+                    <button type="submit"
+                            name="change_expiration_date"
+                            class="btn btn-warning">
+                        Save Expiration Date
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
     {% if certification.is_physician_required %}
         <div class ="row"><div class ="col"><b>Note</b> The employee requested that a physician review the form</div></div>
     <br>
@@ -135,9 +234,9 @@
         </div>
             <br>
             <div class ="row"><div class ="col">
-            <button type="button" class="btn btn-success" onclick="employee_approved()" />Employee is Approved For Respirator</button>
+            <button type="button" class="btn btn-success" onclick="employee_approved()" >Employee is Approved For Respirator</button>
             <br><br>
-            <button type="button" class="btn btn-secondary" onclick="submit_later()" />Save Changes and Exit</button>
+            <button type="button" class="btn btn-secondary" onclick="submit_later()" >Save Changes and Exit</button>
             </div></div>
             <br>
 

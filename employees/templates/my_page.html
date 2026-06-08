@@ -934,9 +934,17 @@
                         aria-expanded="false"
                         aria-controls="collapseFifteen">
                     {% if respirator_clearance_required %}
-                    Respirator Clearance Required!
+                        {% if expired_respirator_cert %}
+                            Respirator Clearance Expired - New Clearance Required!
+                        {% else %}
+                            Respirator Clearance Required!
+                        {% endif %}
+                    {% elif respirator_not_approved %}
+                        Respirator Clearance Submitted - Waiting for Approval
+                    {% elif external_respirator_cert %}
+                        Respirator Clearance Completed - Outside of Trinity
                     {% else %}
-                    Respirator Clearance Completed
+                        Respirator Clearance Completed
                     {% endif %}
                 </button>
             </h5>
@@ -944,15 +952,44 @@
         <div id="collapseFifteen" class="collapse" aria-labelledby="headingFifteen" data-parent="#accordion">
             <div class="card-body">
                 {% if respirator_clearance_required %}
-                        <form name="add_new" action="{% url 'respirator_clearance_section0' %}" >
+
+                    {% if expired_respirator_cert %}
+                        <div class="alert alert-warning">
+                            <strong>Your respirator clearance has expired.</strong><br>
+                            Expiration Date: {{ expired_respirator_cert.date_expires|default:"Not Available" }}<br>
+                            Please complete a new respirator clearance.
+                        </div>
+                    {% endif %}
+
+                    <form name="add_new" action="{% url 'respirator_clearance_section0' %}">
                         {% csrf_token %}
-                      <input type="submit" class= "btn btn-danger btn" value="Complete Respirator Clearance Now" />
-                        </form>
+                        <input type="submit"
+                               class="btn btn-danger btn"
+                               value="Complete Respirator Clearance Now" />
+                    </form>
+                {% elif respirator_not_approved %}
+
+                    <div class="alert alert-warning mb-2">
+                        <strong>Your respirator clearance has been submitted.</strong><br>
+                        It is waiting for Safety Director approval.
+                    </div>
+                {% elif external_respirator_cert %}
+
+                    <div class="alert alert-success mb-2">
+                        <strong>External respirator certification on file.</strong><br>
+                        Date Received: {{ external_respirator_cert.date_received|default:"-" }}<br>
+                        Date Expires: {{ external_respirator_cert.date_expires|default:"-" }}
+                    </div>
+
                 {% else %}
-                                        <form name="add_new" action="{% url 'respirator_clearance_completed' respirator_clearance_id %}" >
+
+                    <form name="add_new" action="{% url 'respirator_clearance_completed' respirator_clearance_id %}">
                         {% csrf_token %}
-                      <input type="submit" class= "btn btn-danger btn" value="View Completed Respirator Clearance Form" />
-                        </form>
+                        <input type="submit"
+                               class="btn btn-danger btn"
+                               value="View Completed Respirator Clearance Form" />
+                    </form>
+
                 {% endif %}
             </div>
         </div>
