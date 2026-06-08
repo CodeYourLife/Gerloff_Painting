@@ -355,7 +355,7 @@ table.dataTable {
 	</div>
 	<div class ="row">
 		{% if week_ending %}
-		<input type= "hidden" name="week_ending" id="week_ending" value="{{week_ending}}" />
+		<input type="hidden" name="week_ending" id="week_ending" value="{{ week_ending|date:'Y-m-d' }}" />
 		<input type= "hidden" name="completed_by" id="completed_by" value="{{completed_by}}" />
 		<div class ="col">Week Ending Date: {{week_ending}} </div>
 		<div class ="col">Ticket Completed By: {{completed_by}}</div>
