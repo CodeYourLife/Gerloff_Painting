@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Wallcovering Job Tag</title>
+
+<style>
+    @page {
+        size: letter landscape;
+        margin: 0;
+    }
+
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+        width: 11in;
+        height: 8.5in;
+        overflow: hidden;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+        position: relative;
+    }
+
+    .tag-page {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 11in;
+        height: 8.5in;
+        overflow: hidden;
+        box-sizing: border-box;
+        padding: 0.35in;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+
+        page-break-before: avoid;
+        page-break-after: avoid;
+        page-break-inside: avoid;
+    }
+
+    .job-number {
+        font-size: 96px;
+        font-weight: 700;
+        line-height: 1;
+        margin: 0 0 20px 0;
+        padding: 0;
+    }
+
+    .job-name {
+        font-size: 62px;
+        font-weight: 600;
+        line-height: 1.05;
+        margin: 0;
+        padding: 0;
+        max-width: 100%;
+        word-break: normal;
+    }
+
+    .pattern-box {
+        margin-top: 28px;
+        padding-top: 16px;
+        border-top: 5px solid #000;
+        width: 90%;
+        box-sizing: border-box;
+    }
+
+    .pattern-label {
+        font-size: 24px;
+        font-weight: 700;
+        margin: 0 0 8px 0;
+        padding: 0;
+        text-transform: uppercase;
+    }
+
+    .pattern-info {
+        font-size: 32px;
+        font-weight: 600;
+        line-height: 1.1;
+        margin: 0;
+        padding: 0;
+    }
+
+    .no-print {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        z-index: 9999;
+    }
+
+    @media print {
+        html,
+        body {
+            width: 11in;
+            height: 8.5in;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+
+        .tag-page {
+            width: 11in;
+            height: 8.5in;
+            margin: 0 !important;
+            overflow: hidden !important;
+            page-break-before: avoid !important;
+            page-break-after: avoid !important;
+            page-break-inside: avoid !important;
+            break-before: avoid !important;
+            break-after: avoid !important;
+            break-inside: avoid !important;
+        }
+
+        .no-print {
+            display: none !important;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+    <button type="button" class="no-print" onclick="window.print();">
+        Print
+    </button>
+
+    <div class="tag-page">
+
+        <div class="job-number">
+            {{ wallcovering.job_number.job_number }}
+        </div>
+
+        <div class="job-name">
+            {{ wallcovering.job_number.job_name }}
+        </div>
+
+        {% if include_pattern %}
+            <div class="pattern-box">
+                <div class="pattern-label">
+                    Wallcovering
+                </div>
+
+                <div class="pattern-info">
+                    {{ wallcovering.code }}
+                    <br>
+                    {{ wallcovering.vendor.company_name }}
+                    <br>
+                    {{ wallcovering.pattern }}
+                </div>
+            </div>
+        {% endif %}
+
+    </div>
+
+    <script>
+        window.onload = function () {
+            window.print();
+        };
+    </script>
+
+</body>
+</html>

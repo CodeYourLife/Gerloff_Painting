@@ -17,4 +17,14 @@ urlpatterns = [
     path('wallcovering_receipt_edit/<int:delivery_id>', views.wallcovering_receipt_edit, name='wallcovering_receipt_edit'),
     path('wallcovering_sent_edit/<int:sent_id>', views.wallcovering_sent_edit, name='wallcovering_sent_edit'),
     path("vendor_edit/<int:vendor_id>/edit/", views.vendor_edit, name="vendor_edit"),
+    path(
+        "wallcovering/<int:id>/job-tag/print/",
+        views.wallcovering_job_tag_print,
+        name="wallcovering_job_tag_print"
+    ),
+    path(
+        "wallcovering/<int:wallcovering_id>/print-labels/",
+        views.wallcovering_print_labels,
+        name="wallcovering_print_labels"
+    ),
 ]
