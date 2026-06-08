@@ -61,7 +61,7 @@
                         {% for x in certifications %}
                         <tr>
                             <td>{{ x.employee }}</td>
-                            <td>{% if x.category %}{{ x.category }}{% else %}{{x.description}}{% endif %}</td>
+                            <td>{{ x.display_description }}</td>
                             <td>
                                 <a href="{% url 'certifications' x.id %}"
 								   class="btn btn-sm btn-outline-primary">
