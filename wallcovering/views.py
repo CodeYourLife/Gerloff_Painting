@@ -21,6 +21,14 @@ from .models import (
 )
 from submittals.models import SubmittalItems, SubmittalApprovals
 
+import os
+from io import BytesIO
+
+import openpyxl
+from django.conf import settings
+from django.http import HttpResponse
+
+
 
 
 def wallcovering_home(request):
@@ -310,6 +318,19 @@ def wallcovering_detail(request, wallcovering_id):
             "status": status,
         })
 
+    label_packages = Packages.objects.filter(
+        orderitem__wallcovering=wallcovering
+    ).select_related(
+        "delivery",
+        "orderitem",
+        "orderitem__wallcovering",
+        "orderitem__wallcovering__job_number",
+        "orderitem__wallcovering__vendor",
+    ).order_by(
+        "delivery__date",
+        "id"
+    )
+
     context = {
         'wallcovering': wallcovering,
         'order_items': order_items,
@@ -326,6 +347,7 @@ def wallcovering_detail(request, wallcovering_id):
         "receipt_groups": receipt_groups,
         "sent_to_job_groups": sent_to_job_groups,
         "submittal_rows": submittal_rows,
+        "label_packages": label_packages,
     }
 
     return render(request, 'wallcovering_detail.html', context)
@@ -1408,4 +1430,86 @@ def vendor_edit(request, vendor_id=None):
         "vendor": vendor,
         "vendor_categories": vendor_categories,
         "page_title": page_title,
+    })
+
+def wallcovering_job_tag_print(request, id):
+    selected_wallcovering = Wallcovering.objects.get(id=id)
+
+    include_pattern = request.GET.get("include_pattern") == "yes"
+
+    return render(request, "wallcovering_job_tag_print.html", {
+        "wallcovering": selected_wallcovering,
+        "include_pattern": include_pattern,
+    })
+
+
+def wallcovering_print_labels(request, wallcovering_id):
+    wallcovering = get_object_or_404(Wallcovering, id=wallcovering_id)
+
+    if request.method != "POST":
+        return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
+
+    package_ids = request.POST.getlist("package_ids")
+
+    selected_packages = Packages.objects.filter(
+        id__in=package_ids,
+        orderitem__wallcovering=wallcovering
+    ).select_related(
+        "delivery",
+        "orderitem",
+        "orderitem__wallcovering",
+        "orderitem__wallcovering__job_number",
+        "orderitem__wallcovering__vendor",
+    ).order_by(
+        "delivery__date",
+        "id"
+    )
+
+    labels_to_print = []
+
+    for package in selected_packages:
+        selected_wallcovering = package.orderitem.wallcovering
+        job = selected_wallcovering.job_number
+
+        total_packages = package.quantity_received or 0
+
+        delivery_date = ""
+        if package.delivery and package.delivery.date:
+            delivery_date = package.delivery.date.strftime("%m/%d/%y")
+
+        contents_notes_parts = []
+
+        if package.contents:
+            contents_notes_parts.append(package.contents)
+
+        if package.notes:
+            contents_notes_parts.append(package.notes)
+
+        contents_notes = " - ".join(contents_notes_parts)
+
+        contents_line = f"Rec'd {delivery_date}"
+
+        if contents_notes:
+            contents_line += f" - {contents_notes}"
+
+        for package_number in range(1, total_packages + 1):
+            labels_to_print.append({
+                "job_line": f"{job.job_number} {job.job_name}",
+                "wallcovering_line": (
+                    f"{selected_wallcovering.code or ''} "
+                    f"{selected_wallcovering.vendor.company_name if selected_wallcovering.vendor else ''} "
+                    f"{selected_wallcovering.pattern or ''}"
+                ).strip(),
+                "contents_line": contents_line,
+                "package_type": package.type or "",
+                "package_number": package_number,
+                "total_packages": total_packages,
+            })
+
+    if not labels_to_print:
+        return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
+
+    return render(request, "wallcovering_label_print.html", {
+        "wallcovering": wallcovering,
+        "labels_to_print": labels_to_print,
     })

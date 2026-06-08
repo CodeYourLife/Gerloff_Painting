@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Wallcovering Labels</title>
+
+    <style>
+        /*
+            IMPORTANT:
+            Adjust this to match the actual Brother label size.
+
+            Example below is for a 4" wide x 2" tall label.
+            If your label is different, change:
+                size: 4in 2in;
+                .label-page width/height
+        */
+
+        @page {
+    size: 3.5in 1.142in;
+    margin: 0;
+}
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background: #fff;
+        }
+
+        .no-print {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 9999;
+            padding: 8px 14px;
+            font-size: 14px;
+        }
+
+.label-page {
+    width: 3.5in;
+    height: 1.142in;
+    box-sizing: border-box;
+    padding: 0.04in 0.06in 0.01in 0.14in;
+    page-break-after: always;
+    break-after: page;
+    overflow: hidden;
+}
+
+.label {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    color: #000;
+    font-weight: 700;
+}
+
+.label-job {
+    font-size: 12.5pt;
+    line-height: 1.08;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.label-wallcovering {
+    font-size: 10pt;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 3px;
+}
+
+.label-contents {
+    font-size: 9pt;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 3px;
+}
+
+.label-bottom {
+    display: grid;
+    grid-template-columns: 1fr 0.45fr 0.2fr 0.45fr;
+    align-items: center;
+    margin-top: 7px;
+    font-size: 14pt;
+    line-height: 1;
+}
+
+.label-current {
+    text-align: center;
+    font-size: 24pt;
+}
+
+.label-of {
+    text-align: center;
+    font-size: 10pt;
+}
+
+.label-total {
+    text-align: center;
+    font-size: 24pt;
+}
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            html,
+            body {
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+            }
+
+            .label-page {
+                page-break-after: always;
+                break-after: page;
+            }
+
+            .label-page:last-child {
+                page-break-after: auto;
+                break-after: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <button type="button" class="no-print" onclick="window.print();">
+        Print Labels
+    </button>
+
+    {% for label in labels_to_print %}
+        <div class="label-page">
+            <div class="label">
+
+                <div class="label-job">
+                    {{ label.job_line }}
+                </div>
+
+                <div class="label-wallcovering">
+                    {{ label.wallcovering_line }}
+                </div>
+
+                <div class="label-contents">
+                    {{ label.contents_line }}
+                </div>
+
+                <div class="label-bottom">
+                    <div class="label-type">
+                        {{ label.package_type }}
+                    </div>
+
+                    <div class="label-current">
+                        {{ label.package_number }}
+                    </div>
+
+                    <div class="label-of">
+                        of
+                    </div>
+
+                    <div class="label-total">
+                        {{ label.total_packages }}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    {% endfor %}
+
+    <script>
+        window.onload = function () {
+            window.print();
+        };
+    </script>
+
+</body>
+</html>

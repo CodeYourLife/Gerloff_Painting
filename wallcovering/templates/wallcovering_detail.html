@@ -46,9 +46,27 @@
             </small>
         </div>
 
-        <a href="{% url 'wallcovering_home' %}" class="btn btn-secondary">
-            Back to Wallcovering
-        </a>
+        <div class="text-right">
+
+            <button type="button"
+                    class="btn btn-info mr-2"
+                    data-toggle="modal"
+                    data-target="#printJobTagModal">
+                <i class="fa fa-print"></i> Print Job Tag
+            </button>
+
+            <button type="button"
+                    class="btn btn-outline-info mr-2"
+                    data-toggle="modal"
+                    data-target="#printLabelsModal">
+                <i class="fa fa-tags"></i> Print Labels
+            </button>
+
+            <a href="{% url 'wallcovering_home' %}" class="btn btn-secondary">
+                Back to Wallcovering
+            </a>
+
+        </div>
     </div>
 
     <!-- STATUS SUMMARY -->
@@ -843,4 +861,152 @@
     </div>
 </div>
 
-{% endblock %}b
+<div class="modal fade" id="printJobTagModal" tabindex="-1" role="dialog" aria-labelledby="printJobTagModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="printJobTagModalLabel">
+                    Print Warehouse Job Tag
+                </h5>
+
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body text-center">
+                <p class="mb-3">
+                    Do you want to include the wallcovering pattern information on the tag?
+                </p>
+
+                <div class="border rounded p-3 bg-light text-left small">
+                    <strong>Job:</strong>
+                    {{ wallcovering.job_number.job_number }}
+                    {{ wallcovering.job_number.job_name }}
+                    <br>
+
+                    <strong>Pattern:</strong>
+                    {{ wallcovering.code }} - {{ wallcovering.vendor.company_name }} - {{ wallcovering.pattern }}
+                </div>
+            </div>
+
+            <div class="modal-footer justify-content-between">
+                <a href="{% url 'wallcovering_job_tag_print' wallcovering.id %}?include_pattern=no"
+                   target="_blank"
+                   class="btn btn-secondary">
+                    No, Job Only
+                </a>
+
+                <a href="{% url 'wallcovering_job_tag_print' wallcovering.id %}?include_pattern=yes"
+                   target="_blank"
+                   class="btn btn-success">
+                    Yes, Include Pattern
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="printLabelsModal" tabindex="-1" role="dialog" aria-labelledby="printLabelsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+
+            <form method="post"
+      action="{% url 'wallcovering_print_labels' wallcovering.id %}"
+      target="_blank">
+                {% csrf_token %}
+
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="printLabelsModalLabel">
+                        Print Warehouse Labels
+                    </h5>
+
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <p class="text-muted mb-2">
+                        Select which received packages need labels.
+                    </p>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th class="text-center">Print</th>
+                                    <th>Delivery Date</th>
+                                    <th>Type</th>
+                                    <th>Contents</th>
+                                    <th class="text-right">Packages Received</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for package in label_packages %}
+                                    <tr>
+                                        <td class="text-center">
+                                            <input type="checkbox"
+                                                   name="package_ids"
+                                                   value="{{ package.id }}"
+                                                   checked>
+                                        </td>
+
+                                        <td>
+                                            {% if package.delivery.date %}
+                                                {{ package.delivery.date|date:"m/d/y" }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+
+                                        <td>{{ package.type }}</td>
+
+                                        <td>{{ package.contents }}</td>
+
+                                        <td class="text-right">
+                                            {{ package.quantity_received }}
+                                        </td>
+
+                                        <td>{{ package.notes|default:"" }}</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-3">
+                                            No received packages available for labels.
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    {% if label_packages %}
+                        <button type="submit" class="btn btn-success">
+                            Generate Labels
+                        </button>
+                    {% else %}
+                        <button type="button" class="btn btn-success" disabled>
+                            Generate Labels
+                        </button>
+                    {% endif %}
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
