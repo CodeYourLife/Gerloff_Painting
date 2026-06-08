@@ -35,7 +35,7 @@ import json
 import os
 import os.path
 import re
-
+from django.utils.dateparse import parse_date
 
 def emailed_ticket(request, id):
     send_data = {}
@@ -787,17 +787,22 @@ def price_ewt(request, id):
                     ticket=ewt,
                     status="Draft",
                 )
-            date_string = request.POST.get("week_ending", "")
-            for fmt in ("%Y-%m-%d", "%B %d, %Y"):
-                try:
-                    converted_date = datetime.strptime(date_string, fmt).date()
-                    proposal.week_ending = converted_date
-                except:
-                    print("ERROR")
-            proposal.completed_by = request.POST.get("completed_by", "")
+
+            date_string = request.POST.get("week_ending", "").strip()
+            converted_date = parse_date(date_string)
+
+            if converted_date:
+                proposal.week_ending = converted_date
+            elif ewt and ewt.week_ending:
+                proposal.week_ending = ewt.week_ending
+
+            proposal.completed_by = request.POST.get("completed_by", "").strip()
             proposal.total = final_cost
             proposal.notes = request.POST.get("notes", "")
             proposal.save()
+
+            proposal.refresh_from_db()
+
             # --------------------------------------------------
             # Rebuild TMList (ALWAYS)
             # --------------------------------------------------
