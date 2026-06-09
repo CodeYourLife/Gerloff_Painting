@@ -110,15 +110,6 @@
             {% csrf_token %}
 
             <div class="mb-3">
-                <label for="report_file">CSV File:</label>
-                <input type="file"
-                   name="report_file"
-                   id="report_file"
-                   accept=".txt,.csv"
-                   required>
-            </div>
-
-            <div class="mb-3">
                 <button type="button"
                         class="btn btn-outline-secondary btn-sm"
                         onclick="copyReportPath()">
@@ -127,6 +118,17 @@
 
                 <small class="text-muted ml-2" id="copy_path_message"></small>
             </div>
+
+            <div class="mb-3">
+                <label for="report_file">CSV File:</label>
+                <input type="file"
+                   name="report_file"
+                   id="report_file"
+                   accept=".txt,.csv"
+                   required>
+            </div>
+
+
 
             <button type="submit" class="btn btn-primary btn-sm">
                 Upload and Update Jobs
@@ -186,6 +188,7 @@
                 <thead>
                     <tr>
                         <th style="display:none;">Found Sort</th>
+                        <th style="display:none;">Cost No Billing Sort</th>
                       <th>Job Number</th>
                       <th>Job Name</th>
                       <th>Superintendent</th>
@@ -202,6 +205,9 @@
                         <tr>
                             <td style="display:none;">
                                 {% if row.was_found_in_report %}1{% else %}0{% endif %}
+                            </td>
+                            <td style="display:none;">
+                                {% if row.has_costs_with_no_billings %}1{% else %}0{% endif %}
                             </td>
                             <td>
                                 <a href="{% url 'job_page' row.job_number %}">
@@ -252,30 +258,35 @@
                             </td>
 
                             <td class="percent-column"
-                                data-order="{% if row.cost_to_billing_percent is not None %}{{ row.cost_to_billing_percent }}{% else %}-1{% endif %}">
+    data-order="{% if row.has_costs_with_no_billings %}999999{% elif row.cost_to_billing_percent is not None %}{{ row.cost_to_billing_percent }}{% else %}-1{% endif %}">
 
-                                {% if row.cost_to_billing_percent is not None %}
+    {% if row.has_costs_with_no_billings %}
+        <span class="badge badge-danger">
+            Need to Bill!
+        </span>
 
-                                    {% if row.cost_to_billing_percent >= 100 %}
-                                        <span class="high-cost-ratio">
-                                            {{ row.cost_to_billing_percent|floatformat:1 }}%
-                                        </span>
-                                    {% elif row.cost_to_billing_percent >= 80 %}
-                                        <span class="medium-cost-ratio">
-                                            {{ row.cost_to_billing_percent|floatformat:1 }}%
-                                        </span>
-                                    {% else %}
-                                        <span class="good-cost-ratio">
-                                            {{ row.cost_to_billing_percent|floatformat:1 }}%
-                                        </span>
-                                    {% endif %}
+    {% elif row.cost_to_billing_percent is not None %}
 
-                                {% elif not row.was_found_in_report %}
-                                    <span class="badge badge-warning">Not Found</span>
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
+        {% if row.cost_to_billing_percent >= 100 %}
+            <span class="high-cost-ratio">
+                {{ row.cost_to_billing_percent|floatformat:1 }}%
+            </span>
+        {% elif row.cost_to_billing_percent >= 80 %}
+            <span class="medium-cost-ratio">
+                {{ row.cost_to_billing_percent|floatformat:1 }}%
+            </span>
+        {% else %}
+            <span class="good-cost-ratio">
+                {{ row.cost_to_billing_percent|floatformat:1 }}%
+            </span>
+        {% endif %}
+
+    {% elif not row.was_found_in_report %}
+        <span class="badge badge-warning">Not Found</span>
+    {% else %}
+        -
+    {% endif %}
+</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -294,32 +305,31 @@
 {% block extra_scripts %}
 <script type="text/javascript" class="init">
 
-window.onload = function() {
-    $('#billing_cost_table').DataTable({
-        paging: false,
-        aaSorting: [
-            [0, 'desc'],
-            [8, 'desc']
-        ],
-        columnDefs: [
-            {
-                targets: [0],
-                visible: false,
-                searchable: false
-            },
-            {
-                targets: [4, 5, 7],
-                render: $.fn.dataTable.render.number(',', '.', 2, '$')
-            },
-            {
-                targets: [6, 8],
-                type: 'num'
-            }
-        ]
-    });
-};
+$(document).ready(function() {
+    if ($('#billing_cost_table').length) {
+        $('#billing_cost_table').DataTable({
+            paging: false,
+            aaSorting: [
+                [0, 'desc'],
+                [1, 'desc'],
+                [9, 'desc']
+            ],
+            columnDefs: [
+                {
+                    targets: [0, 1],
+                    visible: false,
+                    searchable: false
+                },
+                {
+                    targets: [5, 6, 7, 8, 9],
+                    type: 'num'
+                }
+            ]
+        });
+    }
+});
 
-    function copyReportPath() {
+function copyReportPath() {
     const path = "C:\\Sirius";
 
     navigator.clipboard.writeText(path).then(function() {
@@ -328,5 +338,6 @@ window.onload = function() {
         document.getElementById("copy_path_message").innerHTML = "Could not copy path.";
     });
 }
+
 </script>
 {% endblock %}
