@@ -2884,6 +2884,8 @@ def upload_job_cost_billing_report(request):
                 billing_percent = None
                 cost_to_billing_percent = None
 
+                has_costs_with_no_billings = False
+
                 if was_found_in_report:
                     billings = job.billings_to_date or Decimal("0.00")
                     cumulative_costs = job.cumulative_costs_at_closing or Decimal("0.00")
@@ -2893,6 +2895,8 @@ def upload_job_cost_billing_report(request):
 
                     if billings != 0:
                         cost_to_billing_percent = (cumulative_costs / billings) * Decimal("100")
+                    elif cumulative_costs > 0:
+                        has_costs_with_no_billings = True
 
                     billings_display = billings
                     cumulative_costs_display = cumulative_costs
@@ -2914,11 +2918,13 @@ def upload_job_cost_billing_report(request):
                     "cumulative_costs_at_closing": cumulative_costs,
                     "cumulative_costs_display": cumulative_costs_display,
                     "cost_to_billing_percent": cost_to_billing_percent,
+                    "has_costs_with_no_billings": has_costs_with_no_billings,
                 })
 
             table_rows.sort(
                 key=lambda x: (
                     1 if x["was_found_in_report"] else 0,
+                    1 if x["has_costs_with_no_billings"] else 0,
                     x["cost_to_billing_percent"] if x["cost_to_billing_percent"] is not None else Decimal("-1")
                 ),
                 reverse=True
