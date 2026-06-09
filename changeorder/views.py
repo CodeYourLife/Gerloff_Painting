@@ -2438,39 +2438,7 @@ def extra_work_ticket(request, id):
                     note=f"Manual Price Sent Outside of Trinity. ${changeorder.price}. {note_text}"
                 )
 
-        # Shortcut creation removed 2/26/26
-        #     selected_folders = request.POST.getlist("folders")
-        #     changeorder_folder = os.path.join(
-        #         settings.MEDIA_ROOT,
-        #         "changeorder",
-        #         str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number),
-        #     )
-        #     shortcut_base_dir = changeorder_folder
-        #     for folder_path in selected_folders:
-        #         folder_path = os.path.normpath(folder_path)
-        #         if not folder_path.startswith(post_bid_docs_target):
-        #             send_data['error_message'] = "Cant Find Post Bid Docs"
-        #         else:
-        #             # 1️⃣ Shortcut IN change order folder → plan folder
-        #             try:
-        #                 create_folder_shortcut(
-        #                     target_folder=folder_path,
-        #                     shortcut_dir=shortcut_base_dir,
-        #                 )
-        #                 # 2️⃣ Shortcut IN plan folder → change order folder
-        #                 create_changeorder_shortcut_in_plan_folder(
-        #                     plan_folder=folder_path,
-        #                     changeorder_folder=changeorder_folder,
-        #                     changeorder_id=changeorder.id,
-        #                 )
-        #                 send_data['error_message'] = "Shortcuts to Change Order and Plans Succesfully Created"
-        #             except Exception as e:
-        #                 print(e)
-        #                 send_data['error_message'] = "Failed to Create Shortcuts"
 
-        #i dont think this exists anymore
-        # if 'windows_explorer' in request.POST:
-        #     os.startfile(path)
         if 'recipient' in request.POST:
             client = changeorder.job_number.client
             name=request.POST['recipient_name']
@@ -2547,27 +2515,7 @@ def extra_work_ticket(request, id):
                                             cop_number=changeorder, date=date.today(),
                                             user=Employees.objects.get(user=request.user))
         if 'upload_file2' in request.POST:
-            # ----------------JOE DELETED THE FOLLOWING ON 4.3.26 and just changed it to say "PLEASE SAVE EWT"
-            # if 'upload_file2' in request.FILES:
-            # fileitem = request.FILES['upload_file2']
-            # short_year = date.today().strftime("%y")
-            # short_mth = date.today().strftime("%m")
-            # short_day = date.today().strftime("%d")
-            # short_date = short_year + "-" + short_mth + "-" + short_day
-            # extension = fileitem.name.split(".")[1]
-            # fn = os.path.basename(short_date + " Signed EWT." + extension)
-            # fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number), fn)
-            # os.makedirs(os.path.dirname(fn2), exist_ok=True)
-            # with open(fn2, 'wb') as f:
-            #     for chunk in fileitem.chunks():
-            #         f.write(chunk)
-            # try:
-            #     path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
-            #     foldercontents = os.listdir(path)
-            #     send_data['foldercontents'] = foldercontents
-            # except Exception as e:
-            #     print('no folder contents')
-            # ---------------END OF JOE DELETION
+
             changeorder.is_ticket_signed = True
             changeorder.date_signed = date.today()
             changeorder.is_work_complete = True
@@ -3748,12 +3696,10 @@ def select_pm_approval(request, id):
                 if request.POST['selected_file'] == "please_select":
                     Email.sendEmail(subject, message, recipient_list, False, sender)
                 else:
-                    print(f"{path}/" + request.POST['selected_file'])
                     path = os.path.join(settings.MEDIA_ROOT, "changeorder",
                                         str(changeorder.job_number.job_number) + " COP #" + str(changeorder.cop_number))
                     files = []
                     files.append(f"{path}/" + request.POST['selected_file'])
-                    print(files)
                     Email.sendEmail2(subject, message, recipient_list, files,sender)
                 messages.success(request, "Email Sent to Approver")
             except:
@@ -3967,10 +3913,6 @@ def send_cop_report(request,job_number):
             body = f"Attached is the current Change Order report for {job.job_number}. Please advise on approval status."
             check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
             sender = check_sender.email if check_sender else "bridgette@gerloffpainting.com"
-            print("FINAL:", is_final)
-            print("RECIPIENTS:", recipients)
-            print("SENDER:", sender)
-            print("FILEPATH:", filepath)
             try:
                 Email.sendEmail(
                     subject,

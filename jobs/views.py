@@ -45,7 +45,7 @@ import os
 import os.path
 import requests
 import uuid
-
+import re
 
 
 @login_required(login_url='/accounts/login')
@@ -679,7 +679,6 @@ def upload_new_job(request):
     if request.method == 'POST':
 
         if 'server_file_path' in request.POST:
-            print(request.POST['server_file_path'])
             secret = request.headers.get("X-Excel-Secret")
 
             if secret != "GerloffWorkOrder2026":
@@ -761,10 +760,6 @@ def upload_new_job(request):
             # upload_token = request.POST.get("upload_token")
 
             temp_path = os.path.join(settings.MEDIA_ROOT, "job_upload", "Temp.xlsx")
-
-            print("BOOK JOB TEMP PATH:", temp_path)
-            print("BOOK JOB EXISTS:", os.path.exists(temp_path))
-            print("BOOK JOB EXTENSION:", os.path.splitext(temp_path)[1])
 
             wb_obj = openpyxl.load_workbook(temp_path)
 
@@ -1627,7 +1622,6 @@ def clockshark_webhook(request):
             clock_in_time,
             timezone.utc
         )
-        print(clock_in_time)
     if clock_out_time and timezone.is_naive(clock_out_time):
         #clock_out_time = timezone.make_aware(clock_out_time, timezone.get_current_timezone())
         clock_out_time = timezone.make_aware(
@@ -1759,7 +1753,6 @@ def new_jobsite_safety_inspection(request):
     if request.method == "POST":
         form = JobsiteSafetyInspectionForm(request.POST)
         if form.is_valid():
-            print("PUMPKIN2")
             inspection = form.save(commit=False)
             inspection.inspector = inspector
 
@@ -2658,3 +2651,272 @@ def upload_new_job_path_from_excel(request):
     shutil.copyfile(server_file_path, temp_path)
 
     return HttpResponse("OK")
+
+def clean_decimal(value):
+    if value is None:
+        return None
+
+    value = str(value).strip()
+
+    if value == "":
+        return None
+
+    value = value.replace("$", "").replace(",", "")
+
+    if value.startswith("."):
+        value = "0" + value
+
+    try:
+        return Decimal(value)
+    except InvalidOperation:
+        return None
+
+
+def parse_job_summary_txt(lines):
+    """
+    Parses the fixed-width Job Summary by Job TXT report.
+
+    Expected report columns:
+    JOB DESCRIPTION CONTRACT BILLINGS ESTIMATE CUMULATIVE
+
+    Returns list of dictionaries:
+    {
+        "job_number": "F2940",
+        "billings": Decimal("701289.55"),
+        "cumulative_costs": Decimal("717586.82")
+    }
+    """
+    parsed_rows = []
+
+    for line in lines:
+        line = line.rstrip()
+
+        # Skip headers, page breaks, blanks, and totals
+        if not line.strip():
+            continue
+
+        if "JOB SUMMARY BY JOB" in line:
+            continue
+
+        if line.strip().startswith("JOB"):
+            continue
+
+        if "TOTAL ALL JOBS" in line:
+            continue
+
+        if line.startswith("\x0c"):
+            continue
+
+        # Example line:
+        #          F2940 USAA CHESAPE    742032.00    701289.55          .00    717586.82
+        match = re.match(
+            r"^\s*(?P<job_number>[A-Z0-9]{3,5})\s+"
+            r"(?P<description>.*?)\s+"
+            r"(?P<contract>-?[\d,]*\.?\d*)\s+"
+            r"(?P<billings>-?[\d,]*\.?\d*)\s+"
+            r"(?P<estimate>-?[\d,]*\.?\d*)\s+"
+            r"(?P<cumulative>-?[\d,]*\.?\d*)\s*$",
+            line
+        )
+
+        if not match:
+            continue
+
+        job_number = match.group("job_number").strip()
+        billings = clean_decimal(match.group("billings"))
+        cumulative_costs = clean_decimal(match.group("cumulative"))
+
+        if billings is None or cumulative_costs is None:
+            continue
+
+        parsed_rows.append({
+            "job_number": job_number,
+            "billings": billings,
+            "cumulative_costs": cumulative_costs,
+        })
+
+    return parsed_rows
+
+
+def parse_job_summary_csv(lines):
+    """
+    Parses converted CSV with columns:
+    job_number,billings,cumulative_costs
+    """
+    parsed_rows = []
+    reader = csv.DictReader(lines)
+
+    for row in reader:
+        row = {
+            str(k).strip().lower(): v
+            for k, v in row.items()
+            if k is not None
+        }
+
+        job_number = str(row.get("job_number", "")).strip()
+        billings = clean_decimal(row.get("billings"))
+        cumulative_costs = clean_decimal(row.get("cumulative_costs"))
+
+        if not job_number:
+            continue
+
+        if billings is None or cumulative_costs is None:
+            continue
+
+        parsed_rows.append({
+            "job_number": job_number,
+            "billings": billings,
+            "cumulative_costs": cumulative_costs,
+        })
+
+    return parsed_rows
+
+@login_required
+def upload_job_cost_billing_report(request):
+    allowed_users = ["joe", "victortampa1"]
+
+    if request.user.username not in allowed_users:
+        messages.error(request, "You do not have permission to access this page.")
+        return redirect("jobs_home")
+
+    table_rows = []
+    missing_jobs = []
+    invalid_rows = []
+    updated_count = 0
+    uploaded = False
+
+    if request.method == "POST":
+        uploaded = True
+        upload_file = request.FILES.get("report_file")
+
+        if not upload_file:
+            messages.error(request, "Please select a report file.")
+
+        elif not (
+            upload_file.name.lower().endswith(".txt")
+            or upload_file.name.lower().endswith(".csv")
+        ):
+            messages.error(request, "Please upload a .txt or .csv file.")
+
+        else:
+            decoded_lines = upload_file.read().decode(
+                "utf-8-sig",
+                errors="ignore"
+            ).splitlines()
+
+            if upload_file.name.lower().endswith(".txt"):
+                parsed_report_rows = parse_job_summary_txt(decoded_lines)
+            else:
+                parsed_report_rows = parse_job_summary_csv(decoded_lines)
+
+            updated_job_numbers = []
+
+            if not parsed_report_rows:
+                messages.error(request, "No valid job rows were found in this report.")
+
+            for row in parsed_report_rows:
+                job_number = row["job_number"]
+                billings = row["billings"]
+                cumulative_costs = row["cumulative_costs"]
+
+                if not job_number:
+                    invalid_rows.append("Missing job number")
+                    continue
+
+                if billings is None:
+                    invalid_rows.append(f"Invalid billings for {job_number}")
+                    continue
+
+                if cumulative_costs is None:
+                    invalid_rows.append(f"Invalid cumulative costs for {job_number}")
+                    continue
+
+                try:
+                    job = Jobs.objects.get(job_number=job_number)
+                except Jobs.DoesNotExist:
+                    missing_jobs.append(job_number)
+                    continue
+
+                job.billings_to_date = billings
+                job.cumulative_costs_at_closing = cumulative_costs
+                job.save(update_fields=[
+                    "billings_to_date",
+                    "cumulative_costs_at_closing",
+                ])
+
+                updated_count += 1
+                updated_job_numbers.append(job_number)
+
+            if updated_count:
+                messages.success(request, f"{updated_count} jobs were updated.")
+
+            if missing_jobs:
+                messages.warning(
+                    request,
+                    f"{len(missing_jobs)} job numbers from the report were not found in Trinity."
+                )
+
+            if invalid_rows:
+                messages.warning(
+                    request,
+                    f"{len(invalid_rows)} rows could not be imported."
+                )
+
+            jobs = (
+                Jobs.objects
+                .filter(job_number__in=updated_job_numbers)
+                .select_related("superintendent")
+            )
+
+            for job in jobs:
+                billings = job.billings_to_date or Decimal("0.00")
+                cumulative_costs = job.cumulative_costs_at_closing or Decimal("0.00")
+
+                try:
+                    current_contract_amount = job.current_contract_amount()
+                except Exception:
+                    current_contract_amount = job.contract_amount
+
+                if current_contract_amount is None:
+                    current_contract_amount = Decimal("0.00")
+
+                billing_percent = None
+                cost_to_billing_percent = None
+
+                if current_contract_amount != 0:
+                    billing_percent = (
+                        billings / current_contract_amount
+                    ) * Decimal("100")
+
+                if billings != 0:
+                    cost_to_billing_percent = (
+                        cumulative_costs / billings
+                    ) * Decimal("100")
+
+                table_rows.append({
+                    "job_number": job.job_number,
+                    "job_name": job.job_name,
+                    "superintendent": job.superintendent,
+                    "billings_to_date": billings,
+                    "current_contract_amount": current_contract_amount,
+                    "billing_percent": billing_percent,
+                    "cumulative_costs_at_closing": cumulative_costs,
+                    "cost_to_billing_percent": cost_to_billing_percent,
+                })
+
+            table_rows.sort(
+                key=lambda x: (
+                    x["cost_to_billing_percent"]
+                    if x["cost_to_billing_percent"] is not None
+                    else Decimal("-1")
+                ),
+                reverse=True
+            )
+
+    return render(request, "upload_job_cost_billing_report.html", {
+        "table_rows": table_rows,
+        "missing_jobs": missing_jobs,
+        "invalid_rows": invalid_rows,
+        "updated_count": updated_count,
+        "uploaded": uploaded,
+    })

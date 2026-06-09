@@ -1220,8 +1220,6 @@ def import_csv(request):
                 job = Jobs.objects.get(job_number=row[0])
                 if row[1]:
                     job.is_work_order_done = True
-                else:
-                    print(job)
                 job.save()
             except:
                 print(row[0])
@@ -1265,7 +1263,6 @@ def upload_sirius(form, excel_file,notes):
 
 #old as of 6.2.26, i changed it to .csv functionality
 def upload_clockshark_old(form, excel_file,notes):
-    print("PUMPKIN")
     wb = openpyxl.load_workbook(excel_file)
     sheet = wb.active
     created = 0
@@ -1313,7 +1310,6 @@ def upload_clockshark_old(form, excel_file,notes):
             newest_date = timezone.make_aware(newest_date, timezone.get_current_timezone())
         oldest_day = oldest_date.date()
         newest_day = newest_date.date()
-        print(str(ClockSharkTimeEntry.objects.filter(work_day__gte=oldest_date, work_day__lte=newest_date).count()) + " entries deleted")
         ClockSharkTimeEntry.objects.filter(work_day__gte=oldest_date, work_day__lte=newest_date).delete()
         with transaction.atomic():
             for row in sheet.iter_rows(min_row=2, values_only=True):  # 24
@@ -1378,9 +1374,7 @@ def upload_clockshark_old(form, excel_file,notes):
                                                     note="Changed Status to Active From Clock Shark Import",
                                                     type="auto_start_date_note",
                                                     user=Employees.objects.filter().first(), date=date.today())
-                else:
-                    # message.append({'message': "couldn't find " + job_name + " row: " + str(a)})
-                    print("couldn't find " + job_name + " row: " + str(a))
+
                 if work_day < date.today():
                     ClockSharkTimeEntry.objects.create(clockshark_id=clockshark_id, job_name=job_name,
                                                        employee_first_name=employee_first_name,
@@ -1393,9 +1387,7 @@ def upload_clockshark_old(form, excel_file,notes):
                                                            employee_first_name=employee_first_name,
                                                            employee_last_name=employee_last_name, work_day=work_day,
                                                            clock_in=clock_in_time,job=job, clock_out=clock_out_time, hours=minutes/60, hours_adjust_note="AUTO IMPORT")
-                    else:
-                        # message.append({'message': "skipped " + clockshark_id + " row" + str(a)})
-                        print("skipped " + clockshark_id + " row" + str(a))
+
     # return message
 
 def parse_clockshark_datetime(value):
@@ -1446,7 +1438,6 @@ def get_clockshark_rows(uploaded_file):
     return list(sheet.iter_rows(min_row=2, values_only=True))
 
 def upload_clockshark(form, excel_file, notes):
-    print("PUMPKIN")
 
     rows = get_clockshark_rows(excel_file)
 
@@ -1510,8 +1501,6 @@ def upload_clockshark(form, excel_file, notes):
 
         oldest_day = oldest_date.date()
         newest_day = newest_date.date()
-        print(str(ClockSharkTimeEntry.objects.filter(work_day__gte=oldest_day,
-                                                     work_day__lte=newest_day).count()) + " entries deleted")
 
         ClockSharkTimeEntry.objects.filter(
             work_day__gte=oldest_day,

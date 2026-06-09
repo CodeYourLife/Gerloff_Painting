@@ -132,6 +132,8 @@ class Jobs(models.Model):
     is_labor_done = models.BooleanField(default=False)
     is_painting_subbed = models.BooleanField(default=False)
     has_safety_packet_been_sent = models.BooleanField(default=False)
+    billings_to_date = models.DecimalField(
+        max_digits=9, decimal_places=2, blank=True, null=True)
 
     def __str__(self):
         return f"{self.job_name}"

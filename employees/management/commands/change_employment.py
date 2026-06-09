@@ -5,7 +5,6 @@ class Command(BaseCommand):
     help = 'Deletes all entries in the RespiratorClearance model'
 
     def handle(self, *args, **kwargs):
-        print("here")
         for x in SubcontractorInvoice.objects.all():
             job = x.subcontract.job_number
             job.is_active=True
