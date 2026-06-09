@@ -2784,7 +2784,7 @@ def upload_job_cost_billing_report(request):
     invalid_rows = []
     updated_count = 0
     uploaded = False
-
+    open_jobs_missing_from_report = 0
     if request.method == "POST":
         uploaded = True
         upload_file = request.FILES.get("report_file")
@@ -2869,7 +2869,7 @@ def upload_job_cost_billing_report(request):
                 .filter(is_closed=False)
                 .select_related("superintendent")
             )
-            open_jobs_missing_from_report = 0
+
             for job in jobs:
                 was_found_in_report = job.job_number in found_job_numbers
 

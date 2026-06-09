@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-
+{% block nav_item_jobs %}active{% endblock nav_item_jobs %}
 {% load render_table from django_tables2 %}
 {% block extra_head %}
 
@@ -376,20 +376,11 @@ white-space:normal;
 }
     </style>
 {% endblock %}
+{% block sub_nav %}
+{% include 'jobs_nav.html' with active_tab="super_home" %}
+{% endblock %}
+
 {% block content %}
-
-
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="{% url 'jobs_home' %}">Jobs</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav ">
-            <li><a class="nav-item nav-link" href="{% url 'jobs_home' %}">Jobs List</a></li>
-             <li><a class="nav-item nav-link active" href="{% url 'super_home' 'AUTO' %}">Superintendent View</a></li>
-<!--            <li><a class="nav-item nav-link" href="{% url 'book_new_job' %}">Book New Job</a></li>-->
-        </ul>
-    </div>
-</nav>
-
 
 <!-- Modal -->
 <div class="modal fade" id="super-modal" tabindex="-1" role="dialog" aria-labelledby="title"
