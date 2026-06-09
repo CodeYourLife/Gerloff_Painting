@@ -145,10 +145,11 @@
     {% if uploaded %}
         <div class="summary-card">
             <strong>Updated Jobs:</strong> {{ updated_count }}
-
+<br>
+        <strong>Trinity Jobs Missing From Sirius:</strong> {{ open_jobs_missing_from_report }}
             {% if missing_jobs %}
                 <br>
-                <strong>Missing Jobs:</strong>
+                <strong>Sirius Jobs Missing From Trinity:</strong>
                 {{ missing_jobs|length }}
             {% endif %}
 
@@ -184,6 +185,7 @@
             <table id="billing_cost_table" class="display table table-sm table-bordered">
                 <thead>
                     <tr>
+                        <th style="display:none;">Found Sort</th>
                       <th>Job Number</th>
                       <th>Job Name</th>
                       <th>Superintendent</th>
@@ -198,6 +200,9 @@
                 <tbody>
                     {% for row in table_rows %}
                         <tr>
+                            <td style="display:none;">
+                                {% if row.was_found_in_report %}1{% else %}0{% endif %}
+                            </td>
                             <td>
                                 <a href="{% url 'job_page' row.job_number %}">
                                     {{ row.job_number }}
@@ -222,16 +227,28 @@
                                 data-order="{% if row.billing_percent is not None %}{{ row.billing_percent }}{% else %}-1{% endif %}">
                                 {% if row.billing_percent is not None %}
                                     {{ row.billing_percent|floatformat:1 }}%
+                                {% elif not row.was_found_in_report %}
+                                    <span class="badge badge-warning">Not Found</span>
                                 {% else %}
                                     -
                                 {% endif %}
                             </td>
-                            <td class="money-column" data-order="{{ row.billings_to_date }}">
-                                ${{ row.billings_to_date|floatformat:2 }}
+                            <td class="money-column"
+                                data-order="{% if row.billings_to_date is not None %}{{ row.billings_to_date }}{% else %}-1{% endif %}">
+                                {% if row.billings_to_date is not None %}
+                                    ${{ row.billings_to_date|floatformat:2 }}
+                                {% else %}
+                                    <span class="badge badge-warning">Not Found</span>
+                                {% endif %}
                             </td>
 
-                            <td class="money-column" data-order="{{ row.cumulative_costs_at_closing }}">
-                                ${{ row.cumulative_costs_at_closing|floatformat:2 }}
+                            <td class="money-column"
+                                data-order="{% if row.cumulative_costs_at_closing is not None %}{{ row.cumulative_costs_at_closing }}{% else %}-1{% endif %}">
+                                {% if row.cumulative_costs_at_closing is not None %}
+                                    ${{ row.cumulative_costs_at_closing|floatformat:2 }}
+                                {% else %}
+                                    <span class="badge badge-warning">Not Found</span>
+                                {% endif %}
                             </td>
 
                             <td class="percent-column"
@@ -253,6 +270,8 @@
                                         </span>
                                     {% endif %}
 
+                                {% elif not row.was_found_in_report %}
+                                    <span class="badge badge-warning">Not Found</span>
                                 {% else %}
                                     -
                                 {% endif %}
@@ -275,22 +294,30 @@
 {% block extra_scripts %}
 <script type="text/javascript" class="init">
 
-    window.onload = function() {
-        $('#billing_cost_table').DataTable({
-            paging: false,
-            aaSorting: [[7, 'desc']],
-            columnDefs: [
-                {
-                    targets: [3, 4, 6],
-                    render: $.fn.dataTable.render.number(',', '.', 2, '$')
-                },
-                {
-                    targets: [5, 7],
-                    type: 'num'
-                }
-            ]
-        });
-    };
+window.onload = function() {
+    $('#billing_cost_table').DataTable({
+        paging: false,
+        aaSorting: [
+            [0, 'desc'],
+            [8, 'desc']
+        ],
+        columnDefs: [
+            {
+                targets: [0],
+                visible: false,
+                searchable: false
+            },
+            {
+                targets: [4, 5, 7],
+                render: $.fn.dataTable.render.number(',', '.', 2, '$')
+            },
+            {
+                targets: [6, 8],
+                type: 'num'
+            }
+        ]
+    });
+};
 
     function copyReportPath() {
     const path = "C:\\Sirius";

@@ -2847,14 +2847,14 @@ def upload_job_cost_billing_report(request):
                 updated_count += 1
                 updated_job_numbers.append(job_number)
 
-            if updated_count:
-                messages.success(request, f"{updated_count} jobs were updated.")
-
-            if missing_jobs:
-                messages.warning(
-                    request,
-                    f"{len(missing_jobs)} job numbers from the report were not found in Trinity."
-                )
+            # if updated_count:
+            #     messages.success(request, f"{updated_count} jobs were updated.")
+            #
+            # if missing_jobs:
+            #     messages.warning(
+            #         request,
+            #         f"{len(missing_jobs)} job numbers from the report were not found in Trinity."
+            #     )
 
             if invalid_rows:
                 messages.warning(
@@ -2862,15 +2862,16 @@ def upload_job_cost_billing_report(request):
                     f"{len(invalid_rows)} rows could not be imported."
                 )
 
+            found_job_numbers = set(updated_job_numbers)
+
             jobs = (
                 Jobs.objects
-                .filter(job_number__in=updated_job_numbers)
+                .filter(is_closed=False)
                 .select_related("superintendent")
             )
-
+            open_jobs_missing_from_report = 0
             for job in jobs:
-                billings = job.billings_to_date or Decimal("0.00")
-                cumulative_costs = job.cumulative_costs_at_closing or Decimal("0.00")
+                was_found_in_report = job.job_number in found_job_numbers
 
                 try:
                     current_contract_amount = job.current_contract_amount()
@@ -2883,32 +2884,42 @@ def upload_job_cost_billing_report(request):
                 billing_percent = None
                 cost_to_billing_percent = None
 
-                if current_contract_amount != 0:
-                    billing_percent = (
-                        billings / current_contract_amount
-                    ) * Decimal("100")
+                if was_found_in_report:
+                    billings = job.billings_to_date or Decimal("0.00")
+                    cumulative_costs = job.cumulative_costs_at_closing or Decimal("0.00")
 
-                if billings != 0:
-                    cost_to_billing_percent = (
-                        cumulative_costs / billings
-                    ) * Decimal("100")
+                    if current_contract_amount != 0:
+                        billing_percent = (billings / current_contract_amount) * Decimal("100")
 
+                    if billings != 0:
+                        cost_to_billing_percent = (cumulative_costs / billings) * Decimal("100")
+
+                    billings_display = billings
+                    cumulative_costs_display = cumulative_costs
+                else:
+                    billings = None
+                    cumulative_costs = None
+                    billings_display = "Not Found"
+                    cumulative_costs_display = "Not Found"
+                    open_jobs_missing_from_report += 1
                 table_rows.append({
                     "job_number": job.job_number,
                     "job_name": job.job_name,
                     "superintendent": job.superintendent,
+                    "was_found_in_report": was_found_in_report,
                     "billings_to_date": billings,
+                    "billings_to_date_display": billings_display,
                     "current_contract_amount": current_contract_amount,
                     "billing_percent": billing_percent,
                     "cumulative_costs_at_closing": cumulative_costs,
+                    "cumulative_costs_display": cumulative_costs_display,
                     "cost_to_billing_percent": cost_to_billing_percent,
                 })
 
             table_rows.sort(
                 key=lambda x: (
-                    x["cost_to_billing_percent"]
-                    if x["cost_to_billing_percent"] is not None
-                    else Decimal("-1")
+                    1 if x["was_found_in_report"] else 0,
+                    x["cost_to_billing_percent"] if x["cost_to_billing_percent"] is not None else Decimal("-1")
                 ),
                 reverse=True
             )
@@ -2919,4 +2930,5 @@ def upload_job_cost_billing_report(request):
         "invalid_rows": invalid_rows,
         "updated_count": updated_count,
         "uploaded": uploaded,
+        "open_jobs_missing_from_report": open_jobs_missing_from_report,
     })
