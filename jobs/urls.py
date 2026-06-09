@@ -62,4 +62,9 @@ path(
     views.upload_new_job_review,
     name='upload_new_job_review'
 ),
+path(
+    "upload_job_cost_billing_report/",
+    views.upload_job_cost_billing_report,
+    name="upload_job_cost_billing_report"
+),
 ]

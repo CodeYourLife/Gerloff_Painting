@@ -1108,7 +1108,6 @@ def subcontract_invoices(request, subcontract_id, item_id):
                  'notes': x.notes, 'quantity_billed': float(x.quantity_billed()),
                  'total_billed': round(x.total_billed(), 2), 'total_cost': round(x.total_cost(), 2)})
             send_data['items'] = items
-    print(send_data)
     return render(request, "subcontract_invoices.html", send_data)
 
 
@@ -1205,7 +1204,6 @@ def subcontractor_home(request):
                 else:
                     subcontractor.is_inactive = False
                 if 'is_toolbox_required' in request.POST:
-                    print("HERE")
                     subcontractor.is_toolbox_required = True
                 else:
                     subcontractor.is_toolbox_required = False
@@ -1277,17 +1275,12 @@ def subcontractor_home(request):
     send_data['my_invoices'] = my_invoices
     send_data['approval_counts'] = approval_counts
     send_data['late_invoices'] = SubcontractorInvoice.objects.filter(pay_date__gt=this_friday)
-    # print(today - datetime.timedelta(days=today.weekday()))  # provides mondays date
-    # print(datetime.timedelta(days=today.weekday()))  # day of the week in numberical form, 0 is monday
-    # print(datetime.timedelta(days=today.weekday()).days)  # gives day of the week in integer form, stripped date data from it
+
     this_week_status = Weekly_Approvals.objects.latest('id')
     days_since_monday = today - this_week_status.Monday
     if days_since_monday.days >= 7:
         this_week_status = Weekly_Approvals.objects.create(Monday=today - datetime.timedelta(days=today.weekday()))
     send_data['this_week_status'] = this_week_status
-    # print(today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(days=4))  # fridays date
-
-    # this_week_status = Weekly_Approvals.objects.create(Monday=today - datetime.timedelta(days=today.weekday()))
 
     return render(request, "subcontractor_home.html", send_data)
 
@@ -1959,11 +1952,7 @@ def new_subcontractor_payment(request):
 
                         if percentage < 100:
                             ready_to_close = False
-                    #
-                    # if int(subcontract.total_billed()) == int(subcontract.total_contract_amount()):
-                    #     print("BILLED 100%")
-                    # else:
-                    #     ready_to_close = False
+
                     if int(subcontract.total_retainage()) != 0:
                         ready_to_close = False
 

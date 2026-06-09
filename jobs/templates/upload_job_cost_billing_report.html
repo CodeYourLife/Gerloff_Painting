@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_item_jobs %}active{% endblock nav_item_jobs %}
+
+{% block extra_head %}
+<style type="text/css" class="init">
+
+    .dataTables_wrapper {
+        font-family: tahoma;
+        font-size: 13px;
+    }
+
+    .dataTables_filter {
+        float: left !important;
+    }
+
+    label {
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+
+    input {
+        margin-left: 10px;
+        margin-right: 10px;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #495057;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    }
+
+    .upload-card {
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 18px;
+        margin-bottom: 18px;
+    }
+
+    .summary-card {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 15px;
+    }
+
+    .table th {
+        background-color: lightblue;
+        white-space: nowrap;
+    }
+
+    .money-column {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .percent-column {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .high-cost-ratio {
+        font-weight: bold;
+        color: #721c24;
+        background-color: #f8d7da;
+        padding: 3px 6px;
+        border-radius: 4px;
+    }
+
+    .medium-cost-ratio {
+        font-weight: bold;
+        color: #856404;
+        background-color: #fff3cd;
+        padding: 3px 6px;
+        border-radius: 4px;
+    }
+
+    .good-cost-ratio {
+        color: #155724;
+        background-color: #d4edda;
+        padding: 3px 6px;
+        border-radius: 4px;
+    }
+
+</style>
+{% endblock %}
+
+{% block sub_nav %}
+{% include 'jobs_nav.html' with active_tab="job_cost_billing_report" %}
+{% endblock %}
+
+{% block content %}
+
+<br>
+
+<div class="container-fluid">
+
+    <div class="upload-card">
+        <h5>Upload Job Billing / Cost Report</h5>
+        <p class="text-muted mb-3">
+            Run Sirius Job Summary for Active Jobs. Click the Copy Suggested File Path Button.  Click Browse, Paste the Folder Path Into the Nav Bar, then find the file called Report.
+        </p>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="report_file">CSV File:</label>
+                <input type="file"
+                   name="report_file"
+                   id="report_file"
+                   accept=".txt,.csv"
+                   required>
+            </div>
+
+            <div class="mb-3">
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        onclick="copyReportPath()">
+                    Copy Suggested File Path
+                </button>
+
+                <small class="text-muted ml-2" id="copy_path_message"></small>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-sm">
+                Upload and Update Jobs
+            </button>
+        </form>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} mb-2">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if uploaded %}
+        <div class="summary-card">
+            <strong>Updated Jobs:</strong> {{ updated_count }}
+
+            {% if missing_jobs %}
+                <br>
+                <strong>Missing Jobs:</strong>
+                {{ missing_jobs|length }}
+            {% endif %}
+
+            {% if invalid_rows %}
+                <br>
+                <strong>Invalid Rows:</strong>
+                {{ invalid_rows|length }}
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if missing_jobs %}
+        <div class="alert alert-warning">
+            <strong>These job numbers were in the CSV but were not found in Trinity:</strong>
+            <br>
+            {{ missing_jobs|join:", " }}
+        </div>
+    {% endif %}
+
+    {% if invalid_rows %}
+        <div class="alert alert-danger">
+            <strong>Invalid CSV Rows:</strong>
+            <ul class="mb-0">
+                {% for row in invalid_rows %}
+                    <li>{{ row }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% if table_rows %}
+        <div class="table-responsive">
+            <table id="billing_cost_table" class="display table table-sm table-bordered">
+                <thead>
+                    <tr>
+                      <th>Job Number</th>
+                      <th>Job Name</th>
+                      <th>Superintendent</th>
+                      <th>Current Contract</th>
+                      <th>Billing %</th>
+                      <th>Billings To Date</th>
+                      <th>Cumulative Costs</th>
+                      <th>Cost / Billing %</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for row in table_rows %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'job_page' row.job_number %}">
+                                    {{ row.job_number }}
+                                </a>
+                            </td>
+
+                            <td style="white-space: normal; max-width: 260px;">
+                                {{ row.job_name }}
+                            </td>
+
+                            <td>
+                                {% if row.superintendent %}
+                                    {{ row.superintendent.first_name }} {{ row.superintendent.last_name }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="money-column" data-order="{{ row.current_contract_amount }}">
+                                ${{ row.current_contract_amount|floatformat:2 }}
+                            </td>
+                            <td class="percent-column"
+                                data-order="{% if row.billing_percent is not None %}{{ row.billing_percent }}{% else %}-1{% endif %}">
+                                {% if row.billing_percent is not None %}
+                                    {{ row.billing_percent|floatformat:1 }}%
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="money-column" data-order="{{ row.billings_to_date }}">
+                                ${{ row.billings_to_date|floatformat:2 }}
+                            </td>
+
+                            <td class="money-column" data-order="{{ row.cumulative_costs_at_closing }}">
+                                ${{ row.cumulative_costs_at_closing|floatformat:2 }}
+                            </td>
+
+                            <td class="percent-column"
+                                data-order="{% if row.cost_to_billing_percent is not None %}{{ row.cost_to_billing_percent }}{% else %}-1{% endif %}">
+
+                                {% if row.cost_to_billing_percent is not None %}
+
+                                    {% if row.cost_to_billing_percent >= 100 %}
+                                        <span class="high-cost-ratio">
+                                            {{ row.cost_to_billing_percent|floatformat:1 }}%
+                                        </span>
+                                    {% elif row.cost_to_billing_percent >= 80 %}
+                                        <span class="medium-cost-ratio">
+                                            {{ row.cost_to_billing_percent|floatformat:1 }}%
+                                        </span>
+                                    {% else %}
+                                        <span class="good-cost-ratio">
+                                            {{ row.cost_to_billing_percent|floatformat:1 }}%
+                                        </span>
+                                    {% endif %}
+
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% elif uploaded %}
+        <div class="alert alert-info">
+            No matching jobs were updated from this file.
+        </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript" class="init">
+
+    window.onload = function() {
+        $('#billing_cost_table').DataTable({
+            paging: false,
+            aaSorting: [[7, 'desc']],
+            columnDefs: [
+                {
+                    targets: [3, 4, 6],
+                    render: $.fn.dataTable.render.number(',', '.', 2, '$')
+                },
+                {
+                    targets: [5, 7],
+                    type: 'num'
+                }
+            ]
+        });
+    };
+
+    function copyReportPath() {
+    const path = "C:\\Sirius";
+
+    navigator.clipboard.writeText(path).then(function() {
+        document.getElementById("copy_path_message").innerHTML = "Path copied.";
+    }).catch(function() {
+        document.getElementById("copy_path_message").innerHTML = "Could not copy path.";
+    });
+}
+</script>
+{% endblock %}
