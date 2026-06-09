@@ -86,7 +86,43 @@
         padding: 3px 6px;
         border-radius: 4px;
     }
+.billing-table-wrapper {
+    max-height: 75vh;
+    overflow-y: auto;
+    overflow-x: auto;
+}
 
+#billing_cost_table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background-color: lightblue;
+}
+@media print {
+    #above_search_information,
+    #toggle_above_info_button,
+    button,
+    nav,
+    .navbar,
+    .sub-nav,
+    .dataTables_filter,
+    .dataTables_info {
+        display: none !important;
+    }
+
+    .billing-table-wrapper {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    table {
+        font-size: 10px;
+    }
+
+    body {
+        background: white;
+    }
+}
 </style>
 {% endblock %}
 
@@ -99,25 +135,16 @@
 <br>
 
 <div class="container-fluid">
-
+<div id="above_search_information">
+    {% if not table_rows %}
     <div class="upload-card">
         <h5>Upload Job Billing / Cost Report</h5>
         <p class="text-muted mb-3">
-            Run Sirius Job Summary for Active Jobs. Click the Copy Suggested File Path Button.  Click Browse, Paste the Folder Path Into the Nav Bar, then find the file called Report.
+            Run Sirius Job Summary for Active Jobs. Copy this path C:\Sirius.  Click Browse, Paste the Folder Path Into the Nav Bar, then find the file called Report.
         </p>
 
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
-
-            <div class="mb-3">
-                <button type="button"
-                        class="btn btn-outline-secondary btn-sm"
-                        onclick="copyReportPath()">
-                    Copy Suggested File Path
-                </button>
-
-                <small class="text-muted ml-2" id="copy_path_message"></small>
-            </div>
 
             <div class="mb-3">
                 <label for="report_file">CSV File:</label>
@@ -131,11 +158,11 @@
 
 
             <button type="submit" class="btn btn-primary btn-sm">
-                Upload and Update Jobs
+                Run Now
             </button>
         </form>
     </div>
-
+    {% endif %}
     {% if messages %}
         {% for message in messages %}
             <div class="alert alert-{{ message.tags }} mb-2">
@@ -181,9 +208,24 @@
             </ul>
         </div>
     {% endif %}
-
     {% if table_rows %}
-        <div class="table-responsive">
+    <button type="button"
+            class="btn btn-primary btn-sm mb-3 mr-2 font-weight-bold"
+            onclick="printBillingCostReport()">
+        Print Report
+    </button>
+    {% endif %}
+</div>
+{% if table_rows %}
+    <button type="button"
+            class="btn btn-warning btn-sm mb-3 font-weight-bold"
+            id="toggle_above_info_button"
+            onclick="toggleAboveInformation()">
+        ▲ Hide the Above Information
+    </button>
+{% endif %}
+    {% if table_rows %}
+        <div class="table-responsive billing-table-wrapper">
             <table id="billing_cost_table" class="display table table-sm table-bordered">
                 <thead>
                     <tr>
@@ -192,11 +234,12 @@
                       <th>Job Number</th>
                       <th>Job Name</th>
                       <th>Superintendent</th>
+                        <th>Cost / Billing %</th>
                       <th>Current Contract</th>
                       <th>Billing %</th>
                       <th>Billings To Date</th>
                       <th>Cumulative Costs</th>
-                      <th>Cost / Billing %</th>
+
                     </tr>
                 </thead>
 
@@ -222,6 +265,36 @@
                             <td>
                                 {% if row.superintendent %}
                                     {{ row.superintendent.first_name }} {{ row.superintendent.last_name }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="percent-column"
+                                data-order="{% if row.has_costs_with_no_billings %}999999{% elif row.cost_to_billing_percent is not None %}{{ row.cost_to_billing_percent }}{% else %}-1{% endif %}">
+
+                                {% if row.has_costs_with_no_billings %}
+                                    <span class="badge badge-danger">
+                                        Need to Bill!
+                                    </span>
+
+                                {% elif row.cost_to_billing_percent is not None %}
+
+                                    {% if row.cost_to_billing_percent >= 100 %}
+                                        <span class="high-cost-ratio">
+                                            {{ row.cost_to_billing_percent|floatformat:1 }}%
+                                        </span>
+                                    {% elif row.cost_to_billing_percent >= 80 %}
+                                        <span class="medium-cost-ratio">
+                                            {{ row.cost_to_billing_percent|floatformat:1 }}%
+                                        </span>
+                                    {% else %}
+                                        <span class="good-cost-ratio">
+                                            {{ row.cost_to_billing_percent|floatformat:1 }}%
+                                        </span>
+                                    {% endif %}
+
+                                {% elif not row.was_found_in_report %}
+                                    <span class="badge badge-warning">Not Found</span>
                                 {% else %}
                                     -
                                 {% endif %}
@@ -257,36 +330,7 @@
                                 {% endif %}
                             </td>
 
-                            <td class="percent-column"
-    data-order="{% if row.has_costs_with_no_billings %}999999{% elif row.cost_to_billing_percent is not None %}{{ row.cost_to_billing_percent }}{% else %}-1{% endif %}">
 
-    {% if row.has_costs_with_no_billings %}
-        <span class="badge badge-danger">
-            Need to Bill!
-        </span>
-
-    {% elif row.cost_to_billing_percent is not None %}
-
-        {% if row.cost_to_billing_percent >= 100 %}
-            <span class="high-cost-ratio">
-                {{ row.cost_to_billing_percent|floatformat:1 }}%
-            </span>
-        {% elif row.cost_to_billing_percent >= 80 %}
-            <span class="medium-cost-ratio">
-                {{ row.cost_to_billing_percent|floatformat:1 }}%
-            </span>
-        {% else %}
-            <span class="good-cost-ratio">
-                {{ row.cost_to_billing_percent|floatformat:1 }}%
-            </span>
-        {% endif %}
-
-    {% elif not row.was_found_in_report %}
-        <span class="badge badge-warning">Not Found</span>
-    {% else %}
-        -
-    {% endif %}
-</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -301,7 +345,6 @@
 </div>
 
 {% endblock %}
-
 {% block extra_scripts %}
 <script type="text/javascript" class="init">
 
@@ -310,9 +353,9 @@ $(document).ready(function() {
         $('#billing_cost_table').DataTable({
             paging: false,
             aaSorting: [
-                [0, 'desc'],
-                [1, 'desc'],
-                [9, 'desc']
+                [0, 'desc'],  // Found in report first
+                [1, 'desc'],  // Need to Bill first
+                [5, 'desc']   // Then highest Cost / Billing %
             ],
             columnDefs: [
                 {
@@ -329,14 +372,21 @@ $(document).ready(function() {
     }
 });
 
-function copyReportPath() {
-    const path = "C:\\Sirius";
+function toggleAboveInformation() {
+    const aboveInfo = document.getElementById("above_search_information");
+    const button = document.getElementById("toggle_above_info_button");
 
-    navigator.clipboard.writeText(path).then(function() {
-        document.getElementById("copy_path_message").innerHTML = "Path copied.";
-    }).catch(function() {
-        document.getElementById("copy_path_message").innerHTML = "Could not copy path.";
-    });
+    if (aboveInfo.style.display === "none") {
+        aboveInfo.style.display = "block";
+        button.innerHTML = "▲ Hide the Above Information";
+    } else {
+        aboveInfo.style.display = "none";
+        button.innerHTML = "▼ Show the Header Information";
+    }
+}
+
+function printBillingCostReport() {
+    window.print();
 }
 
 </script>
