@@ -517,14 +517,20 @@ def wallcovering_add_order(request, wallcovering_id):
         else:
             lines = [f"Send this email to {wallcovering.vendor}. No Email is entered in Trinity..", ]
 
-
+        lines2 = [f"New Wallcovering Order", ]
         lines.extend([
             "",
             f"Hello I would like to place an order",
             "",
             f"Job Name: {wallcovering.job_number.job_name}",
+            f"Vendor: {wallcovering.vendor.company_name}",
             f"PO#: TR{po_number_int}",
             "",])
+        lines2.extend([
+            "",
+            f"Job Name: {wallcovering.job_number.job_name}",
+            f"PO#: TR{po_number_int}",
+            "", ])
         order = Orders.objects.create(
             po_number=po_number,
             job_number=wallcovering.job_number,
@@ -538,7 +544,7 @@ def wallcovering_add_order(request, wallcovering_id):
         main_quantity = clean_decimal(request.POST.get("main_quantity"))
         main_unit = (request.POST.get("main_unit") or "").strip()
         main_price = clean_decimal(request.POST.get("main_price"))
-        if main_quantity > Decimal("0.00") and main_unit and main_price is not None:
+        if main_quantity is not None and main_quantity > Decimal("0.00") and main_unit and main_price is not None:
             OrderItems.objects.create(
                 order=order,
                 wallcovering=wallcovering,
@@ -549,9 +555,12 @@ def wallcovering_add_order(request, wallcovering_id):
                 item_notes=request.POST.get("main_item_notes"),
                 link_to_wallcovering = wallcovering,
             )
-        lines.extend([
-            f"{clean_decimal(request.POST.get('main_quantity'))} {request.POST.get('main_unit')} of {wallcovering.code} {wallcovering.vendor.company_name} {wallcovering.pattern}",
-            "",])
+            lines.extend([
+                f"{clean_decimal(request.POST.get('main_quantity'))} {request.POST.get('main_unit')} of {wallcovering.code} {wallcovering.vendor.company_name} {wallcovering.pattern}",
+                "",])
+            lines2.extend([
+                f"{clean_decimal(request.POST.get('main_quantity'))} {request.POST.get('main_unit')} of {wallcovering.code} {wallcovering.vendor.company_name} {wallcovering.pattern}",
+                "", ])
         # EXTRA ITEMS - paste, adhesive, sundries, etc.
         descriptions = request.POST.getlist("extra_description[]")
         quantities = request.POST.getlist("extra_quantity[]")
@@ -582,6 +591,9 @@ def wallcovering_add_order(request, wallcovering_id):
             lines.extend([
                 f"{quantity} {unit} of {description}",
                 "", ])
+            lines2.extend([
+                f"{quantity} {unit} of {description}",
+                "", ])
         subject = "Wallcovering Purchase Order"
         employee = Employees.objects.filter(user=request.user).first()
         if employee and employee.email:
@@ -597,6 +609,27 @@ def wallcovering_add_order(request, wallcovering_id):
         except:
             messages.error(request,
                            "There was a problem sending the email, you will have to manually send the order.")
+        #----NEW EMAIL TO WAREHOUSE----
+        #-----------------------------
+        #------------------------------
+        subject = "New Wallcovering Order"
+        recipient = ["bridgette@gerloffpainting.com", "warehouse@gerloffpainting.com"]
+
+        if employee and employee.email:
+            sender = employee.email
+
+            if employee.email not in recipient:
+                recipient.append(employee.email)
+        else:
+            sender = "bridgette@gerloffpainting.com"
+        new_email_message = "\r\n".join(lines2)
+        try:
+            Email.sendEmail(subject, new_email_message, recipient, False, sender)
+            messages.success(request, "Email Sent to Warehouse")
+        except:
+            messages.error(request,
+                           "There was a problem sending the email to the warehouse, you will have to manually send email")
+
         return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
 
     return render(request, "wallcovering_add_order.html", {
