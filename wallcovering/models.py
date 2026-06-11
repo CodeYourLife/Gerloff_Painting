@@ -21,7 +21,7 @@ class Wallcovering(models.Model):
     roll_length = models.CharField(null=True, max_length=50, blank=True)
     is_owner_furnished = models.BooleanField(default=False)
     increment_requirement = models.CharField(null=True, max_length=500, blank=True)
-
+    is_void = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.job_number} {self.code}"

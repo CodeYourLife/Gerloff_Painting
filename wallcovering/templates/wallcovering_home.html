@@ -29,6 +29,19 @@
         margin-left: 0 !important;
     }
 }
+
+.wallcovering-void-row {
+    background-color: #e9ecef !important;
+    color: #777;
+}
+
+.wallcovering-void-row a {
+    color: #777;
+}
+
+.wallcovering-void-row .badge {
+    opacity: 0.65;
+}
 </style>
 {% endblock %}
 
@@ -43,7 +56,27 @@
             + New Wallcovering
         </a>
     </div>
+    <div class="mb-3">
+    <a href="{% url 'wallcovering_home' %}?filter=all"
+       class="btn btn-sm {% if selected_filter == 'all' %}btn-dark{% else %}btn-outline-dark{% endif %}">
+        Show All
+    </a>
 
+    <a href="{% url 'wallcovering_home' %}?filter=not_approved"
+       class="btn btn-sm {% if selected_filter == 'not_approved' %}btn-dark{% else %}btn-outline-dark{% endif %}">
+        Show Wallcoverings Not Approved
+    </a>
+
+    <a href="{% url 'wallcovering_home' %}?filter=approved_not_ordered"
+       class="btn btn-sm {% if selected_filter == 'approved_not_ordered' %}btn-dark{% else %}btn-outline-dark{% endif %}">
+        Show Approved But Not Ordered
+    </a>
+
+    <a href="{% url 'wallcovering_home' %}?filter=not_delivered"
+       class="btn btn-sm {% if selected_filter == 'not_delivered' %}btn-dark{% else %}btn-outline-dark{% endif %}">
+        Show Not Delivered Yet
+    </a>
+</div>
     <div class="card shadow-sm">
         <div class="card-header bg-dark text-white">
             <strong>Wallcovering Status</strong>
@@ -63,10 +96,10 @@
 
                     <tbody>
                         {% for wc in wallcoverings %}
-                            <tr>
+                            <tr class="{% if wc.is_void %}wallcovering-void-row{% endif %}">
                                 <td>
                                     <a href="{% url 'wallcovering_detail' wc.id %}" class="font-weight-bold">
-                                        {% if wc.code %}{{ wc.code }}{% else %}WC (No Code) {% endif %}
+                                        {% if wc.code %}{{ wc.code }}{% else %}WC (No Code) {% endif %}{% if wc.is_void %}[VOIDED]{% endif %}
                                     </a>
                                     <br>
                                     <span class="text-muted">
@@ -125,7 +158,7 @@
                             <tr>
                                 <td></td>
                                 <td class="text-center text-muted py-4">
-                                    No wallcovering has been entered yet.
+                                    No Items.
                                 </td>
                                 <td></td>
                                 <td></td>
