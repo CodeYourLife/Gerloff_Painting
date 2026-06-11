@@ -816,7 +816,27 @@
             {% endfor %}
         </div>
     </div>
-
+{% if not wallcovering.is_void %}
+    <form method="post" class="d-inline">
+        {% csrf_token %}
+        <button type="submit"
+                name="void_wallcovering"
+                class="btn btn-secondary"
+                onclick="return confirm('Mark this wallcovering as No Longer Used?');">
+            Click Here If This Wallcovering Is No Longer Used
+        </button>
+    </form>
+{% else %}
+        <form method="post" class="d-inline">
+        {% csrf_token %}
+        <button type="submit"
+                name="void_wallcovering"
+                class="btn btn-danger"
+                onclick="return confirm('Add this Wallcovering Back to Project?');">
+            Click Here To Add This Wallcovering Back
+        </button>
+    </form>
+{% endif %}
 </div>
 
 <div class="modal fade" id="addWallcoveringNoteModal" tabindex="-1" role="dialog" aria-labelledby="addWallcoveringNoteModalLabel" aria-hidden="true">

@@ -23,27 +23,54 @@
 
 <div class="container-fluid mt-4">
 
-    <h3 class="mb-4">Submittals</h3>
-
+<div class="mb-1 font-weight-bold">
+    {% if show_closed %}
+        Currently Showing All Submittals
+    {% else %}
+        Currently Showing Open Submittals Only
+    {% endif %}
+</div>
+    <div class="d-flex justify-content-start mb-2">
+    <form method="get" class="mb-0">
+        {% if show_closed %}
+            <button type="submit"
+                    class="btn btn-sm btn-info font-weight-bold"
+                    name="show_closed"
+                    value="">
+                Click Here to Only Show Open Submittals
+            </button>
+        {% else %}
+            <button type="submit"
+                    class="btn btn-sm btn-info font-weight-bold"
+                    name="show_closed"
+                    value="on">
+                Click Here Show All Submittals
+            </button>
+        {% endif %}
+    </form>
+</div>
+    <hr>
     <div class="card shadow-sm mb-4">
-        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-            <span>Active Submittals</span>
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
 
-            <form method="get" class="mb-0">
-                <div class="form-check mb-0">
-                    <input class="form-check-input"
-                           type="checkbox"
-                           id="show_closed"
-                           name="show_closed"
-                           onchange="this.form.submit()"
-                           {% if show_closed %}checked{% endif %}>
-                    <label class="form-check-label text-white" for="show_closed">
-                        Show Closed
-                    </label>
-                </div>
-            </form>
-        </div>
+        <button class="btn btn-link text-white font-weight-bold p-0"
+                type="button"
+                data-toggle="collapse"
+                data-target="#submittalsNotApprovedCollapse"
+                aria-expanded="true"
+                aria-controls="submittalsNotApprovedCollapse">
+            {% if show_closed %}
+    {{ submittals|length }} Total Submittals - Click Here to View
+{% else %}
+    {{ submittals|length }} Submittals Not Approved - Click Here to View
+{% endif %}
+        </button>
 
+
+
+    </div>
+
+    <div id="submittalsNotApprovedCollapse" class="collapse">
         <div class="table-responsive">
             <table class="table table-sm table-striped mb-0" id="submittals_table">
                 <thead class="thead-light">
@@ -74,20 +101,28 @@
                     </tr>
                     {% empty %}
                     <tr>
-                            <td></td>
-                            <td></td>
-                            <td>No submittals are found.</td>
-                            <td></td>
+                        <td colspan="4" class="text-center text-muted py-3">
+                            No submittals are found.
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
+</div>
 
 <div class="card shadow-sm">
     <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
-        <span>Pending Items (Not Submitted Yet)</span>
+
+        <button class="btn btn-link text-dark font-weight-bold p-0"
+                type="button"
+                data-toggle="collapse"
+                data-target="#pendingItemsCollapse"
+                aria-expanded="true"
+                aria-controls="pendingItemsCollapse">
+            {{ pending_item_rows|length }} Pending Items (Not Submitted Yet)
+        </button>
 
         <button type="button"
                 class="btn btn-sm btn-primary"
@@ -97,6 +132,7 @@
         </button>
     </div>
 
+    <div id="pendingItemsCollapse" class="collapse">
         <div class="table-responsive">
             <table class="table table-sm table-striped mb-0" id="pending_table">
                 <thead class="thead-light">
@@ -119,15 +155,16 @@
                     </tr>
                     {% empty %}
                     <tr>
-                            <td></td>
-                            <td>No pending approval items.</td>
-                            <td></td>
+                        <td colspan="3" class="text-center text-muted py-3">
+                            No pending approval items.
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
+</div>
 
 </div>
 

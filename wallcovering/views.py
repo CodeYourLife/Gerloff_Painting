@@ -32,22 +32,85 @@ from django.http import HttpResponse
 
 
 def wallcovering_home(request):
+    selected_filter = request.GET.get("filter", "all")
+
     wallcoverings = Wallcovering.objects.select_related(
         "job_number",
         "vendor"
-    ).filter(job_number__is_closed=False).order_by(
+    ).filter(
+        job_number__is_closed=False
+    ).order_by(
         "job_number__job_name",
         "code"
     )
 
+    wallcovering_list = []
+
+    for wc in wallcoverings:
+        wc.home_submittal_status = wc.submittal_status()
+        wc.home_ordering_status = wc.ordering_status()
+        wc.home_sent_status = wc.sent_status()
+        wc.home_display_quantity = wc.display_quantity()
+
+        include_wc = True
+
+        # Exclude voided wallcovering from all filtered views
+        if selected_filter != "all" and wc.is_void:
+            include_wc = False
+
+        elif selected_filter == "not_approved":
+            include_wc = wc.home_submittal_status != "Approved"
+
+        elif selected_filter == "approved_not_ordered":
+            include_wc = (
+                wc.home_submittal_status == "Approved"
+                and wc.home_ordering_status == "Not Ordered"
+            )
+
+        elif selected_filter == "not_delivered":
+            include_wc = wc.home_ordering_status in [
+                "Ordered",
+                "Partially Received",
+            ]
+
+        if include_wc:
+            wallcovering_list.append(wc)
+
     return render(request, "wallcovering_home.html", {
-        "wallcoverings": wallcoverings,
+        "wallcoverings": wallcovering_list,
+        "selected_filter": selected_filter,
     })
 
 
 def wallcovering_detail(request, wallcovering_id):
     wallcovering = get_object_or_404(Wallcovering, id=wallcovering_id)
+    if request.method == "POST":
+        if "void_wallcovering" in request.POST:
+            employee = Employees.objects.filter(user=request.user).first()
+            if not wallcovering.is_void:
+                wallcovering.is_void = True
+                wallcovering.save()
+                WallcoveringNotes.objects.create(
+                    pattern=wallcovering,
+                    date=date.today(),
+                    user=employee,
+                    note="Wallcovering marked as No Longer Used."
+                )
 
+                messages.success(request, "Wallcovering marked as No Longer Used.")
+            else:
+                wallcovering.is_void = False
+                wallcovering.save()
+                WallcoveringNotes.objects.create(
+                    pattern=wallcovering,
+                    date=date.today(),
+                    user=employee,
+                    note="Wallcovering marked as being used again."
+                )
+
+                messages.success(request, "Wallcovering marked as being used again.")
+
+            return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
     pricing = WallcoveringPricing.objects.filter(
         wallcovering=wallcovering
     ).order_by("-quote_date", "-id")

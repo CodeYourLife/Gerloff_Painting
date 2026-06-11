@@ -99,13 +99,19 @@ def submittals_home(request):
                 user=employee,
                 note="Pending submittal item created. " + notes
             )
-
+        messages.success(request, "Pending submittal item created.")
+        return redirect("submittals_home")
 
     show_closed = request.GET.get('show_closed') == 'on'
 
     submittals = Submittals.objects.filter(
-        job_number__is_closed="False"
-    ).order_by('job_number', 'submittal_number')
+        job_number__is_closed=False
+    ).select_related(
+        "job_number"
+    ).order_by(
+        "job_number__job_number",
+        "submittal_number"
+    )
 
     if not show_closed:
         submittals = [x for x in submittals if x.status() == "OPEN"]
