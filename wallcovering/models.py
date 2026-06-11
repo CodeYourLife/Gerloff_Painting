@@ -7,7 +7,7 @@ from decimal import Decimal
 class Wallcovering(models.Model):
     id = models.BigAutoField(primary_key=True)
     job_number = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT)
-    code = models.CharField(null=True, max_length=10,blank=True)
+    code = models.CharField(null=True, max_length=100,blank=True)
     vendor = models.ForeignKey(Vendors, on_delete=models.PROTECT,null=True)
     pattern = models.CharField(null=True, max_length=2000,blank=True)
     estimated_quantity = models.IntegerField(default=0, blank=True,null=True)
