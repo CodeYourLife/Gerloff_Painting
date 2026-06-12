@@ -125,8 +125,13 @@
                                         <!-- Submittal Status -->
                                         {% if wc.submittal_status == "Approved" %}
                                             <span class="badge badge-success d-block mb-1">Approved</span>
+
                                         {% elif wc.submittal_status == "Submitted" %}
                                             <span class="badge badge-primary d-block mb-1">Submitted</span>
+
+                                        {% elif wc.submittal_status == "Partially Submitted" %}
+                                            <span class="badge badge-warning d-block mb-1">Partially Submitted</span>
+
                                         {% else %}
                                             <span class="badge badge-secondary d-block mb-1">Not Submitted</span>
                                         {% endif %}

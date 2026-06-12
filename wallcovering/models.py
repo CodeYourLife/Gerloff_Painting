@@ -111,7 +111,6 @@ class Wallcovering(models.Model):
             return "Owner Furnished"
 
         from submittals.models import SubmittalItems, SubmittalApprovals
-        from django.db.models import Q
 
         matching_items = SubmittalItems.objects.filter(
             wallcovering_id=self,
@@ -121,31 +120,38 @@ class Wallcovering(models.Model):
         if not matching_items.exists():
             return "Not Submitted"
 
-        # If any linked item has no approvals at all,
-        # then that wallcovering item still has not been submitted.
-        if matching_items.filter(
-                submittalapprovals__isnull=True
-        ).exists():
-            return "Not Submitted"
-
-        # If any linked approval is not attached to a real submittal,
-        # then it is still pending submission.
-        if SubmittalApprovals.objects.filter(
-                submittalitem__in=matching_items,
-                submittal__isnull=True
-        ).exists():
-            return "Not Submitted"
-
         linked_approvals = SubmittalApprovals.objects.filter(
             submittalitem__in=matching_items,
             submittal__isnull=False
         )
 
-        # If every linked approval is approved, then the wallcovering is approved.
-        if linked_approvals.exists() and not linked_approvals.exclude(is_approved=True).exists():
+        unlinked_approvals_exist = SubmittalApprovals.objects.filter(
+            submittalitem__in=matching_items,
+            submittal__isnull=True
+        ).exists()
+
+        items_without_approvals_exist = matching_items.filter(
+            submittalapprovals__isnull=True
+        ).exists()
+
+        has_submission_problem = (
+                unlinked_approvals_exist
+                or items_without_approvals_exist
+        )
+
+        # Nothing has actually been submitted yet
+        if not linked_approvals.exists():
+            return "Not Submitted"
+
+        # Some items are submitted, but at least one item still needs to be submitted
+        if has_submission_problem:
+            return "Partially Submitted"
+
+        # Everything has been submitted and all linked approvals are approved
+        if not linked_approvals.exclude(is_approved=True).exists():
             return "Approved"
 
-        # Otherwise, it has been submitted, but not fully approved yet.
+        # Everything has been submitted, but something is pending/rejected
         return "Submitted"
 
     def ordering_status(self):
