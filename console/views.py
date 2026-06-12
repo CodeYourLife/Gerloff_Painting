@@ -368,7 +368,7 @@ def index(request):
         submittal_status = wc.submittal_status()
         ordering_status = wc.ordering_status()
 
-        if submittal_status == "Not Submitted":
+        if submittal_status in ["Not Submitted", "Partially Submitted"]:
             wc_not_submitted_count += 1
 
         elif submittal_status == "Submitted":
