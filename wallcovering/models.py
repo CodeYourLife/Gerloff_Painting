@@ -121,32 +121,32 @@ class Wallcovering(models.Model):
         if not matching_items.exists():
             return "Not Submitted"
 
-        has_approved = False
-        has_problem = False
+        # If any linked item has no approvals at all,
+        # then that wallcovering item still has not been submitted.
+        if matching_items.filter(
+                submittalapprovals__isnull=True
+        ).exists():
+            return "Not Submitted"
 
-        for item in matching_items:
-            approvals = SubmittalApprovals.objects.filter(
-                submittalitem=item
-            ).order_by("id")
+        # If any linked approval is not attached to a real submittal,
+        # then it is still pending submission.
+        if SubmittalApprovals.objects.filter(
+                submittalitem__in=matching_items,
+                submittal__isnull=True
+        ).exists():
+            return "Not Submitted"
 
-            if not approvals.exists():
-                has_problem = True
-                continue
+        linked_approvals = SubmittalApprovals.objects.filter(
+            submittalitem__in=matching_items,
+            submittal__isnull=False
+        )
 
-            if approvals.filter(
-                    Q(submittal__isnull=True) | Q(is_approved__isnull=True)
-            ).exists():
-                has_problem = True
-                continue
-
-            if approvals.filter(is_approved=True).exists():
-                has_approved = True
-
-        if has_problem:
-            return "Submitted"
-
-        if has_approved:
+        # If every linked approval is approved, then the wallcovering is approved.
+        if linked_approvals.exists() and not linked_approvals.exclude(is_approved=True).exists():
             return "Approved"
+
+        # Otherwise, it has been submitted, but not fully approved yet.
+        return "Submitted"
 
     def ordering_status(self):
         if self.is_owner_furnished:

@@ -444,9 +444,19 @@
                     {% for row in submittal_rows %}
                         <tr>
                             <td>
-                                <a href="{% url 'submittal_send' row.approval.submittal.id %}">
+                                {% if row.approval and row.approval.submittal %}
+                                    <a href="{% url 'submittal_send' row.approval.submittal.id %}">
+                                        {{ row.item.description }}
+                                    </a>
+                                {% else %}
                                     {{ row.item.description }}
-                                </a>
+                                {% endif %}
+
+                                {% if row.has_unlinked_approval %}
+                                    <span class="badge badge-warning ml-2">
+                                        Pending Submittal
+                                    </span>
+                                {% endif %}
                             </td>
 
                             <td>

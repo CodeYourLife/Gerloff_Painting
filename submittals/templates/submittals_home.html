@@ -150,7 +150,15 @@
                         <td style="white-space:nowrap;">
                             {{ row.item.job_number.job_number }} - {{ row.item.job_number.job_name }}
                         </td>
-                        <td>{{ row.item.description }}</td>
+                        <td>
+                            {{ row.item.description }}
+
+                            {% if row.item.wallcovering_id %}
+                                <span class="badge badge-success ml-2">
+                                    {% if row.item.wallcovering_id.code %}{{ row.item.wallcovering_id.code|default:"Linked" }}{% else %}WC - No Code{% endif %}
+                                </span>
+                            {% endif %}
+                        </td>
                         <td>{{ row.combined_notes }}</td>
                     </tr>
                     {% empty %}

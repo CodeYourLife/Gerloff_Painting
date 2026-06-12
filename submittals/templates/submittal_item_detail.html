@@ -279,6 +279,60 @@
         </div>
     </div>
 {% endif %}
+
+<div class="card shadow-sm mt-4 mb-4">
+    <div class="card-header bg-dark text-white">
+        Link This Item To A Wallcovering
+    </div>
+
+    <div class="card-body">
+        <p class="mb-3">
+            If this submittal item is for a wallcovering, select the wallcovering below.
+        </p>
+
+        {% if item.wallcovering_id %}
+            <p class="mb-3">
+                <strong>Currently Linked To:</strong>
+                {{ item.wallcovering_id.code }} -
+                {{ item.wallcovering_id.vendor.company_name }}
+                {{ item.wallcovering_id.pattern }}
+            </p>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-row align-items-end">
+                <div class="col-md-8">
+                    <label for="wallcovering_id">
+                        <strong>Select Wallcovering</strong>
+                    </label>
+
+                    <select name="wallcovering_id"
+                            id="wallcovering_id"
+                            class="form-control searchable-select">
+                        <option value="">No Wallcovering Link</option>
+
+                        {% for wc in wallcoverings %}
+                            <option value="{{ wc.id }}"
+                                {% if item.wallcovering_id_id == wc.id %}selected{% endif %}>
+                                {{ wc.code }} - {{ wc.vendor.company_name }} {{ wc.pattern }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-4 mt-3 mt-md-0">
+                    <button type="submit"
+                            name="link_wallcovering"
+                            class="btn btn-primary btn-sm">
+                        Save Wallcovering Link
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 </div>
 
 {% endblock %}

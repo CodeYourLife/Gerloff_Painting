@@ -47,10 +47,10 @@ def wallcovering_home(request):
     wallcovering_list = []
 
     for wc in wallcoverings:
-        wc.home_submittal_status = wc.submittal_status()
-        wc.home_ordering_status = wc.ordering_status()
-        wc.home_sent_status = wc.sent_status()
-        wc.home_display_quantity = wc.display_quantity()
+        submittal_status = wc.submittal_status()
+        ordering_status = wc.ordering_status()
+        sent_status = wc.sent_status()
+        display_quantity = wc.display_quantity()
 
         include_wc = True
 
@@ -59,21 +59,26 @@ def wallcovering_home(request):
             include_wc = False
 
         elif selected_filter == "not_approved":
-            include_wc = wc.home_submittal_status != "Approved"
+            include_wc = submittal_status != "Approved"
 
         elif selected_filter == "approved_not_ordered":
             include_wc = (
-                wc.home_submittal_status == "Approved"
-                and wc.home_ordering_status == "Not Ordered"
+                submittal_status == "Approved"
+                and ordering_status == "Not Ordered"
             )
 
         elif selected_filter == "not_delivered":
-            include_wc = wc.home_ordering_status in [
+            include_wc = ordering_status in [
                 "Ordered",
                 "Partially Received",
             ]
 
         if include_wc:
+            wc.submittal_status = submittal_status
+            wc.ordering_status = ordering_status
+            wc.sent_status = sent_status
+            wc.display_quantity = display_quantity
+
             wallcovering_list.append(wc)
 
     return render(request, "wallcovering_home.html", {
@@ -359,26 +364,49 @@ def wallcovering_detail(request, wallcovering_id):
     submittal_rows = []
 
     for item in submittal_items:
-        approvals = SubmittalApprovals.objects.filter(
-            submittalitem=item,
-            submittal__isnull=False
+        all_approvals = SubmittalApprovals.objects.filter(
+            submittalitem=item
         ).select_related("submittal").order_by("-id")
 
-        approval = approvals.first()
+        linked_approvals = all_approvals.filter(
+            submittal__isnull=False
+        )
 
-        if not approval:
+        latest_linked_approval = linked_approvals.first()
+
+        has_unlinked_approval = all_approvals.filter(
+            submittal__isnull=True
+        ).exists()
+
+        if not all_approvals.exists():
             status = "Not Sent"
-        elif approval.is_approved is True:
+            approval = None
+
+        elif has_unlinked_approval:
+            status = "Not Sent"
+            approval = latest_linked_approval
+
+        elif latest_linked_approval and latest_linked_approval.is_approved is True:
             status = "Approved"
-        elif approval.is_approved is False:
+            approval = latest_linked_approval
+
+        elif latest_linked_approval and latest_linked_approval.is_approved is False:
             status = "Rejected"
-        else:
+            approval = latest_linked_approval
+
+        elif latest_linked_approval:
             status = "Sent"
+            approval = latest_linked_approval
+
+        else:
+            status = "Not Sent"
+            approval = None
 
         submittal_rows.append({
             "item": item,
             "approval": approval,
             "status": status,
+            "has_unlinked_approval": has_unlinked_approval,
         })
 
     label_packages = Packages.objects.filter(

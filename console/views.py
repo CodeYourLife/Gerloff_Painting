@@ -365,14 +365,16 @@ def index(request):
     wc_approved_not_ordered_count = 0
 
     for wc in wallcoverings:
+        submittal_status = wc.submittal_status()
+        ordering_status = wc.ordering_status()
 
-        if wc.submittal_status() == "Not Submitted":
+        if submittal_status == "Not Submitted":
             wc_not_submitted_count += 1
 
-        elif wc.submittal_status() == "Submitted":
+        elif submittal_status == "Submitted":
             wc_not_approved_count += 1
 
-        elif wc.submittal_status() == "Approved" and wc.ordering_status() == "Not Ordered":
+        elif submittal_status == "Approved" and ordering_status == "Not Ordered":
             wc_approved_not_ordered_count += 1
 
     send_data['wc_not_submitted_count'] =wc_not_submitted_count
