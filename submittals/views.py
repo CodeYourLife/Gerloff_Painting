@@ -1024,8 +1024,47 @@ def submittal_item_detail(request, item_id):
         submittalitem=item,
         submittal__isnull=False
     ).exists()
-
+    wallcoverings = Wallcovering.objects.filter(
+        job_number=item.job_number
+    ).order_by("code", "pattern")
     if request.method == 'POST':
+        if "link_wallcovering" in request.POST:
+            wallcovering_id = request.POST.get("wallcovering_id")
+
+            if wallcovering_id:
+                wallcovering = get_object_or_404(
+                    Wallcovering,
+                    id=wallcovering_id,
+                    job_number=item.job_number
+                )
+
+                item.wallcovering_id = wallcovering
+                item.save()
+
+                SubmittalItemNotes.objects.create(
+                    submittal=None,
+                    submittalitem=item,
+                    date=timezone.now().date(),
+                    user=Employees.objects.filter(user=request.user).first(),
+                    note=f"Linked item to wallcovering: {wallcovering.code or ''} {wallcovering.pattern or ''}".strip()
+                )
+
+                messages.success(request, "Wallcovering linked.")
+            else:
+                item.wallcovering_id = None
+                item.save()
+
+                SubmittalItemNotes.objects.create(
+                    submittal=None,
+                    submittalitem=item,
+                    date=timezone.now().date(),
+                    user=Employees.objects.filter(user=request.user).first(),
+                    note="Wallcovering link removed"
+                )
+
+                messages.success(request, "Wallcovering link removed.")
+
+            return redirect("submittal_item_detail", item.id)
         if "change_description" in request.POST:
 
             new_description = request.POST.get(
@@ -1142,9 +1181,10 @@ def submittal_item_detail(request, item_id):
         'approvals': approvals,
         'approval_notes': approval_notes,
         'unlinked_approvals': unlinked_approvals,
-        'status':item.status(),
+        'status': item.status(),
         "all_job_submittal_items": all_job_submittal_items,
         "item_has_been_submitted": item_has_been_submitted,
+        "wallcoverings": wallcoverings,
     }
 
     return render(request, 'submittal_item_detail.html', send_data)
