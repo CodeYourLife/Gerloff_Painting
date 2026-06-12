@@ -493,6 +493,13 @@ def wallcovering_new(request):
             is_repeat=bool(request.POST.get("is_repeat")),
             increment_requirement=request.POST.get("increment_requirement"),
         )
+        if wallcovering.code:
+            description = f"{wallcovering.code} {wallcovering.vendor.company_name} {wallcovering.pattern}"
+        else:
+            description = f"{wallcovering.vendor.company_name}"
+        if wallcovering.is_owner_furnished == False:
+            SubmittalItems.objects.create(wallcovering_id=wallcovering,description =f"{description} Product Data",job_number=selected_job)
+            SubmittalItems.objects.create(wallcovering_id=wallcovering, description=f"{description} Samples",job_number=selected_job)
 
         return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
 
