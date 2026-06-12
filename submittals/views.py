@@ -1112,11 +1112,50 @@ def submittal_item_detail(request, item_id):
         # -------------------------------
         # MARK NO LONGER USED
         # -------------------------------
+        # -------------------------------
+        # MARK NO LONGER USED
+        # -------------------------------
         if 'mark_no_longer_used' in request.POST:
             employee = Employees.objects.filter(user=request.user).first()
+
+            has_linked_submittal_approvals = SubmittalApprovals.objects.filter(
+                submittalitem=item,
+                submittal__isnull=False
+            ).exists()
+
+            # If this item has never actually been submitted,
+            # delete the item completely.
+            if not has_linked_submittal_approvals:
+                item_description = item.description
+                job_number = item.job_number
+
+                # Delete notes first because SubmittalItemNotes uses PROTECT
+                SubmittalItemNotes.objects.filter(
+                    submittalitem=item
+                ).delete()
+
+                # Delete unlinked approvals
+                SubmittalApprovals.objects.filter(
+                    submittalitem=item,
+                    submittal__isnull=True
+                ).delete()
+
+                # Now delete the item
+                item.delete()
+
+                messages.success(
+                    request,
+                    f"Submittal item deleted: {item_description}"
+                )
+
+                return redirect("submittals_home")
+
+            # If it has been submitted before, do NOT delete it.
+            # Just toggle no longer used.
             if item.is_no_longer_used:
                 item.is_no_longer_used = False
                 item.save()
+
                 if employee:
                     SubmittalItemNotes.objects.create(
                         submittal=None,
@@ -1125,10 +1164,13 @@ def submittal_item_detail(request, item_id):
                         user=employee,
                         note="Item added back to project"
                     )
+
                 messages.success(request, "Item added back to project!")
+
             else:
                 item.is_no_longer_used = True
                 item.save()
+
                 if employee:
                     SubmittalItemNotes.objects.create(
                         submittal=None,
@@ -1137,7 +1179,9 @@ def submittal_item_detail(request, item_id):
                         user=employee,
                         note="Item marked as no longer used"
                     )
+
                 messages.success(request, "Item marked as no longer used.")
+
             return redirect('submittal_item_detail', item.id)
 
 
