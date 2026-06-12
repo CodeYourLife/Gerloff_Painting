@@ -249,7 +249,11 @@
 
             <tr>
                 <th class="bg-light">Vendor</th>
+                {% if wallcovering.vendor %}
                 <td> <a href="{% url 'vendor_edit' wallcovering.vendor.id %}">{{ wallcovering.vendor.company_name }}</a></td>
+                {% else %}
+                <td> No Vendor Assigned</td>
+                {% endif %}
             </tr>
 
             <tr>

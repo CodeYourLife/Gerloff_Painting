@@ -55,7 +55,7 @@ def wallcovering_home(request):
         include_wc = True
 
         # Exclude voided wallcovering from all filtered views
-        if selected_filter != "all" and wc.is_void:
+        if selected_filter != "all" and (wc.is_void or wc.is_owner_furnished):
             include_wc = False
 
         elif selected_filter == "not_approved":
