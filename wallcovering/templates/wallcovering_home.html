@@ -102,6 +102,7 @@
                         <tr>
                             <th>Code / Pattern</th>
                             <th>Job</th>
+                            <th>Notes</th>
                             <th class="text-right">Quantity</th>
                             <th class="text-center">Status</th>
                         </tr>
@@ -125,7 +126,19 @@
                                         {{ wc.job_number.job_name }}
                                     </a>
                                 </td>
+                                <td>
+                                    {% if wc.user_note_count %}
+                                        <div>
+                                            {{ wc.user_note_count }} user note{% if wc.user_note_count != 1 %}s{% endif %}
+                                        </div>
+                                    {% endif %}
 
+                                    {% if wc.notes %}
+                                        <div class="text-muted">
+                                            {{ wc.notes }}
+                                        </div>
+                                    {% endif %}
+                                </td>
                                 <td class="text-right">
                                     {{ wc.display_quantity }}
                                 </td>
@@ -178,6 +191,7 @@
                                 <td class="text-center text-muted py-4">
                                     No Items.
                                 </td>
+                                <td></td>
                                 <td></td>
                                 <td></td>
                             </tr>

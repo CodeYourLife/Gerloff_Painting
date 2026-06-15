@@ -27,7 +27,7 @@ from io import BytesIO
 import openpyxl
 from django.conf import settings
 from django.http import HttpResponse
-
+from django.db.models import Count, Q
 
 
 
@@ -37,6 +37,12 @@ def wallcovering_home(request):
     wallcoverings = Wallcovering.objects.select_related(
         "job_number",
         "vendor"
+    ).annotate(
+        user_note_count=Count(
+            "wallcoveringnotes",
+            filter=Q(wallcoveringnotes__note__isnull=False) & ~Q(wallcoveringnotes__note=""),
+            distinct=True
+        )
     ).filter(
         job_number__is_closed=False
     ).order_by(
