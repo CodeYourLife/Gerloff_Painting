@@ -920,7 +920,90 @@ def wallcovering_receive(request, wallcovering_id=None):
                 quantity_received=int(quantity_received or 0),
                 notes=notes,
             )
+        # =========================
+        # EMAIL SUPERINTENDENT / USER / BRIDGETTE
+        # =========================
+        job = first_order.job_number
 
+        recipients = ["bridgette@gerloffpainting.com"]
+
+        if job.superintendent and job.superintendent.email:
+            recipients.append(job.superintendent.email)
+
+        employee = Employees.objects.filter(user=request.user).first()
+        if employee and employee.email:
+            recipients.append(employee.email)
+
+        # Remove duplicates / blanks
+        recipients = list(dict.fromkeys([x for x in recipients if x]))
+
+        sender = employee.email if employee and employee.email else "bridgette@gerloffpainting.com"
+
+        received_lines = []
+
+        for row in valid_received_rows:
+            order_item = row["order_item"]
+            quantity = row["quantity"]
+
+            wc = order_item.wallcovering
+
+            received_lines.append(
+                f"- {wc.code if wc and wc.code else ''} "
+                f"{wc.vendor.company_name if wc and wc.vendor else ''} "
+                f"{wc.pattern if wc and wc.pattern else ''} "
+                f"({order_item.item_description}) "
+                f"Qty Received: {quantity}"
+            )
+
+        package_lines = []
+
+        packages = Packages.objects.filter(
+            delivery=delivery
+        ).select_related(
+            "orderitem",
+            "orderitem__wallcovering"
+        ).order_by("id")
+
+        for package in packages:
+            package_lines.append(
+                f"- {package.type or ''} "
+                f"Qty: {package.quantity_received or 0} "
+                f"Contents: {package.contents or ''} "
+                f"Notes: {package.notes or ''}"
+            )
+
+        email_message = (
+            f"Wallcovering has been received for:\n\n"
+            f"{job.job_number} - {job.job_name}\n\n"
+            f"PO: {first_order.po_number}\n"
+            f"Date Received: {receipt_date}\n\n"
+            f"Received Items:\n"
+            + "\n".join(received_lines)
+        )
+
+        if receipt_notes:
+            email_message += f"\n\nReceipt Notes:\n{receipt_notes}"
+
+        if package_lines:
+            email_message += (
+                f"\n\nPackages:\n"
+                + "\n".join(package_lines)
+            )
+
+        try:
+            Email.sendEmail(
+                f"Wallcovering Received - {job.job_number} {job.job_name}",
+                email_message,
+                recipients,
+                False,
+                sender
+            )
+            messages.success(request, "Wallcovering receipt saved and email sent to superintendent.")
+        except:
+            messages.warning(
+                request,
+                "Wallcovering receipt saved, but the email was not sent to superintendent."
+            )
         if wallcovering:
             return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
 

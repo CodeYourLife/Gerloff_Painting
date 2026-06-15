@@ -144,25 +144,36 @@ def submittals_home(request):
     for item in pending_items:
         combined_notes = []
 
-        if item.notes:
-            combined_notes.append(item.notes)
+        linked_approvals = []
+        unlinked_approvals = []
 
-        latest_approval_note = None
-        if hasattr(item, 'all_approvals'):
+        if hasattr(item, "all_approvals"):
             for approval in item.all_approvals:
-                if approval.notes:
-                    if approval.submittal:
-                        latest_approval_note = f"Submittal {approval.submittal.submittal_number}: {approval.notes}"
-                    else:
-                        latest_approval_note = approval.notes
-                    break
+                if approval.submittal:
+                    linked_approvals.append(approval)
+                else:
+                    unlinked_approvals.append(approval)
 
-        if latest_approval_note:
-            combined_notes.append(latest_approval_note)
+        if linked_approvals:
+            combined_notes.append("Previously Submitted")
+
+        if item.notes:
+            combined_notes.append(f"Notes: {item.notes}")
+
+        future_notes = []
+
+        for approval in unlinked_approvals:
+            if approval.item_notes and approval.item_notes.strip():
+                future_notes.append(approval.item_notes.strip())
+
+        if future_notes:
+            combined_notes.append(
+                "Next Submittal: " + " | ".join(future_notes)
+            )
 
         pending_item_rows.append({
-            'item': item,
-            'combined_notes': " | ".join(combined_notes)
+            "item": item,
+            "combined_notes": " | ".join(combined_notes)
         })
 
     send_data['pending_item_rows'] = pending_item_rows
@@ -1015,21 +1026,53 @@ def submittal_send(request, submittal_id):
 
 def submittal_item_detail(request, item_id):
     item = get_object_or_404(SubmittalItems, id=item_id)
+    employee = Employees.objects.filter(user=request.user).first()
+
+    # If the item has no approval records at all, create one unlinked approval.
+    # This becomes the "Information for Next Submittal" record.
+    if not item.is_no_longer_used and not SubmittalApprovals.objects.filter(submittalitem=item).exists():
+        SubmittalApprovals.objects.get_or_create(
+            submittalitem=item,
+            submittal=None,
+            defaults={
+                "is_approved": None,
+                "notes": "",
+                "item_notes": "",
+                "quantity": 0,
+                "date_reviewed": None,
+            }
+        )
     all_job_submittal_items = SubmittalItems.objects.filter(
         job_number=item.job_number,
+        is_no_longer_used=False,
         submittalapprovals__submittal__isnull=False
     ).exclude(
-        id=item.id,
-        is_no_longer_used=False,
+        id=item.id
     ).distinct().order_by("description")
     item_has_been_submitted = SubmittalApprovals.objects.filter(
         submittalitem=item,
         submittal__isnull=False
     ).exists()
+    has_no_linked_submittal_approvals = not item_has_been_submitted
     wallcoverings = Wallcovering.objects.filter(
         job_number=item.job_number
     ).order_by("code", "pattern")
     if request.method == 'POST':
+        if 'new_note' in request.POST:
+            note_text = request.POST.get('new_note', '').strip()
+
+            if note_text and employee:
+                SubmittalItemNotes.objects.create(
+                    submittalitem=item,
+                    date=timezone.now().date(),
+                    user=employee,
+                    note=note_text
+                )
+                messages.success(request, "Note added.")
+            else:
+                messages.error(request, "Unable to add note.")
+
+            return redirect('submittal_item_detail', item.id)
         if "link_wallcovering" in request.POST:
             wallcovering_id = request.POST.get("wallcovering_id")
 
@@ -1047,7 +1090,7 @@ def submittal_item_detail(request, item_id):
                     submittal=None,
                     submittalitem=item,
                     date=timezone.now().date(),
-                    user=Employees.objects.filter(user=request.user).first(),
+                    user=employee,
                     note=f"Linked item to wallcovering: {wallcovering.code or ''} {wallcovering.pattern or ''}".strip()
                 )
 
@@ -1060,7 +1103,7 @@ def submittal_item_detail(request, item_id):
                     submittal=None,
                     submittalitem=item,
                     date=timezone.now().date(),
-                    user=Employees.objects.filter(user=request.user).first(),
+                    user=employee,
                     note="Wallcovering link removed"
                 )
 
@@ -1091,26 +1134,132 @@ def submittal_item_detail(request, item_id):
                     job_number=item.job_number
                 )
 
+                old_unlinked_approval = SubmittalApprovals.objects.filter(
+                    submittalitem=item,
+                    submittal__isnull=True
+                ).last()
+
+                old_item_notes = ""
+                if old_unlinked_approval:
+                    old_item_notes = old_unlinked_approval.item_notes or ""
+
+                previous_unlinked_approval, created = SubmittalApprovals.objects.get_or_create(
+                    submittalitem=previous_item,
+                    submittal=None,
+                    defaults={
+                        "is_approved": None,
+                        "item_notes": old_item_notes,
+                        "notes": "",
+                        "quantity": 0,
+                        "date_reviewed": None,
+                    }
+                )
+
+                if not created and old_item_notes:
+                    previous_unlinked_approval.item_notes = old_item_notes
+                    previous_unlinked_approval.save(update_fields=["item_notes"])
+
                 SubmittalApprovals.objects.filter(
                     submittalitem=item,
                     submittal__isnull=True
                 ).delete()
-                SubmittalApprovals.objects.create(
-                    submittalitem=previous_item
-                )
+
                 item.delete()
 
-            return redirect("submittal_item_detail", previous_item.id)
+                return redirect("submittal_item_detail", previous_item.id)
+            return redirect("submittal_item_detail", item.id)
         if 'mark_no_additional_needed' in request.POST:
             SubmittalApprovals.objects.filter(submittalitem=item,submittal__isnull=True).delete()
             SubmittalItemNotes.objects.create(
                 submittal=None,
                 submittalitem=item,
                 date=timezone.now().date(),
-                user=Employees.objects.filter(user=request.user).first(),
+                user=employee,
                 note="Additional Submittal No Longer Required"
             )
             return redirect('submittal_item_detail', item.id)
+        if "save_item_notes" in request.POST:
+            item.notes = request.POST.get("item_notes", "").strip()
+            item.save(update_fields=["notes"])
+
+            if employee:
+                SubmittalItemNotes.objects.create(
+                    submittal=None,
+                    submittalitem=item,
+                    date=timezone.now().date(),
+                    user=employee,
+                    note="Item notes updated"
+                )
+
+            messages.success(request, "Item notes updated.")
+            return redirect("submittal_item_detail", item.id)
+
+        if "save_next_submittal_info" in request.POST:
+            next_approval_id = request.POST.get("next_approval_id")
+            next_item_notes = request.POST.get("next_item_notes", "").strip()
+
+            next_approval = get_object_or_404(
+                SubmittalApprovals,
+                id=next_approval_id,
+                submittalitem=item,
+                submittal__isnull=True,
+            )
+
+            old_notes = next_approval.item_notes or ""
+
+            next_approval.item_notes = next_item_notes
+            next_approval.save(update_fields=["item_notes"])
+
+            if employee and old_notes != next_item_notes:
+                SubmittalItemNotes.objects.create(
+                    submittal=None,
+                    submittalitem=item,
+                    date=timezone.now().date(),
+                    user=employee,
+                    note="Information for next submittal updated"
+                )
+
+            messages.success(request, "Information for next submittal updated.")
+            return redirect("submittal_item_detail", item.id)
+        if "additional_submittal_needed" in request.POST:
+            additional_note = request.POST.get("additional_submittal_note", "").strip()
+
+            # Only create a new future approval if one does not already exist
+            existing_unlinked = SubmittalApprovals.objects.filter(
+                submittalitem=item,
+                submittal__isnull=True
+            ).first()
+
+            if existing_unlinked:
+                messages.warning(request, "A future submittal already exists for this item.")
+                return redirect("submittal_item_detail", item.id)
+
+            SubmittalApprovals.objects.create(
+                submittalitem=item,
+                submittal=None,
+                is_approved=None,
+                item_notes=additional_note,
+                notes="",
+                quantity=0,
+                date_reviewed=None,
+            )
+
+            if employee:
+                note_text = "Additional submittal marked as needed"
+
+                if additional_note:
+                    note_text += f": {additional_note}"
+
+                SubmittalItemNotes.objects.create(
+                    submittal=None,
+                    submittalitem=item,
+                    date=timezone.now().date(),
+                    user=employee,
+                    note=note_text
+                )
+
+            messages.success(request, "Additional submittal requirement created.")
+            return redirect("submittal_item_detail", item.id)
         # -------------------------------
         # MARK NO LONGER USED
         # -------------------------------
@@ -1118,7 +1267,6 @@ def submittal_item_detail(request, item_id):
         # MARK NO LONGER USED
         # -------------------------------
         if 'mark_no_longer_used' in request.POST:
-            employee = Employees.objects.filter(user=request.user).first()
 
             has_linked_submittal_approvals = SubmittalApprovals.objects.filter(
                 submittalitem=item,
@@ -1169,30 +1317,76 @@ def submittal_item_detail(request, item_id):
 
                 messages.success(request, "Item added back to project!")
 
+
             else:
+
+                unlinked_approvals = SubmittalApprovals.objects.filter(
+
+                    submittalitem=item,
+
+                    submittal__isnull=True
+
+                ).order_by("id")
+
+                preserved_notes = [
+
+                    approval.item_notes.strip()
+
+                    for approval in unlinked_approvals
+
+                    if approval.item_notes and approval.item_notes.strip()
+
+                ]
+
+                deleted_count, _ = unlinked_approvals.delete()
+
                 item.is_no_longer_used = True
+
                 item.save()
 
                 if employee:
+
+                    note_parts = ["Item marked as no longer used"]
+
+                    if preserved_notes:
+                        note_parts.append(
+
+                            "Preserved future submittal notes: " + " | ".join(preserved_notes)
+
+                        )
+
+                    if deleted_count:
+                        note_parts.append(
+
+                            f"Deleted {deleted_count} future unlinked approval(s)"
+
+                        )
+
                     SubmittalItemNotes.objects.create(
+
                         submittal=None,
+
                         submittalitem=item,
+
                         date=timezone.now().date(),
+
                         user=employee,
-                        note="Item marked as no longer used"
+
+                        note=". ".join(note_parts)
+
                     )
 
                 messages.success(request, "Item marked as no longer used.")
 
             return redirect('submittal_item_detail', item.id)
 
-
     approvals = SubmittalApprovals.objects.filter(
-        submittalitem=item
-    ).exclude(submittal=None).select_related(
-        'submittal',
-        'submittal__job_number',
-    ).order_by('id')
+        submittalitem=item,
+        submittal__isnull=False
+    ).select_related(
+        "submittal",
+        "submittal__job_number",
+    ).order_by("id")
 
     approval_notes = SubmittalItemNotes.objects.filter(
         submittalitem=item
@@ -1203,24 +1397,13 @@ def submittal_item_detail(request, item_id):
         submittal__isnull=True
     ).order_by('id')
 
-    if request.method == 'POST' and 'new_note' in request.POST:
-        note_text = request.POST.get('new_note', '').strip()
-        employee = Employees.objects.filter(user=request.user).first()
+    next_submittal_approval = unlinked_approvals.first()
 
-        latest_approval = approvals.last()
-
-        if note_text and employee:
-            SubmittalItemNotes.objects.create(
-                submittalitem=item,
-                date=timezone.now().date(),
-                user=employee,
-                note=note_text
-            )
-            messages.success(request, "Note added.")
-        else:
-            messages.error(request, "Unable to add note.")
-
-        return redirect('submittal_item_detail', item.id)
+    show_additional_submittal_needed_button = (
+            item_has_been_submitted
+            and not next_submittal_approval
+            and not item.is_no_longer_used
+    )
 
     send_data = {
         'item': item,
@@ -1231,6 +1414,9 @@ def submittal_item_detail(request, item_id):
         "all_job_submittal_items": all_job_submittal_items,
         "item_has_been_submitted": item_has_been_submitted,
         "wallcoverings": wallcoverings,
+        "next_submittal_approval": next_submittal_approval,
+        "has_no_linked_submittal_approvals": has_no_linked_submittal_approvals,
+        "show_additional_submittal_needed_button": show_additional_submittal_needed_button,
     }
 
     return render(request, 'submittal_item_detail.html', send_data)
@@ -1260,7 +1446,8 @@ def job_submittals_summary(request, job_number):
                 )
 
                 SubmittalApprovals.objects.create(
-                    submittalitem=new_item
+                    submittalitem=new_item,
+                    item_notes = notes
                 )
 
                 return redirect(
@@ -1268,6 +1455,7 @@ def job_submittals_summary(request, job_number):
                     job.job_number
                 )
     not_sent_items = []
+
     submittals = (
         Submittals.objects
         .filter(job_number=job)
@@ -1275,37 +1463,74 @@ def job_submittals_summary(request, job_number):
         .prefetch_related(
             Prefetch(
                 "submittalapprovals_set",
-                queryset=SubmittalApprovals.objects.select_related("submittalitem").order_by("submittalitem__description"),
+                queryset=SubmittalApprovals.objects.select_related(
+                    "submittalitem"
+                ).order_by("submittalitem__description"),
                 to_attr="approval_rows"
             )
         )
     )
 
-    for item in SubmittalItems.objects.filter(job_number=job, is_no_longer_used=False):
-        approvals = SubmittalApprovals.objects.filter(
+    for item in SubmittalItems.objects.filter(
+            job_number=job,
+            is_no_longer_used=False
+    ).order_by("description"):
+
+        all_approvals = SubmittalApprovals.objects.filter(
             submittalitem=item
-        ).order_by('id')
+        ).select_related(
+            "submittal"
+        ).order_by("id")
 
-        has_problem = approvals.filter(
-            Q(submittal__isnull=True) | Q(is_approved__isnull=True)
-        ).exists()
+        unlinked_approvals = all_approvals.filter(
+            submittal__isnull=True
+        )
 
-        if not approvals.exists():
+        linked_approvals = all_approvals.filter(
+            submittal__isnull=False
+        ).order_by(
+            "-submittal__submittal_number"
+        )
+
+        if not all_approvals.exists() or unlinked_approvals.exists():
+
+            note_parts = []
+
+            if item.notes:
+                note_parts.append(f"Item Notes: {item.notes}")
+
+            status_parts = []
+
+            for approval in linked_approvals:
+                if approval.is_approved is True:
+                    status = "approved"
+                elif approval.is_approved is False:
+                    status = "rejected"
+                else:
+                    status = "pending"
+
+                status_parts.append(
+                    f"Submittal {approval.submittal.submittal_number}-{status}"
+                )
+
+            if status_parts:
+                note_parts.append(", ".join(status_parts))
+
+            future_notes = []
+
+            for approval in unlinked_approvals:
+                if approval.item_notes:
+                    future_notes.append(approval.item_notes)
+
+            if future_notes:
+                note_parts.append(
+                    "Future submittal: " + " | ".join(future_notes)
+                )
+
             not_sent_items.append({
-                'description': item.description,
-                'id':item.id,
-                'notes': item.notes or '',
-            })
-
-        elif has_problem:
-            approval = approvals.filter(
-                Q(submittal__isnull=True) | Q(is_approved__isnull=True)
-            ).last()
-
-            not_sent_items.append({
-                'description': item.description,
-                'id':item.id,
-                'notes': f"{item.notes or ''}. {approval.notes or ''}".strip(". "),
+                "description": item.description,
+                "id": item.id,
+                "notes": ". ".join(note_parts),
             })
 
 

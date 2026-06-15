@@ -137,9 +137,9 @@
             <table class="table table-sm table-striped mb-0" id="pending_table">
                 <thead class="thead-light">
                     <tr>
-                        <th style="width:320px; white-space:nowrap;">Job</th>
-                        <th>Description</th>
-                        <th>Notes</th>
+                        <th style="width:33%;">Job</th>
+                        <th style="width:33%;">Description</th>
+                        <th style="width:34%;">Notes</th>
                     </tr>
                 </thead>
 
@@ -147,7 +147,7 @@
                     {% for row in pending_item_rows %}
                     <tr class="clickable-row"
                         onclick="window.location='{% url 'submittal_item_detail' row.item.id %}';">
-                        <td style="white-space:nowrap;">
+                        <td>
                             {{ row.item.job_number.job_number }} - {{ row.item.job_number.job_name }}
                         </td>
                         <td>
@@ -159,7 +159,9 @@
                                 </span>
                             {% endif %}
                         </td>
-                        <td>{{ row.combined_notes }}</td>
+                        <td style="white-space:normal;">
+                            {{ row.combined_notes }}
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>
