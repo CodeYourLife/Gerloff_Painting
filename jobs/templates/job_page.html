@@ -2029,7 +2029,7 @@ function check_if_start_date_changed(){
     }
     else {
         confirm_date_button.style.display = "block"
-        change_start_formconfirm_date.checked = false
+        change_start_form.confirm_date.checked = false;
     }
 
 }
@@ -2218,28 +2218,44 @@ function change_start(){
 }
 
 function submit_new_super(){
+    showPageOverlay("Changing superintendent and sending emails...");
+
     $.ajax({
         method: 'GET',
         url: '/superintendent/super_ajax',
-        data: {'job_number':pmform3.job_number.value, 'select_super':pmform3.select_super.value},
+        data: {
+            'job_number': pmform3.job_number.value,
+            'select_super': pmform3.select_super.value
+        },
         success: function (data) {
-            parsedData = JSON.parse(data);
-            if (parsedData.email_sent){alert("Email Sent")}
-            else {alert("Email Not Sent")}
-            begin = document.getElementById("TEST_BRO").innerHTML.search("</b>") + 4
-            end = document.getElementById("TEST_BRO").innerHTML.search("</a>")
-            left = document.getElementById("TEST_BRO").innerHTML.substring(0,begin)
-            document.getElementById("TEST_BRO").innerHTML = left + pmform3.select_super.options[pmform3.select_super.selectedIndex].text
-       }
-    })
+            const parsedData = JSON.parse(data);
+
+            showAlertModal(parsedData.email_message);
+
+            if (selectedSuperDisplayElement) {
+                selectedSuperDisplayElement.innerHTML =
+                    pmform3.select_super.options[pmform3.select_super.selectedIndex].text;
+            }
+        },
+        error: function () {
+            showAlertModal("Something went wrong while changing the superintendent.");
+        },
+        complete: function () {
+            hidePageOverlay();
+        }
+    });
 }
 
-function populate_super_modal(jobname,superid,jobnumber,firstname,x,origin){
-    pmform3.select_super.value=superid
-    pmform3.row_number.value= "NO"
-    document.getElementById("title3").innerHTML = jobname
-    pmform3.job_number.value=jobnumber
-    pmform3.first_name.value=firstname
+let selectedSuperDisplayElement = null;
+
+function populate_super_modal(jobname, superid, jobnumber, firstname, x, origin){
+    pmform3.select_super.value = superid;
+    selectedSuperDisplayElement = x;
+
+    pmform3.row_number.value = "NO";
+    document.getElementById("title3").innerHTML = jobname;
+    pmform3.job_number.value = jobnumber;
+    pmform3.first_name.value = firstname;
 }
 
 function populate_start_date_modal(jobnumber,startdate,is_active,x,origin){
