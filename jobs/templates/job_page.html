@@ -781,8 +781,8 @@ float: left !important;
     </div>
 </div>
 
-<!--CLOSE JOB MODAL-->
-{% if not tickets_not_done and not open_changeorders %}
+<!--CLOSE / RE-OPEN JOB MODAL-->
+{% if job.is_closed or not tickets_not_done and not open_changeorders %}
 <div class="modal fade" id="closeJobModal" tabindex="-1" role="dialog" aria-labelledby="closeJobModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
