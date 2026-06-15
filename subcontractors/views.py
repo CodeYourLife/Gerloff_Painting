@@ -2536,9 +2536,8 @@ def subcontractor_portal_email_for_signature(request, changeorder_id, subcontrac
         ewt.recipient = email
         ewt.save()
         job_name = job.job_name
-        approval_link = request.build_absolute_uri(
-            reverse('emailed_ticket', args=[changeorder.id])
-        )
+        approval_path = reverse('emailed_ticket', args=[changeorder.id])
+        approval_link = "http://184.183.68.156" + approval_path
 
         email_body = (
             f"You have received an extra work ticket from Gerloff Painting "

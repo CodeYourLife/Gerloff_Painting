@@ -2456,13 +2456,13 @@ def extra_work_ticket(request, id):
                     recipient.email=email
                     recipient.save()
             job_name = changeorder.job_number.job_name
-            approval_link = request.build_absolute_uri(
-                reverse('emailed_ticket', args=[changeorder.id])
-            )
+            approval_path = reverse('emailed_ticket', args=[changeorder.id])
+            approval_link = "http://184.183.68.156" + approval_path
             recipients = ["joe@gerloffpainting.com","bridgette@gerloffpainting.com"]
-            recipients.append(email)
+            if email:
+                recipients.append(email)
             check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
-            sender = check_sender.email if check_sender else "bridgette@gerloffpainting.com"
+            sender = check_sender.email if check_sender and check_sender.email else "bridgette@gerloffpainting.com"
             email_body = (
                 f"You have received an extra work ticket from Gerloff Painting "
                 f"for {changeorder.description} at {job_name}.\n\n"
