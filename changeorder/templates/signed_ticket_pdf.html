@@ -93,22 +93,6 @@ th {
     min-width: 35px;
 }
 
-.materials-table {
-    table-layout: fixed;
-    width: 100%;
-}
-
-.materials-table td,
-.materials-table th {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    word-break: break-word;
-}
-
-.materials-table .description-cell {
-    text-align: left;
-}
-
 </style>
 
 </head>
@@ -216,18 +200,18 @@ th {
     {% for y in equipment %}
     <tr>
         <td class="center" style="width:12%;">Equipment</td>
-        <td class="description-cell" style="width:68%;">{{ x.description }}</td>
-        <td class="center" style="width:10%;">{{ x.quantity }}</td>
-        <td class="center" style="width:10%; min-width:35px;">{{ x.units }}</td>
+        <td class="description-cell" style="width:68%;">{{ y.description }}</td>
+        <td class="center" style="width:10%;">{{ y.quantity }}</td>
+        <td class="center" style="width:10%; min-width:35px;">{{ y.units }}</td>
     </tr>
     {% endfor %}
 
     {% for z in sundries %}
     <tr>
         <td class="center" style="width:12%;">Sundry</td>
-        <td class="description-cell" style="width:68%;">{{ x.description }}</td>
-        <td class="center" style="width:10%;">{{ x.quantity }}</td>
-        <td class="center" style="width:10%; min-width:35px;">{{ x.units }}</td>
+        <td class="description-cell" style="width:68%;">{{ z.description }}</td>
+        <td class="center" style="width:10%;">{{ z.quantity }}</td>
+        <td class="center" style="width:10%; min-width:35px;">{{ z.units }}</td>
     </tr>
     {% endfor %}
 </table>
