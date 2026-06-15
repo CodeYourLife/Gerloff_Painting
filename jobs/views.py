@@ -1282,41 +1282,101 @@ def job_page(request, jobnumber):
     approved_items = []
     unapproved_items = []
 
-    for item in SubmittalItems.objects.filter(job_number=selectedjob, is_no_longer_used=False):
+    for item in SubmittalItems.objects.filter(
+            job_number=selectedjob,
+            is_no_longer_used=False
+    ).order_by("description"):
+
         approvals = SubmittalApprovals.objects.filter(
             submittalitem=item
-        ).order_by('id')
+        ).select_related(
+            "submittal"
+        ).order_by("id")
 
-        has_problem = approvals.filter(
-            Q(submittal__isnull=True) | Q(is_approved__isnull=True)
-        ).exists()
+        linked_approvals = approvals.filter(
+            submittal__isnull=False
+        )
 
-        if not approvals.exists():
+        unlinked_approvals = approvals.filter(
+            submittal__isnull=True
+        )
+
+        pending_linked_approvals = linked_approvals.filter(
+            is_approved__isnull=True
+        )
+
+        rejected_linked_approvals = linked_approvals.filter(
+            is_approved=False
+        )
+
+        approved_linked_approvals = linked_approvals.filter(
+            is_approved=True
+        )
+
+        # =========================
+        # UNAPPROVED / PENDING ITEMS
+        # =========================
+        if not approvals.exists() or unlinked_approvals.exists() or pending_linked_approvals.exists() or rejected_linked_approvals.exists():
+
+            approval = None
+
+            if unlinked_approvals.exists():
+                approval = unlinked_approvals.last()
+            elif pending_linked_approvals.exists():
+                approval = pending_linked_approvals.last()
+            elif rejected_linked_approvals.exists():
+                approval = rejected_linked_approvals.last()
+
+            combined_notes = []
+
+            if linked_approvals.exists():
+                combined_notes.append("Previously Submitted")
+
+            if item.notes:
+                combined_notes.append(f"Notes: {item.notes}")
+
+            future_notes = [
+                x.item_notes.strip()
+                for x in unlinked_approvals
+                if x.item_notes and x.item_notes.strip()
+            ]
+
+            if future_notes:
+                combined_notes.append(
+                    "Next Submittal: " + " | ".join(future_notes)
+                )
+
             unapproved_items.append({
-                'item': item,
-                'approval': None,
-                'notes': item.notes or '',
+                "item": item,
+                "approval": approval,
+                "notes": " | ".join(combined_notes),
             })
 
-        elif has_problem:
-            approval = approvals.filter(
-                Q(submittal__isnull=True) | Q(is_approved__isnull=True)
-            ).last()
+        # =========================
+        # APPROVED ITEMS
+        # =========================
+        elif approved_linked_approvals.exists():
+            approval = approved_linked_approvals.last()
 
-            unapproved_items.append({
-                'item': item,
-                'approval': approval,
-                'notes': f"{item.notes or ''}. {approval.notes or ''}".strip(". "),
-            })
+            description_parts = [item.description or ""]
 
-        elif approvals.filter(is_approved=True).exists():
-            approval = approvals.filter(is_approved=True).last()
+            if approval.item_notes:
+                description_parts.append(approval.item_notes)
+
+            notes_parts = []
+
+            if item.notes:
+                notes_parts.append(item.notes)
+
+            if approval.notes:
+                notes_parts.append(approval.notes)
 
             approved_items.append({
-                'item': item,
-                'approval': approval,
-                'notes': f"{item.notes or ''}. {approval.notes or ''}".strip(". "),
-                'submittal_number':approval.submittal.submittal_number,
+                "item": item,
+                "approval": approval,
+                "description": " - ".join(description_parts).strip(" -"),
+                "notes": " | ".join(notes_parts),
+                "submittal_number": approval.submittal.submittal_number if approval.submittal else "",
             })
 
 

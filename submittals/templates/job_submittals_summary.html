@@ -78,7 +78,7 @@
                                 {% for approval in submittal.approval_rows %}
                                 <tr>
                                     <td>{{ approval.submittalitem.description }}</td>
-                                    <td>{{ approval.submittalitem.notes }}</td>
+                                    <td>{{ approval.item_notes }}</td>
                                     <td>
                                         {% if approval.is_approved == True %}
                                             <span class="badge badge-success">Approved</span>

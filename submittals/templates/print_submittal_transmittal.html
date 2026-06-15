@@ -119,7 +119,8 @@
                     {{ row.item.description }}
                 </td>
                 <td class="col-notes">
-                    {{ row.item.notes|default:"" }}
+                    {% if row.approval %}{{ row.approval.item_notes }}{% endif %}
+<!--                    {{ row.item.notes|default:"" }}-->
                 </td>
                 <td class="col-qty">
                     {% if row.approval %}{{ row.approval.quantity }}{% endif %}
