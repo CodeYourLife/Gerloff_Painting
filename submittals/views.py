@@ -699,11 +699,12 @@ def submittal_send(request, submittal_id):
 
             old_is_approved = approval.is_approved
             old_notes = approval.notes or ''
-
+            old_item_notes = approval.item_notes or ''
             item.description = request.POST.get('item_description', '').strip()
-            item.notes = request.POST.get('item_notes', '').strip()
+            #item.notes = request.POST.get('item_notes', '').strip()
             item.job_number = job
             item.save()
+            approval.item_notes = request.POST.get('item_notes', '').strip()
 
             qty_raw = request.POST.get('approval_quantity', '').strip()
             try:
@@ -740,7 +741,8 @@ def submittal_send(request, submittal_id):
 
             if (approval.notes or '') != old_notes:
                 note_parts.append("Approval notes updated- " + approval.notes)
-
+            if (approval.item_notes or '') != old_item_notes:
+                note_parts.append("Item notes updated- " + approval.item_notes)
             if note_parts and employee:
                 SubmittalItemNotes.objects.create(
                     submittal=submittal,
@@ -1207,7 +1209,7 @@ def submittal_item_detail(request, item_id):
 
         latest_approval = approvals.last()
 
-        if note_text and employee and latest_approval:
+        if note_text and employee:
             SubmittalItemNotes.objects.create(
                 submittalitem=item,
                 date=timezone.now().date(),
