@@ -163,10 +163,15 @@ def super_ajax(request):
         if 'select_super' in request.GET:
             job = Jobs.objects.get(job_number=request.GET['job_number'])
             super = Employees.objects.get(id=request.GET['select_super'])
-            email_sent = gerloff_super_change(job, super, Employees.objects.get(user=request.user))
+            author = Employees.objects.get(user=request.user)
+
+            email_result = gerloff_super_change(job, super, author)
+
             send_data = {}
-            send_data['email_sent']=email_sent
-            send_data['super_first_name']=super.first_name
+            send_data['email_sent'] = email_result['email_sent']
+            send_data['email_message'] = email_result['email_message']
+            send_data['super_first_name'] = super.first_name
+
             return HttpResponse(json.dumps(send_data))
         if 'build_notes' in request.GET:
             job = Jobs.objects.get(job_number=request.GET['job_number'])

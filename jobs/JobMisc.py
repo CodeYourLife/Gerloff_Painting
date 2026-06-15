@@ -67,20 +67,131 @@ def start_date_change(job, newdate, status, note, author, did_date_change, notif
 
 
 def gerloff_super_change(job, superintendent, author):
-    JobNotes.objects.create(job_number=job, note="Superintendent " + str(superintendent) + " Assigned to " + str(job),
-                            type="auto_misc_note",
-                            user=author, date=date.today())
+    JobNotes.objects.create(
+        job_number=job,
+        note="Superintendent " + str(superintendent) + " Assigned to " + str(job),
+        type="auto_misc_note",
+        user=author,
+        date=date.today()
+    )
+
     job.superintendent = superintendent
-    email_body = str(superintendent) + "\n You have been assigned to \n" + str(job.job_number) + "\n" + str(
-        job) + "\n" + str(job.client.company)
-    success=False
-    try:
-        Email.sendEmail("New Job - " + job.job_name, email_body, ['joe@gerloffpainting.com'], False,"operations@gerloffpainting.com")
-        success=True
-    except:
-        success=False
     job.save()
-    return success
+
+    author_email = (author.email or "").strip()
+    superintendent_email = (superintendent.email or "").strip()
+
+    recipients = []
+
+    if author_email:
+        recipients.append(author_email)
+
+    if superintendent_email:
+        recipients.append(superintendent_email)
+
+    if author_email:
+        sender = author_email
+    else:
+        sender = "bridgette@gerloffpainting.com"
+
+    main_email_sent = False
+    management_email_sent = False
+
+    # ----------------------------
+    # Email to superintendent/author
+    # ----------------------------
+    if recipients:
+        email_body = (
+            str(superintendent)
+            + "\n\nYou have been assigned to:"
+            + "\n"
+            + str(job.job_number)
+            + "\n"
+            + str(job)
+            + "\n"
+            + str(job.client.company)
+        )
+
+        try:
+            Email.sendEmail(
+                "New Job - " + job.job_name,
+                email_body,
+                recipients,
+                False,
+                sender
+            )
+            main_email_sent = True
+        except Exception as e:
+            return {
+                "email_sent": False,
+                "email_message": "Email failed to send: " + str(e)
+            }
+
+    # ----------------------------
+    # Email to Bridgette/Admin2
+    # ----------------------------
+    management_email_body = (
+        "Superintendent "
+        + str(superintendent)
+        + " has been assigned to job "
+        + str(job.job_number)
+        + " - "
+        + str(job.job_name)
+        + ". Please update management console."
+    )
+
+    try:
+        Email.sendEmail(
+            "Management Console Update Needed - " + job.job_number,
+            management_email_body,
+            [
+                "bridgette@gerloffpainting.com",
+                "admin2@gerloffpainting.com",
+                "joe@gerloffpainting.com"
+            ],
+            False,
+            sender
+        )
+        management_email_sent = True
+
+    except Exception as e:
+        return {
+            "email_sent": main_email_sent,
+            "email_message": (
+                "Superintendent was changed, but the management console email failed to send: "
+                + str(e)
+            )
+        }
+
+    # ----------------------------
+    # User-facing message
+    # ----------------------------
+    if author_email and superintendent_email:
+        email_message = "Email sent to you and the superintendent. Management console email was also sent."
+
+    elif author_email and not superintendent_email:
+        email_message = (
+            "Superintendent does not have an email on file. "
+            "Email was sent to you only. Management console email was also sent."
+        )
+
+    elif not author_email and superintendent_email:
+        email_message = (
+            "You do not have an email on file. "
+            "Email was sent to superintendent using Bridgette as the sender. "
+            "Management console email was also sent."
+        )
+
+    else:
+        email_message = (
+            "Neither you nor the superintendent has an email on file. "
+            "Only the management console email was sent."
+        )
+
+    return {
+        "email_sent": main_email_sent or management_email_sent,
+        "email_message": email_message
+    }
 
 
 def open_dropbox(jobnumber, user):

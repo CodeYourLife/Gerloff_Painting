@@ -36,6 +36,40 @@
             border-radius: 3px;
             color: white !important;
         }
+
+        #appPageOverlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 200000;
+    background: rgba(255, 255, 255, 0.75);
+    align-items: center;
+    justify-content: center;
+    pointer-events: all;
+}
+
+.app-page-overlay-box {
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 25px 35px;
+    text-align: center;
+    box-shadow: 0 3px 15px rgba(0,0,0,.25);
+}
+
+.app-page-overlay-title {
+    margin-top: 12px;
+    font-weight: bold;
+}
+
+.app-page-overlay-subtitle {
+    font-size: 13px;
+    margin-top: 4px;
+}
+
     </style>
 <!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
@@ -142,7 +176,26 @@
             appConfirmCallback = null;
         });
     });
+function showPageOverlay(message) {
+    const overlay = document.getElementById("appPageOverlay");
+    if (!overlay) return;
 
+    if (message) {
+        const title = overlay.querySelector(".app-page-overlay-title");
+        if (title) {
+            title.innerText = message;
+        }
+    }
+
+    overlay.style.display = "flex";
+}
+
+function hidePageOverlay() {
+    const overlay = document.getElementById("appPageOverlay");
+    if (!overlay) return;
+
+    overlay.style.display = "none";
+}
 
     </script>
 
@@ -276,6 +329,20 @@
         </div>
     </div>
 </div>
+
+<!-- GLOBAL PAGE OVERLAY -->
+<div id="appPageOverlay">
+    <div class="app-page-overlay-box">
+        <div class="spinner-border text-primary" role="status"></div>
+        <div class="app-page-overlay-title">
+            Processing, please wait...
+        </div>
+        <div class="app-page-overlay-subtitle">
+            Do not click anything until this finishes.
+        </div>
+    </div>
+</div>
+
 {% block extra_scripts %}{% endblock %}
 </body>
 </html>

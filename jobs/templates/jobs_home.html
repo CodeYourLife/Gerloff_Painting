@@ -413,18 +413,30 @@ function change_start(){
 }
 
 function submit_new_super(){
+    showPageOverlay("Changing superintendent and sending emails...");
+
     $.ajax({
         method: 'GET',
         url: '/superintendent/super_ajax',
-        data: {'job_number':pmform3.job_number.value, 'select_super':pmform3.select_super.value},
+        data: {
+            'job_number': pmform3.job_number.value,
+            'select_super': pmform3.select_super.value
+        },
         success: function (data) {
             parsedData = JSON.parse(data);
-            if (parsedData.email_sent){alert("Email Sent")}
-            else {alert("Email Not Sent")}
-            var table = $('#jobs_table').DataTable()
-            table.cell(pmform3.row_number.value,4).data(parsedData.super_first_name)
-       }
-    })
+
+            showAlertModal(parsedData.email_message);
+
+            var table = $('#jobs_table').DataTable();
+            table.cell(pmform3.row_number.value, 4).data(parsedData.super_first_name);
+        },
+        error: function () {
+            showAlertModal("Something went wrong while changing the superintendent.");
+        },
+        complete: function () {
+            hidePageOverlay();
+        }
+    });
 }
 
 function populate_super_modal(jobname,superid,jobnumber,firstname,x,origin){
