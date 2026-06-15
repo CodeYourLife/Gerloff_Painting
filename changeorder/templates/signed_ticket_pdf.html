@@ -6,7 +6,7 @@
 
 @page {
     size: letter portrait;
-    margin: 0.35in;
+    margin: 0.25in;
 }
 
 body {
@@ -58,6 +58,22 @@ th {
 .signature-block img {
     width: 160px;
     height: 50px;
+}
+
+.materials-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.materials-table td,
+.materials-table th {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.materials-table .description-cell {
+    text-align: left;
 }
 
 </style>
@@ -139,18 +155,18 @@ th {
 
 <div class="section-title">Materials</div>
 
-<table>
+<table class="materials-table">
     <tr>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Qty</th>
-        <th>Units</th>
+        <th style="width:15%;">Type</th>
+        <th class="description-cell" style="width:60%;">Description</th>
+        <th style="width:10%;">Qty</th>
+        <th style="width:15%;">Units</th>
     </tr>
 
     {% for x in materials %}
     <tr>
         <td class="center">Material</td>
-        <td class="center">{{ x.description }}</td>
+        <td class="description-cell">{{ x.description }}</td>
         <td class="center">{{ x.quantity }}</td>
         <td class="center">{{ x.units }}</td>
     </tr>
@@ -159,7 +175,7 @@ th {
     {% for y in equipment %}
     <tr>
         <td class="center">Equipment</td>
-        <td class="center">{{ y.description }}</td>
+        <td class="description-cell">{{ y.description }}</td>
         <td class="center">{{ y.quantity }}</td>
         <td class="center">{{ y.units }}</td>
     </tr>
@@ -168,12 +184,11 @@ th {
     {% for z in sundries %}
     <tr>
         <td class="center">Sundry</td>
-        <td class="center">{{ z.description }}</td>
+        <td class="description-cell">{{ z.description }}</td>
         <td class="center">{{ z.quantity }}</td>
         <td class="center">{{ z.units }}</td>
     </tr>
     {% endfor %}
-
 </table>
 
 <div class="section-title">Client Approval</div>
