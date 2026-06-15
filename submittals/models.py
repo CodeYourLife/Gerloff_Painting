@@ -72,6 +72,7 @@ class SubmittalApprovals(models.Model):
     notes = models.CharField(null=True, max_length=2000, blank=True)
     quantity = models.IntegerField(default=0)
     date_reviewed = models.DateField(null=True, blank=True)
+    item_notes = models.CharField(null=True, max_length=2000, blank=True)
 
 
 class SubmittalNotes(models.Model):
