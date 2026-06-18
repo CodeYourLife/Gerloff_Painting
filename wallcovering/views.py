@@ -20,6 +20,7 @@ from .models import (
     WallcoveringPricing
 )
 from submittals.models import SubmittalItems, SubmittalApprovals
+from changeorder.models import Wallcovering_Change_Orders
 
 import os
 from io import BytesIO
@@ -60,17 +61,34 @@ def wallcovering_home(request):
 
         include_wc = True
 
-        # Exclude voided wallcovering from all filtered views
+        has_approved_cop_not_ordered = Wallcovering_Change_Orders.objects.filter(
+            wallcovering=wc,
+            is_ordered=False,
+            change_order__is_approved=True
+        ).exists()
+
+        # Exclude voided / owner furnished wallcovering from all filtered views
         if selected_filter != "all" and (wc.is_void or wc.is_owner_furnished):
             include_wc = False
 
         elif selected_filter == "not_approved":
             include_wc = submittal_status != "Approved"
 
+
         elif selected_filter == "approved_not_ordered":
+
             include_wc = (
-                submittal_status == "Approved"
-                and ordering_status == "Not Ordered"
+
+                    (
+
+                            submittal_status == "Approved"
+
+                            and ordering_status == "Not Ordered"
+
+                    )
+
+                    or has_approved_cop_not_ordered
+
             )
 
         elif selected_filter == "not_delivered":
@@ -80,6 +98,43 @@ def wallcovering_home(request):
             ]
 
         if include_wc:
+            linked_cop_items = (
+                Wallcovering_Change_Orders.objects
+                .filter(wallcovering=wc)
+                .select_related("change_order")
+            )
+
+            attention_cop_items = linked_cop_items.filter(
+                Q(is_ordered=False) |
+                Q(change_order__is_approved=False)
+            ).order_by("change_order__cop_number", "id")
+
+            wc.change_order_badge_text = ""
+            wc.change_order_badge_class = ""
+
+            attention_count = attention_cop_items.count()
+
+            if attention_count > 1:
+                wc.change_order_badge_text = "Multiple COPs"
+                wc.change_order_badge_class = "badge badge-danger"
+
+            elif attention_count == 1:
+                cop_link = attention_cop_items.first()
+                cop = cop_link.change_order
+                cop_number = cop.cop_number
+
+                if cop_link.is_ordered and not cop.is_approved:
+                    wc.change_order_badge_text = f"COP{cop_number} - Ordered, Not Approved"
+                    wc.change_order_badge_class = "badge badge-warning"
+
+                elif not cop_link.is_ordered and not cop.is_approved:
+                    wc.change_order_badge_text = f"COP{cop_number} Not Approved"
+                    wc.change_order_badge_class = "badge badge-warning"
+
+                elif not cop_link.is_ordered and cop.is_approved:
+                    wc.change_order_badge_text = f"COP{cop_number} Not Ordered"
+                    wc.change_order_badge_class = "badge badge-danger"
+
             wc.submittal_status = submittal_status
             wc.ordering_status = ordering_status
             wc.sent_status = sent_status
@@ -96,6 +151,63 @@ def wallcovering_home(request):
 def wallcovering_detail(request, wallcovering_id):
     wallcovering = get_object_or_404(Wallcovering, id=wallcovering_id)
     if request.method == "POST":
+        if "save_wallcovering_change_orders" in request.POST:
+            employee = Employees.objects.filter(user=request.user).first()
+
+            linked_change_orders = Wallcovering_Change_Orders.objects.filter(
+                wallcovering=wallcovering
+            ).select_related(
+                "change_order"
+            )
+
+            changes_made = False
+
+            for link in linked_change_orders:
+                old_quantity_added = link.quantity_added
+                old_units = link.units or ""
+                old_notes = link.notes or ""
+                old_is_ordered = link.is_ordered
+
+                quantity_raw = request.POST.get(f"quantity_added_{link.id}", "").strip()
+                units = request.POST.get(f"units_{link.id}", "").strip()
+                notes = request.POST.get(f"notes_{link.id}", "").strip()
+                is_ordered = request.POST.get(f"is_ordered_{link.id}") == "on"
+
+                quantity_added = None
+                if quantity_raw:
+                    try:
+                        quantity_added = Decimal(quantity_raw)
+                    except InvalidOperation:
+                        messages.error(request, "Please enter valid quantities.")
+                        return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
+
+                if (
+                    old_quantity_added != quantity_added or
+                    old_units != units or
+                    old_notes != notes or
+                    old_is_ordered != is_ordered
+                ):
+                    link.quantity_added = quantity_added
+                    link.units = units or None
+                    link.notes = notes or None
+                    link.is_ordered = is_ordered
+                    link.save()
+
+                    changes_made = True
+
+            if changes_made:
+                WallcoveringNotes.objects.create(
+                    pattern=wallcovering,
+                    date=date.today(),
+                    user=employee,
+                    note="Updated change order wallcovering information."
+                )
+
+                messages.success(request, "Change order wallcovering information updated.")
+            else:
+                messages.warning(request, "No change order information was changed.")
+
+            return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
         if "void_wallcovering" in request.POST:
             employee = Employees.objects.filter(user=request.user).first()
             if not wallcovering.is_void:
@@ -428,6 +540,16 @@ def wallcovering_detail(request, wallcovering_id):
         "id"
     )
 
+    linked_change_orders = Wallcovering_Change_Orders.objects.filter(
+        wallcovering=wallcovering
+    ).select_related(
+        "change_order",
+        "change_order__job_number"
+    ).order_by(
+        "-change_order__id",
+        "-id"
+    )
+
     context = {
         'wallcovering': wallcovering,
         'order_items': order_items,
@@ -445,6 +567,7 @@ def wallcovering_detail(request, wallcovering_id):
         "sent_to_job_groups": sent_to_job_groups,
         "submittal_rows": submittal_rows,
         "label_packages": label_packages,
+        "linked_change_orders": linked_change_orders,
     }
 
     return render(request, 'wallcovering_detail.html', context)
@@ -504,7 +627,14 @@ def wallcovering_new(request):
         else:
             description = f"{wallcovering.vendor.company_name}"
         if wallcovering.is_owner_furnished == False:
-            SubmittalItems.objects.create(wallcovering_id=wallcovering,description =f"{description} Product Data",job_number=selected_job)
+            existing_submittal = SubmittalItems.objects.filter(description = "Wallcovering Submittal",job_number=selected_job).first()
+            if existing_submittal:
+                existing_submittal.description = f"{description} Product Data"
+                existing_submittal.wallcovering = wallcovering
+                existing_submittal.notes = ""
+                existing_submittal.save()
+            else:
+                SubmittalItems.objects.create(wallcovering_id=wallcovering,description =f"{description} Product Data",job_number=selected_job)
             SubmittalItems.objects.create(wallcovering_id=wallcovering, description=f"{description} Samples",job_number=selected_job)
 
         return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)

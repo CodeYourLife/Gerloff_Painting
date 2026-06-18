@@ -36,6 +36,8 @@ import os
 import os.path
 import re
 from django.utils.dateparse import parse_date
+from wallcovering.models import Wallcovering, WallcoveringNotes
+from changeorder.models import Wallcovering_Change_Orders
 
 def emailed_ticket(request, id):
     send_data = {}
@@ -2230,6 +2232,165 @@ def extra_work_ticket(request, id):
 
 
     if request.method == 'POST':
+        if 'delete_changeorder_wallcovering' in request.POST:
+            employee = Employees.objects.filter(user=request.user).first()
+
+            link_id = request.POST.get('delete_changeorder_wallcovering')
+
+            link = Wallcovering_Change_Orders.objects.filter(
+                id=link_id,
+                change_order=changeorder
+            ).select_related('wallcovering').first()
+
+            if not link:
+                messages.error(request, "That linked wallcovering was not found.")
+                return redirect('extra_work_ticket', id=id)
+
+            wallcovering_display = link.wallcovering.code or "No Code"
+
+            if link.wallcovering.pattern:
+                wallcovering_display += f" - {link.wallcovering.pattern}"
+
+            WallcoveringNotes.objects.create(
+                pattern=link.wallcovering,
+                date=date.today(),
+                user=employee,
+                note=f"Removed from Change Order #{changeorder.cop_number}: {changeorder.description}"
+            )
+
+            link.delete()
+
+            ChangeOrderNotes.objects.create(
+                cop_number=changeorder,
+                date=date.today(),
+                user=employee,
+                note=f"Removed linked wallcovering: {wallcovering_display}"
+            )
+
+            messages.success(request, "Wallcovering removed from this change order.")
+
+            return redirect('extra_work_ticket', id=id)
+        if 'link_wallcovering_to_changeorder' in request.POST:
+            employee = Employees.objects.filter(user=request.user).first()
+
+            wallcovering_id = request.POST.get('wallcovering_id')
+
+            if not wallcovering_id:
+                messages.error(request, "Please select a wallcovering.")
+                return redirect('extra_work_ticket', id=id)
+
+            try:
+                wallcovering = Wallcovering.objects.get(
+                    id=wallcovering_id,
+                    job_number=changeorder.job_number
+                )
+            except Wallcovering.DoesNotExist:
+                messages.error(request, "That wallcovering was not found for this job.")
+                return redirect('extra_work_ticket', id=id)
+
+            already_linked = Wallcovering_Change_Orders.objects.filter(
+                change_order=changeorder,
+                wallcovering=wallcovering
+            ).exists()
+
+            if already_linked:
+                messages.error(
+                    request,
+                    "That wallcovering is already linked to this change order."
+                )
+                return redirect('extra_work_ticket', id=id)
+
+            quantity_added_raw = request.POST.get('quantity_added', '').strip()
+            units = request.POST.get('units', '').strip()
+            notes = request.POST.get('notes', '').strip()
+
+            quantity_added = None
+            if quantity_added_raw:
+                try:
+                    quantity_added = Decimal(quantity_added_raw)
+                except InvalidOperation:
+                    messages.error(request, "Please enter a valid quantity.")
+                    return redirect('extra_work_ticket', id=id)
+
+            Wallcovering_Change_Orders.objects.create(
+                change_order=changeorder,
+                wallcovering=wallcovering,
+                quantity_added=quantity_added,
+                units=units or None,
+                notes=notes or None,
+                is_ordered=False
+            )
+            WallcoveringNotes.objects.create(
+                pattern=wallcovering,
+                date=date.today(),
+                user=employee,
+                note=f"Linked to Change Order #{changeorder.cop_number}: {changeorder.description}"
+            )
+            ChangeOrderNotes.objects.create(
+                cop_number=changeorder,
+                date=date.today(),
+                user=employee,
+                note=f"Linked to wallcovering: {wallcovering}"
+            )
+
+            messages.success(request, "Wallcovering linked to this change order.")
+
+            return redirect('extra_work_ticket', id=id)
+
+
+        if 'save_changeorder_wallcoverings' in request.POST:
+            employee = Employees.objects.filter(user=request.user).first()
+
+            linked_wallcoverings = Wallcovering_Change_Orders.objects.filter(
+                change_order=changeorder
+            )
+
+            changes_made = False
+
+            for link in linked_wallcoverings:
+                old_is_ordered = link.is_ordered
+                old_quantity_added = link.quantity_added
+                old_units = link.units or ""
+                old_notes = link.notes or ""
+
+                quantity_raw = request.POST.get(f'quantity_added_{link.id}', '').strip()
+                units = request.POST.get(f'units_{link.id}', '').strip()
+                notes = request.POST.get(f'notes_{link.id}', '').strip()
+                is_ordered = request.POST.get(f'is_ordered_{link.id}') == 'on'
+
+                quantity_added = None
+                if quantity_raw:
+                    try:
+                        quantity_added = Decimal(quantity_raw)
+                    except InvalidOperation:
+                        messages.error(request, "Please enter valid quantities.")
+                        return redirect('extra_work_ticket', id=id)
+
+                if (
+                    old_quantity_added != quantity_added or
+                    old_units != units or
+                    old_notes != notes or
+                    old_is_ordered != is_ordered
+                ):
+                    link.quantity_added = quantity_added
+                    link.units = units
+                    link.notes = notes
+                    link.is_ordered = is_ordered
+                    link.save()
+                    changes_made = True
+
+            if changes_made:
+                ChangeOrderNotes.objects.create(
+                    cop_number=changeorder,
+                    date=date.today(),
+                    user=employee,
+                    note="Updated linked wallcovering information."
+                )
+                messages.success(request, "Wallcovering links updated.")
+            else:
+                messages.warning(request, "No wallcovering changes were made.")
+
+            return redirect('extra_work_ticket', id=id)
         if 'change_internal' in request.POST:
             employee = Employees.objects.filter(user=request.user).first()
             if changeorder.is_internal:
@@ -2686,6 +2847,21 @@ def extra_work_ticket(request, id):
 
     send_data['status'] = status
     send_data['send_status'] = send_status
+    send_data['job_wallcoverings'] = Wallcovering.objects.filter(
+        job_number=changeorder.job_number,
+        is_void=False
+    ).order_by('code', 'pattern')
+
+    send_data['linked_wallcoverings'] = Wallcovering_Change_Orders.objects.filter(
+        change_order=changeorder
+    ).select_related(
+        'wallcovering',
+        'wallcovering__vendor'
+    ).order_by(
+        'wallcovering__code',
+        'id'
+    )
+
     return render(request, "extra_work_ticket.html", send_data)
 
 

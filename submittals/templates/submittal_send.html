@@ -474,8 +474,8 @@ select {
         </form>
 
         <form action="{% url 'job_submittals_summary' submittal.job_number.job_number %}" class="m-2">
-            <button type="submit" class="btn btn-info btn-sm px-4"/>
-            View All Submittals For Job
+            <button type="submit" class="btn btn-info btn-sm px-4">
+                View All Submittals For Job
             </button>
         </form>
 
@@ -867,8 +867,7 @@ select {
                 {% endif %}
                 <button type="button"
                         class="btn btn-success btn-sm"
-                        data-toggle="modal"
-                        data-target="#addWallcoveringItemModal">
+                        onclick="openAddWallcoveringModal()">
                     Add Wallcovering
                 </button>
 
@@ -899,6 +898,7 @@ select {
                                 <input type="hidden" name="item_id" value="{{ row.item.id }}">
                                 <input type="hidden" name="approval_id" value="{{ row.approval.id }}">
                                 <input type="hidden" name="reject_action" class="reject-action" value="">
+
 
                                 <table class="table table-sm table-striped mb-0">
                                     <tr class="{% if row.item.is_no_longer_used %}no-longer-used-row{% endif %}">
@@ -1233,25 +1233,25 @@ $(document).ready(function () {
     });
 
     $('.approve-checkbox').on('change', function () {
-        const form = $(this).closest('form');
-        if (this.checked) {
-            form.find('.reject-checkbox').prop('checked', false);
-            form.find('.reject-action').val('');
-        }
-    });
+    const form = $(this).closest('form');
+
+    if (this.checked) {
+        form.find('.reject-checkbox').prop('checked', false);
+        form.find('.reject-action').val('');
+    }
+});
 
     $('.reject-checkbox').on('change', function () {
-        const form = $(this).closest('form');
+    const form = $(this).closest('form');
 
-        if (this.checked) {
-            form.find('.approve-checkbox').prop('checked', false);
-            currentRejectForm = form;
-            $('#rejectChoiceModal').modal('show');
-        } else {
-            form.find('.reject-action').val('');
-        }
-
-    });
+    if (this.checked) {
+        form.find('.approve-checkbox').prop('checked', false);
+        currentRejectForm = form;
+        $('#rejectChoiceModal').modal('show');
+    } else {
+        form.find('.reject-action').val('');
+    }
+});
 
     $('#rejectAdditionalBtn').on('click', function () {
         if (currentRejectForm) {
@@ -1388,6 +1388,17 @@ if (submittalDescriptionInput && saveSubmittalDescriptionBtn) {
 
     });
 }
+const pendingWallcoveringSubmittalsExist =
+    {{ pending_wallcovering_submittals_exist|yesno:"true,false" }};
+
+function openAddWallcoveringModal() {
+    if (pendingWallcoveringSubmittalsExist) {
+        alert("There are pending wallcovering submittals. Make sure to first check pending items before using this button");
+    }
+
+    $('#addWallcoveringItemModal').modal('show');
+}
+
 
 </script>
 {% endblock %}

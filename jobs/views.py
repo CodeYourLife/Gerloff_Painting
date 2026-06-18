@@ -1,5 +1,5 @@
-from changeorder.models import ChangeOrders
-from changeorder.models import ClientJobRoles, ChangeOrders
+
+from changeorder.models import ClientJobRoles, ChangeOrders, Wallcovering_Change_Orders
 from collections import defaultdict
 from console.misc import Email, send_safety_inspection_email
 from console.models import *
@@ -1466,8 +1466,52 @@ def job_page(request, jobnumber):
         "pattern"
     )
 
-    send_data["wallcoverings"] = wallcoverings
-    send_data["wallcovering_count"] = wallcoverings.count()
+    wallcovering_list = []
+
+    for wc in wallcoverings:
+        wc.change_order_badge_text = ""
+        wc.change_order_badge_class = ""
+
+        attention_cop_items = (
+            Wallcovering_Change_Orders.objects
+            .filter(
+                wallcovering=wc
+            )
+            .filter(
+                Q(is_ordered=False) |
+                Q(change_order__is_approved=False)
+            )
+            .select_related("change_order")
+            .order_by("change_order__cop_number", "id")
+        )
+
+        attention_count = attention_cop_items.count()
+
+        if attention_count > 1:
+            wc.change_order_badge_text = "Multiple COPs"
+            wc.change_order_badge_class = "badge badge-danger ml-1"
+
+        elif attention_count == 1:
+            cop_link = attention_cop_items.first()
+            cop = cop_link.change_order
+            cop_number = cop.cop_number
+
+            if cop_link.is_ordered and not cop.is_approved:
+                wc.change_order_badge_text = f"COP{cop_number} - Ordered, Not Approved"
+                wc.change_order_badge_class = "badge badge-warning ml-1"
+
+            elif not cop_link.is_ordered and not cop.is_approved:
+                wc.change_order_badge_text = f"COP{cop_number} Not Approved"
+                wc.change_order_badge_class = "badge badge-warning ml-1"
+
+            elif not cop_link.is_ordered and cop.is_approved:
+                wc.change_order_badge_text = f"COP{cop_number} Not Ordered"
+                wc.change_order_badge_class = "badge badge-danger ml-1"
+
+        wallcovering_list.append(wc)
+
+    send_data["wallcoverings"] = wallcovering_list
+    send_data["wallcovering_count"] = len(wallcovering_list)
 
     if go_to_pickup:
         return redirect('request_pickup', jobnumber=selectedjob.job_number, item='ALL', pickup='ALL', status='ALL')

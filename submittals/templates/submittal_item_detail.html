@@ -95,6 +95,7 @@
             {% if not item.is_no_longer_used %}
             <form method="post" class="d-inline">
                 {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next_page }}">
                 <button type="submit"
                         name="mark_no_longer_used"
                         class="btn btn-danger btn-sm"
