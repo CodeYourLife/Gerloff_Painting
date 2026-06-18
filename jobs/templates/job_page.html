@@ -1767,8 +1767,14 @@ float: left !important;
                             style="cursor:pointer;">
                                 <td>
                                     <a href="{% url 'wallcovering_detail' wc.id %}" class="font-weight-bold">
-                                        {% if wc.code %}{{ wc.code }}{% else %}WC (No Code) {% endif %}
+                                        {% if wc.code %}{{ wc.code }}{% else %}WC (No Code){% endif %}
                                     </a>
+
+                                    {% if wc.change_order_badge_text %}
+                                        <span class="{{ wc.change_order_badge_class }}">
+                                            {{ wc.change_order_badge_text }}
+                                        </span>
+                                    {% endif %}
                                     <br>
                                     <span class="text-muted">
                                         {{ wc.vendor }} {{ wc.pattern }}
@@ -1786,6 +1792,8 @@ float: left !important;
                                         <span class="badge badge-success">Approved</span>
                                     {% elif wc.submittal_status == "Submitted" %}
                                         <span class="badge badge-primary">Submitted</span>
+                                    {% elif wc.submittal_status == "Partially Submitted" %}
+                                        <span class="badge badge-secondary">Partially Submitted</span>
                                     {% else %}
                                         <span class="badge badge-secondary">Not Submitted</span>
                                     {% endif %}
@@ -2196,25 +2204,43 @@ function showEmployeeData(status, client, client_email, client_phone,pm,superint
 }
 
 function change_start(){
-    document.getElementById("hide_this").style.display = "block"
-    document.getElementById("hide_button1").style.display = "none"
-    document.getElementById("hide_button2").style.display = "none"
+    document.getElementById("hide_this").style.display = "block";
+    document.getElementById("hide_button1").style.display = "none";
+    document.getElementById("hide_button2").style.display = "none";
+
     $.ajax({
         method: 'GET',
         url: '/superintendent/super_ajax',
-        data: {'confirm_date':change_start_form.confirm_date.checked, 'notify':change_start_form.notify_super.checked, 'job_number':change_start_form.job_number.value, 'start_date': change_start_form.start_date.value,'is_active':change_start_form.is_active.checked,'notes':change_start_form.date_note.value,'row':change_start_form.row_number.value},
+        data: {
+            'confirm_date': change_start_form.confirm_date.checked,
+            'notify': change_start_form.notify_super.checked,
+            'job_number': change_start_form.job_number.value,
+            'start_date': change_start_form.start_date.value,
+            'is_active': change_start_form.is_active.checked,
+            'notes': change_start_form.date_note.value,
+            'row': change_start_form.row_number.value
+        },
         success: function (data) {
-            parsedData = JSON.parse(data);
-            if (parsedData.email_sent){alert("Email Sent")}
-            else {alert("Email Not Sent")}
-            begin = document.getElementById("TEST_YO").innerHTML.search('">')+2
-            end = document.getElementById("TEST_YO").innerHTML.search("</a>")
-            left = document.getElementById("TEST_YO").innerHTML.substring(0,begin)
-            document.getElementById("TEST_YO").innerHTML = left + parsedData.new_date + "</a>"
-            change_start_form.submit()
-        }
-    })
+            const parsedData = JSON.parse(data);
 
+            if (parsedData.email_sent) {
+                alert("Email Sent");
+            } else {
+                alert("Email Not Sent");
+            }
+
+            $('#startdate-modal').modal('hide');
+
+            change_start_form.submit();
+        },
+        error: function () {
+            alert("Something went wrong changing the start date.");
+
+            document.getElementById("hide_this").style.display = "none";
+            document.getElementById("hide_button1").style.display = "inline-block";
+            document.getElementById("hide_button2").style.display = "inline-block";
+        }
+    });
 }
 
 function submit_new_super(){

@@ -289,3 +289,12 @@ class ChangeOrderApprovers(models.Model):
 
     def __str__(self):
         return f"{self.job.job_number} - {self.approver}"
+
+class Wallcovering_Change_Orders(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    change_order = models.ForeignKey('changeorder.ChangeOrders', on_delete=models.PROTECT)
+    wallcovering = models.ForeignKey('wallcovering.Wallcovering', on_delete=models.PROTECT)
+    is_ordered = models.BooleanField(default=False)
+    quantity_added = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    units = models.CharField(null=True, max_length=50)
+    notes = models.CharField(null=True, max_length=2000)

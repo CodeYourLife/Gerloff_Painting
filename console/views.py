@@ -1456,6 +1456,7 @@ def upload_clockshark(form, excel_file, notes):
                 last_name,
                 ignore,
                 ignore,
+                ignore,
                 job_name,
                 job_number,
                 ignore,
@@ -1513,6 +1514,7 @@ def upload_clockshark(form, excel_file, notes):
                 (
                     employee_first_name,
                     employee_last_name,
+                    ignore,
                     ignore,
                     ignore,
                     job_name,

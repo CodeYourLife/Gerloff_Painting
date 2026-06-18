@@ -147,11 +147,25 @@ class Wallcovering(models.Model):
         if has_submission_problem:
             return "Partially Submitted"
 
-        # Everything has been submitted and all linked approvals are approved
+        # If any approval is still pending review, it is submitted but not approved yet
+        if linked_approvals.filter(is_approved__isnull=True).exists():
+            return "Submitted"
+
+        # All approvals are either approved or rejected at this point.
+        # If all are approved, the wallcovering is approved.
         if not linked_approvals.exclude(is_approved=True).exists():
             return "Approved"
 
-        # Everything has been submitted, but something is pending/rejected
+        # Some approvals are rejected.
+        # For rejected approvals only, require the related item to be approved to order.
+        rejected_not_approved_to_order_exists = linked_approvals.filter(
+            is_approved=False,
+            submittalitem__is_approved_to_order=False
+        ).exists()
+
+        if not rejected_not_approved_to_order_exists:
+            return "Approved"
+
         return "Submitted"
 
     def ordering_status(self):

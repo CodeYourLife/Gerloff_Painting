@@ -127,6 +127,14 @@
                                     </a>
                                 </td>
                                 <td>
+                                    {% if wc.change_order_badge_text %}
+                                        <div class="mb-1">
+                                            <span class="{{ wc.change_order_badge_class }}">
+                                                {{ wc.change_order_badge_text }}
+                                            </span>
+                                        </div>
+                                    {% endif %}
+
                                     {% if wc.user_note_count %}
                                         <div>
                                             {{ wc.user_note_count }} user note{% if wc.user_note_count != 1 %}s{% endif %}

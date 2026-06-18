@@ -973,6 +973,7 @@ def submittal_send(request, submittal_id):
     older_notes = notes[:-4]
 
     item_rows = []
+
     for approval in approvals:
         other_submittal_history_exists = SubmittalApprovals.objects.filter(
             submittalitem=approval.submittalitem,
@@ -991,6 +992,17 @@ def submittal_send(request, submittal_id):
             available_items_without_approvals.count()
             + available_unlinked_approvals.count()
     )
+
+    pending_wallcovering_submittals_exist = SubmittalItems.objects.filter(
+        job_number=submittal.job_number,
+        is_no_longer_used=False,
+    ).filter(
+        Q(description__icontains="Wallcovering") |
+        Q(wallcovering_id__isnull=False)
+    ).filter(
+        Q(submittalapprovals__isnull=True) |
+        Q(submittalapprovals__submittal__isnull=True)
+    ).distinct().exists()
     send_data = {
         'submittal': submittal,
         'item_rows': item_rows,
@@ -1020,6 +1032,7 @@ def submittal_send(request, submittal_id):
         "available_items_without_approvals":available_items_without_approvals,
         "available_unlinked_approvals":available_unlinked_approvals,
         "pending_item_count": pending_item_count,
+        "pending_wallcovering_submittals_exist":pending_wallcovering_submittals_exist,
     }
 
     return render(request, 'submittal_send.html', send_data)
@@ -1027,7 +1040,7 @@ def submittal_send(request, submittal_id):
 def submittal_item_detail(request, item_id):
     item = get_object_or_404(SubmittalItems, id=item_id)
     employee = Employees.objects.filter(user=request.user).first()
-
+    next_page = request.GET.get("next") or request.POST.get("next")
     # If the item has no approval records at all, create one unlinked approval.
     # This becomes the "Information for Next Submittal" record.
     if not item.is_no_longer_used and not SubmittalApprovals.objects.filter(submittalitem=item).exists():
@@ -1298,6 +1311,9 @@ def submittal_item_detail(request, item_id):
                     f"Submittal item deleted: {item_description}"
                 )
 
+                if next_page == "job_submittals_summary":
+                    return redirect("job_submittals_summary", job_number=job_number.job_number)
+
                 return redirect("submittals_home")
 
             # If it has been submitted before, do NOT delete it.
@@ -1417,6 +1433,7 @@ def submittal_item_detail(request, item_id):
         "next_submittal_approval": next_submittal_approval,
         "has_no_linked_submittal_approvals": has_no_linked_submittal_approvals,
         "show_additional_submittal_needed_button": show_additional_submittal_needed_button,
+        "next_page": next_page,
     }
 
     return render(request, 'submittal_item_detail.html', send_data)
@@ -1531,6 +1548,7 @@ def job_submittals_summary(request, job_number):
                 "description": item.description,
                 "id": item.id,
                 "notes": ". ".join(note_parts),
+                "wallcovering_id": item.wallcovering_id,
             })
 
 
