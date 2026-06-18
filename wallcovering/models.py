@@ -130,42 +130,33 @@ class Wallcovering(models.Model):
             submittal__isnull=True
         ).exists()
 
-        items_without_approvals_exist = matching_items.filter(
-            submittalapprovals__isnull=True
-        ).exists()
-
-        has_submission_problem = (
-                unlinked_approvals_exist
-                or items_without_approvals_exist
-        )
-
         # Nothing has actually been submitted yet
         if not linked_approvals.exists():
             return "Not Submitted"
 
-        # Some items are submitted, but at least one item still needs to be submitted
-        if has_submission_problem:
-            return "Partially Submitted"
+        # If every active submittal item has at least one approved linked approval,
+        # the wallcovering is approved.
+        for item in matching_items:
+            item_has_approved_approval = linked_approvals.filter(
+                submittalitem=item,
+                is_approved=True
+            ).exists()
 
-        # If any approval is still pending review, it is submitted but not approved yet
-        if linked_approvals.filter(is_approved__isnull=True).exists():
-            return "Submitted"
-
-        # All approvals are either approved or rejected at this point.
-        # If all are approved, the wallcovering is approved.
-        if not linked_approvals.exclude(is_approved=True).exists():
+            if not item_has_approved_approval:
+                break
+        else:
             return "Approved"
 
-        # Some approvals are rejected.
-        # For rejected approvals only, require the related item to be approved to order.
-        rejected_not_approved_to_order_exists = linked_approvals.filter(
-            is_approved=False,
-            submittalitem__is_approved_to_order=False
+        # Some items have a linked approval, but at least one item still has no linked approval.
+        items_without_linked_approvals_exist = matching_items.exclude(
+            id__in=linked_approvals.values_list("submittalitem_id", flat=True)
         ).exists()
 
-        if not rejected_not_approved_to_order_exists:
-            return "Approved"
+        if items_without_linked_approvals_exist or unlinked_approvals_exist:
+            return "Partially Submitted"
 
+        # At least one item has been submitted but is not approved yet,
+        # or was rejected and has not later received an approved approval.
         return "Submitted"
 
     def ordering_status(self):
