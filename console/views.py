@@ -368,13 +368,27 @@ def index(request):
         submittal_status = wc.submittal_status()
         ordering_status = wc.ordering_status()
 
+        has_approved_cop_not_ordered = Wallcovering_Change_Orders.objects.filter(
+            wallcovering=wc,
+            is_ordered=False,
+            change_order__is_approved=True
+        ).exists()
+
+        # Submittal buckets
         if submittal_status in ["Not Submitted", "Partially Submitted"]:
             wc_not_submitted_count += 1
 
         elif submittal_status == "Submitted":
             wc_not_approved_count += 1
 
-        elif submittal_status == "Approved" and ordering_status == "Not Ordered":
+        # Ordering bucket - separate from submittal status
+        if (
+                (
+                        submittal_status == "Approved"
+                        and ordering_status == "Not Ordered"
+                )
+                or has_approved_cop_not_ordered
+        ):
             wc_approved_not_ordered_count += 1
 
     send_data['wc_not_submitted_count'] =wc_not_submitted_count
