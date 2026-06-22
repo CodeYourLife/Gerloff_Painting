@@ -1199,6 +1199,13 @@
                         <small class="text-muted mr-auto" id="pricingFolderPathText">
                             Folder: \\gp-webserver\trinity\wallcovering_quotes\{{ wallcovering.id }}
                         </small>
+
+                        <input type="text"
+                               id="pricingFolderPathInput"
+                               value="\\gp-webserver\trinity\wallcovering_quotes\{{ wallcovering.id }}"
+                               readonly
+                               style="position:absolute; left:-9999px;">
+
                         <button type="button"
                                 class="btn btn-outline-primary"
                                 onclick="copyPricingFolderPath()">
@@ -1268,34 +1275,41 @@ function renderPricingFiles(files) {
     }
 
 function setPricingFolderPath(pathValue) {
-    pricingFolderPath = pathValue || "";
+    pricingFolderPath = pathValue || pricingFolderPath;
+
     const label = document.getElementById("pricingFolderPathText");
     if (label && pricingFolderPath) {
         label.textContent = "Folder: " + pricingFolderPath;
     }
+
+    const input = document.getElementById("pricingFolderPathInput");
+    if (input && pricingFolderPath) {
+        input.value = pricingFolderPath;
+    }
 }
 
 function copyPricingFolderPath() {
-    let pathToCopy = pricingFolderPath;
+    const input = document.getElementById("pricingFolderPathInput");
 
-    if (!pathToCopy) {
-        const label = document.getElementById("pricingFolderPathText");
-        if (label) {
-            pathToCopy = label.textContent.replace("Folder:", "").trim();
-        }
-    }
-
-    if (!pathToCopy) {
+    if (!input || !input.value) {
         alert("Folder path is not available yet.");
         return;
     }
 
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(pathToCopy)
-            .then(() => alert("Folder path copied. Paste into Windows Explorer."))
-            .catch(() => fallbackCopyFolderPath(pathToCopy));
-    } else {
-        fallbackCopyFolderPath(pathToCopy);
+    input.focus();
+    input.select();
+    input.setSelectionRange(0, input.value.length);
+
+    try {
+        const copied = document.execCommand("copy");
+
+        if (copied) {
+            alert("Folder path copied. Paste into Windows Explorer.");
+        } else {
+            prompt("Copy this folder path:", input.value);
+        }
+    } catch (e) {
+        prompt("Copy this folder path:", input.value);
     }
 }
 
