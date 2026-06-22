@@ -1234,7 +1234,7 @@ document.addEventListener("DOMContentLoaded", function () {
 const pricingFilesListUrl = "{% url 'wallcovering_pricing_files' wallcovering.id %}";
 const pricingFilesUploadUrl = "{% url 'wallcovering_pricing_upload' wallcovering.id %}";
 const pricingFilesDownloadBaseUrl = "{% url 'wallcovering_pricing_download' wallcovering.id %}";
-let pricingFolderPath = "";
+let pricingFolderPath = "\\\\gp-webserver\\trinity\\wallcovering_quotes\\{{ wallcovering.id }}";
 
 function getCsrfToken() {
     const match = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
@@ -1276,28 +1276,50 @@ function setPricingFolderPath(pathValue) {
 }
 
 function copyPricingFolderPath() {
-    if (!pricingFolderPath) {
+    let pathToCopy = pricingFolderPath;
+
+    if (!pathToCopy) {
+        const label = document.getElementById("pricingFolderPathText");
+        if (label) {
+            pathToCopy = label.textContent.replace("Folder:", "").trim();
+        }
+    }
+
+    if (!pathToCopy) {
         alert("Folder path is not available yet.");
         return;
     }
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(pricingFolderPath)
+        navigator.clipboard.writeText(pathToCopy)
             .then(() => alert("Folder path copied. Paste into Windows Explorer."))
-            .catch(() => fallbackCopyFolderPath());
+            .catch(() => fallbackCopyFolderPath(pathToCopy));
     } else {
-        fallbackCopyFolderPath();
+        fallbackCopyFolderPath(pathToCopy);
     }
 }
 
-function fallbackCopyFolderPath() {
+function fallbackCopyFolderPath(pathToCopy) {
     const temp = document.createElement("textarea");
-    temp.value = pricingFolderPath;
+    temp.value = pathToCopy;
+    temp.style.position = "fixed";
+    temp.style.left = "-9999px";
+    temp.style.top = "0";
+
     document.body.appendChild(temp);
+    temp.focus();
     temp.select();
-    document.execCommand("copy");
+    temp.setSelectionRange(0, temp.value.length);
+
+    const copied = document.execCommand("copy");
+
     document.body.removeChild(temp);
-    alert("Folder path copied. Paste into Windows Explorer.");
+
+    if (copied) {
+        alert("Folder path copied. Paste into Windows Explorer.");
+    } else {
+        prompt("Copy this folder path:", pathToCopy);
+    }
 }
 
 function loadPricingFiles() {
