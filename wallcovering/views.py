@@ -1889,7 +1889,7 @@ def wallcovering_pricing_files(request, wallcovering_id):
             "size": os.path.getsize(full_path),
         })
 
-    explorer_path = os.path.normpath(folder)
+    explorer_path = rf"\\gp-webserver\trinity\wallcovering_quotes\{wallcovering.id}"
 
     return JsonResponse({
         "files": files,
