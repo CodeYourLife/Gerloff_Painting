@@ -1030,7 +1030,7 @@ float: left !important;
         <div class="col-md-4 job-info-box" data-toggle="modal" data-target="#client-modal">
             <div class="job-info-label">Client</div>
             <a href="#"
-               onclick="showEmployeeData('CLIENT','{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');">
+               onclick="showEmployeeData('CLIENT','{{ job.client|escapejs }}', '{{ job.client.bid_email|escapejs }}','{{ job.client.phone|escapejs }}', '{{ job.client_Pm|escapejs }}', '{{ job.client_Super|escapejs }}', '{{ job.client_Super.phone|escapejs }}', '{{ job.client_Super.email|escapejs }}', '{{ job.client_Pm.phone|escapejs }}', '{{ job.client_Pm.email|escapejs }}');">
                 {{ job.client }}
             </a>
         </div>
@@ -1038,7 +1038,7 @@ float: left !important;
         <div class="col-md-4 job-info-box" data-toggle="modal" data-target="#client_pm-modal">
             <div class="job-info-label">GC PM</div>
             <a href="#"
-               onclick="showEmployeeData('PM','{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');">
+               onclick="showEmployeeData('PM','{{ job.client|escapejs }}', '{{ job.client.bid_email|escapejs }}','{{ job.client.phone|escapejs }}', '{{ job.client_Pm|escapejs }}', '{{ job.client_Super|escapejs }}', '{{ job.client_Super.phone|escapejs }}', '{{ job.client_Super.email|escapejs }}', '{{ job.client_Pm.phone|escapejs }}', '{{ job.client_Pm.email|escapejs }}');">
                 {{ job.client_Pm }}
             </a>
         </div>
@@ -1046,7 +1046,7 @@ float: left !important;
         <div class="col-md-4 job-info-box" data-toggle="modal" data-target="#client_super-modal">
             <div class="job-info-label">GC Super</div>
             <a href="#"
-               onclick="showEmployeeData('SUPERINTENDENT','{{ job.client }}', '{{ job.client.bid_email }}','{{ job.client.phone }}', '{{ job.client_Pm }}', '{{ job.client_Super }}', '{{ job.client_Super.phone }}', '{{ job.client_Super.email }}', '{{ job.client_Pm.phone }}', '{{ job.client_Pm.email }}');">
+               onclick="showEmployeeData('SUPERINTENDENT','{{ job.client|escapejs }}', '{{ job.client.bid_email|escapejs }}','{{ job.client.phone|escapejs }}', '{{ job.client_Pm|escapejs }}', '{{ job.client_Super|escapejs }}', '{{ job.client_Super.phone|escapejs }}', '{{ job.client_Super.email|escapejs }}', '{{ job.client_Pm.phone|escapejs }}', '{{ job.client_Pm.email|escapejs }}');">
                 {{ job.client_Super }}
             </a>
         </div>
@@ -1062,7 +1062,7 @@ float: left !important;
         <div class="col-md-4 job-info-box" data-toggle="modal" data-target="#super-modal">
             <div class="job-info-label">Gerloff Super</div>
             <a href="#"
-               onclick="populate_super_modal('{{ job.job_name }}','{{ job.superintendent.id }}','{{ job.job_number }}','{{ job.superintendent.first_name }}',this,2)">
+               onclick="populate_super_modal('{{ job.job_name|escapejs }}','{{ job.superintendent.id }}','{{ job.job_number|escapejs }}','{{ job.superintendent.first_name|escapejs }}',this,2)">
                 {{ job.superintendent }}
             </a>
         </div>
