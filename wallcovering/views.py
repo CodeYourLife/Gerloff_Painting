@@ -27,8 +27,9 @@ from io import BytesIO
 
 import openpyxl
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse, FileResponse, Http404
 from django.db.models import Count, Q
+from django.utils.text import get_valid_filename
 
 
 
@@ -1863,3 +1864,80 @@ def wallcovering_print_labels(request, wallcovering_id):
         "wallcovering": wallcovering,
         "labels_to_print": labels_to_print,
     })
+
+
+
+
+def _wallcovering_quotes_folder(wallcovering_id):
+    return os.path.join(settings.MEDIA_ROOT, "wallcovering_quotes", str(wallcovering_id))
+
+
+def wallcovering_pricing_files(request, wallcovering_id):
+    wallcovering = get_object_or_404(Wallcovering, id=wallcovering_id)
+
+    folder = _wallcovering_quotes_folder(wallcovering.id)
+    os.makedirs(folder, exist_ok=True)
+
+    files = []
+    for file_name in sorted(os.listdir(folder), reverse=True):
+        full_path = os.path.join(folder, file_name)
+        if not os.path.isfile(full_path):
+            continue
+
+        files.append({
+            "name": file_name,
+            "size": os.path.getsize(full_path),
+        })
+
+    explorer_path = os.path.normpath(folder)
+
+    return JsonResponse({
+        "files": files,
+        "folder_path": explorer_path,
+    })
+
+
+def wallcovering_pricing_upload(request, wallcovering_id):
+    wallcovering = get_object_or_404(Wallcovering, id=wallcovering_id)
+
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "POST required"}, status=405)
+
+    uploaded_file = request.FILES.get("file")
+    if not uploaded_file:
+        return JsonResponse({"ok": False, "error": "No file uploaded"}, status=400)
+
+    folder = _wallcovering_quotes_folder(wallcovering.id)
+    os.makedirs(folder, exist_ok=True)
+
+    safe_name = get_valid_filename(os.path.basename(uploaded_file.name))
+    file_path = os.path.join(folder, safe_name)
+
+    base_name, ext = os.path.splitext(safe_name)
+    counter = 1
+    while os.path.exists(file_path):
+        file_path = os.path.join(folder, f"{base_name}_{counter}{ext}")
+        counter += 1
+
+    with open(file_path, "wb+") as destination:
+        for chunk in uploaded_file.chunks():
+            destination.write(chunk)
+
+    return JsonResponse({"ok": True})
+
+
+def wallcovering_pricing_download(request, wallcovering_id):
+    wallcovering = get_object_or_404(Wallcovering, id=wallcovering_id)
+
+    file_name = request.GET.get("file", "").strip()
+    if not file_name:
+        raise Http404("File not specified")
+
+    safe_name = os.path.basename(file_name)
+    folder = _wallcovering_quotes_folder(wallcovering.id)
+    file_path = os.path.join(folder, safe_name)
+
+    if not os.path.exists(file_path) or not os.path.isfile(file_path):
+        raise Http404("File not found")
+
+    return FileResponse(open(file_path, "rb"), as_attachment=False, filename=safe_name)
