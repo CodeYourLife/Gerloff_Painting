@@ -2031,34 +2031,31 @@ def close_job(request, job_number):
         final_contract_amount = 0
         profit_percent = 0
     subject = f"Job Closed - {job.job_number} {job.job_name}"
+    subbed_out_text = ""
+
+    if job.is_painting_subbed:
+        subbed_out_text = "Job Was Subbed Out!\n\n"
+
     body = (
-        "Job Closed in Trinity.\n\n"
+        "Job Closed in Trinity.\n"
         f"{job.job_number} {job.job_name}\n"
-        f"\n"
+        f"{subbed_out_text}"
         f"Superintendent: {job.superintendent.first_name} {job.superintendent.last_name}\n"
-        f"\n"
         f"Estimator: {job.estimator.first_name} {job.estimator.last_name}\n"
-        f"\n"
-        f"Job Subbed Out: {job.is_painting_subbed}\n"
-        f"\n"
         f"GC: {job.client.company}\n"
         f"\n"
         f"Final Contract Amount: ${final_contract_amount}\n"
-        f"\n"
         f"Final Job Costs: ${cumulative_costs}\n"
-        f"\n"
         f"Profit: {profit_percent}%\n"
         f"\n"
         f"Closed Job Number: {next_number}\n"
-        f"\n"
         f"Please close job in Sirius and MC"
     )
-
     recipients = ["admin2@gerloffpainting.com", "bridgette@gerloffpainting.com","gene@gerloffpainting.com","victor@gerloffpainting.com","joe@gerloffpainting.com"]
 
     try:
         check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
-        sender = check_sender.email if check_sender else "operations@gerloffpainting.com"
+        sender = check_sender.email if check_sender and check_sender.email else "bridgette@gerloffpainting.com"
         Email.sendEmail(subject, body, recipients, False,sender)
         messages.success(
             request,
