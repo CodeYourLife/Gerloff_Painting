@@ -27,4 +27,19 @@ urlpatterns = [
         views.wallcovering_print_labels,
         name="wallcovering_print_labels"
     ),
+    path(
+        "wallcovering/<int:wallcovering_id>/pricing-files/",
+        views.wallcovering_pricing_files,
+        name="wallcovering_pricing_files"
+    ),
+    path(
+        "wallcovering/<int:wallcovering_id>/pricing-files/upload/",
+        views.wallcovering_pricing_upload,
+        name="wallcovering_pricing_upload"
+    ),
+    path(
+        "wallcovering/<int:wallcovering_id>/pricing-files/download/",
+        views.wallcovering_pricing_download,
+        name="wallcovering_pricing_download"
+    ),
 ]

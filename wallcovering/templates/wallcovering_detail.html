@@ -12,7 +12,6 @@
     margin: 14px 0;
     box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
-
 .wc-event-card-header {
     background: #ffffff;
     border: 1px solid #e1e4e8;
@@ -27,7 +26,6 @@
     letter-spacing: .3px;
     margin-bottom: 4px;
 }
-
 .linked-changeorder-table input,
 .linked-changeorder-table textarea,
 .linked-changeorder-table select {
@@ -38,20 +36,29 @@
     font-size: 13px;
     padding: 3px 6px;
 }
-
 .linked-changeorder-table textarea {
     resize: vertical;
 }
-
 .linked-changeorder-table th,
 .linked-changeorder-table td {
     vertical-align: middle;
 }
-
 .linked-changeorder-table input[type="checkbox"] {
     width: auto;
 }
 
+.pricing-dropzone {
+    border: 2px dashed #6c757d;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    background: #f8f9fa;
+    cursor: pointer;
+}
+.pricing-dropzone.dragover {
+    border-color: #28a745;
+    background: #eaf9ee;
+}
 </style>
 {% endblock %}
 
@@ -367,13 +374,21 @@
 
         <div class="d-flex justify-content-between align-items-center mb-2">
             <strong class="text-muted">Pricing Received</strong>
-
-            <button type="button"
-                    class="btn btn-sm btn-outline-danger"
-                    data-toggle="collapse"
-                    data-target="#addPricingCollapse">
-                + Add Pricing
-            </button>
+            <div>
+                <button type="button"
+                        class="btn btn-sm btn-outline-primary mr-2"
+                        data-toggle="modal"
+                        data-target="#pricingFilesModal"
+                        onclick="loadPricingFiles()">
+                    View/File Pricing
+                </button>
+                <button type="button"
+                        class="btn btn-sm btn-outline-danger"
+                        data-toggle="collapse"
+                        data-target="#addPricingCollapse">
+                    + Add Pricing
+                </button>
+            </div>
         </div>
 
         <div class="collapse mb-3" id="addPricingCollapse">
@@ -1145,6 +1160,56 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="pricingFilesModal" tabindex="-1" role="dialog" aria-labelledby="pricingFilesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="pricingFilesModalLabel">Pricing Files</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div id="pricingDropzone" class="pricing-dropzone mb-3">
+                    <div class="font-weight-bold">Drag & Drop files here</div>
+                    <div class="text-muted small">or click to choose files</div>
+                    <input type="file" id="pricingFileInput" multiple style="display:none;">
+                </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>File Name</th>
+                                    <th class="text-center">View File</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pricingFilesTableBody">
+                                <tr>
+                                    <td colspan="2" class="text-center text-muted py-2">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <small class="text-muted mr-auto" id="pricingFolderPathText">
+                        Folder: media/wallcovering_quotes/{{ wallcovering.id }}/
+                    </small>
+                    <button type="button"
+                            class="btn btn-outline-primary"
+                            onclick="copyPricingFolderPath()">
+                        Copy Folder Path
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}
 
 {% block extra_scripts %}
@@ -1163,6 +1228,161 @@ document.addEventListener("DOMContentLoaded", function () {
         input.addEventListener("change", function () {
             saveButton.style.display = "inline-block";
         });
+    });
+});
+
+const pricingFilesListUrl = "{% url 'wallcovering_pricing_files' wallcovering.id %}";
+const pricingFilesUploadUrl = "{% url 'wallcovering_pricing_upload' wallcovering.id %}";
+const pricingFilesDownloadBaseUrl = "{% url 'wallcovering_pricing_download' wallcovering.id %}";
+let pricingFolderPath = "";
+
+function getCsrfToken() {
+    const match = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : "";
+}
+
+function formatKb(sizeBytes) {
+    return (sizeBytes / 1024).toFixed(1);
+}
+
+function renderPricingFiles(files) {
+        const tbody = document.getElementById("pricingFilesTableBody");
+        if (!files.length) {
+            tbody.innerHTML = '<tr><td colspan="2" class="text-center text-muted py-2">No files uploaded yet.</td></tr>';
+            return;
+        }
+
+        let html = "";
+        files.forEach(function (f) {
+            const viewUrl = pricingFilesDownloadBaseUrl + "?file=" + encodeURIComponent(f.name);
+            html += `
+                <tr>
+                    <td>${f.name}</td>
+                    <td class="text-center">
+                        <a class="btn btn-sm btn-outline-primary" href="${viewUrl}" target="_blank" rel="noopener noreferrer">View File</a>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+
+function setPricingFolderPath(pathValue) {
+    pricingFolderPath = pathValue || "";
+    const label = document.getElementById("pricingFolderPathText");
+    if (label && pricingFolderPath) {
+        label.textContent = "Folder: " + pricingFolderPath;
+    }
+}
+
+function copyPricingFolderPath() {
+    if (!pricingFolderPath) {
+        alert("Folder path is not available yet.");
+        return;
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(pricingFolderPath)
+            .then(() => alert("Folder path copied. Paste into Windows Explorer."))
+            .catch(() => fallbackCopyFolderPath());
+    } else {
+        fallbackCopyFolderPath();
+    }
+}
+
+function fallbackCopyFolderPath() {
+    const temp = document.createElement("textarea");
+    temp.value = pricingFolderPath;
+    document.body.appendChild(temp);
+    temp.select();
+    document.execCommand("copy");
+    document.body.removeChild(temp);
+    alert("Folder path copied. Paste into Windows Explorer.");
+}
+
+function loadPricingFiles() {
+        const tbody = document.getElementById("pricingFilesTableBody");
+        tbody.innerHTML = '<tr><td colspan="2" class="text-center text-muted py-2">Loading...</td></tr>';
+
+        fetch(pricingFilesListUrl, { method: "GET" })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to load pricing files");
+                }
+                return response.json();
+            })
+            .then(data => {
+                renderPricingFiles(data.files || []);
+                setPricingFolderPath(data.folder_path || "");
+            })
+            .catch(() => {
+                tbody.innerHTML = '<tr><td colspan="2" class="text-center text-danger py-2">Could not load files.</td></tr>';
+            });
+    }
+
+function uploadPricingFile(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return fetch(pricingFilesUploadUrl, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCsrfToken(),
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: formData
+    }).then(response => {
+        if (!response.ok) {
+            throw new Error("Failed to upload file");
+        }
+        return response.json();
+    });
+}
+
+function uploadPricingFiles(files) {
+    const uploads = [];
+    for (let i = 0; i < files.length; i++) {
+        uploads.push(uploadPricingFile(files[i]));
+    }
+
+    Promise.all(uploads)
+        .then(() => loadPricingFiles())
+        .catch(() => alert("One or more files failed to upload."));
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const dropzone = document.getElementById("pricingDropzone");
+    const fileInput = document.getElementById("pricingFileInput");
+
+    if (!dropzone || !fileInput) return;
+
+    dropzone.addEventListener("click", function () {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener("change", function (e) {
+        if (e.target.files && e.target.files.length) {
+            uploadPricingFiles(e.target.files);
+            fileInput.value = "";
+        }
+    });
+
+    dropzone.addEventListener("dragover", function (e) {
+        e.preventDefault();
+        dropzone.classList.add("dragover");
+    });
+
+    dropzone.addEventListener("dragleave", function () {
+        dropzone.classList.remove("dragover");
+    });
+
+    dropzone.addEventListener("drop", function (e) {
+        e.preventDefault();
+        dropzone.classList.remove("dragover");
+
+        if (e.dataTransfer.files && e.dataTransfer.files.length) {
+            uploadPricingFiles(e.dataTransfer.files);
+        }
     });
 });
 </script>
