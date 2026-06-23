@@ -15,13 +15,14 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Q
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, FileResponse, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import get_template, render_to_string
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.views.decorators.cache import never_cache
 from django.utils.timezone import now
+from django.utils.text import get_valid_filename
 from employees.models import *
 import datetime
 import os
@@ -41,6 +42,84 @@ def wallcovering_subcontract_json(wallcovering):
         'estimated_unit': wallcovering.estimated_unit or '',
         'quantity_ordered': int(wallcovering.quantity_ordered()),
     }
+
+
+def _subcontract_files_folder(subcontract_id):
+    return os.path.join(settings.MEDIA_ROOT, "subcontracts", str(subcontract_id))
+
+
+@login_required(login_url='/accounts/login')
+def subcontract_files(request, subcontract_id):
+    subcontract = get_object_or_404(Subcontracts, id=subcontract_id)
+
+    folder = _subcontract_files_folder(subcontract.id)
+    os.makedirs(folder, exist_ok=True)
+
+    files = []
+    for file_name in sorted(os.listdir(folder), reverse=True):
+        full_path = os.path.join(folder, file_name)
+        if not os.path.isfile(full_path):
+            continue
+
+        files.append({
+            "name": file_name,
+            "size": os.path.getsize(full_path),
+        })
+
+    explorer_path = rf"\\gp-webserver\trinity\subcontracts\{subcontract.id}"
+
+    return JsonResponse({
+        "files": files,
+        "folder_path": explorer_path,
+    })
+
+
+@login_required(login_url='/accounts/login')
+def subcontract_file_upload(request, subcontract_id):
+    subcontract = get_object_or_404(Subcontracts, id=subcontract_id)
+
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "POST required"}, status=405)
+
+    uploaded_file = request.FILES.get("file")
+    if not uploaded_file:
+        return JsonResponse({"ok": False, "error": "No file uploaded"}, status=400)
+
+    folder = _subcontract_files_folder(subcontract.id)
+    os.makedirs(folder, exist_ok=True)
+
+    safe_name = get_valid_filename(os.path.basename(uploaded_file.name))
+    file_path = os.path.join(folder, safe_name)
+
+    base_name, ext = os.path.splitext(safe_name)
+    counter = 1
+    while os.path.exists(file_path):
+        file_path = os.path.join(folder, f"{base_name}_{counter}{ext}")
+        counter += 1
+
+    with open(file_path, "wb+") as destination:
+        for chunk in uploaded_file.chunks():
+            destination.write(chunk)
+
+    return JsonResponse({"ok": True})
+
+
+@login_required(login_url='/accounts/login')
+def subcontract_file_download(request, subcontract_id):
+    subcontract = get_object_or_404(Subcontracts, id=subcontract_id)
+
+    file_name = request.GET.get("file", "").strip()
+    if not file_name:
+        raise Http404("File not specified")
+
+    safe_name = os.path.basename(file_name)
+    folder = _subcontract_files_folder(subcontract.id)
+    file_path = os.path.join(folder, safe_name)
+
+    if not os.path.exists(file_path) or not os.path.isfile(file_path):
+        raise Http404("File not found")
+
+    return FileResponse(open(file_path, "rb"), as_attachment=False, filename=safe_name)
 
 
 def sub_change_orders(request):
