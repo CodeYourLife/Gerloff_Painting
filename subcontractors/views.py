@@ -88,7 +88,12 @@ def subcontract_file_upload(request, subcontract_id):
     folder = _subcontract_files_folder(subcontract.id)
     os.makedirs(folder, exist_ok=True)
 
-    safe_name = get_valid_filename(os.path.basename(uploaded_file.name))
+    original_name = os.path.basename(uploaded_file.name)
+    original_base, original_ext = os.path.splitext(original_name)
+    requested_name = request.POST.get("file_name", "").strip() or original_base
+    requested_base = os.path.splitext(os.path.basename(requested_name))[0] or original_base
+    dated_name = f"{date.today().strftime('%m-%d-%Y')} - {requested_base}{original_ext}"
+    safe_name = get_valid_filename(dated_name)
     file_path = os.path.join(folder, safe_name)
 
     base_name, ext = os.path.splitext(safe_name)
