@@ -947,9 +947,25 @@ function loadSubcontractFiles() {
         });
 }
 
-function uploadSubcontractFile(file) {
+function getSubcontractUploadLabel(file) {
+    const today = new Date();
+    const dateLabel = [
+        String(today.getMonth() + 1).padStart(2, "0"),
+        String(today.getDate()).padStart(2, "0"),
+        today.getFullYear()
+    ].join("/");
+    const defaultName = file.name.replace(/\.[^/.]+$/, "");
+
+    return prompt(
+        "File will be relabeled to " + dateLabel + " along with your file name.\n\nEnter file name:",
+        defaultName
+    );
+}
+
+function uploadSubcontractFile(file, fileName) {
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("file_name", fileName);
 
     return fetch(subcontractFilesUploadUrl, {
         method: "POST",
@@ -969,7 +985,16 @@ function uploadSubcontractFile(file) {
 function uploadSubcontractFiles(files) {
     const uploads = [];
     for (let i = 0; i < files.length; i++) {
-        uploads.push(uploadSubcontractFile(files[i]));
+        const fileName = getSubcontractUploadLabel(files[i]);
+        if (fileName === null) {
+            continue;
+        }
+
+        uploads.push(uploadSubcontractFile(files[i], fileName));
+    }
+
+    if (!uploads.length) {
+        return;
     }
 
     Promise.all(uploads)
