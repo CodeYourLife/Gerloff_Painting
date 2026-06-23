@@ -143,11 +143,25 @@
     border-radius: 0.25rem;
     vertical-align: baseline;
 }
-    .editing-row-highlight {
+.editing-row-highlight {
     outline: 3px solid #ffc107;
     outline-offset: -3px;
     background-color: #fff3cd !important;
 }
+
+    .subcontract-files-dropzone {
+        border: 2px dashed #6c757d;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        background: #f8f9fa;
+        cursor: pointer;
+    }
+
+    .subcontract-files-dropzone.dragover {
+        border-color: #28a745;
+        background: #eaf9ee;
+    }
 </style>
 {% endblock %}
 
@@ -480,6 +494,63 @@
     </div>
 </div>
 
+<!-- Subcontract Files Modal -->
+<div class="modal fade" id="subcontractFilesModal" tabindex="-1" role="dialog" aria-labelledby="subcontractFilesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="subcontractFilesModalLabel">Subcontract Files</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div id="subcontractFilesDropzone" class="subcontract-files-dropzone mb-3">
+                    <div class="font-weight-bold">Drag & Drop files here</div>
+                    <div class="text-muted small">or click to choose files</div>
+                    <input type="file" id="subcontractFileInput" multiple style="display:none;">
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>File Name</th>
+                                <th class="text-center">View File</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subcontractFilesTableBody">
+                            <tr>
+                                <td colspan="2" class="text-center text-muted py-2">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <small class="text-muted mr-auto" id="subcontractFolderPathText">
+                    Folder: \\gp-webserver\trinity\subcontracts\{{ subcontract.id }}
+                </small>
+
+                <input type="text"
+                       id="subcontractFolderPathInput"
+                       value="\\gp-webserver\trinity\subcontracts\{{ subcontract.id }}"
+                       readonly
+                       style="position:absolute; left:-9999px;">
+
+                <button type="button"
+                        class="btn btn-outline-primary"
+                        onclick="copySubcontractFolderPath()">
+                    Copy Folder Path
+                </button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Retainage Modal -->
 <div class="modal fade" id="retainage-modal" tabindex="-1" role="dialog" aria-labelledby="retainage_title" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -521,6 +592,7 @@
     <div class="action-row">
         <button type="button" class="btn btn-info" data-toggle="modal" data-target="#subcontract_info-modal">View PO Details</button>
         <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#notes-modal">Notes</button>
+        <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#subcontractFilesModal" onclick="loadSubcontractFiles()">Files</button>
     </div>
 
     <hr>
@@ -777,6 +849,170 @@
 
 {% block extra_scripts %}
 <script type="text/javascript" class="init">
+const subcontractFilesListUrl = "{% url 'subcontract_files' subcontract.id %}";
+const subcontractFilesUploadUrl = "{% url 'subcontract_file_upload' subcontract.id %}";
+const subcontractFilesDownloadBaseUrl = "{% url 'subcontract_file_download' subcontract.id %}";
+let subcontractFolderPath = "\\\\gp-webserver\\trinity\\subcontracts\\{{ subcontract.id }}";
+
+function getCsrfToken() {
+    const match = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : "";
+}
+
+function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value || "";
+    return div.innerHTML;
+}
+
+function renderSubcontractFiles(files) {
+    const tbody = document.getElementById("subcontractFilesTableBody");
+    if (!files.length) {
+        tbody.innerHTML = '<tr><td colspan="2" class="text-center text-muted py-2">No files uploaded yet.</td></tr>';
+        return;
+    }
+
+    let html = "";
+    files.forEach(function (f) {
+        const viewUrl = subcontractFilesDownloadBaseUrl + "?file=" + encodeURIComponent(f.name);
+        const fileName = escapeHtml(f.name);
+        html += `
+            <tr>
+                <td>${fileName}</td>
+                <td class="text-center">
+                    <a class="btn btn-sm btn-outline-primary" href="${viewUrl}" target="_blank" rel="noopener noreferrer">View File</a>
+                </td>
+            </tr>
+        `;
+    });
+    tbody.innerHTML = html;
+}
+
+function setSubcontractFolderPath(pathValue) {
+    subcontractFolderPath = pathValue || subcontractFolderPath;
+
+    const label = document.getElementById("subcontractFolderPathText");
+    if (label && subcontractFolderPath) {
+        label.textContent = "Folder: " + subcontractFolderPath;
+    }
+
+    const input = document.getElementById("subcontractFolderPathInput");
+    if (input && subcontractFolderPath) {
+        input.value = subcontractFolderPath;
+    }
+}
+
+function copySubcontractFolderPath() {
+    const input = document.getElementById("subcontractFolderPathInput");
+
+    if (!input || !input.value) {
+        alert("Folder path is not available yet.");
+        return;
+    }
+
+    input.focus();
+    input.select();
+    input.setSelectionRange(0, input.value.length);
+
+    try {
+        const copied = document.execCommand("copy");
+
+        if (copied) {
+            alert("Folder path copied. Paste into Windows Explorer.");
+        } else {
+            prompt("Copy this folder path:", input.value);
+        }
+    } catch (e) {
+        prompt("Copy this folder path:", input.value);
+    }
+}
+
+function loadSubcontractFiles() {
+    const tbody = document.getElementById("subcontractFilesTableBody");
+    tbody.innerHTML = '<tr><td colspan="2" class="text-center text-muted py-2">Loading...</td></tr>';
+
+    fetch(subcontractFilesListUrl, { method: "GET" })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Failed to load subcontract files");
+            }
+            return response.json();
+        })
+        .then(data => {
+            renderSubcontractFiles(data.files || []);
+            setSubcontractFolderPath(data.folder_path || "");
+        })
+        .catch(() => {
+            tbody.innerHTML = '<tr><td colspan="2" class="text-center text-danger py-2">Could not load files.</td></tr>';
+        });
+}
+
+function uploadSubcontractFile(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return fetch(subcontractFilesUploadUrl, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCsrfToken(),
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: formData
+    }).then(response => {
+        if (!response.ok) {
+            throw new Error("Failed to upload file");
+        }
+        return response.json();
+    });
+}
+
+function uploadSubcontractFiles(files) {
+    const uploads = [];
+    for (let i = 0; i < files.length; i++) {
+        uploads.push(uploadSubcontractFile(files[i]));
+    }
+
+    Promise.all(uploads)
+        .then(() => loadSubcontractFiles())
+        .catch(() => alert("One or more files failed to upload."));
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const dropzone = document.getElementById("subcontractFilesDropzone");
+    const fileInput = document.getElementById("subcontractFileInput");
+
+    if (!dropzone || !fileInput) return;
+
+    dropzone.addEventListener("click", function () {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener("change", function (e) {
+        if (e.target.files && e.target.files.length) {
+            uploadSubcontractFiles(e.target.files);
+            fileInput.value = "";
+        }
+    });
+
+    dropzone.addEventListener("dragover", function (e) {
+        e.preventDefault();
+        dropzone.classList.add("dragover");
+    });
+
+    dropzone.addEventListener("dragleave", function () {
+        dropzone.classList.remove("dragover");
+    });
+
+    dropzone.addEventListener("drop", function (e) {
+        e.preventDefault();
+        dropzone.classList.remove("dragover");
+
+        if (e.dataTransfer.files && e.dataTransfer.files.length) {
+            uploadSubcontractFiles(e.dataTransfer.files);
+        }
+    });
+});
+
 $(document).ready(function () {
     if ('{{ edit_row }}') {
         $('#sub_table').DataTable({
