@@ -8,6 +8,7 @@ urlpatterns = [
     path('wallcovering_new', views.wallcovering_new, name='wallcovering_new'),
     path('wallcovering_edit/<int:wallcovering_id>', views.wallcovering_edit, name='wallcovering_edit'),
     path('wallcovering_add_order/<int:wallcovering_id>', views.wallcovering_add_order, name='wallcovering_add_order'),
+    path('wallcovering_pending_order/<int:pending_order_id>', views.wallcovering_pending_order, name='wallcovering_pending_order'),
     path('wallcovering_add_pricing/<int:wallcovering_id>', views.wallcovering_add_pricing, name='wallcovering_add_pricing'),
     path('wallcovering_receive', views.wallcovering_receive, name='wallcovering_receive'),
     path('wallcovering_receive/<int:wallcovering_id>', views.wallcovering_receive, name='wallcovering_receive_for_wallcovering'),

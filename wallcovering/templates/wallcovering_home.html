@@ -125,6 +125,13 @@
                                     <a href="{% url 'job_page' wc.job_number.job_number %}">
                                         {{ wc.job_number.job_name }}
                                     </a>
+                                    {% if wc.order_approval_badge_text %}
+                                        <div class="mt-1">
+                                            <span class="{{ wc.order_approval_badge_class }}">
+                                                {{ wc.order_approval_badge_text }}
+                                            </span>
+                                        </div>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     {% if wc.change_order_badge_text %}
