@@ -31,6 +31,18 @@ from xhtml2pdf import pisa
 from media.utilities import MediaUtilities
 
 
+def wallcovering_subcontract_json(wallcovering):
+    vendor = wallcovering.vendor.company_name if wallcovering.vendor else ''
+    return {
+        'id': wallcovering.id,
+        'code': wallcovering.code or '',
+        'vendor': vendor or '',
+        'pattern': wallcovering.pattern or '',
+        'estimated_unit': wallcovering.estimated_unit or '',
+        'quantity_ordered': int(wallcovering.quantity_ordered()),
+    }
+
+
 def sub_change_orders(request):
     send_data = {}
     send_data['unapproved_change_orders'] = SubcontractItems.objects.filter(is_approved=False,
@@ -1357,9 +1369,7 @@ def subcontract(request, id):
         wallcovering = Wallcovering.objects.filter(job_number=subcontract.job_number)
         wallcovering_json1 = []
         for x in wallcovering:
-            wallcovering_json1.append(
-                {'id': x.id, 'code': x.code, 'vendor': x.vendor.company_name, 'pattern': x.pattern,
-                 'estimated_unit': x.estimated_unit, 'quantity_ordered': int(x.quantity_ordered())})
+            wallcovering_json1.append(wallcovering_subcontract_json(x))
         send_data['wallcovering_json'] = json.dumps(list(wallcovering_json1), cls=DjangoJSONEncoder)
     if request.method == 'POST':
         for x in request.POST:
@@ -1699,9 +1709,7 @@ def subcontracts_new(request):
                 wallcovering = Wallcovering.objects.filter(job_number__job_number=request.POST['select_job'])
                 wallcovering_json1 = []
                 for x in wallcovering:
-                    wallcovering_json1.append(
-                        {'id': x.id, 'code': x.code, 'vendor': x.vendor.company_name, 'pattern': x.pattern,
-                         'estimated_unit': x.estimated_unit, 'quantity_ordered': int(x.quantity_ordered())})
+                    wallcovering_json1.append(wallcovering_subcontract_json(x))
                 send_data['wallcovering_json'] = json.dumps(list(wallcovering_json1), cls=DjangoJSONEncoder)
             else:
                 send_data['wallcovering_json'] = 'None'
