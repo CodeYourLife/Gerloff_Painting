@@ -7,7 +7,17 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h4 class="mb-0">Add Wallcovering Order</h4>
+            <h4 class="mb-0">
+                {% if pending_order_review %}
+                    {% if pending_order.date_approved %}
+                        Approved Wallcovering Order
+                    {% else %}
+                        Pending Wallcovering Order
+                    {% endif %}
+                {% else %}
+                    Add Wallcovering Order
+                {% endif %}
+            </h4>
             <small class="text-muted">
                 {{ default_description }}
             </small>
@@ -34,10 +44,43 @@
                         Editing PO {{ order.po_number }}
                     </div>
 
+                    <div class="mb-3">
+                        <button type="button"
+                                class="btn btn-sm btn-outline-secondary"
+                                id="useCustomPoButton">
+                            Use Custom PO Number
+                        </button>
+
+                        <div id="customPoNumberWrapper" class="mt-2" style="display:none;">
+                            <label class="mb-1">Custom PO Number</label>
+                            <input type="text"
+                                   name="custom_po_number"
+                                   class="form-control form-control-sm"
+                                   value="{{ order.po_number }}"
+                                   placeholder="Enter PO number">
+                        </div>
+                    </div>
+
                 {% else %}
 
                     <div class="small text-muted mb-3">
                         A new PO number will be generated automatically using the next available TR number.
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="button"
+                                class="btn btn-sm btn-outline-secondary"
+                                id="useCustomPoButton">
+                            Use Custom PO Number
+                        </button>
+
+                        <div id="customPoNumberWrapper" class="mt-2" style="display:none;">
+                            <label class="mb-1">Custom PO Number</label>
+                            <input type="text"
+                                   name="custom_po_number"
+                                   class="form-control form-control-sm"
+                                   placeholder="Enter PO number">
+                        </div>
                     </div>
 
                 {% endif %}
@@ -65,7 +108,7 @@
                             <input type="date"
                                    name="date_ordered"
                                    class="form-control form-control-sm"
-                                   value="{% if is_edit %}{{ order.date_ordered|date:'Y-m-d' }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}">
+                                   value="{% if pending_order_review %}{{ pending_order.date_ordered|date:'Y-m-d' }}{% elif is_edit %}{{ order.date_ordered|date:'Y-m-d' }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}">
                         </div>
 
                     </div>
@@ -76,7 +119,7 @@
                     <textarea name="order_notes"
                       class="form-control"
                       rows="2"
-                      placeholder="Optional notes for this purchase order">{% if is_edit %}{{ order.notes }}{% endif %}</textarea>
+                      placeholder="Optional notes for this purchase order">{% if pending_order_review %}{{ pending_order.notes }}{% elif is_edit %}{{ order.notes }}{% endif %}</textarea>
                 </div>
 
             </div>
@@ -251,19 +294,109 @@ placeholder="{{ wallcovering.estimated_quantity }}"
         </button>
 </div>
 
-        <button type="submit" class="btn btn-success btn-lg">
+        {% if pending_order_review and not pending_order.date_approved %}
+            <button type="button"
+                    class="btn btn-success btn-lg"
+                    data-toggle="modal"
+                    data-target="#approveOrderModal">
+                Approve Order
+            </button>
+        {% else %}
+            <button type="submit" class="btn btn-success btn-lg">
+                {% if pending_order_review %}
+                    Order Now
+                {% elif is_edit %}
+                    Save Changes
+                {% else %}
+                    Create Order
+                {% endif %}
+            </button>
+        {% endif %}
 
-    {% if is_edit %}
-        Save Changes
-    {% else %}
-        Create Order
-    {% endif %}
-
-</button>
+        {% if not is_edit and not pending_order_review %}
+            <button type="button"
+                    class="btn btn-primary btn-lg"
+                    data-toggle="modal"
+                    data-target="#sendForApprovalModal">
+                Send For Approval
+            </button>
+        {% endif %}
 
         <a href="{% url 'wallcovering_detail' wallcovering.id %}" class="btn btn-secondary btn-lg">
             Cancel
         </a>
+
+        {% if not is_edit and not pending_order_review %}
+            <div class="modal fade" id="sendForApprovalModal" tabindex="-1" role="dialog" aria-labelledby="sendForApprovalModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="sendForApprovalModalLabel">Send For Approval</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+
+                        <div class="modal-body">
+                            <div class="form-group mb-0">
+                                <label>Requestor Notes</label>
+                                <textarea name="requestor_notes"
+                                          class="form-control"
+                                          rows="4"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                    name="send_for_approval"
+                                    value="1"
+                                    class="btn btn-primary">
+                                Send For Approval
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if pending_order_review and not pending_order.date_approved %}
+            <div class="modal fade" id="approveOrderModal" tabindex="-1" role="dialog" aria-labelledby="approveOrderModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="approveOrderModalLabel">Approve Order</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+
+                        <div class="modal-body">
+                            <div class="form-group mb-0">
+                                <label>Approver Notes</label>
+                                <textarea name="approver_notes"
+                                          class="form-control"
+                                          rows="4"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                    name="approve_order"
+                                    value="1"
+                                    class="btn btn-success">
+                                Approve Order
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
 
     </form>
 
@@ -323,6 +456,12 @@ $(document).ready(function () {
         placeholder: 'Select or type price'
     });
 
+    $('#useCustomPoButton').on('click', function () {
+        $('#customPoNumberWrapper').show();
+        $('input[name="custom_po_number"]').focus();
+        $(this).hide();
+    });
+
     $('#addExtraItemBtn').on('click', function () {
 
         $('#noExtraItemsMessage').hide();
@@ -347,6 +486,7 @@ $(document).ready(function () {
     });
 
 $('#orderForm').on('submit', function (e) {
+    const isApprovalSubmit = $(document.activeElement).attr('name') === 'send_for_approval';
     const mainQty = $('input[name="main_quantity"]').val();
     const mainUnit = $('input[name="main_unit"]').val().trim();
     const mainPrice = $('select[name="main_price"]').val();
@@ -410,6 +550,12 @@ $('#orderForm').on('submit', function (e) {
     if (!mainIsComplete && !hasValidExtraItem) {
         e.preventDefault();
         alert('Please enter the main wallcovering item or at least one additional PO item.');
+        return false;
+    }
+
+    if (isApprovalSubmit && $('textarea[name="requestor_notes"]').val().trim() === '') {
+        e.preventDefault();
+        alert('Please enter requestor notes before sending for approval.');
         return false;
     }
 });

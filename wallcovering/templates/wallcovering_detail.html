@@ -627,6 +627,168 @@
 
 
     <!-- ORDERS -->
+{% if pending_order_groups %}
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+        <a class="text-dark font-weight-bold"
+           data-toggle="collapse"
+           href="#pendingOrdersCollapse"
+           role="button"
+           aria-expanded="true">
+            Pending Orders
+        </a>
+    </div>
+    <div class="collapse" id="pendingOrdersCollapse">
+    <div class="card-body p-0">
+
+        {% for group in pending_order_groups %}
+            <div class="wc-event-card">
+                <div class="wc-event-card-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-5">
+                            <div class="font-weight-bold">
+                                Pending Order #{{ group.order.id }}
+                            </div>
+                            <div class="small text-muted">
+                                Requested {{ group.order.date_requested|date:"m/d/Y" }}
+                                {% if group.order.requested_by %}by {{ group.order.requested_by }}{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 text-md-center mt-2 mt-md-0">
+                            <span class="badge badge-warning p-2">
+                                Awaiting Approval
+                            </span>
+                        </div>
+
+                        <div class="col-md-3 text-md-right mt-2 mt-md-0">
+                            <a href="{% url 'wallcovering_pending_order' group.order.id %}"
+                               class="btn btn-sm btn-outline-dark">
+                                Review Order
+                            </a>
+                        </div>
+                    </div>
+
+                    {% if group.order.requestor_notes %}
+                        <div class="small text-muted border-top pt-2 mt-2">
+                            {{ group.order.requestor_notes }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Description</th>
+                                <th class="text-right">Qty</th>
+                                <th>Unit</th>
+                                <th class="text-right">Price</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in group.all_items %}
+                                <tr>
+                                    <td>{{ item.item_description }}</td>
+                                    <td class="text-right">{{ item.quantity|floatformat:2|intcomma }}</td>
+                                    <td>{{ item.unit }}</td>
+                                    <td class="text-right">${{ item.price|floatformat:2|intcomma }}</td>
+                                    <td>{{ item.item_notes|default:"" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endfor %}
+
+    </div>
+    </div>
+</div>
+{% endif %}
+
+{% if approved_order_groups %}
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+        <a class="text-white font-weight-bold"
+           data-toggle="collapse"
+           href="#approvedOrdersCollapse"
+           role="button"
+           aria-expanded="true">
+            Approved Orders
+        </a>
+    </div>
+    <div class="collapse" id="approvedOrdersCollapse">
+    <div class="card-body p-0">
+
+        {% for group in approved_order_groups %}
+            <div class="wc-event-card">
+                <div class="wc-event-card-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-5">
+                            <div class="font-weight-bold">
+                                Approved Order #{{ group.order.id }}
+                            </div>
+                            <div class="small text-muted">
+                                Approved {{ group.order.date_approved|date:"m/d/Y" }}
+                                {% if group.order.approved_by %}by {{ group.order.approved_by }}{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 text-md-center mt-2 mt-md-0">
+                            <span class="badge badge-info p-2">
+                                Ready To Order
+                            </span>
+                        </div>
+
+                        <div class="col-md-3 text-md-right mt-2 mt-md-0">
+                            <a href="{% url 'wallcovering_pending_order' group.order.id %}"
+                               class="btn btn-sm btn-outline-info">
+                                Open Order
+                            </a>
+                        </div>
+                    </div>
+
+                    {% if group.order.approver_notes %}
+                        <div class="small text-muted border-top pt-2 mt-2">
+                            {{ group.order.approver_notes }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Description</th>
+                                <th class="text-right">Qty</th>
+                                <th>Unit</th>
+                                <th class="text-right">Price</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in group.all_items %}
+                                <tr>
+                                    <td>{{ item.item_description }}</td>
+                                    <td class="text-right">{{ item.quantity|floatformat:2|intcomma }}</td>
+                                    <td>{{ item.unit }}</td>
+                                    <td class="text-right">${{ item.price|floatformat:2|intcomma }}</td>
+                                    <td>{{ item.item_notes|default:"" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endfor %}
+
+    </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="card shadow-sm mb-3">
     <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
         <a class="text-white font-weight-bold"

@@ -3,6 +3,8 @@ from decimal import Decimal, InvalidOperation
 from datetime import date
 from django.apps import apps
 from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.db import transaction
 from django.db.models import Sum
 from django.shortcuts import render, get_object_or_404, redirect
@@ -17,7 +19,9 @@ from .models import (
     OutgoingWallcovering,
     OutgoingItem,
     WallcoveringNotes,
-    WallcoveringPricing
+    WallcoveringPricing,
+    Pending_Orders,
+    Pending_Order_Items
 )
 from submittals.models import SubmittalItems, SubmittalApprovals
 from changeorder.models import Wallcovering_Change_Orders
@@ -112,6 +116,27 @@ def wallcovering_home(request):
 
             wc.change_order_badge_text = ""
             wc.change_order_badge_class = ""
+            wc.order_approval_badge_text = ""
+            wc.order_approval_badge_class = ""
+
+            has_pending_order_approval = Pending_Orders.objects.filter(
+                pending_order_items__link_to_wallcovering=wc,
+                date_approved__isnull=True,
+                is_ordered=False
+            ).exists()
+
+            has_approved_pending_order = Pending_Orders.objects.filter(
+                pending_order_items__link_to_wallcovering=wc,
+                date_approved__isnull=False,
+                is_ordered=False
+            ).exists()
+
+            if has_approved_pending_order:
+                wc.order_approval_badge_text = "Pending Order Approved!"
+                wc.order_approval_badge_class = "badge badge-info"
+            elif has_pending_order_approval:
+                wc.order_approval_badge_text = "Order Approval Required"
+                wc.order_approval_badge_class = "badge badge-warning"
 
             attention_count = attention_cop_items.count()
 
@@ -551,6 +576,46 @@ def wallcovering_detail(request, wallcovering_id):
         "-id"
     )
 
+    pending_order_groups = []
+    pending_orders = Pending_Orders.objects.filter(
+        pending_order_items__link_to_wallcovering=wallcovering,
+        date_approved__isnull=True,
+        is_ordered=False
+    ).select_related(
+        "job_number",
+        "vendor",
+        "requested_by",
+        "approved_by"
+    ).distinct().order_by("-date_requested", "-id")
+
+    for pending_order in pending_orders:
+        pending_order_groups.append({
+            "order": pending_order,
+            "all_items": Pending_Order_Items.objects.filter(
+                pending_order=pending_order
+            ).order_by("id"),
+        })
+
+    approved_order_groups = []
+    approved_orders = Pending_Orders.objects.filter(
+        pending_order_items__link_to_wallcovering=wallcovering,
+        date_approved__isnull=False,
+        is_ordered=False
+    ).select_related(
+        "job_number",
+        "vendor",
+        "requested_by",
+        "approved_by"
+    ).distinct().order_by("-date_approved", "-id")
+
+    for approved_order in approved_orders:
+        approved_order_groups.append({
+            "order": approved_order,
+            "all_items": Pending_Order_Items.objects.filter(
+                pending_order=approved_order
+            ).order_by("id"),
+        })
+
     context = {
         'wallcovering': wallcovering,
         'order_items': order_items,
@@ -569,6 +634,8 @@ def wallcovering_detail(request, wallcovering_id):
         "submittal_rows": submittal_rows,
         "label_packages": label_packages,
         "linked_change_orders": linked_change_orders,
+        "pending_order_groups": pending_order_groups,
+        "approved_order_groups": approved_order_groups,
     }
 
     return render(request, 'wallcovering_detail.html', context)
@@ -719,6 +786,15 @@ def get_next_po_number():
     return po_number
 
 
+def get_submitted_po_number(request):
+    custom_po_number = (request.POST.get("custom_po_number") or "").strip()
+
+    if custom_po_number:
+        return custom_po_number
+
+    return f"TR{get_next_po_number()}"
+
+
 def clean_decimal(value):
     if value in [None, ""]:
         return Decimal("0.00")
@@ -743,8 +819,199 @@ def wallcovering_add_order(request, wallcovering_id):
     default_description = f"{wallcovering.code or ''} {wallcovering.pattern or ''}".strip()
 
     if request.method == "POST":
-        po_number_int = get_next_po_number()
-        po_number = f"TR{po_number_int}"
+        main_quantity = clean_decimal(request.POST.get("main_quantity"))
+        main_unit = (request.POST.get("main_unit") or "").strip()
+        main_price = clean_decimal(request.POST.get("main_price"))
+        main_item_notes = request.POST.get("main_item_notes")
+
+        descriptions = request.POST.getlist("extra_description[]")
+        quantities = request.POST.getlist("extra_quantity[]")
+        units = request.POST.getlist("extra_unit[]")
+        prices = request.POST.getlist("extra_price[]")
+        notes = request.POST.getlist("extra_notes[]")
+
+        extra_items = []
+        for i in range(len(descriptions)):
+            description = (descriptions[i] or "").strip()
+            quantity = clean_decimal(quantities[i] if i < len(quantities) else "")
+            unit = (units[i] if i < len(units) else "").strip()
+            price = clean_decimal(prices[i] if i < len(prices) else "")
+            item_note = notes[i] if i < len(notes) else ""
+
+            if description == "" and quantity == Decimal("0.00"):
+                continue
+
+            extra_items.append({
+                "description": description,
+                "quantity": quantity,
+                "unit": unit,
+                "price": price,
+                "item_note": item_note,
+            })
+
+        has_main_item = main_quantity > Decimal("0.00") and main_unit and main_price is not None
+
+        if "send_for_approval" in request.POST:
+            requestor_notes = (request.POST.get("requestor_notes") or "").strip()
+
+            if not requestor_notes:
+                messages.error(request, "Please enter requestor notes before sending for approval.")
+                return redirect("wallcovering_add_order", wallcovering_id=wallcovering.id)
+
+            if not has_main_item and not extra_items:
+                messages.error(request, "Please enter the main wallcovering item or at least one additional PO item.")
+                return redirect("wallcovering_add_order", wallcovering_id=wallcovering.id)
+
+            employee = Employees.objects.filter(user=request.user).first()
+
+            with transaction.atomic():
+                pending_order = Pending_Orders.objects.create(
+                    job_number=wallcovering.job_number,
+                    vendor=wallcovering.vendor,
+                    description=default_description,
+                    date_ordered=request.POST.get("date_ordered") or date.today(),
+                    notes=request.POST.get("order_notes"),
+                    date_requested=date.today(),
+                    requested_by=employee,
+                    requestor_notes=requestor_notes,
+                )
+
+                if has_main_item:
+                    Pending_Order_Items.objects.create(
+                        pending_order=pending_order,
+                        wallcovering=wallcovering,
+                        quantity=main_quantity,
+                        unit=main_unit,
+                        price=main_price,
+                        item_description=default_description,
+                        item_notes=main_item_notes,
+                        link_to_wallcovering=wallcovering,
+                    )
+
+                for item in extra_items:
+                    Pending_Order_Items.objects.create(
+                        pending_order=pending_order,
+                        wallcovering=None,
+                        quantity=item["quantity"],
+                        unit=item["unit"],
+                        price=item["price"],
+                        item_description=item["description"],
+                        item_notes=item["item_note"],
+                        link_to_wallcovering=wallcovering,
+                    )
+
+            current_user_email = ""
+            if employee and employee.email:
+                current_user_email = employee.email.strip().lower()
+            elif request.user.email:
+                current_user_email = request.user.email.strip().lower()
+
+            recipients = []
+            seen_recipients = set()
+
+            def add_recipient(email, skip_if_current_user=False):
+                if not email:
+                    return
+
+                cleaned_email = email.strip()
+                normalized_email = cleaned_email.lower()
+
+                if normalized_email == "lee@gerloffpainting.com":
+                    return
+
+                if skip_if_current_user and normalized_email == current_user_email:
+                    return
+
+                try:
+                    validate_email(cleaned_email)
+                except ValidationError:
+                    return
+
+                if normalized_email in seen_recipients:
+                    return
+
+                recipients.append(cleaned_email)
+                seen_recipients.add(normalized_email)
+
+            add_recipient("bridgette@gerloffpainting.com")
+            add_recipient("joe@gerloffpainting.com")
+
+            if wallcovering.job_number.project_manager:
+                add_recipient(wallcovering.job_number.project_manager.email)
+
+            if wallcovering.job_number.estimator:
+                add_recipient(wallcovering.job_number.estimator.email)
+
+            email_lines = [
+                f"Job Name: {wallcovering.job_number.job_name}",
+                f"Project Manager: {wallcovering.job_number.project_manager or ''}",
+                "",
+                "You have a pending wallcovering order that needs approval",
+                "",
+                "Pending Order Items:",
+            ]
+
+            pending_items = Pending_Order_Items.objects.filter(
+                pending_order=pending_order
+            ).order_by("id")
+
+            note_lines = [
+                "Order Approval Requested.",
+                "",
+                "Pending Order Items:",
+            ]
+
+            for item in pending_items:
+                note_lines.append(
+                    f"Description: {item.item_description}, Quantity: {item.quantity}, Unit: {item.unit}, Price: {item.price}"
+                )
+                email_lines.append(
+                    f"- {item.quantity} {item.unit} of {item.item_description}"
+                )
+
+            note_lines.extend([
+                "",
+                f"Requestor Notes: {requestor_notes}",
+                "",
+                f"Email Recipients: {', '.join(recipients) if recipients else 'None'}",
+            ])
+
+            if employee:
+                WallcoveringNotes.objects.create(
+                    pattern=wallcovering,
+                    date=date.today(),
+                    user=employee,
+                    note="\r\n".join(note_lines)[:2000],
+                )
+            else:
+                messages.error(request, "Could not add an approval note because your employee record was not found.")
+
+            email_lines.extend([
+                "",
+                f"http://gp-webserver/wallcovering/wallcovering_detail/{wallcovering.id}",
+            ])
+
+            if recipients:
+                sender = employee.email if employee and employee.email else "bridgette@gerloffpainting.com"
+
+                try:
+                    Email.sendEmail(
+                        "Pending Wallcovering Approval Needed",
+                        "\r\n".join(email_lines),
+                        recipients,
+                        False,
+                        sender
+                    )
+                    messages.success(request, "Approval email sent.")
+                except:
+                    messages.error(request, "There was a problem sending the approval email.")
+            else:
+                messages.error(request, "No approval email recipients were found.")
+
+            messages.success(request, "Wallcovering order sent for approval.")
+            return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
+
+        po_number = get_submitted_po_number(request)
 
         default_description = f"{wallcovering.code or ''} {wallcovering.pattern or ''}".strip()
         if wallcovering.vendor.company_email:
@@ -759,12 +1026,12 @@ def wallcovering_add_order(request, wallcovering_id):
             "",
             f"Job Name: {wallcovering.job_number.job_name}",
             f"Vendor: {wallcovering.vendor.company_name}",
-            f"PO#: TR{po_number_int}",
+            f"PO#: {po_number}",
             "",])
         lines2.extend([
             "",
             f"Job Name: {wallcovering.job_number.job_name}",
-            f"PO#: TR{po_number_int}",
+            f"PO#: {po_number}",
             "", ])
         order = Orders.objects.create(
             po_number=po_number,
@@ -776,58 +1043,40 @@ def wallcovering_add_order(request, wallcovering_id):
         )
 
         # MAIN WALLCOVERING ITEM - this is the ONLY item linked to Wallcovering
-        main_quantity = clean_decimal(request.POST.get("main_quantity"))
-        main_unit = (request.POST.get("main_unit") or "").strip()
-        main_price = clean_decimal(request.POST.get("main_price"))
-        if main_quantity is not None and main_quantity > Decimal("0.00") and main_unit and main_price is not None:
+        if has_main_item:
             OrderItems.objects.create(
                 order=order,
                 wallcovering=wallcovering,
-                quantity=clean_decimal(request.POST.get("main_quantity")),
-                unit=request.POST.get("main_unit"),
-                price=clean_decimal(request.POST.get("main_price")),
+                quantity=main_quantity,
+                unit=main_unit,
+                price=main_price,
                 item_description=default_description,
-                item_notes=request.POST.get("main_item_notes"),
+                item_notes=main_item_notes,
                 link_to_wallcovering = wallcovering,
             )
             lines.extend([
-                f"{clean_decimal(request.POST.get('main_quantity'))} {request.POST.get('main_unit')} of {wallcovering.code} {wallcovering.vendor.company_name} {wallcovering.pattern}",
+                f"{main_quantity} {main_unit} of {wallcovering.code} {wallcovering.vendor.company_name} {wallcovering.pattern}",
                 "",])
             lines2.extend([
-                f"{clean_decimal(request.POST.get('main_quantity'))} {request.POST.get('main_unit')} of {wallcovering.code} {wallcovering.vendor.company_name} {wallcovering.pattern}",
+                f"{main_quantity} {main_unit} of {wallcovering.code} {wallcovering.vendor.company_name} {wallcovering.pattern}",
                 "", ])
         # EXTRA ITEMS - paste, adhesive, sundries, etc.
-        descriptions = request.POST.getlist("extra_description[]")
-        quantities = request.POST.getlist("extra_quantity[]")
-        units = request.POST.getlist("extra_unit[]")
-        prices = request.POST.getlist("extra_price[]")
-        notes = request.POST.getlist("extra_notes[]")
-
-        for i in range(len(descriptions)):
-            description = (descriptions[i] or "").strip()
-            quantity = clean_decimal(quantities[i] if i < len(quantities) else "")
-            unit = (units[i] if i < len(units) else "").strip()
-            price = clean_decimal(prices[i] if i < len(prices) else "")
-            item_note = notes[i] if i < len(notes) else ""
-
-            if description == "" and quantity == Decimal("0.00"):
-                continue
-
+        for item in extra_items:
             OrderItems.objects.create(
                 order=order,
                 wallcovering=None,  # important
-                quantity=quantity,
-                unit=unit,
-                price=price,
-                item_description=description,
-                item_notes=item_note,
+                quantity=item["quantity"],
+                unit=item["unit"],
+                price=item["price"],
+                item_description=item["description"],
+                item_notes=item["item_note"],
                 link_to_wallcovering=wallcovering,
             )
             lines.extend([
-                f"{quantity} {unit} of {description}",
+                f"{item['quantity']} {item['unit']} of {item['description']}",
                 "", ])
             lines2.extend([
-                f"{quantity} {unit} of {description}",
+                f"{item['quantity']} {item['unit']} of {item['description']}",
                 "", ])
         subject = "Wallcovering Purchase Order"
         employee = Employees.objects.filter(user=request.user).first()
@@ -875,6 +1124,383 @@ def wallcovering_add_order(request, wallcovering_id):
     })
 
 
+
+
+def wallcovering_pending_order(request, pending_order_id):
+    Orders = apps.get_model('jobs', 'Orders')
+
+    pending_order = get_object_or_404(
+        Pending_Orders.objects.select_related(
+            "job_number",
+            "vendor",
+            "requested_by",
+            "approved_by"
+        ),
+        id=pending_order_id,
+        is_ordered=False
+    )
+
+    first_item = Pending_Order_Items.objects.filter(
+        pending_order=pending_order,
+        link_to_wallcovering__isnull=False
+    ).select_related("link_to_wallcovering").first()
+
+    if not first_item:
+        messages.error(request, "This pending order is not linked to a wallcovering.")
+        return redirect("wallcovering_home")
+
+    wallcovering = first_item.link_to_wallcovering
+    default_description = f"{wallcovering.code or ''} {wallcovering.pattern or ''}".strip()
+
+    pricing = WallcoveringPricing.objects.filter(
+        wallcovering=wallcovering
+    ).order_by("-quote_date", "-id")
+
+    def get_posted_items():
+        main_quantity = clean_decimal(request.POST.get("main_quantity"))
+        main_unit = (request.POST.get("main_unit") or "").strip()
+        main_price = clean_decimal(request.POST.get("main_price"))
+        main_item_notes = request.POST.get("main_item_notes")
+
+        descriptions = request.POST.getlist("extra_description[]")
+        quantities = request.POST.getlist("extra_quantity[]")
+        units = request.POST.getlist("extra_unit[]")
+        prices = request.POST.getlist("extra_price[]")
+        notes = request.POST.getlist("extra_notes[]")
+
+        extra_items = []
+        for i in range(len(descriptions)):
+            description = (descriptions[i] or "").strip()
+            quantity = clean_decimal(quantities[i] if i < len(quantities) else "")
+            unit = (units[i] if i < len(units) else "").strip()
+            price = clean_decimal(prices[i] if i < len(prices) else "")
+            item_note = notes[i] if i < len(notes) else ""
+
+            if description == "" and quantity == Decimal("0.00"):
+                continue
+
+            extra_items.append({
+                "description": description,
+                "quantity": quantity,
+                "unit": unit,
+                "price": price,
+                "item_note": item_note,
+            })
+
+        has_main_item = main_quantity > Decimal("0.00") and main_unit and main_price is not None
+
+        return {
+            "main_quantity": main_quantity,
+            "main_unit": main_unit,
+            "main_price": main_price,
+            "main_item_notes": main_item_notes,
+            "extra_items": extra_items,
+            "has_main_item": has_main_item,
+        }
+
+    def replace_pending_items(posted_items):
+        Pending_Order_Items.objects.filter(pending_order=pending_order).delete()
+
+        if posted_items["has_main_item"]:
+            Pending_Order_Items.objects.create(
+                pending_order=pending_order,
+                wallcovering=wallcovering,
+                quantity=posted_items["main_quantity"],
+                unit=posted_items["main_unit"],
+                price=posted_items["main_price"],
+                item_description=default_description,
+                item_notes=posted_items["main_item_notes"],
+                link_to_wallcovering=wallcovering,
+            )
+
+        for item in posted_items["extra_items"]:
+            Pending_Order_Items.objects.create(
+                pending_order=pending_order,
+                wallcovering=None,
+                quantity=item["quantity"],
+                unit=item["unit"],
+                price=item["price"],
+                item_description=item["description"],
+                item_notes=item["item_note"],
+                link_to_wallcovering=wallcovering,
+            )
+
+    def get_pending_order_changes(posted_items):
+        changes = []
+        posted_date_ordered = request.POST.get("date_ordered") or date.today()
+        posted_order_notes = request.POST.get("order_notes") or ""
+
+        existing_date_ordered = pending_order.date_ordered.isoformat() if pending_order.date_ordered else ""
+        if str(posted_date_ordered) != existing_date_ordered:
+            changes.append(f"Date Ordered changed from {existing_date_ordered or 'blank'} to {posted_date_ordered or 'blank'}")
+
+        if posted_order_notes != (pending_order.notes or ""):
+            changes.append("Order Notes changed.")
+
+        existing_items = list(Pending_Order_Items.objects.filter(
+            pending_order=pending_order
+        ).order_by("id"))
+
+        existing_main = next((item for item in existing_items if item.wallcovering_id == wallcovering.id), None)
+
+        if existing_main or posted_items["has_main_item"]:
+            if not existing_main:
+                changes.append("Main wallcovering item added.")
+            elif not posted_items["has_main_item"]:
+                changes.append("Main wallcovering item removed.")
+            else:
+                main_comparisons = [
+                    ("Main Quantity", existing_main.quantity, posted_items["main_quantity"]),
+                    ("Main Unit", existing_main.unit or "", posted_items["main_unit"]),
+                    ("Main Price", existing_main.price, posted_items["main_price"]),
+                    ("Main Notes", existing_main.item_notes or "", posted_items["main_item_notes"] or ""),
+                ]
+
+                for label, old_value, new_value in main_comparisons:
+                    if str(old_value or "") != str(new_value or ""):
+                        changes.append(f"{label} changed from {old_value or 'blank'} to {new_value or 'blank'}")
+
+        existing_extra_items = [
+            {
+                "description": item.item_description or "",
+                "quantity": item.quantity,
+                "unit": item.unit or "",
+                "price": item.price,
+                "item_note": item.item_notes or "",
+            }
+            for item in existing_items
+            if item.wallcovering_id is None
+        ]
+
+        posted_extra_items = posted_items["extra_items"]
+
+        if len(existing_extra_items) != len(posted_extra_items):
+            changes.append(f"Additional item count changed from {len(existing_extra_items)} to {len(posted_extra_items)}")
+
+        for index, posted_item in enumerate(posted_extra_items):
+            if index >= len(existing_extra_items):
+                changes.append(f"Additional item added: {posted_item['description']}")
+                continue
+
+            existing_item = existing_extra_items[index]
+            comparisons = [
+                ("Description", existing_item["description"], posted_item["description"]),
+                ("Quantity", existing_item["quantity"], posted_item["quantity"]),
+                ("Unit", existing_item["unit"], posted_item["unit"]),
+                ("Price", existing_item["price"], posted_item["price"]),
+                ("Notes", existing_item["item_note"], posted_item["item_note"]),
+            ]
+
+            for label, old_value, new_value in comparisons:
+                if str(old_value or "") != str(new_value or ""):
+                    changes.append(
+                        f"Additional item {index + 1} {label} changed from {old_value or 'blank'} to {new_value or 'blank'}"
+                    )
+
+        if len(existing_extra_items) > len(posted_extra_items):
+            for removed_item in existing_extra_items[len(posted_extra_items):]:
+                changes.append(f"Additional item removed: {removed_item['description'] or 'No Description'}")
+
+        return changes
+
+    if request.method == "POST":
+        posted_items = get_posted_items()
+
+        if not posted_items["has_main_item"] and not posted_items["extra_items"]:
+            messages.error(request, "Please enter the main wallcovering item or at least one additional PO item.")
+            return redirect("wallcovering_pending_order", pending_order_id=pending_order.id)
+
+        employee = Employees.objects.filter(user=request.user).first()
+
+        if not pending_order.date_approved:
+            approver_notes = (request.POST.get("approver_notes") or "").strip()
+            changes = get_pending_order_changes(posted_items)
+
+            with transaction.atomic():
+                pending_order.date_ordered = request.POST.get("date_ordered") or date.today()
+                pending_order.notes = request.POST.get("order_notes")
+                pending_order.date_approved = date.today()
+                pending_order.approved_by = employee
+                pending_order.approver_notes = approver_notes
+                pending_order.save()
+                replace_pending_items(posted_items)
+
+            approval_link = f"http://gp-webserver/wallcovering/wallcovering_detail/{wallcovering.id}"
+            sender = employee.email if employee and employee.email else "bridgette@gerloffpainting.com"
+            approval_recipients = ["bridgette@gerloffpainting.com"]
+
+            if employee and employee.email:
+                approver_email = employee.email.strip()
+                if approver_email.lower() not in [email.lower() for email in approval_recipients]:
+                    approval_recipients.append(approver_email)
+
+            approval_lines = [
+                "Order is approved",
+                "",
+                f"Job Name: {wallcovering.job_number.job_name}",
+                "",
+                approval_link,
+                "",
+                "Approver Notes:",
+                approver_notes or "None",
+                "",
+                f"Email Recipients: {', '.join(approval_recipients)}",
+                "",
+                "Changes Made:",
+            ]
+
+            if changes:
+                approval_lines.extend([f"- {change}" for change in changes])
+            else:
+                approval_lines.append("- No changes were made.")
+
+            if employee:
+                WallcoveringNotes.objects.create(
+                    pattern=wallcovering,
+                    date=date.today(),
+                    user=employee,
+                    note="\r\n".join(approval_lines)[:2000],
+                )
+            else:
+                messages.error(request, "Could not add an approval note because your employee record was not found.")
+
+            try:
+                Email.sendEmail(
+                    "Order is approved",
+                    "\r\n".join(approval_lines),
+                    approval_recipients,
+                    False,
+                    sender
+                )
+                messages.success(request, "Order approved and email sent.")
+            except:
+                messages.error(request, "Order approved, but there was a problem sending the approval email.")
+
+            return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
+
+        po_number = get_submitted_po_number(request)
+
+        with transaction.atomic():
+            pending_order.date_ordered = request.POST.get("date_ordered") or date.today()
+            pending_order.notes = request.POST.get("order_notes")
+            pending_order.is_ordered = True
+            pending_order.save()
+            replace_pending_items(posted_items)
+
+            order = Orders.objects.create(
+                po_number=po_number,
+                job_number=wallcovering.job_number,
+                vendor=wallcovering.vendor,
+                description=default_description,
+                date_ordered=pending_order.date_ordered,
+                notes=pending_order.notes,
+            )
+
+            if posted_items["has_main_item"]:
+                OrderItems.objects.create(
+                    order=order,
+                    wallcovering=wallcovering,
+                    quantity=posted_items["main_quantity"],
+                    unit=posted_items["main_unit"],
+                    price=posted_items["main_price"],
+                    item_description=default_description,
+                    item_notes=posted_items["main_item_notes"],
+                    link_to_wallcovering=wallcovering,
+                )
+
+            for item in posted_items["extra_items"]:
+                OrderItems.objects.create(
+                    order=order,
+                    wallcovering=None,
+                    quantity=item["quantity"],
+                    unit=item["unit"],
+                    price=item["price"],
+                    item_description=item["description"],
+                    item_notes=item["item_note"],
+                    link_to_wallcovering=wallcovering,
+                )
+
+        vendor_name = wallcovering.vendor.company_name if wallcovering.vendor else ""
+        vendor_email = wallcovering.vendor.company_email if wallcovering.vendor else ""
+
+        if vendor_email:
+            lines = [f"Send this email to {wallcovering.vendor}: - {vendor_email}"]
+        else:
+            lines = [f"Send this email to {wallcovering.vendor}. No Email is entered in Trinity.."]
+
+        lines2 = ["New Wallcovering Order"]
+        lines.extend([
+            "",
+            "Hello I would like to place an order",
+            "",
+            f"Job Name: {wallcovering.job_number.job_name}",
+            f"Vendor: {vendor_name}",
+            f"PO#: {po_number}",
+            "",
+        ])
+        lines2.extend([
+            "",
+            f"Job Name: {wallcovering.job_number.job_name}",
+            f"PO#: {po_number}",
+            "",
+        ])
+
+        if posted_items["has_main_item"]:
+            item_line = (
+                f"{posted_items['main_quantity']} {posted_items['main_unit']} "
+                f"of {wallcovering.code} {vendor_name} {wallcovering.pattern}"
+            )
+            lines.extend([item_line, ""])
+            lines2.extend([item_line, ""])
+
+        for item in posted_items["extra_items"]:
+            item_line = f"{item['quantity']} {item['unit']} of {item['description']}"
+            lines.extend([item_line, ""])
+            lines2.extend([item_line, ""])
+
+        if employee and employee.email:
+            recipient = [employee.email]
+            sender = employee.email
+        else:
+            recipient = ["bridgette@gerloffpainting.com"]
+            sender = "bridgette@gerloffpainting.com"
+
+        try:
+            Email.sendEmail("Wallcovering Purchase Order", "\r\n".join(lines), recipient, False, sender)
+            messages.success(request, "Please Forward the Order Email to the Vendor ")
+        except:
+            messages.error(request, "There was a problem sending the email, you will have to manually send the order.")
+
+        warehouse_recipients = ["bridgette@gerloffpainting.com", "warehouse@gerloffpainting.com"]
+        if employee and employee.email and employee.email not in warehouse_recipients:
+            warehouse_recipients.append(employee.email)
+
+        try:
+            Email.sendEmail("New Wallcovering Order", "\r\n".join(lines2), warehouse_recipients, False, sender)
+            messages.success(request, "Email Sent to Warehouse")
+        except:
+            messages.error(request, "There was a problem sending the email to the warehouse, you will have to manually send email")
+
+        messages.success(request, f"Order {po_number} created.")
+        return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
+
+    pending_items = Pending_Order_Items.objects.filter(
+        pending_order=pending_order
+    ).order_by("id")
+
+    main_item = pending_items.filter(wallcovering=wallcovering).first()
+    extra_items = pending_items.filter(wallcovering__isnull=True)
+
+    return render(request, "wallcovering_add_order.html", {
+        "pending_order_review": True,
+        "pending_order": pending_order,
+        "wallcovering": wallcovering,
+        "pricing": pricing,
+        "default_description": default_description,
+        "main_item": main_item,
+        "extra_items": extra_items,
+        "today": date.today(),
+    })
 
 
 def wallcovering_add_pricing(request, wallcovering_id):
@@ -1295,6 +1921,10 @@ def wallcovering_order_edit(request, order_id):
     extra_items = order_items.filter(wallcovering__isnull=True)
 
     if request.method == "POST":
+        custom_po_number = (request.POST.get("custom_po_number") or "").strip()
+        if custom_po_number:
+            order.po_number = custom_po_number
+
         order.date_ordered = request.POST.get("date_ordered") or date.today()
         order.notes = request.POST.get("order_notes")
         order.save()

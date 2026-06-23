@@ -316,3 +316,52 @@ class WallcoveringNotes(models.Model):
     date = models.DateField(null=True, blank=True)
     user = models.ForeignKey(employees.models.Employees, on_delete=models.PROTECT)
     note = models.CharField(null=True, max_length=2000)
+
+class Pending_Orders(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    job_number = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT)
+    vendor = models.ForeignKey(
+        Vendors, on_delete=models.PROTECT, null=True, blank=True)
+    description = models.CharField(max_length=2000)
+    date_ordered = models.DateField(null=True, blank=True)
+    notes = models.CharField(null=True, max_length=2000, blank=True)
+    date_requested = models.DateField(null=True, blank=True)
+    date_approved = models.DateField(null=True, blank=True)
+    requested_by = models.ForeignKey(
+        employees.models.Employees,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='requested_pending_wallcovering_orders')
+    approved_by = models.ForeignKey(
+        employees.models.Employees,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='approved_pending_wallcovering_orders')
+    requestor_notes = models.CharField(null=True, max_length=2000, blank=True)
+    approver_notes = models.CharField(null=True, max_length=2000, blank=True)
+    is_ordered = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.job_number} {self.description}"
+
+
+class Pending_Order_Items(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    pending_order = models.ForeignKey(
+        Pending_Orders, on_delete=models.PROTECT, related_name='pending_order_items')
+    wallcovering = models.ForeignKey(
+        Wallcovering, on_delete=models.PROTECT, related_name='pending_orderitems', null=True, blank=True)
+    quantity = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True, verbose_name='Quantity Ordered')
+    unit = models.CharField(null=True, max_length=10)
+    price = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True)
+    item_description = models.CharField(null=True, max_length=100)
+    item_notes = models.CharField(null=True, max_length=1000, blank=True)
+    link_to_wallcovering = models.ForeignKey(
+        Wallcovering, on_delete=models.PROTECT, related_name='linked_pending_orderitems', null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.item_description}"
