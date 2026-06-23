@@ -1356,9 +1356,25 @@ function loadPricingFiles() {
             });
     }
 
-function uploadPricingFile(file) {
+function getPricingUploadLabel(file) {
+    const today = new Date();
+    const dateLabel = [
+        String(today.getMonth() + 1).padStart(2, "0"),
+        String(today.getDate()).padStart(2, "0"),
+        today.getFullYear()
+    ].join("/");
+    const defaultName = file.name.replace(/\.[^/.]+$/, "");
+
+    return prompt(
+        "File will be relabeled to " + dateLabel + " along with your file name.\n\nEnter file name:",
+        defaultName
+    );
+}
+
+function uploadPricingFile(file, fileName) {
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("file_name", fileName);
 
     return fetch(pricingFilesUploadUrl, {
         method: "POST",
@@ -1378,7 +1394,16 @@ function uploadPricingFile(file) {
 function uploadPricingFiles(files) {
     const uploads = [];
     for (let i = 0; i < files.length; i++) {
-        uploads.push(uploadPricingFile(files[i]));
+        const fileName = getPricingUploadLabel(files[i]);
+        if (fileName === null) {
+            continue;
+        }
+
+        uploads.push(uploadPricingFile(files[i], fileName));
+    }
+
+    if (!uploads.length) {
+        return;
     }
 
     Promise.all(uploads)
