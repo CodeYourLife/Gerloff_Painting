@@ -134,6 +134,7 @@ class Jobs(models.Model):
     has_safety_packet_been_sent = models.BooleanField(default=False)
     billings_to_date = models.DecimalField(
         max_digits=9, decimal_places=2, blank=True, null=True)
+    is_start_date_guessed = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.job_name}"

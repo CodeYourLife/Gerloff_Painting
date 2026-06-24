@@ -36,6 +36,8 @@ from django.db.models import Count, Q
 from django.utils.text import get_valid_filename
 
 
+DEFAULT_BOOKING_WALLCOVERING_PATTERN = "Default at Booking-Please Complete"
+
 
 def wallcovering_home(request):
     selected_filter = request.GET.get("filter", "all")
@@ -673,23 +675,37 @@ def wallcovering_new(request):
                     category=vendor_category
                 )
 
-        wallcovering = Wallcovering.objects.create(
+        wallcovering_defaults = {
+            "job_number": selected_job,
+            "vendor": vendor_obj,
+            "code": request.POST.get("code"),
+            "pattern": request.POST.get("pattern"),
+            "estimated_quantity": request.POST.get("estimated_quantity") or 0,
+            "estimated_unit": request.POST.get("estimated_unit"),
+            "roll_width": request.POST.get("roll_width"),
+            "roll_length": request.POST.get("roll_length"),
+            "vertical_repeat": request.POST.get("vertical_repeat"),
+            "cut_charge": request.POST.get("cut_charge"),
+            "notes": request.POST.get("notes"),
+            "is_owner_furnished": bool(request.POST.get("is_owner_furnished")),
+            "is_random_reverse": bool(request.POST.get("is_random_reverse")),
+            "is_repeat": bool(request.POST.get("is_repeat")),
+            "increment_requirement": request.POST.get("increment_requirement"),
+        }
+
+        wallcovering = Wallcovering.objects.filter(
             job_number=selected_job,
-            vendor=vendor_obj,
-            code=request.POST.get("code"),
-            pattern=request.POST.get("pattern"),
-            estimated_quantity=request.POST.get("estimated_quantity") or 0,
-            estimated_unit=request.POST.get("estimated_unit"),
-            roll_width=request.POST.get("roll_width"),
-            roll_length=request.POST.get("roll_length"),
-            vertical_repeat=request.POST.get("vertical_repeat"),
-            cut_charge=request.POST.get("cut_charge"),
-            notes=request.POST.get("notes"),
-            is_owner_furnished=bool(request.POST.get("is_owner_furnished")),
-            is_random_reverse=bool(request.POST.get("is_random_reverse")),
-            is_repeat=bool(request.POST.get("is_repeat")),
-            increment_requirement=request.POST.get("increment_requirement"),
-        )
+            pattern=DEFAULT_BOOKING_WALLCOVERING_PATTERN,
+            is_void=False
+        ).first()
+
+        if wallcovering:
+            for field, value in wallcovering_defaults.items():
+                setattr(wallcovering, field, value)
+            wallcovering.save()
+            messages.success(request, "Updated the default wallcovering created at booking.")
+        else:
+            wallcovering = Wallcovering.objects.create(**wallcovering_defaults)
         if wallcovering.code:
             description = f"{wallcovering.code} {wallcovering.vendor.company_name} {wallcovering.pattern}"
         else:
