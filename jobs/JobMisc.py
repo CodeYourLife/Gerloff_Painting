@@ -25,6 +25,7 @@ def start_date_change(job, newdate, status, note, author, did_date_change, notif
         statusnote = "Changed Status to Inactive"
     if did_date_change == True:
         job.start_date = newdate
+        job.is_start_date_guessed = False
 
         JobNotes.objects.create(job_number=job,
                                 note="Start Date Changed to " + newdate + ". " + note + ". " + statusnote,

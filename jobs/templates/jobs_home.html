@@ -319,9 +319,11 @@
         <span class="badge badge-secondary">Punch</span>
     {% elif x.is_active %}
         <span class="badge badge-success">Active</span>
+    {% elif x.is_start_date_guessed %}
+        <span class="badge badge-secondary">Date Guessed</span>
     {% endif %}
 </td>
-            <td style="white-space:nowrap" data-toggle="modal" data-target="#startdate-modal" ><a href="#">{{x.start_date|date:'M-d-Y'}}</a></td>
+            <td style="white-space:nowrap{% if x.is_start_date_guessed %}; background-color: yellow{% endif %}" data-toggle="modal" data-target="#startdate-modal" ><a href="#">{{x.start_date|date:'M-d-Y'}}</a></td>
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px" >{{x.client}}</td>
                 <td data-toggle="modal" data-target="#super-modal" onclick="populate_super_modal('{{x.job_name}}','{{x.superintendent.id}}','{{x.job_number}}','{{x.superintendent.first_name}}',this,1)"><a href="#">{{x.superintendent.first_name}}</a></td>
                 <td>{% if x.contract_amount %}{{x.contract_amount}}{% else %}T and M{% endif %}</td>

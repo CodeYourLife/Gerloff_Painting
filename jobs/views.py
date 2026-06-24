@@ -227,6 +227,7 @@ def update_job_info(request, jobnumber):
             selectedjob.is_work_order_done = checkbox_value('is_work_order_done')
             selectedjob.is_on_base = checkbox_value('on_base2')
             selectedjob.is_off_hours = checkbox_value('off_hours')
+            selectedjob.is_start_date_guessed = checkbox_value('is_start_date_guessed')
             selectedjob.submittals_needed = checkbox_value('has_submittals')
             selectedjob.is_bonded = checkbox_value('is_bonded')
             selectedjob.save()
@@ -855,6 +856,7 @@ def upload_new_job(request):
             if sheet_obj.cell(row=57, column=2).value: job.special_paint_needed = True
             if sheet_obj.cell(row=29, column=2).value: job.has_paint = True
             if sheet_obj.cell(row=30, column=2).value: job.has_wallcovering = True
+            if sheet_obj.cell(row=248, column=2).value: job.is_start_date_guessed = True
             if sheet_obj.cell(row=52, column=2).value:
                 job.submittals_needed = False
             else:
