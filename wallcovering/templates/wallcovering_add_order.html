@@ -134,6 +134,55 @@
 
     <div class="card-body">
 
+        {% if pending_order_review and not pending_order.date_approved and linked_change_orders %}
+            <div class="border border-danger rounded p-3 mb-3" style="background-color: #fff5f5; border-width: 3px !important;">
+                {% for link in linked_change_orders %}
+                    <div class="{% if not forloop.last %}border-bottom pb-3 mb-3{% endif %}">
+                        <div class="font-weight-bold mb-2">
+                            COP {{ link.change_order.cop_number }} - {{ link.change_order.description }}
+                        </div>
+
+                        <div class="row mb-2">
+                            <div class="col-md-3">
+                                <div class="text-muted small">Quantity Added</div>
+                                <div>{{ link.quantity_added|default_if_none:"" }}</div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-muted small">Units</div>
+                                <div>{{ link.units|default_if_none:"" }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="text-muted small">Notes</div>
+                                <div>{{ link.notes|default_if_none:"" }}</div>
+                            </div>
+                        </div>
+
+                        <div class="font-weight-bold mb-1">
+                            Is the quantity added by this change order included in this order?
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input type="radio"
+                                   class="form-check-input change-order-included-input"
+                                   name="change_order_quantity_included_{{ link.id }}"
+                                   id="changeOrderIncludedYes{{ link.id }}"
+                                   value="yes"
+                                   required>
+                            <label class="form-check-label" for="changeOrderIncludedYes{{ link.id }}">Yes</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input type="radio"
+                                   class="form-check-input change-order-included-input"
+                                   name="change_order_quantity_included_{{ link.id }}"
+                                   id="changeOrderIncludedNo{{ link.id }}"
+                                   value="no"
+                                   required>
+                            <label class="form-check-label" for="changeOrderIncludedNo{{ link.id }}">No</label>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
         <div class="form-row">
             <div class="form-group col-md-5">
                 <label>Item Description</label>
@@ -553,11 +602,16 @@ $('#orderForm').on('submit', function (e) {
         return false;
     }
 
-    if (isApprovalSubmit && $('textarea[name="requestor_notes"]').val().trim() === '') {
+    const unansweredChangeOrder = $('.change-order-included-input').toArray().some(function (input) {
+        return !$('input[name="' + input.name + '"]:checked').length;
+    });
+
+    if (unansweredChangeOrder) {
         e.preventDefault();
-        alert('Please enter requestor notes before sending for approval.');
+        alert('Please answer whether each approved change order quantity is included in this order.');
         return false;
     }
+
 });
 
 });
