@@ -21,7 +21,19 @@ import winshell
 from win32com.client import Dispatch
 
 class Email:
+    @staticmethod
+    def _get_recipients(to):
+        project_root = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..")
+        ).lower()
+
+        if "pycharmprojects" in project_root:
+            return ["joe@gerloffpainting.com"]
+
+        return to
+
     def sendEmail(title, body, to, filename,sender2):
+        to = Email._get_recipients(to)
         msg = MIMEMultipart()
         # sender = to
         sender = sender2
@@ -43,6 +55,7 @@ class Email:
         s.quit()
 
     def sendEmail2(title, body, to, filename,sender2):
+        to = Email._get_recipients(to)
         msg = MIMEMultipart()
         # sender = to
         sender = sender2

@@ -854,10 +854,6 @@ def wallcovering_add_order(request, wallcovering_id):
         if "send_for_approval" in request.POST:
             requestor_notes = (request.POST.get("requestor_notes") or "").strip()
 
-            if not requestor_notes:
-                messages.error(request, "Please enter requestor notes before sending for approval.")
-                return redirect("wallcovering_add_order", wallcovering_id=wallcovering.id)
-
             if not has_main_item and not extra_items:
                 messages.error(request, "Please enter the main wallcovering item or at least one additional PO item.")
                 return redirect("wallcovering_add_order", wallcovering_id=wallcovering.id)
@@ -969,9 +965,20 @@ def wallcovering_add_order(request, wallcovering_id):
                     f"- {item.quantity} {item.unit} of {item.item_description}"
                 )
 
+            if requestor_notes:
+                email_lines.extend([
+                    "",
+                    "Requestor Notes:",
+                    requestor_notes,
+                ])
+
+            if requestor_notes:
+                note_lines.extend([
+                    "",
+                    f"Requestor Notes: {requestor_notes}",
+                ])
+
             note_lines.extend([
-                "",
-                f"Requestor Notes: {requestor_notes}",
                 "",
                 f"Email Recipients: {', '.join(recipients) if recipients else 'None'}",
             ])
@@ -1156,6 +1163,12 @@ def wallcovering_pending_order(request, pending_order_id):
         wallcovering=wallcovering
     ).order_by("-quote_date", "-id")
 
+    linked_change_orders = Wallcovering_Change_Orders.objects.filter(
+        wallcovering=wallcovering,
+        is_ordered=False,
+        change_order__is_approved=True
+    ).select_related("change_order").order_by("change_order__cop_number", "id")
+
     def get_posted_items():
         main_quantity = clean_decimal(request.POST.get("main_quantity"))
         main_unit = (request.POST.get("main_unit") or "").strip()
@@ -1313,6 +1326,18 @@ def wallcovering_pending_order(request, pending_order_id):
         employee = Employees.objects.filter(user=request.user).first()
 
         if not pending_order.date_approved:
+            unanswered_change_orders = [
+                link for link in linked_change_orders
+                if request.POST.get(f"change_order_quantity_included_{link.id}") not in ("yes", "no")
+            ]
+
+            if unanswered_change_orders:
+                messages.error(
+                    request,
+                    "Please answer whether each approved change order quantity is included in this order."
+                )
+                return redirect("wallcovering_pending_order", pending_order_id=pending_order.id)
+
             approver_notes = (request.POST.get("approver_notes") or "").strip()
             changes = get_pending_order_changes(posted_items)
 
@@ -1325,7 +1350,11 @@ def wallcovering_pending_order(request, pending_order_id):
                 pending_order.save()
                 replace_pending_items(posted_items)
 
-            approval_link = f"http://gp-webserver/wallcovering/wallcovering_detail/{wallcovering.id}"
+                for link in linked_change_orders:
+                    if request.POST.get(f"change_order_quantity_included_{link.id}") == "yes":
+                        link.is_ordered = True
+                        link.save(update_fields=["is_ordered"])
+
             sender = employee.email if employee and employee.email else "bridgette@gerloffpainting.com"
             approval_recipients = ["bridgette@gerloffpainting.com"]
 
@@ -1336,23 +1365,27 @@ def wallcovering_pending_order(request, pending_order_id):
 
             approval_lines = [
                 "Order is approved",
-                "",
-                f"Job Name: {wallcovering.job_number.job_name}",
-                "",
-                approval_link,
-                "",
-                "Approver Notes:",
-                approver_notes or "None",
-                "",
-                f"Email Recipients: {', '.join(approval_recipients)}",
-                "",
-                "Changes Made:",
             ]
 
+            if approver_notes:
+                approval_lines.extend([
+                    "",
+                    "Approver Notes:",
+                    approver_notes,
+                ])
+
             if changes:
+                approval_lines.extend(["", "Changes Made:"])
                 approval_lines.extend([f"- {change}" for change in changes])
-            else:
-                approval_lines.append("- No changes were made.")
+
+            if linked_change_orders:
+                approval_lines.extend(["", "Change Order Quantities:"])
+                for link in linked_change_orders:
+                    included_response = request.POST.get(f"change_order_quantity_included_{link.id}")
+                    included_text = "Included" if included_response == "yes" else "Not Included"
+                    approval_lines.append(
+                        f"- COP {link.change_order.cop_number} - {link.change_order.description or ''}: {included_text}"
+                    )
 
             if employee:
                 WallcoveringNotes.objects.create(
@@ -1499,6 +1532,7 @@ def wallcovering_pending_order(request, pending_order_id):
         "default_description": default_description,
         "main_item": main_item,
         "extra_items": extra_items,
+        "linked_change_orders": linked_change_orders,
         "today": date.today(),
     })
 
