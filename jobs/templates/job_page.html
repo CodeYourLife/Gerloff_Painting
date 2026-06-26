@@ -1688,7 +1688,6 @@ float: left !important;
 </div>
 {% endif %}
 <!--subcontracts 13-->
-{% if subcontracts %}
     <div class="card">
         <div class="card-header" id="headingThirteen">
             <h5 class="mb-0">
@@ -1700,6 +1699,13 @@ float: left !important;
         </div>
         <div id="collapseThirteen" class="collapse hide" aria-labelledby="headingThirteen" data-parent="#accordion">
             <div class="card-body">
+                <div class="mb-3">
+                    <a href="{% url 'subcontracts_new' %}?job_number={{ job.job_number }}"
+                       class="btn btn-primary btn-sm">
+                        Add New Subcontract
+                    </a>
+                </div>
+
                 <div class="table-responsive">
                     <table id="subcontractors_table" class="display table table-sm">
                         <thead class="colored-header">
@@ -1731,7 +1737,6 @@ float: left !important;
             </div>
         </div>
     </div>
-{% endif %}
 
 <!--wallcovering-->
 {% if wallcoverings %}
@@ -1769,6 +1774,9 @@ float: left !important;
                                     <a href="{% url 'wallcovering_detail' wc.id %}" class="font-weight-bold">
                                         {% if wc.code %}{{ wc.code }}{% else %}WC (No Code){% endif %}
                                     </a>
+                                    {% for subcontractor_name in wc.subcontractor_names %}
+                                        <span class="badge badge-info ml-1">{{ subcontractor_name }}</span>
+                                    {% endfor %}
 
                                     {% if wc.change_order_badge_text %}
                                         <span class="{{ wc.change_order_badge_class }}">

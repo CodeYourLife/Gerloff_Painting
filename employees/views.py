@@ -635,7 +635,48 @@ def toolbox_file(request, scheduled_id, language):
 def my_page(request):
     employee = Employees.objects.get(user=request.user)
     send_data = {}
+    can_request_vacation = not (
+        employee.job_title and
+        employee.job_title.description == "Painter" and
+        (
+            not employee.employment_company or
+            employee.employment_company.company_name != "Gerloff Painting"
+        )
+    )
     if request.method == 'POST':
+        if 'request_vacation' in request.POST:
+            if not can_request_vacation:
+                messages.error(request, "You are not allowed to request vacation.")
+                return redirect('my_page')
+
+            first_day_raw = request.POST.get("first_day")
+            last_day_raw = request.POST.get("last_day")
+            employee_note = request.POST.get("employee_note") or ""
+
+            try:
+                first_day = date.fromisoformat(first_day_raw)
+                last_day = date.fromisoformat(last_day_raw)
+            except (TypeError, ValueError):
+                messages.error(request, "Please enter valid vacation dates.")
+                return redirect('my_page')
+
+            if last_day < first_day:
+                messages.error(request, "Last day cannot be before first day.")
+                return redirect('my_page')
+
+            Vacation.objects.create(
+                employee=employee,
+                vacation_date=first_day,
+                first_day=first_day,
+                last_day=last_day,
+                duration=(last_day - first_day).days + 1,
+                employee_note=employee_note,
+                request_date=date.today(),
+            )
+
+            messages.success(request, "Vacation request submitted.")
+            return redirect('my_page')
+
         if 'nickname' in request.POST:
             employee.nickname = request.POST['nickname']
             employee.phone = request.POST['phone']
@@ -746,6 +787,7 @@ def my_page(request):
     send_data['employeeJobs'] = EmployeeJob.objects.filter(employee=employee.id,job__is_closed=False)
     send_data['employeeJobs_count'] = EmployeeJob.objects.filter(employee=employee.id,job__is_closed=False).count()
     send_data['employee'] = employee
+    send_data['can_request_vacation'] = can_request_vacation
     send_data['inventory'] = Inventory.objects.filter(assigned_to=employee,is_closed=False)
     send_data['inventory_count'] = Inventory.objects.filter(assigned_to=employee, is_closed=False).count()
     send_data['assessments_performed'] = EmployeeReview.objects.filter(assessment__reviewer=employee)

@@ -66,6 +66,21 @@
 
                 <div class="form-row">
                     <div class="form-group col-md-4">
+                        <label>Yardage To Install</label>
+                        <input type="number"
+                               step="0.01"
+                               name="install_yardage"
+                               class="form-control"
+                               value="{{ wallcovering.install_yardage|default:'' }}"
+                               placeholder="leave blank if installing all of the ordered yardage">
+                        <small class="form-text text-muted">
+                            Only use this when material has a minimum order requirement that is significantly higher than the required install amount.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
                         <label>Roll Width</label>
                         <input type="text" name="roll_width" class="form-control" value="{{ wallcovering.roll_width|default:'' }}">
                     </div>

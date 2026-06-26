@@ -22,6 +22,7 @@ class Wallcovering(models.Model):
     is_owner_furnished = models.BooleanField(default=False)
     increment_requirement = models.CharField(null=True, max_length=500, blank=True)
     is_void = models.BooleanField(default=False)
+    install_yardage = models.DecimalField(null=True, max_digits=10, decimal_places=2, blank=True)
 
     def __str__(self):
         return f"{self.job_number} {self.code}"

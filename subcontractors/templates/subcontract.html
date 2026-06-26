@@ -217,7 +217,89 @@
 
                 <div class="modal-footer">
                     <button type="submit"
+                            name="remove_cop_now"
+                            class="btn btn-danger mr-auto"
+                            formnovalidate>
+                        Remove
+                    </button>
+
+                    <button type="submit"
                             name="link_cop_now"
+                            class="btn btn-primary">
+                        Save Link
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<!-- Link Subcontract Item to Wallcovering Modal -->
+<div class="modal fade" id="linkWcModal" tabindex="-1" role="dialog" aria-labelledby="linkWcModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <form method="post" action="{% url 'subcontract' subcontract.id %}">
+                {% csrf_token %}
+
+                <input type="hidden" name="link_wc_item_id" id="link_wc_item_id">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="linkWcModalLabel">
+                        Link Item to Wallcovering
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="mb-2">
+                        <strong>Subcontract Item:</strong>
+                        <div id="link_wc_item_description" class="text-muted"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="link_wc_wallcovering_id">Select Wallcovering</label>
+                        <select name="link_wc_wallcovering_id"
+                                id="link_wc_wallcovering_id"
+                                class="form-control"
+                                required>
+                            <option value="">Select Wallcovering</option>
+
+                            {% for wc in wallcovering_link_options %}
+                                <option value="{{ wc.id }}">
+                                    {% if wc.code %}
+                                        {{ wc.code }}
+                                    {% else %}
+                                        {{ wc.vendor.company_name }} {{ wc.pattern }}
+                                    {% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit"
+                            name="remove_wc_now"
+                            class="btn btn-danger mr-auto"
+                            formnovalidate>
+                        Remove
+                    </button>
+
+                    <button type="submit"
+                            name="link_wc_now"
                             class="btn btn-primary">
                         Save Link
                     </button>
@@ -593,6 +675,7 @@
         <button type="button" class="btn btn-info" data-toggle="modal" data-target="#subcontract_info-modal">View PO Details</button>
         <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#notes-modal">Notes</button>
         <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#subcontractFilesModal" onclick="loadSubcontractFiles()">Files</button>
+        <a href="{% url 'job_page' subcontract.job_number.job_number %}" class="btn btn-outline-secondary">Goto Job</a>
     </div>
 
     <hr>
@@ -602,6 +685,88 @@
         <input type="hidden" id="hidden_number_items" name="number_items" value="{{ number_items }}">
         <input type="hidden" id="edit_existing_item" name="edit_existing_item" value="None Selected">
         <input type="hidden" id="delete_existing_item" name="delete_existing_item" value="None Selected">
+
+        {% if wallcovering_shortage_rows %}
+            <div class="table-responsive-clean mb-3">
+                <div class="bg-danger text-white font-weight-bold px-2 py-1 small d-flex justify-content-between align-items-center">
+                    <span>Ordered Quantities Exceed Amount Subcontracted</span>
+                    <button type="button"
+                            id="toggleWallcoveringShortageButton"
+                            class="btn btn-light btn-sm py-0"
+                            onclick="toggleWallcoveringShortage()">
+                        Hide This
+                    </button>
+                </div>
+                <table id="wallcoveringShortageTable" class="table table-sm table-bordered mb-0 small">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Wallcovering</th>
+                            <th class="text-right">Install/Ordered Yardage</th>
+                            <th class="text-right">Yardage Subcontracted</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in wallcovering_shortage_rows %}
+                            <tr class="clickable-row"
+                                data-href="{{ row.wallcovering_url }}"
+                                style="cursor:pointer;">
+                                <td>
+                                    <a href="{{ row.wallcovering_url }}">
+                                        {{ row.description }}
+                                    </a>
+                                </td>
+                                <td class="text-right">
+                                    {{ row.target_quantity|floatformat:2|intcomma }}
+                                    <span class="text-muted small">({{ row.target_source }})</span>
+                                </td>
+                                <td class="text-right">{{ row.subcontracted_quantity|floatformat:2|intcomma }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        {% if wallcovering_order_after_subcontract_rows %}
+            <div class="table-responsive-clean mb-3">
+                <div class="bg-danger text-white font-weight-bold px-2 py-1 small d-flex justify-content-between align-items-center">
+                    <span>Wallcovering Ordered After Subcontract</span>
+                    <button type="button"
+                            id="toggleWallcoveringOrderAfterSubcontractButton"
+                            class="btn btn-light btn-sm py-0"
+                            onclick="toggleWarningTable('wallcoveringOrderAfterSubcontractTable', 'toggleWallcoveringOrderAfterSubcontractButton')">
+                        Hide This
+                    </button>
+                </div>
+                <table id="wallcoveringOrderAfterSubcontractTable" class="table table-sm table-bordered mb-0 small">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Wallcovering</th>
+                            <th>Subcontract History</th>
+                            <th>Additional Order</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in wallcovering_order_after_subcontract_rows %}
+                            <tr class="clickable-row"
+                                data-href="{{ row.wallcovering_url }}"
+                                style="cursor:pointer;">
+                                <td>
+                                    <a href="{{ row.wallcovering_url }}">
+                                        {{ row.description }}
+                                    </a>
+                                </td>
+                                <td>{{ row.subcontract_history }}</td>
+                                <td>
+                                    Latest subcontract item was on {{ row.latest_subcontract_item_date|date:"m/d/Y" }}.
+                                    Additional order was placed on {{ row.order_date|date:"m/d/Y" }}.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
 
         <div class="table-responsive-clean">
             <table id="sub_table" class="display table table-sm table-striped">
@@ -665,15 +830,24 @@
                                             Delete Row
                                         </button>
                                     {% endif %}
-                                    {% if not x.change_order_status %}
                                     <button type="button"
                                             class="btn btn-secondary btn-sm mt-1"
                                             data-toggle="modal"
                                             data-target="#linkCopModal"
                                             onclick="populateLinkCopModal('{{ x.id }}', '{{ x.SOV_description|escapejs }}')">
-                                        Link to COP
+                                        {% if x.change_order_number %}COP #{{ x.change_order_number }}{% else %}Link to COP{% endif %}
                                     </button>
-                                    {% endif %}
+                                    <button type="button"
+                                            class="btn btn-secondary btn-sm mt-1"
+                                            data-toggle="modal"
+                                            data-target="#linkWcModal"
+                                            onclick="populateLinkWcModal('{{ x.id }}', '{{ x.SOV_description|escapejs }}', '{{ x.wallcovering_pk }}')">
+                                        {% if x.is_wallcovering_linked %}
+                                            {% if x.wallcovering_code %}{{ x.wallcovering_code }}{% else %}WC Linked{% endif %}
+                                        {% else %}
+                                            Link to WC
+                                        {% endif %}
+                                    </button>
                                 </td>
                             </tr>
                         {% else %}
@@ -731,7 +905,15 @@
                                                     {% endif %}
                                                "
                                                style="text-decoration:none;">
-                                                CO #{{ x.change_order_number }} - {{ x.change_order_status }}
+                                                COP #{{ x.change_order_number }} - {{ x.change_order_status }}
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                    {% if x.is_wallcovering_linked %}
+                                        <div class="mt-1">
+                                            <a href="{% url 'wallcovering_detail' x.wallcovering_pk %}"
+                                               class="btn btn-info btn-xs item-action-badge">
+                                                {% if x.wallcovering_code %}{{ x.wallcovering_code }}{% else %}WC-No Code{% endif %}
                                             </a>
                                         </div>
                                     {% endif %}
@@ -1038,7 +1220,38 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
+function toggleWallcoveringShortage() {
+    toggleWarningTable("wallcoveringShortageTable", "toggleWallcoveringShortageButton");
+}
+
+function toggleWarningTable(tableId, buttonId) {
+    const table = document.getElementById(tableId);
+    const button = document.getElementById(buttonId);
+
+    if (!table || !button) {
+        return;
+    }
+
+    if (table.style.display === "none") {
+        table.style.display = "";
+        button.textContent = "Hide This";
+    } else {
+        table.style.display = "none";
+        button.textContent = "Show";
+    }
+}
+
 $(document).ready(function () {
+    document.querySelectorAll(".clickable-row[data-href]").forEach(function (row) {
+        row.addEventListener("click", function (event) {
+            if (event.target.closest("a, button, input, textarea, select")) {
+                return;
+            }
+
+            window.location.href = row.dataset.href;
+        });
+    });
+
     if ('{{ edit_row }}') {
         $('#sub_table').DataTable({
             paging: false,
@@ -1103,20 +1316,52 @@ function delete_row(id) {
 }
 
 let number_items = 0;
+const wallcoveringData = '{{ wallcovering_json|default:"[]"|escapejs }}';
+const wallcoverings = wallcoveringData ? JSON.parse(wallcoveringData) : [];
 
 function selected_wallcovering(event) {
     const current_row = event.currentTarget.id.replace('wallcovering_number', '');
     const description = document.getElementById('item_description' + current_row);
     const quantity = document.getElementById('item_quantity' + current_row);
     const unit = document.getElementById('item_unit' + current_row);
-    const rolodex = JSON.parse('{{ wallcovering_json|escapejs }}');
+    const helper = document.getElementById('wallcovering_helper' + current_row);
+    const selected = wallcoverings.find(function (wc) {
+        return String(wc.id) === String(event.currentTarget.value);
+    });
 
-    for (let i = 0; i < rolodex.length; i++) {
-        if (rolodex[i].id == event.currentTarget.value) {
-            description.value = 'Install ' + rolodex[i].code;
-            quantity.value = rolodex[i].quantity_ordered;
-            unit.value = rolodex[i].estimated_unit;
+    if (!selected) {
+        if (helper) {
+            helper.textContent = '';
         }
+        return;
+    }
+
+    description.value = 'Install ' + selected.install_description;
+    quantity.value = selected.remaining_install_quantity || '';
+    unit.value = selected.install_unit || '';
+    if (helper) {
+        helper.textContent = selected.assignment_helper_text || '';
+    }
+}
+
+function selected_wallcovering_description(event) {
+    const current_row = event.currentTarget.id.replace('wallcovering_number', '');
+    const description = document.getElementById('item_description' + current_row);
+    const helper = document.getElementById('wallcovering_helper' + current_row);
+    const selected = wallcoverings.find(function (wc) {
+        return String(wc.id) === String(event.currentTarget.value);
+    });
+
+    if (!selected || !description) {
+        if (helper) {
+            helper.textContent = '';
+        }
+        return;
+    }
+
+    description.value = 'Install ' + selected.install_description;
+    if (helper) {
+        helper.textContent = selected.assignment_helper_text || '';
     }
 }
 
@@ -1125,11 +1370,10 @@ function delete_selected(event) {
 }
 
 function add_wallcovering_select(container, rowNumber, includeChangeEvent) {
-    if (!'{{ wallcovering_json }}') {
+    if (!wallcoverings.length) {
         return;
     }
 
-    const rolodex = JSON.parse('{{ wallcovering_json|escapejs }}');
     const formGroup = document.createElement('div');
     formGroup.className = 'form-group';
 
@@ -1145,21 +1389,27 @@ function add_wallcovering_select(container, rowNumber, includeChangeEvent) {
 
     let option = document.createElement('option');
     option.value = 'no_wc_selected';
-    option.text = 'None';
+    option.text = 'Select Wallcovering';
     select.appendChild(option);
 
-    for (let i = 0; i < rolodex.length; i++) {
+    for (let i = 0; i < wallcoverings.length; i++) {
         option = document.createElement('option');
-        option.value = rolodex[i].id;
-        option.text = rolodex[i].code;
+        option.value = wallcoverings[i].id;
+        option.text = wallcoverings[i].code || (wallcoverings[i].vendor + ' ' + wallcoverings[i].pattern).trim();
         select.appendChild(option);
     }
 
     if (includeChangeEvent) {
         select.addEventListener('change', selected_wallcovering, false);
+    } else {
+        select.addEventListener('change', selected_wallcovering_description, false);
     }
 
     formGroup.appendChild(select);
+    const helper = document.createElement('small');
+    helper.id = 'wallcovering_helper' + rowNumber;
+    helper.className = 'form-text text-muted';
+    formGroup.appendChild(helper);
     container.appendChild(formGroup);
 }
 
@@ -1356,6 +1606,12 @@ function add_note2() {
 function populateLinkCopModal(itemId, itemDescription) {
     document.getElementById("link_cop_item_id").value = itemId;
     document.getElementById("link_cop_item_description").innerText = itemDescription;
+}
+
+function populateLinkWcModal(itemId, itemDescription, wallcoveringId) {
+    document.getElementById("link_wc_item_id").value = itemId;
+    document.getElementById("link_wc_item_description").innerText = itemDescription;
+    document.getElementById("link_wc_wallcovering_id").value = wallcoveringId || "";
 }
 </script>
 {% endblock %}
