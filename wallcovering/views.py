@@ -25,6 +25,7 @@ from .models import (
 )
 from submittals.models import SubmittalItems, SubmittalApprovals
 from changeorder.models import Wallcovering_Change_Orders
+from subcontractors.models import SubcontractItems
 
 import os
 from io import BytesIO
@@ -167,6 +168,13 @@ def wallcovering_home(request):
             wc.ordering_status = ordering_status
             wc.sent_status = sent_status
             wc.display_quantity = display_quantity
+            wc.subcontractor_names = list(
+                SubcontractItems.objects
+                .filter(wallcovering_id=wc)
+                .select_related("subcontract__subcontractor")
+                .values_list("subcontract__subcontractor__company", flat=True)
+                .distinct()
+            )
 
             wallcovering_list.append(wc)
 
@@ -578,6 +586,17 @@ def wallcovering_detail(request, wallcovering_id):
         "-id"
     )
 
+    subcontract_items = SubcontractItems.objects.filter(
+        wallcovering_id=wallcovering
+    ).select_related(
+        "subcontract",
+        "subcontract__subcontractor"
+    ).order_by(
+        "subcontract__subcontractor__company",
+        "subcontract__po_number",
+        "id"
+    )
+
     pending_order_groups = []
     pending_orders = Pending_Orders.objects.filter(
         pending_order_items__link_to_wallcovering=wallcovering,
@@ -636,6 +655,7 @@ def wallcovering_detail(request, wallcovering_id):
         "submittal_rows": submittal_rows,
         "label_packages": label_packages,
         "linked_change_orders": linked_change_orders,
+        "subcontract_items": subcontract_items,
         "pending_order_groups": pending_order_groups,
         "approved_order_groups": approved_order_groups,
     }
@@ -766,6 +786,7 @@ def wallcovering_edit(request, wallcovering_id):
         wallcovering.pattern = request.POST.get("pattern")
         wallcovering.estimated_quantity = request.POST.get("estimated_quantity") or 0
         wallcovering.estimated_unit = request.POST.get("estimated_unit")
+        wallcovering.install_yardage = request.POST.get("install_yardage") or None
         wallcovering.roll_width = request.POST.get("roll_width")
         wallcovering.roll_length = request.POST.get("roll_length")
         wallcovering.vertical_repeat = request.POST.get("vertical_repeat")

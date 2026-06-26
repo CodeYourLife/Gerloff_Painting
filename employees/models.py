@@ -421,6 +421,8 @@ class Vacation(models.Model):
     employee_note = models.CharField(max_length=2000)
     is_approved = models.BooleanField(default=False)
     request_date = models.DateField()
+    first_day = models.DateField()
+    last_day = models.DateField()
 
 
 class VacationApprovers(models.Model):
@@ -431,9 +433,9 @@ class VacationApprovers(models.Model):
 class ApprovedVacations(models.Model):
     id = models.BigAutoField(primary_key=True)
     request = models.ForeignKey(Vacation, on_delete=models.PROTECT)
-    date_sent = models.DateField()
     approver = models.ForeignKey(Employees, on_delete=models.PROTECT)
     is_approved = models.BooleanField(default=False)
+    is_rejected = models.BooleanField(default=False)
     approver_notes = models.CharField(max_length=2000)
 
 

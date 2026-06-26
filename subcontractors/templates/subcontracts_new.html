@@ -287,6 +287,8 @@
 
 let number_items = 0;
 let total_items = 0;
+const wallcoveringData = "{{ wallcovering_json|default:'[]'|escapejs }}";
+const wallcoverings = wallcoveringData === "None" ? [] : JSON.parse(wallcoveringData);
 
 $(document).ready(function () {
     $('.searchable-select').select2({
@@ -319,8 +321,22 @@ function update_retainage(event) {
 function selected_wallcovering2(event) {
     const current_row = event.currentTarget.id.replace("wallcovering_number", "");
     const description = document.getElementById("item_description" + current_row);
+    const helper = document.getElementById("wallcovering_helper" + current_row);
+    const selected = wallcoverings.find(function (wc) {
+        return String(wc.id) === String(event.currentTarget.value);
+    });
 
-    description.value = "Install " + event.currentTarget.options[event.currentTarget.selectedIndex].text;
+    if (!selected || !description) {
+        if (helper) {
+            helper.textContent = "";
+        }
+        return;
+    }
+
+    description.value = "Install " + selected.install_description;
+    if (helper) {
+        helper.textContent = selected.assignment_helper_text || "";
+    }
 }
 
 function selected_wallcovering(event) {
@@ -328,14 +344,23 @@ function selected_wallcovering(event) {
     const description = document.getElementById("item_description" + current_row);
     const quantity = document.getElementById("item_quantity" + current_row);
     const unit = document.getElementById("item_unit" + current_row);
-    const rolodex = JSON.parse("{{ wallcovering_json|escapejs }}");
+    const helper = document.getElementById("wallcovering_helper" + current_row);
+    const selected = wallcoverings.find(function (wc) {
+        return String(wc.id) === String(event.currentTarget.value);
+    });
 
-    for (let i = 0; i < rolodex.length; i++) {
-        if (rolodex[i].id == event.currentTarget.value) {
-            description.value = "Install " + rolodex[i].code;
-            quantity.value = rolodex[i].quantity_ordered;
-            unit.value = rolodex[i].estimated_unit;
+    if (!selected) {
+        if (helper) {
+            helper.textContent = "";
         }
+        return;
+    }
+
+    description.value = "Install " + selected.install_description;
+    quantity.value = selected.remaining_install_quantity || "";
+    unit.value = selected.install_unit || "";
+    if (helper) {
+        helper.textContent = selected.assignment_helper_text || "";
     }
 }
 
@@ -374,11 +399,9 @@ function create_new_item_card(itemType) {
 }
 
 function add_wallcovering_dropdown(card, usePerUnitAutoFill) {
-    if ("{{ wallcovering_json }}" === "None") {
+    if (!wallcoverings.length) {
         return;
     }
-
-    const rolodex = JSON.parse("{{ wallcovering_json|escapejs }}");
 
     const formGroup = document.createElement("div");
     formGroup.setAttribute("class", "form-group");
@@ -395,20 +418,14 @@ function add_wallcovering_dropdown(card, usePerUnitAutoFill) {
 
     let option = document.createElement("option");
     option.value = "no_wc_selected";
-    option.text = "None";
+    option.text = "Select Wallcovering";
     select.appendChild(option);
 
-    for (let i = 0; i < rolodex.length; i++) {
+    for (let i = 0; i < wallcoverings.length; i++) {
         option = document.createElement("option");
-        option.value = rolodex[i].id;
-        option.text = rolodex[i].code;
+        option.value = wallcoverings[i].id;
+        option.text = wallcoverings[i].code || (wallcoverings[i].vendor + " " + wallcoverings[i].pattern).trim();
         select.appendChild(option);
-    }
-
-    if (usePerUnitAutoFill) {
-        select.addEventListener("change", selected_wallcovering, false);
-    } else {
-        select.addEventListener("change", selected_wallcovering2, false);
     }
 
     formGroup.appendChild(select);
@@ -418,6 +435,13 @@ function add_wallcovering_dropdown(card, usePerUnitAutoFill) {
         width: "100%",
         placeholder: "Select WC"
     });
+
+    $(select).on("change", usePerUnitAutoFill ? selected_wallcovering : selected_wallcovering2);
+
+    const helper = document.createElement("small");
+    helper.id = "wallcovering_helper" + number_items;
+    helper.className = "form-text text-muted";
+    formGroup.appendChild(helper);
 }
 
 function add_input(card, labelText, type, name, id, placeholder, required, step) {

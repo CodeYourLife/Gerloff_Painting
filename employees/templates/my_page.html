@@ -41,6 +41,48 @@
         background-color: white !important;
     }
 
+    .vacation-request-button {
+        width: auto;
+    }
+
+    .vacation-request-modal .form-control {
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .vacation-request-modal label {
+        margin-left: 0;
+        margin-right: 0;
+        font-weight: 600;
+    }
+
+    @media (max-width: 576px) {
+        .vacation-request-button {
+            width: 100%;
+            padding-top: 0.65rem;
+            padding-bottom: 0.65rem;
+            font-size: 1rem;
+        }
+
+        .vacation-request-modal .modal-dialog {
+            margin: 0.5rem;
+        }
+
+        .vacation-request-modal .modal-body {
+            padding: 1rem;
+        }
+
+        .vacation-request-modal .modal-footer {
+            display: block;
+        }
+
+        .vacation-request-modal .modal-footer .btn {
+            width: 100%;
+            margin: 0 0 0.5rem 0;
+        }
+    }
+
 </style>
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
 {% endblock %}
@@ -383,6 +425,15 @@
             </div>
             <div id="collapseSix" class="collapse" aria-labelledby="headingSix" data-parent="#accordion">
                 <div class="card-body">
+                    {% if can_request_vacation %}
+                    <button type="button"
+                            class="btn btn-primary btn-sm mb-3 vacation-request-button"
+                            data-toggle="modal"
+                            data-target="#requestVacationModal">
+                        Request Vacation
+                    </button>
+                    {% endif %}
+
                     {% if vacation_requests %}
                     <div class="table-responsive">
                         <table class="table display">
@@ -412,6 +463,66 @@
                 </div>
             </div>
         </div>
+
+{% if can_request_vacation %}
+<div class="modal fade vacation-request-modal" id="requestVacationModal" tabindex="-1" role="dialog" aria-labelledby="requestVacationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'my_page' %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="requestVacationModalLabel">Request Vacation</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="vacation_first_day">First Day Off</label>
+                        <input type="date"
+                               name="first_day"
+                               id="vacation_first_day"
+                               class="form-control"
+                               required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="vacation_last_day">Last Day Off</label>
+                        <input type="date"
+                               name="last_day"
+                               id="vacation_last_day"
+                               class="form-control"
+                               required>
+                    </div>
+
+                    <div id="vacation_duration_helper" class="text-danger small mb-2" style="display:none;"></div>
+
+                    <div class="form-group mb-0">
+                        <label for="vacation_employee_note">Note</label>
+                        <textarea name="employee_note"
+                                  id="vacation_employee_note"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Optional note"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit"
+                            name="request_vacation"
+                            class="btn btn-primary">
+                        Submit Request
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
   <!--    #collapse commented code-->
     <div>
 <!--
@@ -1047,6 +1158,11 @@ function check_can_complete_toolbox(scheduled_id) {
 function restoreAccordion() {
     let openId = localStorage.getItem("openAccordion");
 
+    if (openId === "collapseSix") {
+        localStorage.removeItem("openAccordion");
+        return;
+    }
+
     if (openId) {
         let collapseElement = document.getElementById(openId);
         if (collapseElement && !collapseElement.classList.contains("show")) {
@@ -1058,6 +1174,48 @@ function restoreAccordion() {
 document.addEventListener("DOMContentLoaded", function () {
 
     restoreAccordion();
+
+    const vacationFirstDay = document.getElementById("vacation_first_day");
+    const vacationLastDay = document.getElementById("vacation_last_day");
+    const vacationDurationHelper = document.getElementById("vacation_duration_helper");
+
+    function updateVacationDurationHelper() {
+        if (!vacationFirstDay || !vacationLastDay || !vacationDurationHelper) {
+            return;
+        }
+
+        if (!vacationFirstDay.value || !vacationLastDay.value) {
+            vacationDurationHelper.style.display = "none";
+            vacationDurationHelper.textContent = "";
+            return;
+        }
+
+        const firstDay = new Date(vacationFirstDay.value + "T00:00:00");
+        const lastDay = new Date(vacationLastDay.value + "T00:00:00");
+        const dayMs = 24 * 60 * 60 * 1000;
+        const duration = Math.round((lastDay - firstDay) / dayMs) + 1;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const threeWeeksFromToday = new Date(today.getTime() + (21 * dayMs));
+
+        vacationDurationHelper.style.display = "block";
+
+        if (duration < 1) {
+            vacationDurationHelper.textContent = "Last Day Off cannot be before First Day Off.";
+            return;
+        }
+
+        vacationDurationHelper.innerHTML = "Total vacation duration: " + duration + " day" + (duration === 1 ? "" : "s") + ".";
+
+        if (firstDay < threeWeeksFromToday) {
+            vacationDurationHelper.innerHTML += "<br><strong>VACATION REQUESTS MUST BE REQUESTED 3 WEEKS PRIOR!</strong>";
+        }
+    }
+
+    if (vacationFirstDay && vacationLastDay) {
+        vacationFirstDay.addEventListener("change", updateVacationDurationHelper);
+        vacationLastDay.addEventListener("change", updateVacationDurationHelper);
+    }
 
     $('.collapse').on('shown.bs.collapse', function () {
         localStorage.setItem("openAccordion", this.id);

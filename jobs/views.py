@@ -1510,6 +1510,14 @@ def job_page(request, jobnumber):
                 wc.change_order_badge_text = f"COP{cop_number} Not Ordered"
                 wc.change_order_badge_class = "badge badge-danger ml-1"
 
+        wc.subcontractor_names = list(
+            SubcontractItems.objects
+            .filter(wallcovering_id=wc)
+            .select_related("subcontract__subcontractor")
+            .values_list("subcontract__subcontractor__company", flat=True)
+            .distinct()
+        )
+
         wallcovering_list.append(wc)
 
     send_data["wallcoverings"] = wallcovering_list

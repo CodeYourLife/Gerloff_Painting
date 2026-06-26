@@ -115,6 +115,9 @@
                                     <a href="{% url 'wallcovering_detail' wc.id %}" class="font-weight-bold">
                                         {% if wc.code %}{{ wc.code }}{% else %}WC (No Code) {% endif %}{% if wc.is_void %}[VOIDED]{% endif %}
                                     </a>
+                                    {% for subcontractor_name in wc.subcontractor_names %}
+                                        <span class="badge badge-info ml-1">{{ subcontractor_name }}</span>
+                                    {% endfor %}
                                     <br>
                                     <span class="text-muted">
                                         {{wc.vendor.company_name}}- {{ wc.pattern }}
@@ -156,6 +159,11 @@
                                 </td>
                                 <td class="text-right">
                                     {{ wc.display_quantity }}
+                                    {% if wc.install_yardage %}
+                                        <div class="text-muted small">
+                                            {{ wc.install_yardage|floatformat:0 }} yd(install)
+                                        </div>
+                                    {% endif %}
                                 </td>
 
                                 <td class="text-center">

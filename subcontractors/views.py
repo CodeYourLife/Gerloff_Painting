@@ -6,7 +6,7 @@ from datetime import datetime,date
 from decimal import Decimal, InvalidOperation
 from django.core.serializers.json import DjangoJSONEncoder
 from employees.views import get_scheduled_toolbox_folder, get_uploaded_toolbox_file
-from wallcovering.models import Wallcovering
+from wallcovering.models import Wallcovering, OrderItems
 from subcontractors.models import *
 from jobs.models import *
 from equipment.filters import SubcontractsFilter
@@ -14,7 +14,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.http import JsonResponse, HttpResponse, FileResponse, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import get_template, render_to_string
@@ -33,14 +33,122 @@ from media.utilities import MediaUtilities
 
 
 def wallcovering_subcontract_json(wallcovering):
+    def format_yardage(value):
+        if value is None:
+            return ''
+        return f"{Decimal(value):,.2f}".rstrip("0").rstrip(".")
+
+    def join_names(names):
+        names = [name for name in names if name]
+        if not names:
+            return ''
+        if len(names) == 1:
+            return names[0]
+        if len(names) == 2:
+            return f"{names[0]} and {names[1]}"
+        return f"{', '.join(names[:-1])}, and {names[-1]}"
+
     vendor = wallcovering.vendor.company_name if wallcovering.vendor else ''
+    quantity_ordered = wallcovering.quantity_ordered()
+    install_yardage = wallcovering.install_yardage
+    estimated_quantity = wallcovering.estimated_quantity
+    install_description = wallcovering.code or f"{vendor} {wallcovering.pattern or ''}".strip()
+    install_quantity = ''
+    already_subcontracted = (
+        SubcontractItems.objects
+        .filter(
+            wallcovering_id=wallcovering,
+            SOV_is_lump_sum=False
+        )
+        .aggregate(total=Sum("SOV_total_ordered"))
+        .get("total")
+    ) or Decimal("0.00")
+    subcontracted_rows = (
+        SubcontractItems.objects
+        .filter(
+            wallcovering_id=wallcovering,
+            SOV_is_lump_sum=False
+        )
+        .values("subcontract__subcontractor__company")
+        .annotate(total=Sum("SOV_total_ordered"))
+        .order_by("subcontract__subcontractor__company")
+    )
+    subcontracted_names = [
+        row["subcontract__subcontractor__company"]
+        for row in subcontracted_rows
+        if row["total"]
+    ]
+    lump_sum_names = list(
+        SubcontractItems.objects
+        .filter(
+            wallcovering_id=wallcovering,
+            SOV_is_lump_sum=True
+        )
+        .select_related("subcontract__subcontractor")
+        .values_list("subcontract__subcontractor__company", flat=True)
+        .distinct()
+        .order_by("subcontract__subcontractor__company")
+    )
+    has_lump_sum_assignment = bool(lump_sum_names)
+    remaining_install_quantity = ''
+
+    if install_yardage:
+        install_quantity = f"{install_yardage:.2f}"
+    elif quantity_ordered:
+        install_quantity = f"{quantity_ordered:.2f}"
+    elif estimated_quantity:
+        install_quantity = str(estimated_quantity)
+
+    target_quantity = install_yardage or quantity_ordered
+    if not target_quantity and estimated_quantity:
+        target_quantity = Decimal(str(estimated_quantity))
+
+    if target_quantity and not has_lump_sum_assignment:
+        remaining_install_quantity = f"{max(target_quantity - already_subcontracted, Decimal('0.00')):.2f}"
+
+    if install_yardage:
+        target_source = "scheduled to install"
+    elif quantity_ordered:
+        target_source = "ordered"
+    elif estimated_quantity:
+        target_source = "estimated"
+    else:
+        target_source = ""
+
+    assignment_parts = []
+    if already_subcontracted:
+        assignment_parts.append(
+            f"{format_yardage(already_subcontracted)} yards has already been assigned to {join_names(subcontracted_names)}"
+        )
+    if has_lump_sum_assignment:
+        assignment_parts.append(
+            f"lump sum assigned to {join_names(lump_sum_names)}"
+        )
+
+    if target_quantity and assignment_parts:
+        helper_text = f"{format_yardage(target_quantity)} yards {target_source}. " + ", and ".join(assignment_parts) + "."
+    elif target_quantity:
+        helper_text = f"{format_yardage(target_quantity)} yards {target_source}, none has been subcontracted yet."
+    elif assignment_parts:
+        helper_text = ", and ".join(assignment_parts).capitalize() + "."
+    else:
+        helper_text = "No install or ordered yardage is available."
+
     return {
         'id': wallcovering.id,
         'code': wallcovering.code or '',
         'vendor': vendor or '',
         'pattern': wallcovering.pattern or '',
         'estimated_unit': wallcovering.estimated_unit or '',
-        'quantity_ordered': int(wallcovering.quantity_ordered()),
+        'quantity_ordered': f"{quantity_ordered:.2f}" if quantity_ordered else '',
+        'install_yardage': f"{install_yardage:.2f}" if install_yardage else '',
+        'estimated_quantity': str(estimated_quantity) if estimated_quantity else '',
+        'install_description': install_description,
+        'install_quantity': install_quantity,
+        'remaining_install_quantity': remaining_install_quantity,
+        'has_lump_sum_assignment': has_lump_sum_assignment,
+        'assignment_helper_text': helper_text,
+        'install_unit': wallcovering.ordered_unit() or '',
     }
 
 
@@ -457,7 +565,7 @@ def subcontractor_invoice_new(request, subcontract_id):
     if today.weekday() == 4 or today.weekday() == 3 or today.weekday() == 2: friday = friday + timedelta(7)
     subcontract = Subcontracts.objects.get(id=subcontract_id)
     items = []
-    for x in SubcontractItems.objects.filter(subcontract=subcontract).order_by('id'):
+    for x in SubcontractItems.objects.filter(subcontract=subcontract).select_related("wallcovering_id").order_by('id'):
         totalcost = float(x.total_cost())
         totalbilled = float(x.total_billed())
         totalbilledandpending = float(x.total_billed_and_pending())
@@ -1438,9 +1546,172 @@ def subcontract(request, id):
              'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
              'notes': x.notes, 'quantity_billed': float(x.quantity_billed()),
              'total_billed': round(x.total_billed(), 2), 'total_cost': round(x.total_cost(), 2),'change_order_status': change_order_status,
-            'change_order_number': change_order_number,'change_order_id': change_order_id,})
+            'change_order_number': change_order_number,'change_order_id': change_order_id,
+             'wallcovering_pk': x.wallcovering_id.id if x.wallcovering_id else '',
+             'wallcovering_code': x.wallcovering_id.code if x.wallcovering_id and x.wallcovering_id.code else '',
+             'is_wallcovering_linked': bool(x.wallcovering_id),})
     send_data['items'] = items
     send_data['number_items'] = number_items
+    send_data['wallcovering_link_options'] = Wallcovering.objects.filter(
+        job_number=subcontract.job_number
+    ).select_related("vendor").order_by("code", "pattern")
+
+    def format_yardage(value):
+        if value is None:
+            return ''
+        return f"{Decimal(value):,.2f}".rstrip("0").rstrip(".")
+
+    def join_names(names):
+        names = [name for name in names if name]
+        if not names:
+            return ''
+        if len(names) == 1:
+            return names[0]
+        if len(names) == 2:
+            return f"{names[0]} and {names[1]}"
+        return f"{', '.join(names[:-1])}, and {names[-1]}"
+
+    def wallcovering_subcontract_history(wallcovering):
+        history_parts = []
+        non_lump_rows = (
+            SubcontractItems.objects
+            .filter(
+                wallcovering_id=wallcovering,
+                SOV_is_lump_sum=False
+            )
+            .values("subcontract__subcontractor__company")
+            .annotate(total=Sum("SOV_total_ordered"))
+            .order_by("subcontract__subcontractor__company")
+        )
+
+        for row in non_lump_rows:
+            if row["total"]:
+                history_parts.append(
+                    f"{format_yardage(row['total'])} yards assigned to {row['subcontract__subcontractor__company']}"
+                )
+
+        lump_sum_names = list(
+            SubcontractItems.objects
+            .filter(
+                wallcovering_id=wallcovering,
+                SOV_is_lump_sum=True
+            )
+            .values_list("subcontract__subcontractor__company", flat=True)
+            .distinct()
+            .order_by("subcontract__subcontractor__company")
+        )
+
+        if lump_sum_names:
+            history_parts.append(f"lump sum assigned to {join_names(lump_sum_names)}")
+
+        return ", ".join(history_parts)
+
+    wallcovering_shortage_rows = []
+    linked_wallcovering_ids = (
+        SubcontractItems.objects
+        .filter(
+            subcontract=subcontract,
+            wallcovering_id__isnull=False,
+            SOV_is_lump_sum=False
+        )
+        .values_list("wallcovering_id", flat=True)
+        .distinct()
+    )
+
+    for wallcovering in Wallcovering.objects.filter(id__in=linked_wallcovering_ids).select_related("vendor"):
+        if SubcontractItems.objects.filter(
+            wallcovering_id=wallcovering,
+            SOV_is_lump_sum=True
+        ).exists():
+            continue
+
+        target_quantity = wallcovering.install_yardage
+        target_source = "Install Yardage"
+
+        if not target_quantity:
+            target_quantity = wallcovering.quantity_ordered()
+            target_source = "Ordered Yardage"
+
+        if not target_quantity:
+            continue
+
+        subcontracted_quantity = (
+            SubcontractItems.objects
+            .filter(
+                wallcovering_id=wallcovering,
+                SOV_is_lump_sum=False
+            )
+            .aggregate(total=Sum("SOV_total_ordered"))
+            .get("total")
+        ) or Decimal("0.00")
+
+        if target_quantity > subcontracted_quantity:
+            wallcovering_shortage_rows.append({
+                "wallcovering_url": reverse("wallcovering_detail", args=[wallcovering.id]),
+                "description": wallcovering.code or f"{wallcovering.vendor.company_name if wallcovering.vendor else ''} {wallcovering.pattern or ''}".strip(),
+                "target_quantity": target_quantity,
+                "target_source": target_source,
+                "subcontracted_quantity": subcontracted_quantity,
+            })
+
+    send_data["wallcovering_shortage_rows"] = wallcovering_shortage_rows
+
+    wallcovering_order_after_subcontract_rows = []
+    lump_sum_wallcovering_ids = (
+        SubcontractItems.objects
+        .filter(
+            subcontract=subcontract,
+            wallcovering_id__isnull=False,
+            SOV_is_lump_sum=True
+        )
+        .values_list("wallcovering_id", flat=True)
+        .distinct()
+    )
+
+    for wallcovering in Wallcovering.objects.filter(id__in=lump_sum_wallcovering_ids).select_related("vendor"):
+        latest_order = (
+            OrderItems.objects
+            .filter(
+                Q(wallcovering=wallcovering) |
+                Q(link_to_wallcovering=wallcovering),
+                order__date_ordered__isnull=False
+            )
+            .select_related("order")
+            .order_by("-order__date_ordered", "-order__id")
+            .first()
+        )
+
+        if not latest_order:
+            continue
+
+        latest_subcontract_item = (
+            SubcontractItems.objects
+            .filter(
+                wallcovering_id=wallcovering
+            )
+            .order_by("-date", "-id")
+            .first()
+        )
+
+        if not latest_subcontract_item:
+            continue
+
+        if not SubcontractItems.objects.filter(
+            wallcovering_id=wallcovering,
+            SOV_is_lump_sum=True,
+            date__lt=latest_order.order.date_ordered
+        ).exists():
+            continue
+
+        wallcovering_order_after_subcontract_rows.append({
+            "wallcovering_url": reverse("wallcovering_detail", args=[wallcovering.id]),
+            "description": wallcovering.code or f"{wallcovering.vendor.company_name if wallcovering.vendor else ''} {wallcovering.pattern or ''}".strip(),
+            "subcontract_history": wallcovering_subcontract_history(wallcovering),
+            "latest_subcontract_item_date": latest_subcontract_item.date,
+            "order_date": latest_order.order.date_ordered,
+        })
+
+    send_data["wallcovering_order_after_subcontract_rows"] = wallcovering_order_after_subcontract_rows
     send_data['notes'] = SubcontractNotes.objects.filter(subcontract=subcontract).order_by('id')
     send_data['total_retainage'] = 0-subcontract.total_retainage_approved()
     send_data['retainage_to_release'] = subcontract.total_retainage_approved()
@@ -1501,6 +1772,80 @@ def subcontract(request, id):
                 request,
                 f"Item linked to COP #{changeorder.cop_number}."
             )
+
+            return redirect("subcontract", id=subcontract.id)
+        if "remove_cop_now" in request.POST:
+            item_id = request.POST.get("link_cop_item_id")
+
+            item = SubcontractItems.objects.get(
+                id=item_id,
+                subcontract=subcontract
+            )
+
+            old_cop_number = item.change_order.cop_number if item.change_order else None
+            item.change_order = None
+            item.save()
+
+            SubcontractNotes.objects.create(
+                subcontract=subcontract,
+                date=date.today(),
+                user=Employees.objects.get(user=request.user),
+                note=f"Item {item.SOV_description} unlinked from COP #{old_cop_number}." if old_cop_number else f"Item {item.SOV_description} had no COP link to remove."
+            )
+
+            messages.success(request, "COP link removed.")
+
+            return redirect("subcontract", id=subcontract.id)
+        if "link_wc_now" in request.POST:
+            item_id = request.POST.get("link_wc_item_id")
+            wallcovering_id = request.POST.get("link_wc_wallcovering_id")
+
+            item = SubcontractItems.objects.get(
+                id=item_id,
+                subcontract=subcontract
+            )
+
+            wallcovering = Wallcovering.objects.get(
+                id=wallcovering_id,
+                job_number=subcontract.job_number
+            )
+
+            item.wallcovering_id = wallcovering
+            item.save()
+
+            SubcontractNotes.objects.create(
+                subcontract=subcontract,
+                date=date.today(),
+                user=Employees.objects.get(user=request.user),
+                note=f"Item {item.SOV_description} linked to wallcovering {wallcovering.code or wallcovering.pattern}."
+            )
+
+            messages.success(
+                request,
+                "Item linked to wallcovering."
+            )
+
+            return redirect("subcontract", id=subcontract.id)
+        if "remove_wc_now" in request.POST:
+            item_id = request.POST.get("link_wc_item_id")
+
+            item = SubcontractItems.objects.get(
+                id=item_id,
+                subcontract=subcontract
+            )
+
+            old_wallcovering = item.wallcovering_id
+            item.wallcovering_id = None
+            item.save()
+
+            SubcontractNotes.objects.create(
+                subcontract=subcontract,
+                date=date.today(),
+                user=Employees.objects.get(user=request.user),
+                note=f"Item {item.SOV_description} unlinked from wallcovering {old_wallcovering.code or old_wallcovering.pattern}." if old_wallcovering else f"Item {item.SOV_description} had no wallcovering link to remove."
+            )
+
+            messages.success(request, "Wallcovering link removed.")
 
             return redirect("subcontract", id=subcontract.id)
         if 'retainage_percentage' in request.POST:
@@ -1785,18 +2130,22 @@ def subcontractor_new(request):
 def subcontracts_new(request):
     send_data = {}
     send_data['subcontractors'] = Subcontractors.objects.all()
+
+    def select_job(job_number):
+        selectedjob = Jobs.objects.get(job_number=job_number)
+        send_data['selectedjob'] = selectedjob
+        wallcovering = Wallcovering.objects.filter(job_number__job_number=job_number)
+        if wallcovering:
+            wallcovering_json1 = []
+            for x in wallcovering:
+                wallcovering_json1.append(wallcovering_subcontract_json(x))
+            send_data['wallcovering_json'] = json.dumps(list(wallcovering_json1), cls=DjangoJSONEncoder)
+        else:
+            send_data['wallcovering_json'] = 'None'
+
     if request.method == 'POST':
         if 'form1' in request.POST:
-            selectedjob = Jobs.objects.get(job_number=request.POST['select_job'])
-            send_data['selectedjob'] = selectedjob
-            if Wallcovering.objects.filter(job_number__job_number=request.POST['select_job']):
-                wallcovering = Wallcovering.objects.filter(job_number__job_number=request.POST['select_job'])
-                wallcovering_json1 = []
-                for x in wallcovering:
-                    wallcovering_json1.append(wallcovering_subcontract_json(x))
-                send_data['wallcovering_json'] = json.dumps(list(wallcovering_json1), cls=DjangoJSONEncoder)
-            else:
-                send_data['wallcovering_json'] = 'None'
+            select_job(request.POST['select_job'])
             return render(request, "subcontracts_new.html", send_data)
         else:
             if request.POST['po_number'] == "":
@@ -1837,7 +2186,7 @@ def subcontracts_new(request):
             if 'is_entire_job' in request.POST:
                 subcontract1.is_entire_paint_job = True
                 subcontract1.save()
-                selectedjob = Jobs.objects.get(job_number=request.POST['select_job'])
+                selectedjob = Jobs.objects.get(job_number=request.POST['selected_job'])
                 selectedjob.is_painting_subbed = True
                 selectedjob.save()
             for x in range(1, int(request.POST['number_items']) + 1):
@@ -1867,6 +2216,10 @@ def subcontracts_new(request):
                                     id=request.POST['wallcovering_number' + str(x)])
                                 item.save()
             return redirect('subcontract', id=subcontract1.id)
+    if request.method == 'GET' and request.GET.get('job_number'):
+        select_job(request.GET.get('job_number'))
+        return render(request, "subcontracts_new.html", send_data)
+
     send_data['selectedjob'] = 'ALL'
     if request.method == 'GET':
         if 'search_job' in request.GET:

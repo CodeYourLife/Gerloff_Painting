@@ -301,6 +301,17 @@
                 </td>
             </tr>
 
+            <tr>
+                <th class="bg-light">Yardage To Install</th>
+                <td>
+                    {% if wallcovering.install_yardage %}
+                        {{ wallcovering.install_yardage|intcomma }}
+                    {% else %}
+                        Install Ordered Yardage
+                    {% endif %}
+                </td>
+            </tr>
+
 
 
             <tr>
@@ -620,6 +631,57 @@
                 </button>
             {% endif %}
         </form>
+
+        <hr>
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong class="text-muted">Subcontractors</strong>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Subcontractor</th>
+                        <th style="width: 120px;">PO #</th>
+                        <th class="text-right" style="width: 140px;">Quantity</th>
+                        <th class="text-right" style="width: 120px;">Price</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in subcontract_items %}
+                        <tr class="clickable-row"
+                            data-href="{% url 'subcontract' item.subcontract.id %}"
+                            style="cursor:pointer;">
+                            <td>
+                                <a href="{% url 'subcontract' item.subcontract.id %}">
+                                    {{ item.subcontract.subcontractor.company }}
+                                </a>
+                            </td>
+                            <td>{{ item.subcontract.po_number|default:"TBD" }}</td>
+                            <td class="text-right">
+                                {% if item.SOV_is_lump_sum %}
+                                    Lump Sum
+                                {% else %}
+                                    {{ item.SOV_total_ordered|floatformat:2|intcomma }}
+                                    {{ item.SOV_unit|default:"" }}
+                                {% endif %}
+                            </td>
+                            <td class="text-right">
+                                ${{ item.SOV_rate|floatformat:2|intcomma }}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-2">
+                                No subcontracts linked to this wallcovering.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
         </div>
         </div>
@@ -1574,6 +1636,16 @@ function uploadPricingFiles(files) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".clickable-row[data-href]").forEach(function (row) {
+        row.addEventListener("click", function (event) {
+            if (event.target.closest("a, button, input, textarea, select")) {
+                return;
+            }
+
+            window.location.href = row.dataset.href;
+        });
+    });
+
     const dropzone = document.getElementById("pricingDropzone");
     const fileInput = document.getElementById("pricingFileInput");
 
