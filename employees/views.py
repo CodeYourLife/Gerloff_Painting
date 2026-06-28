@@ -821,6 +821,53 @@ def employees_page(request, id):
         messages.success(request, "Manual vacation entry added.")
         return redirect("employees_page", id=employee.id)
 
+    if request.method == 'POST' and 'adjust_vacation_days' in request.POST:
+        if employee.job_title and employee.job_title.description == "Painter":
+            vacation_viewer_group_name = "Painter Vacation Viewers"
+        else:
+            vacation_viewer_group_name = "Office Vacation Viewers"
+
+        can_adjust_vacation_days = (
+            request.user.is_authenticated and
+            request.user.groups.filter(name=vacation_viewer_group_name).exists()
+        )
+
+        if not can_adjust_vacation_days:
+            messages.error(request, "You are not allowed to adjust vacation days for this employee.")
+            return redirect("employees_page", id=employee.id)
+
+        previous_vacation_days = employee.vacation_days_per_year
+        vacation_days_value = request.POST.get("vacation_days_per_year")
+
+        if vacation_days_value in [None, ""]:
+            employee.vacation_days_per_year = None
+        elif vacation_days_value.isdigit():
+            employee.vacation_days_per_year = int(vacation_days_value)
+        else:
+            messages.error(request, "Please enter a valid vacation day amount.")
+            return redirect("employees_page", id=employee.id)
+
+        employee.save()
+        adjustment_note = request.POST.get("vacation_adjustment_note") or ""
+        note = (
+            f"Allowed vacation days changed from "
+            f"{previous_vacation_days if previous_vacation_days is not None else 'Default'} "
+            f"to "
+            f"{employee.vacation_days_per_year if employee.vacation_days_per_year is not None else 'Default'}."
+        )
+
+        if adjustment_note:
+            note += f" {adjustment_note}"
+
+        VacationNotes.objects.create(
+            employee=employee,
+            user=current_user_employee,
+            date=date.today(),
+            note=note,
+        )
+        messages.success(request, "Allowed vacation days updated.")
+        return redirect("employees_page", id=employee.id)
+
     toolbox_summary = employee.toolbox_talk_summary()
     toolbox_completed_count = toolbox_summary["completed_count"]
     toolbox_incomplete_count = toolbox_summary["incomplete_count"]
@@ -916,6 +963,7 @@ def employees_page(request, id):
         "vacation_days_allowed": vacation_days_allowed,
         "vacation_days_used_current_year": vacation_days_used_current_year,
         "vacation_history_by_year": vacation_history_by_year,
+        "vacation_notes": VacationNotes.objects.filter(employee=employee).select_related("user").order_by("-date", "-id"),
         "certification_summary": certification_summary,
         "inventory_summary": inventory_summary,
     }
