@@ -436,6 +436,17 @@ class VacationDefaults(models.Model):
         return "Vacation Defaults"
 
 
+class VacationNotes(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    employee = models.ForeignKey(Employees, on_delete=models.PROTECT, related_name="vacation_notes")
+    user = models.ForeignKey(Employees, on_delete=models.PROTECT, related_name="vacation_notes_written")
+    date = models.DateField()
+    note = models.CharField(max_length=2000)
+
+    def __str__(self):
+        return f"{self.date} {self.employee} {self.note}"
+
+
 class VacationApprovers(models.Model):
     id = models.BigAutoField(primary_key=True)
     employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
