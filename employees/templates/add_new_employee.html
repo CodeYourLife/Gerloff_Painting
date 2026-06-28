@@ -35,7 +35,7 @@
                 <option value="not_selected">Select Title</option>
                 {% if jobtitles %}
                 {% for x in jobtitles %}
-                <option value={{x.id}}>{{x.description}}</option>
+                <option value="{{x.id}}">{{x.description}}</option>
                 {% endfor %}
                 {% endif %}
             </select>
@@ -44,10 +44,19 @@
                 <option value="not_selected">Select Employer</option>
                 {% if employers %}
                 {% for x in employers %}
-                <option value={{x.id}}>{{x.company_name}}</option>
+                <option value="{{x.id}}">{{x.company_name}}</option>
                 {% endfor %}
                 {% endif %}
             </select>
+            <div id="vacationDaysPerYearWrapper" style="display:none;">
+                <label for="vacationDaysPerYear">Vacation Days Per Year</label>
+                <input id="vacationDaysPerYear"
+                       type="number"
+                       name="vacation_days_per_year"
+                       min="0"
+                       step="1"
+                       class="form-control">
+            </div>
             <input type="submit" style="margin-top: 10px" class="btn btn-primary btn-sm" name="add_new" value="Submit" >
         </form>
     </div>
@@ -59,7 +68,63 @@
 	<script type="text/javascript" class="init">
 $(document).ready(function () {
     var table = $('#employees_table').DataTable({});
-})
+});
+
+const employeeJobTitles = {{ job_titles_json|safe }};
+const employeeEmployers = {{ employers_json|safe }};
+const painterDefaultDays = {{ painter_default_days|default:0 }};
+const nonPainterDefaultDays = {{ non_painter_default_days|default:0 }};
+
+function getSelectedJobTitleDescription() {
+    const selectedJobTitleId = document.getElementById("jobTitle").value;
+    const selectedJobTitle = employeeJobTitles.find(function (jobTitle) {
+        return String(jobTitle.id) === String(selectedJobTitleId);
+    });
+
+    return selectedJobTitle ? selectedJobTitle.description : "";
+}
+
+function getSelectedEmployerName() {
+    const selectedEmployerId = document.getElementById("employer").value;
+    const selectedEmployer = employeeEmployers.find(function (employer) {
+        return String(employer.id) === String(selectedEmployerId);
+    });
+
+    return selectedEmployer ? selectedEmployer.company_name : "";
+}
+
+function updateVacationDaysField() {
+    const vacationDaysWrapper = document.getElementById("vacationDaysPerYearWrapper");
+    const vacationDaysInput = document.getElementById("vacationDaysPerYear");
+    const jobTitleDescription = getSelectedJobTitleDescription();
+    const employerName = getSelectedEmployerName();
+
+    if (!jobTitleDescription || !employerName) {
+        vacationDaysWrapper.style.display = "none";
+        vacationDaysInput.value = "";
+        return;
+    }
+
+    if (jobTitleDescription === "Painter") {
+        if (employerName === "Gerloff Painting") {
+            vacationDaysWrapper.style.display = "block";
+            vacationDaysInput.value = painterDefaultDays;
+        } else {
+            vacationDaysWrapper.style.display = "none";
+            vacationDaysInput.value = "";
+        }
+        return;
+    }
+
+    vacationDaysWrapper.style.display = "block";
+    vacationDaysInput.value = nonPainterDefaultDays;
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("jobTitle").addEventListener("change", updateVacationDaysField);
+    document.getElementById("employer").addEventListener("change", updateVacationDaysField);
+    updateVacationDaysField();
+});
 
 	</script>
 {% endblock %}

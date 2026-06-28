@@ -66,6 +66,7 @@ class Employees(models.Model):
     height = models.CharField(max_length=100,null=True, blank=True)
     weight = models.CharField(max_length=100, null=True, blank=True)
     employment_company = models.ForeignKey(Employers, on_delete=models.CASCADE, null=True)
+    vacation_days_per_year = models.IntegerField(null=True, blank=True)
 
 
     def __str__(self):
@@ -420,9 +421,19 @@ class Vacation(models.Model):
     duration = models.IntegerField(default=0)
     employee_note = models.CharField(max_length=2000)
     is_approved = models.BooleanField(default=False)
+    is_rejected = models.BooleanField(default=False)
     request_date = models.DateField()
     first_day = models.DateField()
     last_day = models.DateField()
+
+
+class VacationDefaults(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    painter_days_per_year = models.IntegerField(default=0)
+    non_painter_days_per_year = models.IntegerField(default=0)
+
+    def __str__(self):
+        return "Vacation Defaults"
 
 
 class VacationApprovers(models.Model):
