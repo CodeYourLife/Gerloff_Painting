@@ -2,6 +2,78 @@
 {% load static %}
 {% block nav_item_employees %}active{% endblock nav_item_employees %}
 
+{% block extra_head %}
+<style>
+    .vacation-history-notes {
+        max-width: 360px;
+        white-space: normal !important;
+        text-wrap: wrap !important;
+        overflow-x: visible !important;
+        overflow-wrap: anywhere !important;
+        word-break: normal !important;
+        min-width: 180px;
+    }
+
+    .vacation-history-summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #f1f3f5;
+        border-left: 4px solid #dc3545;
+        padding: 0.5rem 0.75rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+
+    .vacation-history-summary .badge {
+        font-size: 0.85rem;
+    }
+
+    .employee-vacation-approval-row {
+        cursor: pointer;
+    }
+
+    .employee-vacation-approval-row:hover {
+        background-color: #fff3f3;
+    }
+
+    .employee-vacation-approval-row td:first-child {
+        color: #0056b3;
+        font-weight: 600;
+        text-decoration: underline;
+    }
+
+    #employee_approve_vacation_note,
+    #employee_approve_vacation_approver_statuses td {
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+        word-break: normal !important;
+    }
+
+    #employee_approve_vacation_note {
+        display: inline-block;
+        max-width: 100%;
+        vertical-align: top;
+    }
+
+    #employee_approve_vacation_approver_statuses table {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    .vacation-status-link {
+        cursor: pointer;
+        font-weight: 600;
+        text-decoration: underline;
+    }
+
+    #employee_vacation_status_content td {
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+    }
+</style>
+{% endblock %}
+
 {% block sub_nav %}
 {% include 'employees_nav.html' with page_label=employee.first_name|add:" "|add:employee.last_name %}
 {% endblock %}
@@ -420,61 +492,480 @@
 </div>
 
 
-    <!-- Vacation History -->
-    <div class="card mb-3">
-        <div class="card-header">
+{% if can_view_employee_vacation_history %}
+<!-- Vacation History -->
+<div class="card mb-3">
+    <div class="card-header">
+        <a class="text-dark d-block"
+           data-toggle="collapse"
+           href="#vacationHistoryCollapse"
+           role="button"
+           aria-expanded="false"
+           aria-controls="vacationHistoryCollapse"
+           style="text-decoration: none;">
             <strong>Vacation History</strong>
-        </div>
+        </a>
+    </div>
 
+    <div class="collapse" id="vacationHistoryCollapse">
         <div class="card-body">
 
-            {% if vacation_by_year %}
-
-                {% for year, data in vacation_by_year.items %}
-                    <div class="mb-4 border rounded p-3">
-
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h5 class="mb-0">{{ year }}</h5>
-                            <span class="badge badge-info">
-                                {{ data.total_hours }} Hours Used
-                            </span>
+            <h6>Pending Vacation Requests</h6>
+            {% if pending_vacation_requests %}
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>First Day Off</th>
+                                <th>Last Day Off</th>
+                                <th>Days</th>
+                                <th>Note</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for vacation in pending_vacation_requests %}
+                                <tr class="employee-vacation-approval-row"
+                                    data-approval-id="{% if vacation.current_user_approval %}{{ vacation.current_user_approval.id }}{% endif %}"
+                                    data-can-review="{% if vacation.current_user_approval %}true{% else %}false{% endif %}"
+                                    data-employee="{{ vacation.employee|escape }}"
+                                    data-first-day="{{ vacation.first_day|date:'m/d/Y' }}"
+                                    data-last-day="{{ vacation.last_day|date:'m/d/Y' }}"
+                                    data-duration="{{ vacation.display_duration }}"
+                                    data-days-used-prior="{{ vacation.days_used_prior }}"
+                                    data-statuses-id="employee_vacation_approver_statuses_{{ vacation.id }}"
+                                    data-note="{{ vacation.employee_note|default:''|escape }}">
+                                    <td>{{ vacation.first_day|date:"m/d/Y" }}</td>
+                                    <td>{{ vacation.last_day|date:"m/d/Y" }}</td>
+                                    <td>{{ vacation.display_duration }} day{{ vacation.display_duration|pluralize }}</td>
+                                    <td>{{ vacation.employee_note|default:"" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% for vacation in pending_vacation_requests %}
+                    <div id="employee_vacation_approver_statuses_{{ vacation.id }}" style="display:none;">
+                        <div class="table-responsive mb-3">
+                            <table class="table table-sm mb-0">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Approver</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for approver_status in vacation.approver_statuses %}
+                                        <tr>
+                                            <td>{{ approver_status.approver }}</td>
+                                            <td>
+                                                {% if approver_status.is_approved %}
+                                                    Approved
+                                                    {% if approver_status.approver_notes %}
+                                                        - {{ approver_status.approver_notes }}
+                                                    {% endif %}
+                                                {% elif approver_status.is_rejected %}
+                                                    Rejected
+                                                    {% if approver_status.approver_notes %}
+                                                        - {{ approver_status.approver_notes }}
+                                                    {% endif %}
+                                                {% else %}
+                                                    Pending
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No pending vacation requests.</p>
+            {% endif %}
 
-                        {% if data.vacations %}
+            <div class="mb-3">
+                <strong>{{ current_year }} Vacation Days Used:</strong>
+                {{ vacation_days_used_current_year }} of {{ vacation_days_allowed }} day{{ vacation_days_allowed|pluralize }}
+                {% if current_year < 2027 %}
+                    <span class="text-muted">(Annual Vacation Tracking Started on 6/29/26, so this information may not be correct.)</span>
+                {% endif %}
+            </div>
+
+            <button type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    data-toggle="modal"
+                    data-target="#employeeVacationHistoryModal">
+                Show History
+            </button>
+            <button type="button"
+                    class="btn btn-primary btn-sm ml-2"
+                    data-toggle="modal"
+                    data-target="#manualVacationEntryModal">
+                Manual Vacation Entry
+            </button>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="manualVacationEntryModal" tabindex="-1" role="dialog" aria-labelledby="manualVacationEntryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'employees_page' employee.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="manualVacationEntryModalLabel">Manual Vacation Entry</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="manual_vacation_first_day">First Day Off</label>
+                        <input type="date"
+                               name="first_day"
+                               id="manual_vacation_first_day"
+                               class="form-control"
+                               required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="manual_vacation_last_day">Last Day Off</label>
+                        <input type="date"
+                               name="last_day"
+                               id="manual_vacation_last_day"
+                               class="form-control"
+                               required>
+                    </div>
+
+                    <div id="manual_vacation_duration_helper" class="text-danger small mb-2" style="display:none;"></div>
+
+                    <div class="form-group mb-0">
+                        <label for="manual_vacation_employee_note">Note</label>
+                        <textarea name="employee_note"
+                                  id="manual_vacation_employee_note"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Optional note"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit"
+                            name="manual_vacation_entry"
+                            class="btn btn-primary">
+                        Save Vacation
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="employeeVacationApprovalModal" tabindex="-1" role="dialog" aria-labelledby="employeeVacationApprovalModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'employees_page' employee.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="vacation_approval_id" id="employee_vacation_approval_id">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="employeeVacationApprovalModalLabel">Approve Vacation</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-2"><strong>Employee:</strong> <span id="employee_approve_vacation_employee"></span></div>
+                    <div class="mb-2"><strong>First Day Off:</strong> <span id="employee_approve_vacation_first_day"></span></div>
+                    <div class="mb-2"><strong>Last Day Off:</strong> <span id="employee_approve_vacation_last_day"></span></div>
+                    <div class="mb-2"><strong>Duration:</strong> <span id="employee_approve_vacation_duration"></span></div>
+                    <div class="mb-3"><strong>Employee Note:</strong> <span id="employee_approve_vacation_note"></span></div>
+                    <div class="mb-3"><strong>Days Used Prior To This Request:</strong> <span id="employee_approve_vacation_days_used_prior"></span></div>
+                    <div class="mb-2"><strong>Approvers:</strong></div>
+                    <div id="employee_approve_vacation_approver_statuses"></div>
+
+                    <div class="form-group mb-0" id="employee_vacation_approver_notes_group">
+                        <label for="employee_vacation_approver_notes">Approver Notes</label>
+                        <textarea name="approver_notes"
+                                  id="employee_vacation_approver_notes"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Optional note"></textarea>
+                    </div>
+
+                    <div id="employee_vacation_no_approval_message" class="alert alert-info mb-0" style="display:none;">
+                        You are not listed as an approver for this vacation request.
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit"
+                            name="approve_vacation"
+                            id="employee_approve_vacation_button"
+                            class="btn btn-danger">
+                        Approve Vacation
+                    </button>
+                    <button type="submit"
+                            name="reject_vacation"
+                            id="employee_reject_vacation_button"
+                            class="btn btn-outline-danger">
+                        Reject
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="employeeVacationHistoryModal" tabindex="-1" role="dialog" aria-labelledby="employeeVacationHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="employeeVacationHistoryModalLabel">Vacation History</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                {% if vacation_history_by_year %}
+                    {% for history_year in vacation_history_by_year %}
+                        <div class="mb-4 pb-3 border-bottom">
+                            <div class="vacation-history-summary">
+                                <span>{{ history_year.year }}</span>
+                                <span class="badge badge-danger">{{ history_year.total_days }} day{{ history_year.total_days|pluralize }} used</span>
+                            </div>
                             <div class="table-responsive">
-                                <table class="table table-sm table-bordered mb-0">
+                                <table class="table table-sm mb-0">
                                     <thead class="thead-light">
                                         <tr>
-                                            <th>Date</th>
-                                            <th>Hours</th>
+                                            <th>Dates</th>
+                                            <th>Days</th>
+                                            <th>Status</th>
                                             <th>Notes</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for vacation in data.vacations %}
+                                        {% for vacation_item in history_year.vacations %}
                                             <tr>
-                                                <td>{{ vacation.date|date:"m/d/Y" }}</td>
-                                                <td>{{ vacation.hours }}</td>
-                                                <td>{{ vacation.notes|default:"" }}</td>
+                                                <td>{{ vacation_item.first_day|date:"m/d/Y" }}</td>
+                                                <td>{{ vacation_item.display_duration }} day{{ vacation_item.display_duration|pluralize }}</td>
+                                                <td>
+                                                    <a href="#"
+                                                       class="vacation-status-link"
+                                                       data-statuses-id="employee_vacation_history_statuses_{{ vacation_item.id }}">
+                                                        {% if vacation_item.is_approved %}
+                                                            Approved
+                                                        {% elif vacation_item.is_rejected %}
+                                                            Rejected
+                                                        {% else %}
+                                                            Pending
+                                                        {% endif %}
+                                                    </a>
+                                                    <div id="employee_vacation_history_statuses_{{ vacation_item.id }}" style="display:none;">
+                                                        <div class="table-responsive">
+                                                            <table class="table table-sm mb-0">
+                                                                <thead class="thead-light">
+                                                                    <tr>
+                                                                        <th>Approver</th>
+                                                                        <th>Status</th>
+                                                                        <th>Notes</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {% for approver_status in vacation_item.approver_statuses %}
+                                                                        <tr>
+                                                                            <td>{{ approver_status.approver }}</td>
+                                                                            <td>
+                                                                                {% if approver_status.is_approved %}
+                                                                                    Approved
+                                                                                {% elif approver_status.is_rejected %}
+                                                                                    Rejected
+                                                                                {% else %}
+                                                                                    Pending
+                                                                                {% endif %}
+                                                                            </td>
+                                                                            <td>{{ approver_status.approver_notes|default:"" }}</td>
+                                                                        </tr>
+                                                                    {% empty %}
+                                                                        <tr>
+                                                                            <td colspan="3">No approvers found.</td>
+                                                                        </tr>
+                                                                    {% endfor %}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="vacation-history-notes">{{ vacation_item.employee_note|default:"" }}</td>
                                             </tr>
                                         {% endfor %}
                                     </tbody>
                                 </table>
                             </div>
-                        {% else %}
-                            <p class="text-muted mb-0">No vacation detail for this year.</p>
-                        {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted mb-0">No vacation history found.</p>
+                {% endif %}
+                <div class="alert alert-info mt-3 mb-0 py-2">
+                    Vacation Tracking Started 6/29/26.
+                </div>
+            </div>
 
-                    </div>
-                {% endfor %}
-
-            {% else %}
-                <p class="text-muted mb-0">No vacation history found.</p>
-            {% endif %}
-
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    Close
+                </button>
+            </div>
         </div>
     </div>
+</div>
+
+<div class="modal fade" id="employeeVacationStatusModal" tabindex="-1" role="dialog" aria-labelledby="employeeVacationStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="employeeVacationStatusModalLabel">Vacation Approval Status</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div id="employee_vacation_status_content"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 </div>
 
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function () {
+    const manualVacationFirstDay = document.getElementById("manual_vacation_first_day");
+    const manualVacationLastDay = document.getElementById("manual_vacation_last_day");
+    const manualVacationDurationHelper = document.getElementById("manual_vacation_duration_helper");
+
+    function countVacationWeekdays(firstDay, lastDay) {
+        let vacationDays = 0;
+        let currentDay = new Date(firstDay.getTime());
+
+        while (currentDay <= lastDay) {
+            if (currentDay.getDay() !== 0 && currentDay.getDay() !== 6) {
+                vacationDays += 1;
+            }
+
+            currentDay.setDate(currentDay.getDate() + 1);
+        }
+
+        return vacationDays;
+    }
+
+    function updateManualVacationDurationHelper() {
+        if (!manualVacationFirstDay || !manualVacationLastDay || !manualVacationDurationHelper) {
+            return;
+        }
+
+        if (!manualVacationFirstDay.value || !manualVacationLastDay.value) {
+            manualVacationDurationHelper.style.display = "none";
+            manualVacationDurationHelper.textContent = "";
+            return;
+        }
+
+        const firstDay = new Date(manualVacationFirstDay.value + "T00:00:00");
+        const lastDay = new Date(manualVacationLastDay.value + "T00:00:00");
+        const calendarDuration = Math.round((lastDay - firstDay) / (24 * 60 * 60 * 1000)) + 1;
+        const duration = countVacationWeekdays(firstDay, lastDay);
+
+        manualVacationDurationHelper.style.display = "block";
+
+        if (calendarDuration < 1) {
+            manualVacationDurationHelper.textContent = "Last Day Off cannot be before First Day Off.";
+            return;
+        }
+
+        manualVacationDurationHelper.innerHTML = "Total vacation duration: " + duration + " day" + (duration === 1 ? "" : "s") + ".";
+    }
+
+    if (manualVacationFirstDay && manualVacationLastDay) {
+        manualVacationFirstDay.addEventListener("change", updateManualVacationDurationHelper);
+        manualVacationLastDay.addEventListener("change", updateManualVacationDurationHelper);
+    }
+
+    function populateEmployeeVacationApprovalModal(row) {
+        const canReview = row.getAttribute("data-can-review") === "true";
+        const duration = row.getAttribute("data-duration") || "0";
+        const daysUsedPrior = row.getAttribute("data-days-used-prior") || "0";
+        const daysUsedPriorText = isNaN(Number(daysUsedPrior)) ? daysUsedPrior : daysUsedPrior + " day" + (daysUsedPrior === "1" ? "" : "s");
+        const statusesSource = document.getElementById(row.getAttribute("data-statuses-id") || "");
+        const statusesTarget = document.getElementById("employee_approve_vacation_approver_statuses");
+
+        document.getElementById("employee_vacation_approval_id").value = row.getAttribute("data-approval-id") || "";
+        document.getElementById("employee_approve_vacation_employee").textContent = row.getAttribute("data-employee") || "";
+        document.getElementById("employee_approve_vacation_first_day").textContent = row.getAttribute("data-first-day") || "";
+        document.getElementById("employee_approve_vacation_last_day").textContent = row.getAttribute("data-last-day") || "";
+        document.getElementById("employee_approve_vacation_duration").textContent = duration + " day" + (duration === "1" ? "" : "s");
+        document.getElementById("employee_approve_vacation_note").textContent = row.getAttribute("data-note") || "No note provided.";
+        document.getElementById("employee_approve_vacation_days_used_prior").textContent = daysUsedPriorText;
+        document.getElementById("employee_vacation_approver_notes").value = "";
+
+        if (statusesSource && statusesTarget) {
+            statusesTarget.innerHTML = statusesSource.innerHTML;
+        } else if (statusesTarget) {
+            statusesTarget.innerHTML = "";
+        }
+
+        document.getElementById("employee_approve_vacation_button").style.display = canReview ? "" : "none";
+        document.getElementById("employee_reject_vacation_button").style.display = canReview ? "" : "none";
+        document.getElementById("employee_vacation_approver_notes_group").style.display = canReview ? "" : "none";
+        document.getElementById("employee_vacation_no_approval_message").style.display = canReview ? "none" : "block";
+    }
+
+    document.querySelectorAll(".employee-vacation-approval-row").forEach(function (row) {
+        row.addEventListener("click", function () {
+            populateEmployeeVacationApprovalModal(row);
+            $("#employeeVacationApprovalModal").modal("show");
+        });
+    });
+
+    document.addEventListener("click", function (event) {
+        const statusLink = event.target.closest(".vacation-status-link");
+
+        if (!statusLink) {
+            return;
+        }
+
+        event.preventDefault();
+        const statusesSource = document.getElementById(statusLink.getAttribute("data-statuses-id") || "");
+        const statusesTarget = document.getElementById("employee_vacation_status_content");
+
+        if (statusesSource && statusesTarget) {
+            statusesTarget.innerHTML = statusesSource.innerHTML;
+        } else if (statusesTarget) {
+            statusesTarget.innerHTML = "<div>No approvers found.</div>";
+        }
+
+        $("#employeeVacationStatusModal").modal("show");
+    });
+});
+</script>
 {% endblock %}

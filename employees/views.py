@@ -33,6 +33,217 @@ from xhtml2pdf import pisa
 from dateutil.relativedelta import relativedelta
 
 
+VACATION_APPROVAL_BASE_URL = "http://184.183.68.156"
+
+
+def _is_painter(employee):
+    return bool(employee.job_title and employee.job_title.description == "Painter")
+
+
+def _vacation_weekday_count(first_day, last_day):
+    if not first_day or not last_day or last_day < first_day:
+        return 0
+
+    vacation_days = 0
+    current_day = first_day
+
+    while current_day <= last_day:
+        if current_day.weekday() < 5:
+            vacation_days += 1
+
+        current_day += timedelta(days=1)
+
+    return vacation_days
+
+
+def _vacation_allowed_days_for(employee):
+    if employee.vacation_days_per_year is not None:
+        return employee.vacation_days_per_year
+
+    vacation_defaults, created = VacationDefaults.objects.get_or_create(id=1)
+
+    if (
+        employee.job_title and
+        employee.job_title.description == "Painter"
+    ):
+        if (
+            employee.employment_company and
+            employee.employment_company.company_name == "Gerloff Painting"
+        ):
+            return vacation_defaults.painter_days_per_year
+
+        return 0
+
+    return vacation_defaults.non_painter_days_per_year
+
+
+def _vacation_history_by_year(employee):
+    vacation_history_by_year = []
+    vacation_history = Vacation.objects.filter(
+        employee=employee,
+    ).order_by("-first_day", "-id")
+    vacation_history_years = {}
+
+    for vacation_item in vacation_history:
+        vacation_year = vacation_item.first_day.year
+
+        if vacation_year not in vacation_history_years:
+            vacation_history_years[vacation_year] = {
+                "year": vacation_year,
+                "total_days": 0,
+                "vacations": [],
+            }
+
+        vacation_item.display_duration = _vacation_weekday_count(
+            vacation_item.first_day,
+            vacation_item.last_day,
+        )
+        vacation_item.approver_statuses = ApprovedVacations.objects.filter(
+            request=vacation_item,
+        ).select_related(
+            "approver",
+        ).order_by("approver__last_name", "approver__first_name")
+
+        if vacation_item.is_approved:
+            vacation_history_years[vacation_year]["total_days"] += vacation_item.display_duration
+
+        vacation_history_years[vacation_year]["vacations"].append(vacation_item)
+
+    for vacation_year in sorted(vacation_history_years.keys(), reverse=True):
+        vacation_history_by_year.append(vacation_history_years[vacation_year])
+
+    return vacation_history_by_year
+
+
+def _vacation_approvers_for(employee):
+    if _is_painter(employee):
+        group_names = [
+            "Painter Vacation Approvals",
+            "Painter Vacation Approvers",
+        ]
+    else:
+        group_names = [
+            "Office Vacation Approvers",
+        ]
+
+    approvers = {}
+
+    group_approvers = Employees.objects.filter(
+        active=True,
+        user__groups__name__in=group_names,
+    ).distinct()
+
+    for approver in group_approvers:
+        approvers[approver.id] = approver
+
+    if _is_painter(employee):
+        superintendents = Employees.objects.filter(
+            active=True,
+            job_title__description__in=["Superintendent", "Superintendant"],
+        )
+
+        for approver in superintendents:
+            approvers[approver.id] = approver
+
+    return list(approvers.values())
+
+
+def _send_vacation_request_emails(vacation, approvers):
+    vacation_link = VACATION_APPROVAL_BASE_URL + reverse("my_page")
+    requester = vacation.employee
+    requester_name = str(requester)
+    sender = requester.email or "operations@gerloffpainting.com"
+    note = vacation.employee_note or "No note provided."
+    vacation_duration = _vacation_weekday_count(vacation.first_day, vacation.last_day)
+
+    body = (
+        f"{requester_name} submitted a vacation request.\n\n"
+        f"First Day Off: {vacation.first_day.strftime('%m/%d/%Y')}\n"
+        f"Last Day Off: {vacation.last_day.strftime('%m/%d/%Y')}\n"
+        f"Duration: {vacation_duration} day{'s' if vacation_duration != 1 else ''}\n"
+        f"Note: {note}\n\n"
+        f"Review the request here:\n{vacation_link}"
+    )
+
+    for approver in approvers:
+        if not approver.email:
+            continue
+
+        Email.sendEmail(
+            "Vacation Request Submitted",
+            body,
+            [approver.email],
+            False,
+            sender,
+        )
+
+
+def _send_vacation_final_status_email(vacation):
+    employee = vacation.employee
+
+    if not employee.email:
+        Email.sendEmail(
+            "Employee Vacation Approved - Missing Email",
+            "Employee vacation approved, however no email is on file",
+            ["bridgette@gerloffpainting.com"],
+            False,
+            "operations@gerloffpainting.com",
+        )
+        return
+
+    rejected_approvals = ApprovedVacations.objects.filter(
+        request=vacation,
+        is_rejected=True,
+    ).select_related(
+        "approver",
+    ).order_by("approver__last_name", "approver__first_name")
+
+    sender = "operations@gerloffpainting.com"
+    vacation_duration = _vacation_weekday_count(vacation.first_day, vacation.last_day)
+
+    if rejected_approvals.exists():
+        rejection_notes = []
+
+        for approval in rejected_approvals:
+            if approval.approver_notes:
+                rejection_notes.append(f"{approval.approver}: {approval.approver_notes}")
+            else:
+                rejection_notes.append(f"{approval.approver}: No note provided.")
+
+        body = (
+            "Your vacation request was rejected.\n\n"
+            f"First Day Off: {vacation.first_day.strftime('%m/%d/%Y')}\n"
+            f"Last Day Off: {vacation.last_day.strftime('%m/%d/%Y')}\n"
+            f"Duration: {vacation_duration} day{'s' if vacation_duration != 1 else ''}\n\n"
+            "Rejection Notes:\n"
+            + "\n".join(rejection_notes)
+        )
+
+        Email.sendEmail(
+            "Vacation Request Rejected",
+            body,
+            [employee.email],
+            False,
+            sender,
+        )
+        return
+
+    body = (
+        "Your vacation request was approved.\n\n"
+        f"First Day Off: {vacation.first_day.strftime('%m/%d/%Y')}\n"
+        f"Last Day Off: {vacation.last_day.strftime('%m/%d/%Y')}\n"
+        f"Duration: {vacation_duration} day{'s' if vacation_duration != 1 else ''}"
+    )
+
+    Email.sendEmail(
+        "Vacation Request Approved",
+        body,
+        [employee.email],
+        False,
+        sender,
+    )
+
+
 @login_required(login_url='/accounts/login')
 def employee_notes(request, employee):
     send_data = {}
@@ -492,6 +703,124 @@ def toggle_subcontractor_delegation(request, sub_id):
 
 def employees_page(request, id):
     employee = get_object_or_404(Employees, id=id)
+    current_user_employee = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+
+    if request.method == 'POST' and ('approve_vacation' in request.POST or 'reject_vacation' in request.POST):
+        if not current_user_employee:
+            messages.error(request, "Vacation approval could not be found.")
+            return redirect("employees_page", id=employee.id)
+
+        vacation_approval_id = request.POST.get("vacation_approval_id")
+
+        if not vacation_approval_id or not vacation_approval_id.isdigit():
+            messages.error(request, "Vacation approval could not be found.")
+            return redirect("employees_page", id=employee.id)
+
+        approval = get_object_or_404(
+            ApprovedVacations,
+            id=vacation_approval_id,
+            approver=current_user_employee,
+        )
+        vacation = approval.request
+        had_pending_approvals_before_review = ApprovedVacations.objects.filter(
+            request=vacation,
+            is_approved=False,
+            is_rejected=False,
+        ).exists()
+
+        approval.approver_notes = request.POST.get("approver_notes") or ""
+        approval.is_approved = 'approve_vacation' in request.POST
+        approval.is_rejected = 'reject_vacation' in request.POST
+        approval.save()
+
+        has_pending_approvals = ApprovedVacations.objects.filter(
+            request=vacation,
+            is_approved=False,
+            is_rejected=False,
+        ).exists()
+        has_rejected_approvals = ApprovedVacations.objects.filter(
+            request=vacation,
+            is_rejected=True,
+        ).exists()
+        has_approval_rows = ApprovedVacations.objects.filter(request=vacation).exists()
+
+        if has_approval_rows and not has_pending_approvals and not has_rejected_approvals:
+            vacation.is_approved = True
+            vacation.is_rejected = False
+            vacation.save()
+        elif has_approval_rows and not has_pending_approvals and has_rejected_approvals:
+            vacation.is_approved = False
+            vacation.is_rejected = True
+            vacation.save()
+        else:
+            vacation.is_approved = False
+            vacation.is_rejected = False
+            vacation.save()
+
+        if had_pending_approvals_before_review and not has_pending_approvals:
+            try:
+                _send_vacation_final_status_email(vacation)
+            except Exception:
+                messages.warning(
+                    request,
+                    "Vacation review saved, but the final status email could not be sent.",
+                )
+
+        if approval.is_approved:
+            messages.success(request, "Vacation request approved.")
+        else:
+            messages.success(request, "Vacation request rejected.")
+
+        return redirect("employees_page", id=employee.id)
+
+    if request.method == 'POST' and 'manual_vacation_entry' in request.POST:
+        if not current_user_employee:
+            messages.error(request, "Manual vacation entry could not be saved.")
+            return redirect("employees_page", id=employee.id)
+
+        if employee.job_title and employee.job_title.description == "Painter":
+            vacation_viewer_group_name = "Painter Vacation Viewers"
+        else:
+            vacation_viewer_group_name = "Office Vacation Viewers"
+
+        can_make_manual_vacation_entry = request.user.groups.filter(
+            name=vacation_viewer_group_name
+        ).exists()
+
+        if not can_make_manual_vacation_entry:
+            messages.error(request, "You are not allowed to add vacation for this employee.")
+            return redirect("employees_page", id=employee.id)
+
+        first_day_raw = request.POST.get("first_day")
+        last_day_raw = request.POST.get("last_day")
+        manual_note = request.POST.get("employee_note") or ""
+
+        try:
+            first_day = date.fromisoformat(first_day_raw)
+            last_day = date.fromisoformat(last_day_raw)
+        except (TypeError, ValueError):
+            messages.error(request, "Please enter valid vacation dates.")
+            return redirect("employees_page", id=employee.id)
+
+        if last_day < first_day:
+            messages.error(request, "Last day cannot be before first day.")
+            return redirect("employees_page", id=employee.id)
+
+        Vacation.objects.create(
+            employee=employee,
+            vacation_date=first_day,
+            first_day=first_day,
+            last_day=last_day,
+            duration=_vacation_weekday_count(first_day, last_day),
+            employee_note=f"Added by {current_user_employee.first_name}- {manual_note}",
+            is_approved=True,
+            is_rejected=False,
+            request_date=date.today(),
+        )
+
+        messages.success(request, "Manual vacation entry added.")
+        return redirect("employees_page", id=employee.id)
+
     toolbox_summary = employee.toolbox_talk_summary()
     toolbox_completed_count = toolbox_summary["completed_count"]
     toolbox_incomplete_count = toolbox_summary["incomplete_count"]
@@ -499,18 +828,80 @@ def employees_page(request, id):
     certification_count = certification_summary["count"]
     inventory_summary = employee.inventory_summary()
     assigned_equipment_count = inventory_summary["count"]
-    # PLACEHOLDERS - replace these with your actual model queries
+    if employee.job_title and employee.job_title.description == "Painter":
+        vacation_viewer_group_name = "Painter Vacation Viewers"
+    else:
+        vacation_viewer_group_name = "Office Vacation Viewers"
 
-    # Expected structure:
-    # vacation_by_year = {
-    #   2026: {
-    #       "total_hours": 24,
-    #       "vacations": [
-    #           {"date": date, "hours": 8, "notes": "..."},
-    #       ]
-    #   }
-    # }
-    vacation_by_year = {}
+    can_view_employee_vacation_history = (
+        request.user.is_authenticated and
+        request.user.groups.filter(name=vacation_viewer_group_name).exists()
+    )
+    current_year = date.today().year
+    pending_vacation_requests = []
+    vacation_days_allowed = 0
+    vacation_days_used_current_year = 0
+    vacation_history_by_year = []
+
+    if can_view_employee_vacation_history:
+        pending_vacation_requests = list(Vacation.objects.filter(
+            employee=employee,
+            is_approved=False,
+            is_rejected=False,
+        ).order_by("first_day", "id"))
+
+        for vacation_request in pending_vacation_requests:
+            vacation_request.display_duration = _vacation_weekday_count(
+                vacation_request.first_day,
+                vacation_request.last_day,
+            )
+            vacation_request.current_user_approval = None
+
+            if current_user_employee:
+                vacation_request.current_user_approval = ApprovedVacations.objects.filter(
+                    request=vacation_request,
+                    approver=current_user_employee,
+                ).first()
+
+            vacation_request.approver_statuses = ApprovedVacations.objects.filter(
+                request=vacation_request,
+            ).select_related(
+                "approver",
+            ).order_by("approver__last_name", "approver__first_name")
+
+            if date.today() < date(2027, 1, 1):
+                vacation_request.days_used_prior = "Annual Calculation will Start on 1/1/27"
+            else:
+                vacation_year_start = date(vacation_request.first_day.year, 1, 1)
+                prior_vacations = Vacation.objects.filter(
+                    employee=employee,
+                    is_approved=True,
+                    first_day__gte=vacation_year_start,
+                    first_day__lt=vacation_request.first_day,
+                ).exclude(
+                    id=vacation_request.id,
+                )
+                vacation_request.days_used_prior = sum(
+                    _vacation_weekday_count(vacation.first_day, vacation.last_day)
+                    for vacation in prior_vacations
+                )
+
+        vacation_days_allowed = _vacation_allowed_days_for(employee)
+        current_year_start = date(current_year, 1, 1)
+        current_year_end = date(current_year, 12, 31)
+        vacation_days_used_current_year = sum(
+            _vacation_weekday_count(
+                max(vacation.first_day, current_year_start),
+                min(vacation.last_day, current_year_end),
+            )
+            for vacation in Vacation.objects.filter(
+                employee=employee,
+                is_approved=True,
+                first_day__lte=current_year_end,
+                last_day__gte=current_year_start,
+            )
+        )
+        vacation_history_by_year = _vacation_history_by_year(employee)
 
     send_data = {
         "employee": employee,
@@ -519,7 +910,12 @@ def employees_page(request, id):
         "toolbox_summary": toolbox_summary,
         "certification_count": certification_count,
         "assigned_equipment_count": assigned_equipment_count,
-        "vacation_by_year": vacation_by_year,
+        "can_view_employee_vacation_history": can_view_employee_vacation_history,
+        "current_year": current_year,
+        "pending_vacation_requests": pending_vacation_requests,
+        "vacation_days_allowed": vacation_days_allowed,
+        "vacation_days_used_current_year": vacation_days_used_current_year,
+        "vacation_history_by_year": vacation_history_by_year,
         "certification_summary": certification_summary,
         "inventory_summary": inventory_summary,
     }
@@ -635,7 +1031,12 @@ def toolbox_file(request, scheduled_id, language):
 def my_page(request):
     employee = Employees.objects.get(user=request.user)
     send_data = {}
-    can_request_vacation = not (
+    has_worked_more_than_one_year = (
+        employee.date_added and
+        employee.date_added < date.today() - relativedelta(years=1)
+    )
+    vacation_eligible_date = employee.date_added + relativedelta(years=1) if employee.date_added else None
+    is_vacation_request_employee = not (
         employee.job_title and
         employee.job_title.description == "Painter" and
         (
@@ -643,7 +1044,72 @@ def my_page(request):
             employee.employment_company.company_name != "Gerloff Painting"
         )
     )
+    show_vacation_requests = is_vacation_request_employee
+    can_request_vacation = has_worked_more_than_one_year and is_vacation_request_employee
     if request.method == 'POST':
+        if 'approve_vacation' in request.POST or 'reject_vacation' in request.POST:
+            vacation_approval_id = request.POST.get("vacation_approval_id")
+
+            if not vacation_approval_id or not vacation_approval_id.isdigit():
+                messages.error(request, "Vacation approval could not be found.")
+                return redirect('my_page')
+
+            approval = get_object_or_404(
+                ApprovedVacations,
+                id=vacation_approval_id,
+                approver=employee,
+            )
+            vacation = approval.request
+            had_pending_approvals_before_review = ApprovedVacations.objects.filter(
+                request=vacation,
+                is_approved=False,
+                is_rejected=False,
+            ).exists()
+
+            approval.approver_notes = request.POST.get("approver_notes") or ""
+            approval.is_approved = 'approve_vacation' in request.POST
+            approval.is_rejected = 'reject_vacation' in request.POST
+            approval.save()
+
+            has_pending_approvals = ApprovedVacations.objects.filter(
+                request=vacation,
+                is_approved=False,
+                is_rejected=False,
+            ).exists()
+            has_rejected_approvals = ApprovedVacations.objects.filter(
+                request=vacation,
+                is_rejected=True,
+            ).exists()
+            has_approval_rows = ApprovedVacations.objects.filter(request=vacation).exists()
+
+            if has_approval_rows and not has_pending_approvals and not has_rejected_approvals:
+                vacation.is_approved = True
+                vacation.is_rejected = False
+                vacation.save()
+            elif has_approval_rows and not has_pending_approvals and has_rejected_approvals:
+                vacation.is_approved = False
+                vacation.is_rejected = True
+                vacation.save()
+            else:
+                vacation.is_approved = False
+                vacation.is_rejected = False
+                vacation.save()
+
+            if had_pending_approvals_before_review and not has_pending_approvals:
+                try:
+                    _send_vacation_final_status_email(vacation)
+                except Exception:
+                    messages.warning(
+                        request,
+                        "Vacation review saved, but the final status email could not be sent.",
+                    )
+
+            if approval.is_approved:
+                messages.success(request, "Vacation request approved.")
+            else:
+                messages.success(request, "Vacation request rejected.")
+            return redirect('my_page')
+
         if 'request_vacation' in request.POST:
             if not can_request_vacation:
                 messages.error(request, "You are not allowed to request vacation.")
@@ -664,15 +1130,34 @@ def my_page(request):
                 messages.error(request, "Last day cannot be before first day.")
                 return redirect('my_page')
 
-            Vacation.objects.create(
+            vacation = Vacation.objects.create(
                 employee=employee,
                 vacation_date=first_day,
                 first_day=first_day,
                 last_day=last_day,
-                duration=(last_day - first_day).days + 1,
+                duration=_vacation_weekday_count(first_day, last_day),
                 employee_note=employee_note,
                 request_date=date.today(),
             )
+
+            approvers = _vacation_approvers_for(employee)
+
+            for approver in approvers:
+                ApprovedVacations.objects.get_or_create(
+                    request=vacation,
+                    approver=approver,
+                    defaults={
+                        "approver_notes": "",
+                    },
+                )
+
+            try:
+                _send_vacation_request_emails(vacation, approvers)
+            except Exception:
+                messages.warning(
+                    request,
+                    "Vacation request submitted, but the approval email could not be sent.",
+                )
 
             messages.success(request, "Vacation request submitted.")
             return redirect('my_page')
@@ -787,7 +1272,9 @@ def my_page(request):
     send_data['employeeJobs'] = EmployeeJob.objects.filter(employee=employee.id,job__is_closed=False)
     send_data['employeeJobs_count'] = EmployeeJob.objects.filter(employee=employee.id,job__is_closed=False).count()
     send_data['employee'] = employee
+    send_data['show_vacation_requests'] = show_vacation_requests
     send_data['can_request_vacation'] = can_request_vacation
+    send_data['vacation_eligible_date'] = vacation_eligible_date
     send_data['inventory'] = Inventory.objects.filter(assigned_to=employee,is_closed=False)
     send_data['inventory_count'] = Inventory.objects.filter(assigned_to=employee, is_closed=False).count()
     send_data['assessments_performed'] = EmployeeReview.objects.filter(assessment__reviewer=employee)
@@ -795,7 +1282,130 @@ def my_page(request):
     send_data['writeups_written'] = WriteUp.objects.filter(supervisor=employee)
     send_data['writeups_received'] = WriteUp.objects.filter(employee=employee)
     send_data['writeups_received_count'] = WriteUp.objects.filter(employee=employee).count()
-    send_data['vacation_requests'] = Vacation.objects.filter(employee=employee)
+    vacation_requests = list(Vacation.objects.filter(employee=employee))
+    for vacation_request in vacation_requests:
+        vacation_request.display_duration = _vacation_weekday_count(
+            vacation_request.first_day,
+            vacation_request.last_day,
+        )
+    send_data['vacation_requests'] = vacation_requests
+    send_data['my_vacation_history_by_year'] = _vacation_history_by_year(employee)
+    my_vacation_days_allowed = _vacation_allowed_days_for(employee)
+    current_year = date.today().year
+    current_year_start = date(current_year, 1, 1)
+    current_year_end = date(current_year, 12, 31)
+    my_vacation_days_used_current_year = sum(
+        _vacation_weekday_count(
+            max(vacation.first_day, current_year_start),
+            min(vacation.last_day, current_year_end),
+        )
+        for vacation in Vacation.objects.filter(
+            employee=employee,
+            is_approved=True,
+            first_day__lte=current_year_end,
+            last_day__gte=current_year_start,
+        )
+    )
+    send_data['my_vacation_days_allowed'] = my_vacation_days_allowed
+    send_data['my_vacation_days_used_current_year'] = my_vacation_days_used_current_year
+    vacation_requests_with_pending_reviews = ApprovedVacations.objects.filter(
+        is_approved=False,
+        is_rejected=False,
+    ).values_list("request_id", flat=True)
+
+    vacation_approvals_requiring_my_approval = list(ApprovedVacations.objects.filter(
+        approver=employee,
+        request_id__in=vacation_requests_with_pending_reviews,
+        is_approved=False,
+        is_rejected=False,
+    ).select_related(
+        "request",
+        "request__employee",
+    ).order_by("request__first_day", "request__employee__last_name", "request__employee__first_name"))
+
+    vacation_approvals_waiting_on_others = list(ApprovedVacations.objects.filter(
+        approver=employee,
+        request_id__in=vacation_requests_with_pending_reviews,
+    ).filter(
+        Q(is_approved=True) | Q(is_rejected=True)
+    ).select_related(
+        "request",
+        "request__employee",
+    ).order_by("request__first_day", "request__employee__last_name", "request__employee__first_name"))
+
+    vacation_approval_modal_requests = (
+        vacation_approvals_requiring_my_approval +
+        vacation_approvals_waiting_on_others
+    )
+
+    for approval in vacation_approval_modal_requests:
+        approval.approver_statuses = ApprovedVacations.objects.filter(
+            request=approval.request,
+        ).select_related(
+            "approver",
+        ).order_by("approver__last_name", "approver__first_name")
+        approval.display_duration = _vacation_weekday_count(
+            approval.request.first_day,
+            approval.request.last_day,
+        )
+        if date.today() < date(2027, 1, 1):
+            approval.days_used_prior = "Annual Calculation will Start on 1/1/27"
+        else:
+            vacation_year_start = date(approval.request.first_day.year, 1, 1)
+            prior_vacations = Vacation.objects.filter(
+                employee=approval.request.employee,
+                is_approved=True,
+                first_day__gte=vacation_year_start,
+                first_day__lt=approval.request.first_day,
+            ).exclude(
+                id=approval.request.id,
+            )
+            approval.days_used_prior = sum(
+                _vacation_weekday_count(vacation.first_day, vacation.last_day)
+                for vacation in prior_vacations
+            )
+        vacation_history_by_year = []
+        vacation_history = Vacation.objects.filter(
+            employee=approval.request.employee,
+        ).order_by("-first_day", "-id")
+        vacation_history_years = {}
+
+        for vacation_item in vacation_history:
+            vacation_year = vacation_item.first_day.year
+
+            if vacation_year not in vacation_history_years:
+                vacation_history_years[vacation_year] = {
+                    "year": vacation_year,
+                    "total_days": 0,
+                    "vacations": [],
+                }
+
+            vacation_item.display_duration = _vacation_weekday_count(
+                vacation_item.first_day,
+                vacation_item.last_day,
+            )
+            vacation_item.approver_statuses = ApprovedVacations.objects.filter(
+                request=vacation_item,
+            ).select_related(
+                "approver",
+            ).order_by("approver__last_name", "approver__first_name")
+
+            if vacation_item.is_approved:
+                vacation_history_years[vacation_year]["total_days"] += vacation_item.display_duration
+
+            vacation_history_years[vacation_year]["vacations"].append(vacation_item)
+
+        for vacation_year in sorted(vacation_history_years.keys(), reverse=True):
+            vacation_history_by_year.append(vacation_history_years[vacation_year])
+
+        approval.vacation_history_by_year = vacation_history_by_year
+
+    send_data['vacation_approvals_requiring_my_approval'] = vacation_approvals_requiring_my_approval
+    send_data['vacation_approvals_requiring_my_approval_count'] = len(vacation_approvals_requiring_my_approval)
+    send_data['vacation_approvals_waiting_on_others'] = vacation_approvals_waiting_on_others
+    send_data['vacation_approvals_waiting_on_others_count'] = len(vacation_approvals_waiting_on_others)
+    send_data['vacation_approval_modal_requests'] = vacation_approval_modal_requests
+    send_data['vacation_approval_requests_exist'] = bool(vacation_approval_modal_requests)
     send_data['production_reports_written'] = DailyReports.objects.filter(foreman=employee)
     send_data['production_reports_received'] = ProductionItems.objects.filter(employee=employee)
     send_data['classes_taught'] = ClassOccurrence.objects.filter(teacher=employee)
@@ -1023,14 +1633,45 @@ def new_certification(request):
 @login_required(login_url='/accounts/login')
 def add_new_employee(request):
     send_data = {}
-    send_data['jobtitles'] = EmployeeTitles.objects.all
-    send_data['employers'] = Employers.objects.all
+    job_titles = EmployeeTitles.objects.all()
+    employers = Employers.objects.all()
+    vacation_defaults, created = VacationDefaults.objects.get_or_create(id=1)
+    painter_default_days = vacation_defaults.painter_days_per_year if vacation_defaults else 0
+    non_painter_default_days = vacation_defaults.non_painter_days_per_year if vacation_defaults else 0
+    send_data['jobtitles'] = job_titles
+    send_data['employers'] = employers
+    send_data['painter_default_days'] = painter_default_days
+    send_data['non_painter_default_days'] = non_painter_default_days
+    send_data['job_titles_json'] = json.dumps(
+        list(job_titles.values("id", "description")),
+        cls=DjangoJSONEncoder,
+    )
+    send_data['employers_json'] = json.dumps(
+        list(employers.values("id", "company_name")),
+        cls=DjangoJSONEncoder,
+    )
     if request.method == 'POST':
+        job_title = EmployeeTitles.objects.get(id=request.POST['jobTitle'])
+        employer = Employers.objects.get(id=request.POST['employer'])
+        vacation_days_per_year = None
+
+        if (
+            job_title.description == "Painter" and
+            employer.company_name == "Gerloff Painting"
+        ) or job_title.description != "Painter":
+            vacation_days_value = request.POST.get("vacation_days_per_year")
+
+            if vacation_days_value not in [None, ""]:
+                vacation_days_per_year = int(vacation_days_value)
+
         employee = Employees.objects.create(first_name=request.POST['first_name'],
                                             middle_name=request.POST['middle_name'],
                                             last_name=request.POST['last_name'],
-                                            job_title=EmployeeTitles.objects.get(id=request.POST['jobTitle']),
-                                            employer=Employers.objects.get(id=request.POST['employer']), date_added=date.today())
+                                            job_title=job_title,
+                                            employer=employer.company_name,
+                                            employment_company=employer,
+                                            vacation_days_per_year=vacation_days_per_year,
+                                            date_added=date.today())
         try:
             # check if employees directory exists
             employeesFolderPath = os.path.join(settings.MEDIA_ROOT, "employees")
