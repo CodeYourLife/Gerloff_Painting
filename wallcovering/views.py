@@ -28,13 +28,13 @@ from changeorder.models import Wallcovering_Change_Orders
 from subcontractors.models import SubcontractItems
 
 import os
+import re
 from io import BytesIO
 
 import openpyxl
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse, FileResponse, Http404
 from django.db.models import Count, Q
-from django.utils.text import get_valid_filename
 
 
 DEFAULT_BOOKING_WALLCOVERING_PATTERN = "Default at Booking-Please Complete"
@@ -1589,6 +1589,21 @@ def wallcovering_add_pricing(request, wallcovering_id):
 
     return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
 
+
+def wallcovering_delete_pricing(request, wallcovering_id, pricing_id):
+    wallcovering = get_object_or_404(Wallcovering, id=wallcovering_id)
+
+    if request.method == "POST":
+        pricing = get_object_or_404(
+            WallcoveringPricing,
+            id=pricing_id,
+            wallcovering=wallcovering,
+        )
+        pricing.delete()
+
+    return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
+
+
 def wallcovering_receive(request, wallcovering_id=None):
     wallcovering = None
 
@@ -2573,6 +2588,12 @@ def _wallcovering_quotes_folder(wallcovering_id):
     return os.path.join(settings.MEDIA_ROOT, "wallcovering_quotes", str(wallcovering_id))
 
 
+def _clean_wallcovering_quote_filename(value):
+    cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "", value).strip()
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    return cleaned.strip(". ")
+
+
 def wallcovering_pricing_files(request, wallcovering_id):
     wallcovering = get_object_or_404(Wallcovering, id=wallcovering_id)
 
@@ -2615,8 +2636,8 @@ def wallcovering_pricing_upload(request, wallcovering_id):
     original_base, original_ext = os.path.splitext(original_name)
     requested_name = request.POST.get("file_name", "").strip() or original_base
     requested_base = os.path.splitext(os.path.basename(requested_name))[0] or original_base
-    dated_name = f"{date.today().strftime('%m-%d-%Y')} - {requested_base}{original_ext}"
-    safe_name = get_valid_filename(dated_name)
+    safe_base = _clean_wallcovering_quote_filename(requested_base) or original_base
+    safe_name = f"{safe_base}{original_ext}"
     file_path = os.path.join(folder, safe_name)
 
     base_name, ext = os.path.splitext(safe_name)

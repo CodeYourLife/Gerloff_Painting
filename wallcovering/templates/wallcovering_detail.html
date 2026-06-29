@@ -457,7 +457,18 @@
                     <tbody>
                         {% for p in pricing %}
                             <tr>
-                                <td>{{ p.quote_date|date:"m/d/Y" }}</td>
+                                <td>
+                                    {{ p.quote_date|date:"m/d/Y" }}
+                                    <form method="post"
+                                          action="{% url 'wallcovering_delete_pricing' wallcovering.id p.id %}"
+                                          class="d-inline mb-0 ml-2"
+                                          onsubmit="return confirm('Delete this pricing row?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </td>
                                 <td class="text-right">
                                     {% if p.min_yards %}{{ p.min_yards|intcomma }}{% else %}-{% endif %}
                                 </td>
@@ -1399,6 +1410,9 @@
                 <div id="pricingDropzone" class="pricing-dropzone mb-3">
                     <div class="font-weight-bold">Drag & Drop files here</div>
                     <div class="text-muted small">or click to choose files</div>
+                    <div class="text-muted small mt-2">
+                        Please type a short description of the file, starting with the date of the file. Example "2026-05-23 Quote".
+                    </div>
                     <input type="file" id="pricingFileInput" multiple style="display:none;">
                 </div>
 
@@ -1581,16 +1595,10 @@ function loadPricingFiles() {
     }
 
 function getPricingUploadLabel(file) {
-    const today = new Date();
-    const dateLabel = [
-        String(today.getMonth() + 1).padStart(2, "0"),
-        String(today.getDate()).padStart(2, "0"),
-        today.getFullYear()
-    ].join("/");
     const defaultName = file.name.replace(/\.[^/.]+$/, "");
 
     return prompt(
-        "File will be relabeled to " + dateLabel + " along with your file name.\n\nEnter file name:",
+        'Please type a short description of the file, starting with the date of the file.\n\nExample "2026-05-23 Quote"',
         defaultName
     );
 }

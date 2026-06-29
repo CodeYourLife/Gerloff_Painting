@@ -10,6 +10,7 @@ urlpatterns = [
     path('wallcovering_add_order/<int:wallcovering_id>', views.wallcovering_add_order, name='wallcovering_add_order'),
     path('wallcovering_pending_order/<int:pending_order_id>', views.wallcovering_pending_order, name='wallcovering_pending_order'),
     path('wallcovering_add_pricing/<int:wallcovering_id>', views.wallcovering_add_pricing, name='wallcovering_add_pricing'),
+    path('wallcovering_delete_pricing/<int:wallcovering_id>/<int:pricing_id>', views.wallcovering_delete_pricing, name='wallcovering_delete_pricing'),
     path('wallcovering_receive', views.wallcovering_receive, name='wallcovering_receive'),
     path('wallcovering_receive/<int:wallcovering_id>', views.wallcovering_receive, name='wallcovering_receive_for_wallcovering'),
     path('wallcovering_send_to_job/<int:wallcovering_id>', views.wallcovering_send_to_job, name='wallcovering_send_to_job'),
