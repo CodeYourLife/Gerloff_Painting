@@ -844,6 +844,28 @@ def clean_decimal(value):
         return Decimal("0.00")
 
 
+def build_wallcovering_order_email_lines(wallcovering, pending_order, message):
+    email_lines = [
+        f"Job Name: {wallcovering.job_number.job_name}",
+        f"Project Manager: {wallcovering.job_number.project_manager or ''}",
+        "",
+        message,
+        "",
+        "Pending Order Items:",
+    ]
+
+    pending_items = Pending_Order_Items.objects.filter(
+        pending_order=pending_order
+    ).order_by("id")
+
+    for item in pending_items:
+        email_lines.append(
+            f"- {item.quantity} {item.unit} of {item.item_description}"
+        )
+
+    return email_lines
+
+
 def wallcovering_add_order(request, wallcovering_id):
     Orders = apps.get_model('jobs', 'Orders')
 
@@ -975,18 +997,15 @@ def wallcovering_add_order(request, wallcovering_id):
             if wallcovering.job_number.estimator:
                 add_recipient(wallcovering.job_number.estimator.email)
 
-            email_lines = [
-                f"Job Name: {wallcovering.job_number.job_name}",
-                f"Project Manager: {wallcovering.job_number.project_manager or ''}",
-                "",
-                "You have a pending wallcovering order that needs approval",
-                "",
-                "Pending Order Items:",
-            ]
-
             pending_items = Pending_Order_Items.objects.filter(
                 pending_order=pending_order
             ).order_by("id")
+
+            email_lines = build_wallcovering_order_email_lines(
+                wallcovering,
+                pending_order,
+                "You have a pending wallcovering order that needs approval",
+            )
 
             note_lines = [
                 "Order Approval Requested.",
@@ -997,9 +1016,6 @@ def wallcovering_add_order(request, wallcovering_id):
             for item in pending_items:
                 note_lines.append(
                     f"Description: {item.item_description}, Quantity: {item.quantity}, Unit: {item.unit}, Price: {item.price}"
-                )
-                email_lines.append(
-                    f"- {item.quantity} {item.unit} of {item.item_description}"
                 )
 
             if requestor_notes:
@@ -1400,9 +1416,11 @@ def wallcovering_pending_order(request, pending_order_id):
                 if approver_email.lower() not in [email.lower() for email in approval_recipients]:
                     approval_recipients.append(approver_email)
 
-            approval_lines = [
-                "Order is approved",
-            ]
+            approval_lines = build_wallcovering_order_email_lines(
+                wallcovering,
+                pending_order,
+                "Wallcovering order approved.",
+            )
 
             if approver_notes:
                 approval_lines.extend([
@@ -1412,8 +1430,14 @@ def wallcovering_pending_order(request, pending_order_id):
                 ])
 
             if changes:
-                approval_lines.extend(["", "Changes Made:"])
+                approval_lines.extend(["", "Approver Changes:"])
                 approval_lines.extend([f"- {change}" for change in changes])
+            else:
+                approval_lines.extend([
+                    "",
+                    "Approver Changes:",
+                    "- No changes made by approver.",
+                ])
 
             if linked_change_orders:
                 approval_lines.extend(["", "Change Order Quantities:"])
@@ -1423,6 +1447,11 @@ def wallcovering_pending_order(request, pending_order_id):
                     approval_lines.append(
                         f"- COP {link.change_order.cop_number} - {link.change_order.description or ''}: {included_text}"
                     )
+
+            approval_lines.extend([
+                "",
+                f"http://gp-webserver/wallcovering/wallcovering_detail/{wallcovering.id}",
+            ])
 
             if employee:
                 WallcoveringNotes.objects.create(
@@ -1436,7 +1465,7 @@ def wallcovering_pending_order(request, pending_order_id):
 
             try:
                 Email.sendEmail(
-                    "Order is approved",
+                    "Wallcovering Order Approved",
                     "\r\n".join(approval_lines),
                     approval_recipients,
                     False,
