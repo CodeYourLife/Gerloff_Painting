@@ -18,6 +18,20 @@
     background-color: #f8f9fa;
 }
 
+.wallcovering-void-row,
+.wallcovering-void-row:hover {
+    background-color: #e9ecef !important;
+    color: #777;
+}
+
+.wallcovering-void-row a {
+    color: #777;
+}
+
+.wallcovering-void-row .badge {
+    opacity: 0.65;
+}
+
 .colored-header th { background-color: lightblue; padding: 5px; border: solid 1px #777;}
 
 .dataTables_wrapper {
@@ -1767,16 +1781,22 @@ float: left !important;
 
                     <tbody>
                         {% for wc in wallcoverings %}
-                            <tr class="clickable-row"
+                            <tr class="clickable-row {% if wc.is_void %}wallcovering-void-row{% endif %}"
                             data-href="{% url 'wallcovering_detail' wc.id %}"
                             style="cursor:pointer;">
                                 <td>
                                     <a href="{% url 'wallcovering_detail' wc.id %}" class="font-weight-bold">
-                                        {% if wc.code %}{{ wc.code }}{% else %}WC (No Code){% endif %}
+                                        {% if wc.code %}{{ wc.code }}{% else %}WC (No Code){% endif %}{% if wc.is_void %} [VOIDED]{% endif %}
                                     </a>
                                     {% for subcontractor_name in wc.subcontractor_names %}
                                         <span class="badge badge-info ml-1">{{ subcontractor_name }}</span>
                                     {% endfor %}
+
+                                    {% if wc.order_approval_badge_text %}
+                                        <span class="{{ wc.order_approval_badge_class }}">
+                                            {{ wc.order_approval_badge_text }}
+                                        </span>
+                                    {% endif %}
 
                                     {% if wc.change_order_badge_text %}
                                         <span class="{{ wc.change_order_badge_class }}">
@@ -1791,6 +1811,11 @@ float: left !important;
 
                                 <td class="text-right">
                                     {{ wc.display_quantity }}
+                                    {% if wc.install_yardage %}
+                                        <div class="text-muted small">
+                                            {{ wc.install_yardage|floatformat:0 }} yd(install)
+                                        </div>
+                                    {% endif %}
                                 </td>
 
                                 <td class="text-center">
