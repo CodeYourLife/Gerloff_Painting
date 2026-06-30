@@ -37,7 +37,7 @@ import shutil
 from subcontractors.models import *
 from submittals.models import *
 from submittals.models import *
-from wallcovering.models import Wallcovering, Packages, OutgoingItem, OrderItems
+from wallcovering.models import Wallcovering, Packages, OutgoingItem, OrderItems, Pending_Orders
 import csv
 import json
 import openpyxl
@@ -1473,6 +1473,27 @@ def job_page(request, jobnumber):
     for wc in wallcoverings:
         wc.change_order_badge_text = ""
         wc.change_order_badge_class = ""
+        wc.order_approval_badge_text = ""
+        wc.order_approval_badge_class = ""
+
+        has_pending_order_approval = Pending_Orders.objects.filter(
+            pending_order_items__link_to_wallcovering=wc,
+            date_approved__isnull=True,
+            is_ordered=False
+        ).exists()
+
+        has_approved_pending_order = Pending_Orders.objects.filter(
+            pending_order_items__link_to_wallcovering=wc,
+            date_approved__isnull=False,
+            is_ordered=False
+        ).exists()
+
+        if has_approved_pending_order:
+            wc.order_approval_badge_text = "Pending Order Approved!"
+            wc.order_approval_badge_class = "badge badge-primary ml-1"
+        elif has_pending_order_approval:
+            wc.order_approval_badge_text = "Order Approval Required"
+            wc.order_approval_badge_class = "badge badge-primary ml-1"
 
         attention_cop_items = (
             Wallcovering_Change_Orders.objects
@@ -1500,11 +1521,11 @@ def job_page(request, jobnumber):
 
             if cop_link.is_ordered and not cop.is_approved:
                 wc.change_order_badge_text = f"COP{cop_number} - Ordered, Not Approved"
-                wc.change_order_badge_class = "badge badge-warning ml-1"
+                wc.change_order_badge_class = "badge badge-danger ml-1"
 
             elif not cop_link.is_ordered and not cop.is_approved:
                 wc.change_order_badge_text = f"COP{cop_number} Not Approved"
-                wc.change_order_badge_class = "badge badge-warning ml-1"
+                wc.change_order_badge_class = "badge badge-danger ml-1"
 
             elif not cop_link.is_ordered and cop.is_approved:
                 wc.change_order_badge_text = f"COP{cop_number} Not Ordered"
