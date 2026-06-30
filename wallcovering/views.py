@@ -6,10 +6,12 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import transaction
+from django.db.models.deletion import ProtectedError
 from django.db.models import Sum
 from django.shortcuts import render, get_object_or_404, redirect
 from employees.models import Employees
 from equipment.models import Vendors, VendorCategory
+from jobs.models import JobNotes
 from .models import (
     Wallcovering,
     OrderItems,
@@ -23,7 +25,7 @@ from .models import (
     Pending_Orders,
     Pending_Order_Items
 )
-from submittals.models import SubmittalItems, SubmittalApprovals
+from submittals.models import SubmittalItems, SubmittalApprovals, SubmittalItemNotes
 from changeorder.models import Wallcovering_Change_Orders
 from subcontractors.models import SubcontractItems
 
@@ -244,6 +246,78 @@ def wallcovering_detail(request, wallcovering_id):
                 messages.warning(request, "No change order information was changed.")
 
             return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
+        if "delete_wallcovering" in request.POST:
+            employee = Employees.objects.filter(user=request.user).first()
+
+            if not employee:
+                messages.error(request, "Could not find your employee record.")
+                return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
+
+            if Wallcovering_Change_Orders.objects.filter(wallcovering=wallcovering).exists():
+                messages.error(
+                    request,
+                    "This wallcovering cannot be deleted because it is linked to a change order."
+                )
+                return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
+
+            if SubcontractItems.objects.filter(wallcovering_id=wallcovering).exists():
+                messages.error(
+                    request,
+                    "This wallcovering cannot be deleted because it is linked to a subcontract item."
+                )
+                return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
+
+            submittal_items = SubmittalItems.objects.filter(
+                wallcovering_id=wallcovering
+            )
+
+            if SubmittalApprovals.objects.filter(
+                submittalitem__in=submittal_items,
+                submittal__isnull=False
+            ).exists():
+                messages.error(
+                    request,
+                    "This wallcovering cannot be deleted because a linked submittal item has an approval linked to a submittal."
+                )
+                return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
+
+            code = wallcovering.code or "WC-No Code"
+            vendor_name = wallcovering.vendor.company_name if wallcovering.vendor else ""
+            pattern = wallcovering.pattern or ""
+            deleted_note = " ".join(
+                part for part in [code, vendor_name, pattern] if part
+            ) + " deleted"
+            job = wallcovering.job_number
+
+            try:
+                with transaction.atomic():
+                    WallcoveringNotes.objects.filter(pattern=wallcovering).delete()
+                    SubmittalItemNotes.objects.filter(
+                        submittalitem__in=submittal_items
+                    ).delete()
+                    SubmittalApprovals.objects.filter(
+                        submittalitem__in=submittal_items,
+                        submittal__isnull=True
+                    ).delete()
+                    submittal_items.delete()
+                    wallcovering.delete()
+                    JobNotes.objects.create(
+                        job_number=job,
+                        note=deleted_note,
+                        type="auto_misc_note",
+                        user=employee,
+                        date=date.today()
+                    )
+            except ProtectedError:
+                messages.error(
+                    request,
+                    "This wallcovering cannot be deleted because other records are still linked to it."
+                )
+                return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
+
+            messages.success(request, "Wallcovering deleted.")
+            return redirect("wallcovering_home")
+
         if "void_wallcovering" in request.POST:
             employee = Employees.objects.filter(user=request.user).first()
             if not wallcovering.is_void:
