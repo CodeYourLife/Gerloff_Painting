@@ -1236,16 +1236,21 @@ def connect(request):
     if request.method == 'POST':
         send_data = {}
         if 'login_now' in request.POST:
-            if Subcontractors.objects.filter(username=request.POST['username'],password=request.POST['password']).exists():
-                selected_sub = Subcontractors.objects.get(username=request.POST['username'])
+            username = request.POST['username'].strip()
+            password = request.POST['password']
+            selected_sub = Subcontractors.objects.filter(username__iexact=username, password=password).first()
+            if selected_sub:
                 return redirect('portal', sub_id=selected_sub.id, contract_id='ALL')
 
-            elif Subcontractor_Employees.objects.filter(username=request.POST['username'],password1=request.POST['password']).exists():
-                selected_employee = Subcontractor_Employees.objects.filter(username=request.POST['username'],password1=request.POST['password']).first()
+            selected_employee = Subcontractor_Employees.objects.filter(
+                username__iexact=username,
+                password1=password
+            ).first()
+            if selected_employee:
                 return redirect('subcontractor_employee_portal', employee_id=selected_employee.id)
-            else:
-                send_data['message'] = "Username or password not valid"
-                return render(request, "portal_registration.html", send_data)
+
+            send_data['message'] = "Username or password not valid"
+            return render(request, "portal_registration.html", send_data)
 
         if 'enter_pin' in request.POST:
             send_data['enter_pin'] = True
