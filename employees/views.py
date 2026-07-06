@@ -3419,6 +3419,61 @@ def delete_old_incomplete_toolbox_talks(request):
             f"?mode=employees&employee_id={selected_employee.id}"
         )
 
+    if request.method == 'POST' and request.POST.get('action') == 'excuse_selected_talk_people':
+        selected_talk = get_object_or_404(
+            ScheduledToolboxTalks,
+            id=request.POST.get('scheduled_talk_id')
+        )
+        selected_values = set(request.POST.getlist('selected_people'))
+        outstanding_items = [
+            item for item in _get_outstanding_toolbox_items_for_talk(selected_talk)
+            if item['value'] in selected_values
+        ]
+
+        if not outstanding_items:
+            messages.error(request, "Please select at least one person to excuse.")
+            return redirect(
+                reverse('delete_old_incomplete_toolbox_talks') +
+                f"?mode=talks&scheduled_talk_id={selected_talk.id}"
+            )
+
+        excused_employee_count = 0
+        excused_sub_employee_count = 0
+        excused_sub_job_count = 0
+
+        with transaction.atomic():
+            for item in outstanding_items:
+                if item['kind'] == 'employee':
+                    if _excuse_employee_toolbox_talk(
+                        item['employee'],
+                        selected_talk
+                    ):
+                        excused_employee_count += 1
+                elif item['kind'] == 'sub_employee':
+                    item_excused = False
+                    for job in item.get('jobs') or [item['job']]:
+                        if _excuse_subcontractor_toolbox_talk(
+                            item['employee'],
+                            selected_talk,
+                            job
+                        ):
+                            item_excused = True
+                    if item_excused:
+                        excused_sub_employee_count += 1
+                elif item['kind'] == 'sub_job':
+                    if _excuse_subcontractor_job_toolbox_talk(
+                        selected_talk,
+                        item['subcontractor'],
+                        item['job']
+                    ):
+                        excused_sub_job_count += 1
+
+        messages.success(
+            request,
+            f"Excused {excused_employee_count} employee toolbox talks, {excused_sub_employee_count} subcontractor employee toolbox talks, and {excused_sub_job_count} subcontractor job toolbox talks for {_get_talk_title(selected_talk)}."
+        )
+        return redirect('delete_old_incomplete_toolbox_talks')
+
     if mode == 'subs':
         selected_subcontractor_id = request.GET.get('subcontractor_id')
         subcontractor_rows = []
@@ -3510,7 +3565,138 @@ def delete_old_incomplete_toolbox_talks(request):
                 selected_employee
             )
 
+    if mode == 'talks':
+        selected_talk_id = request.GET.get('scheduled_talk_id')
+        talk_rows = _get_incomplete_toolbox_talk_rows()
+
+        send_data['mode'] = mode
+        send_data['talk_rows'] = talk_rows
+
+        if selected_talk_id:
+            selected_talk = get_object_or_404(
+                ScheduledToolboxTalks,
+                id=selected_talk_id
+            )
+            send_data['selected_talk'] = selected_talk
+            send_data['selected_talk_label'] = next(
+                (
+                    row['label'] for row in talk_rows
+                    if row['id'] == selected_talk.id
+                ),
+                _format_outstanding_employee_toolbox_item(selected_talk)
+            )
+            send_data['selected_talk_outstanding_items'] = _get_outstanding_toolbox_items_for_talk(
+                selected_talk
+            )
+
     return render(request, 'delete_old_incomplete_toolbox_talks.html', send_data)
+
+
+def _get_incomplete_toolbox_talk_rows():
+    rows = []
+    today = timezone.localdate()
+
+    scheduled_talks = (
+        ScheduledToolboxTalks.objects
+        .filter(date__lte=today)
+        .select_related('master')
+        .order_by('date', 'id')
+    )
+
+    for scheduled_talk in scheduled_talks:
+        outstanding_count = len(_get_outstanding_toolbox_items_for_talk(scheduled_talk))
+        if not outstanding_count:
+            continue
+
+        item_date = scheduled_talk.date.strftime('%m/%d/%Y') if scheduled_talk.date else 'No Date'
+        rows.append({
+            'id': scheduled_talk.id,
+            'label': f"{item_date} - {_get_talk_title(scheduled_talk)} ({outstanding_count} incomplete)",
+            'outstanding_count': outstanding_count,
+        })
+
+    return rows
+
+
+def _get_outstanding_toolbox_items_for_talk(scheduled_talk):
+    outstanding_items = []
+
+    regular_employees = Employees.objects.filter(
+        active=True,
+        job_title__description__in=[
+            "Painter",
+            "Warehouse",
+            "Superintendent"
+        ]
+    ).order_by(
+        'last_name',
+        'first_name'
+    )
+
+    for employee in regular_employees:
+        if scheduled_talk.id not in _get_assigned_talk_ids_for_employee(employee):
+            continue
+
+        if CompletedToolboxTalks.objects.filter(
+            employee=employee,
+            master=scheduled_talk
+        ).exists():
+            continue
+
+        employee_name = f"{employee.first_name} {employee.last_name}"
+        outstanding_items.append({
+            'kind': 'employee',
+            'value': f"employee|{scheduled_talk.id}|{employee.id}",
+            'employee': employee,
+            'display': f"Employee - {employee_name}",
+            'sort_name': employee_name,
+            'jobs': [],
+            'job': None,
+            'subcontractor': None,
+        })
+
+    subcontractor_items = sub_toolbox.get_scheduled_talk_subcontractor_items(scheduled_talk)["missing"]
+
+    for item in subcontractor_items:
+        if item["type"] == "subcontractor_employee":
+            jobs = item.get("jobs") or []
+            if not jobs:
+                continue
+
+            employee = item["employee"]
+            job_text = "Jobs " + ", ".join(f"{job.job_number} {job.job_name}" for job in jobs)
+            outstanding_items.append({
+                'kind': 'sub_employee',
+                'value': f"sub_employee|{scheduled_talk.id}|{employee.id}",
+                'employee': employee,
+                'subcontractor': item["subcontractor"],
+                'job': jobs[0],
+                'jobs': jobs,
+                'display': f"Subcontractor Employee - {employee.name} - {item['subcontractor'].company} - {job_text}",
+                'sort_name': employee.name,
+            })
+        elif item["type"] == "subcontractor_job":
+            job = item["job"]
+            subcontractor = item["subcontractor"]
+            outstanding_items.append({
+                'kind': 'sub_job',
+                'value': f"sub_job|{scheduled_talk.id}|{subcontractor.id}|{job.pk}",
+                'employee': None,
+                'subcontractor': subcontractor,
+                'job': job,
+                'jobs': [job],
+                'display': f"Subcontractor Job - {subcontractor.company} - Job {job.job_number} {job.job_name}",
+                'sort_name': subcontractor.company,
+            })
+
+    return sorted(
+        outstanding_items,
+        key=lambda item: (
+            item['kind'],
+            item['sort_name'] or '',
+            item['display'] or ''
+        )
+    )
 
 
 def _get_outstanding_toolbox_items_for_employee(employee):

@@ -172,6 +172,59 @@
                 <div>No incomplete toolbox talks found for this employee.</div>
             {% endif %}
         {% endif %}
+    {% elif mode == "talks" %}
+        <a href="{% url 'delete_old_incomplete_toolbox_talks' %}" class="btn btn-outline-secondary excuse-toolbox-action">
+            Go Back To See Other Options
+        </a>
+
+        {% if not selected_talk %}
+            <form method="get" class="mb-3">
+                <input type="hidden" name="mode" value="talks">
+                <input type="hidden" name="scheduled_talk_id" id="selectedTalkId">
+                <div class="form-group">
+                    <label for="talkSearch">Incomplete Talk</label>
+                    <select id="talkSearch" class="form-control">
+                        <option value="">Select a talk</option>
+                        {% for talk in talk_rows %}
+                            <option value="{{ talk.id }}">{{ talk.label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit"
+                        id="selectTalkButton"
+                        class="btn btn-danger excuse-toolbox-action"
+                        style="display:none;">
+                    Select Talk
+                </button>
+            </form>
+        {% endif %}
+
+        {% if selected_talk %}
+            <h5>{{ selected_talk_label }}</h5>
+
+            {% if selected_talk_outstanding_items %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="excuse_selected_talk_people">
+                    <input type="hidden" name="scheduled_talk_id" value="{{ selected_talk.id }}">
+
+                    {% for item in selected_talk_outstanding_items %}
+                        <label class="d-block mb-2">
+                            <input type="checkbox" name="selected_people" value="{{ item.value }}" checked>
+                            {{ item.display }}
+                        </label>
+                    {% endfor %}
+
+                    <button type="submit"
+                            class="btn btn-danger excuse-toolbox-action"
+                            onclick="return confirm('Excuse the checked incomplete people for this toolbox talk?')">
+                        Excuse Selected People
+                    </button>
+                </form>
+            {% else %}
+                <div>No incomplete people found for this talk.</div>
+            {% endif %}
+        {% endif %}
     {% else %}
     <form method="post">
         {% csrf_token %}
@@ -197,6 +250,10 @@
 
     <a href="{% url 'delete_old_incomplete_toolbox_talks' %}?mode=employees" class="btn btn-danger excuse-toolbox-action">
         Select Certain Employees to Excuse
+    </a>
+
+    <a href="{% url 'delete_old_incomplete_toolbox_talks' %}?mode=talks" class="btn btn-danger excuse-toolbox-action">
+        Select Certain Talk to Excuse
     </a>
     {% endif %}
 </div>
@@ -232,13 +289,15 @@
         </div>
     </div>
 </div>
-{% if mode == "subs" or mode == "employees" %}
+{% if mode == "subs" or mode == "employees" or mode == "talks" %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const subcontractorSearch = document.getElementById("subcontractorSearch");
     const selectedSubcontractorId = document.getElementById("selectedSubcontractorId");
     const employeeSearch = document.getElementById("employeeSearch");
     const selectedEmployeeId = document.getElementById("selectedEmployeeId");
+    const talkSearch = document.getElementById("talkSearch");
+    const selectedTalkId = document.getElementById("selectedTalkId");
 
     function updateSelectedSubcontractor() {
         if (!subcontractorSearch || !selectedSubcontractorId) {
@@ -284,6 +343,29 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         updateSelectedEmployee();
         $('#employeeSearch').on('change', updateSelectedEmployee);
+    }
+
+    function updateSelectedTalk() {
+        if (!talkSearch || !selectedTalkId) {
+            return;
+        }
+
+        selectedTalkId.value = talkSearch.value || "";
+
+        const selectTalkButton = document.getElementById("selectTalkButton");
+        if (selectTalkButton) {
+            selectTalkButton.style.display = talkSearch.value ? "block" : "none";
+        }
+    }
+
+    if (talkSearch) {
+        $('#talkSearch').select2({
+            placeholder: "Select a talk",
+            allowClear: true,
+            width: '100%'
+        });
+        updateSelectedTalk();
+        $('#talkSearch').on('change', updateSelectedTalk);
     }
 
     const showEmployeeSelectedTalksButton = document.getElementById("showEmployeeSelectedTalksButton");
