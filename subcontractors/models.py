@@ -611,6 +611,8 @@ class CompletedSubToolboxTalks(models.Model):
     employee = models.ForeignKey(Subcontractor_Employees, on_delete=models.PROTECT)
     master = models.ForeignKey('employees.ScheduledToolboxTalks', on_delete=models.PROTECT)
     job = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT, null=True, blank=True)
+    is_excused = models.BooleanField(default=False)
+    note = models.TextField(null=True, blank=True)
 
     class Meta:
         unique_together = ('employee', 'master', 'job')
@@ -643,6 +645,7 @@ class CompletedSubToolboxJobTalks(models.Model):
     subcontractor = models.ForeignKey(Subcontractors, on_delete=models.PROTECT)
     job = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT)
     date = models.DateField(auto_now_add=True)
+    is_excused = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('scheduled', 'subcontractor', 'job')

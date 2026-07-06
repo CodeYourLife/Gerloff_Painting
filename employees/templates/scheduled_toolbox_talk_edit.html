@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block nav_item_employees %}active{% endblock nav_item_employees %}
+{% block nav_item_safety %}active{% endblock nav_item_safety %}
 
 {% block extra_head %}
 <style>
@@ -42,12 +42,12 @@
     }
 </style>
 {% endblock %}
+
+{% block sub_nav %}
+{% include 'safety_nav.html' with active_tab="schedule" page_label="Edit Scheduled Talk" %}
+{% endblock %}
+
 {% block content %}
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="{% url 'scheduled_toolbox_talks' %}">
-        Go Back to Scheduled Toolbox Talks
-    </a>
-</nav>
 
 <div class="edit-wrap">
 

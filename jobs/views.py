@@ -2276,6 +2276,15 @@ def import_super_from_mc(request):
         job.is_painting_subbed = is_subcontractor
         job.save()
 
+        recipients=[]
+        if employee.email:
+            recipients.append(employee.email)
+            email_message=f"You have been Assigned as Super to {job.job_number} {job.job_name}"
+        else:
+            recipients.append("bridgette@gerloffpainting.com")
+            email_message = f"No email is entered for {employee.first_name} {employee.last_name}. Please let them know they have been Assigned as Super to {job.job_number} {job.job_name}"
+        Email.sendEmail("Super Assigned", email_message, recipients, False, "operations@gerloffpainting.com")
+
         return JsonResponse({
             "success": True,
             "message": "Job updated in Trinity: "
@@ -2295,6 +2304,32 @@ def import_super_from_mc(request):
         })
 
 
+def _job_not_found_diagnostic_response(job_number, raw_job_number, error_prefix):
+    close_matches = list(
+        Jobs.objects
+        .filter(job_number__icontains=job_number[:5])
+        .values_list("job_number", "job_name")[:10]
+    )
+
+    return JsonResponse({
+        "success": False,
+        "error": error_prefix + " - Job not found",
+        "raw_received_job_number": raw_job_number,
+        "raw_received_job_number_length": len(raw_job_number),
+        "raw_received_job_number_character_codes": [ord(character) for character in raw_job_number],
+        "received_job_number": job_number,
+        "received_job_number_length": len(job_number),
+        "received_job_number_character_codes": [ord(character) for character in job_number],
+        "trinity_close_matches": [
+            {
+                "job_number": match[0],
+                "job_name": match[1],
+            }
+            for match in close_matches
+        ],
+    })
+
+
 @csrf_exempt
 def import_pm_from_mc(request):
 
@@ -2312,7 +2347,8 @@ def import_pm_from_mc(request):
             "error": "Tell Joe that this failed to post to Trinity - Unauthorized"
         })
 
-    job_number = request.POST.get("job_number", "").strip()
+    raw_job_number = request.POST.get("job_number", "")
+    job_number = raw_job_number.strip()
     pm_name = request.POST.get("pm_name", "").strip()
 
     if not job_number:
@@ -2355,7 +2391,14 @@ def import_pm_from_mc(request):
 
         job.project_manager = employee
         job.save()
-
+        recipients=[]
+        if employee.email:
+            recipients.append(employee.email)
+            email_message=f"You have been Assigned as PM to {job.job_number} {job.job_name}"
+        else:
+            recipients.append("bridgette@gerloffpainting.com")
+            email_message = f"No email is entered for {employee.first_name} {employee.last_name}. Please let them know they have been Assigned as PM to {job.job_number} {job.job_name}"
+        Email.sendEmail("PM Assigned", email_message, recipients, False, "operations@gerloffpainting.com")
         return JsonResponse({
             "success": True,
             "message": "Job updated in Trinity: "
@@ -2367,11 +2410,11 @@ def import_pm_from_mc(request):
         })
 
     except Jobs.DoesNotExist:
-
-        return JsonResponse({
-            "success": False,
-            "error": "Tell Joe that this failed to post to Trinity - Job not found"
-        })
+        return _job_not_found_diagnostic_response(
+            job_number,
+            raw_job_number,
+            "Tell Joe that this failed to post to Trinity"
+        )
 
 
 def subtract_months(original_date, months):

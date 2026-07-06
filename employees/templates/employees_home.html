@@ -158,7 +158,12 @@
                    aria-expanded="false"
                    aria-controls="subcontractorCollapse{{ group.subcontractor.id }}"
                    style="text-decoration: none;">
-                    <strong>{{ group.subcontractor.company }} - {{ group.count }} employees</strong>
+                    <strong>
+                        {{ group.subcontractor.company }} - {{ group.count }} employees
+                        {% if group.subcontractor.is_toolbox_required %}
+                            <span class="badge badge-success ml-1">Toolbox Required</span>
+                        {% endif %}
+                    </strong>
                 </a>
             </div>
 
@@ -170,25 +175,6 @@
                            class="btn btn-sm btn-primary">
                             👷 Manage Employees
                         </a>
-
-                        {% if group.subcontractor.is_toolbox_required %}
-                            <a href="{% url 'toggle_subcontractor_delegation' group.subcontractor.id %}"
-                               class="btn btn-sm btn-warning ml-2">
-                                {% if group.has_delegation %}
-                                    Remove Delegation
-                                {% else %}
-                                    Add Delegation
-                                {% endif %}
-                            </a>
-
-                            <div class="small text-muted mt-2">
-                                {% if group.has_delegation %}
-                                    Delegation is Currently On. Employees will complete toolbox talks individually through the employee portal.
-                                {% else %}
-                                    Delegation is Currently Off. Toolbox talks must currently be completed by a foreman/supervisor.
-                                {% endif %}
-                            </div>
-                        {% endif %}
 
                     </div>
                     {% if group.employees %}

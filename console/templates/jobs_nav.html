@@ -1,20 +1,55 @@
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="{% url 'jobs_home' %}">Jobs</a>
-<div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav ">
-            <li><a class="nav-item nav-link {% if active_tab == 'jobs_home' %}active{% endif %}" href="{% url 'jobs_home' %}">Jobs List</a></li>
-             <li><a class="nav-item nav-link {% if active_tab == 'super_home' %}active{% endif %}" href="{% url 'super_home' 'AUTO' %}">Superintendent View</a></li>
-            <li><a class="nav-item nav-link {% if active_tab == 'jobs_close' %}active{% endif %}" href="{% url 'jobs_ready_to_close' %}">Closeout</a></li>
-                      {% if request.user.username == 'joe' or request.user.username == 'victortampa1' %}
-                <li>
-                    <a class="nav-item nav-link {% if active_tab == 'job_cost_billing_report' %}active{% endif %}"
-                       href="{% url 'upload_job_cost_billing_report' %}">
-                        Cost/Billing Report
-                    </a>
-                </li>
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'jobs_home' %}">
+        Jobs
+    </a>
+
+    <button class="navbar-toggler" type="button"
+            data-toggle="collapse"
+            data-target="#jobsSubNav"
+            aria-controls="jobsSubNav"
+            aria-expanded="false"
+            aria-label="Toggle jobs navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="jobsSubNav">
+        <ul class="sub-nav-list navbar-nav">
+            <li>
+                <a class="nav-item nav-link {% if active_tab == 'jobs_home' %}active{% endif %}"
+                   href="{% url 'jobs_home' %}">
+                    Jobs List
+                </a>
+            </li>
+
+            <li>
+                <a class="nav-item nav-link {% if active_tab == 'super_home' %}active{% endif %}"
+                   href="{% url 'super_home' 'AUTO' %}">
+                    Superintendent View
+                </a>
+            </li>
+
+            <li>
+                <a class="nav-item nav-link {% if active_tab == 'jobs_close' %}active{% endif %}"
+                   href="{% url 'jobs_ready_to_close' %}">
+                    Closeout
+                </a>
+            </li>
+
+            {% if request.user.username == 'joe' or request.user.username == 'victortampa1' %}
+            <li>
+                <a class="nav-item nav-link {% if active_tab == 'job_cost_billing_report' %}active{% endif %}"
+                   href="{% url 'upload_job_cost_billing_report' %}">
+                    Cost/Billing Report
+                </a>
+            </li>
             {% endif %}
+
             {% if page_label %}
-            <li><span class="nav-item nav-link active">{{ page_label }}</span></li>
+            <li>
+                <span class="nav-item nav-link active">
+                    {{ page_label }}
+                </span>
+            </li>
             {% endif %}
         </ul>
     </div>

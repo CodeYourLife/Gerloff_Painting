@@ -29,7 +29,7 @@
 
 <div class="container mt-3">
 
-    <h4>Employee Management</h4>
+    <h4>{{ selected_sub.company }}</h4>
 
     <div class="mb-3">
         <button class="btn btn-primary" data-toggle="modal" data-target="#addEmployeeModal">
@@ -98,6 +98,32 @@
 
                     <div class="font-weight-bold mb-2">
                         {{ row.job.job_number }} - {{ row.job.job_name }}
+                        {% if row.job.is_active and not row.job.is_labor_done %}
+                            <span class="ml-2 text-success">[Active]</span>
+                        {% else %}
+                            <span class="ml-2 text-muted">[Not Active]</span>
+                        {% endif %}
+                        {% if selected_sub.is_toolbox_required and row.subcontract %}
+                            <form method="post"
+                                  action="{% url 'toggle_subcontractor_job_delegation' selected_sub.id row.subcontract.id %}"
+                                  class="d-inline-block ml-2 mb-0">
+                                {% csrf_token %}
+                                {% if row.is_delegated %}
+                                    <button type="submit" class="btn btn-sm btn-warning">
+                                        REMOVE DELEGATION
+                                    </button>
+                                {% else %}
+                                    <button type="submit" class="btn btn-sm btn-success">
+                                        ADD DELEGATION
+                                    </button>
+                                {% endif %}
+                            </form>
+                            {% if not row.is_delegated %}
+                                <div class="small text-muted mt-1">
+                                    Clicking Add Delegation will allow the subcontractor employees to perform toolbox talks themselves through Trinity
+                                </div>
+                            {% endif %}
+                        {% endif %}
                     </div>
 
                     <div class="table-responsive">
@@ -148,6 +174,32 @@
     </div>
 </div>
 
+{% if other_subcontract_job_rows %}
+<div class="card mt-4">
+    <div class="card-header">
+        <strong>Other Jobs With Open Subcontracts</strong>
+    </div>
+
+    <div class="card-body">
+        {% for row in other_subcontract_job_rows %}
+            <div class="border rounded p-2 mb-3">
+                <div class="font-weight-bold">
+                    {{ row.job.job_number }} - {{ row.job.job_name }}
+                    {% if row.job.is_active and not row.job.is_labor_done %}
+                        <span class="ml-2 text-success">[Active]</span>
+                    {% else %}
+                        <span class="ml-2 text-muted">[Not Active]</span>
+                    {% endif %}
+                </div>
+                <div class="small text-muted mt-1">
+                    Open subcontract. No subcontractor employees are currently assigned to this job.
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 <div class="modal fade" id="employeeModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -174,6 +226,11 @@
                 <div class="form-group">
                     <label>Password</label>
                     <input type="text" id="emp_password" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label>Date Enrolled</label>
+                    <input type="text" id="emp_date_enrolled" class="form-control" readonly>
                 </div>
 
                 <div class="form-group">
@@ -427,6 +484,7 @@ function openEmployeeModal(id) {
     $('#emp_name').val('');
     $('#emp_username').val('');
     $('#emp_password').val('');
+    $('#emp_date_enrolled').val('');
     $('#emp_toolbox').prop('checked', false);
     $('#emp_tm').prop('checked', false);
     $('#emp_current_jobs').html('Loading...');
@@ -442,6 +500,7 @@ function openEmployeeModal(id) {
             $('#emp_name').val(response.name);
             $('#emp_username').val(response.username);
             $('#emp_password').val(response.password1);
+            $('#emp_date_enrolled').val(response.date_enrolled || '');
             $('#emp_toolbox').prop('checked', response.has_access_to_toolbox);
             $('#emp_tm').prop('checked', response.has_access_to_TM);
 

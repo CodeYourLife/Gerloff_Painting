@@ -29,6 +29,7 @@ from openpyxl import load_workbook
 from pathlib import Path
 from rentals.models import *
 from subcontractors.models import *
+from subcontractors import toolbox_views as sub_toolbox
 from submittals.models import *
 from superintendent.models import *
 from wallcovering.models import *
@@ -44,6 +45,205 @@ import os
 import os.path
 import random
 import re
+
+
+def _has_employee_toolbox_record(toolbox_talk, employee):
+    return CompletedToolboxTalks.objects.filter(
+        master=toolbox_talk,
+        employee=employee
+    ).exists()
+
+
+def _has_sub_employee_toolbox_record(toolbox_talk, employee, job):
+    if CompletedSubToolboxTalks.objects.filter(
+        master=toolbox_talk,
+        employee=employee,
+        job=job
+    ).exists():
+        return True
+
+    return CompletedSubToolboxJobTalkEmployees.objects.filter(
+        employee=employee,
+        completed__scheduled=toolbox_talk,
+        completed__job=job,
+        completed__is_excused=False
+    ).exists()
+
+
+def _has_sub_job_toolbox_record(toolbox_talk, subcontractor, job):
+    return CompletedSubToolboxJobTalks.objects.filter(
+        scheduled=toolbox_talk,
+        subcontractor=subcontractor,
+        job=job
+    ).exists()
+
+
+def _get_first_subcontractor_invoice_date(subcontract):
+    return (
+        SubcontractorInvoice.objects
+        .filter(subcontract=subcontract)
+        .order_by('date', 'id')
+        .values_list('date', flat=True)
+        .first()
+    )
+
+
+def _get_subcontractor_employee_delegation(subcontractor, subcontract):
+    return SubcontractorEmployeeDelegation.objects.filter(
+        subcontractor=subcontractor,
+        subcontract=subcontract
+    ).first()
+
+
+def _subcontractor_employee_delegation_effective(subcontractor, subcontract, scheduled_date=None):
+    delegation = _get_subcontractor_employee_delegation(subcontractor, subcontract)
+    return bool(delegation)
+
+
+def _subcontract_has_delegated_employee_for_date(subcontract, scheduled_date):
+    if not _subcontractor_employee_delegation_effective(
+        subcontract.subcontractor,
+        subcontract,
+        scheduled_date
+    ):
+        return False
+
+    return Subcontractor_Job_Assignments.objects.filter(
+        job=subcontract.job_number,
+        employee__subcontractor=subcontract.subcontractor,
+        employee__is_active=True,
+        employee__has_access_to_toolbox=True,
+        employee__date_enrolled__isnull=False,
+        employee__date_enrolled__lte=scheduled_date
+    ).exists()
+
+
+def _sub_employee_has_active_toolbox_job(sub_employee, job=None):
+    query = Subcontractor_Job_Assignments.objects.filter(
+        employee=sub_employee,
+        job__is_closed=False,
+        job__is_active=True,
+        job__is_labor_done=False
+    )
+
+    if job is not None:
+        query = query.filter(job=job)
+
+    return query.exists()
+
+
+def _get_delegated_active_toolbox_jobs_for_sub_employee(sub_employee, job=None, effective_date=None):
+    if (
+        not sub_employee.has_access_to_toolbox or
+        not sub_employee.subcontractor or
+        not sub_employee.subcontractor.is_toolbox_required
+    ):
+        return []
+
+    assignments = Subcontractor_Job_Assignments.objects.filter(
+        employee=sub_employee,
+        job__is_closed=False,
+        job__is_active=True,
+        job__is_labor_done=False
+    ).select_related('job')
+
+    if job is not None:
+        assignments = assignments.filter(job=job)
+
+    delegated_jobs = []
+    seen = set()
+    for assignment in assignments:
+        subcontract = Subcontracts.objects.filter(
+            subcontractor=sub_employee.subcontractor,
+            job_number=assignment.job,
+            is_closed=False,
+            subcontractor__is_toolbox_required=True,
+            job_number__is_closed=False,
+            job_number__is_active=True,
+            job_number__is_labor_done=False
+        ).first()
+
+        if not subcontract:
+            continue
+
+        if not _subcontractor_employee_delegation_effective(
+            subcontractor=sub_employee.subcontractor,
+            subcontract=subcontract,
+            scheduled_date=effective_date
+        ):
+            continue
+
+        if assignment.job_id in seen:
+            continue
+        seen.add(assignment.job_id)
+        delegated_jobs.append(assignment.job)
+
+    return delegated_jobs
+
+
+def _has_sub_employee_toolbox_record_for_any_job(sub_employee, toolbox_talk, jobs):
+    if CompletedSubToolboxTalks.objects.filter(
+        master=toolbox_talk,
+        employee=sub_employee,
+        job__in=jobs
+    ).exists():
+        return True
+
+    return CompletedSubToolboxJobTalkEmployees.objects.filter(
+        employee=sub_employee,
+        completed__scheduled=toolbox_talk,
+        completed__job__in=jobs,
+        completed__is_excused=False
+    ).exists()
+
+
+def _count_missing_toolbox_talks_before(cutoff_date):
+    missing_toolbox_talks = 0
+    employee_titles = ["Painter", "Warehouse", "Superintendent"]
+
+    for toolbox_talk in ScheduledToolboxTalks.objects.filter(
+        date__lt=cutoff_date
+    ).order_by('-date'):
+        counted_employees = set()
+
+        employee_assignments = ScheduledToolboxTalkEmployees.objects.filter(
+            scheduled=toolbox_talk,
+            employee__active=True,
+            employee__job_title__description__in=employee_titles
+        ).select_related(
+            'employee'
+        )
+
+        for assignment in employee_assignments:
+            employee_key = assignment.employee_id
+            if employee_key in counted_employees:
+                continue
+            counted_employees.add(employee_key)
+
+            if not _has_employee_toolbox_record(toolbox_talk, assignment.employee):
+                missing_toolbox_talks += 1
+
+        if not toolbox_talk.is_all_employees:
+            continue
+
+        target_employees = Employees.objects.filter(
+            active=True,
+            date_added__lte=toolbox_talk.date,
+            job_title__description__in=employee_titles
+        )
+
+        for employee in target_employees:
+            employee_key = employee.id
+            if employee_key in counted_employees:
+                continue
+            counted_employees.add(employee_key)
+
+            if not _has_employee_toolbox_record(toolbox_talk, employee):
+                missing_toolbox_talks += 1
+
+    missing_toolbox_talks += sub_toolbox.get_missing_subcontractor_count_before(cutoff_date)
+
+    return missing_toolbox_talks
 
 
 
@@ -300,6 +500,10 @@ def index(request):
     send_data['pending_invoices'] = SubcontractorInvoice.objects.filter(is_sent=False).count()
     send_data['approved_invoices'] = SubcontractorInvoice.objects.filter(is_sent=True, processed=False).count()
     send_data['need_to_be_closed'] = Jobs.objects.filter(is_labor_done=True,is_closed=False).count()
+    send_data['unsuccessful_login_attempts_past_week'] = LoginAttempt.objects.filter(
+        result=LoginAttempt.RESULT_FAILED,
+        attempted_at__gte=timezone.now() - timedelta(days=7)
+    ).count()
     send_data['unapproved_sub_changes'] = SubcontractItems.objects.filter(is_approved=False, subcontract__is_closed=False).count()
     if Jobs.objects.filter(is_closed=False, superintendent=Employees.objects.get(
             user=request.user)).exists() and request.user != Employees.objects.get(id=22).user:
@@ -341,17 +545,8 @@ def index(request):
             if not Certifications.objects.filter(employee=x,category__description="Respirator Clearance").exists():
                 painters_needing_respirator+=1
     send_data['painters_needing_respirator'] = painters_needing_respirator
-    missing_toolbox_talks = 0
     today = date.today()
-    days_until_monday = (0 - today.weekday() + 7) % 7
-    if days_until_monday == 0:
-        days_until_monday = 7
-    next_monday_date = today + timedelta(days=days_until_monday)
-    for toolbox_talk in ScheduledToolboxTalks.objects.filter(date__lt = next_monday_date).order_by('-date'):
-        for employee in Employees.objects.filter(active=True, date_added__lte=toolbox_talk.date).exclude(job_title__description__in=["Office", "Estimator"]):
-            if not CompletedToolboxTalks.objects.filter(master=toolbox_talk, employee=employee).exists():
-                missing_toolbox_talks +=1
-    send_data['missing_toolbox_talks'] = missing_toolbox_talks
+    send_data['missing_toolbox_talks'] = _count_missing_toolbox_talks_before(today + timedelta(days=1))
     wallcoverings = Wallcovering.objects.filter(
         job_number__is_closed=False,
         is_owner_furnished=False
@@ -447,13 +642,18 @@ def warehouse_home(request):
                 )
                 return redirect('warehouse_home')
 
-            CompletedToolboxTalks.objects.get_or_create(
+            completed_talk, created = CompletedToolboxTalks.objects.get_or_create(
                 employee=employee,
                 master=scheduled_talk,
                 defaults={
-                    'date': date.today()
+                    'date': date.today(),
+                    'is_excused': False,
                 }
             )
+            if not created and completed_talk.is_excused:
+                completed_talk.is_excused = False
+                completed_talk.date = date.today()
+                completed_talk.save(update_fields=['is_excused', 'date'])
 
             messages.success(request, "Toolbox talk completed.")
             return redirect('warehouse_home')
@@ -471,7 +671,7 @@ def warehouse_home(request):
 
         for x in scheduled_qs:
 
-            if CompletedToolboxTalks.objects.filter(employee=employee, master=x).exists():
+            if CompletedToolboxTalks.objects.filter(employee=employee, master=x, is_excused=False).exists():
                 continue
 
             if x.master:
@@ -624,7 +824,11 @@ def register_user(request):
         password2 = request.POST['password2']
         email = request.POST['email']
         if password1 == password2:
-            if User.objects.filter(username=username).exists():
+            username_exists_in_django_users = User.objects.filter(username__iexact=username).exists()
+            username_exists_in_subcontractors = Subcontractors.objects.filter(username__iexact=username).exists()
+            username_exists_in_subcontractor_employees = Subcontractor_Employees.objects.filter(username__iexact=username).exists()
+
+            if username_exists_in_django_users or username_exists_in_subcontractors or username_exists_in_subcontractor_employees:
                 messages.info(request, 'Username Taken')
                 return redirect('register_user')
             else:

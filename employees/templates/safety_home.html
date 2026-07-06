@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block nav_item_employees %}active{% endblock nav_item_employees %}
+{% block nav_item_safety %}active{% endblock nav_item_safety %}
 
 {% block extra_head %}
     <style type="text/css" class="init">
@@ -40,19 +40,50 @@
             background-color: white !important;
         }
 
+        .safety-action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 340px;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 16px;
+        }
+
+        .safety-action-buttons .btn {
+            width: 100%;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: normal;
+            text-align: center;
+        }
+
     </style>
     <link rel="stylesheet" href="{% static 'project_styles.css' %}">
 {% endblock %}
 
 {% block sub_nav %}
-{% include 'employees_nav.html' with active_tab="safety" %}
+{% include 'safety_nav.html' with active_tab="home" %}
 {% endblock %}
 
 {% block content %}
 
-<form action="{% url 'new_jobsite_safety_inspection' %}" >
-    <input type="submit" value="Perform Jobsite Inspection" class= "btn btn-danger btn-lg"/>
-</form>
+<div class="safety-action-buttons">
+    <a href="{% url 'new_jobsite_safety_inspection' %}" class="btn btn-danger">
+        Perform Jobsite Inspection
+    </a>
+    <a href="{% url 'my_page' %}?open_toolbox=other_employee" class="btn btn-danger">
+        Give Toolbox Talk to Other Employee
+    </a>
+    <a href="{% url 'my_page' %}?open_toolbox=group" class="btn btn-danger">
+        Perform Group Toolbox Talk
+    </a>
+    <a href="{% url 'toolbox_talk_assign' %}" class="btn btn-danger">
+        Schedule A Talk Now
+    </a>
+</div>
 <br>
 
 <!--{{employee.}}-->

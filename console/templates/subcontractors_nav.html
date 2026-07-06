@@ -1,15 +1,54 @@
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="{% url 'subcontractor_home' %}">Subcontractors</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav ">
-            <li><a class="nav-item nav-link {% if active_tab == 'home' %}active{% endif %}" href="{% url 'subcontractor_home' %}">Subcontractor Home</a></li>
-		 <li><a class="nav-item nav-link {% if active_tab == 'contracts' %}active{% endif %}" href="{% url 'subcontracts_home' %}">Current Contracts</a></li>
-        <li><a class="nav-item nav-link {% if active_tab == 'payments' %}active{% endif %}" href="{% url 'subcontractor_payments' %}">Payments</a></li>
-        <li><a class="nav-item nav-link {% if active_tab == 'approvers' %}active{% endif %}" href="{% url 'subcontractor_approvers_management' %}">Default Approvers</a></li>
-          {% if page_label %}
-            <li><span class="nav-item nav-link active">{{ page_label }}</span></li>
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'subcontractor_home' %}">
+        Subcontractors
+    </a>
+
+    <button class="navbar-toggler" type="button"
+            data-toggle="collapse"
+            data-target="#subcontractorsSubNav"
+            aria-controls="subcontractorsSubNav"
+            aria-expanded="false"
+            aria-label="Toggle subcontractors navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="subcontractorsSubNav">
+        <ul class="sub-nav-list navbar-nav">
+            <li>
+                <a class="nav-item nav-link {% if active_tab == 'home' %}active{% endif %}"
+                   href="{% url 'subcontractor_home' %}">
+                    Subcontractor Home
+                </a>
+            </li>
+
+            <li>
+                <a class="nav-item nav-link {% if active_tab == 'contracts' %}active{% endif %}"
+                   href="{% url 'subcontracts_home' %}">
+                    Current Contracts
+                </a>
+            </li>
+
+            <li>
+                <a class="nav-item nav-link {% if active_tab == 'payments' %}active{% endif %}"
+                   href="{% url 'subcontractor_payments' %}">
+                    Payments
+                </a>
+            </li>
+
+            <li>
+                <a class="nav-item nav-link {% if active_tab == 'approvers' %}active{% endif %}"
+                   href="{% url 'subcontractor_approvers_management' %}">
+                    Default Approvers
+                </a>
+            </li>
+
+            {% if page_label %}
+            <li>
+                <span class="nav-item nav-link active">
+                    {{ page_label }}
+                </span>
+            </li>
             {% endif %}
         </ul>
     </div>
 </nav>
-

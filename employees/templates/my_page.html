@@ -192,6 +192,25 @@
         overflow-wrap: anywhere !important;
     }
 
+    .mobile-toolbox-control {
+        max-width: 520px;
+    }
+
+    .mobile-toolbox-action {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+
+    .group-missing-employees label {
+        display: block;
+        padding: 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        background: #fff;
+        white-space: normal !important;
+    }
+
     @media (max-width: 576px) {
         .vacation-request-button {
             width: 100%;
@@ -291,6 +310,7 @@
             </div>
         </div>
 <!--    # jobs assigned to (-1)-->
+{% if employeeJobs_count %}
     <div class="card">
         <div class="card-header" id="headingNegativeOne">
             <h5 class="mb-0">
@@ -350,7 +370,8 @@
                 </div>
             </div>
         </div>
-    </div>
+        </div>
+{% endif %}
 {% if vacation_approval_requests_exist %}
 <!--    # vacation approvals-->
 {% if vacation_approvals_requiring_my_approval %}
@@ -688,6 +709,7 @@
 </div>
 {% endif %}
 <!--    #assigned tools 1-->
+{% if inventory_count %}
     <div class="card">
             <div class="card-header" id="headingOne">
                 <h5 class="mb-0">
@@ -699,7 +721,6 @@
             </div>
             <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
                 <div class="card-body">
-                    {% if inventory %}
                     <div class="table-responsive">
                         <table id="employees_table" class="table display">
                             <tr>
@@ -718,12 +739,10 @@
                             </tbody>
                         </table>
                     </div>
-                    {% else %}
-                    <div>No Assigned Tools To Show</div>
-                    {% endif %}
                 </div>
             </div>
         </div>
+{% endif %}
 <!-- #just to collapse the commented code-->
     <div>
     <!--<div class="card">
@@ -844,6 +863,7 @@
         </div>-->
 </div>
 <!--    #writeups 5-->
+{% if writeups_received_count %}
     <div class="card">
             <div class="card-header" id="headingFive">
                 <h5 class="mb-0">
@@ -856,7 +876,6 @@
             </div>
             <div id="collapseFive" class="collapse" aria-labelledby="headingFive" data-parent="#accordion">
                 <div class="card-body">
-                    {% if writeups_received %}
                     <div class="table-responsive">
                         <table class="table display">
                             <tr>
@@ -877,12 +896,10 @@
                             </tbody>
                         </table>
                     </div>
-                    {% else %}
-                    <div>No Write-Ups Received To Show</div>
-                    {% endif %}
                 </div>
             </div>
         </div>
+{% endif %}
 
 <!--    #vacations 6-->
 {% if show_vacation_requests %}
@@ -1367,6 +1384,7 @@
 -->
     </div>
 <!--#certifications 14-->
+{% if certifications_count %}
  <div class="card">
         <div class="card-header" id="headingFourteen">
             <h5 class="mb-0">
@@ -1379,7 +1397,6 @@
         </div>
         <div id="collapseFourteen" class="collapse" aria-labelledby="headingFourteen" data-parent="#accordion">
             <div class="card-body">
-                {% if certifications %}
                 <div class="table-responsive">
                     <table class="table display">
                         <tr>
@@ -1411,14 +1428,13 @@
                         </tbody>
                     </table>
                 </div>
-                {% else %}
-                <div>No Certifications To Show</div>
-                {% endif %}
             </div>
         </div>
  </div>
+{% endif %}
 
 <!--#certification action required-->
+{% if actions_count %}
     <div class = "card">
         <div class="card-header" id="headingTwo">
             <h5 class="mb-0">
@@ -1431,7 +1447,6 @@
 
         <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
             <div class="card-body">
-                {% if actions %}
                 <div class="table-responsive">
                     <table class="table display">
                         <tr>
@@ -1456,13 +1471,11 @@
                         </tbody>
                     </table>
                 </div>
-                {% else %}
-                <div>No Certifications Requiring Action</div>
-                {% endif %}
             </div>
         </div>
 
     </div>
+{% endif %}
 
     <!--#toolbox talks 16-->
     <div class = "card">
@@ -1507,6 +1520,7 @@
 <!-- Spanish -->
 {% if x.spanish %}
     <a href="{% url 'toolbox_file' x.item 'Spanish' %}"
+       onclick="rememberToolboxAccordion('collapseSixteen'); window.location.hash='collapseSixteen';"
        class="toolbox-pdf-link btn btn-block mb-2
               {% if x.spanish_viewed %}
                   btn-success
@@ -1531,6 +1545,7 @@
 <!-- English -->
 {% if x.english %}
     <a href="{% url 'toolbox_file' x.item 'English' %}"
+       onclick="rememberToolboxAccordion('collapseSixteen'); window.location.hash='collapseSixteen';"
        class="toolbox-pdf-link btn btn-block mb-2
               {% if x.english_viewed %}
                   btn-success
@@ -1578,6 +1593,307 @@
 
         </div>
 </div>
+
+<!--#toolbox talks for other employees-->
+    <div class="card">
+        <div class="card-header" id="headingToolboxOtherEmployees">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseToolboxOtherEmployees"
+                        aria-expanded="false"
+                        aria-controls="collapseToolboxOtherEmployees">
+                    Toolbox Talks For Other Employees
+                </button>
+            </h5>
+        </div>
+        <div id="collapseToolboxOtherEmployees" class="collapse"
+             aria-labelledby="headingToolboxOtherEmployees" data-parent="#accordion">
+            <div class="card-body">
+                <form name="select_other_employee_toolbox" id="select_other_employee_toolbox"
+                      action="{% url 'my_page' %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" id="other_selected_file" name="selected_file" value="">
+                    <input type="hidden" id="other_scheduledtalk_id" name="scheduledtalk_id">
+                    <input type="hidden" id="other_toolbox_employee_id" name="toolbox_employee_id">
+
+                {% if toolbox_talks_for_other_employees %}
+                    <div class="form-group">
+                        <label for="otherToolboxEmployeeSearch">Employee</label>
+                        <button type="button"
+                                id="changeOtherToolboxEmployeeButton"
+                                class="btn btn-outline-secondary btn-sm mb-2"
+                                style="display:none;">
+                            Change Employee
+                        </button>
+                        <select id="otherToolboxEmployeeSearch" class="form-control">
+                            <option value="">Select an employee</option>
+                            {% for group in toolbox_talks_for_other_employees %}
+                                <option value="other-toolbox-employee-{{ group.employee.id }}">
+                                    {{ group.employee }} ({{ group.count }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    {% for group in toolbox_talks_for_other_employees %}
+                        <div class="other-toolbox-employee-group"
+                             id="other-toolbox-employee-{{ group.employee.id }}"
+                             style="display:none;">
+                            <h6 class="font-weight-bold mb-2">
+                                {{ group.employee }} - {{ group.count }} Toolbox Talk{{ group.count|pluralize }} Required
+                            </h6>
+
+                            <div class="container-fluid p-2">
+                                {% for x in group.talks %}
+                                    <div class="card mb-3 shadow-sm toolbox-card" id="other-card-{{ group.employee.id }}-{{ x.id }}">
+                                        <div class="card-body">
+                                            <h6 class="mb-1 font-weight-bold">
+                                                {{ x.description }}
+                                            </h6>
+
+                                            <div class="text-muted small mb-2">
+                                                {{ x.date }}
+                                            </div>
+
+                                            <div class="mt-2">
+                                                {% if x.spanish %}
+                                                    <a href="{% url 'toolbox_file_for_employee' group.employee.id x.item 'Spanish' %}"
+                                                       onclick="rememberToolboxAccordion('collapseToolboxOtherEmployees'); window.location.hash='collapseToolboxOtherEmployees';"
+                                                       class="toolbox-other-pdf-link btn btn-block mb-2
+                                                              {% if x.spanish_viewed %}
+                                                                  btn-success
+                                                              {% else %}
+                                                                  btn-outline-primary
+                                                              {% endif %}">
+                                                        {% if x.spanish_viewed %}
+                                                            Spanish (Viewed {{ x.spanish_date|date:"m/d/Y" }})
+                                                        {% else %}
+                                                            View Spanish
+                                                        {% endif %}
+                                                    </a>
+                                                {% else %}
+                                                    <button type="button"
+                                                            class="btn btn-block btn-outline-secondary mb-2"
+                                                            onclick="alert('Tell your supervisor that no file has been uploaded for this talk.')">
+                                                        View Spanish
+                                                    </button>
+                                                {% endif %}
+
+                                                {% if x.english %}
+                                                    <a href="{% url 'toolbox_file_for_employee' group.employee.id x.item 'English' %}"
+                                                       onclick="rememberToolboxAccordion('collapseToolboxOtherEmployees'); window.location.hash='collapseToolboxOtherEmployees';"
+                                                       class="toolbox-other-pdf-link btn btn-block mb-2
+                                                              {% if x.english_viewed %}
+                                                                  btn-success
+                                                              {% else %}
+                                                                  btn-outline-primary
+                                                              {% endif %}">
+                                                        {% if x.english_viewed %}
+                                                            English (Viewed {{ x.english_date|date:"m/d/Y" }})
+                                                        {% else %}
+                                                            View English
+                                                        {% endif %}
+                                                    </a>
+                                                {% else %}
+                                                    <button type="button"
+                                                            class="btn btn-block btn-outline-secondary mb-2"
+                                                            onclick="alert('Tell your supervisor that no file has been uploaded for this talk.')">
+                                                        View English
+                                                    </button>
+                                                {% endif %}
+
+                                                <button type="button"
+                                                        class="btn btn-block
+                                                               {% if x.can_complete %}
+                                                                   btn-danger
+                                                               {% else %}
+                                                                   btn-secondary
+                                                               {% endif %}"
+                                                        id="complete-other-btn-{{ group.employee.id }}-{{ x.item }}"
+                                                        onclick="return check_can_complete_toolbox_for_employee('{{ x.item }}', '{{ group.employee.id }}')">
+                                                    I have read and understand this topic
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div>No toolbox talks required for other employees at this time.</div>
+                {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+
+<!--#group toolbox talk-->
+    <div class="card">
+        <div class="card-header" id="headingGroupToolboxTalk">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseGroupToolboxTalk"
+                        aria-expanded="false"
+                        aria-controls="collapseGroupToolboxTalk">
+                    Group Toolbox Talk
+                </button>
+            </h5>
+        </div>
+        <div id="collapseGroupToolboxTalk" class="collapse"
+             aria-labelledby="headingGroupToolboxTalk" data-parent="#accordion">
+            <div class="card-body">
+                <form name="group_toolbox_form" id="group_toolbox_form" action="{% url 'my_page' %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" id="group_selected_file" name="selected_file" value="group_toolbox">
+                    <input type="hidden" id="group_scheduledtalk_id" name="group_scheduledtalk_id">
+                    <input type="hidden" id="group_job_number" name="group_job_number">
+
+                    {% if group_toolbox_talks %}
+                        <div class="mobile-toolbox-control">
+                            <div class="mb-2">
+                                <button type="button"
+                                        id="changeGroupToolboxButton"
+                                        class="btn btn-outline-secondary btn-sm mb-2"
+                                        style="display:none;">
+                                    Change Selected Talk
+                                </button>
+                                <button type="button"
+                                        id="changeGroupJobButton"
+                                        class="btn btn-outline-secondary btn-sm mb-2"
+                                        style="display:none;">
+                                    Change Job
+                                </button>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="groupToolboxTalkSearch">Toolbox Talk</label>
+                                <select id="groupToolboxTalkSearch" class="form-control">
+                                    <option value="">Select a toolbox talk</option>
+                                    {% for talk in group_toolbox_talks %}
+                                        <option value="group-toolbox-talk-{{ talk.id }}"
+                                                data-scheduled-id="{{ talk.id }}">
+                                            {{ talk.option_label }} ({{ talk.missing_count }} missing)
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="groupJobSearch">Jobsite (Leave Blank If Not On a Job)</label>
+                                <select id="groupJobSearch" class="form-control">
+                                    <option value="">No jobsite</option>
+                                    {% for job in open_jobs %}
+                                        <option value="{{ job.job_number }}">
+                                            {{ job.job_number }} {{ job.job_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="small text-muted mb-3">
+                                After completing the talk, you will be able to select which employees were included.
+                            </div>
+                        </div>
+
+                        {% for x in group_toolbox_talks %}
+                            <div class="group-toolbox-talk-panel"
+                                 id="group-toolbox-talk-{{ x.id }}"
+                                 data-scheduled-id="{{ x.id }}"
+                                 style="display:none;">
+                                <div class="card mb-3 shadow-sm toolbox-card">
+                                    <div class="card-body">
+                                        <h6 class="mb-1 font-weight-bold">
+                                            {{ x.description }}
+                                        </h6>
+
+                                        <div class="text-muted small mb-2">
+                                            {{ x.date }}
+                                        </div>
+
+                                        {% if x.spanish %}
+                                            <a href="{% url 'group_toolbox_file' x.id 'Spanish' %}"
+                                               onclick="rememberToolboxAccordion('collapseGroupToolboxTalk'); window.location.hash='collapseGroupToolboxTalk';"
+                                               class="group-toolbox-pdf-link btn btn-block mb-2
+                                                      {% if x.spanish_viewed %}
+                                                          btn-success
+                                                      {% else %}
+                                                          btn-outline-primary
+                                                      {% endif %}">
+                                                {% if x.spanish_viewed %}
+                                                    Spanish (Viewed {{ x.spanish_date|date:"m/d/Y" }})
+                                                {% else %}
+                                                    View Spanish
+                                                {% endif %}
+                                            </a>
+                                        {% else %}
+                                            <button type="button"
+                                                    class="btn btn-block btn-outline-secondary mb-2"
+                                                    onclick="alert('Tell your supervisor that no file has been uploaded for this talk.')">
+                                                View Spanish
+                                            </button>
+                                        {% endif %}
+
+                                        {% if x.english %}
+                                            <a href="{% url 'group_toolbox_file' x.id 'English' %}"
+                                               onclick="rememberToolboxAccordion('collapseGroupToolboxTalk'); window.location.hash='collapseGroupToolboxTalk';"
+                                               class="group-toolbox-pdf-link btn btn-block mb-2
+                                                      {% if x.english_viewed %}
+                                                          btn-success
+                                                      {% else %}
+                                                          btn-outline-primary
+                                                      {% endif %}">
+                                                {% if x.english_viewed %}
+                                                    English (Viewed {{ x.english_date|date:"m/d/Y" }})
+                                                {% else %}
+                                                    View English
+                                                {% endif %}
+                                            </a>
+                                        {% else %}
+                                            <button type="button"
+                                                    class="btn btn-block btn-outline-secondary mb-2"
+                                                    onclick="alert('Tell your supervisor that no file has been uploaded for this talk.')">
+                                                View English
+                                            </button>
+                                        {% endif %}
+
+                                        <button type="button"
+                                                class="btn btn-block {% if x.can_complete %}btn-danger{% else %}btn-secondary{% endif %}"
+                                                onclick="return unlock_group_toolbox_completion('{{ x.id }}')">
+                                            Select The Employees Who Attended This Talk
+                                        </button>
+
+                                        <div class="group-missing-employees"
+                                             id="group-missing-employees-{{ x.id }}"
+                                             style="display:none;">
+                                            {% for missing_employee in x.missing_employees %}
+                                                <label>
+                                                    <input type="checkbox"
+                                                           class="group-toolbox-employee-checkbox group-toolbox-employee-checkbox-{{ x.id }}"
+                                                           name="group_employee_ids"
+                                                           value="{{ missing_employee.id }}"
+                                                           disabled>
+                                                    {{ missing_employee }}
+                                                </label>
+                                            {% endfor %}
+                                        </div>
+
+                                        <button type="button"
+                                                class="btn btn-success mobile-toolbox-action group-toolbox-save-button"
+                                                id="group-toolbox-save-{{ x.id }}"
+                                                style="display:none;"
+                                                onclick="return submit_group_toolbox('{{ x.id }}')">
+                                            Save Group Toolbox Talk
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div>No group toolbox talks are missing employees at this time.</div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
 
 <!--#respirator clearance 15-->
     <div class = "card">
@@ -1657,8 +1973,12 @@
 {% block extra_scripts %}
 <script type="text/javascript" class="init">
 
+function rememberToolboxAccordion(collapseId) {
+    localStorage.setItem("openAccordion", collapseId);
+}
+
 function complete_toolbox(scheduled_id){
-    localStorage.setItem("openAccordion", "collapseSixteen");
+    rememberToolboxAccordion("collapseSixteen");
 
     document.getElementById("selected_file").value = "pumpkin";
     document.getElementById("scheduledtalk_id").value = scheduled_id;
@@ -1667,8 +1987,6 @@ function complete_toolbox(scheduled_id){
 }
 
 function check_can_complete_toolbox(scheduled_id) {
-    localStorage.setItem("openAccordion", "collapseSixteen");
-
     fetch("{% url 'ajax_check_toolbox_can_complete' %}", {
         method: "POST",
         headers: {
@@ -1682,6 +2000,7 @@ function check_can_complete_toolbox(scheduled_id) {
     .then(response => response.json())
     .then(data => {
         if (data.can_complete === true) {
+            rememberToolboxAccordion("collapseSixteen");
             document.getElementById("selected_file").value = "pumpkin";
             document.getElementById("scheduledtalk_id").value = scheduled_id;
             document.getElementById("select_file").submit();
@@ -1697,25 +2016,357 @@ function check_can_complete_toolbox(scheduled_id) {
     return false;
 }
 
-function restoreAccordion() {
-    let openId = localStorage.getItem("openAccordion");
+function check_can_complete_toolbox_for_employee(scheduled_id, employee_id) {
+    fetch("{% url 'ajax_check_toolbox_can_complete' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+            "scheduled_id": scheduled_id,
+            "employee_id": employee_id
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.can_complete === true) {
+            rememberToolboxAccordion("collapseToolboxOtherEmployees");
+            document.getElementById("other_selected_file").value = "other_employee_toolbox";
+            document.getElementById("other_scheduledtalk_id").value = scheduled_id;
+            document.getElementById("other_toolbox_employee_id").value = employee_id;
+            document.getElementById("select_other_employee_toolbox").submit();
+        } else {
+            alert("You need to read the toolbox talk first before marking the course complete.");
+        }
+    })
+    .catch(error => {
+        console.error("Toolbox completion check failed:", error);
+        alert("Could not verify completion status. Please try again.");
+    });
 
-    if (openId === "collapseSix") {
-        localStorage.removeItem("openAccordion");
+    return false;
+}
+
+function show_group_missing_employees(scheduled_id) {
+    const panel = document.getElementById("group-missing-employees-" + scheduled_id);
+    if (panel) {
+        panel.style.display = "block";
+    }
+}
+
+function unlock_group_toolbox_completion(scheduled_id) {
+    fetch("{% url 'ajax_check_toolbox_can_complete' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+            "scheduled_id": scheduled_id,
+            "group_toolbox": "1"
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.can_complete === true) {
+            show_group_missing_employees(scheduled_id);
+
+            document.querySelectorAll(".group-toolbox-employee-checkbox-" + scheduled_id).forEach(function (checkbox) {
+                checkbox.disabled = false;
+                checkbox.checked = false;
+            });
+
+            const saveButton = document.getElementById("group-toolbox-save-" + scheduled_id);
+            if (saveButton) {
+                saveButton.style.display = "block";
+            }
+        } else {
+            alert("You need to read the toolbox talk first before marking the course complete.");
+        }
+    })
+    .catch(error => {
+        console.error("Group toolbox completion check failed:", error);
+        alert("Could not verify completion status. Please try again.");
+    });
+
+    return false;
+}
+
+function submit_group_toolbox(scheduled_id) {
+    const checkedEmployees = document.querySelectorAll(".group-toolbox-employee-checkbox-" + scheduled_id + ":checked");
+
+    if (!checkedEmployees.length) {
+        alert("Please select at least one employee who completed the toolbox talk.");
+        return false;
+    }
+
+    document.getElementById("group_scheduledtalk_id").value = scheduled_id;
+    document.getElementById("group_selected_file").value = "group_toolbox";
+
+    const jobInput = document.getElementById("groupJobSearch");
+    const jobNumber = jobInput ? jobInput.value || "" : "";
+
+    document.getElementById("group_job_number").value = jobNumber;
+    if (jobInput) {
+        $('#groupJobSearch').val('').trigger('change');
+    }
+    localStorage.removeItem("selectedGroupToolboxTalkTarget");
+    localStorage.removeItem("selectedGroupToolboxJobValue");
+    localStorage.removeItem("openAccordion");
+    document.getElementById("group_toolbox_form").submit();
+    return false;
+}
+
+function isToolboxAccordion(openId) {
+    return [
+        "collapseSixteen",
+        "collapseToolboxOtherEmployees",
+        "collapseGroupToolboxTalk"
+    ].indexOf(openId) !== -1;
+}
+
+function toolboxAccordionFromHash() {
+    let hashValue = window.location.hash ? window.location.hash.replace("#", "") : "";
+    return isToolboxAccordion(hashValue) ? hashValue : "";
+}
+
+function clearToolboxAccordionRestore() {
+    localStorage.removeItem("openAccordion");
+}
+
+function restoreAccordion() {
+    let openId = toolboxAccordionFromHash() || localStorage.getItem("openAccordion");
+
+    if (!isToolboxAccordion(openId)) {
+        clearToolboxAccordionRestore();
         return;
     }
 
     if (openId) {
         let collapseElement = document.getElementById(openId);
         if (collapseElement && !collapseElement.classList.contains("show")) {
-            $('#' + openId).collapse('show');
+            collapseElement.classList.add("show");
+            collapseElement.style.height = "";
+            const toggle = document.querySelector('[data-target="#' + openId + '"]');
+            if (toggle) {
+                toggle.setAttribute("aria-expanded", "true");
+                toggle.classList.remove("collapsed");
+            }
+            $(collapseElement).collapse('show');
         }
+        rememberToolboxAccordion(openId);
     }
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get("open_toolbox") === "other_employee") {
+        rememberToolboxAccordion("collapseToolboxOtherEmployees");
+    } else if (params.get("open_toolbox") === "group") {
+        rememberToolboxAccordion("collapseGroupToolboxTalk");
+    }
 
     restoreAccordion();
+
+    function showOtherToolboxEmployeeGroup(targetId) {
+        document.querySelectorAll(".other-toolbox-employee-group").forEach(function (group) {
+            group.style.display = "none";
+        });
+
+        const changeButton = document.getElementById("changeOtherToolboxEmployeeButton");
+
+        if (!targetId) {
+            localStorage.removeItem("selectedOtherToolboxEmployeeTarget");
+            if (changeButton) {
+                changeButton.style.display = "none";
+            }
+            return;
+        }
+
+        const target = document.getElementById(targetId);
+        if (target) {
+            target.style.display = "block";
+            localStorage.setItem("selectedOtherToolboxEmployeeTarget", targetId);
+            if (changeButton) {
+                changeButton.style.display = "inline-block";
+            }
+        }
+    }
+
+    const otherToolboxEmployeeSearch = document.getElementById("otherToolboxEmployeeSearch");
+    const changeOtherToolboxEmployeeButton = document.getElementById("changeOtherToolboxEmployeeButton");
+
+    if (otherToolboxEmployeeSearch) {
+        const useNativeOtherEmployeeSelect = window.matchMedia("(max-width: 768px), (pointer: coarse)").matches;
+        const $otherToolboxEmployeeSearch = $('#otherToolboxEmployeeSearch');
+
+        if (!useNativeOtherEmployeeSelect) {
+            $otherToolboxEmployeeSearch.select2({
+                placeholder: "Select an employee",
+                allowClear: true,
+                width: '100%'
+            });
+        }
+
+        const savedTarget = localStorage.getItem("selectedOtherToolboxEmployeeTarget");
+        if (savedTarget) {
+            $otherToolboxEmployeeSearch.val(savedTarget).trigger('change.select2');
+            showOtherToolboxEmployeeGroup(savedTarget);
+        }
+
+        function handleOtherToolboxEmployeeChange() {
+            showOtherToolboxEmployeeGroup(otherToolboxEmployeeSearch.value || "");
+        }
+
+        $otherToolboxEmployeeSearch.on('change select2:select select2:clear', handleOtherToolboxEmployeeChange);
+        otherToolboxEmployeeSearch.addEventListener("input", handleOtherToolboxEmployeeChange);
+        otherToolboxEmployeeSearch.addEventListener("blur", handleOtherToolboxEmployeeChange);
+    }
+
+    if (changeOtherToolboxEmployeeButton && otherToolboxEmployeeSearch) {
+        changeOtherToolboxEmployeeButton.addEventListener("click", function () {
+            $('#otherToolboxEmployeeSearch').val('').trigger('change');
+            showOtherToolboxEmployeeGroup("");
+            if ($('#otherToolboxEmployeeSearch').hasClass("select2-hidden-accessible")) {
+                $('#otherToolboxEmployeeSearch').select2('open');
+            } else {
+                otherToolboxEmployeeSearch.focus();
+            }
+        });
+    }
+
+    function showGroupToolboxTalkPanel(targetId) {
+        document.querySelectorAll(".group-toolbox-talk-panel").forEach(function (panel) {
+            panel.style.display = "none";
+        });
+        document.querySelectorAll(".group-toolbox-employee-checkbox").forEach(function (checkbox) {
+            checkbox.disabled = true;
+            checkbox.checked = false;
+        });
+        document.querySelectorAll(".group-toolbox-save-button").forEach(function (button) {
+            button.style.display = "none";
+        });
+        document.querySelectorAll(".group-missing-employees").forEach(function (panel) {
+            panel.style.display = "none";
+        });
+
+        const changeButton = document.getElementById("changeGroupToolboxButton");
+
+        if (!targetId) {
+            localStorage.removeItem("selectedGroupToolboxTalkTarget");
+            if (changeButton) {
+                changeButton.style.display = "none";
+            }
+            return;
+        }
+
+        const target = document.getElementById(targetId);
+        if (target) {
+            target.style.display = "block";
+            localStorage.setItem("selectedGroupToolboxTalkTarget", targetId);
+            if (changeButton) {
+                changeButton.style.display = "inline-block";
+            }
+        }
+    }
+
+    const groupToolboxTalkSearch = document.getElementById("groupToolboxTalkSearch");
+    const changeGroupToolboxButton = document.getElementById("changeGroupToolboxButton");
+    const groupJobSearch = document.getElementById("groupJobSearch");
+    const changeGroupJobButton = document.getElementById("changeGroupJobButton");
+
+    function updateSelectedGroupJob() {
+        const groupJobNumber = document.getElementById("group_job_number");
+        const selectedJobNumber = groupJobSearch ? groupJobSearch.value || "" : "";
+
+        if (groupJobNumber) {
+            groupJobNumber.value = selectedJobNumber;
+        }
+        if (selectedJobNumber) {
+            localStorage.setItem("selectedGroupToolboxJobValue", selectedJobNumber);
+        } else {
+            localStorage.removeItem("selectedGroupToolboxJobValue");
+        }
+        if (changeGroupJobButton) {
+            changeGroupJobButton.style.display = selectedJobNumber ? "inline-block" : "none";
+        }
+    }
+
+    if (groupToolboxTalkSearch) {
+        const useNativeGroupToolboxSelect = window.matchMedia("(max-width: 768px), (pointer: coarse)").matches;
+        const $groupToolboxTalkSearch = $('#groupToolboxTalkSearch');
+
+        if (!useNativeGroupToolboxSelect && $.fn.select2) {
+            $groupToolboxTalkSearch.select2({
+                placeholder: "Select a toolbox talk",
+                allowClear: true,
+                width: '100%'
+            });
+        }
+
+        const savedTarget = localStorage.getItem("selectedGroupToolboxTalkTarget");
+        if (savedTarget) {
+            $groupToolboxTalkSearch.val(savedTarget).trigger('change.select2');
+            showGroupToolboxTalkPanel(savedTarget);
+        }
+
+        function handleGroupToolboxTalkChange() {
+            showGroupToolboxTalkPanel(this.value || "");
+        }
+
+        $groupToolboxTalkSearch.on('change select2:select select2:clear', handleGroupToolboxTalkChange);
+        groupToolboxTalkSearch.addEventListener("input", handleGroupToolboxTalkChange);
+        groupToolboxTalkSearch.addEventListener("blur", handleGroupToolboxTalkChange);
+    }
+
+    if (changeGroupToolboxButton && groupToolboxTalkSearch) {
+        changeGroupToolboxButton.addEventListener("click", function () {
+            $('#groupToolboxTalkSearch').val('').trigger('change');
+            showGroupToolboxTalkPanel("");
+            if ($('#groupToolboxTalkSearch').hasClass("select2-hidden-accessible")) {
+                $('#groupToolboxTalkSearch').select2('open');
+            } else {
+                groupToolboxTalkSearch.focus();
+            }
+        });
+    }
+
+    if (groupJobSearch) {
+        const useNativeGroupJobSelect = window.matchMedia("(max-width: 768px), (pointer: coarse)").matches;
+        const $groupJobSearch = $('#groupJobSearch');
+
+        if (!useNativeGroupJobSelect && $.fn.select2) {
+            $groupJobSearch.select2({
+                placeholder: "No jobsite",
+                allowClear: true,
+                width: '100%'
+            });
+        }
+
+        const savedGroupJobValue = localStorage.getItem("selectedGroupToolboxJobValue");
+        if (savedGroupJobValue) {
+            $groupJobSearch.val(savedGroupJobValue).trigger('change.select2');
+        }
+        $groupJobSearch.on('change select2:select select2:clear', updateSelectedGroupJob);
+        groupJobSearch.addEventListener("input", updateSelectedGroupJob);
+        groupJobSearch.addEventListener("blur", updateSelectedGroupJob);
+        updateSelectedGroupJob();
+    }
+
+    if (changeGroupJobButton && groupJobSearch) {
+        changeGroupJobButton.addEventListener("click", function () {
+            $('#groupJobSearch').val('').trigger('change');
+            localStorage.removeItem("selectedGroupToolboxJobValue");
+            updateSelectedGroupJob();
+            if ($('#groupJobSearch').hasClass("select2-hidden-accessible")) {
+                $('#groupJobSearch').select2('open');
+            } else {
+                groupJobSearch.focus();
+            }
+        });
+    }
 
     const vacationFirstDay = document.getElementById("vacation_first_day");
     const vacationLastDay = document.getElementById("vacation_last_day");
@@ -1864,16 +2515,76 @@ document.addEventListener("DOMContentLoaded", function () {
         $("#vacationStatusModal").modal("show");
     });
 
+    $('.collapse').on('hidden.bs.collapse', function () {
+        if (localStorage.getItem("openAccordion") === this.id) {
+            clearToolboxAccordionRestore();
+        }
+        if (window.location.hash === "#" + this.id) {
+            history.replaceState(
+                null,
+                document.title,
+                window.location.pathname + window.location.search
+            );
+        }
+    });
+
     $('.collapse').on('shown.bs.collapse', function () {
-        localStorage.setItem("openAccordion", this.id);
+        if (isToolboxAccordion(this.id)) {
+            rememberToolboxAccordion(this.id);
+        } else {
+            clearToolboxAccordionRestore();
+        }
+    });
+
+    document.querySelectorAll('[data-toggle="collapse"]').forEach(function (toggle) {
+        toggle.addEventListener("click", function () {
+            const targetSelector = toggle.getAttribute("data-target") || toggle.getAttribute("href") || "";
+            const targetId = targetSelector.replace("#", "");
+            const target = document.getElementById(targetId);
+
+            if (
+                target &&
+                target.classList.contains("show") &&
+                window.location.hash === "#" + targetId
+            ) {
+                history.replaceState(
+                    null,
+                    document.title,
+                    window.location.pathname + window.location.search
+                );
+            }
+        });
     });
 
     document.querySelectorAll(".toolbox-pdf-link").forEach(function(link) {
         link.addEventListener("click", function () {
-            localStorage.setItem("openAccordion", "collapseSixteen");
+            window.location.hash = "collapseSixteen";
+            rememberToolboxAccordion("collapseSixteen");
         });
     });
 
+    document.querySelectorAll(".toolbox-other-pdf-link").forEach(function(link) {
+        link.addEventListener("click", function () {
+            window.location.hash = "collapseToolboxOtherEmployees";
+            rememberToolboxAccordion("collapseToolboxOtherEmployees");
+        });
+    });
+
+    document.querySelectorAll(".group-toolbox-pdf-link").forEach(function(link) {
+        link.addEventListener("click", function () {
+            window.location.hash = "collapseGroupToolboxTalk";
+            rememberToolboxAccordion("collapseGroupToolboxTalk");
+        });
+    });
+
+});
+
+window.addEventListener("pageshow", function (event) {
+    restoreAccordion();
+
+    if (event.persisted) {
+        window.location.reload();
+    }
 });
 
 </script>

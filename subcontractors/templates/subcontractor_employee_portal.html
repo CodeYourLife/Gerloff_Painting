@@ -165,7 +165,7 @@
                         data-target="#collapseGroupToolbox"
                         aria-expanded="false"
                         aria-controls="collapseGroupToolbox">
-                    {{ group_toolbox_talks_count }} Group Toolbox Talks - Led By Foreman
+                    Perform a Group Toolbox Talk
                 </button>
             </h5>
         </div>
@@ -253,7 +253,7 @@
                                 </div>
 
                                 <div class="text-muted small mb-2">
-                                    Job: {{ x.job.job_number }} - {{ x.job.job_name }}
+                                    Job: {{ x.job_names|default:x.job.job_name }}
                                 </div>
 
                                 <div class="mt-2">
@@ -312,6 +312,119 @@
     </div>
     {% endif %}
 
+    {% if toolbox_talks_for_other_employees_count %}
+    <div class="card">
+        <div class="card-header" id="headingOtherEmployeeToolbox">
+            <h5 class="mb-0">
+                <button class="btn btn-link"
+                        data-toggle="collapse"
+                        data-target="#collapseOtherEmployeeToolbox"
+                        aria-expanded="false"
+                        aria-controls="collapseOtherEmployeeToolbox">
+                    Perform Toolbox Talk For Others
+                </button>
+            </h5>
+        </div>
+
+        <div id="collapseOtherEmployeeToolbox"
+             class="collapse"
+             aria-labelledby="headingOtherEmployeeToolbox"
+             data-parent="#accordion">
+
+            <div class="card-body">
+                <form name="select_other_employee_toolbox"
+                      id="select_other_employee_toolbox"
+                      action="{% url 'complete_subcontractor_toolbox_talk' %}"
+                      method="post">
+                    {% csrf_token %}
+
+                    <input type="hidden" name="return_employee_id" value="{{ employee_id }}">
+                    <input type="hidden" id="other_toolbox_employee_id" name="employee_id">
+                    <input type="hidden" id="other_scheduledtalk_id" name="scheduledtalk_id">
+
+                    <div class="form-group">
+                        <label for="otherToolboxEmployeeSearch">Employee</label>
+                        <select id="otherToolboxEmployeeSearch" class="form-control">
+                            <option value="">Select an employee</option>
+                            {% for row in toolbox_talks_for_other_employees %}
+                                <option value="other-toolbox-employee-{{ row.employee.id }}">
+                                    {{ row.employee.name }} ({{ row.count }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    {% for row in toolbox_talks_for_other_employees %}
+                    <div id="other-toolbox-employee-{{ row.employee.id }}"
+                         class="other-toolbox-employee-group"
+                         style="display:none;">
+                        <h6 class="font-weight-bold">{{ row.employee.name }}</h6>
+
+                        {% for x in row.talks %}
+                        <div class="card mb-3 shadow-sm toolbox-card">
+                            <div class="card-body">
+                                <h6 class="mb-1 font-weight-bold">
+                                    {{ x.description }}
+                                </h6>
+
+                                <div class="text-muted small mb-1">
+                                    {{ x.date|date:"m/d/Y" }}
+                                </div>
+
+                                <div class="text-muted small mb-2">
+                                    Job: {{ x.job_names|default:x.job.job_name }}
+                                </div>
+
+                                {% if x.spanish %}
+                                    <a href="{% url 'subcontractor_toolbox_file' x.item 'Spanish' row.employee.id %}"
+                                       class="other-toolbox-pdf-link btn btn-block mb-2 {% if x.spanish_viewed %}btn-success{% else %}btn-outline-primary{% endif %}">
+                                        {% if x.spanish_viewed %}
+                                            Spanish (Viewed {{ x.spanish_date|date:"m/d/Y" }})
+                                        {% else %}
+                                            View Spanish
+                                        {% endif %}
+                                    </a>
+                                {% else %}
+                                    <button type="button"
+                                            class="btn btn-block btn-outline-secondary mb-2"
+                                            onclick="alert('Tell your supervisor that no Spanish file has been uploaded for this talk.')">
+                                        View Spanish
+                                    </button>
+                                {% endif %}
+
+                                {% if x.english %}
+                                    <a href="{% url 'subcontractor_toolbox_file' x.item 'English' row.employee.id %}"
+                                       class="other-toolbox-pdf-link btn btn-block mb-2 {% if x.english_viewed %}btn-success{% else %}btn-outline-primary{% endif %}">
+                                        {% if x.english_viewed %}
+                                            English (Viewed {{ x.english_date|date:"m/d/Y" }})
+                                        {% else %}
+                                            View English
+                                        {% endif %}
+                                    </a>
+                                {% else %}
+                                    <button type="button"
+                                            class="btn btn-block btn-outline-secondary mb-2"
+                                            onclick="alert('Tell your supervisor that no English file has been uploaded for this talk.')">
+                                        View English
+                                    </button>
+                                {% endif %}
+
+                                <button type="button"
+                                        class="btn btn-block {% if x.can_complete %}btn-danger{% else %}btn-secondary{% endif %}"
+                                        onclick="check_subcontractor_employee_toolbox_can_complete_for_employee('{{ x.item }}', '{{ row.employee.id }}')">
+                                    Employee has read and understands this topic
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
 {% endif %}
 
     </div>
@@ -329,6 +442,15 @@ function complete_subcontractor_toolbox(scheduled_id) {
 
     document.getElementById("scheduledtalk_id").value = scheduled_id;
     document.getElementById("select_file").submit();
+}
+
+function complete_subcontractor_toolbox_for_employee(scheduled_id, employee_id) {
+    localStorage.setItem("openAccordion", "collapseOtherEmployeeToolbox");
+    localStorage.setItem("selectedOtherSubToolboxEmployeeTarget", "other-toolbox-employee-" + employee_id);
+
+    document.getElementById("other_scheduledtalk_id").value = scheduled_id;
+    document.getElementById("other_toolbox_employee_id").value = employee_id;
+    document.getElementById("select_other_employee_toolbox").submit();
 }
 
 function check_subcontractor_employee_toolbox_can_complete(scheduled_id) {
@@ -359,6 +481,35 @@ function check_subcontractor_employee_toolbox_can_complete(scheduled_id) {
     });
 }
 
+function check_subcontractor_employee_toolbox_can_complete_for_employee(scheduled_id, employee_id) {
+    localStorage.setItem("openAccordion", "collapseOtherEmployeeToolbox");
+    localStorage.setItem("selectedOtherSubToolboxEmployeeTarget", "other-toolbox-employee-" + employee_id);
+
+    fetch("{% url 'ajax_check_subcontractor_employee_toolbox_can_complete' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+            "employee_id": employee_id,
+            "scheduled_id": scheduled_id
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.can_complete === true) {
+            complete_subcontractor_toolbox_for_employee(scheduled_id, employee_id);
+        } else {
+            alert("The employee needs to read the toolbox talk first before marking the course complete.");
+        }
+    })
+    .catch(error => {
+        console.error("Subcontractor other employee toolbox completion check failed:", error);
+        alert("Could not verify completion status. Please try again.");
+    });
+}
+
 function restoreAccordion() {
     let openId = localStorage.getItem("openAccordion");
     if (openId) {
@@ -372,6 +523,36 @@ function restoreAccordion() {
 document.addEventListener("DOMContentLoaded", function () {
     restoreAccordion();
 
+    function showOtherToolboxEmployeeGroup(targetId) {
+        document.querySelectorAll(".other-toolbox-employee-group").forEach(function (group) {
+            group.style.display = "none";
+        });
+
+        if (!targetId) {
+            localStorage.removeItem("selectedOtherSubToolboxEmployeeTarget");
+            return;
+        }
+
+        const selectedGroup = document.getElementById(targetId);
+        if (selectedGroup) {
+            selectedGroup.style.display = "";
+            localStorage.setItem("selectedOtherSubToolboxEmployeeTarget", targetId);
+        }
+    }
+
+    const otherToolboxEmployeeSearch = document.getElementById("otherToolboxEmployeeSearch");
+    if (otherToolboxEmployeeSearch) {
+        const savedTarget = localStorage.getItem("selectedOtherSubToolboxEmployeeTarget");
+        if (savedTarget) {
+            otherToolboxEmployeeSearch.value = savedTarget;
+            showOtherToolboxEmployeeGroup(savedTarget);
+        }
+
+        otherToolboxEmployeeSearch.addEventListener("change", function () {
+            showOtherToolboxEmployeeGroup(otherToolboxEmployeeSearch.value || "");
+        });
+    }
+
     $('.collapse').on('shown.bs.collapse', function () {
         localStorage.setItem("openAccordion", this.id);
     });
@@ -383,6 +564,12 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".toolbox-pdf-link").forEach(function(link) {
         link.addEventListener("click", function () {
             localStorage.setItem("openAccordion", "collapseIndividualToolbox");
+        });
+    });
+
+    document.querySelectorAll(".other-toolbox-pdf-link").forEach(function(link) {
+        link.addEventListener("click", function () {
+            localStorage.setItem("openAccordion", "collapseOtherEmployeeToolbox");
         });
     });
 

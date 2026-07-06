@@ -305,7 +305,7 @@ def super_home(request, super):
 
                 for x in scheduled_qs:
 
-                    if CompletedToolboxTalks.objects.filter(employee=employee, master=x).exists():
+                    if CompletedToolboxTalks.objects.filter(employee=employee, master=x, is_excused=False).exists():
                         continue
 
                     toolbox_talks_required.append({

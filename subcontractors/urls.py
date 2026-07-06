@@ -34,6 +34,11 @@ path("subcontractor_portal_ewt_edit/<changeorder_id> <subcontractor_id><employee
 path("subcontractor_portal_email_signed_ticket/<changeorder_id> <subcontractor_id><employee_id>", views.subcontractor_portal_email_signed_ticket, name='subcontractor_portal_email_signed_ticket'),
 path("subcontractor_payment_print/<id>", views.subcontractor_payment_print, name='subcontractor_payment_print'),
 path('portal/employees/<int:sub_id>/',views.subcontractor_employee_management,name='subcontractor_employee_management'),
+path(
+    'portal/employees/<int:sub_id>/subcontract/<int:subcontract_id>/toggle-delegation/',
+    views.toggle_subcontractor_job_delegation,
+    name='toggle_subcontractor_job_delegation'
+),
 path('subs/employee_ajax/', views.subcontractor_employee_ajax, name='subcontractor_employee_ajax'),
 path('subs/employee_update/', views.subcontractor_employee_update, name='subcontractor_employee_update'),
 path('subs/employee_remove/', views.subcontractor_employee_remove, name='subcontractor_employee_remove'),
