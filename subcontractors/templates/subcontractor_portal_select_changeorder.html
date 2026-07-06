@@ -10,7 +10,7 @@
 </h4>
 
 {% for co in changeorders %}
-{% if co.status == "Ticket Not Completed" %}
+{% if co.portal_ticket_action == "create" %}
 
     <a href="{% url 'subcontractor_portal_create_ticket' co.id subcontractor.id employee_id %}"
    class="card mb-3 shadow-sm text-decoration-none text-dark">

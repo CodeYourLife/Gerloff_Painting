@@ -1,14 +1,47 @@
 <nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="{% url 'change_order_home' %}">Change Orders</a>
-    <div id="navbarNavDropdown2">
-        <ul class="sub-nav-list navbar-nav ">
-            <li><a class="nav-item nav-link {% if active_tab == 'home' %}active{% endif %}" href="{% url 'change_order_home' %}">Home</a></li>
-            <li><a class="nav-item nav-link {% if active_tab == 'add_new' %}active{% endif %}" href="{% url 'change_order_new_select' %}">Add New</a></li>
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'change_order_home' %}">
+        Change Orders
+    </a>
+
+    <button class="navbar-toggler" type="button"
+            data-toggle="collapse"
+            data-target="#changeOrderSubNav"
+            aria-controls="changeOrderSubNav"
+            aria-expanded="false"
+            aria-label="Toggle change order navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="changeOrderSubNav">
+        <ul class="sub-nav-list navbar-nav">
+            <li>
+                <a class="nav-item nav-link {% if active_tab == 'home' %}active{% endif %}"
+                   href="{% url 'change_order_home' %}">
+                    Home
+                </a>
+            </li>
+
+            <li>
+                <a class="nav-item nav-link {% if active_tab == 'add_new' %}active{% endif %}"
+                   href="{% url 'change_order_new_select' %}">
+                    Add New
+                </a>
+            </li>
+
             {% if page_label %}
-            <li><span class="nav-item nav-link active">{{ page_label }}</span></li>
+            <li>
+                <span class="nav-item nav-link active">
+                    {{ page_label }}
+                </span>
+            </li>
             {% endif %}
+
             {% if cop_page_label %}
-            <li><span class="nav-item nav-link active">COP# {{ cop_page_label }}</span></li>
+            <li>
+                <span class="nav-item nav-link active">
+                    COP# {{ cop_page_label }}
+                </span>
+            </li>
             {% endif %}
         </ul>
     </div>

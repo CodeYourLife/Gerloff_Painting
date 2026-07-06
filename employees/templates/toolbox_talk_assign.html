@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block nav_item_employees %}active{% endblock nav_item_employees %}
+{% block nav_item_safety %}active{% endblock nav_item_safety %}
 
 {% block extra_head %}
 <style>
@@ -108,11 +108,11 @@
 </style>
 {% endblock %}
 
-{% block content %}
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="{% url 'safety_home' %}">Go Back to Safety Home</a>
-</nav>
+{% block sub_nav %}
+{% include 'safety_nav.html' with active_tab="schedule" page_label="Assign Toolbox Talk" %}
+{% endblock %}
 
+{% block content %}
 <div class="toolbox-wrap">
     <div class="mb-3">
         <h3 class="mb-0 toolbox-title">Assign Toolbox Talk</h3>

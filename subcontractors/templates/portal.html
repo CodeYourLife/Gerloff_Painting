@@ -474,13 +474,19 @@ Showing Invoice Information for {{last_saturday}} - {{this_friday}}
 
                 <div class="mobile-card-row">
                     <span>Job</span>
-                    <strong>{{ talk.job.job_name }}</strong>
+                    <strong>{{ talk.job_names|default:talk.job.job_name }}</strong>
                 </div>
 
                 <div class="mobile-card-row">
                     <span>Date</span>
                     <strong>{{ talk.date|date:"m/d/Y" }}</strong>
                 </div>
+                {% if talk.employee_name %}
+                <div class="mobile-card-row">
+                    <span>{% if talk.employee_count > 1 %}Employees Needed{% else %}Employee Needed{% endif %}</span>
+                    <strong>{{ talk.employee_name }}</strong>
+                </div>
+                {% endif %}
 				{% if talk.delegated %}
     <div class="mobile-card-row">
         <span>Employee Progress</span>
@@ -498,7 +504,7 @@ Showing Invoice Information for {{last_saturday}} - {{this_friday}}
             Waiting on Employees
         </span>
                 <a class="btn btn-outline-danger btn-block mt-2"
-   href="{% url 'sub_toolbox_complete' selected_sub.id talk.scheduled.id talk.job.job_number %}">
+   href="{% url 'sub_toolbox_complete' selected_sub.id talk.scheduled.id talk.job.job_number %}{% if talk.employee_id %}?employee={{ talk.employee_id }}{% endif %}">
     I will do the toolbox myself
 </a>
     {% endif %}

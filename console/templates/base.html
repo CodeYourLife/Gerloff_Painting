@@ -31,6 +31,7 @@
         }
 
         nav .nav-link.active,
+        nav .navbar-brand.active,
         .collapsible:hover {
             background-color: Red !important;
             border-radius: 3px;
@@ -197,6 +198,97 @@ function hidePageOverlay() {
     overlay.style.display = "none";
 }
 
+/* Better phone navbar */
+@media (max-width: 991.98px) {
+
+    .navbar {
+        padding: 6px 10px !important;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .navbar-brand {
+        font-size: 16px;
+        font-weight: 600;
+        max-width: 240px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .navbar-toggler {
+        padding: 6px 9px;
+        border-radius: 6px;
+    }
+
+    .navbar-collapse {
+        margin-top: 8px;
+        background: #ffffff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 6px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+
+    .navbar-nav {
+        width: 100%;
+    }
+
+    .navbar-nav li {
+        width: 100%;
+    }
+
+    .navbar-nav .nav-link {
+        display: block;
+        width: 100%;
+        padding: 12px 14px !important;
+        font-size: 17px;
+        border-radius: 6px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .navbar-nav li:last-child .nav-link {
+        border-bottom: none;
+    }
+
+    nav .nav-link.active {
+        background-color: red !important;
+        color: white !important;
+        font-weight: 600;
+    }
+
+    .navbar-nav .nav-link:hover,
+    .navbar-nav .dropdown-item:hover {
+        background-color: #f1f1f1;
+    }
+
+    .dropdown-menu {
+        border: none;
+        box-shadow: none;
+        margin: 0;
+        padding: 0 0 0 14px;
+        background: #f8f9fa;
+    }
+
+    .dropdown-item {
+        padding: 11px 14px;
+        font-size: 16px;
+        border-bottom: 1px solid #e5e5e5;
+    }
+
+    .mobile-user-text {
+        padding: 12px 14px;
+        font-size: 15px;
+        color: #666;
+        border-top: 2px solid #ddd;
+        margin-top: 6px;
+    }
+
+    .mobile-logout-link {
+        color: #dc3545 !important;
+        font-weight: 600;
+    }
+}
+
     </script>
 
     {% block extra_head %}{% endblock %}
@@ -205,37 +297,36 @@ function hidePageOverlay() {
 <body>
 {% if user.is_active %}
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <a class="navbar-brand" href="{% url 'index' %}">Go To Home Page</a>
+    <a class="navbar-brand {% block nav_item_index %}{% endblock nav_item_index %}" href="{% url 'index' %}">Home</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown"
             aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavDropdown">
         <ul class="navbar-nav ">
-            <li><a class="nav-item nav-link {% block nav_item_index %}{% endblock nav_item_index %}"
-                   href="{% url 'index' %}">Home</a></li>
-            <li><a class="nav-item nav-link {% block nav_item_equipment %}{% endblock nav_item_equipment %}"
-                   href="{% url 'equipment_home' %}">Equipment</a></li>
-            <li><a class="nav-item nav-link {% block nav_item_rentals %}{% endblock nav_item_rentals %}"
-                   href="{% url 'rentals_home' %}">Rentals</a></li>
-            <li class="manager"><a class="nav-item nav-link {% block nav_item_jobs %}{% endblock nav_item_jobs %}"
-                                   href="{% url 'jobs_home' %}">Jobs</a></li>
-            <li><a class="nav-item nav-link {% block nav_item_subs %}{% endblock nav_item_subs %}"
-                   href="{% url 'subcontractor_home' %}">Subcontractors</a></li>
-            <li><a class="nav-item nav-link {% block nav_item_autos %}{% endblock nav_item_autos %}"
-                   href="{% url 'autos_home' %}">Autos</a></li>
+            <li><a class="nav-item nav-link {% block nav_item_changeorder %}{% endblock nav_item_changeorder %}"
+                   href="{% url 'change_order_home' %}">Change Orders</a></li>
             {% if user.is_superuser %}
             <li><a class="nav-item nav-link {% block nav_item_employees %}{% endblock nav_item_employees %}"
                    href="{% url 'employees_home' %}">Employees</a></li>
-            {% else %}
+            {% endif %}
+            <li><a class="nav-item nav-link {% block nav_item_equipment %}{% endblock nav_item_equipment %}"
+                   href="{% url 'equipment_home' %}">Equipment</a></li>
+            <li class="manager"><a class="nav-item nav-link {% block nav_item_jobs %}{% endblock nav_item_jobs %}"
+                                   href="{% url 'jobs_home' %}">Jobs</a></li>
+            {% if not user.is_superuser %}
             <li><a class="nav-item nav-link" href="{% url 'my_page' %}">My Page</a></li>
             {% endif %}
-            <li><a class="nav-item nav-link {% block nav_item_wallcovering %}{% endblock nav_item_wallcovering %}"
-                   href="{% url 'wallcovering_home' %}">Wallcovering</a></li>
-            <li><a class="nav-item nav-link {% block nav_item_changeorder %}{% endblock nav_item_changeorder %}"
-                   href="{% url 'change_order_home' %}">Change Orders</a></li>
+            <li><a class="nav-item nav-link {% block nav_item_rentals %}{% endblock nav_item_rentals %}"
+                   href="{% url 'rentals_home' %}">Rentals</a></li>
+            <li><a class="nav-item nav-link {% block nav_item_safety %}{% endblock nav_item_safety %}"
+                   href="{% url 'safety_home' %}">Safety</a></li>
+            <li><a class="nav-item nav-link {% block nav_item_subs %}{% endblock nav_item_subs %}"
+                   href="{% url 'subcontractor_home' %}">Subcontractors</a></li>
             <li><a class="nav-item nav-link {% block nav_item_submittals %}{% endblock nav_item_submittals %}"
                    href="{% url 'submittals_home' %}">Submittals</a></li>
+            <li><a class="nav-item nav-link {% block nav_item_wallcovering %}{% endblock nav_item_wallcovering %}"
+                   href="{% url 'wallcovering_home' %}">Wallcovering</a></li>
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle {% block nav_item_roles %}{% endblock nav_item_roles %}" href="#"
                    id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -252,9 +343,12 @@ function hidePageOverlay() {
                 </div>
             </li>
             {% if user.is_authenticated %}
-            <li>Hello, {{user.first_name}}</li>
-            <li><a class="nav-item nav-link {% block nav_item_logout %}{% endblock nav_item_logout %}"
-                   href="{% url 'logout' %}">Logout</a></li>
+            <li>
+                <a class="nav-item nav-link mobile-logout-link {% block nav_item_logout %}{% endblock nav_item_logout %}"
+                   href="{% url 'logout' %}">
+                    Logout
+                </a>
+            </li>
             {% else %}
             <li><a class="nav-item nav-link {% block nav_item_login %}{% endblock nav_item_login %}"
                    href="{% url 'login' %}">Login</a></li>

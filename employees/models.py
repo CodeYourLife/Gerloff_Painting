@@ -11,6 +11,29 @@ class TemporaryPassword(models.Model):
     is_active = models.BooleanField(default=True)
 
 
+class LoginAttempt(models.Model):
+    RESULT_SUCCESS = "success"
+    RESULT_FAILED = "failed"
+
+    FAILURE_USERNAME_NOT_FOUND = "username_not_found"
+    FAILURE_PASSWORD_INCORRECT = "password_incorrect"
+    FAILURE_INACTIVE_USER = "inactive_user"
+
+    username = models.CharField(max_length=150, blank=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    result = models.CharField(max_length=20)
+    failure_reason = models.CharField(max_length=100, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=500, blank=True)
+    attempted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-attempted_at", "-id"]
+
+    def __str__(self):
+        return f"{self.attempted_at} {self.username} {self.result}"
+
+
 class Employers(models.Model):
     id = models.BigAutoField(primary_key=True)
     company_name = models.CharField(max_length=100)
@@ -106,8 +129,17 @@ class Employees(models.Model):
         for talk in scheduled_qs:
             completed = CompletedToolboxTalks.objects.filter(
                 employee=self,
-                master=talk
+                master=talk,
+                is_excused=False
             ).order_by("-date").first()
+            is_excused = CompletedToolboxTalks.objects.filter(
+                employee=self,
+                master=talk,
+                is_excused=True
+            ).exists()
+
+            if is_excused:
+                continue
 
             description = talk.master.description if talk.master else (talk.description or "Custom Toolbox Talk")
 
@@ -572,6 +604,40 @@ class CompletedToolboxTalks(models.Model):
     date = models.DateField(null=True, blank=True)
     employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
     master = models.ForeignKey(ScheduledToolboxTalks, on_delete=models.PROTECT)
+    is_excused = models.BooleanField(default=False)
+
+
+class GroupToolboxTalks(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    job = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT, null=True, blank=True)
+    Foreman = models.ForeignKey(Employees, on_delete=models.PROTECT)
+    date_completed = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.Foreman} {self.date_completed}"
+
+
+class GroupToolboxTalkCompletedToolboxTalks(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    group_toolbox_talk = models.ForeignKey(GroupToolboxTalks, on_delete=models.CASCADE)
+    completed_toolbox_talk = models.ForeignKey(CompletedToolboxTalks, on_delete=models.PROTECT)
+
+    class Meta:
+        unique_together = ('group_toolbox_talk', 'completed_toolbox_talk')
+
+
+class GroupToolboxTalkViews(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
+    scheduled_toolbox_talk = models.ForeignKey(ScheduledToolboxTalks, on_delete=models.CASCADE)
+    viewed_english = models.BooleanField(default=False)
+    viewed_spanish = models.BooleanField(default=False)
+    viewed_english_time = models.DateTimeField(blank=True, null=True)
+    viewed_spanish_time = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        unique_together = ('employee', 'scheduled_toolbox_talk')
+
 
 class ViewedToolboxTalks(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -723,4 +789,5 @@ class ScheduledToolboxTalkEmployees(models.Model):
 
     class Meta:
         unique_together = ('scheduled', 'employee', 'job')
+
 

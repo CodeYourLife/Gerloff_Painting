@@ -139,6 +139,12 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-primary" data-toggle="modal" data-target="#contact_info-modal" data-dismiss="modal"> Change Information </button>
+                <a id="manage_toolbox_talks_button"
+                   class="btn btn-warning"
+                   href="#"
+                   style="display:none;">
+                    Manage Toolbox Talks
+                </a>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             </div>
         </div>
@@ -606,10 +612,14 @@ function populate_contact_info(subcontractor_id){
             if (parsedData.is_toolbox_required){
                 text += "<tr><td>Toolbox Required?: Yes</td></tr>";
                 contact_info_form.is_toolbox_required.checked = true;
+                document.getElementById("manage_toolbox_talks_button").style.display = "inline-block";
+                document.getElementById("manage_toolbox_talks_button").href = "{% url 'subcontractor_employee_management' 999999 %}".replace("999999", parsedData.id);
             }
             else{
                 text += "<tr><td>Toolbox Required?: No</td></tr>";
                 contact_info_form.is_toolbox_required.checked = false;
+                document.getElementById("manage_toolbox_talks_button").style.display = "none";
+                document.getElementById("manage_toolbox_talks_button").href = "#";
             }
 
             document.getElementById("show_contact_info_title").innerHTML = parsedData.company

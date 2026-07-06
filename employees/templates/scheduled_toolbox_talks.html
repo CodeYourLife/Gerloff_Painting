@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block nav_item_employees %}active{% endblock nav_item_employees %}
+{% block nav_item_safety %}active{% endblock nav_item_safety %}
 
 {% block extra_head %}
 <style>
@@ -79,10 +79,11 @@
 }
 </style>
 {% endblock %}
+{% block sub_nav %}
+{% include 'safety_nav.html' with active_tab="schedule" %}
+{% endblock %}
+
 {% block content %}
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="{% url 'safety_home' %}">Go Back to Safety Home</a>
-</nav>
 
 <div class="toolbox-page">
 
@@ -236,6 +237,15 @@
     </div>
 
     <div class="action-card">
+        <a href="{% url 'delete_old_incomplete_toolbox_talks' %}" class="btn btn-danger">
+            Delete Old, Incomplete Talks
+        </a>
+        <small class="form-text text-muted">
+            Click here to excuse employees from old, incomplete talks
+        </small>
+    </div>
+
+    <div class="action-card">
         <form name="custom_assignment" action="{% url 'toolbox_talk_assign' %}">
             <input type="submit" name="extend_schedule" class="btn btn-danger" value="Schedule a Toolbox Talk" />
                         <small class="form-text text-muted">
@@ -265,8 +275,18 @@
                     <td>
                         {% if x.ratio == "FILES NOT UPLOADED" %}
                             <span class="badge badge-danger">{{ x.ratio }}</span>
-                        {% else %}
+                        {% elif x.ratio == "Not Issued Yet" %}
                             <a style="color: blue; cursor: pointer;">{{ x.ratio }}</a>
+                        {% else %}
+                            {% if x.ratio_done_count %}
+                                <span class="badge badge-success">{{ x.ratio_done_count }} Done</span>
+                            {% endif %}
+                            {% if x.ratio_missing_count %}
+                                <span class="badge badge-danger">{{ x.ratio_missing_count }} Missing</span>
+                            {% endif %}
+                            {% if not x.ratio_done_count and not x.ratio_missing_count %}
+                                <span class="badge badge-secondary">Excused</span>
+                            {% endif %}
                         {% endif %}
                     </td>
                 </tr>
@@ -370,6 +390,10 @@ function populate_toolbox_modal(id) {
             if (parsedData.completed_people && parsedData.completed_people.length > 0) {
                 parsedData.completed_people.forEach(function (element) {
                     let line = formatPersonLine(element);
+
+                    if (element.held_by) {
+                        line += " -" + element.held_by;
+                    }
 
                     if (element.completed_date) {
                         line += " - " + element.completed_date;

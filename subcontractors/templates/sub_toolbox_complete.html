@@ -71,7 +71,7 @@
                         <option value=""></option>
 
                         {% for emp in sub_employees %}
-                            <option value="EMPLOYEE_{{ emp.id }}">
+                            <option value="EMPLOYEE_{{ emp.id }}"{% if preselected_employee_id == emp.id|stringformat:"s" %} selected{% endif %}>
                                 {{ emp.name }}
                             </option>
                         {% endfor %}
@@ -99,6 +99,7 @@
         <button type="submit" class="btn btn-success btn-block">
             Complete Toolbox Talk
         </button>
+        <input type="hidden" name="employee" value="{{ preselected_employee_id }}">
 
     </form>
 
@@ -115,6 +116,7 @@
     <input type="hidden" id="selected_language" name="selected_language">
     <input type="hidden" id="base_folder" name="base_folder" value="{{ toolbox_base_folder }}">
     <input type="hidden" name="from_employee" value="{{ from_employee }}">
+    <input type="hidden" name="employee" value="{{ preselected_employee_id }}">
 </form>
 <div class="modal fade" id="removeDelegationModal" tabindex="-1" role="dialog" aria-labelledby="removeDelegationTitle" aria-hidden="true">
     <div class="modal-dialog" role="document">

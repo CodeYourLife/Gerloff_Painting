@@ -1,12 +1,13 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block nav_item_employees %}active{% endblock nav_item_employees %}
+{% block nav_item_safety %}active{% endblock nav_item_safety %}
 {% block title %}Toolbox Talks By Employee{% endblock %}
 
+{% block sub_nav %}
+{% include 'safety_nav.html' with active_tab="employees" %}
+{% endblock %}
+
 {% block content %}
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="{% url 'safety_home' %}">Go Back to Safety Home</a>
-</nav>
 <div class="container-fluid mt-4">
     <div class="card shadow-sm">
         <div class="card-header">
@@ -20,7 +21,7 @@
                         <tr>
                             <th style="width:38%;">Employee Name</th>
                             <th style="width:32%;">Employer</th>
-                            <th style="width:30%;">Completed Talks</th>
+                            <th style="width:30%;">Toolbox Talks</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -39,7 +40,15 @@
                                 {% if row.ratio_display == "Not Signed Up" %}
                                     <span class="badge badge-warning">Not Signed Up</span>
                                 {% else %}
-                                    {{ row.ratio_display }}
+                                    {% if row.done_count %}
+                                        <span class="badge badge-success">{{ row.done_count }} Done</span>
+                                    {% endif %}
+                                    {% if row.missing_count %}
+                                        <span class="badge badge-danger">{{ row.missing_count }} Missing</span>
+                                    {% endif %}
+                                    {% if row.person_type == "employee" and not row.done_count and not row.missing_count %}
+                                        <span class="badge badge-secondary">Excused</span>
+                                    {% endif %}
                                 {% endif %}
                             </td>
                         </tr>
@@ -58,6 +67,9 @@
 <div id="toolbox-modal-url-template"
      data-url-template="{% url 'toolbox_talks_by_employee_modal' 'TYPE_PLACEHOLDER' 999999 %}"
      style="display:none;"></div>
+<div id="subcontractor-management-url-template"
+     data-url-template="{% url 'subcontractor_employee_management' 999999 %}"
+     style="display:none;"></div>
 
 <div class="modal fade" id="toolboxEmployeeModal" tabindex="-1" role="dialog" aria-labelledby="toolboxEmployeeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl" role="document">
@@ -67,6 +79,7 @@
                 <div>
                     <h5 class="modal-title mb-1" id="toolboxEmployeeModalLabel">Toolbox Talks</h5>
                     <div id="toolboxEmployeeModalSubheader" class="text-muted small"></div>
+                    <div id="toolboxEmployeeManagementLink" class="mt-2" style="display:none;"></div>
                 </div>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -188,6 +201,11 @@
         return template;
     }
 
+    function getSubcontractorManagementUrl(subcontractorId) {
+        let template = $('#subcontractor-management-url-template').data('url-template');
+        return template.replace('999999', subcontractorId);
+    }
+
     function resetToolboxModal() {
         $('#toolboxModalLoading').hide();
         $('#toolboxModalError').hide();
@@ -196,6 +214,7 @@
 
         $('#toolboxEmployeeModalLabel').text('Toolbox Talks');
         $('#toolboxEmployeeModalSubheader').text('');
+        $('#toolboxEmployeeManagementLink').hide().html('');
 
         $('#completedCount').text('0');
         $('#incompleteCount').text('0');
@@ -224,6 +243,12 @@
 
                 $('#toolboxEmployeeModalLabel').text(response.person_name || 'Toolbox Talks');
                 $('#toolboxEmployeeModalSubheader').text(response.employer_name || '');
+
+                if (response.management_sub_id) {
+                    $('#toolboxEmployeeManagementLink').html(
+                        `<a class="btn btn-sm btn-outline-secondary" href="${getSubcontractorManagementUrl(response.management_sub_id)}">View All PO's and Employees</a>`
+                    ).show();
+                }
 
                 if (response.has_access_to_toolbox === false) {
                     $('#toolboxModalNotSignedUp').show();

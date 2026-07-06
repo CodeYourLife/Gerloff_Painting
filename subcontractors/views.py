@@ -13,6 +13,7 @@ from equipment.filters import SubcontractsFilter
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Q, Sum
 from django.http import JsonResponse, HttpResponse, FileResponse, Http404
@@ -30,6 +31,508 @@ from datetime import date
 from console.misc import Email
 from xhtml2pdf import pisa
 from media.utilities import MediaUtilities
+from subcontractors import toolbox_views as sub_toolbox
+
+
+def _complete_subcontractor_toolbox_talk(employee, scheduled_talk, job):
+    completed_talk, created = CompletedSubToolboxTalks.objects.get_or_create(
+        employee=employee,
+        master=scheduled_talk,
+        job=job,
+        defaults={
+            'date': date.today(),
+            'is_excused': False,
+        }
+    )
+
+    if not created and completed_talk.is_excused:
+        completed_talk.is_excused = False
+        completed_talk.date = date.today()
+        completed_talk.save(update_fields=['is_excused', 'date'])
+
+    return completed_talk
+
+
+def _complete_subcontractor_job_toolbox_talk(scheduled_talk, subcontractor, job):
+    completed_talk, created = CompletedSubToolboxJobTalks.objects.get_or_create(
+        scheduled=scheduled_talk,
+        subcontractor=subcontractor,
+        job=job,
+        defaults={
+            'is_excused': False,
+        }
+    )
+
+    if not created and completed_talk.is_excused:
+        completed_talk.is_excused = False
+        completed_talk.save(update_fields=['is_excused'])
+
+    return completed_talk
+
+
+def _has_sub_employee_toolbox_record(employee, scheduled_talk, job=None):
+    query = CompletedSubToolboxTalks.objects.filter(
+        employee=employee,
+        master=scheduled_talk
+    )
+
+    if job is not None:
+        query = query.filter(job=job)
+
+    if query.exists():
+        return True
+
+    attended_query = CompletedSubToolboxJobTalkEmployees.objects.filter(
+        employee=employee,
+        completed__scheduled=scheduled_talk,
+        completed__is_excused=False
+    )
+
+    if job is not None:
+        attended_query = attended_query.filter(completed__job=job)
+
+    return attended_query.exists()
+
+
+def _get_completed_sub_employee_toolbox_talk_ids(employee, assigned_ids, jobs):
+    individual_ids = set(
+        CompletedSubToolboxTalks.objects
+        .filter(
+            employee=employee,
+            master_id__in=assigned_ids,
+            job__in=jobs,
+            is_excused=False
+        )
+        .values_list('master_id', flat=True)
+        .distinct()
+    )
+
+    attended_group_ids = set(
+        CompletedSubToolboxJobTalkEmployees.objects
+        .filter(
+            employee=employee,
+            completed__scheduled_id__in=assigned_ids,
+            completed__job__in=jobs,
+            completed__is_excused=False
+        )
+        .values_list('completed__scheduled_id', flat=True)
+        .distinct()
+    )
+
+    return individual_ids | attended_group_ids
+
+
+def _get_completed_sub_employee_ids_for_job_talk(scheduled_talk, job, employees):
+    individual_ids = set(
+        CompletedSubToolboxTalks.objects
+        .filter(
+            master=scheduled_talk,
+            job=job,
+            employee__in=employees,
+            is_excused=False
+        )
+        .values_list('employee_id', flat=True)
+        .distinct()
+    )
+
+    attended_ids = set(
+        CompletedSubToolboxJobTalkEmployees.objects
+        .filter(
+            completed__scheduled=scheduled_talk,
+            completed__job=job,
+            completed__is_excused=False,
+            employee__in=employees
+        )
+        .values_list('employee_id', flat=True)
+        .distinct()
+    )
+
+    return individual_ids | attended_ids
+
+
+def _sub_employee_has_completed_scheduled_talk_anywhere(employee, scheduled_talk):
+    if CompletedSubToolboxTalks.objects.filter(
+        employee=employee,
+        master=scheduled_talk,
+        is_excused=False
+    ).exists():
+        return True
+
+    return CompletedSubToolboxJobTalkEmployees.objects.filter(
+        employee=employee,
+        completed__scheduled=scheduled_talk,
+        completed__is_excused=False
+    ).exists()
+
+
+def _has_sub_job_toolbox_record(scheduled_talk, subcontractor, job):
+    return CompletedSubToolboxJobTalks.objects.filter(
+        scheduled=scheduled_talk,
+        subcontractor=subcontractor,
+        job=job
+    ).exists()
+
+
+def _get_first_subcontractor_invoice_date(subcontract):
+    return (
+        SubcontractorInvoice.objects
+        .filter(subcontract=subcontract)
+        .order_by('date', 'id')
+        .values_list('date', flat=True)
+        .first()
+    )
+
+
+def _get_all_employee_toolbox_talks_for_subcontract(subcontract, end_date=None, start_date=None):
+    first_invoice_date = _get_first_subcontractor_invoice_date(subcontract)
+    if not first_invoice_date:
+        return ScheduledToolboxTalks.objects.none()
+
+    query = ScheduledToolboxTalks.objects.filter(
+        is_all_employees=True,
+        date__isnull=False,
+        date__gt=first_invoice_date,
+    )
+
+    if end_date is not None:
+        query = query.filter(date__lte=end_date)
+
+    if start_date is not None:
+        query = query.filter(date__gte=start_date)
+
+    return query
+
+
+def _get_toolbox_talks_for_delegated_subcontract(subcontract, employee, end_date=None):
+    start_date = _sub_employee_assignment_start_date(employee, subcontract)
+    if not start_date:
+        return ScheduledToolboxTalks.objects.none()
+
+    all_employee_talks = _get_all_employee_toolbox_talks_for_subcontract(
+        subcontract,
+        end_date=end_date,
+        start_date=start_date
+    )
+
+    explicit_job_talk_ids = ScheduledToolboxTalkSubJobs.objects.filter(
+        subcontractor=subcontract.subcontractor,
+        job=subcontract.job_number,
+        subcontractor__is_toolbox_required=True,
+        scheduled__date__isnull=False,
+        scheduled__date__gte=start_date,
+    ).values_list('scheduled_id', flat=True)
+
+    explicit_employee_talk_ids = ScheduledToolboxTalkSubEmployees.objects.filter(
+        employee=employee,
+        job=subcontract.job_number,
+        employee__subcontractor__is_toolbox_required=True,
+        scheduled__date__isnull=False,
+        scheduled__date__gte=start_date,
+    ).values_list('scheduled_id', flat=True)
+
+    if end_date is not None:
+        explicit_job_talk_ids = explicit_job_talk_ids.filter(scheduled__date__lte=end_date)
+        explicit_employee_talk_ids = explicit_employee_talk_ids.filter(scheduled__date__lte=end_date)
+
+    scheduled_ids = set(all_employee_talks.values_list('id', flat=True))
+    scheduled_ids.update(explicit_job_talk_ids)
+    scheduled_ids.update(explicit_employee_talk_ids)
+
+    return ScheduledToolboxTalks.objects.filter(id__in=scheduled_ids)
+
+
+def _backfill_delegated_job_toolbox_completions(subcontract):
+    assigned_employee_ids = Subcontractor_Job_Assignments.objects.filter(
+        job=subcontract.job_number,
+        employee__subcontractor=subcontract.subcontractor,
+        employee__is_active=True,
+        employee__has_access_to_toolbox=True,
+        employee__date_enrolled__isnull=False
+    ).values_list('employee_id', flat=True)
+
+    assigned_employees = Subcontractor_Employees.objects.filter(
+        id__in=assigned_employee_ids
+    ).distinct()
+
+    created_count = 0
+    today = date.today()
+
+    for employee in assigned_employees:
+        scheduled_talks = _get_toolbox_talks_for_delegated_subcontract(
+            subcontract,
+            employee,
+            end_date=today
+        )
+
+        for scheduled_talk in scheduled_talks:
+            if scheduled_talk.date and employee.date_enrolled > scheduled_talk.date:
+                continue
+
+            if CompletedSubToolboxTalks.objects.filter(
+                employee=employee,
+                master=scheduled_talk,
+                job=subcontract.job_number
+            ).exists():
+                continue
+
+            if not _sub_employee_has_completed_scheduled_talk_anywhere(
+                employee,
+                scheduled_talk
+            ):
+                continue
+
+            _complete_subcontractor_toolbox_talk(
+                employee,
+                scheduled_talk,
+                subcontract.job_number
+            )
+            created_count += 1
+
+    return created_count
+
+
+def _close_delegated_job_toolbox_completions_before_undelegate(subcontract):
+    assigned_employee_ids = Subcontractor_Job_Assignments.objects.filter(
+        job=subcontract.job_number,
+        employee__subcontractor=subcontract.subcontractor,
+        employee__is_active=True,
+        employee__has_access_to_toolbox=True,
+        employee__date_enrolled__isnull=False
+    ).values_list('employee_id', flat=True)
+
+    assigned_employees = Subcontractor_Employees.objects.filter(
+        id__in=assigned_employee_ids
+    ).distinct()
+
+    if not assigned_employees.exists():
+        return 0
+
+    scheduled_ids = set()
+    today = date.today()
+
+    for employee in assigned_employees:
+        scheduled_ids.update(
+            _get_toolbox_talks_for_delegated_subcontract(
+                subcontract,
+                employee,
+                end_date=today
+            ).values_list('id', flat=True)
+        )
+
+    closed_count = 0
+
+    for scheduled_talk in ScheduledToolboxTalks.objects.filter(id__in=scheduled_ids):
+        applicable_employees = assigned_employees.filter(
+            date_enrolled__lte=scheduled_talk.date
+        )
+        if not applicable_employees.exists():
+            continue
+
+        employee_ids = set(applicable_employees.values_list('id', flat=True))
+
+        completed_ids = _get_completed_sub_employee_ids_for_job_talk(
+            scheduled_talk,
+            subcontract.job_number,
+            applicable_employees
+        )
+        excused_ids = set(
+            CompletedSubToolboxTalks.objects
+            .filter(
+                master=scheduled_talk,
+                job=subcontract.job_number,
+                employee__in=applicable_employees,
+                is_excused=True
+            )
+            .values_list('employee_id', flat=True)
+            .distinct()
+        )
+
+        if employee_ids - completed_ids - excused_ids:
+            continue
+
+        completed_job_talk, created = CompletedSubToolboxJobTalks.objects.get_or_create(
+            scheduled=scheduled_talk,
+            subcontractor=subcontract.subcontractor,
+            job=subcontract.job_number,
+            defaults={
+                'is_excused': False,
+            }
+        )
+
+        if not created and completed_job_talk.is_excused:
+            completed_job_talk.is_excused = False
+            completed_job_talk.save(update_fields=['is_excused'])
+            closed_count += 1
+        elif created:
+            closed_count += 1
+
+    return closed_count
+
+
+def _complete_attendee_delegated_jobs_for_same_talk(employee, scheduled_talk, completed_job):
+    if (
+        not employee or
+        not employee.has_access_to_toolbox or
+        not employee.subcontractor or
+        not employee.subcontractor.is_toolbox_required or
+        not employee.date_enrolled or
+        (scheduled_talk.date and employee.date_enrolled > scheduled_talk.date)
+    ):
+        return 0
+
+    completed_count = 0
+    assigned_jobs = (
+        Subcontractor_Job_Assignments.objects
+        .filter(
+            employee=employee,
+            job__is_closed=False,
+            job__is_active=True,
+            job__is_labor_done=False
+        )
+        .exclude(job=completed_job)
+        .select_related('job')
+    )
+
+    for assignment in assigned_jobs:
+        subcontract = Subcontracts.objects.filter(
+            subcontractor=employee.subcontractor,
+            job_number=assignment.job,
+            is_closed=False,
+            subcontractor__is_toolbox_required=True,
+            job_number__is_closed=False,
+            job_number__is_active=True,
+            job_number__is_labor_done=False
+        ).first()
+
+        if not subcontract:
+            continue
+
+        if not _subcontractor_employee_delegation_effective(
+            employee.subcontractor,
+            subcontract,
+            scheduled_talk.date
+        ):
+            continue
+
+        if not _get_toolbox_talks_for_delegated_subcontract(
+            subcontract,
+            employee,
+            end_date=scheduled_talk.date
+        ).filter(id=scheduled_talk.id).exists():
+            continue
+
+        existing = CompletedSubToolboxTalks.objects.filter(
+            employee=employee,
+            master=scheduled_talk,
+            job=assignment.job
+        ).first()
+
+        _complete_subcontractor_toolbox_talk(
+            employee,
+            scheduled_talk,
+            assignment.job
+        )
+
+        if not existing or existing.is_excused:
+            completed_count += 1
+
+    return completed_count
+
+
+def _get_subcontractor_employee_delegation(subcontractor, subcontract):
+    return SubcontractorEmployeeDelegation.objects.filter(
+        subcontractor=subcontractor,
+        subcontract=subcontract
+    ).first()
+
+
+def _subcontractor_employee_delegation_effective(subcontractor, subcontract, scheduled_date=None):
+    delegation = _get_subcontractor_employee_delegation(subcontractor, subcontract)
+    return bool(delegation)
+
+
+def _sub_employee_assignment_start_date(sub_employee, subcontract):
+    return sub_employee.date_enrolled
+
+
+def _subcontract_has_delegated_employee_for_date(subcontract, scheduled_date):
+    if not _subcontractor_employee_delegation_effective(
+        subcontract.subcontractor,
+        subcontract,
+        scheduled_date
+    ):
+        return False
+
+    return Subcontractor_Job_Assignments.objects.filter(
+        job=subcontract.job_number,
+        employee__subcontractor=subcontract.subcontractor,
+        employee__is_active=True,
+        employee__has_access_to_toolbox=True,
+        employee__date_enrolled__isnull=False,
+        employee__date_enrolled__lte=scheduled_date
+    ).exists()
+
+
+def _subcontractor_portal_tm_ticket_action(changeorder, subcontractor):
+    if changeorder.created_by_subcontractor_id != subcontractor.id:
+        return None
+
+    if changeorder.need_ticket():
+        return "create"
+
+    if not changeorder.needs_ticket_signed():
+        return None
+
+    return "sign"
+
+
+def _get_delegated_active_toolbox_jobs_for_sub_employee(sub_employee, job=None, effective_date=None):
+    if (
+        not sub_employee.has_access_to_toolbox or
+        not sub_employee.subcontractor or
+        not sub_employee.subcontractor.is_toolbox_required
+    ):
+        return []
+
+    assignments = Subcontractor_Job_Assignments.objects.filter(
+        employee=sub_employee,
+        job__is_closed=False,
+        job__is_active=True,
+        job__is_labor_done=False
+    ).select_related('job')
+
+    if job is not None:
+        assignments = assignments.filter(job=job)
+
+    delegated_jobs = []
+    seen = set()
+    for assignment in assignments:
+        subcontract = Subcontracts.objects.filter(
+            subcontractor=sub_employee.subcontractor,
+            job_number=assignment.job,
+            is_closed=False,
+            subcontractor__is_toolbox_required=True,
+            job_number__is_closed=False,
+            job_number__is_active=True,
+            job_number__is_labor_done=False
+        ).first()
+
+        if not subcontract:
+            continue
+
+        if not _subcontractor_employee_delegation_effective(
+            subcontractor=sub_employee.subcontractor,
+            subcontract=subcontract,
+            scheduled_date=effective_date
+        ):
+            continue
+
+        if assignment.job_id in seen:
+            continue
+        seen.add(assignment.job_id)
+        delegated_jobs.append(assignment.job)
+
+    return delegated_jobs
 
 
 def wallcovering_subcontract_json(wallcovering):
@@ -262,7 +765,7 @@ def portal(request, sub_id, contract_id):
 
 
     for co in all_changeorders:
-        if co.need_ticket() or co.needs_ticket_signed():
+        if _subcontractor_portal_tm_ticket_action(co, selected_sub):
             outstanding_tm_tickets += 1
 
     send_data['outstanding_tm_tickets'] = outstanding_tm_tickets
@@ -309,155 +812,10 @@ def portal(request, sub_id, contract_id):
                                  'percent_complete': format(x.percent_complete(), ".0%"),
                                  'total_contract_amount': total_contract_amount, 'total_billed': total_billed,'total_billed_this_week':total_billed_this_week})
         send_data['subcontracts'] = subcontracts
-        toolbox_talks_required = []
-
-        active_subcontracts = Subcontracts.objects.filter(
-            subcontractor=selected_sub,
-            is_closed=False,
-            job_number__is_closed=False,
-            job_number__is_active=True,
-            job_number__is_labor_done=False,
+        toolbox_talks_required = sub_toolbox.get_subcontractor_portal_required_talks(
+            selected_sub,
+            through_date=datetime.date.today()
         )
-
-        active_jobs = [x.job_number for x in active_subcontracts]
-
-        # ALL EMPLOYEE TALKS
-        all_employee_talks = ScheduledToolboxTalks.objects.filter(
-            date__lte=datetime.date.today(),
-            is_all_employees=True,
-        ).order_by('date')
-
-        for scheduled in all_employee_talks:
-
-            for job in active_jobs:
-
-                subcontract = Subcontracts.objects.filter(
-                    subcontractor=selected_sub,
-                    job_number=job,
-                    is_closed=False
-                ).first()
-
-                delegated = False
-                completed_count = 0
-                employee_count = 0
-
-                if subcontract and SubcontractorEmployeeDelegation.objects.filter(
-                        subcontractor=selected_sub,
-                        subcontract=subcontract
-                ).exists():
-
-                    delegated = True
-
-                    assigned_employee_ids = Subcontractor_Job_Assignments.objects.filter(
-                        job=job,
-                        employee__subcontractor=selected_sub,
-                        employee__is_active=True,
-                        employee__has_access_to_toolbox=True
-                    ).values_list('employee_id', flat=True)
-
-                    delegated_employees = Subcontractor_Employees.objects.filter(
-                        id__in=assigned_employee_ids
-                    )
-
-                    employee_count = delegated_employees.count()
-
-                    completed_count = CompletedSubToolboxTalks.objects.filter(
-                        master=scheduled,
-                        employee__in=delegated_employees
-                    ).values('employee').distinct().count()
-                    if employee_count > 0 and completed_count >= employee_count:
-                        continue
-
-                else:
-                    if not delegated and CompletedSubToolboxJobTalks.objects.filter(
-                            scheduled=scheduled,
-                            subcontractor=selected_sub,
-                            job=job
-                    ).exists():
-                        continue
-
-                toolbox_talks_required.append({
-                    'scheduled': scheduled,
-                    'job': job,
-                    'description': scheduled.master.description if scheduled.master else scheduled.description,
-                    'date': scheduled.date,
-                    'delegated': delegated,
-                    'completed_count': completed_count,
-                    'employee_count': employee_count,
-                })
-
-        # SUBCONTRACTOR SPECIFIC TALKS
-        sub_job_talks = ScheduledToolboxTalkSubJobs.objects.filter(
-            subcontractor=selected_sub,
-            scheduled__date__lte=datetime.date.today(),
-        ).select_related(
-            'scheduled',
-            'job',
-            'scheduled__master'
-        )
-
-        for item in sub_job_talks:
-
-            scheduled = item.scheduled
-            job = item.job
-
-            if job not in active_jobs:
-                continue
-
-            subcontract = Subcontracts.objects.filter(
-                subcontractor=selected_sub,
-                job_number=job,
-                is_closed=False
-            ).first()
-
-            delegated = False
-            completed_count = 0
-            employee_count = 0
-
-            if subcontract and SubcontractorEmployeeDelegation.objects.filter(
-                    subcontractor=selected_sub,
-                    subcontract=subcontract
-            ).exists():
-                delegated = True
-
-                assigned_employee_ids = Subcontractor_Job_Assignments.objects.filter(
-                    job=job,
-                    employee__subcontractor=selected_sub,
-                    employee__is_active=True,
-                    employee__has_access_to_toolbox=True
-                ).values_list('employee_id', flat=True).distinct()
-
-                delegated_employees = Subcontractor_Employees.objects.filter(
-                    id__in=assigned_employee_ids
-                )
-
-                employee_count = delegated_employees.count()
-
-                completed_count = CompletedSubToolboxTalks.objects.filter(
-                    master=scheduled,
-                    employee__in=delegated_employees
-                ).values('employee').distinct().count()
-
-                if employee_count > 0 and completed_count >= employee_count:
-                    continue
-
-            if not delegated and CompletedSubToolboxJobTalks.objects.filter(
-                    scheduled=scheduled,
-                    subcontractor=selected_sub,
-                    job=job
-            ).exists():
-                continue
-
-            toolbox_talks_required.append({
-                'scheduled': scheduled,
-                'job': job,
-                'description': scheduled.master.description if scheduled.master else scheduled.description,
-                'date': scheduled.date,
-                'delegated': delegated,
-                'completed_count': completed_count,
-                'employee_count': employee_count,
-            })
-
         send_data['toolbox_talks_required'] = toolbox_talks_required
         send_data['toolbox_talks_required_count'] = len(toolbox_talks_required)
         send_data['sub_employees'] = Subcontractor_Employees.objects.filter(
@@ -543,15 +901,25 @@ def connect(request):
                 send_data['enter_pin'] = True
             return render(request, "portal_registration.html", send_data)
         if 'new_username' in request.POST:
-            if Subcontractors.objects.filter(username=request.POST['new_username']).exists():
-                selected_sub = Subcontractors.objects.get(id=request.POST['selected_sub'])
+            selected_sub = Subcontractors.objects.get(id=request.POST['selected_sub'])
+            new_username = request.POST['new_username'].strip()
+            username_exists_in_subcontractors = Subcontractors.objects.filter(
+                username__iexact=new_username
+            ).exclude(id=selected_sub.id).exists()
+            username_exists_in_employees = Subcontractor_Employees.objects.filter(
+                username__iexact=new_username
+            ).exists()
+            username_exists_in_django_users = User.objects.filter(
+                username__iexact=new_username
+            ).exists()
+
+            if username_exists_in_subcontractors or username_exists_in_employees or username_exists_in_django_users:
                 send_data['message'] = "That Username has already been used"
                 send_data['selected_sub'] = selected_sub
                 send_data['register_now'] = True
                 return render(request, "portal_registration.html", send_data)
             else:
-                selected_sub = Subcontractors.objects.get(id=request.POST['selected_sub'])
-                selected_sub.username = request.POST['new_username']
+                selected_sub.username = new_username
                 selected_sub.password = request.POST['password']
                 selected_sub.save()
                 return redirect('portal', sub_id=selected_sub.id, contract_id='ALL')
@@ -2543,12 +2911,12 @@ def subcontractor_portal_select_job_for_ticket(request,subcontractor_id,employee
         not_signed = 0
 
         for co in changeorders:
-            status = co.status()
+            action = _subcontractor_portal_tm_ticket_action(co, subcontractor)
 
-            if status == "Ticket Not Completed":
+            if action == "create":
                 not_completed += 1
 
-            elif status == "Ticket Not Signed" and co.created_by_subcontractor == subcontractor:
+            elif action == "sign":
                 not_signed += 1
 
         # only show job if there is work
@@ -2578,12 +2946,10 @@ def subcontractor_portal_select_changeorder(request,job_number, subcontractor_id
 
     for co in all_changeorders:
 
-        status = co.status()
+        action = _subcontractor_portal_tm_ticket_action(co, subcontractor)
 
-        if status == "Ticket Not Completed":
-            changeorders.append(co)
-
-        elif status == "Ticket Not Signed" and co.created_by_subcontractor == subcontractor:
+        if action:
+            co.portal_ticket_action = action
             changeorders.append(co)
     send_data['changeorders'] = changeorders
     send_data['subcontractor']= subcontractor
@@ -3624,19 +3990,68 @@ def subcontractor_employee_management(request, sub_id):
         # -----------------------------
         # TOOLBOX CALCULATION
         # -----------------------------
-        if not emp.has_access_to_toolbox:
+        delegated_jobs = _get_delegated_active_toolbox_jobs_for_sub_employee(emp)
+
+        if not emp.has_access_to_toolbox or not subcontractor.is_toolbox_required:
             toolbox_display = "Not Enrolled"
+        elif not delegated_jobs:
+            toolbox_display = "0 of 0"
         else:
-            assigned_talks = ScheduledToolboxTalkSubEmployees.objects.filter(
-                employee=emp
-            ).values_list('scheduled_id', flat=True).distinct()
+            assigned_talk_ids = set()
 
-            total_assigned = len(assigned_talks)
-
-            completed_count = CompletedSubToolboxTalks.objects.filter(
+            explicit_assignments = ScheduledToolboxTalkSubEmployees.objects.filter(
                 employee=emp,
-                master_id__in=assigned_talks
-            ).count()
+                employee__subcontractor__is_toolbox_required=True,
+                job__in=delegated_jobs
+            ).select_related('scheduled')
+
+            assigned_talk_ids.update(
+                explicit_assignments.values_list('scheduled_id', flat=True).distinct()
+            )
+
+            for job in delegated_jobs:
+                subcontract = Subcontracts.objects.filter(
+                    subcontractor=emp.subcontractor,
+                    job_number=job,
+                    is_closed=False,
+                    subcontractor__is_toolbox_required=True,
+                    job_number__is_closed=False,
+                    job_number__is_active=True,
+                    job_number__is_labor_done=False
+                ).first()
+
+                if not subcontract:
+                    continue
+
+                start_date = _sub_employee_assignment_start_date(emp, subcontract)
+                if not start_date:
+                    continue
+
+                assigned_talk_ids.update(
+                    _get_all_employee_toolbox_talks_for_subcontract(
+                        subcontract,
+                        end_date=date.today(),
+                        start_date=start_date
+                    ).values_list('id', flat=True).distinct()
+                )
+
+            excused_talks = CompletedSubToolboxTalks.objects.filter(
+                employee=emp,
+                master_id__in=assigned_talk_ids,
+                job__in=delegated_jobs,
+                is_excused=True
+            ).values_list('master_id', flat=True).distinct()
+
+            active_assigned_talk_ids = assigned_talk_ids - set(excused_talks)
+            total_assigned = len(active_assigned_talk_ids)
+
+            completed_count = len(
+                _get_completed_sub_employee_toolbox_talk_ids(
+                    emp,
+                    active_assigned_talk_ids,
+                    delegated_jobs
+                )
+            )
 
             toolbox_display = f"{completed_count} of {total_assigned}" if total_assigned > 0 else "0 of 0"
 
@@ -3671,22 +4086,95 @@ def subcontractor_employee_management(request, sub_id):
         emp = assignment.employee
 
         if job.job_number not in jobs_seen:
+            subcontract = Subcontracts.objects.filter(
+                subcontractor=subcontractor,
+                job_number=job,
+                is_closed=False
+            ).first()
+            is_delegated = bool(
+                subcontract and
+                SubcontractorEmployeeDelegation.objects.filter(
+                    subcontractor=subcontractor,
+                    subcontract=subcontract
+                ).exists()
+            )
+
             jobs_seen[job.job_number] = {
                 'job': job,
+                'subcontract': subcontract,
+                'is_delegated': is_delegated,
                 'employees': []
             }
 
         jobs_seen[job.job_number]['employees'].append(emp)
 
     job_assignment_rows = list(jobs_seen.values())
+    assigned_job_numbers = set(jobs_seen.keys())
+
+    other_subcontract_job_rows = []
+    other_subcontracts = Subcontracts.objects.filter(
+        subcontractor=subcontractor,
+        is_closed=False,
+        job_number__is_closed=False,
+    ).exclude(
+        job_number_id__in=assigned_job_numbers
+    ).select_related(
+        'job_number'
+    ).order_by(
+        'job_number__job_name',
+        'job_number__job_number'
+    )
+
+    for subcontract in other_subcontracts:
+        other_subcontract_job_rows.append({
+            'job': subcontract.job_number,
+            'subcontract': subcontract,
+        })
 
     send_data['job_assignment_rows'] = job_assignment_rows
+    send_data['other_subcontract_job_rows'] = other_subcontract_job_rows
 
 
     send_data['employees'] = employee_rows
     send_data['jobs'] = jobs
 
     return render(request, "subcontractor_employee_management.html", send_data)
+
+
+@require_POST
+def toggle_subcontractor_job_delegation(request, sub_id, subcontract_id):
+    subcontractor = get_object_or_404(Subcontractors, id=sub_id)
+    subcontract = get_object_or_404(
+        Subcontracts,
+        id=subcontract_id,
+        subcontractor=subcontractor,
+        is_closed=False
+    )
+
+    existing = SubcontractorEmployeeDelegation.objects.filter(
+        subcontractor=subcontractor,
+        subcontract=subcontract
+    )
+
+    if existing.exists():
+        closed_count = _close_delegated_job_toolbox_completions_before_undelegate(subcontract)
+        existing.delete()
+        messages.success(
+            request,
+            f"Delegation removed for this job. {closed_count} completed toolbox talks were preserved."
+        )
+    else:
+        SubcontractorEmployeeDelegation.objects.get_or_create(
+            subcontractor=subcontractor,
+            subcontract=subcontract
+        )
+        backfilled_count = _backfill_delegated_job_toolbox_completions(subcontract)
+        messages.success(
+            request,
+            f"Delegation added for this job. {backfilled_count} existing toolbox completions were applied."
+        )
+
+    return redirect('subcontractor_employee_management', sub_id=subcontractor.id)
 
 
 @transaction.atomic
@@ -3733,6 +4221,7 @@ def subcontractor_employee_ajax(request):
         'name': emp.name or "",
         'username': emp.username or "",
         'password1': emp.password1 or "",
+        'date_enrolled': emp.date_enrolled.strftime('%m/%d/%Y') if emp.date_enrolled else "",
         'has_access_to_TM': emp.has_access_to_TM,
         'has_access_to_toolbox': emp.has_access_to_toolbox,
         'is_active': emp.is_active,
@@ -3762,7 +4251,11 @@ def subcontractor_employee_update(request):
             username__iexact=username
         ).exists()
 
-        if username_exists_in_employees or username_exists_in_subcontractors:
+        username_exists_in_django_users = User.objects.filter(
+            username__iexact=username
+        ).exists()
+
+        if username_exists_in_employees or username_exists_in_subcontractors or username_exists_in_django_users:
             return JsonResponse({'error': 'That username is already in use.'}, status=400)
 
     emp.name = request.POST.get('name', '').strip()
@@ -3821,7 +4314,11 @@ def subcontractor_employee_create(request):
             username__iexact=username
         ).exists()
 
-        if username_exists_in_employees or username_exists_in_subcontractors:
+        username_exists_in_django_users = User.objects.filter(
+            username__iexact=username
+        ).exists()
+
+        if username_exists_in_employees or username_exists_in_subcontractors or username_exists_in_django_users:
             return JsonResponse({'error': 'That username is already in use.'}, status=400)
     new_emp = Subcontractor_Employees.objects.create(
         subcontractor=subcontractor,
@@ -3899,7 +4396,7 @@ def subcontractor_employee_portal(request, employee_id):
         ).order_by('cop_number')
 
         for co in all_changeorders:
-            if co.need_ticket() or co.needs_ticket_signed():
+            if _subcontractor_portal_tm_ticket_action(co, subcontractor):
                 outstanding_tm_tickets += 1
 
     send_data['outstanding_tm_tickets'] = outstanding_tm_tickets
@@ -3907,169 +4404,97 @@ def subcontractor_employee_portal(request, employee_id):
     # Toolbox talks
     group_toolbox_talks = []
     individual_toolbox_talks = []
-    individual_talk_ids_added = set()
-    if selected_employee.has_access_to_toolbox:
+    if selected_employee.has_access_to_toolbox and subcontractor.is_toolbox_required:
         send_data['toolbox_allowed'] = True
 
-        assigned_jobs_qs = Subcontractor_Job_Assignments.objects.filter(
-            employee=selected_employee,
-            job__is_closed=False,
-            job__is_active=True,
-            job__is_labor_done=False
-        ).select_related('job').order_by('job__job_name')
+        individual_toolbox_talks = []
+        for item in sub_toolbox.get_missing_individual_talk_items_for_employee(
+                selected_employee,
+                through_date=date.today()
+        ):
+            scheduled = item['scheduled']
+            english_file = get_uploaded_toolbox_file(scheduled, "English")
+            spanish_file = get_uploaded_toolbox_file(scheduled, "Spanish")
 
-        assigned_jobs_list = [x.job for x in assigned_jobs_qs]
+            english_view = ViewedSubToolboxTalks.objects.filter(
+                employee=selected_employee,
+                master=scheduled,
+                language="English"
+            ).order_by('-date').first()
 
-        active_subcontracts = Subcontracts.objects.filter(
-            subcontractor=subcontractor,
-            is_closed=False,
-            job_number__in=assigned_jobs_list,
-            job_number__is_closed=False,
-            job_number__is_active=True,
-            job_number__is_labor_done=False,
-        ).select_related('job_number')
+            spanish_view = ViewedSubToolboxTalks.objects.filter(
+                employee=selected_employee,
+                master=scheduled,
+                language="Spanish"
+            ).order_by('-date').first()
 
-        all_employee_talks = ScheduledToolboxTalks.objects.filter(
-            date__lte=date.today(),
-            is_all_employees=True,
-        ).order_by('date')
+            individual_toolbox_talks.append({
+                'item': scheduled.id,
+                'job': item['job'],
+                'job_names': item['job_names'],
+                'description': item['title'],
+                'date': item['date'],
+                'english': english_file['filename'] if english_file else None,
+                'spanish': spanish_file['filename'] if spanish_file else None,
+                'english_viewed': bool(english_view),
+                'english_date': english_view.date if english_view else None,
+                'spanish_viewed': bool(spanish_view),
+                'spanish_date': spanish_view.date if spanish_view else None,
+                'can_complete': bool(english_view or spanish_view),
+            })
 
-        for subcontract in active_subcontracts:
-            job = subcontract.job_number
+        group_toolbox_talks = sub_toolbox.get_missing_group_talk_items_for_employee(
+            selected_employee,
+            through_date=date.today()
+        )
 
-            delegation_exists = SubcontractorEmployeeDelegation.objects.filter(
+        send_data['group_toolbox_talks'] = group_toolbox_talks
+        send_data['group_toolbox_talks_count'] = len(group_toolbox_talks)
+
+        send_data['individual_toolbox_talks'] = individual_toolbox_talks
+        send_data['individual_toolbox_talks_count'] = len(individual_toolbox_talks)
+
+        toolbox_talks_for_other_employees = []
+        other_employees = (
+            Subcontractor_Employees.objects
+            .filter(
                 subcontractor=subcontractor,
-                subcontract=subcontract
-            ).exists()
+                is_active=True,
+                has_access_to_toolbox=True,
+            )
+            .exclude(id=selected_employee.id)
+            .order_by('name', 'id')
+        )
 
-            for scheduled in all_employee_talks:
+        for other_employee in other_employees:
+            employee_toolbox_talks = []
 
-                if delegation_exists:
-                    if CompletedSubToolboxTalks.objects.filter(
-                            employee=selected_employee,
-                            master=scheduled
-                    ).exists():
-                        continue
-                    if scheduled.id in individual_talk_ids_added:
-                        continue
-                    if scheduled.master:
-                        talk_description = scheduled.master.description
-                    else:
-                        talk_description = scheduled.description or "Custom Toolbox Talk"
-
-                    english_file = get_uploaded_toolbox_file(scheduled, "English")
-                    spanish_file = get_uploaded_toolbox_file(scheduled, "Spanish")
-
-                    english_view = ViewedSubToolboxTalks.objects.filter(
-                        employee=selected_employee,
-                        master=scheduled,
-                        language="English"
-                    ).order_by('-date').first()
-
-                    spanish_view = ViewedSubToolboxTalks.objects.filter(
-                        employee=selected_employee,
-                        master=scheduled,
-                        language="Spanish"
-                    ).order_by('-date').first()
-                    if scheduled.id in individual_talk_ids_added:
-                        continue
-
-                    individual_talk_ids_added.add(scheduled.id)
-                    individual_toolbox_talks.append({
-                        'item': scheduled.id,
-                        'job': job,
-                        'description': talk_description,
-                        'date': scheduled.date,
-                        'english': english_file['filename'] if english_file else None,
-                        'spanish': spanish_file['filename'] if spanish_file else None,
-                        'english_viewed': bool(english_view),
-                        'english_date': english_view.date if english_view else None,
-                        'spanish_viewed': bool(spanish_view),
-                        'spanish_date': spanish_view.date if spanish_view else None,
-                        'can_complete': bool(english_view or spanish_view),
-                    })
-
-                else:
-                    if CompletedSubToolboxJobTalks.objects.filter(
-                            scheduled=scheduled,
-                            subcontractor=subcontractor,
-                            job=job
-                    ).exists():
-                        continue
-
-                    if scheduled.master:
-                        talk_description = scheduled.master.description
-                    else:
-                        talk_description = scheduled.description or "Custom Toolbox Talk"
-
-                    group_toolbox_talks.append({
-                        'scheduled': scheduled,
-                        'job': job,
-                        'description': talk_description,
-                        'date': scheduled.date,
-                    })
-
-        sub_job_talks = ScheduledToolboxTalkSubJobs.objects.filter(
-            subcontractor=subcontractor,
-            scheduled__date__lte=date.today(),
-            job__in=assigned_jobs_list,
-        ).select_related(
-            'scheduled',
-            'job',
-            'scheduled__master'
-        ).order_by('scheduled__date')
-
-        for item in sub_job_talks:
-            scheduled = item.scheduled
-            job = item.job
-
-            subcontract = Subcontracts.objects.filter(
-                subcontractor=subcontractor,
-                job_number=job,
-                is_closed=False
-            ).first()
-
-            if not subcontract:
-                continue
-
-            delegation_exists = SubcontractorEmployeeDelegation.objects.filter(
-                subcontractor=subcontractor,
-                subcontract=subcontract
-            ).exists()
-
-            if delegation_exists:
-                if CompletedSubToolboxTalks.objects.filter(
-                        employee=selected_employee,
-                        master=scheduled
-                ).exists():
-                    continue
-                if scheduled.id in individual_talk_ids_added:
-                    continue
-                if scheduled.master:
-                    talk_description = scheduled.master.description
-                else:
-                    talk_description = scheduled.description or "Custom Toolbox Talk"
-
+            for item in sub_toolbox.get_missing_individual_talk_items_for_employee(
+                    other_employee,
+                    through_date=date.today()
+            ):
+                scheduled = item['scheduled']
                 english_file = get_uploaded_toolbox_file(scheduled, "English")
                 spanish_file = get_uploaded_toolbox_file(scheduled, "Spanish")
 
                 english_view = ViewedSubToolboxTalks.objects.filter(
-                    employee=selected_employee,
+                    employee=other_employee,
                     master=scheduled,
                     language="English"
                 ).order_by('-date').first()
 
                 spanish_view = ViewedSubToolboxTalks.objects.filter(
-                    employee=selected_employee,
+                    employee=other_employee,
                     master=scheduled,
                     language="Spanish"
                 ).order_by('-date').first()
-                individual_talk_ids_added.add(scheduled.id)
-                individual_toolbox_talks.append({
+
+                employee_toolbox_talks.append({
                     'item': scheduled.id,
-                    'job': job,
-                    'description': talk_description,
-                    'date': scheduled.date,
+                    'job': item['job'],
+                    'job_names': item['job_names'],
+                    'description': item['title'],
+                    'date': item['date'],
                     'english': english_file['filename'] if english_file else None,
                     'spanish': spanish_file['filename'] if spanish_file else None,
                     'english_viewed': bool(english_view),
@@ -4079,31 +4504,17 @@ def subcontractor_employee_portal(request, employee_id):
                     'can_complete': bool(english_view or spanish_view),
                 })
 
-            else:
-                if CompletedSubToolboxJobTalks.objects.filter(
-                        scheduled=scheduled,
-                        subcontractor=subcontractor,
-                        job=job
-                ).exists():
-                    continue
-
-                if scheduled.master:
-                    talk_description = scheduled.master.description
-                else:
-                    talk_description = scheduled.description or "Custom Toolbox Talk"
-
-                group_toolbox_talks.append({
-                    'scheduled': scheduled,
-                    'job': job,
-                    'description': talk_description,
-                    'date': scheduled.date,
+            if employee_toolbox_talks:
+                toolbox_talks_for_other_employees.append({
+                    'employee': other_employee,
+                    'talks': employee_toolbox_talks,
+                    'count': len(employee_toolbox_talks),
                 })
 
-        send_data['group_toolbox_talks'] = group_toolbox_talks
-        send_data['group_toolbox_talks_count'] = len(group_toolbox_talks)
-
-        send_data['individual_toolbox_talks'] = individual_toolbox_talks
-        send_data['individual_toolbox_talks_count'] = len(individual_toolbox_talks)
+        send_data['toolbox_talks_for_other_employees'] = toolbox_talks_for_other_employees
+        send_data['toolbox_talks_for_other_employees_count'] = sum(
+            row['count'] for row in toolbox_talks_for_other_employees
+        )
 
     else:
         send_data['toolbox_allowed'] = False
@@ -4111,6 +4522,8 @@ def subcontractor_employee_portal(request, employee_id):
         send_data['group_toolbox_talks_count'] = 0
         send_data['individual_toolbox_talks'] = []
         send_data['individual_toolbox_talks_count'] = 0
+        send_data['toolbox_talks_for_other_employees'] = []
+        send_data['toolbox_talks_for_other_employees_count'] = 0
 
     return render(request, "subcontractor_employee_portal.html", send_data)
 
@@ -4171,10 +4584,19 @@ def subcontractor_toolbox_file(request, scheduled_id, language, employee_id):
 def complete_subcontractor_toolbox_talk(request):
     if request.method == "POST":
         employee_id = request.POST.get("employee_id")
+        return_employee_id = request.POST.get("return_employee_id") or employee_id
         scheduledtalk_id = request.POST.get("scheduledtalk_id")
 
         selected_employee = get_object_or_404(Subcontractor_Employees, id=employee_id)
         scheduled_talk = get_object_or_404(ScheduledToolboxTalks, id=scheduledtalk_id)
+        return_employee = get_object_or_404(
+            Subcontractor_Employees,
+            id=return_employee_id,
+            subcontractor=selected_employee.subcontractor
+        )
+
+        if not selected_employee.subcontractor.is_toolbox_required:
+            return redirect('subcontractor_employee_portal', employee_id=return_employee.id)
 
         assigned_job_ids = Subcontractor_Job_Assignments.objects.filter(
             employee=selected_employee,
@@ -4186,30 +4608,41 @@ def complete_subcontractor_toolbox_talk(request):
         delegated_subcontracts = Subcontracts.objects.filter(
             subcontractor=selected_employee.subcontractor,
             is_closed=False,
+            subcontractor__is_toolbox_required=True,
             job_number_id__in=assigned_job_ids,
+            job_number__is_closed=False,
             job_number__is_active=True,
             job_number__is_labor_done=False,
         )
 
         for subcontract in delegated_subcontracts:
 
-            if not SubcontractorEmployeeDelegation.objects.filter(
-                    subcontractor=selected_employee.subcontractor,
-                    subcontract=subcontract
-            ).exists():
+            if not _subcontractor_employee_delegation_effective(
+                    selected_employee.subcontractor,
+                    subcontract,
+                    scheduled_talk.date
+            ):
                 continue
 
-            CompletedSubToolboxTalks.objects.get_or_create(
-                employee=selected_employee,
-                master=scheduled_talk,
-                job=subcontract.job_number
+            if (
+                not selected_employee.date_enrolled or
+                selected_employee.date_enrolled > scheduled_talk.date
+            ):
+                continue
+
+            _complete_subcontractor_toolbox_talk(
+                selected_employee,
+                scheduled_talk,
+                subcontract.job_number
             )
 
             assigned_employee_ids = Subcontractor_Job_Assignments.objects.filter(
                 job=subcontract.job_number,
                 employee__subcontractor=selected_employee.subcontractor,
                 employee__is_active=True,
-                employee__has_access_to_toolbox=True
+                employee__has_access_to_toolbox=True,
+                employee__date_enrolled__isnull=False,
+                employee__date_enrolled__lte=scheduled_talk.date
             ).values_list('employee_id', flat=True).distinct()
 
             assigned_employees = Subcontractor_Employees.objects.filter(
@@ -4222,15 +4655,24 @@ def complete_subcontractor_toolbox_talk(request):
             completed_employee_ids = CompletedSubToolboxTalks.objects.filter(
                 master=scheduled_talk,
                 job=subcontract.job_number,
-                employee__in=assigned_employees
+                employee__in=assigned_employees,
+                is_excused=False
+            ).values_list('employee_id', flat=True).distinct()
+            excused_employee_ids = CompletedSubToolboxTalks.objects.filter(
+                master=scheduled_talk,
+                job=subcontract.job_number,
+                employee__in=assigned_employees,
+                is_excused=True
             ).values_list('employee_id', flat=True).distinct()
 
-            if set(assigned_employee_ids) == set(completed_employee_ids):
+            required_employee_ids = set(assigned_employee_ids) - set(excused_employee_ids)
 
-                completed_job_talk, created = CompletedSubToolboxJobTalks.objects.get_or_create(
-                    scheduled=scheduled_talk,
-                    subcontractor=selected_employee.subcontractor,
-                    job=subcontract.job_number
+            if required_employee_ids and required_employee_ids == set(completed_employee_ids):
+
+                completed_job_talk = _complete_subcontractor_job_toolbox_talk(
+                    scheduled_talk,
+                    selected_employee.subcontractor,
+                    subcontract.job_number
                 )
 
                 for emp in assigned_employees:
@@ -4240,7 +4682,7 @@ def complete_subcontractor_toolbox_talk(request):
                         note="Employee completed themself through the portal"
                     )
 
-        return redirect('subcontractor_employee_portal', employee_id=employee_id)
+        return redirect('subcontractor_employee_portal', employee_id=return_employee.id)
 
     return redirect('https://wwww.gerloffpainting.com')
 
@@ -4732,10 +5174,13 @@ def sub_toolbox_complete(request, sub_id, scheduled_id, job_number):
     scheduled = get_object_or_404(ScheduledToolboxTalks, id=scheduled_id)
     job = get_object_or_404(Jobs, job_number=job_number)
     from_employee = request.GET.get('from_employee') or request.POST.get('from_employee')
+    preselected_employee_id = request.GET.get('employee') or request.POST.get('employee')
     sub_employees = Subcontractor_Employees.objects.filter(
         subcontractor=selected_sub,
         is_active=True
     ).order_by('name')
+    if preselected_employee_id and not sub_employees.filter(id=preselected_employee_id).exists():
+        preselected_employee_id = None
 
     if request.method == 'POST':
         if 'remove_delegation' in request.POST:
@@ -4746,12 +5191,16 @@ def sub_toolbox_complete(request, sub_id, scheduled_id, job_number):
             ).first()
 
             if subcontract:
+                closed_count = _close_delegated_job_toolbox_completions_before_undelegate(subcontract)
                 SubcontractorEmployeeDelegation.objects.filter(
                     subcontractor=selected_sub,
                     subcontract=subcontract
                 ).delete()
 
-                messages.success(request, "Employee self-completion was removed for this job.")
+                messages.success(
+                    request,
+                    f"Employee self-completion was removed for this job. {closed_count} completed toolbox talks were preserved."
+                )
 
             return redirect('portal', sub_id=selected_sub.id, contract_id='ALL')
         # VIEW ENGLISH / SPANISH FILE
@@ -4798,13 +5247,6 @@ def sub_toolbox_complete(request, sub_id, scheduled_id, job_number):
                 job_number=job.job_number
             )
 
-        # COMPLETE TOOLBOX TALK
-        completed, created = CompletedSubToolboxJobTalks.objects.get_or_create(
-            scheduled=scheduled,
-            subcontractor=selected_sub,
-            job=job
-        )
-
         employee_selects = request.POST.getlist('employee_select')
         valid_employee_exists = False
 
@@ -4827,6 +5269,13 @@ def sub_toolbox_complete(request, sub_id, scheduled_id, job_number):
             )
         add_to_employee_list = request.POST.getlist('add_to_employee_list')
 
+        # COMPLETE TOOLBOX TALK
+        completed = _complete_subcontractor_job_toolbox_talk(
+            scheduled,
+            selected_sub,
+            job
+        )
+
         for index, value in enumerate(employee_selects):
             if not value:
                 continue
@@ -4844,6 +5293,17 @@ def sub_toolbox_complete(request, sub_id, scheduled_id, job_number):
                 CompletedSubToolboxJobTalkEmployees.objects.get_or_create(
                     completed=completed,
                     employee=employee
+                )
+
+                _complete_subcontractor_toolbox_talk(
+                    employee,
+                    scheduled,
+                    job
+                )
+                _complete_attendee_delegated_jobs_for_same_talk(
+                    employee,
+                    scheduled,
+                    job
                 )
 
             else:
@@ -4869,6 +5329,18 @@ def sub_toolbox_complete(request, sub_id, scheduled_id, job_number):
                     added_to_employee_list=should_add
                 )
 
+                if new_employee:
+                    _complete_subcontractor_toolbox_talk(
+                        new_employee,
+                        scheduled,
+                        job
+                    )
+                    _complete_attendee_delegated_jobs_for_same_talk(
+                        new_employee,
+                        scheduled,
+                        job
+                    )
+
         messages.success(request, "Toolbox talk completed.")
         if from_employee:
             return redirect('subcontractor_employee_portal', employee_id=from_employee)
@@ -4882,10 +5354,10 @@ def sub_toolbox_complete(request, sub_id, scheduled_id, job_number):
         delegation_exists = False
 
         if subcontract:
-            delegation_exists = SubcontractorEmployeeDelegation.objects.filter(
-                subcontractor=selected_sub,
-                subcontract=subcontract
-            ).exists()
+            delegation_exists = _subcontract_has_delegated_employee_for_date(
+                subcontract,
+                scheduled.date
+            )
 
         if delegation_exists:
             return redirect(
@@ -4948,6 +5420,7 @@ def sub_toolbox_complete(request, sub_id, scheduled_id, job_number):
         'toolbox_base_folder': base_folder,
         'toolbox_folder_id': folder_id,
         'from_employee': from_employee,
+        'preselected_employee_id': str(preselected_employee_id or ''),
         'ask_remove_delegation': ask_remove_delegation,
     })
 
@@ -4980,10 +5453,11 @@ def sub_toolbox_delegate(request, sub_id, scheduled_id, job_number):
             subcontractor=selected_sub,
             subcontract=subcontract
         )
+        backfilled_count = _backfill_delegated_job_toolbox_completions(subcontract)
 
         messages.success(
             request,
-            "Employees have been delegated to complete toolbox talks themselves."
+            f"Employees have been delegated to complete toolbox talks themselves. {backfilled_count} existing toolbox completions were applied."
         )
 
         return redirect('portal', sub_id=selected_sub.id, contract_id='ALL')

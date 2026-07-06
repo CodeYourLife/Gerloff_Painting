@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+{% block nav_item_safety %}active{% endblock nav_item_safety %}
+
+{% block extra_head %}
+<style>
+    .excuse-toolbox-page {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 12px 10px 24px 10px;
+    }
+
+    .excuse-toolbox-action {
+        display: block;
+        width: 100%;
+        margin-bottom: 12px;
+        padding: 0.8rem 1rem;
+        white-space: normal;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block sub_nav %}
+{% include 'safety_nav.html' with active_tab="schedule" page_label="Delete Old Incomplete" %}
+{% endblock %}
+
+{% block content %}
+<div class="excuse-toolbox-page">
+    <h4>Delete Old, Incomplete Talks</h4>
+
+    {% if mode == "subs" %}
+        <a href="{% url 'delete_old_incomplete_toolbox_talks' %}" class="btn btn-outline-secondary excuse-toolbox-action">
+            Go Back To See Other Options
+        </a>
+
+        {% if not selected_subcontractor %}
+            <form method="get" class="mb-3">
+                <input type="hidden" name="mode" value="subs">
+                <input type="hidden" name="subcontractor_id" id="selectedSubcontractorId">
+                <div class="form-group">
+                    <label for="subcontractorSearch">Subcontractor</label>
+                    <select id="subcontractorSearch" class="form-control">
+                        <option value="">Select a subcontractor</option>
+                        {% for subcontractor in subcontractor_rows %}
+                            <option value="{{ subcontractor.id }}">{{ subcontractor.label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit"
+                        id="selectSubcontractorButton"
+                        class="btn btn-danger excuse-toolbox-action"
+                        style="display:none;">
+                    Select Subcontractor
+                </button>
+            </form>
+        {% endif %}
+
+        {% if selected_subcontractor %}
+            <h5>{{ selected_subcontractor.company }}</h5>
+
+            {% if selected_subcontractor_outstanding_items %}
+                <div id="subcontractorExcuseChoiceActions">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="excuse_selected_sub_all">
+                        <input type="hidden" name="subcontractor_id" value="{{ selected_subcontractor.id }}">
+                        <button type="submit"
+                                class="btn btn-danger excuse-toolbox-action"
+                                onclick="return confirm('Excuse all incomplete toolbox talks for {{ selected_subcontractor.company }}?')">
+                            Excuse All Incomplete Toolbox Talks For This Subcontractor
+                        </button>
+                    </form>
+
+                    <button type="button"
+                            id="showSubcontractorSelectedTalksButton"
+                            class="btn btn-outline-danger excuse-toolbox-action">
+                        Select Certain Talks to Excuse
+                    </button>
+                </div>
+
+                <form method="post" id="subcontractorSelectedTalksForm" style="display:none;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="excuse_selected_sub_selected">
+                    <input type="hidden" name="subcontractor_id" value="{{ selected_subcontractor.id }}">
+
+                    {% for item in selected_subcontractor_outstanding_items %}
+                        <label class="d-block mb-2">
+                            <input type="checkbox" name="selected_talks" value="{{ item.value }}">
+                            {{ item.display }}
+                        </label>
+                    {% endfor %}
+
+                    <button type="submit"
+                            class="btn btn-danger excuse-toolbox-action"
+                            onclick="return confirm('Excuse the selected toolbox talks?')">
+                        Excuse Selected Toolbox Talks
+                    </button>
+                </form>
+            {% else %}
+                <div>No incomplete toolbox talks found for this subcontractor.</div>
+            {% endif %}
+        {% endif %}
+    {% elif mode == "employees" %}
+        <a href="{% url 'delete_old_incomplete_toolbox_talks' %}" class="btn btn-outline-secondary excuse-toolbox-action">
+            Go Back To See Other Options
+        </a>
+
+        {% if not selected_employee %}
+            <form method="get" class="mb-3">
+                <input type="hidden" name="mode" value="employees">
+                <input type="hidden" name="employee_id" id="selectedEmployeeId">
+                <div class="form-group">
+                    <label for="employeeSearch">Employee</label>
+                    <select id="employeeSearch" class="form-control">
+                        <option value="">Select an employee</option>
+                        {% for employee in employee_rows %}
+                            <option value="{{ employee.id }}">{{ employee.label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit"
+                        id="selectEmployeeButton"
+                        class="btn btn-danger excuse-toolbox-action"
+                        style="display:none;">
+                    Select Employee
+                </button>
+            </form>
+        {% endif %}
+
+        {% if selected_employee %}
+            <h5>{{ selected_employee.first_name }} {{ selected_employee.last_name }}</h5>
+
+            {% if selected_employee_outstanding_items %}
+                <div id="employeeExcuseChoiceActions">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="excuse_selected_employee_all">
+                        <input type="hidden" name="employee_id" value="{{ selected_employee.id }}">
+                        <button type="submit"
+                                class="btn btn-danger excuse-toolbox-action"
+                                onclick="return confirm('Excuse all incomplete toolbox talks for {{ selected_employee.first_name }} {{ selected_employee.last_name }}?')">
+                            Excuse All Incomplete Toolbox Talks For This Employee
+                        </button>
+                    </form>
+
+                    <button type="button"
+                            id="showEmployeeSelectedTalksButton"
+                            class="btn btn-outline-danger excuse-toolbox-action">
+                        Select Certain Talks to Excuse
+                    </button>
+                </div>
+
+                <form method="post" id="employeeSelectedTalksForm" style="display:none;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="excuse_selected_employee_selected">
+                    <input type="hidden" name="employee_id" value="{{ selected_employee.id }}">
+
+                    {% for item in selected_employee_outstanding_items %}
+                        <label class="d-block mb-2">
+                            <input type="checkbox" name="selected_talks" value="{{ item.value }}">
+                            {{ item.display }}
+                        </label>
+                    {% endfor %}
+
+                    <button type="submit"
+                            class="btn btn-danger excuse-toolbox-action"
+                            onclick="return confirm('Excuse the selected toolbox talks?')">
+                        Excuse Selected Toolbox Talks
+                    </button>
+                </form>
+            {% else %}
+                <div>No incomplete toolbox talks found for this employee.</div>
+            {% endif %}
+        {% endif %}
+    {% else %}
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit"
+                name="action"
+                value="excuse_all"
+                class="btn btn-danger excuse-toolbox-action"
+                onclick="return confirm('Excuse all currently incomplete toolbox talks for all employees and delegated subcontractor employees?')">
+            Excuse All Toolbox Talks, For All Employees and Subs
+        </button>
+    </form>
+
+    <button type="button"
+            class="btn btn-danger excuse-toolbox-action"
+            data-toggle="modal"
+            data-target="#excuseBeforeDateModal">
+            Excuse All Toolbox Talks, For All Employees and Subs, Before a Certain Date
+    </button>
+
+    <a href="{% url 'delete_old_incomplete_toolbox_talks' %}?mode=subs" class="btn btn-danger excuse-toolbox-action">
+        Select Certain Subs to Excuse
+    </a>
+
+    <a href="{% url 'delete_old_incomplete_toolbox_talks' %}?mode=employees" class="btn btn-danger excuse-toolbox-action">
+        Select Certain Employees to Excuse
+    </a>
+    {% endif %}
+</div>
+
+<div class="modal fade" id="excuseBeforeDateModal" tabindex="-1" role="dialog" aria-labelledby="excuseBeforeDateModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="excuseBeforeDateModalLabel">Select Date</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="before_date">Excuse scheduled talks before this date</label>
+                        <input type="date" id="before_date" name="before_date" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit"
+                            name="action"
+                            value="excuse_before_date"
+                            class="btn btn-danger"
+                            onclick="return confirm('Excuse all incomplete toolbox talks scheduled before the selected date?')">
+                        Excuse Talks
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% if mode == "subs" or mode == "employees" %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const subcontractorSearch = document.getElementById("subcontractorSearch");
+    const selectedSubcontractorId = document.getElementById("selectedSubcontractorId");
+    const employeeSearch = document.getElementById("employeeSearch");
+    const selectedEmployeeId = document.getElementById("selectedEmployeeId");
+
+    function updateSelectedSubcontractor() {
+        if (!subcontractorSearch || !selectedSubcontractorId) {
+            return;
+        }
+
+        selectedSubcontractorId.value = subcontractorSearch.value || "";
+
+        const selectSubcontractorButton = document.getElementById("selectSubcontractorButton");
+        if (selectSubcontractorButton) {
+            selectSubcontractorButton.style.display = subcontractorSearch.value ? "block" : "none";
+        }
+    }
+
+    if (subcontractorSearch) {
+        $('#subcontractorSearch').select2({
+            placeholder: "Select a subcontractor",
+            allowClear: true,
+            width: '100%'
+        });
+        updateSelectedSubcontractor();
+        $('#subcontractorSearch').on('change', updateSelectedSubcontractor);
+    }
+
+    function updateSelectedEmployee() {
+        if (!employeeSearch || !selectedEmployeeId) {
+            return;
+        }
+
+        selectedEmployeeId.value = employeeSearch.value || "";
+
+        const selectEmployeeButton = document.getElementById("selectEmployeeButton");
+        if (selectEmployeeButton) {
+            selectEmployeeButton.style.display = employeeSearch.value ? "block" : "none";
+        }
+    }
+
+    if (employeeSearch) {
+        $('#employeeSearch').select2({
+            placeholder: "Select an employee",
+            allowClear: true,
+            width: '100%'
+        });
+        updateSelectedEmployee();
+        $('#employeeSearch').on('change', updateSelectedEmployee);
+    }
+
+    const showEmployeeSelectedTalksButton = document.getElementById("showEmployeeSelectedTalksButton");
+    const employeeExcuseChoiceActions = document.getElementById("employeeExcuseChoiceActions");
+    const employeeSelectedTalksForm = document.getElementById("employeeSelectedTalksForm");
+
+    if (showEmployeeSelectedTalksButton && employeeExcuseChoiceActions && employeeSelectedTalksForm) {
+        showEmployeeSelectedTalksButton.addEventListener("click", function () {
+            employeeExcuseChoiceActions.style.display = "none";
+            employeeSelectedTalksForm.style.display = "block";
+        });
+    }
+
+    const showSubcontractorSelectedTalksButton = document.getElementById("showSubcontractorSelectedTalksButton");
+    const subcontractorExcuseChoiceActions = document.getElementById("subcontractorExcuseChoiceActions");
+    const subcontractorSelectedTalksForm = document.getElementById("subcontractorSelectedTalksForm");
+
+    if (showSubcontractorSelectedTalksButton && subcontractorExcuseChoiceActions && subcontractorSelectedTalksForm) {
+        showSubcontractorSelectedTalksButton.addEventListener("click", function () {
+            subcontractorExcuseChoiceActions.style.display = "none";
+            subcontractorSelectedTalksForm.style.display = "block";
+        });
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

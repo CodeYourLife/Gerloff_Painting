@@ -3,24 +3,49 @@ from django.shortcuts import render
 from employees.models import *
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User, auth
+from django.contrib.auth.decorators import login_required
 from console.misc import Email
 from console.random_password_generator import RandomPasswordGenerator
+from subcontractors.models import Subcontractors, Subcontractor_Employees
 from datetime import datetime,timedelta
 from django.conf import settings
 import os
 
 
+def _get_client_ip(request):
+    forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR")
+
+
+def _record_login_attempt(request, username, user, result, failure_reason=""):
+    LoginAttempt.objects.create(
+        username=username or "",
+        user=user,
+        result=result,
+        failure_reason=failure_reason,
+        ip_address=_get_client_ip(request),
+        user_agent=(request.META.get("HTTP_USER_AGENT") or "")[:500],
+    )
+
+
 def registration(request):
     send_data = {}
     if request.method == 'POST':
-        if User.objects.filter(username=request.POST['username']).exists():
+        username = request.POST['username'].strip()
+        username_exists_in_django_users = User.objects.filter(username__iexact=username).exists()
+        username_exists_in_subcontractors = Subcontractors.objects.filter(username__iexact=username).exists()
+        username_exists_in_subcontractor_employees = Subcontractor_Employees.objects.filter(username__iexact=username).exists()
+
+        if username_exists_in_django_users or username_exists_in_subcontractors or username_exists_in_subcontractor_employees:
             send_data['message'] = "Username already exists"
-            send_data['username'] = request.POST['username']
+            send_data['username'] = username
             send_data['password'] = request.POST['password']
             send_data['phonenumber'] = request.POST['phonenumber']
             send_data['email'] = request.POST['email']
             return render(request, "registration.html", send_data)
-        user = User.objects.create_user(username=request.POST['username'],
+        user = User.objects.create_user(username=username,
                                         email=request.POST['email'],
                                         password=request.POST['password'])
         employee = Employees.objects.get(id=request.POST['selected_employee'])
@@ -99,10 +124,25 @@ def login(request):
             username = request.POST['username']
             password = request.POST['password']
             try:
+                matching_user = User.objects.filter(username=username).first()
                 user = auth.authenticate(username=username, password=password)
                 if user is not None:
                     auth.login(request, user)
                     return redirect("/")
+                if matching_user is None:
+                    failure_reason = LoginAttempt.FAILURE_USERNAME_NOT_FOUND
+                elif not matching_user.is_active:
+                    failure_reason = LoginAttempt.FAILURE_INACTIVE_USER
+                else:
+                    failure_reason = LoginAttempt.FAILURE_PASSWORD_INCORRECT
+
+                _record_login_attempt(
+                    request,
+                    username,
+                    matching_user,
+                    LoginAttempt.RESULT_FAILED,
+                    failure_reason
+                )
             except Exception as e:
                 print('invalid credentials', e)
             send_data['message'] = "Invalid credentials"
@@ -115,3 +155,11 @@ def login(request):
 def logout(request):
     auth.logout(request)
     return redirect("/")
+
+
+@login_required(login_url='/accounts/login')
+def login_attempt_log(request):
+    attempts = LoginAttempt.objects.select_related("user").all()[:500]
+    return render(request, "login_attempt_log.html", {
+        "attempts": attempts,
+    })
