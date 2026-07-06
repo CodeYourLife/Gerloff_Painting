@@ -103,8 +103,8 @@ def login(request):
         elif 'forgot' in request.POST:
             # send email to user
             try:
-                username = request.POST['username']
-                forgottenUser = User.objects.get(username=username)
+                username = request.POST['username'].strip()
+                forgottenUser = User.objects.get(username__iexact=username)
                 employee = Employees.objects.get(user=forgottenUser)
                 randomPassword = RandomPasswordGenerator().getRandomPassword()
                 expiration = datetime.now() + timedelta(hours=1)
@@ -121,11 +121,12 @@ def login(request):
             send_data['password'] = request.POST['password']
             return render(request, "login.html", send_data)
         else:
-            username = request.POST['username']
+            username = request.POST['username'].strip()
             password = request.POST['password']
             try:
-                matching_user = User.objects.filter(username=username).first()
-                user = auth.authenticate(username=username, password=password)
+                matching_user = User.objects.filter(username__iexact=username).first()
+                auth_username = matching_user.username if matching_user else username
+                user = auth.authenticate(username=auth_username, password=password)
                 if user is not None:
                     auth.login(request, user)
                     return redirect("/")
