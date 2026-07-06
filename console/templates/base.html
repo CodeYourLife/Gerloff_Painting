@@ -197,7 +197,9 @@ function hidePageOverlay() {
 
     overlay.style.display = "none";
 }
+</script>
 
+<style>
 /* Better phone navbar */
 @media (max-width: 991.98px) {
 
@@ -294,6 +296,8 @@ function hidePageOverlay() {
         align-items: flex-start;
         justify-content: space-between !important;
         padding: 6px 10px !important;
+        background-color: #343a40 !important;
+        border-bottom-color: #343a40 !important;
     }
 
     .sub-navbar-brand {
@@ -314,12 +318,38 @@ function hidePageOverlay() {
         flex-basis: 100%;
         width: 100%;
         margin-top: 8px;
+        background-color: #343a40 !important;
+        border-color: rgba(255,255,255,0.18) !important;
+    }
+
+    .sub-nav .navbar-collapse.show,
+    .sub-nav .navbar-collapse.collapsing {
+        display: block !important;
+        flex-basis: 100% !important;
+        width: 100% !important;
     }
 
     .sub-nav-list {
         width: 100%;
+        display: flex !important;
         flex-direction: column !important;
         flex-flow: column nowrap !important;
+    }
+
+    .sub-nav .navbar-collapse.show .navbar-nav,
+    .sub-nav .navbar-collapse.collapsing .navbar-nav,
+    .sub-nav .navbar-collapse.show .sub-nav-list,
+    .sub-nav .navbar-collapse.collapsing .sub-nav-list {
+        display: flex !important;
+        flex-direction: column !important;
+        flex-flow: column nowrap !important;
+        width: 100% !important;
+    }
+
+    .sub-nav-list li,
+    .sub-nav .navbar-collapse.show .nav-item,
+    .sub-nav .navbar-collapse.collapsing .nav-item {
+        width: 100% !important;
     }
 
     .sub-nav-list .nav-link {
@@ -327,11 +357,22 @@ function hidePageOverlay() {
         width: 100%;
         padding: 10px 12px !important;
         font-size: 16px !important;
+        color: rgba(255,255,255,0.88) !important;
         border-bottom: 1px solid rgba(255,255,255,0.14);
     }
-}
 
-    </script>
+    .sub-nav-list .nav-link:hover,
+    .sub-nav-list .nav-link:focus {
+        color: #ffffff !important;
+        background-color: rgba(255,255,255,0.12) !important;
+    }
+
+    .sub-nav-list .nav-link.active {
+        color: #ffffff !important;
+        background-color: red !important;
+    }
+}
+</style>
 
     {% block extra_head %}{% endblock %}
     <style>

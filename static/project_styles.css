@@ -10,6 +10,8 @@
             align-items: flex-start;
             justify-content: space-between !important;
             padding: 6px 10px !important;
+            background-color: #343a40 !important;
+            border-bottom-color: #343a40 !important;
         }
 
         .sub-navbar-brand {
@@ -30,6 +32,8 @@
             flex-basis: 100%;
             width: 100%;
             margin-top: 8px;
+            background-color: #343a40 !important;
+            border-color: rgba(255,255,255,0.18) !important;
         }
 
         .sub-nav .navbar-collapse.show,
@@ -67,7 +71,19 @@
             width: 100%;
             padding: 10px 12px !important;
             font-size: 16px !important;
+            color: rgba(255,255,255,0.88) !important;
             border-bottom: 1px solid rgba(255,255,255,0.14);
+        }
+
+        .sub-nav-list .nav-link:hover,
+        .sub-nav-list .nav-link:focus {
+            color: #ffffff !important;
+            background-color: rgba(255,255,255,0.12) !important;
+        }
+
+        .sub-nav-list .nav-link.active {
+            color: #ffffff !important;
+            background-color: red !important;
         }
     }
 
