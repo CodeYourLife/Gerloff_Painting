@@ -1,8 +1,17 @@
 
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand sub-navbar-brand" href="#">Submittals</a>
+<nav class="sub-nav navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'submittals_home' %}">Submittals</a>
 
-    <div id="navbarNavDropdown2">
+    <button class="navbar-toggler" type="button"
+            data-toggle="collapse"
+            data-target="#submittalsSubNav"
+            aria-controls="submittalsSubNav"
+            aria-expanded="false"
+            aria-label="Toggle submittals navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="submittalsSubNav">
         <ul class="sub-nav-list navbar-nav">
 
             <li>

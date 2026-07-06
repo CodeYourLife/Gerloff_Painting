@@ -1,0 +1,76 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
+
+{% block sub_nav %}
+    {% include 'portal_nav.html' with selected_sub=selected_sub active_tab='home' page_label='Respirator Clearance' %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Formulario de Autorizacion para Respirador - Informacion del Empleado</h2>
+    <form id="employee_form" method="POST" action="{% url 'subcontractor_resp_clearance_section' selected_sub.id clearance.id 0 %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <p>Empleado = <b>{{ clearance.employee_display_name }}</b></p>
+            <br>
+
+            <label for="gender">Genero:</label>
+            <select id="gender" name="gender" class="form-control" style="width: 250px;">
+                {% if clearance.gender and clearance.gender != "not_selected" %}
+                    <option value="{{ clearance.gender }}">{{ clearance.gender }}</option>
+                {% endif %}
+                <option value="not_selected">Por favor seleccione</option>
+                <option value="Masculino">Masculino</option>
+                <option value="Femenino">Femenino</option>
+                <option value="No asignado">No asignado</option>
+            </select>
+
+            <br>
+            <label for="height">Estatura: </label>
+            <input type="text" name="height" id="height" value="{{ clearance.height|default:'' }}">
+
+            <br>
+            <label for="weight">Peso: </label>
+            <input type="text" name="weight" id="weight" value="{{ clearance.weight|default:'' }}">
+
+            <br>
+            <label for="phone">Numero de telefono: </label>
+            <input type="text" name="phone" id="phone" value="{{ clearance.phone|default:'' }}">
+
+            <br>
+            <label for="birth_date">Fecha de nacimiento: </label>
+            <input type="date" name="birth_date" id="birth_date" value="{{ clearance.birth_date|date:'Y-m-d' }}">
+        </div>
+
+        <button type="button" class="btn btn-primary" onclick="check_form()">Continuar a la siguiente pagina</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript" class="init">
+function check_form() {
+    let formCompleted = "yes";
+    const myForm = document.getElementById("employee_form");
+    Array.from(myForm.elements).forEach(element => {
+        if (element.type === "select-one" && element.value === "not_selected") {
+            alert(element.labels[0].textContent + " No completado");
+            formCompleted = "no";
+        } else if (element.type === "text" && element.value === "") {
+            alert(element.labels[0].textContent + " No completado");
+            formCompleted = "no";
+        }
+    });
+    if (formCompleted === "yes") {
+        myForm.submit();
+    }
+}
+</script>
+{% endblock %}
+
+
+

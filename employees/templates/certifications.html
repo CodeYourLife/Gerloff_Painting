@@ -34,9 +34,14 @@
 <div class="container mt-4">
 
     <div class="text-center mb-3">
-        <form action="{% url 'new_certification' %}">
+        <form action="{% url 'new_certification' %}" class="d-inline-block mr-2">
             <button type="submit" class="btn btn-primary">
                 New Certification
+            </button>
+        </form>
+        <form action="{% url 'subcontractor_certifications' %}" class="d-inline-block">
+            <button type="submit" class="btn btn-secondary">
+                View Subcontractor Certifications
             </button>
         </form>
     </div>

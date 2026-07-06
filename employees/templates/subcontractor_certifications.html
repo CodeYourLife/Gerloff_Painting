@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_item_employees %}active{% endblock nav_item_employees %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
+
+{% block sub_nav %}
+{% include 'employees_nav.html' with active_tab="certifications" page_label="Subcontractor Certifications" %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="text-center mb-3">
+        <a href="{% url 'certifications' 'ALL' %}" class="btn btn-outline-secondary">
+            Back to Employee Certifications
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="subcontractor_certifications_table" class="display table table-striped table-hover w-100">
+                    <thead>
+                    <tr>
+                        <th>Subcontractor</th>
+                        <th>Employee</th>
+                        <th>Certification</th>
+                        <th>Date Completed</th>
+                        <th>Expiration / Status</th>
+                        <th>View</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for clearance in clearances %}
+                        <tr>
+                            <td>{{ clearance.subcontractor.company }}</td>
+                            <td>{{ clearance.employee_display_name }}</td>
+                            <td>Respirator Certification [Subcontractor]</td>
+                            <td>{{ clearance.date_completed|default:"-" }}</td>
+                            <td>{{ clearance.status_label }}</td>
+                            <td>
+                                <a href="{% url 'subcontractor_resp_clearance_review' clearance.subcontractor_id clearance.id %}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript" class="init">
+$(document).ready(function () {
+    $("#subcontractor_certifications_table").DataTable({
+        paging: false,
+        info: false,
+        order: [[0, "asc"], [1, "asc"]]
+    });
+});
+</script>
+{% endblock %}

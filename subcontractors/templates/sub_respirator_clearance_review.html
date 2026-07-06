@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_item_safety %}active{% endblock nav_item_safety %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
+
+{% block sub_nav %}
+{% include 'safety_nav.html' with page_label="Subcontractor Respirator Certification" %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 900px;">
+    <h3>Respirator Clearance for {{ clearance.employee_display_name }}</h3>
+    <p><strong>Subcontractor:</strong> {{ selected_sub.company }}</p>
+
+    {% if not_completed_yet %}
+        <div class="card border-warning">
+            <div class="card-header bg-warning font-weight-bold">
+                Respirator Application Not Completed Yet
+            </div>
+            <div class="card-body">
+                <p><strong>Date Started:</strong> {{ clearance.date_created|default:"Not Available" }}</p>
+                <p><strong>Progress:</strong> {{ sections_completed }} of {{ total_sections }} sections completed</p>
+
+                <div class="progress mb-3" style="height: 24px;">
+                    <div class="progress-bar"
+                         role="progressbar"
+                         style="width: {% widthratio sections_completed total_sections 100 %}%;">
+                        {% widthratio sections_completed total_sections 100 %}%
+                    </div>
+                </div>
+
+                <table class="table table-sm table-bordered">
+                    <thead>
+                    <tr>
+                        <th>Section</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for section_name, is_complete in respirator_sections %}
+                        <tr>
+                            <td>{{ section_name }}</td>
+                            <td>
+                                {% if is_complete %}
+                                    <span class="badge badge-success">Completed</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">Not Completed</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <p><strong>Questionnaire Completion Date:</strong> {{ clearance.date_completed }}</p>
+
+        {% if approved_for_use %}
+            <div class="card border-warning mb-3">
+                <div class="card-header bg-warning font-weight-bold">
+                    Respirator Certification Expiration
+                </div>
+                <div class="card-body">
+                    <p>
+                        <strong>Current Expiration Date:</strong>
+                        {% if clearance.date_expires %}
+                            {{ clearance.date_expires }}
+                        {% else %}
+                            <span class="text-danger">No expiration date entered</span>
+                        {% endif %}
+                    </p>
+
+                    <form method="post" action="{% url 'subcontractor_resp_clearance_review' selected_sub.id clearance.id %}">
+                        {% csrf_token %}
+                        <div class="form-row align-items-end">
+                            <div class="col-md-6 mb-2">
+                                <label for="expiration_date">New Expiration Date</label>
+                                <input type="date" name="expiration_date" id="expiration_date" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <button type="submit" name="change_expiration_date" class="btn btn-warning">
+                                    Save Expiration Date
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if clearance.is_physician_required %}
+            <div class="alert alert-warning">
+                The employee requested that a physician review the form.
+            </div>
+        {% endif %}
+
+        <a href="{% url 'subcontractor_resp_clearance_completed' selected_sub.id clearance.id %}" class="btn btn-danger mb-3">
+            View Completed Respirator Clearance Form
+        </a>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                Notes
+            </div>
+            <div class="card-body">
+                {% for note in notes %}
+                    <p>{{ note }}</p>
+                {% empty %}
+                    <p>No notes yet.</p>
+                {% endfor %}
+                <form method="post" action="{% url 'subcontractor_resp_clearance_review' selected_sub.id clearance.id %}">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <div class="col-md-9 mb-2">
+                            <input type="text" name="note" class="form-control" placeholder="New Note Here">
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button type="submit" class="btn btn-primary btn-block">Add Note</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if approved_for_use %}
+            <h4>Employee Approved For Respirator</h4>
+        {% else %}
+            <div class="card mb-4">
+                <div class="card-header bg-info font-weight-bold">
+                    Safety Director Review
+                </div>
+                <div class="card-body">
+                    <form id="employee_form" method="post" action="{% url 'subcontractor_resp_clearance_review' selected_sub.id clearance.id %}">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="is_physician_required">Does a Physician Need to Review?</label>
+                            <select class="form-control" id="is_physician_required" name="is_physician_required" onchange="showHidden()">
+                                {% if clearance.is_physician_actually_required %}
+                                    <option value="Yes" selected>Yes</option>
+                                {% else %}
+                                    <option value="Please Select" selected>Please Select</option>
+                                    <option value="Yes">Yes</option>
+                                {% endif %}
+                                <option value="No">No</option>
+                                <option value="TBD">TBD</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="physician_review">
+                            <label for="physician_approved">Has the Physician Approved?</label>
+                            <select class="form-control" id="physician_approved" name="physician_approved">
+                                {% if clearance.is_physician_actually_required %}
+                                    <option value="Please Select" selected>Please Select</option>
+                                    <option value="Not Applicable">Not Applicable</option>
+                                {% else %}
+                                    <option value="Please Select">Please Select</option>
+                                    <option value="Not Applicable" selected>Not Applicable</option>
+                                {% endif %}
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                                <option value="TBD">TBD</option>
+                            </select>
+                        </div>
+
+                        <input type="hidden" name="submit_status" id="submit_status">
+
+                        <button type="button" class="btn btn-success" onclick="employeeApproved()">
+                            Employee is Approved For Respirator
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="submitLater()">
+                            Save Changes and Exit
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+function showHidden() {
+    const physicianRequired = document.getElementById("is_physician_required");
+    const physicianReview = document.getElementById("physician_review");
+    if (!physicianRequired || !physicianReview) {
+        return;
+    }
+    physicianReview.style.display = physicianRequired.value === "Yes" ? "block" : "none";
+}
+
+function employeeApproved() {
+    const physicianRequired = document.getElementById("is_physician_required");
+    const physicianApproved = document.getElementById("physician_approved");
+
+    if (physicianRequired.value === "Please Select" || physicianRequired.value === "TBD") {
+        alert("Please select whether a physician needs to review.");
+        return;
+    }
+
+    if (physicianRequired.value === "Yes" && physicianApproved.value !== "Yes") {
+        alert("The employee cannot be approved until the physician has approved.");
+        return;
+    }
+
+    document.getElementById("submit_status").value = "Approved";
+    document.getElementById("employee_form").submit();
+}
+
+function submitLater() {
+    document.getElementById("submit_status").value = "Later";
+    document.getElementById("employee_form").submit();
+}
+
+window.onload = showHidden;
+</script>
+{% endblock %}

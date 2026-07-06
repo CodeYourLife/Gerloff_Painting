@@ -13,3 +13,17 @@ admin.site.register(InvoiceApprovals)
 admin.site.register(SubcontractorPayments)
 admin.site.register(SubcontractorOriginalInvoiceItem)
 admin.site.register(SubcontractorEmployeeDelegation)
+
+
+@admin.register(SubcontractorRespiratorClearance)
+class SubcontractorRespiratorClearanceAdmin(admin.ModelAdmin):
+    list_display = (
+        "subcontractor",
+        "employee_display_name",
+        "date_created",
+        "date_completed",
+        "approved_for_use",
+        "date_expires",
+    )
+    list_filter = ("approved_for_use", "subcontractor")
+    search_fields = ("employee__name", "employee_name", "subcontractor__company")

@@ -1,0 +1,119 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
+{% block content %}
+
+<div class="container mt-5">
+    <h2>Formulario de Autorizacion para Respirador {{ clearance.employee_display_name }} - Seccion 3 de 6</h2>
+    <form id="employee_form" method="POST" action="{% url 'subcontractor_resp_clearance_section' selected_sub.id clearance.id 3 %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <br>
+            <b>1. Alguna vez ha tenido alguno de los siguientes sintomas cardiovasculares o del corazon?</b>
+        <br>
+            <br>
+            <label for="chest_pain">Tiene dolor o presion frecuente en el pecho?</label>
+        <select id="chest_pain" name="chest_pain" class="form-control">
+            <option selected>{{ part1.chest_pain }}</option>
+            <option value="Yes">Si</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="heart_skipping">En los ultimos dos anos, ha notado que su corazon salta o pierde latidos?</label>
+        <select id="heart_skipping" name="heart_skipping" class="form-control">
+            <option selected>{{ part1.heart_skipping }}</option>
+            <option value="Yes">Si</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="heartburn">Tiene acidez o reflujo frecuente que no esta relacionado con comer?</label>
+        <select id="heartburn" name="heartburn" class="form-control">
+            <option selected>{{ part1.heartburn }}</option>
+            <option value="Yes">Si</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="other">Cualquier otro sintoma que crea que pueda estar relacionado con problemas del corazon o de circulacion?</label>
+        <select id="other" name="other" class="form-control">
+            <option selected>{{ part1.other }}</option>
+            <option value="Yes">Si</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="explanation">Si respondio "Si" a cualquiera de lo anterior, explique:</label>
+        <textarea id="explanation" name="explanation" class="form-control" rows="4">{{ part1.explanation }}</textarea>
+    </div>
+
+    <hr>
+
+    <div class="form-group">
+        <b>2. Toma ACTUALMENTE medicamentos para alguno de los siguientes problemas?</b>
+<br>
+        <br>
+        <label for="breathing_medication">Problemas respiratorios o pulmonares?</label>
+        <select id="breathing_medication" name="breathing_medication" class="form-control">
+            <option selected>{{ part1.breathing_medication }}</option>
+            <option value="Yes">Si</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="heart_medication">Problemas del corazon?</label>
+        <select id="heart_medication" name="heart_medication" class="form-control">
+            <option selected>{{ part1.heart_medication }}</option>
+            <option value="Yes">Si</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="blood_pressure_medication">Presion arterial?</label>
+        <select id="blood_pressure_medication" name="blood_pressure_medication" class="form-control">
+            <option selected>{{ part1.blood_pressure_medication }}</option>
+            <option value="Yes">Si</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="seizure_medication">Convulsiones?</label>
+        <select id="seizure_medication" name="seizure_medication" class="form-control">
+            <option selected>{{ part1.seizure_medication }}</option>
+            <option value="Yes">Si</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="medication_explanation">Si respondio "Si" a cualquiera de lo anterior, explique:</label>
+        <textarea id="medication_explanation" name="medication_explanation" class="form-control" rows="4">{{ part1.medication_explanation }}</textarea>
+    </div>
+            
+        <button type="button" class="btn btn-primary" onclick='check_form()'>Continuar a la siguiente pagina</button>
+
+    </form>
+
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+	<script type="text/javascript" class="init">
+
+
+    function check_form() {
+        form_completed = "yes"
+        myForm = document.getElementById('employee_form');
+        Array.from(myForm.elements).forEach(element => {
+            if (element.type === 'select-one' && (element.value === 'Please Select' || element.value === 'Por favor seleccione')) {
+                alert(element.labels[0].textContent + " No completado");
+                element.scrollIntoView();
+                form_completed = "no";
+                process.exit()
+                return;
+            }
+        })
+
+        if (form_completed == "yes"){myForm.submit()}
+    }
+    </script>
+{% endblock %}
+
+
+

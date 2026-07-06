@@ -1,6 +1,7 @@
 from console.models import *
 from django.shortcuts import render, redirect
 import json
+from types import SimpleNamespace
 from changeorder.views import link_callback
 from datetime import datetime,date
 from decimal import Decimal, InvalidOperation
@@ -29,9 +30,67 @@ import datetime
 import os
 from datetime import date
 from console.misc import Email
+from dateutil.relativedelta import relativedelta
 from xhtml2pdf import pisa
 from media.utilities import MediaUtilities
 from subcontractors import toolbox_views as sub_toolbox
+
+
+SUB_RESPIRATOR_SECTION_MODELS = {
+    1: RespiratorClearance1,
+    2: RespiratorClearance2,
+    3: RespiratorClearance3,
+    4: RespiratorClearance4,
+    5: RespiratorClearance5,
+    6: RespiratorClearance6,
+}
+
+
+def _sub_respirator_section_defaults(section_number):
+    section_model = SUB_RESPIRATOR_SECTION_MODELS[section_number]
+    values = {}
+
+    for field in section_model._meta.fields:
+        if field.name in ("id", "main"):
+            continue
+        values[field.name] = field.get_default()
+
+    return values
+
+
+def _sub_respirator_section_data(clearance, section_number):
+    values = _sub_respirator_section_defaults(section_number)
+    saved_values = (clearance.form_data or {}).get(str(section_number), {})
+    values.update(saved_values)
+    return SimpleNamespace(**values)
+
+
+def _save_sub_respirator_section(clearance, section_number, post_data):
+    allowed_fields = _sub_respirator_section_defaults(section_number).keys()
+    form_data = clearance.form_data or {}
+    section_data = form_data.get(str(section_number), {})
+
+    for field_name in allowed_fields:
+        if field_name in post_data:
+            section_data[field_name] = post_data.get(field_name)
+
+    form_data[str(section_number)] = section_data
+    clearance.form_data = form_data
+    clearance.save(update_fields=["form_data"])
+
+
+def _duplicate_sub_employee_name(base_name, subcontractor):
+    duplicate_name = f"{base_name} 2"
+    suffix = 2
+
+    while Subcontractor_Employees.objects.filter(
+        subcontractor=subcontractor,
+        name__iexact=duplicate_name
+    ).exists():
+        suffix += 1
+        duplicate_name = f"{base_name} {suffix}"
+
+    return duplicate_name
 
 
 def _complete_subcontractor_toolbox_talk(employee, scheduled_talk, job):
@@ -866,6 +925,310 @@ def portal(request, sub_id, contract_id):
         send_data['items'] = items
 
     return render(request, "portal.html", send_data)
+
+
+def subcontractor_resp_clearance(request, sub_id):
+    selected_sub = get_object_or_404(Subcontractors, id=sub_id)
+
+    if request.method == "POST" and request.POST.get("start_clearance"):
+        sub_employee = None
+        employee_name = (request.POST.get("employee_name") or "").strip()
+        sub_employee_id = request.POST.get("sub_employee_id")
+        duplicate_choice = request.POST.get("duplicate_choice")
+        duplicate_employee_id = request.POST.get("duplicate_employee_id")
+        selected_language = request.POST.get("language") if request.POST.get("language") in ("English", "Spanish") else "English"
+
+        if sub_employee_id:
+            sub_employee = get_object_or_404(
+                Subcontractor_Employees,
+                id=sub_employee_id,
+                subcontractor=selected_sub
+            )
+            employee_name = sub_employee.name
+
+        if not sub_employee and not employee_name:
+            messages.error(request, "Select an existing employee or type a new employee name.")
+            return redirect("subcontractor_resp_clearance", sub_id=selected_sub.id)
+
+        if not sub_employee:
+            existing_employee = (
+                Subcontractor_Employees.objects
+                .filter(subcontractor=selected_sub, name__iexact=employee_name)
+                .order_by("-is_active", "id")
+                .first()
+            )
+
+            if existing_employee and not duplicate_choice:
+                clearances = (
+                    SubcontractorRespiratorClearance.objects
+                    .filter(subcontractor=selected_sub)
+                    .select_related("employee", "subcontractor")
+                    .order_by("employee_name", "-date_created", "-id")
+                )
+
+                return render(request, "sub_respirator_clearance.html", {
+                    "selected_sub": selected_sub,
+                    "sub_employees": Subcontractor_Employees.objects.filter(
+                        subcontractor=selected_sub,
+                        is_active=True
+                    ).order_by("name"),
+                    "clearances": clearances,
+                    "duplicate_employee_name": employee_name,
+                    "duplicate_employee": existing_employee,
+                    "selected_language": selected_language,
+                })
+
+            if duplicate_choice == "same":
+                sub_employee = get_object_or_404(
+                    Subcontractor_Employees,
+                    id=duplicate_employee_id,
+                    subcontractor=selected_sub
+                )
+                employee_name = sub_employee.name
+            else:
+                new_employee_name = employee_name
+                if existing_employee:
+                    new_employee_name = _duplicate_sub_employee_name(employee_name, selected_sub)
+
+                sub_employee = Subcontractor_Employees.objects.create(
+                    subcontractor=selected_sub,
+                    name=new_employee_name,
+                    date_enrolled=date.today(),
+                    is_active=True,
+                )
+                employee_name = sub_employee.name
+
+        if sub_employee and not sub_employee.is_active:
+            sub_employee.is_active = True
+            sub_employee.date_enrolled = sub_employee.date_enrolled or date.today()
+            sub_employee.save(update_fields=["is_active", "date_enrolled"])
+
+        clearance = SubcontractorRespiratorClearance.objects.create(
+            subcontractor=selected_sub,
+            employee=sub_employee,
+            employee_name=employee_name,
+            date_created=date.today(),
+            language=selected_language,
+        )
+
+        return redirect(
+            "subcontractor_resp_clearance_section",
+            sub_id=selected_sub.id,
+            clearance_id=clearance.id,
+            section_number=0
+        )
+
+    clearances = (
+        SubcontractorRespiratorClearance.objects
+        .filter(subcontractor=selected_sub)
+        .select_related("employee", "subcontractor")
+        .order_by("employee_name", "-date_created", "-id")
+    )
+
+    return render(request, "sub_respirator_clearance.html", {
+        "selected_sub": selected_sub,
+        "sub_employees": Subcontractor_Employees.objects.filter(
+            subcontractor=selected_sub,
+            is_active=True
+        ).order_by("name"),
+        "clearances": clearances,
+    })
+
+
+def subcontractor_resp_clearance_section(request, sub_id, clearance_id, section_number):
+    selected_sub = get_object_or_404(Subcontractors, id=sub_id)
+    clearance = get_object_or_404(
+        SubcontractorRespiratorClearance,
+        id=clearance_id,
+        subcontractor=selected_sub
+    )
+
+    section_number = int(section_number)
+
+    if section_number == 0:
+        if request.method == "POST":
+            clearance.gender = request.POST.get("gender")
+            clearance.height = request.POST.get("height")
+            clearance.weight = request.POST.get("weight")
+            clearance.phone = request.POST.get("phone")
+            clearance.birth_date = request.POST.get("birth_date") or None
+            clearance.save(update_fields=[
+                "gender",
+                "height",
+                "weight",
+                "phone",
+                "birth_date",
+            ])
+            return redirect(
+                "subcontractor_resp_clearance_section",
+                sub_id=selected_sub.id,
+                clearance_id=clearance.id,
+                section_number=1
+            )
+
+        template_name = "sub_respirator_clearance_section0_spanish.html" if clearance.language == "Spanish" else "sub_respirator_clearance_section0.html"
+        return render(request, template_name, {
+            "selected_sub": selected_sub,
+            "clearance": clearance,
+        })
+
+    if section_number not in SUB_RESPIRATOR_SECTION_MODELS:
+        messages.error(request, "Respirator clearance section could not be found.")
+        return redirect("subcontractor_resp_clearance", sub_id=selected_sub.id)
+
+    if request.method == "POST":
+        _save_sub_respirator_section(clearance, section_number, request.POST)
+
+        if section_number == 6:
+            clearance.date_completed = date.today()
+            clearance.is_physician_required = request.POST.get("physician") == "Yes"
+            clearance.is_physician_actually_required = request.POST.get("physician") == "Yes"
+            clearance.save(update_fields=[
+                "date_completed",
+                "is_physician_required",
+                "is_physician_actually_required",
+            ])
+
+            try:
+                Email.sendEmail(
+                    "Subcontractor Respirator Clearance Completed",
+                    (
+                        "Respirator Clearance Completed.\n"
+                        f"Subcontractor: {selected_sub.company}\n"
+                        f"Employee: {clearance.employee_display_name}"
+                    ),
+                    ["skip@gerloffpainting.com", "bridgette@gerloffpainting.com"],
+                    False,
+                    selected_sub.email or "operations@gerloffpainting.com"
+                )
+            except Exception:
+                messages.warning(
+                    request,
+                    "Respirator clearance was completed, but the notification email could not be sent."
+                )
+
+            messages.success(request, "Respirator clearance submitted for approval.")
+            return redirect("subcontractor_resp_clearance", sub_id=selected_sub.id)
+
+        return redirect(
+            "subcontractor_resp_clearance_section",
+            sub_id=selected_sub.id,
+            clearance_id=clearance.id,
+            section_number=section_number + 1
+        )
+
+    template_name = f"sub_respirator_clearance_section{section_number}.html"
+    if clearance.language == "Spanish":
+        template_name = f"sub_respirator_clearance_section{section_number}_spanish.html"
+
+    return render(request, template_name, {
+        "selected_sub": selected_sub,
+        "clearance": clearance,
+        "part1": _sub_respirator_section_data(clearance, section_number),
+    })
+
+
+def subcontractor_resp_clearance_completed(request, sub_id, clearance_id):
+    selected_sub = get_object_or_404(Subcontractors, id=sub_id)
+    clearance = get_object_or_404(
+        SubcontractorRespiratorClearance,
+        id=clearance_id,
+        subcontractor=selected_sub
+    )
+
+    return render(request, "sub_respirator_clearance_completed.html", {
+        "selected_sub": selected_sub,
+        "clearance": clearance,
+        "main": clearance,
+        "part1": _sub_respirator_section_data(clearance, 1),
+        "part2": _sub_respirator_section_data(clearance, 2),
+        "part3": _sub_respirator_section_data(clearance, 3),
+        "part4": _sub_respirator_section_data(clearance, 4),
+        "part5": _sub_respirator_section_data(clearance, 5),
+        "part6": _sub_respirator_section_data(clearance, 6),
+    })
+
+
+def subcontractor_resp_clearance_review(request, sub_id, clearance_id):
+    selected_sub = get_object_or_404(Subcontractors, id=sub_id)
+    clearance = get_object_or_404(
+        SubcontractorRespiratorClearance,
+        id=clearance_id,
+        subcontractor=selected_sub
+    )
+
+    if request.method == "POST":
+        existing_notes = clearance.notes or ""
+
+        if "note" in request.POST:
+            note = (request.POST.get("note") or "").strip()
+            if note:
+                clearance.notes = existing_notes + f"\n{date.today()} - {note}"
+                clearance.save(update_fields=["notes"])
+            return redirect("subcontractor_resp_clearance_review", sub_id=selected_sub.id, clearance_id=clearance.id)
+
+        if "change_expiration_date" in request.POST:
+            old_expiration_date = clearance.date_expires
+            new_expiration_date = request.POST.get("expiration_date")
+            clearance.date_expires = new_expiration_date or None
+            clearance.notes = (
+                existing_notes
+                + "\n"
+                + f"{date.today()} - Expiration date changed from "
+                + (old_expiration_date.strftime("%m/%d/%Y") if old_expiration_date else "None")
+                + f" to {new_expiration_date}"
+            )
+            clearance.save(update_fields=["date_expires", "notes"])
+            return redirect("subcontractor_resp_clearance_review", sub_id=selected_sub.id, clearance_id=clearance.id)
+
+        if request.POST.get("submit_status") == "Approved":
+            clearance.approved_for_use = True
+            clearance.date_approved = date.today()
+            clearance.date_expires = date.today() + relativedelta(years=1)
+
+            if request.POST.get("is_physician_required") == "Yes":
+                clearance.is_physician_actually_required = True
+                clearance.physician_approved = True
+            else:
+                clearance.is_physician_actually_required = False
+                clearance.physician_approved = False
+
+            clearance.notes = existing_notes + f"\n{date.today()} - Approved for Respirator Use"
+            clearance.save()
+        else:
+            if request.POST.get("is_physician_required") == "No":
+                clearance.is_physician_actually_required = False
+            if request.POST.get("is_physician_required") == "Yes":
+                clearance.is_physician_actually_required = True
+
+            clearance.notes = (
+                existing_notes
+                + "\n"
+                + f"{date.today()} - Not Approved Yet. "
+                + f"Physician Required? - {request.POST.get('is_physician_required')}. "
+                + f"Physician Approved? - {request.POST.get('physician_approved')}"
+            )
+            clearance.save()
+
+        return redirect("safety_home")
+
+    respirator_sections = [
+        (f"Section {section_number}", bool((clearance.form_data or {}).get(str(section_number))))
+        for section_number in range(1, 7)
+    ]
+    sections_completed = sum(1 for section_name, is_complete in respirator_sections if is_complete)
+    total_sections = len(respirator_sections)
+
+    return render(request, "sub_respirator_clearance_review.html", {
+        "selected_sub": selected_sub,
+        "clearance": clearance,
+        "respirator_sections": respirator_sections,
+        "sections_completed": sections_completed,
+        "total_sections": total_sections,
+        "not_completed_yet": not bool(clearance.date_completed),
+        "approved_for_use": clearance.approved_for_use,
+        "notes": [line for line in (clearance.notes or "").splitlines() if line.strip()],
+    })
 
 
 def connect(request):

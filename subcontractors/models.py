@@ -600,6 +600,54 @@ class Subcontractor_Employees(models.Model):
     date_enrolled = models.DateField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
 
+    def __str__(self):
+        return self.name or f"Subcontractor Employee {self.id}"
+
+
+class SubcontractorRespiratorClearance(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    subcontractor = models.ForeignKey(Subcontractors, on_delete=models.PROTECT)
+    employee = models.ForeignKey(
+        Subcontractor_Employees,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True
+    )
+    employee_name = models.CharField(max_length=250, null=True, blank=True)
+    date_created = models.DateField(null=True, blank=True)
+    date_completed = models.DateField(null=True, blank=True)
+    approved_for_use = models.BooleanField(default=False)
+    date_approved = models.DateField(null=True, blank=True)
+    date_expires = models.DateField(null=True, blank=True)
+    is_physician_required = models.BooleanField(default=False)
+    is_physician_actually_required = models.BooleanField(default=False)
+    physician_approved = models.BooleanField(default=False)
+    gender = models.CharField(max_length=50, null=True, blank=True)
+    height = models.CharField(max_length=50, null=True, blank=True)
+    weight = models.CharField(max_length=50, null=True, blank=True)
+    phone = models.CharField(max_length=50, null=True, blank=True)
+    birth_date = models.DateField(null=True, blank=True)
+    language = models.CharField(max_length=20, default="English")
+    form_data = models.JSONField(default=dict, blank=True)
+    notes = models.TextField(null=True, blank=True)
+
+    @property
+    def employee_display_name(self):
+        if self.employee:
+            return self.employee.name
+        return self.employee_name or "Unassigned"
+
+    def status_label(self):
+        if not self.date_completed:
+            return "Not completed yet"
+        if not self.approved_for_use:
+            return "Not approved yet"
+        return self.date_expires or ""
+
+    def __str__(self):
+        return f"{self.subcontractor} - {self.employee_display_name}"
+
+
 class Subcontractor_Job_Assignments(models.Model):
     id = models.BigAutoField(primary_key=True)
     employee = models.ForeignKey(Subcontractor_Employees, on_delete=models.PROTECT)

@@ -450,6 +450,12 @@ Showing Invoice Information for {{last_saturday}} - {{this_friday}}
     👷 EMPLOYEE MANAGEMENT
 </a>
 </div>
+<div class="mb-2">
+<a href="{% url 'subcontractor_resp_clearance' selected_sub.id %}"
+   class="btn btn-primary btn-lg d-block d-md-inline-block mt-2">
+    😷 RESPIRATOR CLEARANCE
+</a>
+</div>
 </div>
 {% if toolbox_talks_required_count %}
 <div class="card mobile-dashboard-card mb-3">

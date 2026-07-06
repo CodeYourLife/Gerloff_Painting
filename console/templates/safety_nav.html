@@ -1,4 +1,4 @@
-<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+<nav class="sub-nav navbar navbar-expand-lg navbar-dark bg-dark">
     <a class="navbar-brand sub-navbar-brand" href="{% url 'safety_home' %}">
         Safety
     </a>
@@ -24,21 +24,28 @@
             <li>
                 <a class="nav-item nav-link {% if active_tab == 'all_topics' %}active{% endif %}"
                    href="{% url 'toolbox_talks_master' %}">
-                    All Topics
+                    Toolbox Topics
                 </a>
             </li>
 
             <li>
                 <a class="nav-item nav-link {% if active_tab == 'schedule' and not page_label %}active{% endif %}"
                    href="{% url 'scheduled_toolbox_talks' %}">
-                    Schedule
+                    Toolbox Schedule
                 </a>
             </li>
 
             <li>
                 <a class="nav-item nav-link {% if active_tab == 'employees' %}active{% endif %}"
                    href="{% url 'toolbox_talks_by_employee' %}">
-                    Employees
+                    Toolbox - By Employee
+                </a>
+            </li>
+
+            <li>
+                <a class="nav-item nav-link {% if active_tab == 'certifications' %}active{% endif %}"
+                   href="{% url 'certifications' 'ALL' %}">
+                    Certifications
                 </a>
             </li>
 

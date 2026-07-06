@@ -2519,7 +2519,7 @@ def certifications(request, id):
                                               user=Employees.objects.get(user=request.user),
                                               note=request.POST['note'])
         if 'closed_item' in request.POST:
-            cert.is_closed = False
+            cert.is_closed = True
             CertificationNotes.objects.create(certification=cert, date=date.today(),
                                               user=Employees.objects.get(user=request.user),
                                               note="Cert closed." + request.POST['closed_note'])
@@ -2555,7 +2555,11 @@ def certifications(request, id):
                                               note="Expiration Date Changed to: " + cert.date_expires + "- " +
                                                    request.POST['end_date_note'])
         cert.save()
-    certifications_list = Certifications.objects.filter(is_closed=False)
+    certifications_list = Certifications.objects.filter(
+        is_closed=False,
+        employee__active=True,
+        employee__job_title__description="Painter",
+    )
 
     for cert in certifications_list:
         if cert.category and cert.category.description == "Respirator Clearance":
@@ -2572,6 +2576,20 @@ def certifications(request, id):
     send_data['certifications'] = certifications_list
     send_data['actions'] = CertificationActionRequired.objects.all()
     return render(request, "certifications.html", send_data)
+
+
+@login_required(login_url='/accounts/login')
+def subcontractor_certifications(request):
+    clearances = (
+        SubcontractorRespiratorClearance.objects
+        .select_related("subcontractor", "employee")
+        .order_by("subcontractor__company", "employee_name", "-date_created", "-id")
+    )
+
+    send_data = {
+        "clearances": clearances,
+    }
+    return render(request, "subcontractor_certifications.html", send_data)
 
 
 @login_required(login_url='/accounts/login')
@@ -2777,15 +2795,113 @@ def daily_reports(request, id):
 def safety_home(request):
     send_data = {}
     painters_needing_respirator = []
+    today = date.today()
+    expiration_warning_date = today + timedelta(days=14)
     for x in Employees.objects.filter(active=True, job_title__description="Painter"):
-        if not RespiratorClearance.objects.filter(employee=x).exists():
-            if not Certifications.objects.filter(employee=x, category__description="Respirator Clearance").exists():
-                painters_needing_respirator.append({'employee': x.first_name + " " + x.last_name})
+        external_resp_cert = Certifications.objects.filter(
+            employee=x,
+            is_closed=False,
+            category__description="Respirator Clearance",
+            date_expires__gte=today
+        ).exclude(
+            respiratorclearance__isnull=False
+        ).order_by("date_expires").first()
+
+        trinity_resp_clearance = RespiratorClearance.objects.filter(
+            employee=x,
+            date_completed__isnull=False,
+            approved_for_use=True,
+            certification__is_closed=False,
+            certification__date_expires__gte=today
+        ).select_related("certification").order_by("certification__date_expires").first()
+
+        pending_trinity_resp_clearance = RespiratorClearance.objects.filter(
+            employee=x,
+            date_completed__isnull=False,
+            approved_for_use=False,
+            certification__is_closed=False
+        ).exists()
+
+        expired_trinity_resp_clearance = RespiratorClearance.objects.filter(
+            employee=x,
+            date_completed__isnull=False,
+            approved_for_use=True,
+            certification__is_closed=False,
+            certification__date_expires__lt=today
+        ).exists()
+
+        expired_external_resp_cert = Certifications.objects.filter(
+            employee=x,
+            is_closed=False,
+            category__description="Respirator Clearance",
+            date_expires__lt=today
+        ).exclude(
+            respiratorclearance__isnull=False
+        ).exists()
+
+        if external_resp_cert or trinity_resp_clearance or pending_trinity_resp_clearance:
+            current_expiration = None
+            if external_resp_cert:
+                current_expiration = external_resp_cert.date_expires
+            if trinity_resp_clearance and (
+                current_expiration is None or trinity_resp_clearance.certification.date_expires < current_expiration
+            ):
+                current_expiration = trinity_resp_clearance.certification.date_expires
+
+            if current_expiration and today <= current_expiration <= expiration_warning_date:
+                painters_needing_respirator.append({
+                    'employee': x.first_name + " " + x.last_name,
+                    'status': f"Pending Expiration {current_expiration.strftime('%m/%d/%Y')}",
+                })
+            continue
+
+        status = "Expired" if expired_trinity_resp_clearance or expired_external_resp_cert else "Not Completed"
+        painters_needing_respirator.append({
+            'employee': x.first_name + " " + x.last_name,
+            'status': status,
+        })
+
+    for x in (
+        SubcontractorRespiratorClearance.objects
+        .filter(
+            approved_for_use=True,
+            date_expires__gte=today,
+            date_expires__lte=expiration_warning_date,
+        )
+        .select_related('subcontractor', 'employee')
+    ):
+        painters_needing_respirator.append({
+            'employee': f"{x.subcontractor.company} - {x.employee_display_name}",
+            'status': f"Pending Expiration {x.date_expires.strftime('%m/%d/%Y')}",
+        })
+
     send_data['pending_respirators'] = painters_needing_respirator
     send_data['pending_respirators_count'] = len(painters_needing_respirator)
     respirators_in_review = []
-    for x in RespiratorClearance.objects.filter(date_approved__isnull=True):
-        respirators_in_review.append({'employee': x.employee.first_name + " " + x.employee.last_name,'date': x.date_created, 'status': x.certification.action})
+    for x in RespiratorClearance.objects.filter(date_approved__isnull=True).select_related('employee', 'certification'):
+        status = x.certification.action if x.certification else ""
+        respirators_in_review.append({
+            'employee': x.employee.first_name + " " + x.employee.last_name,
+            'date': x.date_created,
+            'status': status,
+            'certification_id': x.certification_id,
+            'link_to_certification': status == "Need Safety Director Approval" and bool(x.certification_id),
+        })
+
+    for x in (
+        SubcontractorRespiratorClearance.objects
+        .filter(approved_for_use=False)
+        .select_related('subcontractor', 'employee')
+    ):
+        respirators_in_review.append({
+            'employee': f"{x.subcontractor.company} - {x.employee_display_name}",
+            'date': x.date_completed or x.date_created,
+            'status': "Need Safety Director Approval" if x.date_completed else "Not Completed Yet",
+            'link_to_subcontractor_clearance': True,
+            'subcontractor_id': x.subcontractor_id,
+            'clearance_id': x.id,
+        })
+
     send_data['respirators_in_review'] = respirators_in_review
     send_data['respirators_in_review_count'] = len(respirators_in_review)
     send_data['safety_inspections'] = (
