@@ -1,0 +1,92 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
+{% block content %}
+
+<div class="container mt-5">
+    <h2>Formulario de Autorizacion para Respirador {{ clearance.employee_display_name }} - Seccion 6 de 6</h2>
+    <form id="employee_form" method="POST" action="{% url 'subcontractor_resp_clearance_section' selected_sub.id clearance.id 6 %}">
+        {% csrf_token %}
+        <div class="form-group">
+
+    <label for="second_job">Liste cualquier segundo trabajo o negocio adicional que tenga:</label>
+    <textarea id="second_job" name="second_job" class="form-control" rows="2">{{ part1.second_job }}</textarea>
+    <br>
+    <label for="previous_occupations">Liste sus ocupaciones anteriores:</label>
+    <textarea id="previous_occupations" name="previous_occupations" class="form-control" rows="2">{{ part1.previous_occupations }}</textarea>
+    <br>
+    <label for="hobbies">Liste pasatiempos o actividades que realiza regularmente:</label>
+    <textarea id="hobbies" name="hobbies" class="form-control" rows="2">{{ part1.hobbies }}</textarea>
+
+    <br><b>Exposiciones ocupacionales</b><br><br>
+    <label for="military_exposure">Alguna vez ha estado expuesto a agentes biologicos o quimicos (en entrenamiento o combate)?</label>
+    <select id="military_exposure" name="military_exposure" class="form-control" style="width: 250px;">
+      <option value="{{ part1.military_exposure }}">{{ part1.military_exposure }}</option>
+      <option value="Yes">Si</option>
+      <option value="No">No</option>
+    </select>
+
+    <br>
+    <label for="hazmat_team">Alguna vez ha servido en un equipo HAZMAT?</label>
+    <select id="hazmat_team" name="hazmat_team" class="form-control" style="width: 250px;">
+      <option value="{{ part1.hazmat_team }}">{{ part1.hazmat_team }}</option>
+      <option value="Yes">Si</option>
+      <option value="No">No</option>
+    </select>
+
+    <br><b>3. Medicamentos</b><br>
+    <label for="other_medications">Actualmente toma otros medicamentos no mencionados anteriormente?</label>
+    <select id="other_medications" name="other_medications" class="form-control" style="width: 250px;">
+      <option value="{{ part1.other_medications }}">{{ part1.other_medications }}</option>
+      <option value="Yes">Si</option>
+      <option value="No">No</option>
+    </select>
+
+    <br>
+    <label for="list_medications">Si respondio si, liste los medicamentos:</label>
+    <textarea id="list_medications" name="list_medications" class="form-control" rows="2">{{ part1.list_medications }}</textarea>
+
+    <br>
+    <label for="physician">Desea hablar con el profesional de salud que revisara este cuestionario sobre sus respuestas? Si elige 'si', la evaluacion no se puede aprobar hasta que nos comuniquemos con usted.</label>
+    <select id="physician" name="physician" class="form-control" style="width: 250px;">
+      <option value="{{ part1.physician }}">{{ part1.physician }}</option>
+      <option value="Yes">Si</option>
+      <option value="No">No</option>
+    </select>
+
+    <br>
+
+        <button type="button" class="btn btn-primary" onclick='check_form()'>ENVIAR FORMULARIO</button>
+		</div>
+    </form>
+
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+	<script type="text/javascript" class="init">
+
+
+    function check_form() {
+        form_completed = "yes"
+        myForm = document.getElementById('employee_form');
+        Array.from(myForm.elements).forEach(element => {
+            if (element.type === 'select-one' && (element.value === 'Please Select' || element.value === 'Por favor seleccione')) {
+                alert(element.labels[0].textContent + " No completado");
+                element.scrollIntoView();
+                form_completed = "no";
+                process.exit()
+                return;
+            }
+        })
+
+        if (form_completed == "yes"){myForm.submit()}
+    }
+    </script>
+{% endblock %}
+
+
+

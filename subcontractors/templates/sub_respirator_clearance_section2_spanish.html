@@ -1,0 +1,152 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
+{% block content %}
+
+<div class="container mt-5">
+    <h2>Formulario de Autorizacion para Respirador {{ clearance.employee_display_name }} - Seccion 2 de 6</h2>
+    <form id="employee_form" method="POST" action="{% url 'subcontractor_resp_clearance_section' selected_sub.id clearance.id 2 %}">
+        {% csrf_token %}
+        <div class="form-group">
+<b>Seccion 1 - Tiene actualmente alguno de los siguientes sintomas de enfermedad pulmonar o respiratoria? </b>
+            <br>
+            <br>
+        <label for="breath_shortness">Le falta el aire al hacer actividades de bajo esfuerzo (como caminar a paso normal o lavarse/vestirse). O le falta el aire de una manera que interfiere con su trabajo?</label>
+        <select name="breath_shortness" id="breath_shortness" class="form-control">
+            <option selected>{{ part1.breath_shortness }}</option>
+            <option value="Yes">Si</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="coughing_issues">Tiene problemas de tos (por ejemplo, tos que produce flema, lo despierta por la manana, ocurre principalmente al acostarse, o produce sangre en la boca)?</label>
+        <select name="coughing_issues" id="coughing_issues" class="form-control">
+            <option selected>{{ part1.coughing_issues }}</option>
+            <option value="Yes">Si</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="wheezing_issues">Tiene silbidos al respirar que interfieren con su trabajo?</label>
+        <select name="wheezing_issues" id="wheezing_issues" class="form-control">
+            <option selected>{{ part1.wheezing_issues }}</option>
+            <option value="Yes">Si</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="chest_pain">Tiene dolor en el pecho al respirar profundamente o al hacer ejercicio?</label>
+        <select name="chest_pain" id="chest_pain" class="form-control">
+            <option selected>{{ part1.chest_pain }}</option>
+            <option value="Yes">Si</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="other_lung_problems">Ha consultado a un medico por problemas respiratorios o pulmonares?</label>
+        <select name="other_lung_problems" id="other_lung_problems" class="form-control">
+            <option selected>{{ part1.other_lung_problems }}</option>
+            <option value="Yes">Si</option>
+            <option value="No">No</option>
+        </select>
+
+        <label for="lung_problem_explanation">Si respondio si a cualquiera de lo anterior, explique:</label>
+        <textarea name="lung_problem_explanation" id="lung_problem_explanation" class="form-control" rows="3">{{ part1.lung_problem_explanation }}</textarea>
+
+        <hr>
+
+            <b>Seccion 2 - Alguna vez ha tenido alguno de los siguientes problemas cardiovasculares o del corazon? </b>
+            <br>
+            <br>
+
+<label for="heart_attack">Ataque al corazon?</label>
+<select name="heart_attack" id="heart_attack" class="form-control">
+    <option selected>{{ part1.heart_attack }}</option>
+    <option value="Yes">Si</option>
+    <option value="No">No</option>
+</select>
+
+<label for="stroke">Derrame cerebral?</label>
+<select name="stroke" id="stroke" class="form-control">
+    <option selected>{{ part1.stroke }}</option>
+    <option value="Yes">Si</option>
+    <option value="No">No</option>
+</select>
+
+<label for="angina">Angina o dolor en el pecho por enfermedad cardiaca?</label>
+<select name="angina" id="angina" class="form-control">
+    <option selected>{{ part1.angina }}</option>
+    <option value="Yes">Si</option>
+    <option value="No">No</option>
+</select>
+
+<label for="heart_failure">Insuficiencia cardiaca?</label>
+<select name="heart_failure" id="heart_failure" class="form-control">
+    <option selected>{{ part1.heart_failure }}</option>
+    <option value="Yes">Si</option>
+    <option value="No">No</option>
+</select>
+
+<label for="swelling">Hinchazon en las piernas o pies no causada por caminar?</label>
+<select name="swelling" id="swelling" class="form-control">
+    <option selected>{{ part1.swelling }}</option>
+    <option value="Yes">Si</option>
+    <option value="No">No</option>
+</select>
+
+<label for="arrhythmia">Arritmia cardiaca (latido irregular)?</label>
+<select name="arrhythmia" id="arrhythmia" class="form-control">
+    <option selected>{{ part1.arrhythmia }}</option>
+    <option value="Yes">Si</option>
+    <option value="No">No</option>
+</select>
+
+<label for="high_blood_pressure">Presion arterial alta?</label>
+<select name="high_blood_pressure" id="high_blood_pressure" class="form-control">
+    <option selected>{{ part1.high_blood_pressure }}</option>
+    <option value="Yes">Si</option>
+    <option value="No">No</option>
+</select>
+
+<label for="other_heart_problem">Cualquier otro problema del corazon que le hayan informado?</label>
+<select name="other_heart_problem" id="other_heart_problem" class="form-control">
+    <option selected>{{ part1.other_heart_problem }}</option>
+    <option value="Yes">Si</option>
+    <option value="No">No</option>
+</select>
+
+        <label for="heart_problem_explanation">Si respondio si a cualquiera de lo anterior, explique:</label>
+        <textarea name="heart_problem_explanation" id="heart_problem_explanation" class="form-control" rows="3">{{ part1.heart_problem_explanation }}</textarea>
+
+        <br>
+        <button type="button" class="btn btn-primary" onclick='check_form()'>Continuar a la siguiente pagina</button>
+    </div>
+    </form>
+
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+	<script type="text/javascript" class="init">
+
+
+    function check_form() {
+        form_completed = "yes"
+        myForm = document.getElementById('employee_form');
+        Array.from(myForm.elements).forEach(element => {
+            if (element.type === 'select-one' && (element.value === 'Please Select' || element.value === 'Por favor seleccione')) {
+                alert(element.labels[0].textContent + " No completado");
+                element.scrollIntoView();
+                form_completed = "no";
+                process.exit()
+                return;
+            }
+        })
+
+        if (form_completed == "yes"){myForm.submit()}
+    }
+    </script>
+{% endblock %}
+
+
+

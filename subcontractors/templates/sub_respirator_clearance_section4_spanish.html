@@ -1,0 +1,153 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
+{% block content %}
+
+
+<div class="container mt-5">
+    <h2>Formulario de Autorizacion para Respirador {{ clearance.employee_display_name }} - Seccion 4 de 6</h2>
+    <form id="employee_form" method="POST" action="{% url 'subcontractor_resp_clearance_section' selected_sub.id clearance.id 4 %}">
+        {% csrf_token %}
+        <div class="form-group">
+
+        <label for="worn_respirator">
+            Ha usado un respirador anteriormente?
+        </label>
+        <select id="worn_respirator" name="worn_respirator" class="form-control" onchange ="show_hidden()">
+            <option selected>{{ part1.worn_respirator }}</option>
+            <option value="Yes">Si</option>
+            <option value="No">No</option>
+        </select>
+        <br>
+            <b>Si ha usado un respirador antes, complete lo siguiente: </b>
+            <br>
+            <br>
+        <label for="respirator_type">
+            Que tipo de respirador uso?
+        </label>
+        <textarea id="respirator_type"
+                  name="respirator_type"
+                  class="form-control"
+                  rows="3">{{ part1.respirator_type }}</textarea>
+
+        <hr>
+
+
+        <label for="eye_irritation">
+            Irritacion en los ojos al usar un respirador?
+        </label>
+        <select id="eye_irritation" name="eye_irritation" class="form-control">
+            <option selected>{{ part1.eye_irritation }}</option>
+            <option value="Yes">Si</option>
+            <option value="No">No</option>
+            <option value="N/A">No aplica</option>
+        </select>
+
+        <label for="allergies">
+            Alergias en la piel o sarpullido al usar respirador?
+        </label>
+        <select id="allergies" name="allergies" class="form-control">
+            <option selected>{{ part1.allergies }}</option>
+            <option value="Yes">Si</option>
+            <option value="No">No</option>
+            <option value="N/A">No aplica</option>
+        </select>
+
+        <label for="anxiety">
+            Ansiedad, panico o claustrofobia al usar un respirador?
+        </label>
+        <select id="anxiety" name="anxiety" class="form-control">
+            <option selected>{{ part1.anxiety }}</option>
+            <option value="Yes">Si</option>
+            <option value="No">No</option>
+            <option value="N/A">No aplica</option>
+        </select>
+
+        <label for="weakness">
+            Debilidad, mareos, aturdimiento o fatiga al usar un respirador?
+        </label>
+        <select id="weakness" name="weakness" class="form-control">
+            <option selected>{{ part1.weakness }}</option>
+            <option value="Yes">Si</option>
+            <option value="No">No</option>
+            <option value="N/A">No aplica</option>
+        </select>
+
+        <label for="other_problem">
+            Cualquier otro problema al usar un respirador?
+        </label>
+        <select id="other_problem" name="other_problem" class="form-control">
+            <option selected>{{ part1.other_problem }}</option>
+            <option value="Yes">Si</option>
+            <option value="No">No</option>
+            <option value="N/A">No aplica</option>
+        </select>
+
+        <label for="explanation">
+            Si respondio "Si" a cualquiera de lo anterior, explique:
+        </label>
+        <textarea id="explanation"
+                  name="explanation"
+                  class="form-control"
+                  rows="4">{{ part1.explanation }}</textarea>
+
+        <hr>
+
+        <br>
+        <button type="button" class="btn btn-primary" onclick='check_form()'>Continuar a la siguiente pagina</button>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+	<script type="text/javascript" class="init">
+function show_hidden(){
+    myForm = document.getElementById('employee_form');
+    worn_respirator = document.getElementById('worn_respirator')
+
+        Array.from(myForm.elements).forEach(element => {
+            if (element.type === 'select-one' && element.name !== 'worn_respirator') {
+                if (worn_respirator.value == "Si") {
+                    element.value = "Por favor seleccione"
+                }
+                else {
+                    element.value = "N/A"
+                }
+            }
+        })
+        if (worn_respirator.value == "No") {
+                    document.getElementById('respirator_type').value = "No aplica"
+                    document.getElementById('explanation').value = "No aplica"
+                }
+        else{
+            document.getElementById('respirator_type').value = ""
+                    document.getElementById('explanation').value = ""
+        }
+}
+
+    function check_form() {
+        form_completed = "yes"
+        myForm = document.getElementById('employee_form');
+        Array.from(myForm.elements).forEach(element => {
+            if (element.type === 'select-one' && (element.value === 'Please Select' || element.value === 'Por favor seleccione')) {
+                alert(element.labels[0].textContent + " No completado");
+                element.scrollIntoView();
+                form_completed = "no";
+                process.exit()
+                return;
+            }
+        })
+
+        if (form_completed == "yes"){myForm.submit()}
+    }
+    </script>
+{% endblock %}
+
+
+

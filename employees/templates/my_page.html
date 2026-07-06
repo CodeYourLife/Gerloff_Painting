@@ -1960,6 +1960,15 @@
                     </form>
 
                 {% endif %}
+
+                {% if not respirator_clearance_required and not respirator_not_approved %}
+                    <form name="add_another_respirator_clearance" action="{% url 'respirator_clearance_section0' %}" class="mt-2">
+                        {% csrf_token %}
+                        <input type="submit"
+                               class="btn btn-danger btn"
+                               value="Complete Another Respirator Clearance" />
+                    </form>
+                {% endif %}
             </div>
         </div>
 

@@ -1,0 +1,74 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
+
+{% block sub_nav %}
+    {% include 'portal_nav.html' with selected_sub=selected_sub active_tab='home' page_label='Respirator Clearance' %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Respirator Clearance Form - Employee Info</h2>
+    <form id="employee_form" method="POST" action="{% url 'subcontractor_resp_clearance_section' selected_sub.id clearance.id 0 %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <p>Employee = <b>{{ clearance.employee_display_name }}</b></p>
+            <br>
+
+            <label for="gender">Gender:</label>
+            <select id="gender" name="gender" class="form-control" style="width: 250px;">
+                {% if clearance.gender and clearance.gender != "not_selected" %}
+                    <option value="{{ clearance.gender }}">{{ clearance.gender }}</option>
+                {% endif %}
+                <option value="not_selected">Please Select</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Unassigned">Unassigned</option>
+            </select>
+
+            <br>
+            <label for="height">Height: </label>
+            <input type="text" name="height" id="height" value="{{ clearance.height|default:'' }}">
+
+            <br>
+            <label for="weight">Weight: </label>
+            <input type="text" name="weight" id="weight" value="{{ clearance.weight|default:'' }}">
+
+            <br>
+            <label for="phone">Phone Number: </label>
+            <input type="text" name="phone" id="phone" value="{{ clearance.phone|default:'' }}">
+
+            <br>
+            <label for="birth_date">Birth Date: </label>
+            <input type="date" name="birth_date" id="birth_date" value="{{ clearance.birth_date|date:'Y-m-d' }}">
+        </div>
+
+        <button type="button" class="btn btn-primary" onclick="check_form()">Proceed to Next Page</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript" class="init">
+function check_form() {
+    let formCompleted = "yes";
+    const myForm = document.getElementById("employee_form");
+    Array.from(myForm.elements).forEach(element => {
+        if (element.type === "select-one" && element.value === "not_selected") {
+            alert(element.labels[0].textContent + " Not Completed");
+            formCompleted = "no";
+        } else if (element.type === "text" && element.value === "") {
+            alert(element.labels[0].textContent + " Not Completed");
+            formCompleted = "no";
+        }
+    });
+    if (formCompleted === "yes") {
+        myForm.submit();
+    }
+}
+</script>
+{% endblock %}
+

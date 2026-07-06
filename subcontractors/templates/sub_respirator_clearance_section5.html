@@ -1,0 +1,144 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
+{% block content %}
+
+<div class="container mt-5">
+    <h2>Respirator Clearance Form {{ clearance.employee_display_name }} - Section 5 of 6</h2>
+    <form id="employee_form" method="POST" action="{% url 'subcontractor_resp_clearance_section' selected_sub.id clearance.id 5 %}">
+        {% csrf_token %}
+        <div class="form-group">
+               <label for="home_exposure">At work or at home, have you ever been exposed to hazardous solvents, airborne chemicals (e.g. gases, fumes, or dust), or have you come into skin contact with hazardous chemicals?</label>
+        <select name="home_exposure" id="home_exposure" class="form-control" style="width: 250px;">
+            <option value="{{ part1.home_exposure }}">{{ part1.home_exposure }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            
+        </select><br>
+
+  <label for="home_exposure_explained">If yes, please explain:</label>
+        <textarea class="form-control" name="home_exposure_explained" id="home_exposure_explained" rows="3">{{ part1.home_exposure_explained }}</textarea>
+        <br>
+
+        <!-- Each Exposure Type -->
+            <br>
+            <b>Have you ever worked with any of the materials, or under any of the conditions listed below?</b>
+            <br><br>
+        <label for="asbestos">Asbestos:</label>
+        <select name="asbestos" id="asbestos" class="form-control" style="width: 250px;">
+            <option value="{{ part1.asbestos }}">{{ part1.asbestos }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            
+        </select><br>
+
+        <label for="silica">Silica (e.g., in sandblasting)):</label>
+        <select name="silica" id="silica" class="form-control" style="width: 250px;">
+            <option value="{{ part1.silica }}">{{ part1.silica }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            
+        </select><br>
+
+        <label for="tungsten_cobalt">Tungsten/cobalt (e.g. grinding or welding this material):</label>
+        <select name="tungsten_cobalt" id="tungsten_cobalt" class="form-control" style="width: 250px;">
+            <option value="{{ part1.tungsten_cobalt }}">{{ part1.tungsten_cobalt }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            
+        </select><br>
+
+        <label for="beryllium">Beryllium:</label>
+        <select name="beryllium" id="beryllium" class="form-control" style="width: 250px;">
+            <option value="{{ part1.beryllium }}">{{ part1.beryllium }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            
+        </select><br>
+
+        <label for="aluminum">Aluminum:</label>
+        <select name="aluminum" id="aluminum" class="form-control" style="width: 250px;">
+            <option value="{{ part1.aluminum }}">{{ part1.aluminum }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            
+        </select><br>
+
+        <label for="coal">Coal (e.g. mining):</label>
+        <select name="coal" id="coal" class="form-control" style="width: 250px;">
+            <option value="{{ part1.coal }}">{{ part1.coal }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            
+        </select><br>
+
+        <label for="iron">Iron:</label>
+        <select name="iron" id="iron" class="form-control" style="width: 250px;">
+            <option value="{{ part1.iron }}">{{ part1.iron }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            
+        </select><br>
+
+        <label for="tin">Tin:</label>
+        <select name="tin" id="tin" class="form-control" style="width: 250px;">
+            <option value="{{ part1.tin }}">{{ part1.tin }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            
+        </select><br>
+
+        <label for="dusty_environments">Dusty environments:</label>
+        <select name="dusty_environments" id="dusty_environments" class="form-control" style="width: 250px;">
+            <option value="{{ part1.dusty_environments }}">{{ part1.dusty_environments }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            
+        </select><br>
+
+        <label for="other_exposure">Any other hazardous material exposure?:</label>
+        <select name="other_exposure" id="other_exposure" class="form-control" style="width: 250px;">
+            <option value="{{ part1.other_exposure }}">{{ part1.other_exposure }}</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            
+        </select><br>
+
+        <!-- Explanation -->
+        <label for="explanation">If you answered "Yes" to any of the above, please explain:</label>
+        <textarea class="form-control" name="explanation" id="explanation" rows="4">{{ part1.explanation }}</textarea>
+        <br>
+
+        <button type="button" class="btn btn-primary" onclick='check_form()'>Proceed to Next Page</button>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+	<script type="text/javascript" class="init">
+
+
+    function check_form() {
+        form_completed = "yes"
+        myForm = document.getElementById('employee_form');
+        Array.from(myForm.elements).forEach(element => {
+            if (element.type === 'select-one' && element.value === 'Please Select') {
+                alert(element.labels[0].textContent + " Not Completed");
+                element.scrollIntoView();
+                form_completed = "no";
+                process.exit()
+                return;
+            }
+        })
+
+        if (form_completed == "yes"){myForm.submit()}
+    }
+    </script>
+{% endblock %}
+

@@ -35,6 +35,26 @@ path("subcontractor_portal_email_signed_ticket/<changeorder_id> <subcontractor_i
 path("subcontractor_payment_print/<id>", views.subcontractor_payment_print, name='subcontractor_payment_print'),
 path('portal/employees/<int:sub_id>/',views.subcontractor_employee_management,name='subcontractor_employee_management'),
 path(
+    'portal/<int:sub_id>/respirator-clearance/',
+    views.subcontractor_resp_clearance,
+    name='subcontractor_resp_clearance'
+),
+path(
+    'portal/<int:sub_id>/respirator-clearance/<int:clearance_id>/section/<int:section_number>/',
+    views.subcontractor_resp_clearance_section,
+    name='subcontractor_resp_clearance_section'
+),
+path(
+    'portal/<int:sub_id>/respirator-clearance/<int:clearance_id>/completed/',
+    views.subcontractor_resp_clearance_completed,
+    name='subcontractor_resp_clearance_completed'
+),
+path(
+    'portal/<int:sub_id>/respirator-clearance/<int:clearance_id>/review/',
+    views.subcontractor_resp_clearance_review,
+    name='subcontractor_resp_clearance_review'
+),
+path(
     'portal/employees/<int:sub_id>/subcontract/<int:subcontract_id>/toggle-delegation/',
     views.toggle_subcontractor_job_delegation,
     name='toggle_subcontractor_job_delegation'

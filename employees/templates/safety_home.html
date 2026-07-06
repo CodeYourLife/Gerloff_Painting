@@ -129,7 +129,7 @@
                 <h5 class="mb-0">
                     <button class="btn btn-link" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false"
                             aria-controls="collapseThree">
-                        {{pending_respirators_count}} Employees Needing Respirator Approval
+                        {{pending_respirators_count}} Employees Need Respirator Clearance
                     </button>
                 </h5>
             </div>
@@ -144,7 +144,7 @@
                         </thead>
                         <tbody>
                             {% for x in pending_respirators %}
-                            <tr><td>{{x.employee}}</td></tr>
+                            <tr><td>{{x.employee}} - {{x.status}}</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -178,7 +178,15 @@
                             {% for x in respirators_in_review %}
                             <tr><td>{{x.employee}}</td>
                             <td>{{x.date}}</td>
-                                <td>{{x.status}}</td>
+                                <td>
+                                    {% if x.link_to_certification %}
+                                        <a href="{% url 'certifications' x.certification_id %}">{{x.status}}</a>
+                                    {% elif x.link_to_subcontractor_clearance %}
+                                        <a href="{% url 'subcontractor_resp_clearance_review' x.subcontractor_id x.clearance_id %}">{{x.status}}</a>
+                                    {% else %}
+                                        {{x.status}}
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
