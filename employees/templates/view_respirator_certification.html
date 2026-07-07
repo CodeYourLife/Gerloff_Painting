@@ -41,6 +41,32 @@
             background-color: white !important;
         }
 
+        .respirator-cert-container .form-control {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            box-sizing: border-box;
+        }
+
+        .respirator-cert-container .input-group input.form-control {
+            min-width: 0;
+        }
+
+        .expiration-date-row {
+            margin-left: 0;
+            margin-right: 0;
+        }
+
+        .expiration-date-input-col {
+            padding-left: 0;
+            padding-right: 16px;
+        }
+
+        .respirator-cert-container #expiration_date {
+            width: calc(100% - 24px) !important;
+        }
+
     </style>
     <link rel="stylesheet" href="{% static 'project_styles.css' %}">
 {% endblock %}
@@ -52,8 +78,9 @@
 {% block content %}
 <br>
 
+<div class="container mt-4 mb-5 respirator-cert-container" style="max-width: 900px;">
 {% if not_completed_yet %}
-    <div class="container mt-4" style="max-width: 800px;">
+    <div>
         <div class="card border-warning">
             <div class="card-header bg-warning font-weight-bold">
                 Respirator Application Not Completed Yet
@@ -109,20 +136,46 @@
                     </tbody>
                 </table>
             </div>
+            <hr>
+            <form method="post"
+                  action="{% url 'view_respirator_certification' certification_id %}"
+                  class="text-center"
+                  onsubmit="return confirm('Are you sure you want to delete this respirator clearance? This cannot be undone.');">
+                {% csrf_token %}
+                <button type="submit"
+                        name="delete_clearance"
+                        value="1"
+                        class="btn btn-danger mb-4">
+                    Delete
+                </button>
+            </form>
         </div>
     </div>
 {% else %}
-<div class="demo-html" style="width:90%">
+<div>
     <!--    	<div style="background-color: powderblue;">-->
-	<div class ="row"><div class ="col"><h3>Respirator Clearance for {{certification.employee}}</h3></div></div>
-    <br>
+	<div class="mb-3">
+        <h3 class="mb-1">Respirator Clearance</h3>
+        <div class="small">
+            <b>Employee:</b> {{certification.employee}}
+        </div>
+        {% if approved_for_use %}
+            <span class="badge badge-success mt-2">Approved {{certification.date_approved}}</span>
+        {% endif %}
+    </div>
     <div class ="row"><div class ="col"><b>Questionnaire Completion Date:</b> {{certification.date_completed}}</div></div>
     <br>
+    <div class ="row"><div class ="col">
+    <form id="view_clearance" action="{% url 'respirator_clearance_completed' certification.id %}" method="POST">
+    {% csrf_token %}
+    <input type="submit" class= "btn btn-danger btn" value="View Completed Respirator Clearance Form" />
+    </form>
+    </div></div>
     <br>
 {% if approved_for_use %}
 <div class="card border-warning mb-3">
     <div class="card-header bg-warning font-weight-bold">
-        Respirator Certification Expiration
+        Change Expiration Date
     </div>
 
     <div class="card-body">
@@ -138,8 +191,8 @@
         <form method="POST" action="{% url 'view_respirator_certification' certification_id %}">
             {% csrf_token %}
 
-            <div class="form-row align-items-end">
-                <div class="col-md-6 mb-2">
+            <div class="form-row align-items-end expiration-date-row">
+                <div class="col-md-6 mb-2 expiration-date-input-col">
                     <label for="expiration_date">New Expiration Date</label>
                     <input type="date"
                            name="expiration_date"
@@ -151,7 +204,9 @@
                 <div class="col-md-6 mb-2">
                     <button type="submit"
                             name="change_expiration_date"
-                            class="btn btn-warning">
+                            id="save_expiration_date"
+                            class="btn btn-warning"
+                            style="display: none;">
                         Save Expiration Date
                     </button>
                 </div>
@@ -165,13 +220,6 @@
     <br>
     {% endif %}
 
-    <div class ="row"><div class ="col">
-    <form id="view_clearance" action="{% url 'respirator_clearance_completed' certification.id %}" method="POST">
-    {% csrf_token %}
-    <input type="submit" class= "btn btn-danger btn" value="View Completed Respirator Clearance Form" />
-    </form>
-    </div></div>
-    <br>
     <!--	Notes-->
 	<div style="background-color: Ivory;">
 	<div class ="row"><div class ="col"><h3>NOTES</h3></div></div>
@@ -182,14 +230,25 @@
 	{% endif %}
 		 <form id="add_note_form" action="{% url 'view_respirator_certification' certification_id %}" method="POST">
 			 {% csrf_token %}
-			 <div class ="row"><div class ="col"><input type="text" name="note" size="100" placeholder ='New Note Here' /> <input type="submit" name="new_note" value="ADD NOTE" /></div></div>
+			 <div class="input-group mb-3">
+                 <input type="text"
+                        name="note"
+                        class="form-control"
+                        placeholder="New Note Here">
+                 <div class="input-group-append">
+                     <button type="submit"
+                             name="new_note"
+                             value="ADD NOTE"
+                             class="btn btn-primary">
+                         ADD NOTE
+                     </button>
+                 </div>
+             </div>
          </form>
              <br>
 	</div>
     <hr>
     {% if approved_for_use %}
-    <br><br>
-    <div class ="row"><div class ="col"><h4>Employee Approved For Respirator</h4></div></div>
     {% else %}
     <br>
     <div style="background-color: powderblue;">
@@ -247,20 +306,39 @@
     {% endif %}
 </div>
 {% endif %}
-
+</div>
 
 {% endblock %}
 
 {% block extra_scripts %}
     <script type="text/javascript" class="init">
-    window.onload = function() {
+    window.addEventListener('load', function() {
         show_hidden()
+        toggle_expiration_save()
+
+        const expiration_date = document.getElementById('expiration_date');
+        if (expiration_date) {
+            expiration_date.addEventListener('input', toggle_expiration_save);
+            expiration_date.addEventListener('change', toggle_expiration_save);
+        }
+    })
+
+    function toggle_expiration_save() {
+        const expiration_date = document.getElementById('expiration_date');
+        const save_expiration_date = document.getElementById('save_expiration_date');
+        if (!expiration_date || !save_expiration_date) {
+            return;
+        }
+        save_expiration_date.style.display = expiration_date.value ? "inline-block" : "none";
     }
 
     function show_hidden(){
-        hide_physician_section = document.getElementById('physician_review');
-        is_physician_required_select = document.getElementById('is_physician_required');
-        physician_approved_select = document.getElementById('physician_approved');
+        const hide_physician_section = document.getElementById('physician_review');
+        const is_physician_required_select = document.getElementById('is_physician_required');
+        const physician_approved_select = document.getElementById('physician_approved');
+        if (!hide_physician_section || !is_physician_required_select || !physician_approved_select) {
+            return;
+        }
         if (is_physician_required_select.value == "Yes"){
             hide_physician_section.style.display = "block"
             physician_approved_select.value = "Please Select"

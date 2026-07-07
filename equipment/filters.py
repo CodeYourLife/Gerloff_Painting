@@ -137,6 +137,7 @@ class JobsFilter(django_filters.FilterSet):
 
     search = django_filters.CharFilter(label='Job Name =', method='search_filter')
     search2 = django_filters.CharFilter(label='Superintendent =', method='search_filter2')
+    search9 = django_filters.CharFilter(label='Project Manager =', method='search_filter9')
     search3 = django_filters.BooleanFilter(
         label='Include Closed Jobs',
         widget=forms.CheckboxInput,
@@ -168,6 +169,14 @@ class JobsFilter(django_filters.FilterSet):
             return queryset.filter(superintendent=None)
         else:
             return queryset.filter(superintendent__id=value)
+
+    def search_filter9(self, queryset, name, value):
+        if value == 'ALL':
+            return queryset
+        elif value == 'UNASSIGNED':
+            return queryset.filter(project_manager=None)
+        else:
+            return queryset.filter(project_manager__id=value)
 
     def search_filter3(self, queryset, name, value):
         if value:

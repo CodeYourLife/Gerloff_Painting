@@ -61,6 +61,38 @@ def _delete_expired_group_toolbox_views():
     ).delete()
 
 
+def get_respirators_in_review():
+    respirators_in_review = []
+    for x in RespiratorClearance.objects.filter(date_approved__isnull=True).select_related('employee', 'certification'):
+        status = x.certification.action if x.certification else ""
+        respirators_in_review.append({
+            'employee': x.employee.first_name + " " + x.employee.last_name,
+            'date': x.date_created,
+            'status': status,
+            'certification_id': x.certification_id,
+            'link_to_certification': status in [
+                "Need Safety Director Approval",
+                "Need to Complete Application",
+            ] and bool(x.certification_id),
+        })
+
+    for x in (
+        SubcontractorRespiratorClearance.objects
+        .filter(approved_for_use=False)
+        .select_related('subcontractor', 'employee')
+    ):
+        respirators_in_review.append({
+            'employee': f"{x.subcontractor.company} - {x.employee_display_name}",
+            'date': x.date_completed or x.date_created,
+            'status': "Need Safety Director Approval" if x.date_completed else "Need to Complete Application",
+            'link_to_subcontractor_clearance': True,
+            'subcontractor_id': x.subcontractor_id,
+            'clearance_id': x.id,
+        })
+
+    return respirators_in_review
+
+
 def _complete_employee_toolbox_talk(employee, scheduled_talk):
     completed_talk, created = CompletedToolboxTalks.objects.get_or_create(
         employee=employee,
@@ -2877,31 +2909,7 @@ def safety_home(request):
 
     send_data['pending_respirators'] = painters_needing_respirator
     send_data['pending_respirators_count'] = len(painters_needing_respirator)
-    respirators_in_review = []
-    for x in RespiratorClearance.objects.filter(date_approved__isnull=True).select_related('employee', 'certification'):
-        status = x.certification.action if x.certification else ""
-        respirators_in_review.append({
-            'employee': x.employee.first_name + " " + x.employee.last_name,
-            'date': x.date_created,
-            'status': status,
-            'certification_id': x.certification_id,
-            'link_to_certification': status == "Need Safety Director Approval" and bool(x.certification_id),
-        })
-
-    for x in (
-        SubcontractorRespiratorClearance.objects
-        .filter(approved_for_use=False)
-        .select_related('subcontractor', 'employee')
-    ):
-        respirators_in_review.append({
-            'employee': f"{x.subcontractor.company} - {x.employee_display_name}",
-            'date': x.date_completed or x.date_created,
-            'status': "Need Safety Director Approval" if x.date_completed else "Not Completed Yet",
-            'link_to_subcontractor_clearance': True,
-            'subcontractor_id': x.subcontractor_id,
-            'clearance_id': x.id,
-        })
-
+    respirators_in_review = get_respirators_in_review()
     send_data['respirators_in_review'] = respirators_in_review
     send_data['respirators_in_review_count'] = len(respirators_in_review)
     send_data['safety_inspections'] = (
@@ -4620,6 +4628,19 @@ def view_respirator_certification(request,id):
     selected_cert = Certifications.objects.get(id=id)
     selected_respirator_cert = RespiratorClearance.objects.get(certification=selected_cert)
     if request.method == 'POST':
+        if 'delete_clearance' in request.POST:
+            if selected_respirator_cert.date_completed:
+                messages.error(request, "Completed respirator clearances cannot be deleted.")
+                return redirect('view_respirator_certification', id=selected_cert.id)
+
+            with transaction.atomic():
+                CertificationNotes.objects.filter(certification=selected_cert).delete()
+                CertificationActionRequired.objects.filter(main=selected_cert).delete()
+                selected_respirator_cert.delete()
+                selected_cert.delete()
+            messages.success(request, "Respirator clearance deleted.")
+            return redirect('safety_home')
+
         if 'note' in request.POST:
             CertificationNotes.objects.create(certification=selected_cert,date=date.today(), user=Employees.objects.get(user=request.user), note=request.POST['note'])
         elif 'change_expiration_date' in request.POST:
