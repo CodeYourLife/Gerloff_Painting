@@ -435,6 +435,9 @@
 var original_start_date = "Test"
 
 function new_filter_now(){
+    if (typeof showPageOverlay === "function") {
+        showPageOverlay("Filtering jobs...");
+    }
     const table = $('#jobs_table').DataTable();
     document.getElementById('table_search').value = table.search();
     document.getElementById('filter_form').submit();
