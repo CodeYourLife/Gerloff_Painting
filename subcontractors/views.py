@@ -46,6 +46,22 @@ SUB_RESPIRATOR_SECTION_MODELS = {
 }
 
 
+def _sub_resp_note_employee(request):
+    if not request.user.is_authenticated:
+        return None
+    return Employees.objects.filter(user=request.user).first()
+
+
+def _create_sub_resp_note(request, clearance, note):
+    SubcontractorRespiratorNotes.objects.create(
+        main=clearance,
+        date=date.today(),
+        employee=_sub_resp_note_employee(request),
+        subcontractor_employee=clearance.employee if not request.user.is_authenticated else None,
+        note=note
+    )
+
+
 def _sub_respirator_section_defaults(section_number):
     section_model = SUB_RESPIRATOR_SECTION_MODELS[section_number]
     values = {}
@@ -1088,6 +1104,7 @@ def subcontractor_resp_clearance_section(request, sub_id, clearance_id, section_
                 "is_physician_required",
                 "is_physician_actually_required",
             ])
+            _create_sub_resp_note(request, clearance, "Form Completed")
 
             try:
                 Email.sendEmail(
@@ -1158,27 +1175,30 @@ def subcontractor_resp_clearance_review(request, sub_id, clearance_id):
     )
 
     if request.method == "POST":
-        existing_notes = clearance.notes or ""
+        if "delete_clearance" in request.POST:
+            SubcontractorRespiratorNotes.objects.filter(main=clearance).delete()
+            clearance.delete()
+            messages.success(request, "Subcontractor respirator clearance deleted.")
+            return redirect("safety_home")
 
         if "note" in request.POST:
             note = (request.POST.get("note") or "").strip()
             if note:
-                clearance.notes = existing_notes + f"\n{date.today()} - {note}"
-                clearance.save(update_fields=["notes"])
+                _create_sub_resp_note(request, clearance, note)
             return redirect("subcontractor_resp_clearance_review", sub_id=selected_sub.id, clearance_id=clearance.id)
 
         if "change_expiration_date" in request.POST:
             old_expiration_date = clearance.date_expires
             new_expiration_date = request.POST.get("expiration_date")
             clearance.date_expires = new_expiration_date or None
-            clearance.notes = (
-                existing_notes
-                + "\n"
-                + f"{date.today()} - Expiration date changed from "
+            _create_sub_resp_note(
+                request,
+                clearance,
+                "Expiration date changed from "
                 + (old_expiration_date.strftime("%m/%d/%Y") if old_expiration_date else "None")
                 + f" to {new_expiration_date}"
             )
-            clearance.save(update_fields=["date_expires", "notes"])
+            clearance.save(update_fields=["date_expires"])
             return redirect("subcontractor_resp_clearance_review", sub_id=selected_sub.id, clearance_id=clearance.id)
 
         if request.POST.get("submit_status") == "Approved":
@@ -1193,22 +1213,22 @@ def subcontractor_resp_clearance_review(request, sub_id, clearance_id):
                 clearance.is_physician_actually_required = False
                 clearance.physician_approved = False
 
-            clearance.notes = existing_notes + f"\n{date.today()} - Approved for Respirator Use"
             clearance.save()
+            _create_sub_resp_note(request, clearance, "Approved for Respirator Use")
         else:
             if request.POST.get("is_physician_required") == "No":
                 clearance.is_physician_actually_required = False
             if request.POST.get("is_physician_required") == "Yes":
                 clearance.is_physician_actually_required = True
 
-            clearance.notes = (
-                existing_notes
-                + "\n"
-                + f"{date.today()} - Not Approved Yet. "
+            clearance.save()
+            _create_sub_resp_note(
+                request,
+                clearance,
+                "Not Approved Yet. "
                 + f"Physician Required? - {request.POST.get('is_physician_required')}. "
                 + f"Physician Approved? - {request.POST.get('physician_approved')}"
             )
-            clearance.save()
 
         return redirect("safety_home")
 
@@ -1227,7 +1247,7 @@ def subcontractor_resp_clearance_review(request, sub_id, clearance_id):
         "total_sections": total_sections,
         "not_completed_yet": not bool(clearance.date_completed),
         "approved_for_use": clearance.approved_for_use,
-        "notes": [line for line in (clearance.notes or "").splitlines() if line.strip()],
+        "notes": SubcontractorRespiratorNotes.objects.filter(main=clearance).order_by("date", "id"),
     })
 
 

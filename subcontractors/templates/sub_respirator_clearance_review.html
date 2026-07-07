@@ -4,6 +4,29 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+<style>
+    .sub-respirator-review-container .form-control {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        box-sizing: border-box;
+    }
+
+    .expiration-date-row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .expiration-date-input-col {
+        padding-left: 0;
+        padding-right: 16px;
+    }
+
+    .sub-respirator-review-container #expiration_date {
+        width: calc(100% - 24px) !important;
+    }
+</style>
 {% endblock %}
 
 {% block sub_nav %}
@@ -11,9 +34,13 @@
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4" style="max-width: 900px;">
-    <h3>Respirator Clearance for {{ clearance.employee_display_name }}</h3>
+<div class="container mt-4 sub-respirator-review-container" style="max-width: 900px;">
+    <h5>Subcontractor Respirator Clearance</h5>
+    <p><strong>Employee:</strong> {{ clearance.employee_display_name }}</p>
     <p><strong>Subcontractor:</strong> {{ selected_sub.company }}</p>
+    {% if approved_for_use %}
+        <span class="badge badge-success mb-3">Approved {{ clearance.date_approved }}</span>
+    {% endif %}
 
     {% if not_completed_yet %}
         <div class="card border-warning">
@@ -55,14 +82,31 @@
                     </tbody>
                 </table>
             </div>
+                <hr>
+    <form method="post"
+          action="{% url 'subcontractor_resp_clearance_review' selected_sub.id clearance.id %}"
+          class="text-center"
+          onsubmit="return confirm('Are you sure you want to delete this subcontractor respirator clearance? This cannot be undone.');">
+        {% csrf_token %}
+        <button type="submit"
+                name="delete_clearance"
+                value="1"
+                class="btn btn-danger mb-4">
+            Delete
+        </button>
+    </form>
         </div>
     {% else %}
         <p><strong>Questionnaire Completion Date:</strong> {{ clearance.date_completed }}</p>
 
+        <a href="{% url 'subcontractor_resp_clearance_completed' selected_sub.id clearance.id %}" class="btn btn-danger mb-3">
+            View Completed Respirator Clearance Form
+        </a>
+
         {% if approved_for_use %}
             <div class="card border-warning mb-3">
                 <div class="card-header bg-warning font-weight-bold">
-                    Respirator Certification Expiration
+                    Change Expiration Date
                 </div>
                 <div class="card-body">
                     <p>
@@ -76,13 +120,17 @@
 
                     <form method="post" action="{% url 'subcontractor_resp_clearance_review' selected_sub.id clearance.id %}">
                         {% csrf_token %}
-                        <div class="form-row align-items-end">
-                            <div class="col-md-6 mb-2">
+                        <div class="form-row align-items-end expiration-date-row">
+                            <div class="col-md-6 mb-2 expiration-date-input-col">
                                 <label for="expiration_date">New Expiration Date</label>
                                 <input type="date" name="expiration_date" id="expiration_date" class="form-control" required>
                             </div>
                             <div class="col-md-6 mb-2">
-                                <button type="submit" name="change_expiration_date" class="btn btn-warning">
+                                <button type="submit"
+                                        name="change_expiration_date"
+                                        id="save_expiration_date"
+                                        class="btn btn-warning"
+                                        style="display: none;">
                                     Save Expiration Date
                                 </button>
                             </div>
@@ -98,17 +146,13 @@
             </div>
         {% endif %}
 
-        <a href="{% url 'subcontractor_resp_clearance_completed' selected_sub.id clearance.id %}" class="btn btn-danger mb-3">
-            View Completed Respirator Clearance Form
-        </a>
-
         <div class="card mb-3">
             <div class="card-header">
                 Notes
             </div>
             <div class="card-body">
                 {% for note in notes %}
-                    <p>{{ note }}</p>
+                    <p>{{ note.date }} - {{ note.author|default:"Unknown" }} - {{ note.note }}</p>
                 {% empty %}
                     <p>No notes yet.</p>
                 {% endfor %}
@@ -126,9 +170,7 @@
             </div>
         </div>
 
-        {% if approved_for_use %}
-            <h4>Employee Approved For Respirator</h4>
-        {% else %}
+        {% if not approved_for_use %}
             <div class="card mb-4">
                 <div class="card-header bg-info font-weight-bold">
                     Safety Director Review
@@ -179,6 +221,8 @@
             </div>
         {% endif %}
     {% endif %}
+
+
 </div>
 {% endblock %}
 
@@ -216,6 +260,24 @@ function submitLater() {
     document.getElementById("employee_form").submit();
 }
 
-window.onload = showHidden;
+function toggleExpirationSave() {
+    const expirationDate = document.getElementById("expiration_date");
+    const saveExpirationDate = document.getElementById("save_expiration_date");
+    if (!expirationDate || !saveExpirationDate) {
+        return;
+    }
+    saveExpirationDate.style.display = expirationDate.value ? "inline-block" : "none";
+}
+
+window.addEventListener("load", function() {
+    showHidden();
+    toggleExpirationSave();
+
+    const expirationDate = document.getElementById("expiration_date");
+    if (expirationDate) {
+        expirationDate.addEventListener("input", toggleExpirationSave);
+        expirationDate.addEventListener("change", toggleExpirationSave);
+    }
+});
 </script>
 {% endblock %}

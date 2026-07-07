@@ -21,7 +21,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from employees.forms import SiriusUploadForm,ClockSharkUploadForm, ToolboxTalksUploadForm
 from employees.models import *
-from employees.views import get_scheduled_toolbox_folder, get_uploaded_toolbox_file
+from employees.views import get_respirators_in_review, get_scheduled_toolbox_folder, get_uploaded_toolbox_file
 from jobs.models import *
 from jobs.models import Jobs
 from jobs.views import subtract_months
@@ -537,7 +537,7 @@ def index(request):
                 next_two_weeks += 1
     send_data['super_jobs'] = next_two_weeks  #
     send_data['current_user'] = request.user.first_name
-    clearance_forms_needing_review = RespiratorClearance.objects.filter(approved_for_use=False).count()
+    clearance_forms_needing_review = len(get_respirators_in_review())
     send_data['clearance_forms_needing_review']=clearance_forms_needing_review
     painters_needing_respirator=0
     for x in Employees.objects.filter(job_title__description="Painter",active=True):

@@ -195,6 +195,132 @@ def gerloff_super_change(job, superintendent, author):
     }
 
 
+def gerloff_estimator_pm_change(job, estimator, project_manager, author):
+    changes = []
+
+    if job.estimator_id != estimator.id:
+        changes.append(("Estimator", estimator))
+
+    if job.project_manager_id != project_manager.id:
+        changes.append(("Project Manager", project_manager))
+
+    if not changes:
+        return {
+            "email_sent": False,
+            "email_message": "No assignments changed."
+        }
+
+    for role, employee in changes:
+        JobNotes.objects.create(
+            job_number=job,
+            note=role + " " + str(employee) + " Assigned to " + str(job),
+            type="auto_misc_note",
+            user=author,
+            date=date.today()
+        )
+
+    job.estimator = estimator
+    job.project_manager = project_manager
+    job.save()
+
+    author_email = (author.email or "").strip()
+    sender = author_email or "bridgette@gerloffpainting.com"
+    main_email_sent = False
+    management_email_sent = False
+    missing_email_names = []
+    failed_email_messages = []
+
+    assignments_by_employee = {}
+    for role, employee in changes:
+        assignments_by_employee.setdefault(employee.id, {
+            "employee": employee,
+            "roles": []
+        })
+        assignments_by_employee[employee.id]["roles"].append(role)
+
+    for assignment in assignments_by_employee.values():
+        employee = assignment["employee"]
+        employee_email = (employee.email or "").strip()
+        roles_text = " and ".join(assignment["roles"])
+
+        if not employee_email:
+            missing_email_names.append(str(employee))
+            continue
+
+        email_body = (
+            str(employee)
+            + "\n\nYou have been assigned as "
+            + roles_text
+            + " to:"
+            + "\n"
+            + str(job.job_number)
+            + "\n"
+            + str(job)
+            + "\n"
+            + str(job.client.company)
+        )
+
+        try:
+            Email.sendEmail(
+                "New Job - " + job.job_name,
+                email_body,
+                [employee_email],
+                False,
+                sender
+            )
+            main_email_sent = True
+        except Exception as e:
+            failed_email_messages.append(str(employee) + ": " + str(e))
+
+    management_lines = []
+    for role, employee in changes:
+        management_lines.append(role + " " + str(employee))
+
+    management_email_body = (
+        ", ".join(management_lines)
+        + " assigned to job "
+        + str(job.job_number)
+        + " - "
+        + str(job.job_name)
+        + ". Please update management console."
+    )
+
+    try:
+        Email.sendEmail(
+            "Management Console Update Needed - " + job.job_number,
+            management_email_body,
+            [
+                "bridgette@gerloffpainting.com",
+                "admin2@gerloffpainting.com",
+                "joe@gerloffpainting.com"
+            ],
+            False,
+            sender
+        )
+        management_email_sent = True
+    except Exception as e:
+        return {
+            "email_sent": main_email_sent,
+            "email_message": (
+                "Assignments were changed, but the management console email failed to send: "
+                + str(e)
+            )
+        }
+
+    email_message = "Assignment updated. Management console email was sent."
+    if main_email_sent:
+        email_message += " Assignment email was sent."
+    if missing_email_names:
+        email_message += " No email on file for: " + ", ".join(missing_email_names) + "."
+    if failed_email_messages:
+        email_message += " Some assignment emails failed: " + "; ".join(failed_email_messages) + "."
+
+    return {
+        "email_sent": main_email_sent or management_email_sent,
+        "email_message": email_message
+    }
+
+
 def open_dropbox(jobnumber, user):
     job = Jobs.objects.get(job_number=jobnumber)
     query = str(job.job_number) + " " + str(job.job_name)

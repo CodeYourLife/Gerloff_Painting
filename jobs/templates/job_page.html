@@ -341,6 +341,57 @@ float: left !important;
 
 
 <!-- Modal -->
+<div class="modal fade" id="estimator-pm-modal" tabindex="-1" role="dialog" aria-labelledby="title"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="title4"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="tab-content clearfix">
+                    <div class="tab-pane active" id="estimator_pm_tab">
+                        <div style="margin-top: 12px" class="table-responsive">
+                            <form id="pmform4" method="post">
+                                {% csrf_token %}
+                                <table>
+                                    <tr><td>
+                                        <label for="select_estimator">Estimator:</label>
+                                        <select id="select_estimator" name="select_estimator">
+                                            {% for employee in estimator_pm_employees %}
+                                            <option value="{{employee.id}}">{{employee.first_name}} {{employee.last_name}}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <br>
+                                        <label for="select_project_manager">PM:</label>
+                                        <select id="select_project_manager" name="select_project_manager">
+                                            {% for employee in estimator_pm_employees %}
+                                            <option value="{{employee.id}}">{{employee.first_name}} {{employee.last_name}}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <br>
+                                        <input type="hidden" name="job_number" id="job_number" />
+                                        <button type="button" class="btn btn-primary" onclick="submit_new_estimator_pm()" data-dismiss="modal"> Save Changes </button>
+                                    </td></tr>
+                                </table>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal -->
 
 <div class="modal fade" id="labor_close-modal" tabindex="-1" role="dialog" aria-labelledby="title"
      aria-hidden="true">
@@ -1083,7 +1134,10 @@ float: left !important;
 
         <div class="col-md-4 job-info-box">
             <div class="job-info-label">Gerloff Estimator / PM</div>
-            {{ job.estimator }} / {{job.project_manager}}
+            <a href="#"
+               onclick="populate_estimator_pm_modal('{{ job.job_name|escapejs }}','{{ job.job_number|escapejs }}','{{ job.estimator.id|default_if_none:'' }}','{{ job.project_manager.id|default_if_none:'' }}')">
+                <span id="selected_estimator_pm_display">{{ job.estimator }} / {{job.project_manager}}</span>
+            </a>
         </div>
 
         <div class="col-md-4 job-info-box" data-toggle="modal" data-target="#contract_amount-modal">
@@ -2315,6 +2369,51 @@ function populate_super_modal(jobname, superid, jobnumber, firstname, x, origin)
     document.getElementById("title3").innerHTML = jobname;
     pmform3.job_number.value = jobnumber;
     pmform3.first_name.value = firstname;
+}
+
+function submit_new_estimator_pm(){
+    showPageOverlay("Changing estimator / project manager and sending emails...");
+
+    $.ajax({
+        method: 'GET',
+        url: "{% url 'change_estimator_pm_ajax' %}",
+        data: {
+            'job_number': pmform4.job_number.value,
+            'select_estimator': pmform4.select_estimator.value,
+            'select_project_manager': pmform4.select_project_manager.value
+        },
+        success: function (data) {
+            showAlertModal(data.email_message);
+
+            if (data.success) {
+                document.getElementById("selected_estimator_pm_display").innerHTML =
+                    data.estimator_name + " / " + data.project_manager_name;
+            }
+        },
+        error: function () {
+            showAlertModal("Something went wrong while changing the estimator / project manager.");
+        },
+        complete: function () {
+            hidePageOverlay();
+        }
+    });
+}
+
+function populate_estimator_pm_modal(jobname,jobnumber,estimatorid,projectmanagerid){
+    if (estimatorid) {
+        pmform4.select_estimator.value = estimatorid;
+    } else {
+        pmform4.select_estimator.selectedIndex = 0;
+    }
+    if (projectmanagerid) {
+        pmform4.select_project_manager.value = projectmanagerid;
+    } else {
+        pmform4.select_project_manager.selectedIndex = 0;
+    }
+
+    document.getElementById("title4").innerHTML = jobname;
+    pmform4.job_number.value = jobnumber;
+    $('#estimator-pm-modal').modal('show');
 }
 
 function populate_start_date_modal(jobnumber,startdate,is_active,x,origin){

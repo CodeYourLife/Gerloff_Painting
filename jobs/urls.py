@@ -22,6 +22,7 @@ urlpatterns = [
     path('complete-work-order/', views.complete_work_order, name='complete_work_order'),
     path('import_super_from_mc/', views.import_super_from_mc, name='import_super_from_mc'),
     path('import_pm_from_mc/', views.import_pm_from_mc, name='import_pm_from_mc'),
+    path('change-estimator-pm-ajax/', views.change_estimator_pm_ajax, name='change_estimator_pm_ajax'),
     path(
             "clockshark/unmapped-jobs/",
             views.clockshark_unmapped_jobs,

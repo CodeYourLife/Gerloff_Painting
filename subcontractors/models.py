@@ -629,7 +629,6 @@ class SubcontractorRespiratorClearance(models.Model):
     birth_date = models.DateField(null=True, blank=True)
     language = models.CharField(max_length=20, default="English")
     form_data = models.JSONField(default=dict, blank=True)
-    notes = models.TextField(null=True, blank=True)
 
     @property
     def employee_display_name(self):
@@ -646,6 +645,33 @@ class SubcontractorRespiratorClearance(models.Model):
 
     def __str__(self):
         return f"{self.subcontractor} - {self.employee_display_name}"
+
+
+class SubcontractorRespiratorNotes(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    main = models.ForeignKey(SubcontractorRespiratorClearance, on_delete=models.CASCADE)
+    date = models.DateField()
+    employee = models.ForeignKey(
+        'employees.Employees',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+    subcontractor_employee = models.ForeignKey(
+        Subcontractor_Employees,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+    note = models.CharField(max_length=2000, blank=True, null=True)
+
+    @property
+    def author(self):
+        if self.employee:
+            return self.employee
+        if self.subcontractor_employee:
+            return self.subcontractor_employee
+        return ""
 
 
 class Subcontractor_Job_Assignments(models.Model):

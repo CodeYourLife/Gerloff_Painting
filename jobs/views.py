@@ -28,7 +28,7 @@ from equipment.filters import JobsFilter
 from equipment.models import Inventory
 from equipment.tables import JobsTable
 from jobs.filters import JobNotesFilter
-from jobs.JobMisc import start_date_change, gerloff_super_change
+from jobs.JobMisc import start_date_change, gerloff_super_change, gerloff_estimator_pm_change
 from jobs.models import *
 from jobs.models import ClockSharkTimeEntry, Jobs
 from jobs.models import Jobs
@@ -167,6 +167,51 @@ def get_client_employee_ajax(request):
         'phone': client_employee.phone or '',
         'email': client_employee.email or '',
     })
+
+
+@login_required(login_url='/accounts/login')
+def change_estimator_pm_ajax(request):
+    job_number = request.GET.get("job_number")
+    estimator_id = request.GET.get("select_estimator")
+    project_manager_id = request.GET.get("select_project_manager")
+
+    if not job_number or not estimator_id or not project_manager_id:
+        return JsonResponse({
+            "success": False,
+            "email_sent": False,
+            "email_message": "Missing job, estimator, or project manager."
+        })
+
+    try:
+        job = Jobs.objects.get(job_number=job_number)
+        estimator = Employees.objects.exclude(job_title__description="Painter").get(id=estimator_id)
+        project_manager = Employees.objects.exclude(job_title__description="Painter").get(id=project_manager_id)
+        author = Employees.objects.get(user=request.user)
+
+        email_result = gerloff_estimator_pm_change(job, estimator, project_manager, author)
+
+        return JsonResponse({
+            "success": True,
+            "email_sent": email_result["email_sent"],
+            "email_message": email_result["email_message"],
+            "estimator_id": estimator.id,
+            "estimator_name": str(estimator),
+            "project_manager_id": project_manager.id,
+            "project_manager_name": str(project_manager),
+        })
+    except Jobs.DoesNotExist:
+        return JsonResponse({
+            "success": False,
+            "email_sent": False,
+            "email_message": "Job not found."
+        })
+    except Employees.DoesNotExist:
+        return JsonResponse({
+            "success": False,
+            "email_sent": False,
+            "email_message": "Estimator, project manager, or current user employee record not found."
+        })
+
 
 @login_required(login_url='/accounts/login')
 def update_job_info(request, jobnumber):
@@ -951,19 +996,29 @@ def jobs_home(request):
     request_get = request.GET.copy()
 
     # Default view: Active + Punchlist
-    if not any(k in request_get for k in ['search2', 'search3', 'search4', 'search5', 'search7', 'search6','search8']):
+    if not any(k in request_get for k in ['search2', 'search9', 'search3', 'search4', 'search5', 'search7', 'search6','search8']):
         request_get['search4'] = 'on'
         request_get['search5'] = 'on'
 
     if request.method == 'GET':
-        # if 'search' in request_get:
-        #     send_data['search_exists'] = request_get['search']
+        if 'table_search' in request_get:
+            send_data['table_search'] = request_get['table_search']
 
         if 'search2' in request_get:
             send_data['search2_exists'] = request_get['search2']
             if request_get['search2'] != 'ALL' and request_get['search2'] != 'UNASSIGNED':
                 employee = Employees.objects.get(id=request_get['search2'])
                 send_data['selected_supername'] = employee.first_name + " " + employee.last_name
+            elif request_get['search2'] == 'UNASSIGNED':
+                send_data['selected_supername'] = "Unassigned Super"
+
+        if 'search9' in request_get:
+            send_data['search9_exists'] = request_get['search9']
+            if request_get['search9'] != 'ALL' and request_get['search9'] != 'UNASSIGNED':
+                employee = Employees.objects.get(id=request_get['search9'])
+                send_data['selected_project_manager_name'] = employee.first_name + " " + employee.last_name
+            elif request_get['search9'] == 'UNASSIGNED':
+                send_data['selected_project_manager_name'] = "Unassigned PM"
 
         if 'search3' in request_get:
             send_data['search3_exists'] = request_get['search3']
@@ -1002,7 +1057,25 @@ def jobs_home(request):
     send_data['has_filter'] = any(
         field in request_get for field in set(search_jobs.get_fields())
     )
+    selected_employee_filters = []
+    if send_data.get('selected_supername'):
+        selected_employee_filters.append(send_data['selected_supername'])
+    if send_data.get('selected_project_manager_name'):
+        selected_employee_filters.append(send_data['selected_project_manager_name'])
+    send_data['employee_filter_button_text'] = (
+        "Filtered by " + " and ".join(selected_employee_filters) if selected_employee_filters else "Filter By Employee"
+    )
+    send_data['employee_filter_open'] = False
     send_data['supers'] = Employees.objects.filter(job_title__description="Superintendent", active=True)
+    send_data['estimator_pm_employees'] = Employees.objects.exclude(
+        job_title__description="Painter"
+    ).order_by("first_name", "last_name")
+    send_data['project_manager_filter_employees'] = (
+        Employees.objects
+        .filter(project_manager__is_closed=False)
+        .distinct()
+        .order_by("first_name", "last_name")
+    )
     send_data['tickets'] = ChangeOrders.objects.filter(job_number__is_closed=False, is_t_and_m=True,
                                                        is_ticket_signed=False)
     send_data['open_cos'] = ChangeOrders.objects.filter(job_number__is_closed=False, is_closed=False,
@@ -1454,6 +1527,9 @@ def job_page(request, jobnumber):
         notes = JobNotes.objects.filter(job_number=selectedjob)
     send_data['notes'] = notes.order_by('date')
     send_data['supers'] = Employees.objects.filter(job_title__description="Superintendent", active=True)
+    send_data['estimator_pm_employees'] = Employees.objects.exclude(
+        job_title__description="Painter"
+    ).order_by("first_name", "last_name")
     send_data['man_hours_budgeted'] = selectedjob.man_hours_budgeted
     send_data['man_hours_used'] = selectedjob.hours_to_date()
     send_data['manhours_notes'] = JobNotes.objects.filter(job_number=selectedjob, type="manhours_note")
@@ -2272,18 +2348,21 @@ def import_super_from_mc(request):
                 "error": "Tell Joe that this failed to post to Trinity - Superintendent not found: " + super_name
             })
 
+        superintendent_changed = job.superintendent_id != employee.pk
+
         job.superintendent = employee
         job.is_painting_subbed = is_subcontractor
         job.save()
 
-        recipients=[]
-        if employee.email:
-            recipients.append(employee.email)
-            email_message=f"You have been Assigned as Super to {job.job_number} {job.job_name}"
-        else:
-            recipients.append("bridgette@gerloffpainting.com")
-            email_message = f"No email is entered for {employee.first_name} {employee.last_name}. Please let them know they have been Assigned as Super to {job.job_number} {job.job_name}"
-        Email.sendEmail("Super Assigned", email_message, recipients, False, "operations@gerloffpainting.com")
+        if superintendent_changed:
+            recipients=[]
+            if employee.email:
+                recipients.append(employee.email)
+                email_message=f"You have been Assigned as Super to {job.job_number} {job.job_name}"
+            else:
+                recipients.append("bridgette@gerloffpainting.com")
+                email_message = f"No email is entered for {employee.first_name} {employee.last_name}. Please let them know they have been Assigned as Super to {job.job_number} {job.job_name}"
+            Email.sendEmail("Super Assigned", email_message, recipients, False, "operations@gerloffpainting.com")
 
         return JsonResponse({
             "success": True,
@@ -2389,16 +2468,19 @@ def import_pm_from_mc(request):
                 "error": "Tell Joe that this failed to post to Trinity - PM not found: " + pm_name
             })
 
+        project_manager_changed = job.project_manager_id != employee.pk
+
         job.project_manager = employee
         job.save()
-        recipients=[]
-        if employee.email:
-            recipients.append(employee.email)
-            email_message=f"You have been Assigned as PM to {job.job_number} {job.job_name}"
-        else:
-            recipients.append("bridgette@gerloffpainting.com")
-            email_message = f"No email is entered for {employee.first_name} {employee.last_name}. Please let them know they have been Assigned as PM to {job.job_number} {job.job_name}"
-        Email.sendEmail("PM Assigned", email_message, recipients, False, "operations@gerloffpainting.com")
+        if project_manager_changed:
+            recipients=['joe@gerloffpainting.com']
+            if employee.email:
+                recipients.append(employee.email)
+                email_message=f"You have been Assigned as PM to {job.job_number} {job.job_name}"
+            else:
+                recipients.append("bridgette@gerloffpainting.com")
+                email_message = f"No email is entered for {employee.first_name} {employee.last_name}. Please let them know they have been Assigned as PM to {job.job_number} {job.job_name}"
+            Email.sendEmail("PM Assigned", email_message, recipients, False, "operations@gerloffpainting.com")
         return JsonResponse({
             "success": True,
             "message": "Job updated in Trinity: "
