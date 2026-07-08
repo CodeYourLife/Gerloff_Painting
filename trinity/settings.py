@@ -156,6 +156,7 @@ BASE_DIR / "static"
 #STATICFILES_DIR =['/jobs/static/jobs/project_styles.css']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+LOGIN_URL = '/accounts/login'
 
 # For Emails
 DEFAULT_FROM_EMAIL = 'joe@gerloffpainting.com'
