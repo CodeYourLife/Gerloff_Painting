@@ -60,6 +60,17 @@ from jobs.exchange_public_folders import (
 
 logger = logging.getLogger(__name__)
 
+from jobs.exchange_public_folders import (
+    ExchangeConfigError,
+    ExchangeFolderNotFound,
+    UnsupportedEmailFormat,
+    copy_exchange_item_to_job_public_folder,
+    file_email_to_job_public_folder,
+    list_job_public_folder_emails,
+)
+
+logger = logging.getLogger(__name__)
+
 
 @login_required(login_url='/accounts/login')
 def change_start_date(request, jobnumber, previous, super, filter):
