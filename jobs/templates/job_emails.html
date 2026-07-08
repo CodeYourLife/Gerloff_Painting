@@ -6,7 +6,33 @@
 {% include 'jobs_nav.html' with page_label="Job Emails" %}
 {% endblock %}
 
+{% block extra_head %}
+<style>
+    #email-loading-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 200000;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.75);
+    }
+
+    .email-loading-box {
+        padding: 14px 22px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background: #fff;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
+<div id="email-loading-overlay">
+    <div class="email-loading-box">Loading...</div>
+</div>
+
 <div class="container mt-3">
     {% if messages %}
         {% for message in messages %}
@@ -22,31 +48,73 @@
             {% if folder_name %}
                 <div class="text-muted">{{ folder_name }}</div>
             {% endif %}
+            {% if email_date_start and email_date_end %}
+                <small class="text-muted">
+                    Showing emails from {{ email_date_start|date:"m/d/y" }} to {{ email_date_end|date:"m/d/y" }}
+                </small>
+            {% else %}
+                <small class="text-muted">No emails found</small>
+            {% endif %}
         </div>
         <a href="{% url 'job_page' job.job_number %}" class="btn btn-secondary btn-sm">Back To Job</a>
     </div>
 
-    <table class="table table-sm table-striped">
+    {% if has_next_page %}
+        <div class="mb-2">
+            <a class="btn btn-info btn-sm email-loading-link"
+               href="{% url 'job_emails' job.job_number %}?offset={{ next_email_offset }}">
+                Show Next 25 Emails
+            </a>
+        </div>
+    {% endif %}
+
+    <table id="job_emails_table" class="table table-sm table-striped table-hover">
         <thead>
             <tr>
                 <th>Received</th>
                 <th>From</th>
                 <th>Subject</th>
+                <th>Attachments</th>
             </tr>
         </thead>
         <tbody>
             {% for email in emails %}
                 <tr>
-                    <td>{{ email.datetime_received|date:"m/d/Y g:i A" }}</td>
+                    <td data-order="{{ email.datetime_received|date:'Y-m-d H:i:s' }}">
+                        {{ email.datetime_received|date:"m/d/Y g:i A" }}
+                    </td>
                     <td>{{ email.sender }}</td>
-                    <td>{{ email.subject }}</td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="3">No emails found.</td>
+                    <td>
+                        <a class="email-loading-link" href="{% url 'job_email_detail' job.job_number %}?item_id={{ email.id|urlencode }}">
+                            {{ email.subject }}
+                        </a>
+                    </td>
+                    <td>{% if email.has_attachments %}Yes{% endif %}</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function () {
+    $('#job_emails_table').DataTable({
+        order: [[0, 'desc']],
+        paging: false,
+        lengthChange: false,
+        info: false
+    });
+
+    $('#email-loading-overlay').hide();
+
+    $('.email-loading-link').on('click', function () {
+        var overlay = document.getElementById('email-loading-overlay');
+        if (overlay) {
+            overlay.style.display = 'flex';
+        }
+    });
+});
+</script>
 {% endblock %}
