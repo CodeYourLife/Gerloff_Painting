@@ -47,6 +47,18 @@ import os.path
 import requests
 import uuid
 import re
+from urllib.parse import quote as urlquote
+
+from jobs.exchange_public_folders import (
+    ExchangeConfigError,
+    ExchangeFolderNotFound,
+    copy_exchange_item_to_job_public_folder,
+    get_job_public_folder_email,
+    get_job_public_folder_email_attachment,
+    list_job_public_folder_emails,
+)
+
+logger = logging.getLogger(__name__)
 
 from jobs.exchange_public_folders import (
     ExchangeConfigError,
@@ -1131,37 +1143,6 @@ def activate_sub_job(request,jobnumber):
     return redirect('job_page', jobnumber=jobnumber)
 
 
-@login_required(login_url='/accounts/login')
-@require_POST
-def file_job_email(request, jobnumber):
-    selectedjob = get_object_or_404(Jobs, job_number=jobnumber)
-    uploaded_file = request.FILES.get("email_file")
-
-    if not uploaded_file:
-        messages.error(request, "Choose an .eml file to file.")
-        return redirect("job_page", jobnumber=jobnumber)
-
-    if not uploaded_file.name.lower().endswith(".eml"):
-        messages.error(request, "Only .eml files are supported for full email import right now.")
-        return redirect("job_page", jobnumber=jobnumber)
-
-    try:
-        result = file_email_to_job_public_folder(selectedjob, uploaded_file)
-    except (ExchangeConfigError, ExchangeFolderNotFound, UnsupportedEmailFormat, ValueError) as exc:
-        logger.warning("Could not file email for job %s: %s", jobnumber, exc)
-        messages.error(request, str(exc))
-    except Exception:
-        logger.exception("Unexpected error filing email for job %s", jobnumber)
-        messages.error(request, "The email could not be filed to Exchange. Check the server logs for details.")
-    else:
-        messages.success(
-            request,
-            f"Email filed to {result['folder_name']}: {result['subject']}",
-        )
-
-    return redirect("job_page", jobnumber=jobnumber)
-
-
 @require_POST
 def file_outlook_email_api(request):
     if not request.user.is_authenticated:
@@ -1251,20 +1232,93 @@ def job_emails(request, jobnumber):
     selectedjob = get_object_or_404(Jobs, job_number=jobnumber)
     folder_name = ""
     emails = []
+    limit = 25
+    try:
+        offset = max(int(request.GET.get("offset", "0")), 0)
+    except ValueError:
+        offset = 0
+    has_next_page = False
 
     try:
-        folder_name, emails = list_job_public_folder_emails(selectedjob.job_number)
+        folder_name, emails, has_next_page = list_job_public_folder_emails(
+            selectedjob.job_number,
+            limit=limit,
+            offset=offset,
+        )
     except (ExchangeConfigError, ExchangeFolderNotFound) as exc:
         messages.error(request, str(exc))
     except Exception:
         logger.exception("Unexpected error loading Exchange emails for job %s", jobnumber)
         messages.error(request, "Emails could not be loaded from Exchange. Check the server logs for details.")
 
+    email_date_start = None
+    email_date_end = None
+    if emails:
+        email_dates = [email["datetime_received"] for email in emails if email["datetime_received"]]
+        if email_dates:
+            email_date_start = min(email_dates)
+            email_date_end = max(email_dates)
+
     return render(
         request,
         "job_emails.html",
-        {"job": selectedjob, "folder_name": folder_name, "emails": emails},
+        {
+            "job": selectedjob,
+            "folder_name": folder_name,
+            "emails": emails,
+            "email_limit": limit,
+            "email_offset": offset,
+            "next_email_offset": offset + limit,
+            "has_next_page": has_next_page,
+            "email_date_start": email_date_start,
+            "email_date_end": email_date_end,
+        },
     )
+
+
+@login_required(login_url='/accounts/login')
+def job_email_detail(request, jobnumber):
+    selectedjob = get_object_or_404(Jobs, job_number=jobnumber)
+    item_id = request.GET.get("item_id", "")
+    if not item_id:
+        messages.error(request, "No email was selected.")
+        return redirect("job_emails", jobnumber=jobnumber)
+
+    try:
+        folder_name, email = get_job_public_folder_email(jobnumber, item_id)
+    except (ExchangeConfigError, ExchangeFolderNotFound) as exc:
+        messages.error(request, str(exc))
+        return redirect("job_emails", jobnumber=jobnumber)
+    except Exception:
+        logger.exception("Unexpected error loading Exchange email for job %s", jobnumber)
+        messages.error(request, "The email could not be loaded from Exchange. Check the server logs for details.")
+        return redirect("job_emails", jobnumber=jobnumber)
+
+    return render(
+        request,
+        "job_email_detail.html",
+        {"job": selectedjob, "folder_name": folder_name, "email": email},
+    )
+
+
+@login_required(login_url='/accounts/login')
+def job_email_attachment(request, jobnumber):
+    item_id = request.GET.get("item_id", "")
+    attachment_id = request.GET.get("attachment_id", "")
+    if not item_id or not attachment_id:
+        messages.error(request, "Attachment could not be found.")
+        return redirect("job_emails", jobnumber=jobnumber)
+
+    try:
+        attachment = get_job_public_folder_email_attachment(jobnumber, item_id, attachment_id)
+    except Exception:
+        logger.exception("Unexpected error loading Exchange email attachment for job %s", jobnumber)
+        messages.error(request, "The attachment could not be loaded from Exchange.")
+        return redirect("job_emails", jobnumber=jobnumber)
+
+    response = HttpResponse(attachment["content"], content_type=attachment["content_type"])
+    response["Content-Disposition"] = "attachment; filename*=UTF-8''" + urlquote(attachment["name"])
+    return response
 
 
 @login_required(login_url='/accounts/login')

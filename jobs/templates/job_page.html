@@ -1286,11 +1286,11 @@ float: left !important;
 </div>
 
             <div class="col-12 col-md-4 col-lg-3 mb-2">
-                <input type="button"
-                       class="btn btn-info btn-sm btn-block"
-                       data-toggle="modal"
-                       data-target="#emails-modal"
-                       value="Emails"/>
+                <a href="{% url 'job_emails' job.job_number %}"
+                   onclick="showPageOverlay('Loading emails...')"
+                   class="btn btn-info btn-sm btn-block">
+                    Emails
+                </a>
             </div>
 
         </div>

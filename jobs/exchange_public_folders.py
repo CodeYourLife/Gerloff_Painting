@@ -1,7 +1,4 @@
 import logging
-from email import policy
-from email.utils import getaddresses
-from email.parser import BytesParser
 
 from django.conf import settings
 
@@ -13,10 +10,6 @@ class ExchangeConfigError(Exception):
 
 
 class ExchangeFolderNotFound(Exception):
-    pass
-
-
-class UnsupportedEmailFormat(Exception):
     pass
 
 
@@ -79,117 +72,6 @@ def find_job_public_folder(job_number):
     )
 
 
-def _mailboxes(header_value):
-    from exchangelib import Mailbox
-
-    mailboxes = []
-    for name, email_address in getaddresses([header_value or ""]):
-        if email_address:
-            mailboxes.append(Mailbox(name=name or None, email_address=email_address))
-    return mailboxes
-
-
-def _message_body(message):
-    plain_body = ""
-    html_body = ""
-
-    if message.is_multipart():
-        for part in message.walk():
-            if part.get_content_disposition() == "attachment":
-                continue
-            content_type = part.get_content_type()
-            if content_type == "text/plain":
-                plain_body = plain_body or part.get_content()
-            elif content_type == "text/html":
-                html_body = html_body or part.get_content()
-    else:
-        if message.get_content_type() == "text/plain":
-            plain_body = message.get_content()
-        elif message.get_content_type() == "text/html":
-            html_body = message.get_content()
-
-    return plain_body.strip(), html_body.strip()
-
-
-def _message_attachments(message):
-    attachments = []
-
-    for part in message.walk():
-        if part.get_content_disposition() != "attachment":
-            continue
-
-        filename = part.get_filename()
-        content = part.get_payload(decode=True)
-        if not filename or content is None:
-            continue
-
-        attachments.append({"name": filename, "content": content})
-
-    return attachments
-
-
-def _eml_payload(uploaded_file, content):
-    parsed = BytesParser(policy=policy.default).parsebytes(content)
-    plain_body, html_body = _message_body(parsed)
-    return {
-        "subject": str(parsed.get("subject") or uploaded_file.name),
-        "author": _mailboxes(str(parsed.get("from", "")))[:1],
-        "to_recipients": _mailboxes(str(parsed.get("to", ""))),
-        "cc_recipients": _mailboxes(str(parsed.get("cc", ""))),
-        "plain_body": plain_body,
-        "html_body": html_body,
-        "attachments": _message_attachments(parsed),
-    }
-
-
-def _uploaded_email_payload(uploaded_file, content):
-    filename = uploaded_file.name.lower()
-    if filename.endswith(".eml"):
-        return _eml_payload(uploaded_file, content)
-    if filename.endswith(".msg"):
-        raise UnsupportedEmailFormat(
-            ".msg full import is not supported yet. Please save the email as .eml and upload that file."
-        )
-    raise ValueError("Only .eml files are supported for full email import.")
-
-
-def file_email_to_job_public_folder(job, uploaded_file):
-    from exchangelib import FileAttachment, HTMLBody, Message
-
-    content = uploaded_file.read()
-    payload = _uploaded_email_payload(uploaded_file, content)
-    account, folder = find_job_public_folder(job.job_number)
-
-    body = HTMLBody(payload["html_body"]) if payload["html_body"] else payload["plain_body"]
-    author = payload["author"][0] if payload["author"] else None
-
-    message = Message(
-        account=account,
-        folder=folder,
-        subject=payload["subject"],
-        body=body,
-        author=author,
-        to_recipients=payload["to_recipients"],
-        cc_recipients=payload["cc_recipients"],
-    )
-
-    for attachment in payload["attachments"]:
-        message.attach(
-            FileAttachment(name=attachment["name"], content=attachment["content"])
-        )
-
-    message.save()
-
-    folder_name = _folder_name(folder)
-    logger.info(
-        "Filed email to Exchange public folder '%s' for job %s: %s",
-        folder_name,
-        job.job_number,
-        payload["subject"],
-    )
-    return {"folder_name": folder_name, "subject": payload["subject"]}
-
-
 def copy_exchange_item_to_job_public_folder(item_id, job_number):
     account, folder = find_job_public_folder(job_number)
     item = next(account.fetch(ids=[(item_id, None)]))
@@ -213,17 +95,99 @@ def copy_exchange_item_to_job_public_folder(item_id, job_number):
     }
 
 
-def list_job_public_folder_emails(job_number, limit=25):
+def _mailbox_text(mailbox):
+    if not mailbox:
+        return ""
+    email_address = getattr(mailbox, "email_address", "") or ""
+    name = getattr(mailbox, "name", "") or ""
+    if name and email_address:
+        return f"{name} <{email_address}>"
+    return name or email_address or str(mailbox)
+
+
+def _mailbox_list_text(mailboxes):
+    return ", ".join(_mailbox_text(mailbox) for mailbox in (mailboxes or []) if mailbox)
+
+
+def _attachment_id_value(attachment):
+    attachment_id = getattr(attachment, "attachment_id", None)
+    return getattr(attachment_id, "id", None) or str(attachment_id or "")
+
+
+def _attachment_summary(attachment):
+    return {
+        "id": _attachment_id_value(attachment),
+        "name": getattr(attachment, "name", "") or "Attachment",
+        "content_type": getattr(attachment, "content_type", "") or "application/octet-stream",
+        "size": getattr(attachment, "size", None),
+        "is_inline": getattr(attachment, "is_inline", False),
+    }
+
+
+def list_job_public_folder_emails(job_number, limit=50, offset=0):
     _, folder = find_job_public_folder(job_number)
     emails = []
 
-    for item in folder.all().order_by("-datetime_received")[:limit]:
+    end = offset + limit + 1
+    items = list(folder.all().order_by("-datetime_received")[offset:end])
+
+    for item in items[:limit]:
         emails.append(
             {
+                "id": item.id,
+                "changekey": item.changekey,
                 "subject": item.subject or "(No subject)",
-                "sender": str(item.sender or ""),
+                "sender": _mailbox_text(item.sender),
                 "datetime_received": item.datetime_received,
+                "has_attachments": item.has_attachments,
             }
         )
 
-    return _folder_name(folder), emails
+    return _folder_name(folder), emails, len(items) > limit
+
+
+def get_job_public_folder_email(job_number, item_id):
+    account, folder = find_job_public_folder(job_number)
+    item = next(account.fetch(ids=[(item_id, None)], folder=folder))
+    if isinstance(item, Exception):
+        raise item
+
+    body = item.body or ""
+    text_body = getattr(item, "text_body", None) or ""
+    attachments = [
+        _attachment_summary(attachment)
+        for attachment in (item.attachments or [])
+        if getattr(attachment, "name", None)
+    ]
+
+    return _folder_name(folder), {
+        "id": item.id,
+        "subject": item.subject or "(No subject)",
+        "sender": _mailbox_text(item.sender),
+        "author": _mailbox_text(item.author),
+        "to_recipients": _mailbox_list_text(item.to_recipients),
+        "cc_recipients": _mailbox_list_text(item.cc_recipients),
+        "datetime_received": item.datetime_received,
+        "datetime_sent": item.datetime_sent,
+        "body": str(body),
+        "text_body": str(text_body),
+        "body_is_html": body.__class__.__name__ == "HTMLBody",
+        "attachments": attachments,
+    }
+
+
+def get_job_public_folder_email_attachment(job_number, item_id, attachment_id):
+    account, folder = find_job_public_folder(job_number)
+    item = next(account.fetch(ids=[(item_id, None)], folder=folder))
+    if isinstance(item, Exception):
+        raise item
+
+    for attachment in item.attachments or []:
+        if _attachment_id_value(attachment) == attachment_id:
+            return {
+                "name": getattr(attachment, "name", "") or "attachment",
+                "content_type": getattr(attachment, "content_type", "") or "application/octet-stream",
+                "content": getattr(attachment, "content", b""),
+            }
+
+    raise FileNotFoundError("Attachment was not found on this email.")
