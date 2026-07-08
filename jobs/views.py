@@ -60,17 +60,6 @@ from jobs.exchange_public_folders import (
 
 logger = logging.getLogger(__name__)
 
-from jobs.exchange_public_folders import (
-    ExchangeConfigError,
-    ExchangeFolderNotFound,
-    UnsupportedEmailFormat,
-    copy_exchange_item_to_job_public_folder,
-    file_email_to_job_public_folder,
-    list_job_public_folder_emails,
-)
-
-logger = logging.getLogger(__name__)
-
 
 @login_required(login_url='/accounts/login')
 def change_start_date(request, jobnumber, previous, super, filter):
@@ -2381,6 +2370,7 @@ def close_job(request, job_number):
 
 
 def jobs_ready_to_close(request):
+    #test
     if request.method == "POST":
         if "new_closing_note" in request.POST:
             job_id = request.POST.get("job_id")
