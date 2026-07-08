@@ -1066,40 +1066,6 @@ float: left !important;
 </div>
 
 
-<div class="modal fade" id="emails-modal" tabindex="-1" role="dialog" aria-labelledby="emails-modal-title"
-     aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="emails-modal-title">Emails</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-
-            <form action="{% url 'file_job_email' job.job_number %}" method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <div id="email-drop-zone" class="border rounded p-4 text-center bg-light">
-                        <p class="mb-3">Drag a .eml file here or choose one below.</p>
-                        <input id="email-file-input" type="file" name="email_file" accept=".eml,message/rfc822" class="form-control-file" required>
-                        <div id="email-file-name" class="text-muted mt-2"></div>
-                    </div>
-                </div>
-
-                <div class="modal-footer">
-                    <a class="btn btn-info btn-sm" href="{% url 'job_emails' job.job_number %}">
-                        View Emails
-                    </a>
-                    <button type="submit" class="btn btn-primary btn-sm">File Email</button>
-                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-
 {% if job.is_closed %}
 <div class="alert alert-secondary mb-3">
     <strong>JOB IS CLOSED.</strong>
@@ -2169,39 +2135,6 @@ $(document).on('click', '.clickable-row', function (e) {
 });
 
 var original_start_date = "Test"
-
-var emailDropZone = document.getElementById("email-drop-zone");
-var emailFileInput = document.getElementById("email-file-input");
-var emailFileName = document.getElementById("email-file-name");
-
-if (emailDropZone && emailFileInput) {
-    ["dragenter", "dragover"].forEach(function(eventName) {
-        emailDropZone.addEventListener(eventName, function(event) {
-            event.preventDefault();
-            emailDropZone.classList.add("border-primary");
-        });
-    });
-
-    ["dragleave", "drop"].forEach(function(eventName) {
-        emailDropZone.addEventListener(eventName, function(event) {
-            event.preventDefault();
-            emailDropZone.classList.remove("border-primary");
-        });
-    });
-
-    emailDropZone.addEventListener("drop", function(event) {
-        if (event.dataTransfer.files.length) {
-            emailFileInput.files = event.dataTransfer.files;
-            emailFileName.innerHTML = event.dataTransfer.files[0].name;
-        }
-    });
-
-    emailFileInput.addEventListener("change", function() {
-        if (emailFileInput.files.length) {
-            emailFileName.innerHTML = emailFileInput.files[0].name;
-        }
-    });
-}
 
 function check_if_start_date_changed(){
     if (original_start_date != change_start_form.start_date.value){
