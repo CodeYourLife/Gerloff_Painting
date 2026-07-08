@@ -40,12 +40,24 @@ from submittals.models import *
 from wallcovering.models import Wallcovering, Packages, OutgoingItem, OrderItems, Pending_Orders
 import csv
 import json
+import logging
 import openpyxl
 import os
 import os.path
 import requests
 import uuid
 import re
+
+from jobs.exchange_public_folders import (
+    ExchangeConfigError,
+    ExchangeFolderNotFound,
+    UnsupportedEmailFormat,
+    copy_exchange_item_to_job_public_folder,
+    file_email_to_job_public_folder,
+    list_job_public_folder_emails,
+)
+
+logger = logging.getLogger(__name__)
 
 
 @login_required(login_url='/accounts/login')
@@ -1117,6 +1129,143 @@ def activate_sub_job(request,jobnumber):
         selected_job.is_painting_subbed = True
     selected_job.save()
     return redirect('job_page', jobnumber=jobnumber)
+
+
+@login_required(login_url='/accounts/login')
+@require_POST
+def file_job_email(request, jobnumber):
+    selectedjob = get_object_or_404(Jobs, job_number=jobnumber)
+    uploaded_file = request.FILES.get("email_file")
+
+    if not uploaded_file:
+        messages.error(request, "Choose an .eml file to file.")
+        return redirect("job_page", jobnumber=jobnumber)
+
+    if not uploaded_file.name.lower().endswith(".eml"):
+        messages.error(request, "Only .eml files are supported for full email import right now.")
+        return redirect("job_page", jobnumber=jobnumber)
+
+    try:
+        result = file_email_to_job_public_folder(selectedjob, uploaded_file)
+    except (ExchangeConfigError, ExchangeFolderNotFound, UnsupportedEmailFormat, ValueError) as exc:
+        logger.warning("Could not file email for job %s: %s", jobnumber, exc)
+        messages.error(request, str(exc))
+    except Exception:
+        logger.exception("Unexpected error filing email for job %s", jobnumber)
+        messages.error(request, "The email could not be filed to Exchange. Check the server logs for details.")
+    else:
+        messages.success(
+            request,
+            f"Email filed to {result['folder_name']}: {result['subject']}",
+        )
+
+    return redirect("job_page", jobnumber=jobnumber)
+
+
+@require_POST
+def file_outlook_email_api(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"success": False, "error": "Log in to Trinity before filing email."}, status=403)
+
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return JsonResponse({"success": False, "error": "Invalid JSON payload."}, status=400)
+
+    item_id = str(payload.get("item_id", "")).strip()
+    job_number = str(payload.get("job_number", "")).strip().upper()
+
+    if not item_id:
+        return JsonResponse({"success": False, "error": "Missing Outlook item ID."}, status=400)
+    if not job_number:
+        return JsonResponse({"success": False, "error": "Missing job number."}, status=400)
+    if not Jobs.objects.filter(job_number=job_number).exists():
+        return JsonResponse({"success": False, "error": f"Job {job_number} was not found in Trinity."}, status=404)
+
+    username = request.user.get_username()
+    log_context = {
+        "trinity_user": username,
+        "item_id": item_id,
+        "job_number": job_number,
+        "timestamp": timezone.now().isoformat(),
+    }
+
+    try:
+        result = copy_exchange_item_to_job_public_folder(item_id, job_number)
+    except (ExchangeConfigError, ExchangeFolderNotFound) as exc:
+        logger.warning("Outlook add-in email filing failed: %s", {**log_context, "error": str(exc)})
+        return JsonResponse({"success": False, "error": str(exc)}, status=400)
+    except Exception:
+        logger.exception("Outlook add-in email filing failed: %s", log_context)
+        return JsonResponse(
+            {"success": False, "error": "The selected email could not be copied to Exchange."},
+            status=500,
+        )
+
+    logger.info(
+        "Outlook add-in email filing succeeded: %s",
+        {
+            **log_context,
+            "destination_folder": result["folder_name"],
+            "subject": result["subject"],
+        },
+    )
+    return JsonResponse(
+        {
+            "success": True,
+            "message": f"Filed to {result['folder_name']}: {result['subject']}",
+            "destination_folder": result["folder_name"],
+            "subject": result["subject"],
+        }
+    )
+
+
+@login_required(login_url='/accounts/login')
+def outlook_addin_taskpane(request):
+    return render(request, "outlook_addin_taskpane.html")
+
+
+def _addin_absolute_url(request, url_name):
+    path = reverse(url_name)
+    base_url = getattr(settings, "OUTLOOK_ADDIN_BASE_URL", None)
+    if base_url:
+        return base_url.rstrip("/") + path
+    return request.build_absolute_uri(path)
+
+
+def outlook_addin_manifest(request):
+    return render(
+        request,
+        "outlook_addin_manifest.xml",
+        {
+            "taskpane_url": _addin_absolute_url(request, "outlook_addin_taskpane"),
+            "icon_32_url": request.build_absolute_uri(settings.STATIC_URL + "images/favicon.png"),
+            "icon_80_url": request.build_absolute_uri(settings.STATIC_URL + "images/favicon.png"),
+        },
+        content_type="application/xml",
+    )
+
+
+@login_required(login_url='/accounts/login')
+def job_emails(request, jobnumber):
+    selectedjob = get_object_or_404(Jobs, job_number=jobnumber)
+    folder_name = ""
+    emails = []
+
+    try:
+        folder_name, emails = list_job_public_folder_emails(selectedjob.job_number)
+    except (ExchangeConfigError, ExchangeFolderNotFound) as exc:
+        messages.error(request, str(exc))
+    except Exception:
+        logger.exception("Unexpected error loading Exchange emails for job %s", jobnumber)
+        messages.error(request, "Emails could not be loaded from Exchange. Check the server logs for details.")
+
+    return render(
+        request,
+        "job_emails.html",
+        {"job": selectedjob, "folder_name": folder_name, "emails": emails},
+    )
+
 
 @login_required(login_url='/accounts/login')
 def job_page(request, jobnumber):

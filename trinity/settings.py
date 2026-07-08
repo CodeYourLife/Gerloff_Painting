@@ -166,6 +166,13 @@ EMAIL_HOST_USER = 'joe@gerloffpainting.com'
 EMAIL_USE_TLS = False
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
+EXCHANGE_EWS_URL = os.getenv("EXCHANGE_EWS_URL", "https://remote.gerloffpainting.com/EWS/Exchange.asmx")
+EXCHANGE_EMAIL = os.getenv("EXCHANGE_EMAIL")
+EXCHANGE_USERNAME = os.getenv("EXCHANGE_USERNAME")
+EXCHANGE_PASSWORD = os.getenv("EXCHANGE_PASSWORD")
+EXCHANGE_OPEN_JOBS_FOLDER = os.getenv("EXCHANGE_OPEN_JOBS_FOLDER", "Open Jobs")
+OUTLOOK_ADDIN_BASE_URL = os.getenv("OUTLOOK_ADDIN_BASE_URL")
+
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
