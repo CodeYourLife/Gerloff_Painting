@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block nav_item_jobs %}active{% endblock nav_item_jobs %}
+
+{% block sub_nav %}
+{% include 'jobs_nav.html' with page_label="Job Emails" %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-3">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }}" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-1">{{ job.job_number }} - {{ job.job_name }}</h4>
+            {% if folder_name %}
+                <div class="text-muted">{{ folder_name }}</div>
+            {% endif %}
+        </div>
+        <a href="{% url 'job_page' job.job_number %}" class="btn btn-secondary btn-sm">Back To Job</a>
+    </div>
+
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                <th>Received</th>
+                <th>From</th>
+                <th>Subject</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for email in emails %}
+                <tr>
+                    <td>{{ email.datetime_received|date:"m/d/Y g:i A" }}</td>
+                    <td>{{ email.sender }}</td>
+                    <td>{{ email.subject }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3">No emails found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

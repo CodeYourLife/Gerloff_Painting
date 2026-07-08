@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Trinity Email Filing</title>
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 16px;
+            color: #222;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        input {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 12px;
+        }
+
+        button {
+            width: 100%;
+            padding: 9px;
+            border: 0;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            background: #777;
+            cursor: default;
+        }
+
+        #status {
+            margin-top: 12px;
+            line-height: 1.4;
+        }
+
+        .error {
+            color: #b00020;
+        }
+
+        .success {
+            color: #0b6b2b;
+        }
+    </style>
+</head>
+<body>
+    {% csrf_token %}
+    <label for="job-number">Job Number</label>
+    <input id="job-number" name="job_number" autocomplete="off" placeholder="F4720">
+    <button id="file-button" type="button">File Selected Email</button>
+    <div id="status"></div>
+
+    <script>
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== "") {
+                document.cookie.split(";").forEach(function(cookie) {
+                    var trimmed = cookie.trim();
+                    if (trimmed.substring(0, name.length + 1) === (name + "=")) {
+                        cookieValue = decodeURIComponent(trimmed.substring(name.length + 1));
+                    }
+                });
+            }
+            return cookieValue;
+        }
+
+        function setStatus(message, className) {
+            var status = document.getElementById("status");
+            status.className = className || "";
+            status.textContent = message;
+        }
+
+        function selectedItemId() {
+            if (!Office.context.mailbox || !Office.context.mailbox.item) {
+                return "";
+            }
+            return Office.context.mailbox.item.itemId || "";
+        }
+
+        function fileSelectedEmail() {
+            var button = document.getElementById("file-button");
+            var jobNumber = document.getElementById("job-number").value.trim().toUpperCase();
+            var itemId = selectedItemId();
+
+            if (!itemId) {
+                setStatus("Open a saved email message in Outlook before filing.", "error");
+                return;
+            }
+            if (!jobNumber) {
+                setStatus("Enter a job number.", "error");
+                return;
+            }
+
+            button.disabled = true;
+            setStatus("Filing email...", "");
+
+            fetch("{% url 'file_outlook_email_api' %}", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken")
+                },
+                body: JSON.stringify({
+                    item_id: itemId,
+                    job_number: jobNumber
+                })
+            })
+            .then(function(response) {
+                return response.json().then(function(data) {
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.error || "The email could not be filed.");
+                    }
+                    return data;
+                });
+            })
+            .then(function(data) {
+                setStatus(data.message, "success");
+            })
+            .catch(function(error) {
+                setStatus(error.message, "error");
+            })
+            .finally(function() {
+                button.disabled = false;
+            });
+        }
+
+        Office.onReady(function() {
+            document.getElementById("file-button").addEventListener("click", fileSelectedEmail);
+        });
+    </script>
+</body>
+</html>
