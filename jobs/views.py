@@ -2370,6 +2370,7 @@ def close_job(request, job_number):
 
 
 def jobs_ready_to_close(request):
+    #test
     if request.method == "POST":
         if "new_closing_note" in request.POST:
             job_id = request.POST.get("job_id")
