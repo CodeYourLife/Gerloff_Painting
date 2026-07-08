@@ -1221,7 +1221,7 @@ def job_emails(request, jobnumber):
     selectedjob = get_object_or_404(Jobs, job_number=jobnumber)
     folder_name = ""
     emails = []
-    limit = 25
+    limit = 50
     try:
         offset = max(int(request.GET.get("offset", "0")), 0)
     except ValueError:
