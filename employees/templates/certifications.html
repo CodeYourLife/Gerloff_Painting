@@ -107,7 +107,9 @@
 								</a>
                             </td>
                             <td>{{ x.date_received }}</td>
-                            <td>{{ x.date_expires }}</td>
+                            <td {% if x.is_expired_flagged %}class="table-danger font-weight-bold"{% endif %}>
+                                {{ x.date_expires }}
+                            </td>
                             <td>
                                 {% if x.action_required %}
                                     {% for action in x.action_required %}

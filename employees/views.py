@@ -3803,6 +3803,12 @@ def certifications(request, id):
             "view_url": reverse("certifications", args=[cert.id]),
             "date_received": cert.date_received,
             "date_expires": cert.date_expires,
+            "is_expired_flagged": (
+                not cert.is_closed and
+                cert.is_flagged_when_expired and
+                cert.date_expires and
+                cert.date_expires < date.today()
+            ),
             "action_required": action_required,
         })
 
