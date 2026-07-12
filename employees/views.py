@@ -5935,6 +5935,7 @@ def view_respirator_certification(request,id):
             with transaction.atomic():
                 CertificationNotes.objects.filter(certification=selected_cert).delete()
                 CertificationActionRequired.objects.filter(main=selected_cert).delete()
+                EmployeePendingActions.objects.filter(certification=selected_cert).delete()
                 selected_respirator_cert.delete()
                 selected_cert.delete()
             messages.success(request, "Respirator clearance deleted.")
