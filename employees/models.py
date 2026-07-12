@@ -409,6 +409,7 @@ class Certifications(models.Model):
     job = models.ForeignKey(
         'jobs.Jobs', on_delete=models.PROTECT, null=True, blank=True)
     note = models.CharField(null=True, blank=True, max_length=2000)
+    is_flagged_when_expired = models.BooleanField(default=True)
     is_closed = models.BooleanField(default=False)
     action_required = models.BooleanField(default=False)
     action = models.CharField(null=True, blank=True, max_length=500)

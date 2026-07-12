@@ -108,6 +108,38 @@ def _pending_employee_task_queryset():
     )
 
 
+def _expired_flagged_certification_queryset():
+    return (
+        Certifications.objects
+        .filter(
+            is_closed=False,
+            is_flagged_when_expired=True,
+            date_expires__lt=date.today(),
+        )
+        .filter(
+            Q(employee__active=True) |
+            Q(
+                employee__isnull=True,
+                subcontractor__is_inactive=False,
+                subcontractor_employee__isnull=True,
+            ) |
+            Q(
+                employee__isnull=True,
+                subcontractor__is_inactive=False,
+                subcontractor_employee__is_active=True,
+            )
+        )
+        .select_related(
+            "employee",
+            "category",
+            "job",
+            "subcontractor",
+            "subcontractor_employee",
+        )
+        .order_by("date_expires", "employee__last_name", "employee__first_name", "subcontractor__company")
+    )
+
+
 def _get_first_subcontractor_invoice_date(subcontract):
     return (
         SubcontractorInvoice.objects
@@ -530,6 +562,7 @@ def index(request):
     send_data['pending_invoices'] = SubcontractorInvoice.objects.filter(is_sent=False).count()
     send_data['approved_invoices'] = SubcontractorInvoice.objects.filter(is_sent=True, processed=False).count()
     send_data['pending_employee_tasks_count'] = _pending_employee_task_queryset().count()
+    send_data['expired_flagged_certifications_count'] = _expired_flagged_certification_queryset().count()
     send_data['need_to_be_closed'] = Jobs.objects.filter(is_labor_done=True,is_closed=False).count()
     send_data['unsuccessful_login_attempts_past_week'] = LoginAttempt.objects.filter(
         result=LoginAttempt.RESULT_FAILED,
@@ -630,6 +663,15 @@ def pending_employee_tasks(request):
     return render(request, 'pending_employee_tasks.html', {
         "pending_tasks": pending_tasks,
         "pending_tasks_count": len(pending_tasks),
+    })
+
+
+@login_required(login_url='/accounts/login')
+def expired_certifications(request):
+    certifications = list(_expired_flagged_certification_queryset())
+    return render(request, 'expired_certifications.html', {
+        "certifications": certifications,
+        "certifications_count": len(certifications),
     })
 
 

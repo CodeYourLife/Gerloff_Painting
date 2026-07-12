@@ -3385,6 +3385,13 @@ def certifications(request, id):
         send_data['certification_files'] = _certification_file_rows(selected_cert.id)
         send_data['certification_files_count'] = len(send_data['certification_files'])
         send_data['certification_folder_path'] = rf"\\gp-webserver\trinity\certifications\{selected_cert.id}"
+        jobs_for_certification = Jobs.objects.filter(is_closed=False).order_by("job_number", "job_name")
+        if selected_cert.job_id:
+            jobs_for_certification = (
+                jobs_for_certification |
+                Jobs.objects.filter(pk=selected_cert.job_id)
+            ).distinct().order_by("job_number", "job_name")
+        send_data['jobs_for_certification'] = jobs_for_certification
         send_data['active_employees'] = Employees.objects.filter(
             active=True,
         ).order_by(
@@ -3426,6 +3433,45 @@ def certifications(request, id):
 
     if request.method == 'POST':
         cert = Certifications.objects.get(id=id)
+        if 'edit_certification_info' in request.POST:
+            old_description = cert.description or ""
+            old_job = str(cert.job) if cert.job else "None"
+            old_note = cert.note or ""
+            old_flag = cert.is_flagged_when_expired
+
+            cert.description = (request.POST.get("certification_description") or "").strip() or None
+            cert.note = (request.POST.get("certification_note") or "").strip() or None
+            cert.is_flagged_when_expired = bool(request.POST.get("is_flagged_when_expired"))
+
+            job_id = request.POST.get("certification_job") or ""
+            if job_id:
+                cert.job = get_object_or_404(Jobs, pk=job_id)
+            else:
+                cert.job = None
+
+            cert.save(update_fields=["description", "job", "note", "is_flagged_when_expired"])
+
+            note_parts = []
+            if old_description != (cert.description or ""):
+                note_parts.append(f"Description changed from '{old_description or 'None'}' to '{cert.description or 'None'}'")
+            if old_job != (str(cert.job) if cert.job else "None"):
+                note_parts.append(f"Job changed from '{old_job}' to '{str(cert.job) if cert.job else 'None'}'")
+            if old_note != (cert.note or ""):
+                note_parts.append("Note updated")
+            if old_flag != cert.is_flagged_when_expired:
+                note_parts.append(
+                    "Expired certification flag changed to "
+                    + ("Yes" if cert.is_flagged_when_expired else "No")
+                )
+
+            CertificationNotes.objects.create(
+                certification=cert,
+                date=date.today(),
+                user=Employees.objects.get(user=request.user),
+                note="Certification info edited. " + "; ".join(note_parts) if note_parts else "Certification info edit submitted with no changes.",
+            )
+            messages.success(request, "Certification info updated.")
+            return redirect('certifications', id=cert.id)
         if 'upload_certification_files' in request.POST:
             uploaded_files = request.FILES.getlist('certification_files')
             custom_name = request.POST.get('certification_file_name') or ""

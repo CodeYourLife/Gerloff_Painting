@@ -139,9 +139,17 @@
 <div class="mt-4 mb-5" id="certification_details">
 
     <div class="card shadow-sm">
-        <div class="card-header bg-dark text-white">
-            <h4 class="mb-0">{% if selected_item.category %}{{ selected_item.category }}{% else %}{{ selected_item.description }}{% endif %}</h4>
-            <div class="small">{{ selected_item.owner_display }}</div>
+        <div class="card-header bg-dark text-white d-flex flex-wrap justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0">{% if selected_item.category %}{{ selected_item.category }}{% else %}{{ selected_item.description }}{% endif %}</h4>
+                <div class="small">{{ selected_item.owner_display }}</div>
+            </div>
+            <button type="button"
+                    class="btn btn-light btn-sm mt-2 mt-md-0"
+                    data-toggle="modal"
+                    data-target="#editCertificationInfoModal">
+                Edit Info
+            </button>
         </div>
 
         <div class="card-body">
@@ -169,6 +177,13 @@
                 <div class="col-md-6">
                     <strong>Note</strong>
                     <div>{{ selected_item.note|default:"-" }}</div>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Flag When Expired</strong>
+                    <div>{% if selected_item.is_flagged_when_expired %}Yes{% else %}No{% endif %}</div>
                 </div>
             </div>
 
@@ -529,6 +544,77 @@
                     </div>
                 {% endif %}
 
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editCertificationInfoModal" tabindex="-1" role="dialog" aria-labelledby="editCertificationInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'certifications' selected_item.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editCertificationInfoModalLabel">Edit Certification Info</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="certification_description">Description</label>
+                        <input type="text"
+                               id="certification_description"
+                               name="certification_description"
+                               class="form-control"
+                               maxlength="500"
+                               value="{{ selected_item.description|default:'' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="certification_job">Job</label>
+                        <select id="certification_job" name="certification_job" class="form-control">
+                            <option value="">No Job</option>
+                            {% for job in jobs_for_certification %}
+                                <option value="{{ job.pk }}"
+                                        {% if selected_item.job_id == job.pk %}selected{% endif %}>
+                                    {{ job.job_number }} - {{ job.job_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="certification_note">Note</label>
+                        <textarea id="certification_note"
+                                  name="certification_note"
+                                  class="form-control"
+                                  rows="4"
+                                  maxlength="2000">{{ selected_item.note|default:'' }}</textarea>
+                    </div>
+
+                    <div class="form-check">
+                        <input type="checkbox"
+                               id="is_flagged_when_expired"
+                               name="is_flagged_when_expired"
+                               class="form-check-input"
+                               value="1"
+                               {% if selected_item.is_flagged_when_expired %}checked{% endif %}>
+                        <label class="form-check-label" for="is_flagged_when_expired">
+                            Flag this certification when expired
+                        </label>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" name="edit_certification_info" class="btn btn-primary">
+                        Save Changes
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
             </form>
         </div>
     </div>
