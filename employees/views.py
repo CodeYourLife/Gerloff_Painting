@@ -2155,9 +2155,8 @@ def employees_page(request, id):
         ).values_list("certification_id", flat=True)
     )
     certification_summary["open_certifications"] = list(certification_summary["open_certifications"])
-    certification_summary["closed_certifications"] = list(certification_summary["closed_certifications"])
 
-    for cert in certification_summary["open_certifications"] + certification_summary["closed_certifications"]:
+    for cert in certification_summary["open_certifications"]:
         cert.has_open_pending_action = cert.id in open_pending_action_cert_ids
 
     inventory_summary = employee.inventory_summary()

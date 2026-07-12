@@ -180,7 +180,7 @@ class Employees(models.Model):
         closed_certifications = certifications.filter(is_closed=True)
 
         return {
-            "count": certifications.count(),
+            "count": open_certifications.count(),
             "open_count": open_certifications.count(),
             "closed_count": closed_certifications.count(),
             "open_certifications": open_certifications,
