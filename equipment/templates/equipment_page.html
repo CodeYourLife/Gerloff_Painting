@@ -238,6 +238,19 @@
                        value="Mark as Missing">
             </form>
 
+            <form name="defective_expired_button"
+                  action="{% url 'equipment_page' inventories.id %}"
+                  method="post"
+                  onsubmit="return requiredNotePrompt(defective_expired_button.defective_expired_notes)">
+                {% csrf_token %}
+                <input type="hidden" id="defective_expired_notes" name="defective_expired_notes" value="">
+                <input id="defective_expired"
+                       class="btn btn-danger btn-sm"
+                       name="defective_expired"
+                       type="submit"
+                       value="Mark as Defective / Expired">
+            </form>
+
             {% if inventories.job_number %}
                 <form name="request_pickup"
                       action="{% url 'request_pickup' jobnumber=inventories.job_number.job_number item=inventories.id pickup='ALL' status='ALL' %}"
@@ -591,6 +604,29 @@
         }
 
         return false;
+    }
+
+    function requiredNotePrompt(type) {
+        var confirmed = confirm("This will remove the item from the active equipment list. Click OK to proceed.");
+
+        if (!confirmed) {
+            return false;
+        }
+
+        var name = prompt("Required Note: Please explain what is wrong with the equipment");
+
+        if (name == null) {
+            return false;
+        }
+
+        name = name.trim();
+        if (!name) {
+            alert("A note is required.");
+            return false;
+        }
+
+        type.value = name;
+        return true;
     }
     $(document).ready(function () {
     $('#select_service').select2({

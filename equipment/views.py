@@ -651,6 +651,7 @@ def equipment_page(request, id):
     employees = Employees.objects.filter(active=True)
     vendors = Vendors.objects.filter(category__category="Equipment Repair")
     path = os.path.join(settings.MEDIA_ROOT, "equipment", str(inventory.id))
+    os.makedirs(path, exist_ok=True)
     send_data['folder_path'] = rf"\\gp-webserver\trinity\equipment\{inventory.id}"
     foldercontents = os.listdir(path)
     folder_count=0
@@ -726,6 +727,87 @@ def equipment_page(request, id):
                                       category="Missing")
             new_note.save()
             return redirect('equipment_page', inventory.id)
+        if 'defective_expired' in request.POST:
+            defective_note = (request.POST.get('defective_expired_notes') or '').strip()
+            if not defective_note:
+                return redirect('equipment_page', inventory.id)
+
+            current_employee = Employees.objects.get(user=request.user)
+            last_job = inventory.job_number
+            last_job_display = "None"
+            if last_job:
+                last_job_display = f"{last_job.job_number} - {last_job.job_name}"
+            else:
+                last_job_note = (
+                    InventoryNotes.objects
+                    .filter(inventory_item=inventory, category="Job")
+                    .order_by("-date", "-id")
+                    .first()
+                )
+                if last_job_note:
+                    last_job_display = " - ".join(
+                        value for value in [
+                            last_job_note.job_number,
+                            last_job_note.job_name,
+                        ] if value
+                    ) or "None"
+
+            note_text = f"Equipment marked as defective / expired. {defective_note}"
+            inventory.is_closed = True
+            inventory.job_number = None
+            inventory.service_vendor = None
+            inventory.assigned_to = None
+            inventory.save()
+
+            InventoryNotes.objects.create(
+                inventory_item=inventory,
+                date=date.today(),
+                user=current_employee,
+                note=note_text,
+                category="Misc",
+            )
+
+            recipients = [
+                "skip@gerloffpainting.com",
+                "victor@gerloffpainting.com",
+                "joe@gerloffpainting.com",
+            ]
+            recipients.extend(
+                Employees.objects.filter(
+                    active=True,
+                    job_title__description="Superintendent",
+                ).exclude(
+                    email__isnull=True,
+                ).exclude(
+                    email="",
+                ).values_list("email", flat=True)
+            )
+            recipients = list(dict.fromkeys(recipients))
+            message = (
+                f"{note_text}\n\n"
+                f"Equipment Number: {inventory.number or inventory.id}\n"
+                f"Item: {inventory.item or ''}\n"
+                f"Last Job Assigned To: {last_job_display}"
+            )
+            sender = current_employee.email or "operations@gerloffpainting.com"
+            Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()
+            try:
+                Email.sendEmail(
+                    "Equipment Marked Defective / Expired",
+                    message,
+                    recipients,
+                    False,
+                    sender,
+                )
+                email_message = "Defective / expired equipment email sent successfully."
+            except Exception:
+                email_message = "Error! Defective / expired equipment email failed to send."
+            Email_Errors.objects.create(
+                user=request.user.first_name + " " + request.user.last_name,
+                error=email_message,
+                date=date.today(),
+            )
+            return redirect('equipment_home')
         if 'select_job' in request.POST:
             inventory.job_number = Jobs.objects.get(job_number=request.POST['select_job'])
             inventory.service_vendor = None
