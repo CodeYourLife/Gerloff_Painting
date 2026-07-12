@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block nav_item_index %}active{% endblock nav_item_index %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+<style>
+    .expired-cert-card {
+        border: 1px solid #d6d8db;
+        border-left: 5px solid #dc3545;
+        border-radius: 6px;
+        box-shadow: 0 .15rem .35rem rgba(0, 0, 0, .08);
+    }
+
+    .expired-cert-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: .75rem;
+        border-top: 1px solid #e9ecef;
+        padding-top: .5rem;
+        margin-top: .5rem;
+    }
+
+    @media (max-width: 575.98px) {
+        .expired-cert-meta {
+            display: block;
+        }
+
+        .expired-cert-meta strong {
+            display: block;
+            margin-top: .15rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+        <h4 class="mb-2">Expired Certifications</h4>
+        <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-sm mb-2">Back to Dashboard</a>
+    </div>
+
+    <div class="alert alert-danger py-2">
+        {{ certifications_count }} flagged, expired certification{{ certifications_count|pluralize }}.
+    </div>
+
+    {% if certifications %}
+        <div class="row">
+            {% for certification in certifications %}
+                <div class="col-12 col-md-6 col-xl-4 mb-3">
+                    <a href="{% url 'certifications' certification.id %}" class="text-dark" style="text-decoration: none;">
+                        <div class="card h-100 expired-cert-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="mb-0">
+                                        {{ certification.description|default:certification.category }}
+                                    </h6>
+                                    <span class="badge badge-danger">Expired</span>
+                                </div>
+
+                                <div class="mb-2">
+                                    <strong>Employee:</strong>
+                                    {{ certification.owner_display }}
+                                </div>
+
+                                {% if certification.job %}
+                                    <div class="mb-2">
+                                        <strong>Job:</strong>
+                                        {{ certification.job }}
+                                    </div>
+                                {% endif %}
+
+                                <div class="expired-cert-meta">
+                                    <span class="text-muted">Date Received</span>
+                                    <strong>{{ certification.date_received|date:"m/d/Y"|default:"-" }}</strong>
+                                </div>
+
+                                <div class="expired-cert-meta">
+                                    <span class="text-muted">Date Expired</span>
+                                    <strong>{{ certification.date_expires|date:"m/d/Y"|default:"-" }}</strong>
+                                </div>
+
+                                {% if certification.note %}
+                                    <div class="border-top pt-2 mt-2" style="white-space: normal; overflow-wrap: anywhere;">
+                                        <div class="text-muted">Note</div>
+                                        <div>{{ certification.note }}</div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted">No flagged certifications are expired.</p>
+    {% endif %}
+</div>
+{% endblock %}

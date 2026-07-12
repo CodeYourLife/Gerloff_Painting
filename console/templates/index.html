@@ -128,6 +128,11 @@
                             <b>{{ pending_employee_tasks_count }}</b> -Pending Employee Tasks
                         </a>
                     </div>
+                    <div style="display: flex">
+                        <a href="{% url 'expired_certifications' %}">
+                            <b>{{ expired_flagged_certifications_count }}</b> -Expired Certifications
+                        </a>
+                    </div>
                 </div>
             </div>
             <div class="card-footer">
