@@ -1,0 +1,758 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_item_employees %}active{% endblock nav_item_employees %}
+
+{% block sub_nav %}
+{% if user.is_authenticated and user.is_active %}
+    {% include 'employees_nav.html' with page_label=sub_employee.name %}
+{% else %}
+    {% include 'portal_nav.html' with selected_sub=selected_sub page_label=sub_employee.name %}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3">
+
+    <div class="mb-3">
+        <div>
+            <h3 class="mb-0">{{ sub_employee.name|default:"" }}</h3>
+            <small class="text-muted">
+                {{ sub_employee.subcontractor.company }}
+            </small>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <strong>Employee Details</strong>
+            <button type="button"
+                    class="btn btn-sm btn-primary ml-2"
+                    data-toggle="modal"
+                    data-target="#editEmployeeDetailsModal">
+                Edit
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <small class="text-muted">Name</small>
+                    <div>{{ sub_employee.name|default:"" }}</div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <small class="text-muted">Nickname</small>
+                    <div>{{ sub_employee.nickname|default:"" }}</div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <small class="text-muted">Subcontractor</small>
+                    <div>{{ sub_employee.subcontractor.company|default:"" }}</div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <small class="text-muted">Phone</small>
+                    <div>{{ sub_employee.phone|default:"" }}</div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <small class="text-muted">Email</small>
+                    <div>{{ sub_employee.email|default:"" }}</div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <small class="text-muted">Birth Date</small>
+                    <div>{{ sub_employee.birth_date|date:"m/d/Y" }}</div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <small class="text-muted">Date Enrolled</small>
+                    <div>{{ sub_employee.date_enrolled|date:"m/d/Y" }}</div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <small class="text-muted">Status</small>
+                    <div>
+                        {% if sub_employee.is_active %}
+                            <span class="badge badge-success">Active</span>
+                        {% else %}
+                            <span class="badge badge-secondary">Inactive</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editEmployeeDetailsModal" tabindex="-1" role="dialog" aria-labelledby="editEmployeeDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form method="post" action="{% url 'subcontractor_employee_page' sub_employee.id %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editEmployeeDetailsModalLabel">Edit Employee Details</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="edit_name">Name</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="edit_name"
+                                   name="name"
+                                   value="{{ sub_employee.name|default:'' }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_nickname">Nickname</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="edit_nickname"
+                                   name="nickname"
+                                   value="{{ sub_employee.nickname|default:'' }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_phone">Phone</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="edit_phone"
+                                   name="phone"
+                                   value="{{ sub_employee.phone|default:'' }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_email">Email</label>
+                            <input type="email"
+                                   class="form-control"
+                                   id="edit_email"
+                                   name="email"
+                                   value="{{ sub_employee.email|default:'' }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_birth_date">Birth Date</label>
+                            <input type="date"
+                                   class="form-control"
+                                   id="edit_birth_date"
+                                   name="birth_date"
+                                   value="{{ sub_employee.birth_date|date:'Y-m-d' }}">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" name="update_employee_details" class="btn btn-primary">
+                            Save Details
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <strong>Trinity Registration Status</strong>
+            <button type="button"
+                    class="btn btn-sm btn-primary ml-2"
+                    data-toggle="modal"
+                    data-target="#editTrinityRegistrationModal">
+                Edit
+            </button>
+        </div>
+        <div class="card-body">
+            {% if sub_employee.username or sub_employee.password1 %}
+                <span class="badge badge-success mr-2">Registered</span>
+            {% else %}
+                <span class="badge badge-danger mr-2">Not Registered</span>
+            {% endif %}
+            <div class="mt-2">
+                <strong>Username:</strong> {{ sub_employee.username|default:"" }}
+            </div>
+            <div>
+                <strong>Password:</strong> {{ sub_employee.password1|default:"" }}
+            </div>
+            <div class="mt-3">
+                <strong>Toolbox Access:</strong>
+                {% if sub_employee.has_access_to_toolbox %}
+                    <span class="badge badge-success">Yes</span>
+                {% else %}
+                    <span class="badge badge-secondary">No</span>
+                {% endif %}
+            </div>
+            <div class="mt-2">
+                <strong>T&amp;M Access:</strong>
+                {% if sub_employee.has_access_to_TM %}
+                    <span class="badge badge-success">Yes</span>
+                {% else %}
+                    <span class="badge badge-secondary">No</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editTrinityRegistrationModal" tabindex="-1" role="dialog" aria-labelledby="editTrinityRegistrationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form method="post" action="{% url 'subcontractor_employee_page' sub_employee.id %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editTrinityRegistrationModalLabel">Edit Trinity Registration</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="edit_username">Username</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="edit_username"
+                                   name="username"
+                                   value="{{ sub_employee.username|default:'' }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_password1">Password</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="edit_password1"
+                                   name="password1"
+                                   value="{{ sub_employee.password1|default:'' }}">
+                        </div>
+                        <div class="form-check mb-2">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   id="edit_has_access_to_toolbox"
+                                   name="has_access_to_toolbox"
+                                   {% if sub_employee.has_access_to_toolbox %}checked{% endif %}>
+                            <label for="edit_has_access_to_toolbox" class="form-check-label">Toolbox Access</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   id="edit_has_access_to_TM"
+                                   name="has_access_to_TM"
+                                   {% if sub_employee.has_access_to_TM %}checked{% endif %}>
+                            <label for="edit_has_access_to_TM" class="form-check-label">T&amp;M Access</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" name="update_trinity_registration" class="btn btn-primary">
+                            Save Registration
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <a class="text-dark d-inline-block"
+               data-toggle="collapse"
+               href="#assignedJobsCollapse"
+               role="button"
+               aria-expanded="false"
+               aria-controls="assignedJobsCollapse"
+               style="text-decoration: none;">
+                <strong>{{ assigned_jobs_count }} Assigned Job{{ assigned_jobs_count|pluralize }}</strong>
+            </a>
+            {% if not assigned_jobs %}
+                <button type="button"
+                        class="btn btn-sm btn-primary ml-2"
+                        data-toggle="modal"
+                        data-target="#addAssignedJobModal">
+                    Link Employee to Job
+                </button>
+            {% endif %}
+        </div>
+        <div class="collapse" id="assignedJobsCollapse">
+            <div class="card-body">
+                {% if assigned_jobs %}
+                    <button type="button"
+                            class="btn btn-sm btn-primary mb-3"
+                            data-toggle="modal"
+                            data-target="#addAssignedJobModal">
+                        Link Employee to Another Job
+                    </button>
+                    <div class="row">
+                        {% for assignment in assigned_jobs %}
+                            <div class="col-12 col-md-6 col-xl-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <strong>{{ assignment.job.job_number }}</strong>
+                                                <div>{{ assignment.job.job_name }}</div>
+                                            </div>
+                                            {% if assignment.job.is_closed %}
+                                                <span class="badge badge-secondary">Closed</span>
+                                            {% elif assignment.job.is_active and not assignment.job.is_labor_done %}
+                                                <span class="badge badge-success">Active</span>
+                                            {% else %}
+                                                <span class="badge badge-light">Not Active</span>
+                                            {% endif %}
+                                        </div>
+
+                                        <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-2">
+                                            <span class="text-muted">Toolbox Delegated</span>
+                                            {% if assignment.is_toolbox_delegated %}
+                                                <span class="badge badge-success">Yes</span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">No</span>
+                                            {% endif %}
+                                        </div>
+
+                                        <form method="post"
+                                              action="{% url 'subcontractor_employee_page' sub_employee.id %}"
+                                              class="mt-3 mb-0">
+                                            {% csrf_token %}
+                                            <button type="submit"
+                                                    name="remove_assigned_job"
+                                                    value="{{ assignment.job.job_number }}"
+                                                    class="btn btn-sm btn-outline-danger btn-block"
+                                                    onclick="return confirm('Remove this employee from this job?');">
+                                                Remove From Job
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="mb-0 text-muted">No jobs assigned.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addAssignedJobModal" tabindex="-1" role="dialog" aria-labelledby="addAssignedJobModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form method="post" action="{% url 'subcontractor_employee_page' sub_employee.id %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addAssignedJobModalLabel">Add to Job</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group mb-0">
+                            <label for="assigned_job">Job</label>
+                            <select id="assigned_job" name="assigned_job" class="form-control" required>
+                                <option value="">Please Select</option>
+                                {% for job in available_jobs %}
+                                    <option value="{{ job.job_number }}">
+                                        {{ job.job_number }} - {{ job.job_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% if not available_jobs %}
+                            <div class="text-muted mt-2">No available open jobs for this subcontractor.</div>
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit"
+                                name="add_assigned_job"
+                                class="btn btn-primary"
+                                {% if not available_jobs %}disabled{% endif %}>
+                            Add Job
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <a class="text-dark d-block"
+               data-toggle="collapse"
+               href="#pendingTasksCollapse"
+               role="button"
+               aria-expanded="false"
+               aria-controls="pendingTasksCollapse"
+               style="text-decoration: none;">
+                <strong>{{ pending_task_count }} Pending Task{{ pending_task_count|pluralize }}</strong>
+            </a>
+        </div>
+        <div class="collapse" id="pendingTasksCollapse">
+            <div class="card-body">
+                <button type="button"
+                        class="btn btn-primary mb-3"
+                        data-toggle="modal"
+                        data-target="#addPendingActionModal">
+                    Add New Task
+                </button>
+
+                {% if pending_tasks %}
+                    <div class="row">
+                        {% for task in pending_tasks %}
+                            <div class="col-12 col-md-6 col-xl-4 mb-3">
+                                <div class="card h-100 border-warning"
+                                     role="button"
+                                     data-toggle="modal"
+                                     data-target="#completePendingActionModal"
+                                     data-action-id="{{ task.id }}"
+                                     data-action-description="{{ task.description|escapejs }}"
+                                     data-action-date="{{ task.date|date:'m/d/Y' }}"
+                                     data-action-certification="{% if task.certification %}{{ task.certification.description|default:task.certification.category|escapejs }}{% endif %}"
+                                     style="cursor:pointer;">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div class="font-weight-bold">{{ task.description }}</div>
+                                            <span class="badge badge-warning">Open</span>
+                                        </div>
+                                        {% if task.date %}
+                                            <div class="d-flex justify-content-between border-top pt-2">
+                                                <span class="text-muted">Date</span>
+                                                <strong>{{ task.date|date:"m/d/Y" }}</strong>
+                                            </div>
+                                        {% endif %}
+                                        {% if task.certification %}
+                                            <div class="d-flex justify-content-between border-top pt-2 mt-2">
+                                                <span class="text-muted">Certification</span>
+                                                <a href="{% url 'certifications' task.certification.id %}"
+                                                   class="pending-task-certification-link">
+                                                    {{ task.certification.description|default:task.certification.category }}
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                        {% if task.notes %}
+                                            <div class="border-top pt-2 mt-2">
+                                                <div class="text-muted">Notes</div>
+                                                <div>{{ task.notes }}</div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="mb-0 text-muted">No pending tasks.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <a class="text-dark d-block"
+               data-toggle="collapse"
+               href="#toolboxTalksCollapse"
+               role="button"
+               aria-expanded="false"
+               aria-controls="toolboxTalksCollapse"
+               style="text-decoration: none;">
+                <strong>
+                    Toolbox Talks -
+                    {{ toolbox_completed_count }} Completed,
+                    {{ toolbox_incomplete_count }} Incomplete
+                </strong>
+            </a>
+        </div>
+        <div class="collapse" id="toolboxTalksCollapse">
+            <div class="card-body">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <a class="text-danger d-block"
+                           data-toggle="collapse"
+                           href="#incompleteToolboxTalksCollapse"
+                           role="button"
+                           aria-expanded="false"
+                           aria-controls="incompleteToolboxTalksCollapse"
+                           style="text-decoration: none;">
+                            <strong>Incomplete Talks - {{ toolbox_incomplete_count }}</strong>
+                        </a>
+                    </div>
+                    <div class="collapse" id="incompleteToolboxTalksCollapse">
+                        <div class="card-body">
+                            {% if toolbox_summary.incomplete_talks %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>Scheduled Date</th>
+                                                <th>Toolbox Talk</th>
+                                                <th>Job</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for talk in toolbox_summary.incomplete_talks %}
+                                                <tr>
+                                                    <td>{{ talk.scheduled_date|date:"m/d/Y" }}</td>
+                                                    <td>{{ talk.description }}</td>
+                                                    <td>{{ talk.job|default:"" }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="mb-0 text-muted">No incomplete toolbox talks.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-0">
+                    <div class="card-header">
+                        <a class="text-success d-block"
+                           data-toggle="collapse"
+                           href="#completedToolboxTalksCollapse"
+                           role="button"
+                           aria-expanded="false"
+                           aria-controls="completedToolboxTalksCollapse"
+                           style="text-decoration: none;">
+                            <strong>Completed Talks - {{ toolbox_completed_count }}</strong>
+                        </a>
+                    </div>
+                    <div class="collapse" id="completedToolboxTalksCollapse">
+                        <div class="card-body">
+                            {% if toolbox_summary.completed_talks %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>Scheduled Date</th>
+                                                <th>Completed Date</th>
+                                                <th>Toolbox Talk</th>
+                                                <th>Job</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for talk in toolbox_summary.completed_talks %}
+                                                <tr>
+                                                    <td>{{ talk.scheduled_date|date:"m/d/Y" }}</td>
+                                                    <td>{{ talk.completed_date|date:"m/d/Y" }}</td>
+                                                    <td>{{ talk.description }}</td>
+                                                    <td>{{ talk.job|default:"" }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="mb-0 text-muted">No completed toolbox talks.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <a class="text-dark d-block"
+               data-toggle="collapse"
+               href="#certificationsCollapse"
+               role="button"
+               aria-expanded="false"
+               aria-controls="certificationsCollapse"
+               style="text-decoration: none;">
+                <strong>{{ certification_count }} Certification{{ certification_count|pluralize }}</strong>
+            </a>
+        </div>
+        <div class="collapse" id="certificationsCollapse">
+            <div class="card-body">
+                {% if open_certifications %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Date Received</th>
+                                    <th>Date Expires</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cert in open_certifications %}
+                                    <tr onclick="window.location.href='{% url 'certifications' cert.id %}'"
+                                        style="cursor:pointer;">
+                                        <td>{{ cert.description|default:cert.category }}</td>
+                                        <td>{{ cert.date_received|date:"m/d/Y" }}</td>
+                                        <td>{{ cert.date_expires|date:"m/d/Y" }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="mb-0 text-muted">No certifications found for this subcontractor employee.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <a class="text-dark d-block"
+               data-toggle="collapse"
+               href="#respiratorClearancesCollapse"
+               role="button"
+               aria-expanded="false"
+               aria-controls="respiratorClearancesCollapse"
+               style="text-decoration: none;">
+                <strong>{{ respirator_clearance_count }} Respirator Clearance{{ respirator_clearance_count|pluralize }}</strong>
+            </a>
+        </div>
+        <div class="collapse" id="respiratorClearancesCollapse">
+            <div class="card-body">
+                {% if respirator_clearances %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Date Created</th>
+                                    <th>Date Completed</th>
+                                    <th>Date Expires</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for clearance in respirator_clearances %}
+                                    <tr onclick="window.location.href='{% url 'subcontractor_resp_clearance_review' clearance.subcontractor.id clearance.id %}'"
+                                        style="cursor:pointer;">
+                                        <td>{{ clearance.date_created|date:"m/d/Y" }}</td>
+                                        <td>{{ clearance.date_completed|date:"m/d/Y" }}</td>
+                                        <td>{{ clearance.date_expires|date:"m/d/Y" }}</td>
+                                        <td>
+                                            {% if clearance.is_closed %}
+                                                Closed
+                                            {% elif not clearance.date_completed %}
+                                                Form Incomplete
+                                            {% elif not clearance.approved_for_use %}
+                                                Awaiting Approval
+                                            {% else %}
+                                                Approved
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="mb-0 text-muted">No respirator clearances found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="addPendingActionModal" tabindex="-1" role="dialog" aria-labelledby="addPendingActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'subcontractor_employee_page' sub_employee.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addPendingActionModalLabel">Add New Task</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="add_pending_action_description">Task</label>
+                        <input type="text"
+                               class="form-control"
+                               id="add_pending_action_description"
+                               name="pending_action_description"
+                               maxlength="500"
+                               required>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label for="add_pending_action_notes">Notes</label>
+                        <textarea class="form-control"
+                                  id="add_pending_action_notes"
+                                  name="pending_action_notes"
+                                  rows="3"
+                                  maxlength="1800"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" name="add_pending_action" class="btn btn-primary">
+                        Add Task
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="completePendingActionModal" tabindex="-1" role="dialog" aria-labelledby="completePendingActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'subcontractor_employee_page' sub_employee.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="pending_action_id" id="pending_action_id">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="completePendingActionModalLabel">Completed Task</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <strong id="pending_action_description"></strong>
+                    </div>
+                    <div class="small text-muted mb-2" id="pending_action_date"></div>
+                    <div class="mb-3" id="pending_action_certification"></div>
+
+                    <div class="form-group mb-0">
+                        <label for="completion_note">Additional Information</label>
+                        <input type="text"
+                               name="completion_note"
+                               id="completion_note"
+                               class="form-control"
+                               placeholder="Optional note">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit"
+                            name="complete_pending_action"
+                            class="btn btn-success">
+                        Task Completed
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    $('.pending-task-certification-link').on('click', function (event) {
+        event.stopPropagation();
+    });
+
+    $('#completePendingActionModal').on('show.bs.modal', function (event) {
+        const card = $(event.relatedTarget);
+        const actionId = card.data('action-id');
+        const description = card.data('action-description') || '';
+        const actionDate = card.data('action-date') || '';
+        const certification = card.data('action-certification') || '';
+
+        $('#pending_action_id').val(actionId);
+        $('#pending_action_description').text(description);
+        $('#pending_action_date').text(actionDate ? 'Date: ' + actionDate : '');
+        $('#pending_action_certification').text(certification ? 'Certification: ' + certification : '');
+        $('#completion_note').val('');
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block nav_item_index %}active{% endblock nav_item_index %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'project_styles.css' %}">
+<style>
+    .pending-task-card {
+        border: 1px solid #d6d8db;
+        border-left: 5px solid #ffc107;
+        border-radius: 6px;
+        box-shadow: 0 .15rem .35rem rgba(0, 0, 0, .08);
+    }
+
+    .pending-task-card .card-body {
+        padding: 1rem;
+    }
+
+    .pending-task-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: .75rem;
+        border-top: 1px solid #e9ecef;
+        padding-top: .5rem;
+        margin-top: .5rem;
+    }
+
+    @media (max-width: 575.98px) {
+        .pending-task-meta {
+            display: block;
+        }
+
+        .pending-task-meta strong {
+            display: block;
+            margin-top: .15rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+        <h4 class="mb-2">Pending Employee Tasks</h4>
+        <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-sm mb-2">Back to Dashboard</a>
+    </div>
+
+    <div class="alert alert-warning py-2">
+        {{ pending_tasks_count }} pending task{{ pending_tasks_count|pluralize }} for active employees and subcontractor employees.
+    </div>
+
+    {% if pending_tasks %}
+        <div class="row">
+            {% for task in pending_tasks %}
+                <div class="col-12 col-md-6 col-xl-4 mb-3">
+                    <div class="card h-100 pending-task-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="mb-0">{{ task.description }}</h6>
+                                <span class="badge badge-warning">Open</span>
+                            </div>
+
+                            <div class="mb-2">
+                                <strong>Employee:</strong>
+                                {% if task.employee %}
+                                    <a href="{% url 'employees_page' task.employee.id %}">
+                                        {{ task.assignee_display }}
+                                    </a>
+                                {% elif task.subcontractor_employee %}
+                                    <a href="{% url 'subcontractor_employee_page' task.subcontractor_employee.id %}">
+                                        {{ task.assignee_display }}
+                                    </a>
+                                {% else %}
+                                    {{ task.assignee_display }}
+                                {% endif %}
+                            </div>
+
+                            {% if task.subcontractor_employee %}
+                                <div class="mb-2">
+                                    <strong>Subcontractor:</strong>
+                                    {{ task.subcontractor_employee.subcontractor.company }}
+                                </div>
+                            {% endif %}
+
+                            {% if task.date %}
+                                <div class="pending-task-meta">
+                                    <span class="text-muted">Date</span>
+                                    <strong>{{ task.date|date:"m/d/Y" }}</strong>
+                                </div>
+                            {% endif %}
+
+                            {% if task.certification %}
+                                <div class="pending-task-meta">
+                                    <span class="text-muted">Certification</span>
+                                    <strong>
+                                        <a href="{% url 'certifications' task.certification.id %}">
+                                            {{ task.certification.description|default:task.certification.category }}
+                                        </a>
+                                    </strong>
+                                </div>
+                            {% endif %}
+
+                            {% if task.notes %}
+                                <div class="border-top pt-2 mt-2" style="white-space: normal; overflow-wrap: anywhere;">
+                                    <div class="text-muted">Notes</div>
+                                    <div>{{ task.notes }}</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted">No pending employee tasks.</p>
+    {% endif %}
+</div>
+{% endblock %}
