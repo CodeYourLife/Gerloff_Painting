@@ -2155,9 +2155,8 @@ def employees_page(request, id):
         ).values_list("certification_id", flat=True)
     )
     certification_summary["open_certifications"] = list(certification_summary["open_certifications"])
-    certification_summary["closed_certifications"] = list(certification_summary["closed_certifications"])
 
-    for cert in certification_summary["open_certifications"] + certification_summary["closed_certifications"]:
+    for cert in certification_summary["open_certifications"]:
         cert.has_open_pending_action = cert.id in open_pending_action_cert_ids
 
     inventory_summary = employee.inventory_summary()
@@ -3359,6 +3358,7 @@ def my_page(request):
 @login_required(login_url='/accounts/login')
 def certifications(request, id):
     send_data = {}
+    show_closed_certifications = request.GET.get("show_closed") == "1"
     if id != 'ALL':
         selected_cert = Certifications.objects.get(id=id)
         send_data['selected_item'] = selected_cert
@@ -3692,7 +3692,7 @@ def certifications(request, id):
             return redirect('certifications', id=cert.id)
         cert.save()
     certifications_list = Certifications.objects.filter(
-        is_closed=False,
+        is_closed=show_closed_certifications,
     ).filter(
         Q(employee__active=True) | Q(employee__isnull=True, subcontractor__is_inactive=False),
     ).select_related(
@@ -3762,7 +3762,7 @@ def certifications(request, id):
 
     subcontractor_clearances = (
         SubcontractorRespiratorClearance.objects
-        .filter(is_closed=False)
+        .filter(is_closed=show_closed_certifications)
         .select_related("subcontractor", "employee")
         .order_by("subcontractor__company", "employee_name", "-date_created", "-id")
     )
@@ -3802,6 +3802,7 @@ def certifications(request, id):
         certification_filter_descriptions,
         key=str.casefold,
     )
+    send_data['show_closed_certifications'] = show_closed_certifications
     return render(request, "certifications.html", send_data)
 
 
@@ -5934,6 +5935,7 @@ def view_respirator_certification(request,id):
             with transaction.atomic():
                 CertificationNotes.objects.filter(certification=selected_cert).delete()
                 CertificationActionRequired.objects.filter(main=selected_cert).delete()
+                EmployeePendingActions.objects.filter(certification=selected_cert).delete()
                 selected_respirator_cert.delete()
                 selected_cert.delete()
             messages.success(request, "Respirator clearance deleted.")

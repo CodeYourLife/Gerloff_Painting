@@ -520,7 +520,7 @@
         <div class="card-body">
 
             {% if certification_summary.open_certifications %}
-                <h6>Open Certifications - {{ certification_summary.open_count }}</h6>
+                <h6>Active Certifications - {{ certification_summary.open_count }}</h6>
 
                 <div class="table-responsive mb-4">
                     <table class="table table-sm table-bordered mb-0">
@@ -552,41 +552,8 @@
                         </tbody>
                     </table>
                 </div>
-            {% endif %}
-
-
-            {% if certification_summary.closed_certifications %}
-                <h6>Closed Certifications - {{ certification_summary.closed_count }}</h6>
-
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0">
-                        <thead class="thead-light">
-                            <tr>
-                                <th>Description</th>
-                                <th>Date Received</th>
-                                <th>Date Expires</th>
-                                <th>Note</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for cert in certification_summary.closed_certifications %}
-                                <tr class="table-secondary"
-                                    onclick="window.location.href='{% url 'certifications' cert.id %}'"
-                                    style="cursor:pointer;">
-                                    <td>{{ cert.description|default:"" }}</td>
-                                    <td>{{ cert.date_received|date:"m/d/Y" }}</td>
-                                    <td>{{ cert.date_expires|date:"m/d/Y" }}</td>
-                                    <td>{{ cert.note|default:"" }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% endif %}
-
-
-            {% if not certification_summary.open_certifications and not certification_summary.closed_certifications %}
-                <p class="mb-0 text-muted">No certifications found for this employee.</p>
+            {% else %}
+                <p class="mb-0 text-muted">No active certifications found for this employee.</p>
             {% endif %}
 
         </div>
