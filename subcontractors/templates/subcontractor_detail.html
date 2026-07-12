@@ -1,0 +1,885 @@
+{% extends 'base.html' %}
+{% block nav_item_subs %}active{% endblock nav_item_subs %}
+
+{% block extra_head %}
+<style>
+    .toolbox-card {
+        border-radius: 8px;
+        margin-left: -4px;
+        margin-right: -4px;
+    }
+
+    .toolbox-card .card-body {
+        padding: 1rem 0.85rem;
+    }
+
+    .toolbox-card .btn {
+        white-space: normal !important;
+        word-break: break-word;
+        line-height: 1.2;
+        padding: 12px 10px;
+        font-size: 15px;
+    }
+
+    .mobile-card {
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: .65rem .75rem;
+        margin-bottom: .65rem;
+        box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075);
+    }
+
+    .mobile-card-title {
+        font-weight: 700;
+        margin-bottom: .4rem;
+        font-size: .95rem;
+    }
+
+    .mobile-card-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        border-top: 1px solid #f1f3f5;
+        padding: .25rem 0;
+        font-size: .875rem;
+    }
+
+    .mobile-card-row span {
+        color: #6c757d;
+    }
+
+    .mobile-card-row strong {
+        text-align: right;
+    }
+
+    .mobile-card .badge {
+        font-size: .8rem;
+        padding: .35rem .5rem !important;
+    }
+
+    .clickable-row {
+        cursor: pointer;
+    }
+
+    .clickable-row:hover {
+        background-color: #eef5ff;
+    }
+
+    .trinity-username-badge {
+        white-space: normal;
+        text-align: center;
+        line-height: 1.15;
+        max-width: 120px;
+        font-size: .72rem;
+    }
+
+    .trinity-username-badge .trinity-username-value {
+        display: block;
+        font-size: .9rem;
+        margin-top: 2px;
+        word-break: break-word;
+    }
+</style>
+{% endblock %}
+
+{% block sub_nav %}
+{% include 'subcontractors_nav.html' with page_label=subcontractor.company %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h4 class="mb-1">{{ subcontractor.company }}</h4>
+            <a href="{% url 'subcontractor_home' %}">Back to Subcontractors</a>
+        </div>
+        <a class="btn btn-sm btn-secondary mt-2 mt-sm-0"
+           href="{% url 'subcontractor_employee_management' subcontractor.id %}">
+            Employee Management
+        </a>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <a class="text-dark d-block"
+               data-toggle="collapse"
+               href="#contactInfoCollapse"
+               role="button"
+               aria-expanded="true"
+               aria-controls="contactInfoCollapse"
+               style="text-decoration:none;">
+                <strong>Contact Info</strong>
+            </a>
+            <button type="button"
+                    class="btn btn-sm btn-primary"
+                    data-toggle="modal"
+                    data-target="#editContactInfoModal">
+                Edit
+            </button>
+        </div>
+        <div class="collapse show" id="contactInfoCollapse">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12 col-md-4 mb-3">
+                        <small class="text-muted d-block">Contact</small>
+                        <strong>{{ subcontractor.contact|default:"" }}</strong>
+                    </div>
+                    <div class="col-12 col-md-4 mb-3">
+                        <small class="text-muted d-block">Phone</small>
+                        <strong>{{ subcontractor.phone|default:"" }}</strong>
+                    </div>
+                    <div class="col-12 col-md-4 mb-3">
+                        <small class="text-muted d-block">Email</small>
+                        <strong>{{ subcontractor.email|default:"" }}</strong>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-md-4 mb-3">
+                        <small class="text-muted d-block">Toolbox Required</small>
+                        {% if subcontractor.is_toolbox_required %}
+                            <span class="badge badge-success">Yes</span>
+                        {% else %}
+                            <span class="badge badge-secondary">No</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-12 col-md-4 mb-3">
+                        <small class="text-muted d-block">Status</small>
+                        {% if subcontractor.is_inactive %}
+                            <span class="badge badge-danger">Inactive</span>
+                        {% else %}
+                            <span class="badge badge-success">Active</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <small class="text-muted d-block">Notes</small>
+                <div>{{ subcontractor.notes|default:"" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <a class="text-dark d-block"
+               data-toggle="collapse"
+               href="#requiredDocumentsCollapse"
+               role="button"
+               aria-expanded="false"
+               aria-controls="requiredDocumentsCollapse"
+               style="text-decoration:none;">
+                <strong>Required Documents ({{ required_document_count }} out of 5 received)</strong>
+            </a>
+            <button type="button"
+                    class="btn btn-sm btn-primary"
+                    data-toggle="modal"
+                    data-target="#editRequiredDocumentsModal">
+                Edit
+            </button>
+        </div>
+        <div class="collapse" id="requiredDocumentsCollapse">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Document</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Workers Comp</td>
+                                <td>{% if subcontractor.has_workers_comp %}<span class="badge badge-success">Received</span>{% else %}<span class="badge badge-danger">Missing</span>{% endif %}</td>
+                                <td>{{ subcontractor.insurance_expire_date|date:"m/d/Y"|default:"" }}</td>
+                            </tr>
+                            <tr>
+                                <td>Auto Insurance</td>
+                                <td>{% if subcontractor.has_auto_insurance %}<span class="badge badge-success">Received</span>{% else %}<span class="badge badge-danger">Missing</span>{% endif %}</td>
+                                <td>{{ subcontractor.insurance_expire_date|date:"m/d/Y"|default:"" }}</td>
+                            </tr>
+                            <tr>
+                                <td>W9 Form</td>
+                                <td>{% if subcontractor.has_w9_form %}<span class="badge badge-success">Received</span>{% else %}<span class="badge badge-danger">Missing</span>{% endif %}</td>
+                                <td>{{ subcontractor.w9_form_date|date:"m/d/Y"|default:"" }}</td>
+                            </tr>
+                            <tr>
+                                <td>Business License</td>
+                                <td>{% if subcontractor.has_business_license %}<span class="badge badge-success">Received</span>{% else %}<span class="badge badge-danger">Missing</span>{% endif %}</td>
+                                <td>{{ subcontractor.business_license_expiration_date|date:"m/d/Y"|default:"" }}</td>
+                            </tr>
+                            <tr>
+                                <td>Independent Contractor Agreement</td>
+                                <td>{% if subcontractor.is_signed_labor_agreement %}<span class="badge badge-success">Received</span>{% else %}<span class="badge badge-secondary">Not Received</span>{% endif %}</td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <a class="text-dark d-block"
+               data-toggle="collapse"
+               href="#employeesAssignedJobsCollapse"
+               role="button"
+               aria-expanded="false"
+               aria-controls="employeesAssignedJobsCollapse"
+               style="text-decoration:none;">
+                <strong>Employees Assigned to Jobs</strong>
+            </a>
+        </div>
+        <div class="collapse" id="employeesAssignedJobsCollapse">
+            <div class="card-body">
+                {% if job_assignment_rows %}
+                    {% for row in job_assignment_rows %}
+                        <div class="border rounded p-2 mb-3">
+                            <div class="font-weight-bold mb-2">
+                                {{ row.job.job_number }} - {{ row.job.job_name }}
+                                {% if row.job.is_active and not row.job.is_labor_done %}
+                                    <span class="ml-2 text-success">[Active]</span>
+                                {% else %}
+                                    <span class="ml-2 text-muted">[Not Active]</span>
+                                {% endif %}
+                                {% if subcontractor.is_toolbox_required and row.subcontract %}
+                                    <form method="post" class="d-inline-block ml-2 mb-0">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="job_action" value="toggle_delegation">
+                                        <input type="hidden" name="job_number" value="{{ row.job.job_number }}">
+                                        {% if row.is_delegated %}
+                                            <button type="submit" class="btn btn-sm btn-warning">
+                                                REMOVE DELEGATION
+                                            </button>
+                                        {% else %}
+                                            <button type="submit" class="btn btn-sm btn-success">
+                                                ADD DELEGATION
+                                            </button>
+                                        {% endif %}
+                                    </form>
+                                    {% if not row.is_delegated %}
+                                        <div class="small text-muted mt-1">
+                                            Clicking Add Delegation will allow the subcontractor employees to perform toolbox talks themselves through Trinity
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Employee</th>
+                                            <th>Trinity Access</th>
+                                            <th>Toolbox</th>
+                                            <th>T&amp;M</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for emp in row.employees %}
+                                            <tr>
+                                                <td>{{ emp.name }}</td>
+                                                <td>
+                                                    {% if emp.username %}
+                                                        <span class="badge badge-success trinity-username-badge">
+                                                            username
+                                                            <span class="trinity-username-value">{{ emp.username }}</span>
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="badge badge-danger">No Access</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if emp.has_access_to_toolbox %}
+                                                        <span class="badge badge-success">Enrolled</span>
+                                                    {% else %}
+                                                        <span class="badge badge-secondary">No Access</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if emp.has_access_to_TM %}
+                                                        <span class="badge badge-success">Enrolled</span>
+                                                    {% else %}
+                                                        <span class="badge badge-secondary">No Access</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted mb-0">
+                        No employees are currently assigned to active jobs.
+                    </p>
+                {% endif %}
+
+                {% if other_subcontract_job_rows %}
+                    <div class="mt-4">
+                        <strong>Other Jobs With Open Subcontracts</strong>
+                        {% for row in other_subcontract_job_rows %}
+                            <div class="border rounded p-2 mt-2">
+                                <div class="font-weight-bold">
+                                    {{ row.job.job_number }} - {{ row.job.job_name }}
+                                    {% if row.job.is_active and not row.job.is_labor_done %}
+                                        <span class="ml-2 text-success">[Active]</span>
+                                    {% else %}
+                                        <span class="ml-2 text-muted">[Not Active]</span>
+                                    {% endif %}
+                                </div>
+                                <div class="small text-muted mt-1">
+                                    Open subcontract. No subcontractor employees are currently assigned to this job.
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <a class="text-dark d-block"
+               data-toggle="collapse"
+               href="#employeesCollapse"
+               role="button"
+               aria-expanded="false"
+               aria-controls="employeesCollapse"
+               style="text-decoration:none;">
+                <strong>Show All Employees ({{ employee_count }})</strong>
+            </a>
+        </div>
+        <div class="collapse" id="employeesCollapse">
+            <div class="card-body">
+                <div class="mb-3">
+                    <button type="button"
+                            class="btn btn-sm btn-primary"
+                            data-toggle="modal"
+                            data-target="#addSubcontractorEmployeeModal">
+                        Add New Employees
+                    </button>
+                </div>
+                {% if employee_table_rows %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Trinity Access</th>
+                                    <th>Jobs</th>
+                                    <th>Tasks</th>
+                                    <th>Certifications</th>
+                                    <th>Toolbox Access</th>
+                                    <th>T&amp;M Access</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in employee_table_rows %}
+                                    <tr class="clickable-row"
+                                        onclick="window.location='{% url 'subcontractor_employee_page' row.employee.id %}';">
+                                        <td>{{ row.employee.name|default:"" }}</td>
+                                        <td>
+                                            {% if row.employee.username %}
+                                                <span class="badge badge-success">username = "{{ row.employee.username }}"</span>
+                                            {% else %}
+                                                <span class="badge badge-danger">No Access</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ row.job_count }}</td>
+                                        <td>{{ row.task_count }}</td>
+                                        <td>{{ row.certification_count }}</td>
+                                        <td>
+                                            {% if row.employee.has_access_to_toolbox %}
+                                                <span class="badge badge-success">
+                                                    {{ row.toolbox_completed_count }} Complete
+                                                </span>
+                                                <span class="badge badge-warning">
+                                                    {{ row.toolbox_incomplete_count }} Incomplete
+                                                </span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">No</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if row.employee.has_access_to_TM %}
+                                                <span class="badge badge-success">Yes</span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">No</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">No active employees for this subcontractor.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addSubcontractorEmployeeModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <form method="post" class="modal-content">
+                {% csrf_token %}
+                <input type="hidden" name="add_subcontractor_employee" value="1">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Employee</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <label>Name</label>
+                    <input type="text" name="employee_name" class="form-control mb-2" required>
+
+                    <label>Username</label>
+                    <input type="text" name="username" class="form-control mb-2">
+
+                    <label>Password</label>
+                    <input type="text" name="password1" class="form-control mb-2">
+
+                    <label>Email</label>
+                    <input type="email" name="email" class="form-control mb-2">
+
+                    <label>Phone</label>
+                    <input type="text" name="phone" class="form-control mb-3">
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="has_access_to_toolbox" id="newEmployeeToolboxAccess">
+                        <label class="form-check-label" for="newEmployeeToolboxAccess">Toolbox Access</label>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="has_access_to_TM" id="newEmployeeTMAccess">
+                        <label class="form-check-label" for="newEmployeeTMAccess">T&amp;M Access</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Add Employee</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <a class="text-dark d-block"
+               data-toggle="collapse"
+               href="#invoiceApproversCollapse"
+               role="button"
+               aria-expanded="false"
+               aria-controls="invoiceApproversCollapse"
+               style="text-decoration:none;">
+                <strong>Invoice Approvers ({{ approver_count }})</strong>
+            </a>
+        </div>
+        <div class="collapse" id="invoiceApproversCollapse">
+            <div class="card-body">
+                <a class="btn btn-sm btn-primary mb-3"
+                   href="{% url 'subcontractor_approvers' subcontractor.id %}">
+                    Edit
+                </a>
+                {% if approvers %}
+                    <ul class="mb-0">
+                        {% for approver in approvers %}
+                            <li>
+                                {% if approver.employee %}
+                                    {{ approver.employee }}
+                                {% else %}
+                                    {{ approver.job_description }}
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted mb-0">No invoice approvers are set.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <a class="text-dark d-block"
+               data-toggle="collapse"
+               href="#toolboxTalksCollapse"
+               role="button"
+               aria-expanded="false"
+               aria-controls="toolboxTalksCollapse"
+               style="text-decoration:none;">
+                <strong>Toolbox Talks {{ toolbox_completed_count }} Completed {{ toolbox_incomplete_count }} Incomplete</strong>
+            </a>
+        </div>
+        <div class="collapse" id="toolboxTalksCollapse">
+            <div class="card-body bg-light">
+                {% if toolbox_talk_rows %}
+                    <div class="row">
+                        {% for talk in toolbox_talk_rows %}
+                            <div class="col-12 col-md-6 col-xl-4 mb-2">
+                                <div class="mobile-card h-100">
+                                    <div class="mobile-card-title">
+                                        {{ talk.description }}
+                                    </div>
+
+                                    <div class="mobile-card-row">
+                                        <span>Job</span>
+                                        <strong>{{ talk.job_names|default:talk.job.job_name }}</strong>
+                                    </div>
+
+                                    <div class="mobile-card-row">
+                                        <span>Date</span>
+                                        <strong>{{ talk.date|date:"m/d/Y" }}</strong>
+                                    </div>
+
+                                    {% if talk.employee_name %}
+                                        <div class="mobile-card-row">
+                                            <span>{% if talk.employee_count > 1 %}Employees Needed{% else %}Employee Needed{% endif %}</span>
+                                            <strong>{{ talk.employee_name }}</strong>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if talk.delegated %}
+                                        <div class="mobile-card-row">
+                                            <span>Employee Progress</span>
+                                            <strong>{{ talk.completed_count }} out of {{ talk.employee_count }} completed</strong>
+                                        </div>
+
+                                        {% if talk.completed_count >= talk.employee_count and talk.employee_count > 0 %}
+                                            <span class="badge badge-success d-block p-2 mt-2">Complete</span>
+                                        {% else %}
+                                            <span class="badge badge-warning d-block p-2 mt-2">Waiting on Employees</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge badge-danger d-block p-2 mt-2">Needs Toolbox Talk</span>
+                                    {% endif %}
+
+                                    <div class="d-flex flex-wrap mt-2">
+                                        <form method="post" class="mr-2 mb-2">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="toolbox_action" value="excuse">
+                                            <input type="hidden" name="scheduled_id" value="{{ talk.scheduled.id }}">
+                                            <input type="hidden" name="job_number" value="{{ talk.job.job_number }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                Excuse
+                                            </button>
+                                        </form>
+
+                                        <form method="post" class="mb-2">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="toolbox_action" value="toggle_delegation">
+                                            <input type="hidden" name="scheduled_id" value="{{ talk.scheduled.id }}">
+                                            <input type="hidden" name="job_number" value="{{ talk.job.job_number }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                {% if talk.delegated %}Remove Delegation{% else %}Delegate{% endif %} (Click to change)
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">No incomplete toolbox talks.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <a class="text-dark d-block"
+               data-toggle="collapse"
+               href="#pendingTasksCollapse"
+               role="button"
+               aria-expanded="false"
+               aria-controls="pendingTasksCollapse"
+               style="text-decoration:none;">
+                <strong>Pending Tasks ({{ pending_task_count }})</strong>
+            </a>
+        </div>
+        <div class="collapse" id="pendingTasksCollapse">
+            <div class="card-body">
+                {% if pending_tasks %}
+                    <div class="row">
+                        {% for task in pending_tasks %}
+                            <div class="col-12 col-md-6 col-xl-4 mb-3">
+                                <div class="border rounded p-3 h-100">
+                                    <h6 class="mb-1">{{ task.description }}</h6>
+                                    <div class="small text-muted mb-2">
+                                        {{ task.subcontractor_employee.name }}
+                                        {% if task.date %} - {{ task.date|date:"m/d/Y" }}{% endif %}
+                                    </div>
+                                    {% if task.notes %}
+                                        <div class="mb-2">{{ task.notes }}</div>
+                                    {% endif %}
+                                    {% if task.certification %}
+                                        <a class="btn btn-sm btn-outline-primary"
+                                           href="{% url 'certifications' task.certification.id %}">
+                                            View Cert
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">No pending tasks.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <a class="text-dark d-block"
+               data-toggle="collapse"
+               href="#jobsCollapse"
+               role="button"
+               aria-expanded="false"
+               aria-controls="jobsCollapse"
+               style="text-decoration:none;">
+                <strong>Jobs ({{ job_count }})</strong>
+            </a>
+        </div>
+        <div class="collapse" id="jobsCollapse">
+            <div class="card-body">
+                {% if job_rows %}
+                    <div class="row">
+                        {% for row in job_rows %}
+                            <div class="col-12 col-md-6 col-xl-4 mb-3">
+                                <div class="mobile-card h-100">
+                                    <div class="mobile-card-title">
+                                        {{ row.job.job_number }} - {{ row.job.job_name }}
+                                    </div>
+
+                                    <div class="mb-2">
+                                        {% if row.is_active %}
+                                            <span class="badge badge-success">Active</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">Not Active</span>
+                                        {% endif %}
+                                        <form method="post" class="d-inline-block mb-0">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="job_action" value="toggle_delegation">
+                                            <input type="hidden" name="job_number" value="{{ row.job.job_number }}">
+                                            <button type="submit" class="btn btn-sm {% if row.is_delegated %}btn-info{% else %}btn-warning{% endif %}">
+                                                {% if row.is_delegated %}Delegated{% else %}Not Delegated{% endif %} (Click to change)
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    <div class="mobile-card-row">
+                                        <span>Percent Billed</span>
+                                        <strong>{{ row.percent_billed }}%</strong>
+                                    </div>
+
+                                    <div class="mobile-card-row">
+                                        <span>Assigned Employees</span>
+                                        <strong>
+                                            <button type="button"
+                                                    class="btn btn-link btn-sm p-0"
+                                                    data-toggle="modal"
+                                                    data-target="#assignedEmployeesModal{{ row.subcontract.id }}">
+                                                {{ row.assigned_employee_count }}
+                                            </button>
+                                        </strong>
+                                    </div>
+
+                                    <div class="mobile-card-row">
+                                        <span>Toolbox Talks</span>
+                                        <strong>{{ row.completed_toolbox_count }} Complete, {{ row.incomplete_toolbox_count }} Incomplete</strong>
+                                    </div>
+
+                                    <div class="mobile-card-row">
+                                        <span>T&amp;M Tickets</span>
+                                        <strong>{{ row.completed_tm_ticket_count }} Completed, {{ row.unsigned_tm_ticket_count }} Unsigned</strong>
+                                    </div>
+
+                                    <a class="btn btn-sm btn-outline-primary mt-2"
+                                       href="{% url 'subcontract' row.subcontract.id %}">
+                                        View PO
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    {% for row in job_rows %}
+                        <div class="modal fade" id="assignedEmployeesModal{{ row.subcontract.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+                            <div class="modal-dialog modal-lg" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">{{ row.job.job_number }} - Assigned Employees</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form method="post" class="border rounded p-2 mb-3">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="job_action" value="add_employee">
+                                            <input type="hidden" name="job_number" value="{{ row.job.job_number }}">
+                                            <label for="addEmployee{{ row.subcontract.id }}">Add Employee</label>
+                                            <div class="d-flex flex-wrap">
+                                                <select id="addEmployee{{ row.subcontract.id }}"
+                                                        name="employee_id"
+                                                        class="form-control mr-2 mb-2"
+                                                        style="max-width: 360px;"
+                                                        required>
+                                                    <option value="">Select employee</option>
+                                                    {% for employee in row.add_employee_options %}
+                                                        <option value="{{ employee.id }}">{{ employee.name }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                                <button type="submit" class="btn btn-sm btn-primary mb-2">Add Employee</button>
+                                            </div>
+                                        </form>
+
+                                        {% if row.employee_rows %}
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-bordered mb-0">
+                                                    <thead class="thead-light">
+                                                        <tr>
+                                                            <th>Employee</th>
+                                                            <th>Trinity</th>
+                                                            <th>Toolbox</th>
+                                                            <th>T&amp;M</th>
+                                                            <th></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for employee_row in row.employee_rows %}
+                                                            <tr>
+                                                                <td>
+                                                                    <a href="{% url 'subcontractor_employee_page' employee_row.employee.id %}">
+                                                                        {{ employee_row.employee.name }}
+                                                                    </a>
+                                                                </td>
+                                                                <td>{{ employee_row.trinity_status }}</td>
+                                                                <td>{{ employee_row.toolbox_status }}</td>
+                                                                <td>{{ employee_row.tm_status }}</td>
+                                                                <td>
+                                                                    <form method="post" class="mb-0">
+                                                                        {% csrf_token %}
+                                                                        <input type="hidden" name="job_action" value="remove_employee">
+                                                                        <input type="hidden" name="job_number" value="{{ row.job.job_number }}">
+                                                                        <input type="hidden" name="employee_id" value="{{ employee_row.employee.id }}">
+                                                                        <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                                                                    </form>
+                                                                </td>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        {% else %}
+                                            <p class="text-muted mb-0">No employees are assigned to this job.</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted mb-0">No open jobs.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editContactInfoModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form method="post" class="modal-content">
+            {% csrf_token %}
+            <input type="hidden" name="update_contact_info" value="1">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Contact Info</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <label>Contact</label>
+                <input type="text" name="contact" class="form-control mb-2" value="{{ subcontractor.contact|default:'' }}">
+                <label>Phone</label>
+                <input type="text" name="phone" class="form-control mb-2" value="{{ subcontractor.phone|default:'' }}">
+                <label>Email</label>
+                <input type="email" name="email" class="form-control mb-2" value="{{ subcontractor.email|default:'' }}">
+                <label>Notes</label>
+                <textarea name="notes" class="form-control mb-3" rows="4">{{ subcontractor.notes|default:"" }}</textarea>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="is_toolbox_required" id="isToolboxRequired" {% if subcontractor.is_toolbox_required %}checked{% endif %}>
+                    <label class="form-check-label" for="isToolboxRequired">Toolbox Required</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="is_inactive" id="isInactive" {% if subcontractor.is_inactive %}checked{% endif %}>
+                    <label class="form-check-label" for="isInactive">Inactive</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="editRequiredDocumentsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form method="post" class="modal-content">
+            {% csrf_token %}
+            <input type="hidden" name="update_required_documents" value="1">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Required Documents</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <label>Insurance Expiration</label>
+                <input type="date" name="insurance_expire_date" class="form-control mb-3" value="{{ subcontractor.insurance_expire_date|date:'Y-m-d' }}">
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="has_workers_comp" id="hasWorkersComp" {% if subcontractor.has_workers_comp %}checked{% endif %}>
+                    <label class="form-check-label" for="hasWorkersComp">Workers Comp Received</label>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" name="has_auto_insurance" id="hasAutoInsurance" {% if subcontractor.has_auto_insurance %}checked{% endif %}>
+                    <label class="form-check-label" for="hasAutoInsurance">Auto Insurance Received</label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="has_w9_form" id="hasW9Form" {% if subcontractor.has_w9_form %}checked{% endif %}>
+                    <label class="form-check-label" for="hasW9Form">W9 Form Received</label>
+                </div>
+                <label>W9 Form Date</label>
+                <input type="date" name="w9_form_date" class="form-control mb-3" value="{{ subcontractor.w9_form_date|date:'Y-m-d' }}">
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="has_business_license" id="hasBusinessLicense" {% if subcontractor.has_business_license %}checked{% endif %}>
+                    <label class="form-check-label" for="hasBusinessLicense">Business License Received</label>
+                </div>
+                <label>Business License Expiration</label>
+                <input type="date" name="business_license_expiration_date" class="form-control mb-3" value="{{ subcontractor.business_license_expiration_date|date:'Y-m-d' }}">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="is_signed_labor_agreement" id="isSignedLaborAgreement" {% if subcontractor.is_signed_labor_agreement %}checked{% endif %}>
+                    <label class="form-check-label" for="isSignedLaborAgreement">Independent Contractor Agreement Received</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
