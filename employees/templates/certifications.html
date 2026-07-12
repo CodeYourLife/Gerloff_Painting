@@ -39,6 +39,15 @@
                 New Certification
             </button>
         </form>
+        {% if show_closed_certifications %}
+            <a href="{% url 'certifications' 'ALL' %}" class="btn btn-outline-secondary">
+                View Active Certifications
+            </a>
+        {% else %}
+            <a href="{% url 'certifications' 'ALL' %}?show_closed=1" class="btn btn-outline-secondary">
+                View Closed Certifications
+            </a>
+        {% endif %}
     </div>
 
     <div class="card shadow-sm">
