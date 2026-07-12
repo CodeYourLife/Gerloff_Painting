@@ -481,6 +481,21 @@ function check_if_start_date_changed(){
 
 }
 
+function clear_start_date_guessed_marker(row){
+    if (!row) { return; }
+
+    var statusCell = row.cells[1];
+    var dateCell = row.cells[2];
+
+    if (statusCell && statusCell.innerText.trim() === "Date Guessed") {
+        statusCell.innerHTML = "";
+    }
+
+    if (dateCell) {
+        dateCell.classList.remove("bg-warning");
+    }
+}
+
 function change_start(){
     $.ajax({
         method: 'GET',
@@ -503,6 +518,9 @@ function change_start(){
             }
             var clicked_row = Number(pmform2.row_number.value)
             table.rows[clicked_row].cells[2].innerHTML = "<a href='#' >" + parsedData.new_date + "</a>"
+            if (parsedData.is_start_date_guessed === false) {
+                clear_start_date_guessed_marker(table.rows[clicked_row])
+            }
             if (sorted == "false"){return}
             newdate =moment(table.rows[clicked_row].cells[2].innerHTML.substring(12,23),'MMM-DD-YYYY')
             for (i = 1; i < (rows.length - 1); i++) {
@@ -642,6 +660,7 @@ function populate_start_date_modal(jobnumber,startdate,is_active,x,origin){
             document.getElementById("title2").innerHTML = parsedData.job_name
             pmform2.date_note.value=""
             pmform2.start_date.value=adjusted_date
+            original_start_date = adjusted_date
             var table = $('#jobs_table').DataTable()
             pmform2.row_number.value=x.rowIndex
             pmform2.job_number.value=jobnumber

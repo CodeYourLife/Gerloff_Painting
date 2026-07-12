@@ -776,6 +776,7 @@ def wallcovering_new(request):
             "pattern": request.POST.get("pattern"),
             "estimated_quantity": request.POST.get("estimated_quantity") or 0,
             "estimated_unit": request.POST.get("estimated_unit"),
+            "install_yardage": request.POST.get("install_yardage") or None,
             "roll_width": request.POST.get("roll_width"),
             "roll_length": request.POST.get("roll_length"),
             "vertical_repeat": request.POST.get("vertical_repeat"),
@@ -2213,6 +2214,83 @@ def wallcovering_order_edit(request, order_id):
         "extra_items": extra_items,
         "today": date.today(),
     })
+
+def wallcovering_order_delete(request, order_id):
+    Orders = apps.get_model('jobs', 'Orders')
+    order = get_object_or_404(Orders, id=order_id)
+
+    first_item = OrderItems.objects.filter(
+        order=order,
+        link_to_wallcovering__isnull=False
+    ).first()
+
+    if not first_item:
+        messages.error(request, "This order is not linked to a wallcovering.")
+        return redirect("wallcovering_home")
+
+    wallcovering = first_item.link_to_wallcovering
+
+    if request.method != "POST":
+        return redirect("wallcovering_order_edit", order_id=order.id)
+
+    order_items = OrderItems.objects.filter(order=order)
+
+    if WallcoveringDelivery.objects.filter(order=order).exists():
+        messages.error(request, "This order cannot be deleted because material has already been received.")
+        return redirect("wallcovering_order_edit", order_id=order.id)
+
+    if Packages.objects.filter(orderitem__in=order_items).exists():
+        messages.error(request, "This order cannot be deleted because packages are linked to it.")
+        return redirect("wallcovering_order_edit", order_id=order.id)
+
+    if OutgoingItem.objects.filter(package__orderitem__in=order_items).exists():
+        messages.error(request, "This order cannot be deleted because material has already been sent to the job.")
+        return redirect("wallcovering_order_edit", order_id=order.id)
+
+    if WallcoveringNotes.objects.filter(order__in=order_items).exists():
+        messages.error(request, "This order cannot be deleted because notes are linked to it.")
+        return redirect("wallcovering_order_edit", order_id=order.id)
+
+    po_number = order.po_number
+    order_date = order.date_ordered
+    order_notes = order.notes
+    employee = Employees.objects.filter(user=request.user).first()
+    order_summary_lines = [
+        f"Wallcovering order PO {po_number} deleted.",
+        f"Date Ordered: {order_date or 'N/A'}",
+        "",
+        "Deleted Order Items:",
+    ]
+
+    for item in order_items.order_by("id"):
+        quantity = item.quantity if item.quantity is not None else "N/A"
+        unit = item.unit or ""
+        price = item.price if item.price is not None else "N/A"
+        description = item.item_description or "No description"
+        order_summary_lines.append(
+            f"- {description}: {quantity} {unit}, Price: {price}"
+        )
+        if item.item_notes:
+            order_summary_lines.append(f"  Item Notes: {item.item_notes}")
+
+    if order_notes:
+        order_summary_lines.extend(["", f"Order Notes: {order_notes}"])
+
+    order_summary = "\r\n".join(order_summary_lines)[:2000]
+
+    with transaction.atomic():
+        if employee:
+            WallcoveringNotes.objects.create(
+                pattern=wallcovering,
+                date=date.today(),
+                user=employee,
+                note=order_summary,
+            )
+        order_items.delete()
+        order.delete()
+
+    messages.success(request, f"Order {po_number} deleted.")
+    return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
 
 def wallcovering_receipt_edit(request, delivery_id):
     delivery = get_object_or_404(WallcoveringDelivery, id=delivery_id)

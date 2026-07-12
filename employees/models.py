@@ -389,7 +389,20 @@ class Certifications(models.Model):
     id = models.BigAutoField(primary_key=True)
     category = models.ForeignKey(
         CertificationCategories, on_delete=models.PROTECT, null=True)
-    employee = models.ForeignKey(Employees, on_delete=models.PROTECT)
+    employee = models.ForeignKey(Employees, on_delete=models.PROTECT, null=True, blank=True)
+    subcontractor = models.ForeignKey(
+        'subcontractors.Subcontractors',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
+    subcontractor_employee = models.ForeignKey(
+        'subcontractors.Subcontractor_Employees',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
+    subcontractor_employee_name = models.CharField(null=True, blank=True, max_length=250)
     description = models.CharField(null=True, blank=True, max_length=500)
     date_received = models.DateField(null=True, blank=True)
     date_expires = models.DateField(null=True, blank=True)
@@ -400,8 +413,22 @@ class Certifications(models.Model):
     action_required = models.BooleanField(default=False)
     action = models.CharField(null=True, blank=True, max_length=500)
 
+    @property
+    def owner_display(self):
+        if self.employee:
+            return str(self.employee)
+        if self.subcontractor:
+            if self.subcontractor_employee:
+                employee_name = self.subcontractor_employee.name
+            else:
+                employee_name = self.subcontractor_employee_name
+            if employee_name:
+                return f"{self.subcontractor.company} - {employee_name}"
+            return str(self.subcontractor)
+        return "Unassigned"
+
     def __str__(self):
-        return f"{self.category} {self.employee}"
+        return f"{self.category} {self.owner_display}"
 
 
 class CertificationNotes(models.Model):
@@ -411,6 +438,35 @@ class CertificationNotes(models.Model):
     date = models.DateField()
     user = models.ForeignKey(Employees, on_delete=models.PROTECT)
     note = models.CharField(null=True, max_length=2000)
+
+
+class EmployeePendingActions(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    employee = models.ForeignKey(Employees, on_delete=models.PROTECT, null=True, blank=True)
+    subcontractor_employee = models.ForeignKey(
+        'subcontractors.Subcontractor_Employees',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
+    certification = models.ForeignKey(
+        Certifications, on_delete=models.PROTECT, null=True, blank=True)
+    date = models.DateField(null=True, blank=True)
+    description = models.CharField(max_length=500)
+    notes = models.CharField(null=True, blank=True, max_length=2000)
+    is_complete = models.BooleanField(default=False)
+    confirmed_is_complete = models.BooleanField(default=False)
+
+    @property
+    def assignee_display(self):
+        if self.employee:
+            return str(self.employee)
+        if self.subcontractor_employee:
+            return f"[SUB] {self.subcontractor_employee}"
+        return "Unassigned"
+
+    def __str__(self):
+        return f"{self.assignee_display} {self.description}"
 
 
 class CertificationActionRequired(models.Model):

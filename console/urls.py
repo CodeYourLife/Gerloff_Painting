@@ -7,6 +7,7 @@ urlpatterns = [
     path("base", views.base, name='base'),
     path('register_user', views.register_user, name='register_user'),
     path('warehouse_home', views.warehouse_home, name='warehouse_home'),
+    path('pending_employee_tasks', views.pending_employee_tasks, name='pending_employee_tasks'),
     path('seperate_test', views.seperate_test, name='seperate_test'),
     path('import_csv', views.import_csv, name='import_csv'),
     path('admin_home', views.admin_home, name='admin_home'),

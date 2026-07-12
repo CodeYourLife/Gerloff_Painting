@@ -9,6 +9,50 @@
 .select2-selection__rendered {
     font-size: 13px;
 }
+
+.trinity-username-badge {
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
+    max-width: 120px;
+    font-size: .72rem;
+}
+
+.trinity-username-badge .trinity-username-value {
+    display: block;
+    font-size: .9rem;
+    margin-top: 2px;
+    word-break: break-word;
+}
+
+.employee-action-buttons {
+    gap: .5rem;
+}
+
+.employee-management-card {
+    border: 2px solid #6c757d;
+    box-shadow: 0 .15rem .35rem rgba(0, 0, 0, .12);
+}
+
+.employee-management-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 .25rem .5rem rgba(0, 123, 255, .2);
+}
+
+@media (max-width: 575.98px) {
+    .employee-action-buttons {
+        flex-wrap: nowrap !important;
+    }
+
+    .employee-action-buttons .btn {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: .35rem .4rem;
+        font-size: .78rem;
+        line-height: 1.15;
+        white-space: normal;
+    }
+}
 </style>
 {% endblock %}
 {% block sub_nav %}
@@ -31,65 +75,193 @@
 
     <h4>{{ selected_sub.company }}</h4>
 
-    <div class="mb-3">
-        <button class="btn btn-primary" data-toggle="modal" data-target="#addEmployeeModal">
-            + Add New Employee
-        </button>
-        <button class="btn btn-secondary" data-toggle="modal" data-target="#addOldEmployeeModal">
-            + Add Back Existing Employee
-        </button>
-    </div>
-
-    <div class="table-responsive">
-        <table class="table table-sm table-bordered">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Jobs</th>
-                    <th>Toolbox</th>
-                    <th>T&amp;M Access</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for x in employees %}
-                <tr>
-                    <td>
-                        <a href="#" onclick="return openEmployeeModal('{{x.id}}');">
-                            {{x.name}}
-                        </a>
-                    </td>
-
-                    <td>{{x.job_count}}</td>
-
-                    <td>
-                        {% if x.toolbox_display == "Not Enrolled" %}
-                            <span class="badge badge-secondary">Not Enrolled</span>
-                        {% else %}
-                            {{x.toolbox_display}}
-                        {% endif %}
-                    </td>
-
-                    <td>
-                        {% if x.has_access_to_TM %}
-                            <span class="badge badge-success">Yes</span>
-                        {% else %}
-                            <span class="badge badge-secondary">No</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
 </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <a class="text-dark d-block"
+               data-toggle="collapse"
+               href="#showEmployeesCollapse"
+               role="button"
+               aria-expanded="false"
+               aria-controls="showEmployeesCollapse"
+               style="text-decoration:none;">
+                <strong>Show Employees</strong>
+            </a>
+        </div>
+        <div class="collapse" id="showEmployeesCollapse">
+            <div class="card-body">
+                <div class="mb-3 d-flex flex-wrap align-items-center employee-action-buttons">
+                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addEmployeeModal">
+                        + Add New Employee
+                    </button>
+                    <button class="btn btn-secondary btn-sm" data-toggle="modal" data-target="#addOldEmployeeModal">
+                        + Add Back Old Employee
+                    </button>
+                </div>
+                <p class="text-muted small mb-3">Click an employee to view / change information.</p>
+
+                {% if employees %}
+                    <div class="row">
+                        {% for x in employees %}
+                <div class="col-12 col-md-6 col-xl-4 mb-3">
+                    <a href="{% url 'subcontractor_employee_page' x.id %}"
+                       class="card text-left w-100 h-100 employee-management-card text-dark"
+                       style="background:white; text-decoration:none;">
+                        <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h5 class="mb-0">{{ x.name }}</h5>
+                                            {% if x.username %}
+                                                <span class="badge badge-success trinity-username-badge">
+                                                    username
+                                                    <span class="trinity-username-value">{{ x.username }}</span>
+                                                </span>
+                                            {% else %}
+                                                <span class="badge badge-danger">No Trinity Access</span>
+                                            {% endif %}
+                                        </div>
+
+                            <div class="row">
+                                <div class="col-4 mb-3">
+                                    <small class="text-muted d-block">Jobs</small>
+                                    <strong>{{ x.job_count }}</strong>
+                                </div>
+                                <div class="col-4 mb-3">
+                                    <small class="text-muted d-block">Tasks</small>
+                                    <strong>{{ x.task_count }}</strong>
+                                </div>
+                                <div class="col-4 mb-3">
+                                    <small class="text-muted d-block">Certs</small>
+                                    <strong>{{ x.certification_count }}</strong>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Toolbox Access</small>
+                                    {% if x.has_access_to_toolbox %}
+                                        <span class="badge badge-success">
+                                            {{ x.toolbox_completed_count }} Complete
+                                        </span>
+                                        <span class="badge badge-warning">
+                                            {{ x.toolbox_incomplete_count }} Incomplete
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">No</span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-6">
+                                    <small class="text-muted d-block">T&amp;M Access</small>
+                                    {% if x.has_access_to_TM %}
+                                        <span class="badge badge-success">Yes</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">No</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                                    </div>
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">No active employees for this subcontractor.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <a class="text-dark d-block"
+               data-toggle="collapse"
+               href="#pendingEmployeeTasksCollapse"
+               role="button"
+               aria-expanded="false"
+               aria-controls="pendingEmployeeTasksCollapse"
+               style="text-decoration:none;">
+                <strong>Pending Employee Tasks</strong>
+                {% if pending_employee_tasks_count %}
+                    <span class="badge badge-warning ml-2">{{ pending_employee_tasks_count }}</span>
+                {% endif %}
+            </a>
+        </div>
+        <div class="collapse" id="pendingEmployeeTasksCollapse">
+            <div class="card-body">
+                {% if pending_employee_tasks %}
+                    <div class="row">
+                        {% for task in pending_employee_tasks %}
+                            <div class="col-12 col-md-6 col-xl-4 mb-3">
+                                <div class="card h-100 border-warning"
+                                     role="button"
+                                     data-toggle="modal"
+                                     data-target="#completePendingActionModal"
+                                     data-action-id="{{ task.id }}"
+                                     data-action-description="{{ task.description|escapejs }}"
+                                     data-action-date="{{ task.date|date:'m/d/Y' }}"
+                                     data-action-employee="{{ task.subcontractor_employee.name|escapejs }}"
+                                     data-action-certification="{% if task.certification %}{{ task.certification.description|default:task.certification.category|escapejs }}{% endif %}"
+                                     style="cursor:pointer;">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <div class="font-weight-bold">{{ task.description }}</div>
+                                                <div class="small text-muted">{{ task.subcontractor_employee.name }}</div>
+                                            </div>
+                                            <span class="badge badge-warning">Open</span>
+                                        </div>
+
+                                        {% if task.date %}
+                                            <div class="d-flex justify-content-between border-top pt-2">
+                                                <span class="text-muted">Date</span>
+                                                <strong>{{ task.date|date:"m/d/Y" }}</strong>
+                                            </div>
+                                        {% endif %}
+
+                                        {% if task.certification %}
+                                            <div class="d-flex justify-content-between border-top pt-2 mt-2">
+                                                <span class="text-muted">Certification</span>
+                                                <a href="{% url 'certifications' task.certification.id %}"
+                                                   class="pending-task-certification-link">
+                                                    {{ task.certification.description|default:task.certification.category }}
+                                                </a>
+                                            </div>
+                                        {% endif %}
+
+                                        {% if task.notes %}
+                                            <div class="border-top pt-2 mt-2">
+                                                <div class="text-muted">Notes</div>
+                                                <div>{{ task.notes }}</div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">No pending employee tasks.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 
 <div class="card mt-4">
     <div class="card-header">
-        <strong>Employees Assigned By Job</strong>
+        <a class="text-dark d-block"
+           data-toggle="collapse"
+           href="#jobAssignmentsCollapse"
+           role="button"
+           aria-expanded="false"
+           aria-controls="jobAssignmentsCollapse"
+           style="text-decoration:none;">
+            <strong>Show Employees Assigned to Jobs</strong>
+        </a>
     </div>
 
-    <div class="card-body">
+    <div class="collapse" id="jobAssignmentsCollapse">
+        <div class="card-body">
 
         {% if job_assignment_rows %}
 
@@ -124,6 +296,16 @@
                                 </div>
                             {% endif %}
                         {% endif %}
+                        <hr class="my-2">
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary"
+                                data-toggle="modal"
+                                data-target="#jobEmployeesModal"
+                                data-job-id="{{ row.job.job_number }}"
+                                data-job-label="{{ row.job.job_number }} - {{ row.job.job_name }}"
+                                data-assigned-ids="{% for emp in row.employees %}{{ emp.id }}{% if not forloop.last %},{% endif %}{% endfor %}">
+                            Add / Remove Employees
+                        </button>
                     </div>
 
                     <div class="table-responsive">
@@ -131,6 +313,7 @@
                             <thead class="thead-light">
                                 <tr>
                                     <th>Employee</th>
+                                    <th>Trinity Access</th>
                                     <th>Toolbox</th>
                                     <th>T&amp;M</th>
                                 </tr>
@@ -140,6 +323,17 @@
                                 {% for emp in row.employees %}
                                     <tr>
                                         <td>{{ emp.name }}</td>
+
+                                        <td>
+                                            {% if emp.username %}
+                                                <span class="badge badge-success trinity-username-badge">
+                                                    username
+                                                    <span class="trinity-username-value">{{ emp.username }}</span>
+                                                </span>
+                                            {% else %}
+                                                <span class="badge badge-danger">No Access</span>
+                                            {% endif %}
+                                        </td>
 
                                         <td>
                                             {% if emp.has_access_to_toolbox %}
@@ -171,34 +365,81 @@
             </p>
         {% endif %}
 
+            {% if other_subcontract_job_rows %}
+                <hr>
+                <strong>Other Jobs With Open Subcontracts</strong>
+                {% for row in other_subcontract_job_rows %}
+                    <div class="border rounded p-2 mb-3 mt-2">
+                        <div class="font-weight-bold">
+                            {{ row.job.job_number }} - {{ row.job.job_name }}
+                            {% if row.job.is_active and not row.job.is_labor_done %}
+                                <span class="ml-2 text-success">[Active]</span>
+                            {% else %}
+                                <span class="ml-2 text-muted">[Not Active]</span>
+                            {% endif %}
+                        </div>
+                        <div class="small text-muted mt-1">
+                            Open subcontract. No subcontractor employees are currently assigned to this job.
+                        </div>
+                        <hr class="my-2">
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary"
+                                data-toggle="modal"
+                                data-target="#jobEmployeesModal"
+                                data-job-id="{{ row.job.job_number }}"
+                                data-job-label="{{ row.job.job_number }} - {{ row.job.job_name }}"
+                                data-assigned-ids="">
+                            Add / Remove Employees
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
     </div>
 </div>
 
-{% if other_subcontract_job_rows %}
-<div class="card mt-4">
-    <div class="card-header">
-        <strong>Other Jobs With Open Subcontracts</strong>
-    </div>
+<div class="modal fade" id="jobEmployeesModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add / Remove Employees</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
 
-    <div class="card-body">
-        {% for row in other_subcontract_job_rows %}
-            <div class="border rounded p-2 mb-3">
-                <div class="font-weight-bold">
-                    {{ row.job.job_number }} - {{ row.job.job_name }}
-                    {% if row.job.is_active and not row.job.is_labor_done %}
-                        <span class="ml-2 text-success">[Active]</span>
-                    {% else %}
-                        <span class="ml-2 text-muted">[Not Active]</span>
-                    {% endif %}
+            <div class="modal-body">
+                <input type="hidden" id="job_employees_job_id">
+                <div class="font-weight-bold mb-3" id="job_employees_job_label"></div>
+
+                <div class="form-group">
+                    <label>Add Existing Employee</label>
+                    <select id="job_add_employee_select" class="form-control">
+                        <option value="">Please Select</option>
+                    </select>
                 </div>
-                <div class="small text-muted mt-1">
-                    Open subcontract. No subcontractor employees are currently assigned to this job.
+
+                <div class="form-group">
+                    <label>New Employee</label>
+                    <input type="text"
+                           id="job_new_employee_name"
+                           class="form-control"
+                           placeholder="Type new employee name">
+                </div>
+
+                <div class="form-group mb-0">
+                    <label>Remove Employees</label>
+                    <select id="job_remove_employee_select" class="form-control" multiple>
+                    </select>
+                    <small class="form-text text-muted">Select one or more employees currently assigned to this job.</small>
                 </div>
             </div>
-        {% endfor %}
+
+            <div class="modal-footer">
+                <button class="btn btn-primary" type="button" onclick="saveJobEmployeesModal()">Save Changes</button>
+                <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
     </div>
 </div>
-{% endif %}
 
 <div class="modal fade" id="employeeModal" tabindex="-1">
     <div class="modal-dialog">
@@ -229,6 +470,26 @@
                 </div>
 
                 <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="emp_email" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="text" id="emp_phone" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label>Nickname</label>
+                    <input type="text" id="emp_nickname" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label>Birth Date</label>
+                    <input type="date" id="emp_birth_date" class="form-control">
+                </div>
+
+                <div class="form-group">
                     <label>Date Enrolled</label>
                     <input type="text" id="emp_date_enrolled" class="form-control" readonly>
                 </div>
@@ -253,16 +514,22 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Add to Job</label>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="mb-0">Add to Job</label>
+                        <button class="btn btn-success btn-sm"
+                                id="assign_job_btn"
+                                type="button"
+                                onclick="assignJobToEmployee()"
+                                style="display:none;">
+                            Assign Selected Job
+                        </button>
+                    </div>
                     <select id="emp_job_select" class="form-control"></select>
                 </div>
 
             </div>
 
             <div class="modal-footer">
-                <button class="btn btn-secondary" id="assign_job_btn" type="button" onclick="assignJobToEmployee()" style="display:none;">
-                    Assign Job
-                </button>
                 <button class="btn btn-primary" type="button" onclick="saveEmployeeModal()">Save</button>
                 <button class="btn btn-danger" type="button" onclick="removeEmployee()">Remove Employee</button>
             </div>
@@ -288,33 +555,13 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="add_emp_username" class="form-control">
+                    <label>Email</label>
+                    <input type="email" id="add_emp_email" class="form-control">
                 </div>
 
                 <div class="form-group">
-                    <label>Password</label>
-                    <input type="text" id="add_emp_password" class="form-control">
-                </div>
-
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="add_emp_toolbox">
-                        Toolbox Access
-                    </label>
-                </div>
-
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="add_emp_tm">
-                        T&amp;M Access
-                    </label>
-                </div>
-
-                <div class="form-group mb-0">
-                    <label>Assign to Job</label>
-                    <select id="add_emp_job_select" class="form-control"></select>
-                    <small class="form-text text-muted">Optional. You can assign a job now or later.</small>
+                    <label>Phone</label>
+                    <input type="text" id="add_emp_phone" class="form-control">
                 </div>
 
             </div>
@@ -366,10 +613,94 @@
     </div>
 </div>
 
+<div class="modal fade" id="completePendingActionModal" tabindex="-1" role="dialog" aria-labelledby="completePendingActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'subcontractor_employee_management' selected_sub.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="pending_action_id" id="pending_action_id">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="completePendingActionModalLabel">Completed Task</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <strong id="pending_action_description"></strong>
+                    </div>
+                    <div class="small text-muted mb-2" id="pending_action_employee"></div>
+                    <div class="small text-muted mb-2" id="pending_action_date"></div>
+                    <div class="mb-3" id="pending_action_certification"></div>
+
+                    <div class="form-group mb-0">
+                        <label for="completion_note">Additional Information</label>
+                        <input type="text"
+                               name="completion_note"
+                               id="completion_note"
+                               class="form-control"
+                               placeholder="Optional note">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit"
+                            name="complete_pending_action"
+                            class="btn btn-success">
+                        Task Completed
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
+$('.pending-task-certification-link').on('click', function (event) {
+    event.stopPropagation();
+});
+
+$('#completePendingActionModal').on('show.bs.modal', function (event) {
+    const card = $(event.relatedTarget);
+    const actionId = card.data('action-id');
+    const description = card.data('action-description') || '';
+    const employee = card.data('action-employee') || '';
+    const actionDate = card.data('action-date') || '';
+    const certification = card.data('action-certification') || '';
+
+    $('#pending_action_id').val(actionId);
+    $('#pending_action_description').text(description);
+    $('#pending_action_employee').text(employee ? 'Employee: ' + employee : '');
+    $('#pending_action_date').text(actionDate ? 'Date: ' + actionDate : '');
+    $('#pending_action_certification').text(certification ? 'Certification: ' + certification : '');
+    $('#completion_note').val('');
+});
+
+const subEmployees = [
+    {% for x in employees %}
+        {
+            id: "{{ x.id }}",
+            name: "{{ x.name|escapejs }}",
+            active: true
+        }{% if not forloop.last or oldemployees %},{% endif %}
+    {% endfor %}
+    {% for x in oldemployees %}
+        {
+            id: "{{ x.id }}",
+            name: "{{ x.name|escapejs }}",
+            active: false
+        }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+];
+
 $(document).on('change', '#emp_job_select', function () {
     toggleAssignJobButton();
 });
@@ -377,46 +708,154 @@ $('#emp_job_select').select2({
     width: '100%',
     dropdownAutoWidth: true
 });
-$('#add_emp_job_select').select2({
+$('#job_add_employee_select').select2({
     width: '100%',
-    dropdownAutoWidth: true
+    dropdownParent: $('#jobEmployeesModal')
 });
-function loadSubJobsForNewEmployee() {
-    let $target = $('#add_emp_job_select');
-    $target.empty();
+$('#job_remove_employee_select').select2({
+    width: '100%',
+    dropdownParent: $('#jobEmployeesModal')
+});
 
-    $.ajax({
-        url: "{% url 'ajax_subcontractor_jobs' %}",
-        data: {
-            subcontractor_id: "{{ selected_sub.id }}"
-        },
-        success: function (response) {
-            $target.append($('<option>', {
-                value: '',
-                text: 'Please Select'
+$('#jobEmployeesModal').on('show.bs.modal', function (event) {
+    let button = $(event.relatedTarget);
+    let jobId = button.data('job-id');
+    let jobLabel = button.data('job-label');
+    let assignedIds = String(button.data('assigned-ids') || '')
+        .split(',')
+        .filter(function (id) { return id !== ''; });
+
+    $('#job_employees_job_id').val(jobId);
+    $('#job_employees_job_label').text(jobLabel);
+    $('#job_new_employee_name').val('');
+
+    let $addSelect = $('#job_add_employee_select');
+    let $removeSelect = $('#job_remove_employee_select');
+    $addSelect.empty().append($('<option>', {
+        value: '',
+        text: 'Please Select'
+    }));
+    $removeSelect.empty();
+
+    subEmployees.forEach(function (employee) {
+        let isAssigned = assignedIds.indexOf(String(employee.id)) !== -1;
+        if (employee.active && !isAssigned) {
+            $addSelect.append($('<option>', {
+                value: employee.id,
+                text: employee.name
             }));
+        }
+        if (employee.active && isAssigned) {
+            $removeSelect.append($('<option>', {
+                value: employee.id,
+                text: employee.name
+            }));
+        }
+    });
 
-            $.each(response.results, function (index, item) {
-                $target.append(
-                    $('<option>', {
-                        value: item.id,
-                        text: item.label
-                    })
-                );
-            });
+    $addSelect.val('').trigger('change');
+    $removeSelect.val(null).trigger('change');
+});
+
+function ajaxAssignEmployeeToJob(employeeId, jobId) {
+    return $.ajax({
+        method: 'POST',
+        url: "{% url 'assign_subcontractor_employee_job' %}",
+        data: {
+            employee_id: employeeId,
+            job_id: jobId,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
         }
     });
 }
 
+function ajaxRemoveEmployeeFromJob(employeeId, jobId) {
+    return $.ajax({
+        method: 'POST',
+        url: "{% url 'remove_subcontractor_employee_job' %}",
+        data: {
+            employee_id: employeeId,
+            job_id: jobId,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        }
+    });
+}
+
+function ajaxCreateEmployeeForJob(employeeName, jobId) {
+    return $.ajax({
+        method: 'POST',
+        url: "{% url 'subcontractor_employee_create' %}",
+        data: {
+            subcontractor_id: "{{ selected_sub.id }}",
+            name: employeeName,
+            username: '',
+            password1: '',
+            email: '',
+            phone: '',
+            nickname: '',
+            birth_date: '',
+            has_access_to_toolbox: false,
+            has_access_to_TM: false,
+            job_id: jobId,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        }
+    });
+}
+
+function saveJobEmployeesModal() {
+    let jobId = $('#job_employees_job_id').val();
+    let addEmployeeId = $('#job_add_employee_select').val();
+    let newEmployeeName = $('#job_new_employee_name').val().trim();
+    let removeEmployeeIds = $('#job_remove_employee_select').val() || [];
+    let requests = [];
+
+    if (!addEmployeeId && !newEmployeeName && removeEmployeeIds.length === 0) {
+        alert('Please add or remove at least one employee.');
+        return;
+    }
+
+    if (newEmployeeName) {
+        let duplicate = subEmployees.find(function (employee) {
+            return employee.name.toLowerCase() === newEmployeeName.toLowerCase();
+        });
+        if (duplicate) {
+            let continueCreating = confirm(
+                'There is already an employee named "' + duplicate.name + '" for this subcontractor. ' +
+                'Click OK to create a new employee anyway. Click Cancel to go back and select the existing employee.'
+            );
+            if (!continueCreating) {
+                return;
+            }
+        }
+    }
+
+    if (addEmployeeId) {
+        requests.push(ajaxAssignEmployeeToJob(addEmployeeId, jobId));
+    }
+    if (newEmployeeName) {
+        requests.push(ajaxCreateEmployeeForJob(newEmployeeName, jobId));
+    }
+    removeEmployeeIds.forEach(function (employeeId) {
+        requests.push(ajaxRemoveEmployeeFromJob(employeeId, jobId));
+    });
+
+    $.when.apply($, requests)
+        .done(function () {
+            location.reload();
+        })
+        .fail(function (xhr) {
+            let msg = 'Could not update job employees.';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                msg = xhr.responseJSON.error;
+            }
+            alert(msg);
+        });
+}
+
 $('#addEmployeeModal').on('show.bs.modal', function () {
     $('#add_emp_name').val('');
-    $('#add_emp_username').val('');
-    $('#add_emp_password').val('');
-    $('#add_emp_toolbox').prop('checked', false);
-    $('#add_emp_tm').prop('checked', false);
-    $('#add_emp_job_select').empty();
-
-    loadSubJobsForNewEmployee();
+    $('#add_emp_email').val('');
+    $('#add_emp_phone').val('');
 });
 
 function createEmployee() {
@@ -426,11 +865,15 @@ function createEmployee() {
         data: {
             subcontractor_id: "{{ selected_sub.id }}",
             name: $('#add_emp_name').val(),
-            username: $('#add_emp_username').val(),
-            password1: $('#add_emp_password').val(),
-            has_access_to_toolbox: $('#add_emp_toolbox').is(':checked'),
-            has_access_to_TM: $('#add_emp_tm').is(':checked'),
-            job_id: $('#add_emp_job_select').val(),
+            username: '',
+            password1: '',
+            email: $('#add_emp_email').val(),
+            phone: $('#add_emp_phone').val(),
+            nickname: '',
+            birth_date: '',
+            has_access_to_toolbox: false,
+            has_access_to_TM: false,
+            job_id: '',
             csrfmiddlewaretoken: '{{ csrf_token }}'
         },
         success: function () {
@@ -484,6 +927,10 @@ function openEmployeeModal(id) {
     $('#emp_name').val('');
     $('#emp_username').val('');
     $('#emp_password').val('');
+    $('#emp_email').val('');
+    $('#emp_phone').val('');
+    $('#emp_nickname').val('');
+    $('#emp_birth_date').val('');
     $('#emp_date_enrolled').val('');
     $('#emp_toolbox').prop('checked', false);
     $('#emp_tm').prop('checked', false);
@@ -500,6 +947,10 @@ function openEmployeeModal(id) {
             $('#emp_name').val(response.name);
             $('#emp_username').val(response.username);
             $('#emp_password').val(response.password1);
+            $('#emp_email').val(response.email);
+            $('#emp_phone').val(response.phone);
+            $('#emp_nickname').val(response.nickname);
+            $('#emp_birth_date').val(response.birth_date);
             $('#emp_date_enrolled').val(response.date_enrolled || '');
             $('#emp_toolbox').prop('checked', response.has_access_to_toolbox);
             $('#emp_tm').prop('checked', response.has_access_to_TM);
@@ -540,6 +991,10 @@ function saveEmployeeModal() {
             name: $('#emp_name').val(),
             username: $('#emp_username').val(),
             password1: $('#emp_password').val(),
+            email: $('#emp_email').val(),
+            phone: $('#emp_phone').val(),
+            nickname: $('#emp_nickname').val(),
+            birth_date: $('#emp_birth_date').val(),
             has_access_to_toolbox: $('#emp_toolbox').is(':checked'),
             has_access_to_TM: $('#emp_tm').is(':checked'),
             csrfmiddlewaretoken: '{{ csrf_token }}'

@@ -16,6 +16,7 @@ urlpatterns = [
     path('wallcovering_send_to_job/<int:wallcovering_id>', views.wallcovering_send_to_job, name='wallcovering_send_to_job'),
     path('wallcovering_add_note/<int:wallcovering_id>', views.wallcovering_add_note, name='wallcovering_add_note'),
     path('wallcovering_order_edit/<int:order_id>', views.wallcovering_order_edit, name='wallcovering_order_edit'),
+    path('wallcovering_order_delete/<int:order_id>', views.wallcovering_order_delete, name='wallcovering_order_delete'),
     path('wallcovering_receipt_edit/<int:delivery_id>', views.wallcovering_receipt_edit, name='wallcovering_receipt_edit'),
     path('wallcovering_sent_edit/<int:sent_id>', views.wallcovering_sent_edit, name='wallcovering_sent_edit'),
     path("vendor_edit/<int:vendor_id>/edit/", views.vendor_edit, name="vendor_edit"),

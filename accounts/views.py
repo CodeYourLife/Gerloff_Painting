@@ -34,12 +34,12 @@ def registration(request):
     send_data = {}
     if request.method == 'POST':
         username = request.POST['username'].strip()
-        username_exists_in_django_users = User.objects.filter(username__iexact=username).exists()
-        username_exists_in_subcontractors = Subcontractors.objects.filter(username__iexact=username).exists()
-        username_exists_in_subcontractor_employees = Subcontractor_Employees.objects.filter(username__iexact=username).exists()
+        username_exists_in_django_users = User.objects.filter(username__iexact=username).exists() if username else False
+        username_exists_in_subcontractors = Subcontractors.objects.filter(username__iexact=username).exists() if username else False
+        username_exists_in_subcontractor_employees = Subcontractor_Employees.objects.filter(username__iexact=username).exists() if username else False
 
-        if username_exists_in_django_users or username_exists_in_subcontractors or username_exists_in_subcontractor_employees:
-            send_data['message'] = "Username already exists"
+        if not username or username_exists_in_django_users or username_exists_in_subcontractors or username_exists_in_subcontractor_employees:
+            send_data['message'] = "USERNAME ALREADY IN USE. Please choose a different username."
             send_data['username'] = username
             send_data['password'] = request.POST['password']
             send_data['phonenumber'] = request.POST['phonenumber']
@@ -112,7 +112,7 @@ def login(request):
                 TemporaryPassword.objects.filter(user=forgottenUser.id).update(is_active=False)
                 #create a new temporary password
                 TemporaryPassword.objects.create(user=forgottenUser, expiration= expiration, password=randomPassword)
-                Email.sendEmail("Forgot Password Alert", f"Someone requested their password. If this is not you, please contact your admin. Go to this page http://184.183.68.156/accounts/forgot_password and use this temporary passcode to reset your password {randomPassword} that will expire after one hour from this email's receipt.", [employee.email], False,"operations@gerloffpainting.com")
+                Email.sendEmail("Forgot Password Alert", f"Someone requested their password. If this is not you, please contact your admin. Go to this page http://184.183.68.156/accounts/forgot_password and use this temporary passcode to reset your password {randomPassword} that will expire after one hour from this email's receipt.", [employee.email], False,"bridgette@gerloffpainting.com")
                 send_data['message'] = "Email sent to user with their password"
             except Exception as e:
                 send_data['message'] = "Unable to send email, check username and try again or contact your admin"
@@ -128,6 +128,19 @@ def login(request):
                 auth_username = matching_user.username if matching_user else username
                 user = auth.authenticate(username=auth_username, password=password)
                 if user is not None:
+                    employee = Employees.objects.filter(user=user).first()
+                    if employee is not None and not employee.active:
+                        _record_login_attempt(
+                            request,
+                            username,
+                            user,
+                            LoginAttempt.RESULT_FAILED,
+                            LoginAttempt.FAILURE_INACTIVE_USER
+                        )
+                        send_data['message'] = "Invalid credentials"
+                        send_data['username'] = request.POST['username']
+                        send_data['password'] = request.POST['password']
+                        return render(request, "login.html", send_data)
                     auth.login(request, user)
                     return redirect("/")
                 if matching_user is None:

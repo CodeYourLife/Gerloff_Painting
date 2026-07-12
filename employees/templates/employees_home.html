@@ -61,6 +61,11 @@
     #employees_table_filter input {
         margin-left: 0.5rem;
     }
+
+    .trinity-username-badge {
+        white-space: nowrap;
+        font-size: .8rem;
+    }
     </style>
     {% endblock %}
 
@@ -149,7 +154,7 @@
 
     <!-- Subcontractor Employees -->
     {% for group in subcontractor_groups %}
-        <div class="card mb-3">
+        <div class="card mb-3" id="subcontractor-card-{{ group.subcontractor.id }}">
             <div class="card-header">
                 <a class="text-dark d-block"
                    data-toggle="collapse"
@@ -171,9 +176,9 @@
                 <div class="card-body">
                     <div class="mb-3">
 
-                        <a href="{% url 'subcontractor_employee_management' group.subcontractor.id %}"
+                        <a href="{% url 'subcontractor' group.subcontractor.id %}"
                            class="btn btn-sm btn-primary">
-                            👷 Manage Employees
+                            Go To Subcontractor Page
                         </a>
 
                     </div>
@@ -183,21 +188,40 @@
                                 <thead class="thead-light">
                                 <tr>
                                     <th>Name</th>
-                                    <th>Username</th>
+                                    <th>Trinity Access</th>
+                                    <th>Jobs</th>
+                                    <th>Tasks</th>
+                                    <th>Certifications</th>
                                     <th>Toolbox Access</th>
                                     <th>T&M Access</th>
-                                    <th>Date Enrolled</th>
                                 </tr>
                                 </thead>
 
                                 <tbody>
                                 {% for sub_employee in group.employees %}
-                                    <tr>
+                                    <tr class="clickable-row"
+                                        onclick="window.location='{% url 'subcontractor_employee_page' sub_employee.id %}';">
                                         <td>{{ sub_employee.name|default:"" }}</td>
-                                        <td>{{ sub_employee.username|default:"" }}</td>
+                                        <td>
+                                            {% if sub_employee.username %}
+                                                <span class="badge badge-success trinity-username-badge">
+                                                    username = {{ sub_employee.username }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge badge-danger">No Trinity Access</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ sub_employee.job_count }}</td>
+                                        <td>{{ sub_employee.task_count }}</td>
+                                        <td>{{ sub_employee.certification_count }}</td>
                                         <td>
                                             {% if sub_employee.has_access_to_toolbox %}
-                                                <span class="badge badge-success">Yes</span>
+                                                <span class="badge badge-success">
+                                                    {{ sub_employee.toolbox_completed_count }} Complete
+                                                </span>
+                                                <span class="badge badge-warning">
+                                                    {{ sub_employee.toolbox_incomplete_count }} Incomplete
+                                                </span>
                                             {% else %}
                                                 <span class="badge badge-secondary">No</span>
                                             {% endif %}
@@ -209,7 +233,6 @@
                                                 <span class="badge badge-secondary">No</span>
                                             {% endif %}
                                         </td>
-                                        <td>{{ sub_employee.date_enrolled|date:"m/d/Y" }}</td>
                                     </tr>
                                 {% endfor %}
                                 </tbody>
@@ -233,6 +256,26 @@
 <script type="text/javascript" class="init">
         $(document).ready(function () {
             var table = $('#employees_table').DataTable({paging:false});
+
+            var params = new URLSearchParams(window.location.search);
+            var subcontractorId = params.get('subcontractor_id');
+
+            if (subcontractorId) {
+                var collapseSelector = '#subcontractorCollapse' + subcontractorId;
+                var cardSelector = '#subcontractor-card-' + subcontractorId;
+
+                $(collapseSelector).collapse('show');
+
+                setTimeout(function () {
+                    var card = document.querySelector(cardSelector);
+                    if (card) {
+                        card.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                }, 250);
+            }
         })
 
 </script>
