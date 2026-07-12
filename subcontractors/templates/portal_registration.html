@@ -33,7 +33,9 @@
                            class="btn btn-primary btn-sm mt-3"
                            value="Submit">
 
-                    <div class="text-danger mt-2">{{ message }}</div>
+                    {% if message %}
+                        <div class="alert alert-danger font-weight-bold mt-3 mb-0">{{ message }}</div>
+                    {% endif %}
                 </form>
 
             {% elif register_now %}
@@ -71,7 +73,9 @@
                         Submit
                     </button>
 
-                    <div class="text-danger mt-2">{{ message }}</div>
+                    {% if message %}
+                        <div class="alert alert-danger font-weight-bold mt-3 mb-0">{{ message }}</div>
+                    {% endif %}
                 </form>
 
             {% else %}
@@ -110,7 +114,9 @@
                            placeholder="Password"
                            class="form-control">
 
-                    <div class="text-danger mt-2">{{ message }}</div>
+                    {% if message %}
+                        <div class="alert alert-danger font-weight-bold mt-3 mb-0">{{ message }}</div>
+                    {% endif %}
 
                     <input type="submit"
                            class="btn btn-primary btn-sm mt-3"

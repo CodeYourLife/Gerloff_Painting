@@ -6,9 +6,11 @@ from . import views
 urlpatterns = [
 path("employees_home", views.employees_home, name='employees_home'),
 path("employees_page/<id>", views.employees_page, name='employees_page'),
+path("subcontractor_employee_page/<int:id>", views.subcontractor_employee_page, name='subcontractor_employee_page'),
 path("training", views.training, name='training'),
 path("my_page", views.my_page, name='my_page'),
 path("certifications/<id>", views.certifications, name='certifications'),
+path("certifications/<int:certification_id>/files/<path:filename>/", views.certification_file, name='certification_file'),
 path("subcontractor_certifications", views.subcontractor_certifications, name='subcontractor_certifications'),
 path("new_certification", views.new_certification, name='new_certification'),
 path("add_new_employee", views.add_new_employee, name='add_new_employee'),

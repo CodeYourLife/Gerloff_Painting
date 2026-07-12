@@ -39,6 +39,34 @@
 
             <div class="card-body">
 
+                {% if duplicate_subcontractor_employee_name %}
+                    <div class="alert alert-warning">
+                        <div class="font-weight-bold mb-2">
+                            Subcontractor employee name already exists
+                        </div>
+                        <p class="mb-3">
+                            There are already {{ duplicate_active_count }} active employee{{ duplicate_active_count|pluralize }}
+                            named {{ duplicate_subcontractor_employee_name }}, and
+                            {{ duplicate_inactive_count }} inactive employee{{ duplicate_inactive_count|pluralize }}
+                            named {{ duplicate_subcontractor_employee_name }}.
+                            If this employee is not any of those, please click Add New Employee.
+                            Otherwise, please select the active employee from the dropdown, or Re-Active the Employee Prior to Adding a New Certification.
+                        </p>
+                        <div class="d-flex flex-wrap">
+                            <form action="{% url 'new_certification' %}" method="post" class="mb-2">
+                                {% csrf_token %}
+                                {% for item in duplicate_certification_post_items %}
+                                    <input type="hidden" name="{{ item.key }}" value="{{ item.value }}">
+                                {% endfor %}
+                                <input type="hidden" name="duplicate_choice" value="new">
+                                <button type="submit" class="btn btn-primary">
+                                    Add New Employee
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
+
 
 
                 <form action="{% url 'new_certification' %}" method="post">
@@ -47,7 +75,7 @@
                     <div class="form-section-title">Certification Details</div>
 
                     <div class="form-group">
-                        <label for="select_category">Certification Type</label>
+                        <label for="select_category">Certification Type (Select Existing or Type New)</label>
 
                         <select id="select_category" name="select_category" class="form-control">
                             <option value="please_select">Please Select</option>
@@ -67,6 +95,34 @@
                                 <option value="{{ x.id }}">{{ x.first_name }} {{ x.last_name }}</option>
                             {% endfor %}
                         </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="select_subcontractor">Subcontractor</label>
+                        <select id="select_subcontractor" name="select_subcontractor" class="form-control">
+                            <option value="please_select">Please Select</option>
+                            {% for x in subcontractors %}
+                                <option value="{{ x.id }}">{{ x.company }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div id="subcontractor_employee_group" style="display: none;">
+                        <div class="form-group">
+                            <label for="select_subcontractor_employee">Subcontractor Employee</label>
+                            <select id="select_subcontractor_employee" name="select_subcontractor_employee" class="form-control">
+                                <option value="please_select">Please Select</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subcontractor_employee_name">Subcontractor Employee Name, if not listed</label>
+                            <input type="text"
+                                   id="subcontractor_employee_name"
+                                   name="subcontractor_employee_name"
+                                   class="form-control"
+                                   placeholder="Subcontractor employee name">
+                        </div>
                     </div>
 
                     <div class="form-row">
@@ -126,40 +182,9 @@
                                   placeholder="Notes"></textarea>
                     </div>
 
-                    <hr>
-
-                    <div class="form-section-title">Employee Action Required</div>
-
-                    <div class="form-check mb-3">
-                        <input type="checkbox"
-                               name="is_action_required"
-                               id="is_action_required"
-                               class="form-check-input">
-                        <label for="is_action_required" class="form-check-label">
-                            Employee action is required
-                        </label>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="select_action">Select Action</label>
-                        <select id="select_action" name="select_action" class="form-control">
-                            <option value="please_select">Please Select Action Required</option>
+                    <!--
                             <option value="custom">Custom — type it below</option>
-                            {% for x in actions %}
-                                <option value="{{ x.id }}">{{ x.action }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="custom_action">Custom Action</label>
-                        <input type="text"
-                               id="custom_action"
-                               name="custom_action"
-                               class="form-control"
-                               placeholder="Custom action required">
-                    </div>
-
+                    -->
                     <div class="text-center mt-4">
                         <input type="submit"
                                name="complete"
@@ -175,11 +200,34 @@
     </div>
 
 </div>
+
+<div class="modal fade" id="saveCertificationTypeModal" tabindex="-1" role="dialog" aria-labelledby="saveCertificationTypeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="saveCertificationTypeModalLabel">Save Certification Type?</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Save <strong id="new_certification_type_name"></strong> as a certification type to be used again in the future?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="save_certification_type_yes">Yes</button>
+                <button type="button" class="btn btn-secondary" id="save_certification_type_no">No</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock content %}
 
 {% block extra_scripts %}
 <script>
 $(document).ready(function () {
+    let pendingNewCertificationType = "";
+    const subcontractorEmployeesBySubcontractor = JSON.parse('{{ subcontractor_employees_json|escapejs }}');
+
     $('#select_category').select2({
         tags: true,
         width: '100%',
@@ -199,18 +247,99 @@ $(document).ready(function () {
         }
     });
 
+    $('#select_employee').select2({
+        width: '100%',
+        placeholder: 'Please Select'
+    });
+
+    $('#select_subcontractor').select2({
+        width: '100%',
+        placeholder: 'Please Select'
+    });
+
+    $('#select_subcontractor_employee').select2({
+        width: '100%',
+        placeholder: 'Please Select'
+    });
+
+    function clearRegularEmployee() {
+        $('#select_employee').val('please_select').trigger('change');
+    }
+
+    function clearSubcontractorFields() {
+        $('#select_subcontractor').val('please_select').trigger('change');
+        $('#select_subcontractor_employee').empty().append(new Option('Please Select', 'please_select'));
+        $('#select_subcontractor_employee').val('please_select').trigger('change');
+        $('#subcontractor_employee_name').val('');
+        $('#subcontractor_employee_group').hide();
+    }
+
+    function populateSubcontractorEmployees(subcontractorId) {
+        const $employeeSelect = $('#select_subcontractor_employee');
+        $employeeSelect.empty().append(new Option('Please Select', 'please_select'));
+
+        if (!subcontractorId || subcontractorId === 'please_select') {
+            $employeeSelect.val('please_select').trigger('change');
+            $('#subcontractor_employee_group').hide();
+            return;
+        }
+
+        const employeeOptions = subcontractorEmployeesBySubcontractor[String(subcontractorId)] || [];
+        employeeOptions.forEach(function (employee) {
+            $employeeSelect.append(new Option(employee.name, employee.id));
+        });
+        $employeeSelect.val('please_select').trigger('change');
+        $('#subcontractor_employee_group').show();
+    }
+
+    $('#select_employee').on('change', function () {
+        const selectedEmployee = $(this).val();
+        if (selectedEmployee && selectedEmployee !== 'please_select') {
+            clearSubcontractorFields();
+        }
+    });
+
+    $('#select_subcontractor').on('change', function () {
+        const selectedSubcontractor = $(this).val();
+        if (selectedSubcontractor && selectedSubcontractor !== 'please_select') {
+            clearRegularEmployee();
+        }
+        populateSubcontractorEmployees(selectedSubcontractor);
+    });
+
+    $('#select_subcontractor_employee').on('change', function () {
+        const selectedSubEmployee = $(this).val();
+        if (selectedSubEmployee && selectedSubEmployee !== 'please_select') {
+            $('#subcontractor_employee_name').val('');
+        }
+    });
+
+    $('#subcontractor_employee_name').on('input', function () {
+        if ($(this).val().trim()) {
+            $('#select_subcontractor_employee').val('please_select').trigger('change');
+        }
+    });
+
     $('#select_category').on('select2:select', function (e) {
         let data = e.params.data;
 
         if (data.newOption || String(data.id).startsWith('NEW__')) {
-            if (confirm('Do you want to save "' + data.text + '" as a certification type to be used again in the future?')) {
-                $('#save_new_certification_type').val('YES');
-            } else {
-                $('#save_new_certification_type').val('NO');
-            }
+            pendingNewCertificationType = data.text;
+            $('#new_certification_type_name').text(data.text);
+            $('#saveCertificationTypeModal').modal('show');
         } else {
             $('#save_new_certification_type').val('NO');
         }
+    });
+
+    $('#save_certification_type_yes').on('click', function () {
+        $('#save_new_certification_type').val('YES');
+        $('#saveCertificationTypeModal').modal('hide');
+    });
+
+    $('#save_certification_type_no').on('click', function () {
+        $('#save_new_certification_type').val('NO');
+        $('#saveCertificationTypeModal').modal('hide');
     });
 });
 </script>

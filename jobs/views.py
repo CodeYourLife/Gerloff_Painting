@@ -600,6 +600,14 @@ def audit_MC_open_jobs(request):
     send_data = {}
     if request.method == 'POST':
         if 'upload_file' in request.FILES:
+            def normalize_mc_job_number(value):
+                if value is None:
+                    return ""
+                if isinstance(value, float) and value.is_integer():
+                    return str(int(value))
+                return str(value).strip()
+
+            note_user = Employees.objects.filter(user=request.user).first()
             fileitem = request.FILES['upload_file']
             fn2 = os.path.join(settings.MEDIA_ROOT, "job_upload", "Temp.xlsx")
             open(fn2, 'wb').write(fileitem.file.read())
@@ -621,9 +629,9 @@ def audit_MC_open_jobs(request):
             a = 3
             while sheet_obj.cell(row=a, column=1).value != None:
                 mc_labor_done = 0
-                superintendents.append({'job_number':sheet_obj.cell(row=a, column=1).value, 'super':sheet_obj.cell(row=a, column=7).value})
+                job_number = normalize_mc_job_number(sheet_obj.cell(row=a, column=1).value)
+                superintendents.append({'job_number': job_number, 'super':sheet_obj.cell(row=a, column=7).value})
                 if sheet_obj.cell(row=a, column=18).value == "Open":  #if open in MC
-                    job_number = sheet_obj.cell(row=a, column=1).value
                     open_jobs.append(job_number)
                     if sheet_obj.cell(row=a, column=25).value != None:  #job has been marked labor done in MC
                         mc_labor_done = 1
@@ -632,6 +640,13 @@ def audit_MC_open_jobs(request):
                         if job.is_closed == True:
                             job.is_closed = False
                             job.save()
+                            JobNotes.objects.create(
+                                job_number=job,
+                                note="Job reopened by MC Booked Jobs upload because Management Console listed this job as Open.",
+                                type="auto_misc_note",
+                                user=note_user,
+                                date=date.today()
+                            )
                             needs_to_be_opened.append({'job_number': job_number, 'job_name': job.job_name})
                         if mc_labor_done == 1:
                             labor_done.append({'job_number': job_number, 'job_name': job.job_name})
@@ -719,6 +734,13 @@ def audit_MC_open_jobs(request):
                         x.previously_closed_date = date.today()
                         x.ar_closed_date = date.today()
                         x.save()
+                        JobNotes.objects.create(
+                            job_number=x,
+                            note="Job closed by MC Booked Jobs upload because this job was not listed as Open in the uploaded Management Console report. No closed job number was assigned by this upload.",
+                            type="auto_misc_note",
+                            user=note_user,
+                            date=date.today()
+                        )
     send_data['closed_but_subs']= closed_but_subs
     send_data['closed_but_equipment'] =closed_but_equipment
     send_data['need_to_be_labor_done'] =needs_to_be_labor_done
@@ -2549,13 +2571,15 @@ def import_super_from_mc(request):
 
         if superintendent_changed:
             recipients=[]
+            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            sender = check_sender.email if check_sender and check_sender.email else "bridgette@gerloffpainting.com"
             if employee.email:
                 recipients.append(employee.email)
                 email_message=f"You have been Assigned as Super to {job.job_number} {job.job_name}"
             else:
                 recipients.append("bridgette@gerloffpainting.com")
                 email_message = f"No email is entered for {employee.first_name} {employee.last_name}. Please let them know they have been Assigned as Super to {job.job_number} {job.job_name}"
-            Email.sendEmail("Super Assigned", email_message, recipients, False, "operations@gerloffpainting.com")
+            Email.sendEmail("Super Assigned", email_message, recipients, False, sender)
 
         return JsonResponse({
             "success": True,
@@ -2667,13 +2691,15 @@ def import_pm_from_mc(request):
         job.save()
         if project_manager_changed:
             recipients=['joe@gerloffpainting.com']
+            check_sender = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            sender = check_sender.email if check_sender and check_sender.email else "bridgette@gerloffpainting.com"
             if employee.email:
                 recipients.append(employee.email)
                 email_message=f"You have been Assigned as PM to {job.job_number} {job.job_name}"
             else:
                 recipients.append("bridgette@gerloffpainting.com")
                 email_message = f"No email is entered for {employee.first_name} {employee.last_name}. Please let them know they have been Assigned as PM to {job.job_number} {job.job_name}"
-            Email.sendEmail("PM Assigned", email_message, recipients, False, "operations@gerloffpainting.com")
+            Email.sendEmail("PM Assigned", email_message, recipients, False, sender)
         return JsonResponse({
             "success": True,
             "message": "Job updated in Trinity: "

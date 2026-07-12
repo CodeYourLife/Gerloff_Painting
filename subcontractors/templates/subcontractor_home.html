@@ -132,6 +132,13 @@
                 </button>
             </div>
             <div class="modal-body">
+                        <div class="mb-2">
+                            <a id="view_employee_details_button"
+                               class="btn btn-info btn-sm"
+                               href="#">
+                                View Employee Details
+                            </a>
+                        </div>
                         <div style="margin-top: 12px" class="table-responsive">
                             <div id="contact_info_here">
                             </div>
@@ -292,7 +299,7 @@
 
 			{% for x in subcontractors %}
 				<tr>
-					<td style="white-space:nowrap" data-toggle="modal" data-target="#show_contact_info-modal" onclick="populate_contact_info('{{x.id}}')"><a href="#">{{x.company}}{% if x.is_toolbox_required %} [Toolbox Required]{% endif %}</a></td>
+					<td style="white-space:nowrap"><a href="{% url 'subcontractor' x.id %}">{{x.company}}{% if x.is_toolbox_required %} [Toolbox Required]{% endif %}</a></td>
 					<td style="white-space:nowrap" data-toggle="modal" data-target="#active_contracts-modal" onclick="populate_active_contracts_modal('{{x.id}}')"><a href="#">{{x.active_contracts}} Active Contracts</a></td>
                     <td style="white-space:nowrap" data-toggle="modal" data-target="#active_contracts-modal" onclick="populate_pending_invoices_modal('{{x.id}}')"><a href="#">{{x.pending_invoices}} Pending Invoices</a></td>
                 </tr>
@@ -622,6 +629,7 @@ function populate_contact_info(subcontractor_id){
                 document.getElementById("manage_toolbox_talks_button").href = "#";
             }
 
+            document.getElementById("view_employee_details_button").href = "{% url 'employees_home' %}?subcontractor_id=" + parsedData.id + "#subcontractor-card-" + parsedData.id;
             document.getElementById("show_contact_info_title").innerHTML = parsedData.company
             document.getElementById("contact_info_title").innerHTML = parsedData.company
             text += "</table>";

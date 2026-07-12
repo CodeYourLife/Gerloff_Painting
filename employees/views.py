@@ -6,15 +6,17 @@ from datetime import date, timedelta, datetime
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction
-from django.db.models import Q, Max
-from django.http import JsonResponse, HttpResponse
+from django.db.models import Q, Max, Count
+from django.http import JsonResponse, HttpResponse, FileResponse, Http404
 from django.shortcuts import render, redirect, get_object_or_404, reverse
 from django.template.loader import get_template
 from django.utils.timezone import now
 from django.utils import timezone
+from django.utils.text import get_valid_filename
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.cache import never_cache
@@ -25,6 +27,7 @@ from equipment.models import Inventory
 from jobs.models import Jobs, JobNotes, Email_Errors, JobsiteSafetyInspection, ClockSharkTimeEntry
 from media.utilities import MediaUtilities
 import json
+import mimetypes
 import openpyxl
 import os
 import shutil
@@ -61,24 +64,115 @@ def _delete_expired_group_toolbox_views():
     ).delete()
 
 
+def _close_previous_employee_respirator_certifications(employee, current_certification, note_user=None):
+    previous_certifications = Certifications.objects.filter(
+        employee=employee,
+        is_closed=False,
+        category__description="Respirator Clearance",
+    ).exclude(
+        id=current_certification.id,
+    )
+
+    closed_count = 0
+    note_user = note_user or employee
+
+    for certification in previous_certifications:
+        certification.is_closed = True
+        certification.save(update_fields=["is_closed"])
+        CertificationNotes.objects.create(
+            certification=certification,
+            date=date.today(),
+            user=note_user,
+            note=f"Closed because new respirator clearance {current_certification.id} was completed.",
+        )
+        closed_count += 1
+
+    return closed_count
+
+
+def _certification_files_folder(certification_id):
+    return os.path.join(settings.MEDIA_ROOT, "certifications", str(certification_id))
+
+
+def _certification_file_rows(certification_id):
+    folder = _certification_files_folder(certification_id)
+    os.makedirs(folder, exist_ok=True)
+
+    files = []
+    for filename in sorted(os.listdir(folder)):
+        path = os.path.join(folder, filename)
+        if os.path.isfile(path):
+            files.append({
+                "name": filename,
+                "url": reverse("certification_file", args=[certification_id, filename]),
+            })
+    return files
+
+
+def _certification_upload_filename(uploaded_file, custom_name, index=None):
+    original_name = os.path.basename(uploaded_file.name)
+    original_root, original_extension = os.path.splitext(original_name)
+    file_root = custom_name.strip() if custom_name and custom_name.strip() else original_root
+
+    if index is not None:
+        file_root = f"{file_root} {index}"
+
+    safe_root = get_valid_filename(file_root) or "certification_file"
+    safe_extension = get_valid_filename(original_extension).lower()
+    return f"{safe_root}{safe_extension}"
+
+
+def _duplicate_certification_sub_employee_name(base_name, subcontractor):
+    duplicate_name = f"{base_name} 2"
+    suffix = 2
+
+    while Subcontractor_Employees.objects.filter(
+        subcontractor=subcontractor,
+        name__iexact=duplicate_name,
+    ).exists():
+        suffix += 1
+        duplicate_name = f"{base_name} {suffix}"
+
+    return duplicate_name
+
+
+@login_required(login_url='/accounts/login')
+def certification_file(request, certification_id, filename):
+    certification = get_object_or_404(Certifications, id=certification_id)
+    safe_name = os.path.basename(filename)
+    file_path = os.path.join(_certification_files_folder(certification.id), safe_name)
+
+    if not os.path.exists(file_path) or not os.path.isfile(file_path):
+        raise Http404("File not found")
+
+    content_type, _ = mimetypes.guess_type(file_path)
+    return FileResponse(
+        open(file_path, "rb"),
+        as_attachment=False,
+        filename=safe_name,
+        content_type=content_type,
+    )
+
+
 def get_respirators_in_review():
     respirators_in_review = []
-    for x in RespiratorClearance.objects.filter(date_approved__isnull=True).select_related('employee', 'certification'):
-        status = x.certification.action if x.certification else ""
+    for x in RespiratorClearance.objects.filter(
+        certification__is_closed=False,
+    ).select_related('employee', 'certification'):
+        if x.approved_for_use:
+            continue
+        status = "Need Safety Director Approval" if x.date_completed else "Need to Complete Application"
         respirators_in_review.append({
             'employee': x.employee.first_name + " " + x.employee.last_name,
-            'date': x.date_created,
+            'date': x.date_completed or x.date_created,
             'status': status,
             'certification_id': x.certification_id,
-            'link_to_certification': status in [
-                "Need Safety Director Approval",
-                "Need to Complete Application",
-            ] and bool(x.certification_id),
+            'link_to_certification': bool(x.certification_id),
         })
 
     for x in (
         SubcontractorRespiratorClearance.objects
-        .filter(approved_for_use=False)
+        .filter(approved_for_use=False, is_closed=False)
         .select_related('subcontractor', 'employee')
     ):
         respirators_in_review.append({
@@ -1325,6 +1419,315 @@ def reinstate_subcontractor_employee(request, id):
 
     return redirect("employees_home")
 
+
+def _sub_employee_toolbox_summary(sub_employee):
+    assigned_pairs = _get_assigned_sub_employee_toolbox_pairs(sub_employee)
+    completed_pairs = _get_completed_sub_employee_toolbox_pairs(sub_employee, assigned_pairs)
+    excused_pairs = _get_excused_sub_employee_toolbox_pairs(sub_employee, assigned_pairs)
+    incomplete_pairs = assigned_pairs - completed_pairs - excused_pairs
+    scheduled_ids = {scheduled_id for scheduled_id, job_id in assigned_pairs}
+    job_ids = {job_id for scheduled_id, job_id in assigned_pairs}
+    scheduled_by_id = {
+        item.id: item
+        for item in ScheduledToolboxTalks.objects.filter(
+            id__in=scheduled_ids,
+        ).select_related("master")
+    }
+    jobs_by_id = {
+        item.pk: item
+        for item in Jobs.objects.filter(pk__in=job_ids)
+    }
+
+    def talk_description(scheduled):
+        if scheduled.description:
+            return scheduled.description
+        if scheduled.master:
+            return scheduled.master.description
+        return ""
+
+    def pair_rows(pairs, include_completed_date=False):
+        rows = []
+        for scheduled_id, job_id in sorted(
+            pairs,
+            key=lambda pair: (
+                scheduled_by_id.get(pair[0]).date if scheduled_by_id.get(pair[0]) else date.min,
+                str(jobs_by_id.get(pair[1]) or ""),
+            ),
+        ):
+            scheduled = scheduled_by_id.get(scheduled_id)
+            job = jobs_by_id.get(job_id)
+            row = {
+                "scheduled_date": scheduled.date if scheduled else None,
+                "description": talk_description(scheduled) if scheduled else "",
+                "job": job,
+            }
+            if include_completed_date and scheduled and job:
+                row["completed_date"] = _get_sub_employee_toolbox_completion_date(
+                    sub_employee,
+                    scheduled,
+                    job,
+                )
+            rows.append(row)
+        return rows
+
+    return {
+        "completed_count": len(completed_pairs),
+        "incomplete_count": len(incomplete_pairs),
+        "completed_talks": pair_rows(completed_pairs, include_completed_date=True),
+        "incomplete_talks": pair_rows(incomplete_pairs),
+    }
+
+
+def subcontractor_employee_page(request, id):
+    sub_employee = get_object_or_404(
+        Subcontractor_Employees.objects.select_related("subcontractor"),
+        id=id,
+    )
+    if request.method == "POST" and "update_employee_details" in request.POST:
+        sub_employee.name = (request.POST.get("name") or "").strip()
+        sub_employee.nickname = (request.POST.get("nickname") or "").strip()
+        sub_employee.phone = (request.POST.get("phone") or "").strip()
+        sub_employee.email = (request.POST.get("email") or "").strip()
+        sub_employee.birth_date = request.POST.get("birth_date") or None
+        sub_employee.save(update_fields=[
+            "name",
+            "nickname",
+            "phone",
+            "email",
+            "birth_date",
+        ])
+        messages.success(request, "Employee details updated.")
+        return redirect("subcontractor_employee_page", id=sub_employee.id)
+
+    if request.method == "POST" and "update_trinity_registration" in request.POST:
+        username = (request.POST.get("username") or "").strip()
+        if username:
+            username_exists = (
+                Subcontractor_Employees.objects
+                .filter(username__iexact=username)
+                .exclude(id=sub_employee.id)
+                .exists()
+            )
+            username_exists = username_exists or Subcontractors.objects.filter(
+                username__iexact=username
+            ).exists()
+            username_exists = username_exists or User.objects.filter(
+                username__iexact=username
+            ).exists()
+            if username_exists:
+                messages.error(request, "USERNAME ALREADY IN USE. Please choose a different username.")
+                return redirect("subcontractor_employee_page", id=sub_employee.id)
+
+        sub_employee.username = username
+        sub_employee.password1 = (request.POST.get("password1") or "").strip()
+        sub_employee.has_access_to_toolbox = request.POST.get("has_access_to_toolbox") == "on"
+        sub_employee.has_access_to_TM = request.POST.get("has_access_to_TM") == "on"
+        sub_employee.save(update_fields=[
+            "username",
+            "password1",
+            "has_access_to_toolbox",
+            "has_access_to_TM",
+        ])
+        messages.success(request, "Trinity registration updated.")
+        return redirect("subcontractor_employee_page", id=sub_employee.id)
+
+    if request.method == "POST" and "add_assigned_job" in request.POST:
+        selected_job = get_object_or_404(
+            Jobs,
+            job_number=request.POST.get("assigned_job"),
+            is_closed=False,
+        )
+        Subcontractor_Job_Assignments.objects.get_or_create(
+            employee=sub_employee,
+            job=selected_job,
+        )
+        messages.success(request, "Job assigned.")
+        return redirect("subcontractor_employee_page", id=sub_employee.id)
+
+    if request.method == "POST" and "remove_assigned_job" in request.POST:
+        Subcontractor_Job_Assignments.objects.filter(
+            employee=sub_employee,
+            job_id=request.POST.get("remove_assigned_job"),
+        ).delete()
+        messages.success(request, "Job removed.")
+        return redirect("subcontractor_employee_page", id=sub_employee.id)
+
+    if request.method == "POST" and "add_pending_action" in request.POST:
+        description = (request.POST.get("pending_action_description") or "").strip()
+        note_text = (request.POST.get("pending_action_notes") or "").strip()
+
+        if not description:
+            messages.error(request, "Please enter a task description.")
+            return redirect("subcontractor_employee_page", id=sub_employee.id)
+
+        current_employee = None
+        if request.user.is_authenticated:
+            current_employee = Employees.objects.filter(user=request.user).first()
+        added_by = current_employee.first_name if current_employee else "Unknown"
+        notes = f"{date.today().strftime('%m/%d/%Y')} - Added by {added_by}."
+        if note_text:
+            notes += f" {note_text}"
+
+        pending_action = EmployeePendingActions.objects.create(
+            subcontractor_employee=sub_employee,
+            description=description,
+            notes=notes,
+            date=date.today(),
+            is_complete=False,
+            confirmed_is_complete=False,
+        )
+
+        if sub_employee.email:
+            sender = (
+                current_employee.email
+                if current_employee and current_employee.email
+                else "bridgette@gerloffpainting.com"
+            )
+            email_body = (
+                "A new required task has been added for you.\n\n"
+                f"Task: {pending_action.description}\n"
+                f"Date Added: {pending_action.date.strftime('%m/%d/%Y')}\n"
+            )
+            if note_text:
+                email_body += f"\nNotes:\n{note_text}"
+
+            try:
+                Email.sendEmail(
+                    "New Required Task",
+                    email_body,
+                    [sub_employee.email],
+                    False,
+                    sender,
+                )
+                messages.success(request, "Required task added and employee notified.")
+            except Exception:
+                messages.warning(request, "Required task added, but the employee email could not be sent.")
+        else:
+            messages.warning(request, "Required task added, but this employee does not have an email on file.")
+
+        return redirect("subcontractor_employee_page", id=sub_employee.id)
+
+    if request.method == "POST" and "complete_pending_action" in request.POST:
+        pending_action = get_object_or_404(
+            EmployeePendingActions,
+            id=request.POST.get("pending_action_id"),
+            subcontractor_employee=sub_employee,
+            is_complete=False,
+        )
+        completion_note = (request.POST.get("completion_note") or "").strip()
+        current_employee = None
+        if request.user.is_authenticated:
+            current_employee = Employees.objects.filter(user=request.user).first()
+
+        completed_by = current_employee.first_name if current_employee else sub_employee.name
+        note_prefix = f"{date.today().strftime('%m/%d/%Y')} - {completed_by}: Completed task."
+        if completion_note:
+            note_prefix += f" {completion_note}"
+
+        existing_notes = pending_action.notes or ""
+        if existing_notes:
+            pending_action.notes = existing_notes + "\n" + note_prefix
+        else:
+            pending_action.notes = note_prefix
+        pending_action.is_complete = True
+        pending_action.save(update_fields=["notes", "is_complete"])
+
+        email_body = (
+            f"{sub_employee.name} completed a required task.\n\n"
+            f"Subcontractor: {sub_employee.subcontractor.company}\n"
+            f"Task: {pending_action.description}\n"
+            f"Date: {date.today().strftime('%m/%d/%Y')}\n"
+        )
+        if pending_action.certification:
+            email_body += f"Certification: {pending_action.certification}\n"
+        if completion_note:
+            email_body += f"\nNotes:\n{completion_note}"
+
+        sender = sub_employee.email or "bridgette@gerloffpainting.com"
+        try:
+            Email.sendEmail(
+                "Required Task Completed",
+                email_body,
+                ["bridgette@gerloffpainting.com"],
+                False,
+                sender,
+            )
+            messages.success(request, "Task marked complete.")
+        except Exception:
+            messages.warning(request, "Task marked complete, but the email could not be sent.")
+        return redirect("subcontractor_employee_page", id=sub_employee.id)
+
+    toolbox_summary = _sub_employee_toolbox_summary(sub_employee)
+    assigned_jobs = list(
+        Subcontractor_Job_Assignments.objects
+        .filter(employee=sub_employee)
+        .select_related("job")
+        .order_by("job__job_name", "job__job_number")
+    )
+    delegated_job_numbers = set(
+        SubcontractorEmployeeDelegation.objects.filter(
+            subcontractor=sub_employee.subcontractor,
+            subcontract__job_number_id__in=[
+                assignment.job_id
+                for assignment in assigned_jobs
+            ],
+        ).values_list("subcontract__job_number_id", flat=True)
+    )
+    for assignment in assigned_jobs:
+        assignment.is_toolbox_delegated = assignment.job_id in delegated_job_numbers
+    assigned_job_numbers = [assignment.job_id for assignment in assigned_jobs]
+    available_jobs = (
+        Jobs.objects
+        .filter(
+            subcontracts__subcontractor=sub_employee.subcontractor,
+            subcontracts__is_closed=False,
+            is_closed=False,
+        )
+        .exclude(job_number__in=assigned_job_numbers)
+        .order_by("job_name", "job_number")
+        .distinct()
+    )
+    certifications = (
+        Certifications.objects
+        .filter(subcontractor_employee=sub_employee)
+        .select_related("category", "subcontractor", "subcontractor_employee")
+        .order_by("is_closed", "date_expires", "description")
+    )
+    open_certifications = certifications.filter(is_closed=False)
+    pending_tasks = (
+        EmployeePendingActions.objects
+        .filter(
+            subcontractor_employee=sub_employee,
+            is_complete=False,
+        )
+        .select_related("certification")
+        .order_by("date", "id")
+    )
+    respirator_clearances = (
+        SubcontractorRespiratorClearance.objects
+        .filter(employee=sub_employee)
+        .select_related("subcontractor", "employee")
+        .order_by("is_closed", "-date_created", "-id")
+    )
+
+    return render(request, "subcontractor_employee_page.html", {
+        "sub_employee": sub_employee,
+        "selected_sub": sub_employee.subcontractor,
+        "assigned_jobs": assigned_jobs,
+        "assigned_jobs_count": len(assigned_jobs),
+        "available_jobs": available_jobs,
+        "toolbox_summary": toolbox_summary,
+        "toolbox_completed_count": toolbox_summary["completed_count"],
+        "toolbox_incomplete_count": toolbox_summary["incomplete_count"],
+        "open_certifications": open_certifications,
+        "certification_count": open_certifications.count(),
+        "pending_tasks": pending_tasks,
+        "pending_task_count": pending_tasks.count(),
+        "respirator_clearances": respirator_clearances,
+        "respirator_clearance_count": respirator_clearances.count(),
+    })
+
+
 @login_required(login_url='/accounts/login')
 def employees_home(request):
     send_data = {}
@@ -1356,10 +1759,73 @@ def employees_home(request):
             ).order_by("name")
 
 
+        sub_employees = list(sub_employees)
+        sub_employee_ids = [sub_employee.id for sub_employee in sub_employees]
+
+        task_counts = {
+            row["certification__subcontractor_employee_id"]: row["count"]
+            for row in (
+                EmployeePendingActions.objects
+                .filter(
+                    certification__subcontractor_employee_id__in=sub_employee_ids,
+                    is_complete=False,
+                )
+                .values("certification__subcontractor_employee_id")
+                .annotate(count=Count("id"))
+            )
+        }
+        certification_counts = {
+            row["subcontractor_employee_id"]: row["count"]
+            for row in (
+                Certifications.objects
+                .filter(
+                    subcontractor_employee_id__in=sub_employee_ids,
+                    is_closed=False,
+                )
+                .values("subcontractor_employee_id")
+                .annotate(count=Count("id"))
+            )
+        }
+        respirator_counts = {
+            row["employee_id"]: row["count"]
+            for row in (
+                SubcontractorRespiratorClearance.objects
+                .filter(
+                    employee_id__in=sub_employee_ids,
+                    is_closed=False,
+                )
+                .values("employee_id")
+                .annotate(count=Count("id"))
+            )
+        }
+        job_counts = {
+            row["employee_id"]: row["count"]
+            for row in (
+                Subcontractor_Job_Assignments.objects
+                .filter(employee_id__in=sub_employee_ids)
+                .values("employee_id")
+                .annotate(count=Count("id"))
+            )
+        }
+
+        for sub_employee in sub_employees:
+            sub_employee.task_count = task_counts.get(sub_employee.id, 0)
+            sub_employee.certification_count = (
+                certification_counts.get(sub_employee.id, 0) +
+                respirator_counts.get(sub_employee.id, 0)
+            )
+            sub_employee.job_count = job_counts.get(sub_employee.id, 0)
+            sub_employee.toolbox_completed_count = 0
+            sub_employee.toolbox_incomplete_count = 0
+            if sub_employee.has_access_to_toolbox and sub_employee.subcontractor.is_toolbox_required:
+                toolbox_summary = _sub_employee_toolbox_summary(sub_employee)
+                sub_employee.toolbox_completed_count = toolbox_summary["completed_count"]
+                sub_employee.toolbox_incomplete_count = toolbox_summary["incomplete_count"]
+
         subcontractor_groups.append({
             "subcontractor": sub,
             "employees": sub_employees,
-            "count": sub_employees.count(),
+            "count": len(sub_employees),
         })
 
 
@@ -1415,6 +1881,90 @@ def toggle_subcontractor_delegation(request, sub_id):
 def employees_page(request, id):
     employee = get_object_or_404(Employees, id=id)
     current_user_employee = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+
+    if request.method == 'POST' and 'add_pending_action' in request.POST:
+        description = (request.POST.get("pending_action_description") or "").strip()
+        note_text = (request.POST.get("pending_action_notes") or "").strip()
+
+        if not description:
+            messages.error(request, "Please enter a task description.")
+            return redirect("employees_page", id=employee.id)
+
+        added_by = current_user_employee.first_name if current_user_employee else "Unknown"
+        notes = f"{date.today().strftime('%m/%d/%Y')} - Added by {added_by}."
+        if note_text:
+            notes += f" {note_text}"
+
+        pending_action = EmployeePendingActions.objects.create(
+            employee=employee,
+            description=description,
+            notes=notes,
+            date=date.today(),
+            is_complete=False,
+            confirmed_is_complete=False,
+        )
+
+        if employee.email:
+            sender = current_user_employee.email if current_user_employee and current_user_employee.email else "bridgette@gerloffpainting.com"
+            email_body = (
+                "A new required task has been added for you.\n\n"
+                f"Task: {pending_action.description}\n"
+                f"Date Added: {pending_action.date.strftime('%m/%d/%Y')}\n"
+            )
+            if note_text:
+                email_body += f"\nNotes:\n{note_text}"
+
+            try:
+                Email.sendEmail(
+                    "New Required Task",
+                    email_body,
+                    [employee.email],
+                    False,
+                    sender,
+                )
+                messages.success(request, "Required task added and employee notified.")
+            except Exception:
+                messages.warning(request, "Required task added, but the employee email could not be sent.")
+        else:
+            messages.warning(request, "Required task added, but this employee does not have an email on file.")
+
+        return redirect("employees_page", id=employee.id)
+
+    if request.method == 'POST' and 'add_pending_action_note' in request.POST:
+        pending_action = get_object_or_404(
+            EmployeePendingActions,
+            id=request.POST.get("add_pending_action_note"),
+            employee=employee,
+            certification__isnull=True,
+            is_complete=False,
+        )
+        note_text = (request.POST.get(f"pending_action_note_{pending_action.id}") or "").strip()
+
+        if not note_text:
+            messages.error(request, "Please enter a note before adding it.")
+            return redirect("employees_page", id=employee.id)
+
+        note_prefix = date.today().strftime('%m/%d/%Y')
+        if current_user_employee:
+            note_prefix += f" - {current_user_employee.first_name}"
+
+        pending_action.notes = (
+            (pending_action.notes + "\n") if pending_action.notes else ""
+        ) + f"{note_prefix}: {note_text}"
+        pending_action.save(update_fields=["notes"])
+        messages.success(request, "Task note added.")
+        return redirect("employees_page", id=employee.id)
+
+    if request.method == 'POST' and 'delete_pending_action' in request.POST:
+        pending_action = get_object_or_404(
+            EmployeePendingActions,
+            id=request.POST.get("delete_pending_action"),
+            employee=employee,
+            certification__isnull=True,
+        )
+        pending_action.delete()
+        messages.success(request, "Pending employee task deleted.")
+        return redirect("employees_page", id=employee.id)
 
     if request.method == 'POST' and ('approve_vacation' in request.POST or 'reject_vacation' in request.POST):
         if not current_user_employee:
@@ -1582,8 +2132,34 @@ def employees_page(request, id):
     toolbox_summary = employee.toolbox_talk_summary()
     toolbox_completed_count = toolbox_summary["completed_count"]
     toolbox_incomplete_count = toolbox_summary["incomplete_count"]
+    pending_actions = list(
+        EmployeePendingActions.objects.filter(
+            employee=employee,
+            is_complete=False,
+        ).select_related(
+            "certification",
+            "certification__category",
+        ).order_by(
+            "date",
+            "id",
+        )
+    )
+    pending_actions_count = len(pending_actions)
     certification_summary = employee.certification_summary()
     certification_count = certification_summary["count"]
+    open_pending_action_cert_ids = set(
+        EmployeePendingActions.objects.filter(
+            employee=employee,
+            certification__isnull=False,
+            is_complete=False,
+        ).values_list("certification_id", flat=True)
+    )
+    certification_summary["open_certifications"] = list(certification_summary["open_certifications"])
+    certification_summary["closed_certifications"] = list(certification_summary["closed_certifications"])
+
+    for cert in certification_summary["open_certifications"] + certification_summary["closed_certifications"]:
+        cert.has_open_pending_action = cert.id in open_pending_action_cert_ids
+
     inventory_summary = employee.inventory_summary()
     assigned_equipment_count = inventory_summary["count"]
     if employee.job_title and employee.job_title.description == "Painter":
@@ -1666,6 +2242,8 @@ def employees_page(request, id):
         "toolbox_completed_count": toolbox_completed_count,
         "toolbox_incomplete_count": toolbox_incomplete_count,
         "toolbox_summary": toolbox_summary,
+        "pending_actions": pending_actions,
+        "pending_actions_count": pending_actions_count,
         "certification_count": certification_count,
         "assigned_equipment_count": assigned_equipment_count,
         "can_view_employee_vacation_history": can_view_employee_vacation_history,
@@ -1872,7 +2450,172 @@ def my_page(request):
     )
     show_vacation_requests = is_vacation_request_employee
     can_request_vacation = has_worked_more_than_one_year and is_vacation_request_employee
+
+    def task_review_scope_filter():
+        if request.user.groups.filter(name="Employee Task Reviewers").exists():
+            return (
+                Q(employee__active=True) |
+                Q(
+                    subcontractor_employee__is_active=True,
+                    subcontractor_employee__subcontractor__is_inactive=False,
+                )
+            )
+        if employee.job_title and employee.job_title.description == "Superintendent":
+            return (
+                Q(
+                    employee__active=True,
+                    employee__job_title__description__in=["Painter", "Warehouse"],
+                ) |
+                Q(
+                    subcontractor_employee__is_active=True,
+                    subcontractor_employee__subcontractor__is_inactive=False,
+                )
+            )
+        return Q(pk__in=[])
+
     if request.method == 'POST':
+        if 'complete_pending_action' in request.POST:
+            pending_action = get_object_or_404(
+                EmployeePendingActions,
+                id=request.POST.get("pending_action_id"),
+                employee=employee,
+                is_complete=False,
+            )
+            completion_note = (request.POST.get("completion_note") or "").strip()
+            note_prefix = f"{date.today().strftime('%m/%d/%Y')} - {employee.first_name}: Completed task."
+            if completion_note:
+                note_prefix += f" {completion_note}"
+
+            existing_notes = pending_action.notes or ""
+            if existing_notes:
+                pending_action.notes = existing_notes + "\n" + note_prefix
+            else:
+                pending_action.notes = note_prefix
+
+            pending_action.is_complete = True
+            pending_action.save()
+
+            email_body = (
+                f"{employee} completed a required task.\n\n"
+                f"Task: {pending_action.description}\n"
+                f"Date: {date.today().strftime('%m/%d/%Y')}\n"
+            )
+            if pending_action.certification:
+                email_body += f"Certification: {pending_action.certification}\n"
+            if completion_note:
+                email_body += f"\nNotes:\n{completion_note}"
+
+            sender = employee.email if employee.email else "bridgette@gerloffpainting.com"
+            try:
+                Email.sendEmail(
+                    "Required Task Completed",
+                    email_body,
+                    ["bridgette@gerloffpainting.com"],
+                    False,
+                    sender,
+                )
+                messages.success(request, "Task marked complete.")
+            except Exception:
+                messages.warning(request, "Task marked complete, but the email could not be sent.")
+
+            return redirect('my_page')
+
+        if 'add_review_pending_action_note' in request.POST:
+            pending_action = get_object_or_404(
+                EmployeePendingActions.objects.filter(
+                    task_review_scope_filter(),
+                    certification__isnull=True,
+                    is_complete=False,
+                ),
+                id=request.POST.get("add_review_pending_action_note"),
+            )
+            note_text = (request.POST.get(f"review_pending_action_note_{pending_action.id}") or "").strip()
+
+            if not note_text:
+                messages.error(request, "Please enter a note before adding it.")
+                return redirect('my_page')
+
+            note_prefix = date.today().strftime('%m/%d/%Y')
+            if employee:
+                note_prefix += f" - {employee.first_name}"
+
+            pending_action.notes = (
+                (pending_action.notes + "\n") if pending_action.notes else ""
+            ) + f"{note_prefix}: {note_text}"
+            pending_action.save(update_fields=["notes"])
+            messages.success(request, "Task note added.")
+            return redirect('my_page')
+
+        if 'delete_review_pending_action' in request.POST:
+            pending_action = get_object_or_404(
+                EmployeePendingActions.objects.filter(
+                    task_review_scope_filter(),
+                    certification__isnull=True,
+                    is_complete=False,
+                ),
+                id=request.POST.get("delete_review_pending_action"),
+            )
+            pending_action.delete()
+            messages.success(request, "Pending employee task deleted.")
+            return redirect('my_page')
+
+        if 'confirm_review_completed_action' in request.POST:
+            completed_action = get_object_or_404(
+                EmployeePendingActions.objects.filter(
+                    task_review_scope_filter(),
+                    is_complete=True,
+                    confirmed_is_complete=False,
+                ),
+                id=request.POST.get("confirm_review_completed_action"),
+            )
+            completed_action.confirmed_is_complete = True
+            completed_action.save(update_fields=["confirmed_is_complete"])
+            if completed_action.certification:
+                CertificationNotes.objects.create(
+                    certification=completed_action.certification,
+                    date=date.today(),
+                    user=employee,
+                    note=(
+                        f"Completed employee task confirmed for {completed_action.assignee_display}: "
+                        f"{completed_action.description}"
+                    ),
+                )
+            messages.success(request, "Completed task confirmed.")
+            return redirect('my_page')
+
+        if 'deny_review_completed_action' in request.POST:
+            completed_action = get_object_or_404(
+                EmployeePendingActions.objects.filter(
+                    task_review_scope_filter(),
+                    is_complete=True,
+                    confirmed_is_complete=False,
+                ),
+                id=request.POST.get("deny_review_completed_action"),
+            )
+            denial_note = (request.POST.get(f"deny_review_completed_action_note_{completed_action.id}") or "").strip()
+            if not denial_note:
+                messages.error(request, "Please enter a note explaining why the completed task was denied.")
+                return redirect('my_page')
+
+            completed_action.is_complete = False
+            completed_action.confirmed_is_complete = False
+            completed_action.notes = (
+                (completed_action.notes + "\n") if completed_action.notes else ""
+            ) + f"{date.today().strftime('%m/%d/%Y')} - {employee.first_name}: Denied completion. {denial_note}"
+            completed_action.save(update_fields=["is_complete", "confirmed_is_complete", "notes"])
+            if completed_action.certification:
+                CertificationNotes.objects.create(
+                    certification=completed_action.certification,
+                    date=date.today(),
+                    user=employee,
+                    note=(
+                        f"Completed employee task denied and reopened for {completed_action.assignee_display}: "
+                        f"{completed_action.description}. Reason: {denial_note}"
+                    ),
+                )
+            messages.success(request, "Completed task denied and reopened.")
+            return redirect('my_page')
+
         if 'approve_vacation' in request.POST or 'reject_vacation' in request.POST:
             vacation_approval_id = request.POST.get("vacation_approval_id")
 
@@ -2312,10 +3055,90 @@ def my_page(request):
     send_data['exams'] = ExamScore.objects.filter(student=employee)
     send_data['mentorship_mentor'] = Mentorship.objects.filter(mentor=employee)
     send_data['mentorship_apprentice'] = Mentorship.objects.filter(apprentice=employee)
-    send_data['certifications'] = Certifications.objects.filter(employee=employee,is_closed=False)
-    send_data['certifications_count'] = Certifications.objects.filter(employee=employee,is_closed=False).count()
-    send_data['actions'] = Certifications.objects.filter(employee=employee, action_required=True)
-    send_data['actions_count'] = Certifications.objects.filter(employee=employee, action_required=True).count()
+    certifications = list(
+        Certifications.objects.filter(
+            employee=employee,
+            is_closed=False,
+        ).select_related(
+            "category",
+        )
+    )
+    pending_actions = list(
+        EmployeePendingActions.objects.filter(
+            employee=employee,
+            is_complete=False,
+        ).select_related(
+            "certification",
+            "certification__category",
+        ).order_by(
+            "date",
+            "id",
+        )
+    )
+
+    pending_actions_by_certification = {}
+    for pending_action in pending_actions:
+        if pending_action.certification_id:
+            pending_actions_by_certification.setdefault(
+                pending_action.certification_id,
+                [],
+            ).append(pending_action)
+
+    for certification in certifications:
+        certification.pending_actions = pending_actions_by_certification.get(
+            certification.id,
+            [],
+        )
+
+    send_data['certifications'] = certifications
+    send_data['certifications_count'] = len(certifications)
+    send_data['pending_actions'] = pending_actions
+    send_data['pending_actions_count'] = len(pending_actions)
+    task_review_employee_filter = task_review_scope_filter()
+
+    task_review_select_related = (
+        "employee",
+        "employee__job_title",
+        "subcontractor_employee",
+        "subcontractor_employee__subcontractor",
+        "certification",
+        "certification__category",
+    )
+    task_reviewer_pending_actions = list(
+        EmployeePendingActions.objects.filter(
+            task_review_employee_filter,
+            is_complete=False,
+        ).select_related(
+            *task_review_select_related,
+        ).order_by(
+            "employee__last_name",
+            "employee__first_name",
+            "subcontractor_employee__subcontractor__company",
+            "subcontractor_employee__name",
+            "date",
+            "id",
+        )
+    )
+    task_reviewer_completed_actions = list(
+        EmployeePendingActions.objects.filter(
+            task_review_employee_filter,
+            is_complete=True,
+            confirmed_is_complete=False,
+        ).select_related(
+            *task_review_select_related,
+        ).order_by(
+            "employee__last_name",
+            "employee__first_name",
+            "subcontractor_employee__subcontractor__company",
+            "subcontractor_employee__name",
+            "date",
+            "id",
+        )
+    )
+    send_data['task_reviewer_pending_actions'] = task_reviewer_pending_actions
+    send_data['task_reviewer_pending_actions_count'] = len(task_reviewer_pending_actions)
+    send_data['task_reviewer_completed_actions'] = task_reviewer_completed_actions
+    send_data['task_reviewer_completed_actions_count'] = len(task_reviewer_completed_actions)
     from django.utils.timezone import now
 
     if employee.job_title and employee.job_title.description in ["Painter", "Superintendent", "Warehouse"]:
@@ -2538,64 +3361,370 @@ def certifications(request, id):
     send_data = {}
     if id != 'ALL':
         selected_cert = Certifications.objects.get(id=id)
-        send_data['selected_item'] = Certifications.objects.get(id=id)
+        send_data['selected_item'] = selected_cert
         send_data['notes2'] = CertificationNotes.objects.filter(certification__id=id)
+        pending_employee_tasks = EmployeePendingActions.objects.filter(
+            certification=selected_cert,
+            is_complete=False,
+        ).order_by(
+            "date",
+            "id",
+        )
+        completed_tasks_requiring_review = EmployeePendingActions.objects.filter(
+            certification=selected_cert,
+            is_complete=True,
+            confirmed_is_complete=False,
+        ).order_by(
+            "date",
+            "id",
+        )
+        send_data['pending_employee_tasks'] = pending_employee_tasks
+        send_data['pending_employee_tasks_count'] = pending_employee_tasks.count()
+        send_data['completed_tasks_requiring_review'] = completed_tasks_requiring_review
+        send_data['completed_tasks_requiring_review_count'] = completed_tasks_requiring_review.count()
+        send_data['certification_files'] = _certification_file_rows(selected_cert.id)
+        send_data['certification_files_count'] = len(send_data['certification_files'])
+        send_data['certification_folder_path'] = rf"\\gp-webserver\trinity\certifications\{selected_cert.id}"
+        send_data['active_employees'] = Employees.objects.filter(
+            active=True,
+        ).order_by(
+            "first_name",
+            "last_name",
+        )
+        pending_task_assignee_options = [
+            {
+                "value": f"employee:{employee.id}",
+                "label": str(employee),
+                "selected": bool(selected_cert.employee_id == employee.id),
+            }
+            for employee in send_data['active_employees']
+        ]
+        if selected_cert.subcontractor_id:
+            for sub_employee in (
+                Subcontractor_Employees.objects
+                .filter(
+                    subcontractor=selected_cert.subcontractor,
+                    is_active=True,
+                )
+                .order_by("name")
+            ):
+                pending_task_assignee_options.append({
+                    "value": f"sub:{sub_employee.id}",
+                    "label": f"[SUB] {sub_employee.name}",
+                    "selected": bool(selected_cert.subcontractor_employee_id == sub_employee.id),
+                })
+        send_data['pending_task_assignee_options'] = pending_task_assignee_options
+        if selected_cert.subcontractor_employee_id:
+            send_data['pending_task_selected_assignee'] = f"sub:{selected_cert.subcontractor_employee_id}"
+        elif selected_cert.employee_id:
+            send_data['pending_task_selected_assignee'] = f"employee:{selected_cert.employee_id}"
+        else:
+            send_data['pending_task_selected_assignee'] = ""
         if selected_cert.category:
             if selected_cert.category.description=="Respirator Clearance" and RespiratorClearance.objects.filter(certification=selected_cert).exists():
                 return redirect('view_respirator_certification',id=id)
 
     if request.method == 'POST':
         cert = Certifications.objects.get(id=id)
+        if 'upload_certification_files' in request.POST:
+            uploaded_files = request.FILES.getlist('certification_files')
+            custom_name = request.POST.get('certification_file_name') or ""
+
+            if not uploaded_files:
+                messages.error(request, "Please choose at least one file to upload.")
+                return redirect('certifications', id=cert.id)
+
+            folder = _certification_files_folder(cert.id)
+            os.makedirs(folder, exist_ok=True)
+
+            for index, uploaded_file in enumerate(uploaded_files, start=1):
+                filename = _certification_upload_filename(
+                    uploaded_file,
+                    custom_name,
+                    index if len(uploaded_files) > 1 else None,
+                )
+                file_path = os.path.join(folder, filename)
+                with open(file_path, "wb+") as destination:
+                    for chunk in uploaded_file.chunks():
+                        destination.write(chunk)
+
+            CertificationNotes.objects.create(
+                certification=cert,
+                date=date.today(),
+                user=Employees.objects.get(user=request.user),
+                note=f"Uploaded {len(uploaded_files)} certification file(s).",
+            )
+            messages.success(request, "Certification file uploaded.")
+            return redirect('certifications', id=cert.id)
+        if 'add_pending_task' in request.POST:
+            task_assignee = request.POST.get('pending_task_employee') or ""
+            task_employee = None
+            task_subcontractor_employee = None
+            if task_assignee.startswith("sub:"):
+                task_subcontractor_employee = get_object_or_404(
+                    Subcontractor_Employees,
+                    id=task_assignee.replace("sub:", "", 1),
+                    is_active=True,
+                    subcontractor=cert.subcontractor,
+                )
+            elif task_assignee.startswith("employee:"):
+                task_employee = get_object_or_404(
+                    Employees,
+                    id=task_assignee.replace("employee:", "", 1),
+                    active=True,
+                )
+            else:
+                messages.error(request, "Please select an employee.")
+                return redirect('certifications', id=cert.id)
+
+            task_assignee_display = (
+                f"[SUB] {task_subcontractor_employee}"
+                if task_subcontractor_employee
+                else str(task_employee)
+            )
+            recipient_email = (
+                task_subcontractor_employee.email
+                if task_subcontractor_employee
+                else task_employee.email
+            )
+            task_description = (request.POST.get('pending_task_description') or "").strip()
+            task_note = (request.POST.get('pending_task_note') or "").strip()
+
+            if not task_description:
+                messages.error(request, "Please enter a task description.")
+                return redirect('certifications', id=cert.id)
+
+            current_employee = Employees.objects.filter(user=request.user).first()
+            notes = ""
+            if task_note:
+                note_prefix = date.today().strftime('%m/%d/%Y')
+                if current_employee:
+                    note_prefix += f" - {current_employee.first_name}"
+                notes = f"{note_prefix}: {task_note}"
+
+            pending_action = EmployeePendingActions.objects.create(
+                employee=task_employee,
+                subcontractor_employee=task_subcontractor_employee,
+                certification=cert,
+                date=date.today(),
+                description=task_description,
+                notes=notes,
+                is_complete=False,
+                confirmed_is_complete=False,
+            )
+            certification_note = f"Pending employee task assigned to {task_assignee_display}: {task_description}"
+            if task_note:
+                certification_note += f". Note: {task_note}"
+            note_user = (
+                current_employee or
+                task_employee or
+                Employees.objects.filter(user__is_superuser=True).first() or
+                Employees.objects.first()
+            )
+            CertificationNotes.objects.create(
+                certification=cert,
+                date=date.today(),
+                user=note_user,
+                note=certification_note,
+            )
+            if recipient_email:
+                sender = (
+                    current_employee.email
+                    if current_employee and current_employee.email
+                    else "bridgette@gerloffpainting.com"
+                )
+                email_body = (
+                    "A new required task has been added for you.\n\n"
+                    f"Task: {pending_action.description}\n"
+                    f"Certification: {cert}\n"
+                    f"Date Added: {pending_action.date.strftime('%m/%d/%Y')}\n"
+                )
+                if task_note:
+                    email_body += f"\nNotes:\n{task_note}"
+
+                try:
+                    Email.sendEmail(
+                        "New Required Task",
+                        email_body,
+                        [recipient_email],
+                        False,
+                        sender,
+                    )
+                    messages.success(request, "Pending employee task added and employee notified.")
+                except Exception:
+                    messages.warning(request, "Pending employee task added, but the employee email could not be sent.")
+            else:
+                messages.warning(request, "Pending employee task added, but this employee does not have an email on file.")
+            return redirect('certifications', id=cert.id)
+        if 'add_pending_task_note' in request.POST:
+            pending_task = get_object_or_404(
+                EmployeePendingActions,
+                id=request.POST.get('add_pending_task_note'),
+                certification=cert,
+                is_complete=False,
+            )
+            task_note = (request.POST.get(f"pending_task_note_{pending_task.id}") or "").strip()
+            if task_note:
+                current_employee = Employees.objects.filter(user=request.user).first()
+                note_prefix = date.today().strftime('%m/%d/%Y')
+                if current_employee:
+                    note_prefix += f" - {current_employee.first_name}"
+                pending_task.notes = (
+                    (pending_task.notes + "\n") if pending_task.notes else ""
+                ) + f"{note_prefix}: {task_note}"
+                pending_task.save(update_fields=["notes"])
+                messages.success(request, "Task note added.")
+            else:
+                messages.error(request, "Please enter a note before adding it.")
+            return redirect('certifications', id=cert.id)
+        if 'delete_pending_task' in request.POST:
+            pending_task = get_object_or_404(
+                EmployeePendingActions,
+                id=request.POST.get('delete_pending_task'),
+                certification=cert,
+            )
+            current_employee = Employees.objects.filter(user=request.user).first()
+            certification_note = (
+                f"Pending employee task deleted for {pending_task.assignee_display}: "
+                f"{pending_task.description}"
+            )
+            if pending_task.notes:
+                certification_note += f". Notes: {pending_task.notes}"
+            CertificationNotes.objects.create(
+                certification=cert,
+                date=date.today(),
+                user=current_employee or pending_task.employee or Employees.objects.filter(user__is_superuser=True).first() or Employees.objects.first(),
+                note=certification_note,
+            )
+            pending_task.delete()
+            messages.success(request, "Pending employee task deleted.")
+            return redirect('certifications', id=cert.id)
+        if 'confirm_completed_task' in request.POST:
+            completed_task = get_object_or_404(
+                EmployeePendingActions,
+                id=request.POST.get('confirm_completed_task'),
+                certification=cert,
+                is_complete=True,
+                confirmed_is_complete=False,
+            )
+            current_employee = Employees.objects.filter(user=request.user).first()
+            completed_task.confirmed_is_complete = True
+            completed_task.save(update_fields=["confirmed_is_complete"])
+            CertificationNotes.objects.create(
+                certification=cert,
+                date=date.today(),
+                user=current_employee or completed_task.employee or Employees.objects.filter(user__is_superuser=True).first() or Employees.objects.first(),
+                note=(
+                    f"Completed employee task confirmed for {completed_task.assignee_display}: "
+                    f"{completed_task.description}"
+                ),
+            )
+            messages.success(request, "Completed task confirmed.")
+            return redirect('certifications', id=cert.id)
+        if 'deny_completed_task' in request.POST:
+            completed_task = get_object_or_404(
+                EmployeePendingActions,
+                id=request.POST.get('deny_completed_task'),
+                certification=cert,
+                is_complete=True,
+                confirmed_is_complete=False,
+            )
+            current_employee = Employees.objects.filter(user=request.user).first()
+            denial_note = (request.POST.get(f"deny_completed_task_note_{completed_task.id}") or "").strip()
+            if not denial_note:
+                messages.error(request, "Please enter a note explaining why the completed task was denied.")
+                return redirect('certifications', id=cert.id)
+
+            completed_task.is_complete = False
+            completed_task.confirmed_is_complete = False
+            completed_task.notes = (
+                (completed_task.notes + "\n") if completed_task.notes else ""
+            ) + f"{date.today().strftime('%m/%d/%Y')} - {current_employee.first_name if current_employee else 'Unknown'}: Denied completion. {denial_note}"
+            completed_task.save(update_fields=["is_complete", "confirmed_is_complete", "notes"])
+            CertificationNotes.objects.create(
+                certification=cert,
+                date=date.today(),
+                user=current_employee or completed_task.employee or Employees.objects.filter(user__is_superuser=True).first() or Employees.objects.first(),
+                note=(
+                    f"Completed employee task denied and reopened for {completed_task.assignee_display}: "
+                    f"{completed_task.description}. Reason: {denial_note}"
+                ),
+            )
+            messages.success(request, "Completed task denied and reopened.")
+            return redirect('certifications', id=cert.id)
         if 'new_note' in request.POST:
             CertificationNotes.objects.create(certification=cert, date=date.today(),
                                               user=Employees.objects.get(user=request.user),
                                               note=request.POST['note'])
+            return redirect('certifications', id=cert.id)
         if 'closed_item' in request.POST:
             cert.is_closed = True
+            deleted_pending_actions_count, _ = EmployeePendingActions.objects.filter(
+                certification=cert,
+                confirmed_is_complete=False,
+            ).delete()
             CertificationNotes.objects.create(certification=cert, date=date.today(),
                                               user=Employees.objects.get(user=request.user),
-                                              note="Cert closed." + request.POST['closed_note'])
-        if 'closed_action' in request.POST:
-            cert.action_required = False
-            CertificationNotes.objects.create(certification=cert, date=date.today(),
-                                              user=Employees.objects.get(user=request.user),
-                                              note="Action: <" + cert.action + "> Completed! " + request.POST[
-                                                  'closed_action_note'])
-            cert.action = ""
-        if 'select_action_now' in request.POST:
-            cert.action_required = True
-            cert.action = CertificationActionRequired.objects.get(id=request.POST['closed_action_note']).action
-            CertificationNotes.objects.create(certification=cert, date=date.today(),
-                                              user=Employees.objects.get(user=request.user),
-                                              note="Action: <" + cert.action + "> Required! ")
-        if 'custom_action_now' in request.POST:
-            cert.action_required = True
-            cert.action = request.POST['custom_action']
-            CertificationNotes.objects.create(certification=cert, date=date.today(),
-                                              user=Employees.objects.get(user=request.user),
-                                              note="Action: <" + cert.action + "> Required! ")
+                                              note=(
+                                                  "Cert closed."
+                                                  + request.POST['closed_note']
+                                                  + f" Deleted {deleted_pending_actions_count} unconfirmed pending employee task(s)."
+                                              ))
+            cert.save()
+            return redirect('certifications', id='ALL')
         if 'change_start_date' in request.POST:
             cert.date_received = request.POST['start_date']
             CertificationNotes.objects.create(certification=cert, date=date.today(),
                                               user=Employees.objects.get(user=request.user),
                                               note="Start Date Changed to: " + cert.date_received + "- " + request.POST[
                                                   'start_date_note'])
+            cert.save()
+            messages.success(request, "Date received updated.")
+            return redirect('certifications', id=cert.id)
         if 'change_end_date' in request.POST:
             cert.date_expires = request.POST['end_date']
             CertificationNotes.objects.create(certification=cert, date=date.today(),
                                               user=Employees.objects.get(user=request.user),
                                               note="Expiration Date Changed to: " + cert.date_expires + "- " +
                                                    request.POST['end_date_note'])
+            cert.save()
+            messages.success(request, "Expiration date updated.")
+            return redirect('certifications', id=cert.id)
         cert.save()
     certifications_list = Certifications.objects.filter(
         is_closed=False,
-        employee__active=True,
-        employee__job_title__description="Painter",
+    ).filter(
+        Q(employee__active=True) | Q(employee__isnull=True, subcontractor__is_inactive=False),
+    ).select_related(
+        "employee",
+        "category",
+        "subcontractor",
+        "subcontractor_employee",
     )
+    certification_ids = list(certifications_list.values_list("id", flat=True))
+    trinity_respirators_by_certification = {
+        clearance.certification_id: clearance
+        for clearance in RespiratorClearance.objects.filter(
+            certification_id__in=certification_ids,
+        ).select_related("certification")
+    }
+    pending_tasks_by_certification = {}
+    for task in EmployeePendingActions.objects.filter(
+        certification__isnull=False,
+        is_complete=False,
+    ).order_by(
+        "date",
+        "id",
+    ):
+        pending_tasks_by_certification.setdefault(task.certification_id, []).append(task)
 
+    certification_rows = []
+    certification_filter_descriptions = set()
     for cert in certifications_list:
+        cert.pending_employee_tasks = pending_tasks_by_certification.get(cert.id, [])
         if cert.category and cert.category.description == "Respirator Clearance":
-            if RespiratorClearance.objects.filter(certification=cert).exists():
+            respirator_clearance = trinity_respirators_by_certification.get(cert.id)
+            if respirator_clearance:
                 cert.display_description = "Respirator Certification [Trinity]"
             else:
                 cert.display_description = "Respirator Certification [External]"
@@ -2604,40 +3733,110 @@ def certifications(request, id):
                 cert.display_description = cert.category
             else:
                 cert.display_description = cert.description
+        if cert.display_description:
+            certification_filter_descriptions.add(str(cert.display_description))
+        action_required = []
+        if cert.category and cert.category.description == "Respirator Clearance":
+            respirator_clearance = trinity_respirators_by_certification.get(cert.id)
+            if respirator_clearance:
+                if not respirator_clearance.date_completed:
+                    action_required.append("Form Incomplete")
+                elif not respirator_clearance.approved_for_use:
+                    action_required.append("Awaiting Approval")
+        if not action_required:
+            action_required = [task.description for task in cert.pending_employee_tasks]
+        employee_url = None
+        if cert.employee_id:
+            employee_url = reverse("employees_page", args=[cert.employee_id])
+        elif cert.subcontractor_employee_id:
+            employee_url = reverse("subcontractor_employee_page", args=[cert.subcontractor_employee_id])
+        certification_rows.append({
+            "employee": cert.owner_display,
+            "employee_url": employee_url,
+            "display_description": cert.display_description,
+            "view_url": reverse("certifications", args=[cert.id]),
+            "date_received": cert.date_received,
+            "date_expires": cert.date_expires,
+            "action_required": action_required,
+        })
 
-    send_data['certifications'] = certifications_list
-    send_data['actions'] = CertificationActionRequired.objects.all()
+    subcontractor_clearances = (
+        SubcontractorRespiratorClearance.objects
+        .filter(is_closed=False)
+        .select_related("subcontractor", "employee")
+        .order_by("subcontractor__company", "employee_name", "-date_created", "-id")
+    )
+    subcontractor_description = "Respirator Certification [Subcontractor]"
+    for clearance in subcontractor_clearances:
+        action_required = []
+        if not clearance.date_completed:
+            action_required.append("Form Incomplete")
+        elif not clearance.approved_for_use:
+            action_required.append("Awaiting Approval")
+
+        certification_filter_descriptions.add(subcontractor_description)
+        employee_url = None
+        if clearance.employee_id:
+            employee_url = reverse("subcontractor_employee_page", args=[clearance.employee_id])
+        certification_rows.append({
+            "employee": f"{clearance.subcontractor.company} - {clearance.employee_display_name}",
+            "employee_url": employee_url,
+            "display_description": subcontractor_description,
+            "view_url": reverse(
+                "subcontractor_resp_clearance_review",
+                args=[clearance.subcontractor_id, clearance.id],
+            ),
+            "date_received": clearance.date_completed or clearance.date_created,
+            "date_expires": clearance.date_expires,
+            "action_required": action_required,
+        })
+
+    send_data['certifications'] = sorted(
+        certification_rows,
+        key=lambda row: (
+            row["employee"].lower(),
+            str(row["display_description"]).lower(),
+        ),
+    )
+    send_data['certification_filter_descriptions'] = sorted(
+        certification_filter_descriptions,
+        key=str.casefold,
+    )
     return render(request, "certifications.html", send_data)
 
 
 @login_required(login_url='/accounts/login')
 def subcontractor_certifications(request):
-    clearances = (
-        SubcontractorRespiratorClearance.objects
-        .select_related("subcontractor", "employee")
-        .order_by("subcontractor__company", "employee_name", "-date_created", "-id")
-    )
-
-    send_data = {
-        "clearances": clearances,
-    }
-    return render(request, "subcontractor_certifications.html", send_data)
+    return redirect("certifications", id="ALL")
 
 
 @login_required(login_url='/accounts/login')
 def new_certification(request):
+    subcontractor_employees_by_subcontractor = defaultdict(list)
+    for subcontractor_employee in (
+        Subcontractor_Employees.objects
+        .filter(is_active=True, subcontractor__is_inactive=False)
+        .select_related('subcontractor')
+        .order_by('name')
+    ):
+        subcontractor_employees_by_subcontractor[str(subcontractor_employee.subcontractor_id)].append({
+            'id': subcontractor_employee.id,
+            'name': subcontractor_employee.name,
+        })
+
     send_data = {
         'employees': Employees.objects.filter(
             active=True,
-            job_title__description__in=[
-                "Painter",
-                "Warehouse",
-                "Superintendent"
-            ]
         ).order_by('first_name', 'last_name'),
+        'subcontractors': Subcontractors.objects.filter(
+            is_inactive=False,
+        ).order_by('company'),
+        'subcontractor_employees_json': json.dumps(
+            subcontractor_employees_by_subcontractor,
+            cls=DjangoJSONEncoder,
+        ),
         'jobs': Jobs.objects.filter(is_closed=False).order_by('job_name'),
         'categories': CertificationCategories.objects.all().order_by('description'),
-        'actions': CertificationActionRequired.objects.all().order_by('action'),
     }
 
     if request.method == 'POST':
@@ -2653,20 +3852,125 @@ def new_certification(request):
                 category, created = CertificationCategories.objects.get_or_create(
                     description=new_type_description
                 )
+                cert_description = category.description
             else:
                 cert_description = new_type_description
 
         elif selected_category and selected_category != 'please_select':
             category = CertificationCategories.objects.get(id=selected_category)
+            cert_description = category.description
 
         else:
             return redirect('new_certification')
 
+        certification_note = request.POST.get('note', '')
+        selected_employee_id = request.POST.get('select_employee')
+        selected_subcontractor_id = request.POST.get('select_subcontractor')
+        selected_subcontractor_employee_id = request.POST.get('select_subcontractor_employee')
+        duplicate_choice = request.POST.get('duplicate_choice')
+        duplicate_employee_id = request.POST.get('duplicate_employee_id')
+        custom_subcontractor_employee_name = (
+            request.POST.get('subcontractor_employee_name') or ""
+        ).strip()
+
+        selected_employee_id = None if selected_employee_id in [None, '', 'please_select'] else selected_employee_id
+        selected_subcontractor_id = None if selected_subcontractor_id in [None, '', 'please_select'] else selected_subcontractor_id
+        selected_subcontractor_employee_id = (
+            None
+            if selected_subcontractor_employee_id in [None, '', 'please_select']
+            else selected_subcontractor_employee_id
+        )
+
+        if selected_employee_id and (
+            selected_subcontractor_id or selected_subcontractor_employee_id or custom_subcontractor_employee_name
+        ):
+            messages.error(request, "Select either a regular employee or a subcontractor employee, not both.")
+            return redirect('new_certification')
+
+        if not selected_employee_id and not selected_subcontractor_id:
+            messages.error(request, "Select a regular employee or a subcontractor.")
+            return redirect('new_certification')
+
+        employee = None
+        subcontractor = None
+        subcontractor_employee = None
+        if selected_employee_id:
+            employee = get_object_or_404(Employees, id=selected_employee_id, active=True)
+        else:
+            subcontractor = get_object_or_404(
+                Subcontractors,
+                id=selected_subcontractor_id,
+                is_inactive=False,
+            )
+            if selected_subcontractor_employee_id:
+                subcontractor_employee = get_object_or_404(
+                    Subcontractor_Employees,
+                    id=selected_subcontractor_employee_id,
+                    subcontractor=subcontractor,
+                    is_active=True,
+                )
+                custom_subcontractor_employee_name = ""
+            elif not custom_subcontractor_employee_name:
+                messages.error(request, "Select a subcontractor employee or enter a subcontractor employee name.")
+                return redirect('new_certification')
+            else:
+                matching_subcontractor_employees = (
+                    Subcontractor_Employees.objects
+                    .filter(
+                        subcontractor=subcontractor,
+                        name__iexact=custom_subcontractor_employee_name,
+                    )
+                )
+                active_duplicate_count = matching_subcontractor_employees.filter(is_active=True).count()
+                inactive_duplicate_count = matching_subcontractor_employees.filter(is_active=False).count()
+
+                if (active_duplicate_count or inactive_duplicate_count) and duplicate_choice != "new":
+                    duplicate_post_items = []
+                    for key in request.POST:
+                        if key in [
+                            "csrfmiddlewaretoken",
+                            "duplicate_choice",
+                            "duplicate_employee_id",
+                        ]:
+                            continue
+                        for value in request.POST.getlist(key):
+                            duplicate_post_items.append({
+                                "key": key,
+                                "value": value,
+                            })
+
+                    send_data.update({
+                        "duplicate_subcontractor_employee_name": custom_subcontractor_employee_name,
+                        "duplicate_subcontractor": subcontractor,
+                        "duplicate_active_count": active_duplicate_count,
+                        "duplicate_inactive_count": inactive_duplicate_count,
+                        "duplicate_certification_post_items": duplicate_post_items,
+                    })
+                    return render(request, "new_certification.html", send_data)
+
+                new_subcontractor_employee_name = custom_subcontractor_employee_name
+                if active_duplicate_count or inactive_duplicate_count:
+                    new_subcontractor_employee_name = _duplicate_certification_sub_employee_name(
+                        custom_subcontractor_employee_name,
+                        subcontractor,
+                    )
+
+                subcontractor_employee = Subcontractor_Employees.objects.create(
+                    subcontractor=subcontractor,
+                    name=new_subcontractor_employee_name,
+                    date_enrolled=date.today(),
+                    is_active=True,
+                )
+                custom_subcontractor_employee_name = ""
+
         new_cert = Certifications.objects.create(
             category=category,
-            employee=Employees.objects.get(id=request.POST.get('select_employee')),
+            employee=employee,
+            subcontractor=subcontractor,
+            subcontractor_employee=subcontractor_employee,
+            subcontractor_employee_name=custom_subcontractor_employee_name,
             description=cert_description,
-            note=request.POST.get('note', '')
+            note=certification_note
         )
 
         if 'dont_know_start' not in request.POST and request.POST.get('start_date'):
@@ -2679,20 +3983,17 @@ def new_certification(request):
         if selected_job and selected_job != 'please_select':
             new_cert.job = Jobs.objects.get(job_number=selected_job)
 
-        if 'is_action_required' in request.POST:
-            new_cert.action_required = True
-
-            custom_action = request.POST.get('custom_action', '').strip()
-            selected_action = request.POST.get('select_action')
-
-            if custom_action:
-                new_cert.action = custom_action
-            elif selected_action and selected_action != 'please_select' and selected_action != 'custom':
-                new_cert.action = CertificationActionRequired.objects.get(
-                    id=selected_action
-                ).action
-
         new_cert.save()
+
+        if certification_note:
+            CertificationNotes.objects.create(
+                certification=new_cert,
+                date=date.today(),
+                user=Employees.objects.get(user=request.user),
+                note=certification_note,
+            )
+
+        os.makedirs(_certification_files_folder(new_cert.id), exist_ok=True)
 
         return redirect('certifications', id=new_cert.id)
 
@@ -2897,6 +4198,7 @@ def safety_home(request):
         SubcontractorRespiratorClearance.objects
         .filter(
             approved_for_use=True,
+            is_closed=False,
             date_expires__gte=today,
             date_expires__lte=expiration_warning_date,
         )
@@ -3883,9 +5185,7 @@ def respirator_clearance_section0(request):
             new_cert = Certifications.objects.create(
                 employee=employee,
                 category=CertificationCategories.objects.get(description="Respirator Clearance"),
-                description="Respirator Clearance",
-                action_required=True,
-                action="Need to Complete Application"
+                description="Respirator Clearance"
             )
 
             rc = RespiratorClearance.objects.create(
@@ -4088,15 +5388,13 @@ def respirator_clearance_section6(request):
         RespiratorNotes.objects.create(employee=employee,date=date.today(),main=main, note="Respirator Clearance Form Completed")
         new_cert = main.certification
         CertificationNotes.objects.create(certification=new_cert,date=date.today(),user=employee,note="Respirator Clearance Form Completed")
-        new_cert.action = "Need Safety Director Approval"
-        new_cert.save()
+        _close_previous_employee_respirator_certifications(employee, new_cert, employee)
         if request.POST['physician'] == 'Yes':
             main.is_physician_required = True
             main.is_physician_actually_required = True
             main.save()
             CertificationNotes.objects.create(certification=new_cert, date=date.today(), user=employee,
                                               note="Employee Requested Physician Review")
-        CertificationActionRequired.objects.create(main=new_cert,action="Waiting for Safety Director")
         return redirect('my_page')
     return render(request, 'respirator_clearance_section6.html', send_data)
 
@@ -4667,12 +5965,16 @@ def view_respirator_certification(request,id):
             if request.POST['submit_status'] == 'Approved':
                 selected_cert.date_received = date.today()
                 selected_cert.date_expires = date.today() + relativedelta(years=1)
-                selected_cert.action_required=False
-                selected_cert.action=""
                 selected_cert.save()
                 CertificationActionRequired.objects.filter(main=selected_cert,action="Waiting for Safety Director").delete()
                 selected_respirator_cert.approved_for_use = True
                 selected_respirator_cert.date_approved = date.today()
+                current_user_employee = Employees.objects.get(user=request.user)
+                _close_previous_employee_respirator_certifications(
+                    selected_cert.employee,
+                    selected_cert,
+                    current_user_employee,
+                )
                 if request.POST['is_physician_required'] == 'Yes':
                     selected_respirator_cert.is_physician_actually_required = True
                     selected_respirator_cert.physician_approved = True
@@ -4680,7 +5982,7 @@ def view_respirator_certification(request,id):
                     selected_respirator_cert.is_physician_actually_required = False
                     selected_respirator_cert.physician_approved = False
                 CertificationNotes.objects.create(certification=selected_cert, date=date.today(),
-                                                  user=Employees.objects.get(user=request.user),
+                                                  user=current_user_employee,
                                                   note="Approved for Respirator Use")
             else:
                 if request.POST['is_physician_required'] == 'No':

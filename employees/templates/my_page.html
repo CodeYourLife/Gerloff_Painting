@@ -201,6 +201,28 @@
         margin-bottom: 8px;
     }
 
+    .required-action-header {
+        background-color: #dc3545 !important;
+    }
+
+    .required-action-header .btn-link {
+        color: #ffffff !important;
+        font-weight: 600;
+        white-space: normal;
+        text-align: left;
+    }
+
+    .task-review-open-header {
+        background-color: #28a745 !important;
+    }
+
+    .task-review-open-header .btn-link {
+        color: #ffffff !important;
+        font-weight: 600;
+        white-space: normal;
+        text-align: left;
+    }
+
     .group-missing-employees label {
         display: block;
         padding: 10px;
@@ -1397,89 +1419,387 @@
         </div>
         <div id="collapseFourteen" class="collapse" aria-labelledby="headingFourteen" data-parent="#accordion">
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table display">
-                        <tr>
-                            <th>Category</th>
-                            <th>Description</th>
-                            <th>Date Received</th>
-                            <th>Date Expires</th>
-                            <th>Action</th>
-                        </tr>
-                        <tbody>
-                        {% for x in certifications %}
-                        <tr>
-                            <td>{% if x.category %}{{x.category}}{% else %}{{x.description}}{% endif %}</td>
-                            {% if x.category.description == "Respirator Clearance" %}
-                            {% if respirator_not_approved %}
-                            <td>Not Approved</td>
-                            {% else %}
-                            <td>Approved</td>
-                            {% endif %}
-                            {% else %}
-                            <td>{{x.description}}</td>
-                            {% endif %}
-<!--                            <td><a href="{%  url 'certifications' x.id %}">View</a></td>-->
-                            <td>{{x.date_received}} -</td>
-                            <td>{{x.date_expires}}</td>
-                            <td>{{x.action}}</td>
-                        </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="row">
+                    {% for x in certifications %}
+                        <div class="col-12 col-md-6 col-xl-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="mb-3 font-weight-bold">
+                                        {{ x.description|default:"Certification" }}
+                                    </h5>
+
+                                    {% if x.category.description == "Respirator Clearance" %}
+                                        <div class="mb-2">
+                                            <strong>Status:</strong>
+                                            {% if respirator_not_approved %}
+                                                Not Approved
+                                            {% else %}
+                                                Approved
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+
+                                    <div class="mb-2">
+                                        <strong>Date Received:</strong>
+                                        {{ x.date_received|default:"-" }}
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <strong>Date Expires:</strong>
+                                        {{ x.date_expires|default:"-" }}
+                                    </div>
+
+                                    {% if x.pending_actions %}
+                                        <div style="white-space: normal; overflow-wrap: anywhere;">
+                                            <strong>Actions Required:</strong>
+                                            <ul class="mb-0 pl-3">
+                                                {% for action in x.pending_actions %}
+                                                    <li>
+                                                        {{ action.description }}
+                                                        {% if action.date %}
+                                                            <span class="text-muted">({{ action.date|date:"m/d/Y" }})</span>
+                                                        {% endif %}
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
  </div>
 {% endif %}
 
-<!--#certification action required-->
-{% if actions_count %}
-    <div class = "card">
-        <div class="card-header" id="headingTwo">
+<!--#pending required tasks-->
+{% if pending_actions_count %}
+    <div class="card">
+        <div class="card-header required-action-header" id="headingPendingActions">
             <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false"
-                        aria-controls="collapseTwo">
-                    {{actions_count}} Actions Required At This Time!
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapsePendingActions"
+                        aria-expanded="false"
+                        aria-controls="collapsePendingActions">
+                    {{ pending_actions_count }} Required Tasks
                 </button>
             </h5>
         </div>
 
-        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
+        <div id="collapsePendingActions" class="collapse" aria-labelledby="headingPendingActions" data-parent="#accordion">
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table display">
-                        <tr>
-                            <th>Category</th>
-                            <th>Description</th>
+                <div class="row">
+                    {% for action in pending_actions %}
+                        <div class="col-12 col-md-6 col-xl-4 mb-3">
+                            <div class="card h-100 border-warning"
+                                 role="button"
+                                 data-toggle="modal"
+                                 data-target="#completePendingActionModal"
+                                 data-action-id="{{ action.id }}"
+                                 data-action-description="{{ action.description|escapejs }}"
+                                 data-action-date="{{ action.date|date:'m/d/Y' }}"
+                                 data-action-certification="{% if action.certification %}{{ action.certification.category|default:action.certification.description|escapejs }}{% endif %}">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="mb-0">{{ action.description }}</h6>
+                                        <span class="badge badge-warning">Open</span>
+                                    </div>
 
-                            <th>Date Received</th>
-                            <th>Date Expires</th>
-                            <th>Action</th>
-                        </tr>
-                        <tbody>
-                        {% for x in actions %}
-                        <tr>
-                            <td>{{x.category}} -</td>
-                            <td>{{x.description}} -</td>
-<!--                            <td><a href="{%  url 'certifications' x.id %}">View</a></td>-->
-                            <td>{{x.date_received}}</td>
-                            <td>{{x.date_expires}}</td>
-                            <td>{{x.action}}</td>
-                        </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
+                                    {% if action.date %}
+                                        <div class="small text-muted mb-2">
+                                            {{ action.date|date:"m/d/Y" }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if action.certification %}
+                                        <div class="mb-2">
+                                            <strong>Certification:</strong>
+                                            {{ action.certification.category|default:action.certification.description }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if action.notes %}
+                                        <div style="white-space: normal; overflow-wrap: anywhere;">
+                                            {{ action.notes }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
-
     </div>
+{% endif %}
+
+<div class="modal fade" id="completePendingActionModal" tabindex="-1" role="dialog" aria-labelledby="completePendingActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'my_page' %}">
+                {% csrf_token %}
+                <input type="hidden" name="pending_action_id" id="pending_action_id">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="completePendingActionModalLabel">Completed Task</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <strong id="pending_action_description"></strong>
+                    </div>
+                    <div class="small text-muted mb-2" id="pending_action_date"></div>
+                    <div class="mb-3" id="pending_action_certification"></div>
+
+                    <div class="form-group mb-0">
+                        <label for="completion_note">Additional Information</label>
+                        <input type="text"
+                               name="completion_note"
+                               id="completion_note"
+                               class="form-control"
+                               placeholder="Optional note">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit"
+                            name="complete_pending_action"
+                            class="btn btn-success">
+                        Task Completed
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if task_reviewer_pending_actions_count %}
+    <div class="card">
+        <div class="card-header task-review-open-header" id="headingTaskReviewerPendingActions">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTaskReviewerPendingActions"
+                        aria-expanded="false"
+                        aria-controls="collapseTaskReviewerPendingActions">
+                    {{ task_reviewer_pending_actions_count }} Pending Employee Task{{ task_reviewer_pending_actions_count|pluralize }}
+                </button>
+            </h5>
+        </div>
+
+        <div id="collapseTaskReviewerPendingActions" class="collapse" aria-labelledby="headingTaskReviewerPendingActions" data-parent="#accordion">
+            <div class="card-body">
+                <div class="row">
+                    {% for action in task_reviewer_pending_actions %}
+                        <div class="col-12 col-md-6 col-xl-4 mb-3">
+                            {% if action.certification %}
+                                <a href="{% url 'certifications' action.certification.id %}"
+                                   class="text-dark"
+                                   style="text-decoration:none;">
+                            {% endif %}
+                            <div class="card h-100 border-success">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="mb-0">{{ action.description }}</h6>
+                                        <span class="badge badge-success">Open</span>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <strong>Employee:</strong>
+                                        {{ action.assignee_display }}
+                                    </div>
+                                    {% if action.subcontractor_employee %}
+                                        <div class="mb-2">
+                                            <strong>Subcontractor:</strong>
+                                            {{ action.subcontractor_employee.subcontractor.company }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if action.date %}
+                                        <div class="small text-muted mb-2">
+                                            {{ action.date|date:"m/d/Y" }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if action.certification %}
+                                        <div class="mb-2">
+                                            <strong>Certification:</strong>
+                                            {% if action.certification.category %}
+                                                {{ action.certification.category }}
+                                            {% else %}
+                                                {{ action.certification.description }}
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if action.notes %}
+                                        <div style="white-space: normal; overflow-wrap: anywhere;">
+                                            <strong>Notes:</strong>
+                                            {{ action.notes }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if not action.certification %}
+                                        <div class="mt-3">
+                                            <button type="button"
+                                                    class="btn btn-outline-primary mr-2 mb-2 show-review-pending-action-note"
+                                                    data-action-id="{{ action.id }}">
+                                                Add Note
+                                            </button>
+                                            <button type="submit"
+                                                    form="review_pending_task_actions_form"
+                                                    name="delete_review_pending_action"
+                                                    value="{{ action.id }}"
+                                                    class="btn btn-outline-danger mb-2"
+                                                    onclick="return confirm('Delete this pending employee task?');">
+                                                Delete
+                                            </button>
+                                        </div>
+                                        <div id="review-pending-action-note-{{ action.id }}" class="input-group mt-2" style="display:none;">
+                                            <input type="text"
+                                                   form="review_pending_task_actions_form"
+                                                   name="review_pending_action_note_{{ action.id }}"
+                                                   class="form-control"
+                                                   placeholder="Add note">
+                                            <div class="input-group-append">
+                                                <button type="submit"
+                                                        form="review_pending_task_actions_form"
+                                                        name="add_review_pending_action_note"
+                                                        value="{{ action.id }}"
+                                                        class="btn btn-primary">
+                                                    Add Note Now
+                                                </button>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if action.certification %}
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <form method="post"
+          action="{% url 'my_page' %}"
+          id="review_pending_task_actions_form">
+        {% csrf_token %}
+    </form>
+{% endif %}
+
+{% if task_reviewer_completed_actions_count %}
+    <div class="card">
+        <div class="card-header required-action-header" id="headingTaskReviewerCompletedActions">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTaskReviewerCompletedActions"
+                        aria-expanded="false"
+                        aria-controls="collapseTaskReviewerCompletedActions">
+                    {{ task_reviewer_completed_actions_count }} Completed Task{{ task_reviewer_completed_actions_count|pluralize }} Awaiting Approval
+                </button>
+            </h5>
+        </div>
+
+        <div id="collapseTaskReviewerCompletedActions" class="collapse" aria-labelledby="headingTaskReviewerCompletedActions" data-parent="#accordion">
+            <div class="card-body">
+                <div class="row">
+                    {% for action in task_reviewer_completed_actions %}
+                        <div class="col-12 col-md-6 col-xl-4 mb-3">
+                            <div class="card h-100 border-danger">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="mb-0">{{ action.description }}</h6>
+                                        <span class="badge badge-danger">Awaiting Approval</span>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <strong>Employee:</strong>
+                                        {{ action.assignee_display }}
+                                    </div>
+                                    {% if action.subcontractor_employee %}
+                                        <div class="mb-2">
+                                            <strong>Subcontractor:</strong>
+                                            {{ action.subcontractor_employee.subcontractor.company }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if action.date %}
+                                        <div class="small text-muted mb-2">
+                                            {{ action.date|date:"m/d/Y" }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if action.certification %}
+                                        <div class="mb-2">
+                                            <strong>Certification:</strong>
+                                            {% if action.certification.category %}
+                                                {{ action.certification.category }}
+                                            {% else %}
+                                                {{ action.certification.description }}
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if action.notes %}
+                                        <div style="white-space: normal; overflow-wrap: anywhere;">
+                                            <strong>Notes:</strong>
+                                            {{ action.notes }}
+                                        </div>
+                                    {% endif %}
+
+                                    <div class="mt-3">
+                                        <button type="submit"
+                                                form="review_completed_task_actions_form"
+                                                name="confirm_review_completed_action"
+                                                value="{{ action.id }}"
+                                                class="btn btn-success mr-2 mb-2">
+                                            Confirm Completion
+                                        </button>
+                                        <div class="form-group mt-2 mb-2">
+                                            <label for="deny_review_completed_action_note_{{ action.id }}" class="small font-weight-bold">
+                                                Denial Note
+                                            </label>
+                                            <textarea id="deny_review_completed_action_note_{{ action.id }}"
+                                                      form="review_completed_task_actions_form"
+                                                      name="deny_review_completed_action_note_{{ action.id }}"
+                                                      class="form-control"
+                                                      rows="2"
+                                                      placeholder="Required if denying"></textarea>
+                                        </div>
+                                        <button type="submit"
+                                                form="review_completed_task_actions_form"
+                                                name="deny_review_completed_action"
+                                                value="{{ action.id }}"
+                                                class="btn btn-outline-danger mb-2"
+                                                onclick="return confirm('Deny this completed task and reopen it?');">
+                                            Deny
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <form method="post"
+          action="{% url 'my_page' %}"
+          id="review_completed_task_actions_form">
+        {% csrf_token %}
+    </form>
 {% endif %}
 
     <!--#toolbox talks 16-->
     <div class = "card">
-    <div class="card-header" id="headingSixteen">
+    <div class="card-header{% if toolbox_talks_required %} required-action-header{% endif %}" id="headingSixteen">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSixteen"
                         aria-expanded="false"
@@ -1897,17 +2217,13 @@
 
 <!--#respirator clearance 15-->
     <div class = "card">
-        <div class="card-header" id="headingFifteen">
+        <div class="card-header{% if respirator_clearance_required %} required-action-header{% endif %}" id="headingFifteen">
             <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFifteen"
                         aria-expanded="false"
                         aria-controls="collapseFifteen">
                     {% if respirator_clearance_required %}
-                        {% if expired_respirator_cert %}
-                            Respirator Clearance Expired - New Clearance Required!
-                        {% else %}
-                            Respirator Clearance Required!
-                        {% endif %}
+                        New Respirator Clearance Required
                     {% elif respirator_not_approved %}
                         Respirator Clearance Submitted - Waiting for Approval
                     {% elif external_respirator_cert %}
@@ -2127,6 +2443,20 @@ function submit_group_toolbox(scheduled_id) {
     return false;
 }
 
+$('#completePendingActionModal').on('show.bs.modal', function (event) {
+    const card = $(event.relatedTarget);
+    const actionId = card.data('action-id');
+    const description = card.data('action-description') || '';
+    const actionDate = card.data('action-date') || '';
+    const certification = card.data('action-certification') || '';
+
+    $('#pending_action_id').val(actionId);
+    $('#pending_action_description').text(description);
+    $('#pending_action_date').text(actionDate ? 'Date: ' + actionDate : '');
+    $('#pending_action_certification').text(certification ? 'Certification: ' + certification : '');
+    $('#completion_note').val('');
+});
+
 function isToolboxAccordion(openId) {
     return [
         "collapseSixteen",
@@ -2178,6 +2508,21 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     restoreAccordion();
+
+    document.querySelectorAll(".show-review-pending-action-note").forEach(function (button) {
+        button.addEventListener("click", function () {
+            const actionId = button.getAttribute("data-action-id");
+            const noteRow = document.getElementById("review-pending-action-note-" + actionId);
+
+            if (noteRow) {
+                noteRow.style.display = "";
+                const noteInput = noteRow.querySelector('input[type="text"]');
+                if (noteInput) {
+                    noteInput.focus();
+                }
+            }
+        });
+    });
 
     function showOtherToolboxEmployeeGroup(targetId) {
         document.querySelectorAll(".other-toolbox-employee-group").forEach(function (group) {

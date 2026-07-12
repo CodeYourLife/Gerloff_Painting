@@ -16,7 +16,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Count
 from django.http import JsonResponse, HttpResponse, FileResponse, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import get_template, render_to_string
@@ -45,6 +45,8 @@ SUB_RESPIRATOR_SECTION_MODELS = {
     6: RespiratorClearance6,
 }
 
+USERNAME_IN_USE_MESSAGE = "USERNAME ALREADY IN USE. Please choose a different username."
+
 
 def _sub_resp_note_employee(request):
     if not request.user.is_authenticated:
@@ -60,6 +62,37 @@ def _create_sub_resp_note(request, clearance, note):
         subcontractor_employee=clearance.employee if not request.user.is_authenticated else None,
         note=note
     )
+
+
+def _close_previous_subcontractor_respirator_clearances(request, clearance):
+    previous_clearances = SubcontractorRespiratorClearance.objects.filter(
+        subcontractor=clearance.subcontractor,
+        is_closed=False,
+    ).exclude(
+        id=clearance.id,
+    )
+
+    if clearance.employee_id:
+        previous_clearances = previous_clearances.filter(employee=clearance.employee)
+    else:
+        previous_clearances = previous_clearances.filter(
+            employee__isnull=True,
+            employee_name__iexact=clearance.employee_name,
+        )
+
+    closed_count = 0
+
+    for previous_clearance in previous_clearances:
+        previous_clearance.is_closed = True
+        previous_clearance.save(update_fields=["is_closed"])
+        _create_sub_resp_note(
+            request,
+            previous_clearance,
+            f"Closed because new respirator clearance {clearance.id} was completed.",
+        )
+        closed_count += 1
+
+    return closed_count
 
 
 def _sub_respirator_section_defaults(section_number):
@@ -967,17 +1000,17 @@ def subcontractor_resp_clearance(request, sub_id):
             return redirect("subcontractor_resp_clearance", sub_id=selected_sub.id)
 
         if not sub_employee:
-            existing_employee = (
+            matching_employees = (
                 Subcontractor_Employees.objects
                 .filter(subcontractor=selected_sub, name__iexact=employee_name)
-                .order_by("-is_active", "id")
-                .first()
             )
+            active_duplicate_count = matching_employees.filter(is_active=True).count()
+            inactive_duplicate_count = matching_employees.filter(is_active=False).count()
 
-            if existing_employee and not duplicate_choice:
+            if (active_duplicate_count or inactive_duplicate_count) and duplicate_choice != "new":
                 clearances = (
                     SubcontractorRespiratorClearance.objects
-                    .filter(subcontractor=selected_sub)
+                    .filter(subcontractor=selected_sub, is_closed=False)
                     .select_related("employee", "subcontractor")
                     .order_by("employee_name", "-date_created", "-id")
                 )
@@ -990,29 +1023,22 @@ def subcontractor_resp_clearance(request, sub_id):
                     ).order_by("name"),
                     "clearances": clearances,
                     "duplicate_employee_name": employee_name,
-                    "duplicate_employee": existing_employee,
+                    "duplicate_active_count": active_duplicate_count,
+                    "duplicate_inactive_count": inactive_duplicate_count,
                     "selected_language": selected_language,
                 })
 
-            if duplicate_choice == "same":
-                sub_employee = get_object_or_404(
-                    Subcontractor_Employees,
-                    id=duplicate_employee_id,
-                    subcontractor=selected_sub
-                )
-                employee_name = sub_employee.name
-            else:
-                new_employee_name = employee_name
-                if existing_employee:
-                    new_employee_name = _duplicate_sub_employee_name(employee_name, selected_sub)
+            new_employee_name = employee_name
+            if active_duplicate_count or inactive_duplicate_count:
+                new_employee_name = _duplicate_sub_employee_name(employee_name, selected_sub)
 
-                sub_employee = Subcontractor_Employees.objects.create(
-                    subcontractor=selected_sub,
-                    name=new_employee_name,
-                    date_enrolled=date.today(),
-                    is_active=True,
-                )
-                employee_name = sub_employee.name
+            sub_employee = Subcontractor_Employees.objects.create(
+                subcontractor=selected_sub,
+                name=new_employee_name,
+                date_enrolled=date.today(),
+                is_active=True,
+            )
+            employee_name = sub_employee.name
 
         if sub_employee and not sub_employee.is_active:
             sub_employee.is_active = True
@@ -1036,7 +1062,7 @@ def subcontractor_resp_clearance(request, sub_id):
 
     clearances = (
         SubcontractorRespiratorClearance.objects
-        .filter(subcontractor=selected_sub)
+        .filter(subcontractor=selected_sub, is_closed=False)
         .select_related("employee", "subcontractor")
         .order_by("employee_name", "-date_created", "-id")
     )
@@ -1063,11 +1089,13 @@ def subcontractor_resp_clearance_section(request, sub_id, clearance_id, section_
 
     if section_number == 0:
         if request.method == "POST":
+            phone = (request.POST.get("phone") or "").strip()
+            birth_date = request.POST.get("birth_date") or None
             clearance.gender = request.POST.get("gender")
             clearance.height = request.POST.get("height")
             clearance.weight = request.POST.get("weight")
-            clearance.phone = request.POST.get("phone")
-            clearance.birth_date = request.POST.get("birth_date") or None
+            clearance.phone = phone
+            clearance.birth_date = birth_date
             clearance.save(update_fields=[
                 "gender",
                 "height",
@@ -1075,6 +1103,16 @@ def subcontractor_resp_clearance_section(request, sub_id, clearance_id, section_
                 "phone",
                 "birth_date",
             ])
+            if clearance.employee:
+                employee_update_fields = []
+                if phone and clearance.employee.phone != phone:
+                    clearance.employee.phone = phone
+                    employee_update_fields.append("phone")
+                if birth_date and str(clearance.employee.birth_date or "") != birth_date:
+                    clearance.employee.birth_date = birth_date
+                    employee_update_fields.append("birth_date")
+                if employee_update_fields:
+                    clearance.employee.save(update_fields=employee_update_fields)
             return redirect(
                 "subcontractor_resp_clearance_section",
                 sub_id=selected_sub.id,
@@ -1082,6 +1120,11 @@ def subcontractor_resp_clearance_section(request, sub_id, clearance_id, section_
                 section_number=1
             )
 
+        if clearance.employee:
+            if not clearance.phone and clearance.employee.phone:
+                clearance.phone = clearance.employee.phone
+            if not clearance.birth_date and clearance.employee.birth_date:
+                clearance.birth_date = clearance.employee.birth_date
         template_name = "sub_respirator_clearance_section0_spanish.html" if clearance.language == "Spanish" else "sub_respirator_clearance_section0.html"
         return render(request, template_name, {
             "selected_sub": selected_sub,
@@ -1105,6 +1148,7 @@ def subcontractor_resp_clearance_section(request, sub_id, clearance_id, section_
                 "is_physician_actually_required",
             ])
             _create_sub_resp_note(request, clearance, "Form Completed")
+            _close_previous_subcontractor_respirator_clearances(request, clearance)
 
             try:
                 Email.sendEmail(
@@ -1214,6 +1258,7 @@ def subcontractor_resp_clearance_review(request, sub_id, clearance_id):
                 clearance.physician_approved = False
 
             clearance.save()
+            _close_previous_subcontractor_respirator_clearances(request, clearance)
             _create_sub_resp_note(request, clearance, "Approved for Respirator Use")
         else:
             if request.POST.get("is_physician_required") == "No":
@@ -1258,13 +1303,18 @@ def connect(request):
         if 'login_now' in request.POST:
             username = request.POST['username'].strip()
             password = request.POST['password']
-            selected_sub = Subcontractors.objects.filter(username__iexact=username, password=password).first()
+            selected_sub = Subcontractors.objects.filter(
+                username__iexact=username,
+                password=password,
+                is_inactive=False
+            ).first()
             if selected_sub:
                 return redirect('portal', sub_id=selected_sub.id, contract_id='ALL')
 
             selected_employee = Subcontractor_Employees.objects.filter(
                 username__iexact=username,
-                password1=password
+                password1=password,
+                is_active=True
             ).first()
             if selected_employee:
                 return redirect('subcontractor_employee_portal', employee_id=selected_employee.id)
@@ -1293,16 +1343,16 @@ def connect(request):
             new_username = request.POST['new_username'].strip()
             username_exists_in_subcontractors = Subcontractors.objects.filter(
                 username__iexact=new_username
-            ).exclude(id=selected_sub.id).exists()
+            ).exclude(id=selected_sub.id).exists() if new_username else False
             username_exists_in_employees = Subcontractor_Employees.objects.filter(
                 username__iexact=new_username
-            ).exists()
+            ).exists() if new_username else False
             username_exists_in_django_users = User.objects.filter(
                 username__iexact=new_username
-            ).exists()
+            ).exists() if new_username else False
 
-            if username_exists_in_subcontractors or username_exists_in_employees or username_exists_in_django_users:
-                send_data['message'] = "That Username has already been used"
+            if not new_username or username_exists_in_subcontractors or username_exists_in_employees or username_exists_in_django_users:
+                send_data['message'] = USERNAME_IN_USE_MESSAGE
                 send_data['selected_sub'] = selected_sub
                 send_data['register_now'] = True
                 return render(request, "portal_registration.html", send_data)
@@ -2246,6 +2296,606 @@ def subcontractor_home(request):
 
 
 @login_required(login_url='/accounts/login')
+def subcontractor(request, id):
+    send_data = {}
+    subcontractor = get_object_or_404(Subcontractors, id=id)
+
+    if request.method == 'POST':
+        toolbox_action = request.POST.get('toolbox_action')
+        if toolbox_action:
+            scheduled = get_object_or_404(
+                ScheduledToolboxTalks,
+                id=request.POST.get('scheduled_id')
+            )
+            job = get_object_or_404(
+                Jobs,
+                job_number=request.POST.get('job_number')
+            )
+            subcontract = get_object_or_404(
+                Subcontracts,
+                subcontractor=subcontractor,
+                job_number=job,
+                is_closed=False
+            )
+
+            if toolbox_action == 'toggle_delegation':
+                existing = SubcontractorEmployeeDelegation.objects.filter(
+                    subcontractor=subcontractor,
+                    subcontract=subcontract
+                )
+                if existing.exists():
+                    closed_count = _close_delegated_job_toolbox_completions_before_undelegate(subcontract)
+                    existing.delete()
+                    messages.success(
+                        request,
+                        f"Employee self-completion was removed for this job. {closed_count} completed toolbox talks were preserved."
+                    )
+                else:
+                    SubcontractorEmployeeDelegation.objects.get_or_create(
+                        subcontractor=subcontractor,
+                        subcontract=subcontract
+                    )
+                    backfilled_count = _backfill_delegated_job_toolbox_completions(subcontract)
+                    messages.success(
+                        request,
+                        f"Employees have been delegated to complete toolbox talks themselves. {backfilled_count} existing toolbox completions were applied."
+                    )
+                return redirect('subcontractor', id=subcontractor.id)
+
+            if toolbox_action == 'excuse':
+                if sub_toolbox.is_delegated(subcontract):
+                    excused_count = 0
+                    employees = sub_toolbox.get_assigned_toolbox_employees_for_job(subcontract)
+                    for employee in employees:
+                        if not sub_toolbox.talk_applies_to_employee_job(employee, scheduled, subcontract):
+                            continue
+                        if sub_toolbox.get_employee_toolbox_status(
+                            employee,
+                            scheduled,
+                            job
+                        ) == sub_toolbox.STATUS_MISSING:
+                            sub_toolbox.mark_employee_toolbox_excused(
+                                employee,
+                                scheduled,
+                                job,
+                                note="Excused from subcontractor detail page."
+                            )
+                            excused_count += 1
+                    messages.success(
+                        request,
+                        f"Excused {excused_count} employee toolbox assignment{'s' if excused_count != 1 else ''}."
+                    )
+                else:
+                    completed_talk, created = CompletedSubToolboxJobTalks.objects.get_or_create(
+                        scheduled=scheduled,
+                        subcontractor=subcontractor,
+                        job=job,
+                        defaults={
+                            'is_excused': True,
+                        }
+                    )
+                    if not created and not completed_talk.is_excused:
+                        completed_talk.is_excused = True
+                        completed_talk.save(update_fields=['is_excused'])
+                    messages.success(request, "Toolbox talk was excused.")
+                return redirect('subcontractor', id=subcontractor.id)
+
+        job_action = request.POST.get('job_action')
+        if job_action:
+            job = get_object_or_404(
+                Jobs,
+                job_number=request.POST.get('job_number')
+            )
+            subcontract = get_object_or_404(
+                Subcontracts,
+                subcontractor=subcontractor,
+                job_number=job,
+                is_closed=False
+            )
+
+            if job_action == 'toggle_delegation':
+                existing = SubcontractorEmployeeDelegation.objects.filter(
+                    subcontractor=subcontractor,
+                    subcontract=subcontract
+                )
+                if existing.exists():
+                    closed_count = _close_delegated_job_toolbox_completions_before_undelegate(subcontract)
+                    existing.delete()
+                    messages.success(
+                        request,
+                        f"Employee self-completion was removed for this job. {closed_count} completed toolbox talks were preserved."
+                    )
+                else:
+                    SubcontractorEmployeeDelegation.objects.get_or_create(
+                        subcontractor=subcontractor,
+                        subcontract=subcontract
+                    )
+                    backfilled_count = _backfill_delegated_job_toolbox_completions(subcontract)
+                    messages.success(
+                        request,
+                        f"Employees have been delegated to complete toolbox talks themselves. {backfilled_count} existing toolbox completions were applied."
+                    )
+                return redirect('subcontractor', id=subcontractor.id)
+
+            if job_action in ('add_employee', 'remove_employee'):
+                employee = get_object_or_404(
+                    Subcontractor_Employees,
+                    id=request.POST.get('employee_id'),
+                    subcontractor=subcontractor
+                )
+                if job_action == 'add_employee':
+                    Subcontractor_Job_Assignments.objects.get_or_create(
+                        employee=employee,
+                        job=job
+                    )
+                    messages.success(request, f"{employee.name} was assigned to {job}.")
+                else:
+                    Subcontractor_Job_Assignments.objects.filter(
+                        employee=employee,
+                        job=job
+                    ).delete()
+                    messages.success(request, f"{employee.name} was removed from {job}.")
+                return redirect('subcontractor', id=subcontractor.id)
+
+        if request.POST.get('add_subcontractor_employee'):
+            employee_name = (request.POST.get('employee_name') or '').strip()
+            if not employee_name:
+                messages.error(request, "Employee name is required.")
+                return redirect('subcontractor', id=subcontractor.id)
+
+            if Subcontractor_Employees.objects.filter(
+                subcontractor=subcontractor,
+                name__iexact=employee_name
+            ).exists():
+                employee_name = _duplicate_sub_employee_name(employee_name, subcontractor)
+
+            username = (request.POST.get('username') or '').strip()
+            if username:
+                username_exists = (
+                    Subcontractor_Employees.objects.filter(username__iexact=username).exists() or
+                    Subcontractors.objects.filter(username__iexact=username).exists() or
+                    User.objects.filter(username__iexact=username).exists()
+                )
+                if username_exists:
+                    messages.error(request, USERNAME_IN_USE_MESSAGE)
+                    return redirect('subcontractor', id=subcontractor.id)
+
+            new_employee = Subcontractor_Employees.objects.create(
+                subcontractor=subcontractor,
+                name=employee_name,
+                username=username,
+                password1=(request.POST.get('password1') or '').strip(),
+                email=(request.POST.get('email') or '').strip(),
+                phone=(request.POST.get('phone') or '').strip(),
+                has_access_to_toolbox='has_access_to_toolbox' in request.POST,
+                has_access_to_TM='has_access_to_TM' in request.POST,
+                is_active=True,
+                date_enrolled=date.today(),
+            )
+            messages.success(request, f"{new_employee.name} was added.")
+            return redirect('subcontractor', id=subcontractor.id)
+
+        if 'update_contact_info' in request.POST:
+            subcontractor.contact = request.POST.get('contact', '')
+            subcontractor.phone = request.POST.get('phone', '')
+            subcontractor.email = request.POST.get('email', '')
+            subcontractor.notes = request.POST.get('notes', '')
+            subcontractor.is_inactive = 'is_inactive' in request.POST
+            subcontractor.is_toolbox_required = 'is_toolbox_required' in request.POST
+            subcontractor.save()
+            return redirect('subcontractor', id=subcontractor.id)
+
+        if 'update_required_documents' in request.POST:
+            insurance_expire_date = request.POST.get('insurance_expire_date')
+            w9_form_date = request.POST.get('w9_form_date')
+            business_license_expiration_date = request.POST.get('business_license_expiration_date')
+
+            subcontractor.insurance_expire_date = insurance_expire_date or None
+            subcontractor.w9_form_date = w9_form_date or None
+            subcontractor.business_license_expiration_date = business_license_expiration_date or None
+            subcontractor.has_workers_comp = 'has_workers_comp' in request.POST
+            subcontractor.has_auto_insurance = 'has_auto_insurance' in request.POST
+            subcontractor.has_w9_form = 'has_w9_form' in request.POST
+            subcontractor.has_business_license = 'has_business_license' in request.POST
+            subcontractor.is_signed_labor_agreement = 'is_signed_labor_agreement' in request.POST
+            subcontractor.save()
+            return redirect('subcontractor', id=subcontractor.id)
+
+    required_document_count = sum([
+        1 if subcontractor.has_workers_comp else 0,
+        1 if subcontractor.has_auto_insurance else 0,
+        1 if subcontractor.has_w9_form else 0,
+        1 if subcontractor.has_business_license else 0,
+        1 if subcontractor.is_signed_labor_agreement else 0,
+    ])
+
+    active_sub_employees = Subcontractor_Employees.objects.filter(
+        subcontractor=subcontractor,
+        is_active=True
+    ).order_by('name')
+
+    toolbox_completed_count = 0
+    toolbox_incomplete_count = 0
+    toolbox_employee_rows = []
+
+    for emp in active_sub_employees:
+        delegated_jobs = _get_delegated_active_toolbox_jobs_for_sub_employee(emp)
+        employee_missing_talks = []
+
+        if not emp.has_access_to_toolbox or not subcontractor.is_toolbox_required or not delegated_jobs:
+            completed_count = 0
+            incomplete_count = 0
+        else:
+            assigned_talk_ids = set(
+                ScheduledToolboxTalkSubEmployees.objects.filter(
+                    employee=emp,
+                    employee__subcontractor__is_toolbox_required=True,
+                    job__in=delegated_jobs
+                ).values_list('scheduled_id', flat=True).distinct()
+            )
+
+            for job in delegated_jobs:
+                subcontract = Subcontracts.objects.filter(
+                    subcontractor=emp.subcontractor,
+                    job_number=job,
+                    is_closed=False,
+                    subcontractor__is_toolbox_required=True,
+                    job_number__is_closed=False,
+                    job_number__is_active=True,
+                    job_number__is_labor_done=False
+                ).first()
+
+                if not subcontract:
+                    continue
+
+                start_date = _sub_employee_assignment_start_date(emp, subcontract)
+                if not start_date:
+                    continue
+
+                assigned_talk_ids.update(
+                    _get_all_employee_toolbox_talks_for_subcontract(
+                        subcontract,
+                        end_date=date.today(),
+                        start_date=start_date
+                    ).values_list('id', flat=True).distinct()
+                )
+
+            excused_talks = set(
+                CompletedSubToolboxTalks.objects.filter(
+                    employee=emp,
+                    master_id__in=assigned_talk_ids,
+                    job__in=delegated_jobs,
+                    is_excused=True
+                ).values_list('master_id', flat=True).distinct()
+            )
+            active_assigned_talk_ids = assigned_talk_ids - excused_talks
+            completed_count = len(
+                _get_completed_sub_employee_toolbox_talk_ids(
+                    emp,
+                    active_assigned_talk_ids,
+                    delegated_jobs
+                )
+            )
+            incomplete_count = len(active_assigned_talk_ids) - completed_count
+
+            for item in sub_toolbox.get_missing_individual_talk_items_for_employee(
+                emp,
+                through_date=date.today()
+            ):
+                scheduled = item['scheduled']
+                english_file = get_uploaded_toolbox_file(scheduled, "English")
+                spanish_file = get_uploaded_toolbox_file(scheduled, "Spanish")
+                english_view = ViewedSubToolboxTalks.objects.filter(
+                    employee=emp,
+                    master=scheduled,
+                    language="English"
+                ).order_by('-date').first()
+                spanish_view = ViewedSubToolboxTalks.objects.filter(
+                    employee=emp,
+                    master=scheduled,
+                    language="Spanish"
+                ).order_by('-date').first()
+
+                employee_missing_talks.append({
+                    'description': item['title'],
+                    'date': item['date'],
+                    'job': item['job'],
+                    'job_names': item['job_names'],
+                    'english': english_file['filename'] if english_file else None,
+                    'spanish': spanish_file['filename'] if spanish_file else None,
+                    'english_viewed': bool(english_view),
+                    'english_date': english_view.date if english_view else None,
+                    'spanish_viewed': bool(spanish_view),
+                    'spanish_date': spanish_view.date if spanish_view else None,
+                })
+
+        toolbox_completed_count += completed_count
+        toolbox_incomplete_count += incomplete_count
+        toolbox_employee_rows.append({
+            'employee': emp,
+            'completed_count': completed_count,
+            'incomplete_count': incomplete_count,
+            'has_access_to_toolbox': emp.has_access_to_toolbox,
+            'missing_talks': employee_missing_talks,
+        })
+
+    sub_employee_ids = list(active_sub_employees.values_list("id", flat=True))
+    task_counts = {
+        row["certification__subcontractor_employee_id"]: row["count"]
+        for row in (
+            EmployeePendingActions.objects
+            .filter(
+                certification__subcontractor_employee_id__in=sub_employee_ids,
+                is_complete=False,
+            )
+            .values("certification__subcontractor_employee_id")
+            .annotate(count=Count("id"))
+        )
+    }
+    certification_counts = {
+        row["subcontractor_employee_id"]: row["count"]
+        for row in (
+            Certifications.objects
+            .filter(
+                subcontractor_employee_id__in=sub_employee_ids,
+                is_closed=False,
+            )
+            .values("subcontractor_employee_id")
+            .annotate(count=Count("id"))
+        )
+    }
+    respirator_counts = {
+        row["employee_id"]: row["count"]
+        for row in (
+            SubcontractorRespiratorClearance.objects
+            .filter(
+                employee_id__in=sub_employee_ids,
+                is_closed=False,
+            )
+            .values("employee_id")
+            .annotate(count=Count("id"))
+        )
+    }
+    job_counts = {
+        row["employee_id"]: row["count"]
+        for row in (
+            Subcontractor_Job_Assignments.objects
+            .filter(employee_id__in=sub_employee_ids)
+            .values("employee_id")
+            .annotate(count=Count("id"))
+        )
+    }
+    toolbox_counts = {
+        row["employee"].id: row
+        for row in toolbox_employee_rows
+    }
+    employee_table_rows = []
+    for sub_employee in active_sub_employees:
+        toolbox_row = toolbox_counts.get(sub_employee.id, {})
+        employee_table_rows.append({
+            "employee": sub_employee,
+            "job_count": job_counts.get(sub_employee.id, 0),
+            "task_count": task_counts.get(sub_employee.id, 0),
+            "certification_count": (
+                certification_counts.get(sub_employee.id, 0) +
+                respirator_counts.get(sub_employee.id, 0)
+            ),
+            "toolbox_completed_count": toolbox_row.get("completed_count", 0),
+            "toolbox_incomplete_count": toolbox_row.get("incomplete_count", 0),
+        })
+
+    pending_tasks = EmployeePendingActions.objects.filter(
+        subcontractor_employee__subcontractor=subcontractor,
+        is_complete=False
+    ).select_related(
+        'subcontractor_employee',
+        'certification'
+    ).order_by('date', 'id')
+
+    jobs = Subcontracts.objects.filter(
+        subcontractor=subcontractor,
+        is_closed=False
+    ).select_related('job_number').order_by('job_number__job_name', 'job_number__job_number')
+    toolbox_talk_rows = sub_toolbox.get_subcontractor_portal_required_talks(
+        subcontractor,
+        through_date=date.today()
+    )
+    job_rows = []
+    for subcontract in jobs:
+        job = subcontract.job_number
+        assigned_employee_ids = list(
+            Subcontractor_Job_Assignments.objects.filter(
+                employee__subcontractor=subcontractor,
+                employee__is_active=True,
+                job=job,
+            ).values_list('employee_id', flat=True).distinct()
+        )
+        assigned_employees = Subcontractor_Employees.objects.filter(
+            id__in=assigned_employee_ids
+        ).order_by('name')
+        assigned_employee_count = assigned_employees.count()
+        add_employee_options = Subcontractor_Employees.objects.filter(
+            subcontractor=subcontractor,
+            is_active=True,
+        ).exclude(
+            id__in=assigned_employee_ids
+        ).order_by('name')
+        employee_rows = []
+        for employee in assigned_employees:
+            employee_rows.append({
+                'employee': employee,
+                'trinity_status': 'Enrolled' if employee.username else 'Not Enrolled',
+                'toolbox_status': 'Enrolled' if employee.has_access_to_toolbox else 'Not Enrolled',
+                'tm_status': 'Enrolled' if employee.has_access_to_TM else 'Not Enrolled',
+            })
+
+        assigned_toolbox_employee_count = Subcontractor_Job_Assignments.objects.filter(
+            employee__subcontractor=subcontractor,
+            job=job,
+            employee__is_active=True,
+            employee__has_access_to_toolbox=True,
+            employee__date_enrolled__isnull=False,
+        ).values('employee_id').distinct().count()
+
+        completed_toolbox_count = 0
+        incomplete_toolbox_count = 0
+        assigned_toolbox_employees = sub_toolbox.get_assigned_toolbox_employees_for_job(subcontract)
+        for employee in assigned_toolbox_employees:
+            scheduled_talks = sub_toolbox.get_applicable_talks_for_employee_job(
+                employee,
+                subcontract,
+                end_date=date.today()
+            )
+            for scheduled in scheduled_talks:
+                status = sub_toolbox.get_employee_toolbox_status(
+                    employee,
+                    scheduled,
+                    job
+                )
+                if status == sub_toolbox.STATUS_EXCUSED:
+                    continue
+                if status == sub_toolbox.STATUS_COMPLETED:
+                    completed_toolbox_count += 1
+                else:
+                    incomplete_toolbox_count += 1
+
+        if not sub_toolbox.is_delegated(subcontract):
+            completed_toolbox_count += CompletedSubToolboxJobTalks.objects.filter(
+                subcontractor=subcontractor,
+                job=job,
+                is_excused=False,
+            ).count()
+            incomplete_toolbox_count += len([
+                talk for talk in toolbox_talk_rows
+                if talk.get('job') == job and not talk.get('delegated')
+            ])
+        elif not assigned_toolbox_employees.exists():
+            for talk in toolbox_talk_rows:
+                if talk.get('job') != job:
+                    continue
+                completed_toolbox_count += talk.get('completed_count') or 0
+                incomplete_toolbox_count += max(
+                    (talk.get('employee_count') or 0) - (talk.get('completed_count') or 0),
+                    0
+                )
+
+        tm_changeorders = ChangeOrders.objects.filter(
+            job_number=job,
+            is_t_and_m=True,
+            is_closed=False,
+            created_by_subcontractor=subcontractor,
+        )
+        completed_tm_ticket_count = 0
+        unsigned_tm_ticket_count = 0
+        for changeorder in tm_changeorders:
+            if changeorder.is_ticket_signed:
+                completed_tm_ticket_count += 1
+            elif changeorder.digital_ticket_completed():
+                unsigned_tm_ticket_count += 1
+
+        job_rows.append({
+            'subcontract': subcontract,
+            'job': job,
+            'is_active': job.is_active and not job.is_closed and not job.is_labor_done,
+            'percent_billed': round(float(subcontract.percent_complete()) * 100, 1),
+            'assigned_employee_count': assigned_employee_count,
+            'assigned_toolbox_employee_count': assigned_toolbox_employee_count,
+            'employee_rows': employee_rows,
+            'add_employee_options': add_employee_options,
+            'completed_toolbox_count': completed_toolbox_count,
+            'incomplete_toolbox_count': incomplete_toolbox_count,
+            'is_delegated': sub_toolbox.is_delegated(subcontract),
+            'completed_tm_ticket_count': completed_tm_ticket_count,
+            'unsigned_tm_ticket_count': unsigned_tm_ticket_count,
+        })
+
+    active_jobs = Subcontractor_Job_Assignments.objects.filter(
+        employee__subcontractor=subcontractor,
+        job__is_closed=False,
+        job__subcontracts__subcontractor=subcontractor,
+        job__subcontracts__is_closed=False
+    ).select_related(
+        'employee',
+        'job'
+    ).order_by(
+        'job__job_name',
+        'employee__name'
+    )
+
+    jobs_seen = {}
+    for assignment in active_jobs:
+        job = assignment.job
+        emp = assignment.employee
+
+        if job.job_number not in jobs_seen:
+            subcontract = Subcontracts.objects.filter(
+                subcontractor=subcontractor,
+                job_number=job,
+                is_closed=False
+            ).first()
+            is_delegated = bool(
+                subcontract and
+                SubcontractorEmployeeDelegation.objects.filter(
+                    subcontractor=subcontractor,
+                    subcontract=subcontract
+                ).exists()
+            )
+            jobs_seen[job.job_number] = {
+                'job': job,
+                'subcontract': subcontract,
+                'is_delegated': is_delegated,
+                'employees': []
+            }
+
+        jobs_seen[job.job_number]['employees'].append(emp)
+
+    job_assignment_rows = list(jobs_seen.values())
+    assigned_job_numbers = set(jobs_seen.keys())
+    other_subcontract_job_rows = []
+    other_subcontracts = Subcontracts.objects.filter(
+        subcontractor=subcontractor,
+        is_closed=False,
+        job_number__is_closed=False,
+    ).exclude(
+        job_number_id__in=assigned_job_numbers
+    ).select_related(
+        'job_number'
+    ).order_by(
+        'job_number__job_name',
+        'job_number__job_number'
+    )
+    for subcontract in other_subcontracts:
+        other_subcontract_job_rows.append({
+            'job': subcontract.job_number,
+            'subcontract': subcontract,
+        })
+
+    approvers = Subcontractor_Approvers.objects.filter(
+        subcontractor=subcontractor
+    ).select_related('employee').order_by('employee__last_name', 'employee__first_name', 'job_description')
+    send_data['subcontractor'] = subcontractor
+    send_data['required_document_count'] = required_document_count
+    send_data['approvers'] = approvers
+    send_data['approver_count'] = approvers.count()
+    send_data['toolbox_completed_count'] = toolbox_completed_count
+    send_data['toolbox_incomplete_count'] = toolbox_incomplete_count
+    send_data['toolbox_employee_rows'] = toolbox_employee_rows
+    send_data['employee_table_rows'] = employee_table_rows
+    send_data['employee_count'] = len(employee_table_rows)
+    send_data['toolbox_talk_rows'] = toolbox_talk_rows
+    send_data['toolbox_talk_rows_count'] = len(toolbox_talk_rows)
+    send_data['pending_tasks'] = pending_tasks
+    send_data['pending_task_count'] = pending_tasks.count()
+    send_data['jobs'] = jobs
+    send_data['job_count'] = jobs.count()
+    send_data['job_rows'] = job_rows
+    send_data['job_assignment_rows'] = job_assignment_rows
+    send_data['other_subcontract_job_rows'] = other_subcontract_job_rows
+
+    return render(request, "subcontractor_detail.html", send_data)
+
+
+@login_required(login_url='/accounts/login')
 def subcontract(request, id):
     send_data = {}
     subcontract = Subcontracts.objects.get(id=id)
@@ -2855,12 +3505,6 @@ def subcontract(request, id):
     send_data['total_billed'] = "{:,}".format(round(subcontract.total_approved(), 2))
     send_data['subcontract_date'] = str(subcontract.date)
     return render(request, "subcontract.html", send_data)
-
-
-@login_required(login_url='/accounts/login')
-def subcontractor(request, id):
-    response = redirect('/')
-    return response
 
 
 @login_required(login_url='/accounts/login')
@@ -4357,6 +5001,58 @@ def subcontractor_employee_management(request, sub_id):
     subcontractor = Subcontractors.objects.get(id=sub_id)
     send_data['selected_sub'] = subcontractor
 
+    if request.method == "POST" and "complete_pending_action" in request.POST:
+        pending_action = get_object_or_404(
+            EmployeePendingActions,
+            id=request.POST.get("pending_action_id"),
+            subcontractor_employee__subcontractor=subcontractor,
+            is_complete=False,
+        )
+        completion_note = (request.POST.get("completion_note") or "").strip()
+        current_employee = None
+        if request.user.is_authenticated:
+            current_employee = Employees.objects.filter(user=request.user).first()
+
+        completed_by = (
+            current_employee.first_name
+            if current_employee
+            else pending_action.subcontractor_employee.name
+        )
+        note_prefix = f"{date.today().strftime('%m/%d/%Y')} - {completed_by}: Completed task."
+        if completion_note:
+            note_prefix += f" {completion_note}"
+
+        pending_action.notes = (
+            (pending_action.notes + "\n") if pending_action.notes else ""
+        ) + note_prefix
+        pending_action.is_complete = True
+        pending_action.save(update_fields=["notes", "is_complete"])
+
+        email_body = (
+            f"{pending_action.subcontractor_employee.name} completed a required task.\n\n"
+            f"Subcontractor: {subcontractor.company}\n"
+            f"Task: {pending_action.description}\n"
+            f"Date: {date.today().strftime('%m/%d/%Y')}\n"
+        )
+        if pending_action.certification:
+            email_body += f"Certification: {pending_action.certification}\n"
+        if completion_note:
+            email_body += f"\nNotes:\n{completion_note}"
+
+        sender = pending_action.subcontractor_employee.email or "bridgette@gerloffpainting.com"
+        try:
+            Email.sendEmail(
+                "Required Task Completed",
+                email_body,
+                ["bridgette@gerloffpainting.com"],
+                False,
+                sender,
+            )
+            messages.success(request, "Task marked complete.")
+        except Exception:
+            messages.warning(request, "Task marked complete, but the email could not be sent.")
+        return redirect("subcontractor_employee_management", sub_id=subcontractor.id)
+
     employees = Subcontractor_Employees.objects.filter(
         subcontractor=subcontractor,is_active=True
     ).order_by('name')
@@ -4369,6 +5065,43 @@ def subcontractor_employee_management(request, sub_id):
 
     # Build employee list with job assignments
     employee_rows = []
+    employee_ids = list(employees.values_list("id", flat=True))
+    task_counts = {
+        row["subcontractor_employee_id"]: row["count"]
+        for row in (
+            EmployeePendingActions.objects
+            .filter(
+                subcontractor_employee_id__in=employee_ids,
+                is_complete=False,
+            )
+            .values("subcontractor_employee_id")
+            .annotate(count=Count("id"))
+        )
+    }
+    certification_counts = {
+        row["subcontractor_employee_id"]: row["count"]
+        for row in (
+            Certifications.objects
+            .filter(
+                subcontractor_employee_id__in=employee_ids,
+                is_closed=False,
+            )
+            .values("subcontractor_employee_id")
+            .annotate(count=Count("id"))
+        )
+    }
+    respirator_counts = {
+        row["employee_id"]: row["count"]
+        for row in (
+            SubcontractorRespiratorClearance.objects
+            .filter(
+                employee_id__in=employee_ids,
+                is_closed=False,
+            )
+            .values("employee_id")
+            .annotate(count=Count("id"))
+        )
+    }
 
     for emp in employees:
 
@@ -4382,8 +5115,12 @@ def subcontractor_employee_management(request, sub_id):
 
         if not emp.has_access_to_toolbox or not subcontractor.is_toolbox_required:
             toolbox_display = "Not Enrolled"
+            completed_count = 0
+            incomplete_count = 0
         elif not delegated_jobs:
             toolbox_display = "0 of 0"
+            completed_count = 0
+            incomplete_count = 0
         else:
             assigned_talk_ids = set()
 
@@ -4440,6 +5177,7 @@ def subcontractor_employee_management(request, sub_id):
                     delegated_jobs
                 )
             )
+            incomplete_count = total_assigned - completed_count
 
             toolbox_display = f"{completed_count} of {total_assigned}" if total_assigned > 0 else "0 of 0"
 
@@ -4448,7 +5186,12 @@ def subcontractor_employee_management(request, sub_id):
             'name': emp.name,
             'username': emp.username,
             'job_count': job_count,
+            'task_count': task_counts.get(emp.id, 0),
+            'certification_count': certification_counts.get(emp.id, 0) + respirator_counts.get(emp.id, 0),
             'toolbox_display': toolbox_display,
+            'toolbox_completed_count': completed_count,
+            'toolbox_incomplete_count': incomplete_count,
+            'has_access_to_toolbox': emp.has_access_to_toolbox,
             'has_access_to_TM': emp.has_access_to_TM,
             'is_active': emp.is_active,
         })
@@ -4521,6 +5264,21 @@ def subcontractor_employee_management(request, sub_id):
 
     send_data['job_assignment_rows'] = job_assignment_rows
     send_data['other_subcontract_job_rows'] = other_subcontract_job_rows
+    send_data['pending_employee_tasks'] = (
+        EmployeePendingActions.objects
+        .filter(
+            subcontractor_employee__subcontractor=subcontractor,
+            subcontractor_employee__is_active=True,
+            is_complete=False,
+        )
+        .select_related(
+            "subcontractor_employee",
+            "certification",
+            "certification__category",
+        )
+        .order_by("subcontractor_employee__name", "date", "id")
+    )
+    send_data['pending_employee_tasks_count'] = send_data['pending_employee_tasks'].count()
 
 
     send_data['employees'] = employee_rows
@@ -4609,6 +5367,10 @@ def subcontractor_employee_ajax(request):
         'name': emp.name or "",
         'username': emp.username or "",
         'password1': emp.password1 or "",
+        'email': emp.email or "",
+        'phone': emp.phone or "",
+        'nickname': emp.nickname or "",
+        'birth_date': emp.birth_date.strftime('%Y-%m-%d') if emp.birth_date else "",
         'date_enrolled': emp.date_enrolled.strftime('%m/%d/%Y') if emp.date_enrolled else "",
         'has_access_to_TM': emp.has_access_to_TM,
         'has_access_to_toolbox': emp.has_access_to_toolbox,
@@ -4644,11 +5406,15 @@ def subcontractor_employee_update(request):
         ).exists()
 
         if username_exists_in_employees or username_exists_in_subcontractors or username_exists_in_django_users:
-            return JsonResponse({'error': 'That username is already in use.'}, status=400)
+            return JsonResponse({'error': USERNAME_IN_USE_MESSAGE}, status=400)
 
     emp.name = request.POST.get('name', '').strip()
-    emp.username = request.POST.get('username', '').strip()
+    emp.username = username
     emp.password1 = request.POST.get('password1', '').strip()
+    emp.email = request.POST.get('email', '').strip()
+    emp.phone = request.POST.get('phone', '').strip()
+    emp.nickname = request.POST.get('nickname', '').strip()
+    emp.birth_date = request.POST.get('birth_date') or None
     emp.has_access_to_toolbox = request.POST.get('has_access_to_toolbox') == 'true'
     emp.has_access_to_TM = request.POST.get('has_access_to_TM') == 'true'
     emp.save()
@@ -4679,6 +5445,10 @@ def subcontractor_employee_create(request):
     name = request.POST.get('name', '').strip()
     username = request.POST.get('username', '').strip()
     password1 = request.POST.get('password1', '').strip()
+    email = request.POST.get('email', '').strip()
+    phone = request.POST.get('phone', '').strip()
+    nickname = request.POST.get('nickname', '').strip()
+    birth_date = request.POST.get('birth_date') or None
     has_access_to_toolbox = request.POST.get('has_access_to_toolbox') == 'true'
     has_access_to_tm = request.POST.get('has_access_to_TM') == 'true'
     job_id = request.POST.get('job_id')
@@ -4707,12 +5477,23 @@ def subcontractor_employee_create(request):
         ).exists()
 
         if username_exists_in_employees or username_exists_in_subcontractors or username_exists_in_django_users:
-            return JsonResponse({'error': 'That username is already in use.'}, status=400)
+            return JsonResponse({'error': USERNAME_IN_USE_MESSAGE}, status=400)
+
+    if Subcontractor_Employees.objects.filter(
+        subcontractor=subcontractor,
+        name__iexact=name
+    ).exists():
+        name = _duplicate_sub_employee_name(name, subcontractor)
+
     new_emp = Subcontractor_Employees.objects.create(
         subcontractor=subcontractor,
         name=name,
         username=username,
         password1=password1,
+        email=email,
+        phone=phone,
+        nickname=nickname,
+        birth_date=birth_date,
         has_access_to_toolbox=has_access_to_toolbox,
         has_access_to_TM=has_access_to_tm,
         is_active=True,
@@ -4761,6 +5542,69 @@ def subcontractor_employee_portal(request, employee_id):
     send_data = {}
     subcontractor = selected_employee.subcontractor
 
+    if request.method == "POST" and "complete_pending_action" in request.POST:
+        pending_action = get_object_or_404(
+            EmployeePendingActions,
+            id=request.POST.get("pending_action_id"),
+            subcontractor_employee=selected_employee,
+            is_complete=False,
+        )
+        completion_note = (request.POST.get("completion_note") or "").strip()
+        note_prefix = f"{date.today().strftime('%m/%d/%Y')} - {selected_employee.name}: Completed task."
+        if completion_note:
+            note_prefix += f" {completion_note}"
+
+        pending_action.notes = (
+            (pending_action.notes + "\n") if pending_action.notes else ""
+        ) + note_prefix
+        pending_action.is_complete = True
+        pending_action.save(update_fields=["notes", "is_complete"])
+
+        email_body = (
+            f"{selected_employee.name} completed a required task.\n\n"
+            f"Subcontractor: {subcontractor.company}\n"
+            f"Task: {pending_action.description}\n"
+            f"Date: {date.today().strftime('%m/%d/%Y')}\n"
+        )
+        if pending_action.certification:
+            email_body += f"Certification: {pending_action.certification}\n"
+        if completion_note:
+            email_body += f"\nNotes:\n{completion_note}"
+
+        sender = selected_employee.email or "bridgette@gerloffpainting.com"
+        try:
+            Email.sendEmail(
+                "Required Task Completed",
+                email_body,
+                ["bridgette@gerloffpainting.com"],
+                False,
+                sender,
+            )
+            messages.success(request, "Task marked complete.")
+        except Exception:
+            messages.warning(request, "Task marked complete, but the email could not be sent.")
+        return redirect("subcontractor_employee_portal", employee_id=selected_employee.id)
+
+    if request.method == "POST" and request.POST.get("start_employee_resp_clearance"):
+        selected_language = (
+            request.POST.get("language")
+            if request.POST.get("language") in ("English", "Spanish")
+            else "English"
+        )
+        clearance = SubcontractorRespiratorClearance.objects.create(
+            subcontractor=subcontractor,
+            employee=selected_employee,
+            employee_name=selected_employee.name,
+            date_created=date.today(),
+            language=selected_language,
+        )
+        return redirect(
+            "subcontractor_resp_clearance_section",
+            sub_id=subcontractor.id,
+            clearance_id=clearance.id,
+            section_number=0,
+        )
+
     send_data['selected_employee'] = selected_employee
     send_data['subcontractor'] = subcontractor
     send_data['employee_id'] = employee_id
@@ -4788,6 +5632,54 @@ def subcontractor_employee_portal(request, employee_id):
                 outstanding_tm_tickets += 1
 
     send_data['outstanding_tm_tickets'] = outstanding_tm_tickets
+
+    today = date.today()
+    employee_clearances = (
+        SubcontractorRespiratorClearance.objects
+        .filter(
+            subcontractor=subcontractor,
+            employee=selected_employee,
+            is_closed=False,
+        )
+        .select_related("employee", "subcontractor")
+    )
+    approved_resp_clearance = employee_clearances.filter(
+        date_completed__isnull=False,
+        approved_for_use=True,
+        date_expires__gte=today,
+    ).order_by("-date_expires", "-date_completed", "-id").first()
+    pending_resp_clearance = employee_clearances.filter(
+        date_completed__isnull=False,
+        approved_for_use=False,
+    ).order_by("-date_completed", "-id").first()
+    incomplete_resp_clearance = employee_clearances.filter(
+        date_completed__isnull=True,
+    ).order_by("-date_created", "-id").first()
+    expired_resp_clearance = employee_clearances.filter(
+        date_completed__isnull=False,
+        approved_for_use=True,
+        date_expires__lt=today,
+    ).order_by("-date_expires", "-date_completed", "-id").first()
+
+    send_data["approved_resp_clearance"] = approved_resp_clearance
+    send_data["pending_resp_clearance"] = pending_resp_clearance
+    send_data["incomplete_resp_clearance"] = incomplete_resp_clearance
+    send_data["expired_resp_clearance"] = expired_resp_clearance
+    send_data["respirator_clearance_required"] = not (
+        approved_resp_clearance or pending_resp_clearance or incomplete_resp_clearance
+    )
+
+    pending_actions = (
+        EmployeePendingActions.objects
+        .filter(
+            subcontractor_employee=selected_employee,
+            is_complete=False,
+        )
+        .select_related("certification", "certification__category")
+        .order_by("date", "id")
+    )
+    send_data["pending_actions"] = pending_actions
+    send_data["pending_actions_count"] = pending_actions.count()
 
     # Toolbox talks
     group_toolbox_talks = []
@@ -5937,3 +6829,4 @@ def ajax_check_subcontractor_employee_toolbox_can_complete(request):
     return JsonResponse({
         "can_complete": can_complete
     })
+

@@ -78,6 +78,36 @@ def _has_sub_job_toolbox_record(toolbox_talk, subcontractor, job):
     ).exists()
 
 
+def _pending_employee_task_queryset():
+    return (
+        EmployeePendingActions.objects
+        .filter(is_complete=False)
+        .filter(
+            Q(employee__active=True) |
+            Q(
+                subcontractor_employee__is_active=True,
+                subcontractor_employee__subcontractor__is_inactive=False,
+            )
+        )
+        .select_related(
+            "employee",
+            "employee__job_title",
+            "subcontractor_employee",
+            "subcontractor_employee__subcontractor",
+            "certification",
+            "certification__category",
+        )
+        .order_by(
+            "employee__last_name",
+            "employee__first_name",
+            "subcontractor_employee__subcontractor__company",
+            "subcontractor_employee__name",
+            "date",
+            "id",
+        )
+    )
+
+
 def _get_first_subcontractor_invoice_date(subcontract):
     return (
         SubcontractorInvoice.objects
@@ -499,6 +529,7 @@ def index(request):
     send_data['active_subcontracts'] = Subcontracts.objects.filter(job_number__is_closed=False, is_closed=False).count()
     send_data['pending_invoices'] = SubcontractorInvoice.objects.filter(is_sent=False).count()
     send_data['approved_invoices'] = SubcontractorInvoice.objects.filter(is_sent=True, processed=False).count()
+    send_data['pending_employee_tasks_count'] = _pending_employee_task_queryset().count()
     send_data['need_to_be_closed'] = Jobs.objects.filter(is_labor_done=True,is_closed=False).count()
     send_data['unsuccessful_login_attempts_past_week'] = LoginAttempt.objects.filter(
         result=LoginAttempt.RESULT_FAILED,
@@ -591,6 +622,15 @@ def index(request):
     send_data['wc_approved_not_ordered_count'] =wc_approved_not_ordered_count
 
     return render(request, 'index.html', send_data)
+
+
+@login_required(login_url='/accounts/login')
+def pending_employee_tasks(request):
+    pending_tasks = list(_pending_employee_task_queryset())
+    return render(request, 'pending_employee_tasks.html', {
+        "pending_tasks": pending_tasks,
+        "pending_tasks_count": len(pending_tasks),
+    })
 
 
 @login_required(login_url='/accounts/login')
@@ -819,17 +859,17 @@ def register_user(request):
     if request.method == 'POST':
         # first_name = request.POST['first_name']
         # last_name = request.POST['last_name']
-        username = request.POST['username']
+        username = request.POST['username'].strip()
         password1 = request.POST['password1']
         password2 = request.POST['password2']
         email = request.POST['email']
         if password1 == password2:
-            username_exists_in_django_users = User.objects.filter(username__iexact=username).exists()
-            username_exists_in_subcontractors = Subcontractors.objects.filter(username__iexact=username).exists()
-            username_exists_in_subcontractor_employees = Subcontractor_Employees.objects.filter(username__iexact=username).exists()
+            username_exists_in_django_users = User.objects.filter(username__iexact=username).exists() if username else False
+            username_exists_in_subcontractors = Subcontractors.objects.filter(username__iexact=username).exists() if username else False
+            username_exists_in_subcontractor_employees = Subcontractor_Employees.objects.filter(username__iexact=username).exists() if username else False
 
-            if username_exists_in_django_users or username_exists_in_subcontractors or username_exists_in_subcontractor_employees:
-                messages.info(request, 'Username Taken')
+            if not username or username_exists_in_django_users or username_exists_in_subcontractors or username_exists_in_subcontractor_employees:
+                messages.error(request, 'USERNAME ALREADY IN USE. Please choose a different username.')
                 return redirect('register_user')
             else:
                 user = User.objects.create_user(username=username, password=password1, email=email,

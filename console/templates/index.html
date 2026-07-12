@@ -118,6 +118,25 @@
             </div>
         </div>
 
+        <!-- employees-->
+        <div class="card" style="width: 18rem; margin-top: 22px;">
+            <h5 class="card-header">Employees</h5>
+            <div class="card-body" style="height: 135px;">
+                <div class="card-text">
+                    <div style="display: flex">
+                        <a href="{% url 'pending_employee_tasks' %}">
+                            <b>{{ pending_employee_tasks_count }}</b> -Pending Employee Tasks
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div style="text-align: center;">
+                    <a href="{% url 'employees_home' %}" class="btn btn-info btn-sm">Go to Employees</a>
+                </div>
+            </div>
+        </div>
+
     <!-- rentals superintendent warehouse-->
 <!--    <div class="row h-100 d-flex" style="justify-content: space-around;">-->
         <!-- rentals-->

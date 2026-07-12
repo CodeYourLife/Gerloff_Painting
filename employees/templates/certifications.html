@@ -39,15 +39,33 @@
                 New Certification
             </button>
         </form>
-        <form action="{% url 'subcontractor_certifications' %}" class="d-inline-block">
-            <button type="submit" class="btn btn-secondary">
-                View Subcontractor Certifications
-            </button>
-        </form>
     </div>
 
     <div class="card shadow-sm">
         <div class="card-body">
+
+            <div class="form-row align-items-end mb-3">
+                <div class="col-md-5">
+                    <label for="certification_description_filter" class="font-weight-bold">
+                        Filter by Certification
+                    </label>
+                    <select id="certification_description_filter" class="form-control">
+                        <option value="">All Certifications</option>
+                        {% for description in certification_filter_descriptions %}
+                            <option value="{{ description }}">{{ description }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-7">
+                    <label for="certifications_table_search" class="font-weight-bold">
+                        Search
+                    </label>
+                    <input type="search"
+                           id="certifications_table_search"
+                           class="form-control"
+                           placeholder="Search certifications">
+                </div>
+            </div>
 
             <div class="table-responsive">
                 <table id="certifications_table" class="display table table-striped table-hover w-100">
@@ -65,19 +83,27 @@
                     <tbody>
                         {% for x in certifications %}
                         <tr>
-                            <td>{{ x.employee }}</td>
+                            <td>
+                                {% if x.employee_url %}
+                                    <a href="{{ x.employee_url }}">{{ x.employee }}</a>
+                                {% else %}
+                                    {{ x.employee }}
+                                {% endif %}
+                            </td>
                             <td>{{ x.display_description }}</td>
                             <td>
-                                <a href="{% url 'certifications' x.id %}"
+                                <a href="{{ x.view_url }}"
 								   class="btn btn-sm btn-outline-primary">
-									View
+									View Cert
 								</a>
                             </td>
                             <td>{{ x.date_received }}</td>
                             <td>{{ x.date_expires }}</td>
                             <td>
-                                {% if x.action_required == True %}
-                                    {{ x.action }}
+                                {% if x.action_required %}
+                                    {% for action in x.action_required %}
+                                        <div>{{ action }}</div>
+                                    {% endfor %}
                                 {% endif %}
                             </td>
                         </tr>
@@ -106,7 +132,7 @@
     <div class="card shadow-sm">
         <div class="card-header bg-dark text-white">
             <h4 class="mb-0">{% if selected_item.category %}{{ selected_item.category }}{% else %}{{ selected_item.description }}{% endif %}</h4>
-            <div class="small">{{ selected_item.employee }}</div>
+            <div class="small">{{ selected_item.owner_display }}</div>
         </div>
 
         <div class="card-body">
@@ -142,7 +168,19 @@
             <form action="{% url 'certifications' selected_item.id %}" method="post">
                 {% csrf_token %}
 
-                <h5 class="mb-3">Notes</h5>
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <button class="btn btn-link p-0"
+                                type="button"
+                                data-toggle="collapse"
+                                data-target="#certificationNotesCollapse"
+                                aria-expanded="false"
+                                aria-controls="certificationNotesCollapse">
+                            {{ notes2.count }} Note{{ notes2.count|pluralize }}
+                        </button>
+                    </div>
+                    <div id="certificationNotesCollapse" class="collapse">
+                        <div class="card-body">
 
                 {% if notes2 %}
                     <div class="list-group mb-3">
@@ -159,7 +197,7 @@
                     <div class="text-muted mb-3">No notes yet.</div>
                 {% endif %}
 
-                <div class="input-group mb-4">
+                <div class="input-group">
                     <input type="text"
                            name="note"
                            class="form-control"
@@ -172,113 +210,274 @@
                     </div>
                 </div>
 
-                <hr>
-
-                <h5 class="mb-3">Action Required</h5>
-
-                {% if selected_item.action_required == True %}
-                    <div class="alert alert-warning">
-                        <strong>Current Action:</strong>
-                        {{ selected_item.action }}
-                    </div>
-
-                    <div class="form-row align-items-center mb-4">
-                        <div class="col-md-9 mb-2">
-                            <input type="text"
-                                   name="closed_action_note"
-                                   class="form-control"
-                                   placeholder="Add note regarding completion">
                         </div>
-                        <div class="col-md-3 mb-2">
-                            <input type="submit"
-                                   name="closed_action"
-                                   value="Mark Completed"
-                                   class="btn btn-success btn-block">
-                        </div>
-                    </div>
-                {% else %}
-                    <div class="form-row align-items-center mb-3">
-                        <div class="col-md-9 mb-2">
-                            <select id="select_action"
-                                    name="select_action"
-                                    class="form-control">
-                                <option value="please_select">Please Select Action Required</option>
-                                {% for x in actions %}
-                                    <option value="{{ x.id }}">{{ x.action }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <input type="submit"
-                                   name="select_action_now"
-                                   value="Add Action"
-                                   class="btn btn-warning btn-block">
-                        </div>
-                    </div>
-
-                    <div class="form-row align-items-center mb-4">
-                        <div class="col-md-9 mb-2">
-                            <input type="text"
-                                   name="custom_action"
-                                   class="form-control"
-                                   placeholder="Or enter custom action required">
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <input type="submit"
-                                   name="custom_action_now"
-                                   value="Add Custom"
-                                   class="btn btn-warning btn-block">
-                        </div>
-                    </div>
-                {% endif %}
-
-                <hr>
-
-                <h5 class="mb-3">Change Dates</h5>
-
-                <div class="form-row align-items-center mb-3">
-                    <div class="col-md-3 mb-2">
-                        <label class="mb-1">New Date Received</label>
-                        <input type="date"
-                               name="start_date"
-                               class="form-control">
-                    </div>
-                    <div class="col-md-6 mb-2">
-                        <label class="mb-1">Reason</label>
-                        <input type="text"
-                               name="start_date_note"
-                               class="form-control"
-                               placeholder="Clarify date change">
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <label class="mb-1 d-none d-md-block">&nbsp;</label>
-                        <input type="submit"
-                               name="change_start_date"
-                               value="Change Received Date"
-                               class="btn btn-outline-primary btn-block">
                     </div>
                 </div>
 
-                <div class="form-row align-items-center mb-4">
-                    <div class="col-md-3 mb-2">
-                        <label class="mb-1">New Expiration Date</label>
-                        <input type="date"
-                               name="end_date"
-                               class="form-control">
+                <hr>
+
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <button class="btn btn-link p-0"
+                                type="button"
+                                data-toggle="collapse"
+                                data-target="#certificationFilesCollapse"
+                                aria-expanded="false"
+                                aria-controls="certificationFilesCollapse">
+                            {{ certification_files_count }} Files and Documents
+                        </button>
                     </div>
-                    <div class="col-md-6 mb-2">
-                        <label class="mb-1">Reason</label>
-                        <input type="text"
-                               name="end_date_note"
-                               class="form-control"
-                               placeholder="Clarify date change">
+                    <div id="certificationFilesCollapse" class="collapse">
+                        <div class="card-body">
+                            <input type="text"
+                                   id="certificationFolderPath"
+                                   value="{{ certification_folder_path }}"
+                                   style="position:absolute; left:-9999px;">
+
+                            <div class="mb-3">
+                                <button type="button"
+                                        class="btn btn-primary mr-2 mb-2"
+                                        data-toggle="modal"
+                                        data-target="#uploadCertificationFilesModal">
+                                    Upload Files
+                                </button>
+                                <button type="button"
+                                        class="btn btn-secondary mb-2"
+                                        onclick="copyCertificationFolderPath()">
+                                    Copy Folder Link
+                                </button>
+                            </div>
+
+                            {% if certification_files %}
+                                <div class="list-group">
+                                    {% for file in certification_files %}
+                                        <a href="{{ file.url }}"
+                                           class="list-group-item list-group-item-action">
+                                            {{ file.name }}
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-muted">No files or documents uploaded.</div>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="col-md-3 mb-2">
-                        <label class="mb-1 d-none d-md-block">&nbsp;</label>
-                        <input type="submit"
-                               name="change_end_date"
-                               value="Change Expiration"
-                               class="btn btn-outline-primary btn-block">
+                </div>
+
+                {% if completed_tasks_requiring_review_count %}
+                <hr>
+
+                <div class="card mb-3 border-danger">
+                    <div class="card-header bg-danger">
+                        <button class="btn btn-link p-0 text-white font-weight-bold"
+                                type="button"
+                                data-toggle="collapse"
+                                data-target="#completedTasksReviewCollapse"
+                                aria-expanded="false"
+                                aria-controls="completedTasksReviewCollapse">
+                            {{ completed_tasks_requiring_review_count }} Completed Task{{ completed_tasks_requiring_review_count|pluralize }} Requiring Review
+                        </button>
+                    </div>
+                    <div id="completedTasksReviewCollapse" class="collapse">
+                        <div class="card-body">
+                            <div class="list-group">
+                                {% for task in completed_tasks_requiring_review %}
+                                        <div class="list-group-item">
+                                            <div class="font-weight-bold">
+                                                {{ task.description }}
+                                            </div>
+                                            <div class="mt-2">
+                                                <strong>Employee:</strong>
+                                                {{ task.assignee_display }}
+                                            </div>
+                                            {% if task.date %}
+                                                <div class="small text-muted">
+                                                    {{ task.date|date:"m/d/Y" }}
+                                                </div>
+                                            {% endif %}
+                                            {% if task.notes %}
+                                                <div class="mt-2" style="white-space: normal; overflow-wrap: anywhere;">
+                                                    <strong>Notes:</strong>
+                                                    {{ task.notes }}
+                                                </div>
+                                            {% endif %}
+                                            <div class="mt-3">
+                                                <button type="submit"
+                                                        name="confirm_completed_task"
+                                                        value="{{ task.id }}"
+                                                        class="btn btn-success mr-2 mb-2">
+                                                    Confirm Completion
+                                                </button>
+                                                <div class="form-group mt-2 mb-2">
+                                                    <label for="deny_completed_task_note_{{ task.id }}" class="small font-weight-bold">
+                                                        Denial Note
+                                                    </label>
+                                                    <textarea id="deny_completed_task_note_{{ task.id }}"
+                                                              name="deny_completed_task_note_{{ task.id }}"
+                                                              class="form-control"
+                                                              rows="2"
+                                                              placeholder="Required if denying"></textarea>
+                                                </div>
+                                                <button type="submit"
+                                                        name="deny_completed_task"
+                                                        value="{{ task.id }}"
+                                                        class="btn btn-outline-danger mb-2"
+                                                        onclick="return confirm('Deny this completed task and reopen it?');">
+                                                    Deny
+                                                </button>
+                                            </div>
+                                        </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% endif %}
+
+                <div class="card mb-3">
+                    <div class="card-header{% if pending_employee_tasks_count %} bg-success{% endif %}">
+                        <button class="btn btn-link p-0{% if pending_employee_tasks_count %} text-white font-weight-bold{% endif %}"
+                                type="button"
+                                data-toggle="collapse"
+                                data-target="#pendingEmployeeTasksCollapse"
+                                aria-expanded="false"
+                                aria-controls="pendingEmployeeTasksCollapse">
+                            {{ pending_employee_tasks_count }} Pending Employee Task{{ pending_employee_tasks_count|pluralize }}
+                        </button>
+                    </div>
+                    <div id="pendingEmployeeTasksCollapse" class="collapse">
+                        <div class="card-body">
+                            <button type="button"
+                                    class="btn btn-primary mb-3"
+                                    data-toggle="modal"
+                                    data-target="#addPendingTaskModal">
+                                Add New Task
+                            </button>
+
+                            {% if pending_employee_tasks %}
+                                <div class="list-group">
+                                    {% for task in pending_employee_tasks %}
+                                        <div class="list-group-item">
+                                            <div class="font-weight-bold">
+                                                {{ task.description }}
+                                            </div>
+                                            <div class="mt-2">
+                                                <strong>Employee:</strong>
+                                                {{ task.assignee_display }}
+                                            </div>
+                                            {% if task.date %}
+                                                <div class="small text-muted">
+                                                    {{ task.date|date:"m/d/Y" }}
+                                                </div>
+                                            {% endif %}
+                                            {% if task.notes %}
+                                                <div class="mt-2" style="white-space: normal; overflow-wrap: anywhere;">
+                                                    <strong>Notes:</strong>
+                                                    {{ task.notes }}
+                                                </div>
+                                            {% endif %}
+                                            <div class="mt-3">
+                                                <button type="button"
+                                                        class="btn btn-outline-primary mr-2 mb-2 show-pending-task-note"
+                                                        data-task-id="{{ task.id }}">
+                                                    Add Note
+                                                </button>
+                                                <button type="submit"
+                                                        name="delete_pending_task"
+                                                        value="{{ task.id }}"
+                                                        class="btn btn-outline-danger mb-2"
+                                                        onclick="return confirm('Delete this pending employee task?');">
+                                                    Delete
+                                                </button>
+                                            </div>
+                                            <div id="pending-task-note-{{ task.id }}" class="input-group mt-2" style="display:none;">
+                                                <input type="text"
+                                                       name="pending_task_note_{{ task.id }}"
+                                                       class="form-control"
+                                                       placeholder="Add note">
+                                                <div class="input-group-append">
+                                                    <button type="submit"
+                                                            name="add_pending_task_note"
+                                                            value="{{ task.id }}"
+                                                            class="btn btn-primary">
+                                                        Add Note Now
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-muted">No pending employee tasks.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <button class="btn btn-link p-0"
+                                type="button"
+                                data-toggle="collapse"
+                                data-target="#changeDatesCollapse"
+                                aria-expanded="false"
+                                aria-controls="changeDatesCollapse">
+                            Change Dates
+                        </button>
+                    </div>
+                    <div id="changeDatesCollapse" class="collapse">
+                        <div class="card-body">
+                            <div class="form-row align-items-center mb-3">
+                                <div class="col-md-3 mb-2">
+                                    <label class="mb-1">New Date Received</label>
+                                    <input type="date"
+                                           name="start_date"
+                                           value="{{ selected_item.date_received|date:'Y-m-d' }}"
+                                           class="form-control">
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="mb-1">Reason</label>
+                                    <input type="text"
+                                           name="start_date_note"
+                                           class="form-control"
+                                           placeholder="Clarify date change">
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <label class="mb-1 d-none d-md-block">&nbsp;</label>
+                                    <input type="submit"
+                                           name="change_start_date"
+                                           value="Change Received Date"
+                                           class="btn btn-outline-primary btn-block">
+                                </div>
+                            </div>
+
+                            <div class="form-row align-items-center mb-0">
+                                <div class="col-md-3 mb-2">
+                                    <label class="mb-1">New Expiration Date</label>
+                                    <input type="date"
+                                           name="end_date"
+                                           value="{{ selected_item.date_expires|date:'Y-m-d' }}"
+                                           class="form-control">
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="mb-1">Reason</label>
+                                    <input type="text"
+                                           name="end_date_note"
+                                           class="form-control"
+                                           placeholder="Clarify date change">
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <label class="mb-1 d-none d-md-block">&nbsp;</label>
+                                    <input type="submit"
+                                           name="change_end_date"
+                                           value="Change Expiration"
+                                           class="btn btn-outline-primary btn-block">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -286,32 +485,151 @@
                     <hr>
 
                     <div class="card border-danger">
-                        <div class="card-header bg-danger text-white">
-                            Void This Record
+                        <div class="card-header">
+                            <button class="btn btn-link p-0 text-danger font-weight-bold"
+                                    type="button"
+                                    data-toggle="collapse"
+                                    data-target="#voidCertificationCollapse"
+                                    aria-expanded="false"
+                                    aria-controls="voidCertificationCollapse">
+                                Void This Record
+                            </button>
                         </div>
-                        <div class="card-body">
-                            <p class="text-muted">
-                                Use this only if the certification is no longer valid.
-                            </p>
+                        <div id="voidCertificationCollapse" class="collapse">
+                            <div class="card-body">
+                                <p class="text-muted">
+                                    Use this only if the certification is no longer valid.
+                                </p>
 
-                            <div class="form-row align-items-center">
-                                <div class="col-md-9 mb-2">
-                                    <input type="text"
-                                           name="closed_note"
-                                           class="form-control"
-                                           placeholder="Add note to indicate why this is void">
-                                </div>
-                                <div class="col-md-3 mb-2">
-                                    <input type="submit"
-                                           name="closed_item"
-                                           value="Void Certification"
-                                           class="btn btn-danger btn-block">
+                                <div class="form-row align-items-center">
+                                    <div class="col-md-9 mb-2">
+                                        <input type="text"
+                                               name="closed_note"
+                                               class="form-control"
+                                               placeholder="Add note to indicate why this is void">
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <input type="submit"
+                                               name="closed_item"
+                                               value="Void Certification"
+                                               class="btn btn-danger btn-block">
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 {% endif %}
 
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="uploadCertificationFilesModal" tabindex="-1" role="dialog" aria-labelledby="uploadCertificationFilesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'certifications' selected_item.id %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadCertificationFilesModalLabel">Upload Files</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="certification_file_name">File Name</label>
+                        <input type="text"
+                               id="certification_file_name"
+                               name="certification_file_name"
+                               class="form-control"
+                               placeholder="Optional custom file name">
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label for="certification_files">Files</label>
+                        <label id="certification_file_drop_zone"
+                               class="d-block text-center border rounded p-4"
+                               style="cursor:pointer;">
+                            <div class="font-weight-bold">Drag and drop files here</div>
+                            <div class="text-muted">or click to choose files</div>
+                            <input type="file"
+                                   id="certification_files"
+                                   name="certification_files"
+                                   multiple
+                                   class="d-none">
+                        </label>
+                        <div id="certification_file_list" class="small text-muted mt-2"></div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" name="upload_certification_files" class="btn btn-primary">
+                        Upload Files
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addPendingTaskModal" tabindex="-1" role="dialog" aria-labelledby="addPendingTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'certifications' selected_item.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addPendingTaskModalLabel">Add New Task</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="pending_task_employee">Select Employee</label>
+                        <select id="pending_task_employee" name="pending_task_employee" class="form-control" required>
+                            {% for assignee in pending_task_assignee_options %}
+                                <option value="{{ assignee.value }}"
+                                        {% if assignee.selected %}selected{% endif %}>
+                                    {{ assignee.label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pending_task_description">Task Description</label>
+                        <input type="text"
+                               id="pending_task_description"
+                               name="pending_task_description"
+                               class="form-control"
+                               maxlength="500"
+                               required>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label for="pending_task_note">Note</label>
+                        <textarea id="pending_task_note"
+                                  name="pending_task_note"
+                                  class="form-control"
+                                  rows="3"
+                                  maxlength="1800"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" name="add_pending_task" class="btn btn-primary">
+                        Add Task
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
             </form>
         </div>
     </div>
@@ -325,12 +643,106 @@
 
 {% block extra_scripts %}
 	<script type="text/javascript" class="init">
+function copyCertificationFolderPath() {
+    const input = document.getElementById("certificationFolderPath");
+    if (!input || !input.value) {
+        alert("Folder path is not available yet.");
+        return;
+    }
+
+    input.select();
+    input.setSelectionRange(0, 99999);
+
+    try {
+        document.execCommand("copy");
+        alert("Folder path copied to clipboard.");
+    } catch (error) {
+        alert("Copy not supported in this browser.");
+    }
+}
+
 $(document).ready(function () {
-    $('#certifications_table').DataTable({
+    const certificationsTable = $('#certifications_table').DataTable({
         paging: false,
-        info: false
+        info: false,
+        dom: 'rt'
     });
-})
+
+    $('#certifications_table_search').on('keyup change', function () {
+        certificationsTable.search(this.value).draw();
+    });
+
+    $('#certification_description_filter').on('change', function () {
+        const selectedDescription = this.value;
+        if (selectedDescription) {
+            certificationsTable
+                .column(1)
+                .search('^' + $.fn.dataTable.util.escapeRegex(selectedDescription) + '$', true, false)
+                .draw();
+        } else {
+            certificationsTable
+                .column(1)
+                .search('')
+                .draw();
+        }
+    });
+
+    $('.show-pending-task-note').on('click', function () {
+        const taskId = $(this).data('task-id');
+        const noteRow = $('#pending-task-note-' + taskId);
+        noteRow.show();
+        noteRow.find('input[type="text"]').focus();
+    });
+
+    if ($('#pending_task_employee').length) {
+        $('#pending_task_employee').select2({
+            width: '100%',
+            dropdownParent: $('#addPendingTaskModal')
+        });
+        {% if pending_task_selected_assignee %}
+            $('#pending_task_employee').val('{{ pending_task_selected_assignee }}').trigger('change');
+        {% endif %}
+    }
+
+    const fileInput = document.getElementById('certification_files');
+    const dropZone = document.getElementById('certification_file_drop_zone');
+    const fileList = document.getElementById('certification_file_list');
+
+    function updateCertificationFileList(files) {
+        if (!fileList) {
+            return;
+        }
+
+        if (!files || !files.length) {
+            fileList.textContent = '';
+            return;
+        }
+
+        fileList.textContent = Array.from(files).map(file => file.name).join(', ');
+    }
+
+    if (fileInput && dropZone) {
+        fileInput.addEventListener('change', function () {
+            updateCertificationFileList(fileInput.files);
+        });
+
+        dropZone.addEventListener('dragover', function (event) {
+            event.preventDefault();
+            dropZone.classList.add('border-primary');
+        });
+
+        dropZone.addEventListener('dragleave', function () {
+            dropZone.classList.remove('border-primary');
+        });
+
+        dropZone.addEventListener('drop', function (event) {
+            event.preventDefault();
+            dropZone.classList.remove('border-primary');
+            fileInput.files = event.dataTransfer.files;
+            updateCertificationFileList(fileInput.files);
+        });
+    }
+});
 
 	</script>
 {% endblock %}

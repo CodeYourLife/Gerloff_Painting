@@ -375,6 +375,15 @@ placeholder="{{ wallcovering.estimated_quantity }}"
             Cancel
         </a>
 
+        {% if is_edit %}
+            <button type="submit"
+                    form="deleteOrderForm"
+                    class="btn btn-danger btn-lg"
+                    onclick="return confirm('Delete this order? This cannot be undone.');">
+                Delete Order
+            </button>
+        {% endif %}
+
         {% if not is_edit and not pending_order_review %}
             <div class="modal fade" id="sendForApprovalModal" tabindex="-1" role="dialog" aria-labelledby="sendForApprovalModalLabel" aria-hidden="true">
                 <div class="modal-dialog" role="document">
@@ -448,6 +457,14 @@ placeholder="{{ wallcovering.estimated_quantity }}"
         {% endif %}
 
     </form>
+
+    {% if is_edit %}
+        <form method="post"
+              id="deleteOrderForm"
+              action="{% url 'wallcovering_order_delete' order.id %}">
+            {% csrf_token %}
+        </form>
+    {% endif %}
 
     <div id="extraItemTemplate" style="display:none;">
     <div class="extra-item border rounded p-3 mb-3">

@@ -24,6 +24,7 @@ class SubcontractorRespiratorClearanceAdmin(admin.ModelAdmin):
         "date_completed",
         "approved_for_use",
         "date_expires",
+        "is_closed",
     )
-    list_filter = ("approved_for_use", "subcontractor")
+    list_filter = ("approved_for_use", "is_closed", "subcontractor")
     search_fields = ("employee__name", "employee_name", "subcontractor__company")

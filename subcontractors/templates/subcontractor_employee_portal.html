@@ -116,7 +116,171 @@
                 </div>
             </div>
         </div>
+
+        <div class="card">
+            <div class="card-header{% if respirator_clearance_required or expired_resp_clearance or incomplete_resp_clearance %} bg-danger{% endif %}" id="headingRespirator">
+                <h5 class="mb-0">
+                    <button class="btn btn-link{% if respirator_clearance_required or expired_resp_clearance or incomplete_resp_clearance %} text-white{% endif %}"
+                            data-toggle="collapse"
+                            data-target="#collapseRespirator"
+                            aria-expanded="false"
+                            aria-controls="collapseRespirator">
+                        {% if respirator_clearance_required or expired_resp_clearance %}
+                            New Respirator Clearance Required
+                        {% elif incomplete_resp_clearance %}
+                            Respirator Clearance Started - Finish Required
+                        {% elif pending_resp_clearance %}
+                            Respirator Clearance Submitted - Waiting for Approval
+                        {% else %}
+                            Respirator Clearance Completed
+                        {% endif %}
+                    </button>
+                </h5>
+            </div>
+            <div id="collapseRespirator" class="collapse" aria-labelledby="headingRespirator" data-parent="#accordion">
+                <div class="card-body">
+                    {% if expired_resp_clearance %}
+                        <div class="alert alert-warning">
+                            <strong>Your respirator clearance has expired.</strong><br>
+                            Expiration Date: {{ expired_resp_clearance.date_expires|default:"Not Available" }}<br>
+                            Please complete a new respirator clearance.
+                        </div>
+                    {% endif %}
+
+                    {% if respirator_clearance_required or expired_resp_clearance %}
+                        <button class="btn btn-danger mb-3"
+                                type="button"
+                                data-toggle="collapse"
+                                data-target="#startRespiratorClearance">
+                            Complete Respirator Clearance Now
+                        </button>
+
+                        <div class="collapse" id="startRespiratorClearance">
+                            <form method="post" action="{% url 'subcontractor_employee_portal' selected_employee.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="start_employee_resp_clearance" value="1">
+
+                                <div class="form-group">
+                                    <label for="language">Language</label>
+                                    <select id="language" name="language" class="form-control">
+                                        <option value="English">English</option>
+                                        <option value="Spanish">Spanish</option>
+                                    </select>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">
+                                    Start Clearance
+                                </button>
+                            </form>
+                        </div>
+                    {% elif incomplete_resp_clearance %}
+                        <div class="alert alert-warning mb-3">
+                            <strong>Your respirator clearance has been started.</strong><br>
+                            Please finish the remaining sections.
+                        </div>
+                        <a href="{% url 'subcontractor_resp_clearance_section' subcontractor.id incomplete_resp_clearance.id 0 %}"
+                           class="btn btn-danger">
+                            Continue Respirator Clearance
+                        </a>
+                    {% elif pending_resp_clearance %}
+                        <div class="alert alert-warning mb-0">
+                            <strong>Your respirator clearance has been submitted.</strong><br>
+                            It is waiting for Safety Director approval.
+                        </div>
+                    {% elif approved_resp_clearance %}
+                        <div class="alert alert-success mb-3">
+                            <strong>Respirator clearance completed.</strong><br>
+                            Expiration Date: {{ approved_resp_clearance.date_expires|default:"Not Available" }}
+                        </div>
+                        <a href="{% url 'subcontractor_resp_clearance_completed' subcontractor.id approved_resp_clearance.id %}"
+                           class="btn btn-danger">
+                            View Completed Respirator Clearance Form
+                        </a>
+                        <button class="btn btn-outline-danger mt-2"
+                                type="button"
+                                data-toggle="collapse"
+                                data-target="#startRespiratorClearanceAgain">
+                            Complete Another Respirator Clearance
+                        </button>
+                        <div class="collapse mt-3" id="startRespiratorClearanceAgain">
+                            <form method="post" action="{% url 'subcontractor_employee_portal' selected_employee.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="start_employee_resp_clearance" value="1">
+                                <div class="form-group">
+                                    <label for="language_again">Language</label>
+                                    <select id="language_again" name="language" class="form-control">
+                                        <option value="English">English</option>
+                                        <option value="Spanish">Spanish</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    Start Clearance
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
 <!--assigned jobs -->
+        {% if pending_actions_count %}
+        <div class="card">
+            <div class="card-header bg-warning" id="headingPendingTasks">
+                <h5 class="mb-0">
+                    <button class="btn btn-link text-dark" data-toggle="collapse" data-target="#collapsePendingTasks"
+                            aria-expanded="false" aria-controls="collapsePendingTasks">
+                        {{ pending_actions_count }} Pending Task{{ pending_actions_count|pluralize }}
+                    </button>
+                </h5>
+            </div>
+            <div id="collapsePendingTasks" class="collapse" aria-labelledby="headingPendingTasks" data-parent="#accordion">
+                <div class="card-body">
+                    <div class="row">
+                        {% for action in pending_actions %}
+                            <div class="col-12 col-md-6 col-xl-4 mb-3">
+                                <div class="card h-100 border-warning"
+                                     role="button"
+                                     data-toggle="modal"
+                                     data-target="#completePendingActionModal"
+                                     data-action-id="{{ action.id }}"
+                                     data-action-description="{{ action.description|escapejs }}"
+                                     data-action-date="{{ action.date|date:'m/d/Y' }}"
+                                     data-action-certification="{% if action.certification %}{{ action.certification.description|default:action.certification.category|escapejs }}{% endif %}"
+                                     style="cursor:pointer;">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="mb-0">{{ action.description }}</h6>
+                                            <span class="badge badge-warning">Open</span>
+                                        </div>
+
+                                        {% if action.date %}
+                                            <div class="small text-muted mb-2">
+                                                {{ action.date|date:"m/d/Y" }}
+                                            </div>
+                                        {% endif %}
+
+                                        {% if action.certification %}
+                                            <div class="mb-2">
+                                                <strong>Certification:</strong>
+                                                {{ action.certification.description|default:action.certification.category }}
+                                            </div>
+                                        {% endif %}
+
+                                        {% if action.notes %}
+                                            <div style="white-space: normal; overflow-wrap: anywhere;">
+                                                {{ action.notes }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="card">
             <div class="card-header" id="headingJobs">
                 <h5 class="mb-0">
@@ -430,6 +594,52 @@
     </div>
 </div>
 
+<div class="modal fade" id="completePendingActionModal" tabindex="-1" role="dialog" aria-labelledby="completePendingActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'subcontractor_employee_portal' selected_employee.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="pending_action_id" id="pending_action_id">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="completePendingActionModalLabel">Completed Task</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <strong id="pending_action_description"></strong>
+                    </div>
+                    <div class="small text-muted mb-2" id="pending_action_date"></div>
+                    <div class="mb-3" id="pending_action_certification"></div>
+
+                    <div class="form-group mb-0">
+                        <label for="completion_note">Additional Information</label>
+                        <input type="text"
+                               name="completion_note"
+                               id="completion_note"
+                               class="form-control"
+                               placeholder="Optional note">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit"
+                            name="complete_pending_action"
+                            class="btn btn-success">
+                        Task Completed
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_scripts %}
@@ -437,6 +647,20 @@
         src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 
 <script type="text/javascript">
+$('#completePendingActionModal').on('show.bs.modal', function (event) {
+    const card = $(event.relatedTarget);
+    const actionId = card.data('action-id');
+    const description = card.data('action-description') || '';
+    const actionDate = card.data('action-date') || '';
+    const certification = card.data('action-certification') || '';
+
+    $('#pending_action_id').val(actionId);
+    $('#pending_action_description').text(description);
+    $('#pending_action_date').text(actionDate ? 'Date: ' + actionDate : '');
+    $('#pending_action_certification').text(certification ? 'Certification: ' + certification : '');
+    $('#completion_note').val('');
+});
+
 function complete_subcontractor_toolbox(scheduled_id) {
     localStorage.setItem("openAccordion", "collapseIndividualToolbox");
 

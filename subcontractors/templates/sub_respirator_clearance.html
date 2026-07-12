@@ -22,27 +22,25 @@
         <div class="card-body">
             {% if duplicate_employee_name %}
                 <div class="alert alert-warning">
-                    <strong>{{ duplicate_employee_name }}</strong> already exists in your employee list.
-                    Is this the same person?
+                    <div class="font-weight-bold mb-2">
+                        Subcontractor employee name already exists
+                    </div>
+                    <p class="mb-3">
+                        There are already {{ duplicate_active_count }} active employee{{ duplicate_active_count|pluralize }}
+                        named {{ duplicate_employee_name }}, and
+                        {{ duplicate_inactive_count }} inactive employee{{ duplicate_inactive_count|pluralize }}
+                        named {{ duplicate_employee_name }}.
+                        If this employee is not any of those, please click Add New Employee.
+                        Otherwise, please select the active employee from the dropdown, or Re-Active the Employee Prior to Starting a New Respirator Clearance.
+                    </p>
                     <div class="mt-3">
                         <form method="post" action="{% url 'subcontractor_resp_clearance' selected_sub.id %}" class="d-inline">
                             {% csrf_token %}
                             <input type="hidden" name="start_clearance" value="1">
                             <input type="hidden" name="employee_name" value="{{ duplicate_employee_name }}">
-                            <input type="hidden" name="duplicate_employee_id" value="{{ duplicate_employee.id }}">
-                            <input type="hidden" name="duplicate_choice" value="same">
-                            <input type="hidden" name="language" value="{{ selected_language|default:'English' }}">
-                            <button type="submit" class="btn btn-primary">Yes, Same Person</button>
-                        </form>
-
-                        <form method="post" action="{% url 'subcontractor_resp_clearance' selected_sub.id %}" class="d-inline">
-                            {% csrf_token %}
-                            <input type="hidden" name="start_clearance" value="1">
-                            <input type="hidden" name="employee_name" value="{{ duplicate_employee_name }}">
-                            <input type="hidden" name="duplicate_employee_id" value="{{ duplicate_employee.id }}">
                             <input type="hidden" name="duplicate_choice" value="new">
                             <input type="hidden" name="language" value="{{ selected_language|default:'English' }}">
-                            <button type="submit" class="btn btn-outline-danger">No, Add New Person</button>
+                            <button type="submit" class="btn btn-primary">Add New Employee</button>
                         </form>
                     </div>
                 </div>
