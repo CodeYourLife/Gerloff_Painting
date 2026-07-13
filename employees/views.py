@@ -33,6 +33,7 @@ import os
 import shutil
 from subcontractors.models import *
 from subcontractors import toolbox_views as sub_toolbox
+from wallcovering.models import Pending_Orders, Pending_Order_Items
 from xhtml2pdf import pisa
 from dateutil.relativedelta import relativedelta
 
@@ -62,6 +63,87 @@ def _delete_expired_group_toolbox_views():
         Q(viewed_english_time__isnull=True) | Q(viewed_english_time__lt=cutoff),
         Q(viewed_spanish_time__isnull=True) | Q(viewed_spanish_time__lt=cutoff),
     ).delete()
+
+
+def _pending_wallcovering_order_rows(queryset):
+    rows = []
+
+    for pending_order in queryset:
+        items = list(
+            Pending_Order_Items.objects.filter(
+                pending_order=pending_order
+            ).select_related(
+                "wallcovering",
+                "link_to_wallcovering",
+            ).order_by(
+                "id"
+            )
+        )
+        pending_order.pending_items_for_my_page = items
+        pending_order.wallcovering_for_my_page = next(
+            (
+                item.link_to_wallcovering
+                for item in items
+                if item.link_to_wallcovering_id
+            ),
+            None,
+        )
+        rows.append(pending_order)
+
+    return rows
+
+
+def _wallcovering_orders_for_my_page(employee):
+    employee_email = (employee.email or "").strip().lower()
+    is_joe = employee_email == "joe@gerloffpainting.com"
+    is_bridgette = employee_email == "bridgette@gerloffpainting.com"
+
+    approval_filter = (
+        Q(job_number__project_manager=employee) |
+        Q(job_number__estimator=employee)
+    )
+
+    if is_joe:
+        approval_filter |= Q(pk__isnull=False)
+
+    pending_for_approval = Pending_Orders.objects.filter(
+        approval_filter,
+        date_approved__isnull=True,
+        is_ordered=False,
+    ).select_related(
+        "job_number",
+        "job_number__project_manager",
+        "job_number__estimator",
+        "vendor",
+        "requested_by",
+    ).distinct().order_by(
+        "date_requested",
+        "job_number__job_number",
+        "id",
+    )
+
+    approved_for_ordering = Pending_Orders.objects.none()
+    if is_bridgette:
+        approved_for_ordering = Pending_Orders.objects.filter(
+            date_approved__isnull=False,
+            is_ordered=False,
+        ).select_related(
+            "job_number",
+            "job_number__project_manager",
+            "job_number__estimator",
+            "vendor",
+            "requested_by",
+            "approved_by",
+        ).distinct().order_by(
+            "date_approved",
+            "job_number__job_number",
+            "id",
+        )
+
+    return (
+        _pending_wallcovering_order_rows(pending_for_approval),
+        _pending_wallcovering_order_rows(approved_for_ordering),
+    )
 
 
 def _close_previous_employee_respirator_certifications(employee, current_certification, note_user=None):
@@ -2830,11 +2912,13 @@ def my_page(request):
             messages.success(request, "Group toolbox talk completed.")
             return redirect('my_page')
     # Everything else is just data preparation
-    if employee.job_title and employee.job_title.description == "Painter":
+    is_painter = bool(employee.job_title and employee.job_title.description == "Painter")
+    if is_painter:
         base_template = "painter_base.html"
     else:
         base_template = "base.html"
     send_data['base_template'] = base_template
+    send_data["is_painter"] = is_painter
 
     today = date.today()
 
@@ -2889,6 +2973,8 @@ def my_page(request):
         respiratorclearance__isnull=False
     ).order_by("-date_expires").first()
 
+    show_respirator_clearance_card = True
+
     if external_resp_cert:
         send_data["respirator_clearance_required"] = False
         send_data["external_respirator_cert"] = external_resp_cert
@@ -2902,7 +2988,7 @@ def my_page(request):
         send_data["respirator_not_approved"] = "Yes"
         send_data["respirator_clearance_id"] = pending_trinity_resp_clearance.id
 
-    else:
+    elif is_painter:
         send_data["respirator_clearance_required"] = "Yes"
 
         if expired_trinity_resp_clearance:
@@ -2910,9 +2996,22 @@ def my_page(request):
 
         elif expired_external_resp_cert:
             send_data["expired_respirator_cert"] = expired_external_resp_cert
+    else:
+        send_data["respirator_clearance_required"] = False
+        show_respirator_clearance_card = False
+
+    send_data["show_respirator_clearance_card"] = show_respirator_clearance_card
     send_data['employeeJobs'] = EmployeeJob.objects.filter(employee=employee.id,job__is_closed=False)
     send_data['employeeJobs_count'] = EmployeeJob.objects.filter(employee=employee.id,job__is_closed=False).count()
     send_data['employee'] = employee
+    (
+        pending_wallcovering_orders_for_approval,
+        approved_wallcovering_orders_for_ordering,
+    ) = _wallcovering_orders_for_my_page(employee)
+    send_data['pending_wallcovering_orders_for_approval'] = pending_wallcovering_orders_for_approval
+    send_data['pending_wallcovering_orders_for_approval_count'] = len(pending_wallcovering_orders_for_approval)
+    send_data['approved_wallcovering_orders_for_ordering'] = approved_wallcovering_orders_for_ordering
+    send_data['approved_wallcovering_orders_for_ordering_count'] = len(approved_wallcovering_orders_for_ordering)
     send_data['show_vacation_requests'] = show_vacation_requests
     send_data['can_request_vacation'] = can_request_vacation
     send_data['vacation_eligible_date'] = vacation_eligible_date

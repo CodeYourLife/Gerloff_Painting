@@ -1,6 +1,7 @@
 
 {% extends base_template %}
 {% load static %}
+{% load humanize %}
 {% block nav_item_employees %}active{% endblock nav_item_employees %}
 
 {% block extra_head %}
@@ -115,6 +116,24 @@
 
     .vacation-history-summary .badge {
         font-size: 0.85rem;
+    }
+
+    .wc-event-card {
+        background: #f8f9fa;
+        border: 1px solid #cfd4da;
+        border-left: 6px solid #4f5d75;
+        border-radius: 8px;
+        padding: 14px;
+        margin: 14px 0;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+
+    .wc-event-card-header {
+        background: #ffffff;
+        border: 1px solid #e1e4e8;
+        border-radius: 6px;
+        padding: 8px 10px;
+        margin-bottom: 10px;
     }
 
     .vacation-history-notes {
@@ -394,6 +413,178 @@
         </div>
         </div>
 {% endif %}
+{% if pending_wallcovering_orders_for_approval_count %}
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center" id="headingPendingWallcoveringApprovals">
+        <a class="text-dark font-weight-bold"
+           data-toggle="collapse"
+           href="#collapsePendingWallcoveringApprovals"
+           role="button"
+           aria-expanded="false"
+           aria-controls="collapsePendingWallcoveringApprovals">
+            {{ pending_wallcovering_orders_for_approval_count }} Pending Wallcovering Order{{ pending_wallcovering_orders_for_approval_count|pluralize }}
+        </a>
+    </div>
+        <div id="collapsePendingWallcoveringApprovals" class="collapse" aria-labelledby="headingPendingWallcoveringApprovals"
+             data-parent="#accordion">
+        <div class="card-body p-0">
+
+        {% for order in pending_wallcovering_orders_for_approval %}
+            <div class="wc-event-card">
+                <div class="wc-event-card-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-5">
+                            <div class="font-weight-bold">
+                                Pending Order #{{ order.id }}
+                            </div>
+                            <div class="small text-muted">
+                                {{ order.job_number.job_number }} {{ order.job_number.job_name }}
+                            </div>
+                            <div class="small text-muted">
+                                Requested {{ order.date_requested|date:"m/d/Y" }}
+                                {% if order.requested_by %}by {{ order.requested_by }}{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 text-md-center mt-2 mt-md-0">
+                            <span class="badge badge-warning p-2">
+                                Awaiting Approval
+                            </span>
+                        </div>
+
+                        <div class="col-md-3 text-md-right mt-2 mt-md-0">
+                            <a href="{% url 'wallcovering_pending_order' order.id %}"
+                               class="btn btn-sm btn-outline-dark">
+                                Review Order
+                            </a>
+                        </div>
+                    </div>
+
+                    {% if order.requestor_notes %}
+                        <div class="small text-muted border-top pt-2 mt-2">
+                            {{ order.requestor_notes }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Description</th>
+                                <th class="text-right">Qty</th>
+                                <th>Unit</th>
+                                <th class="text-right">Price</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.pending_items_for_my_page %}
+                                <tr>
+                                    <td>{{ item.item_description }}</td>
+                                    <td class="text-right">{{ item.quantity|floatformat:2|intcomma }}</td>
+                                    <td>{{ item.unit }}</td>
+                                    <td class="text-right">${{ item.price|floatformat:2|intcomma }}</td>
+                                    <td>{{ item.item_notes|default:"" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endfor %}
+
+        </div>
+        </div>
+</div>
+{% endif %}
+
+{% if approved_wallcovering_orders_for_ordering_count %}
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center" id="headingApprovedWallcoveringOrders">
+        <a class="text-white font-weight-bold"
+           data-toggle="collapse"
+           href="#collapseApprovedWallcoveringOrders"
+           role="button"
+           aria-expanded="false"
+           aria-controls="collapseApprovedWallcoveringOrders">
+            {{ approved_wallcovering_orders_for_ordering_count }} Approved Wallcovering Order{{ approved_wallcovering_orders_for_ordering_count|pluralize }}
+        </a>
+    </div>
+        <div id="collapseApprovedWallcoveringOrders" class="collapse" aria-labelledby="headingApprovedWallcoveringOrders"
+             data-parent="#accordion">
+        <div class="card-body p-0">
+
+        {% for order in approved_wallcovering_orders_for_ordering %}
+            <div class="wc-event-card">
+                <div class="wc-event-card-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-5">
+                            <div class="font-weight-bold">
+                                Approved Order #{{ order.id }}
+                            </div>
+                            <div class="small text-muted">
+                                {{ order.job_number.job_number }} {{ order.job_number.job_name }}
+                            </div>
+                            <div class="small text-muted">
+                                Approved {{ order.date_approved|date:"m/d/Y" }}
+                                {% if order.approved_by %}by {{ order.approved_by }}{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 text-md-center mt-2 mt-md-0">
+                            <span class="badge badge-info p-2">
+                                Ready To Order
+                            </span>
+                        </div>
+
+                        <div class="col-md-3 text-md-right mt-2 mt-md-0">
+                            <a href="{% url 'wallcovering_pending_order' order.id %}"
+                               class="btn btn-sm btn-outline-info">
+                                Open Order
+                            </a>
+                        </div>
+                    </div>
+
+                    {% if order.approver_notes %}
+                        <div class="small text-muted border-top pt-2 mt-2">
+                            {{ order.approver_notes }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Description</th>
+                                <th class="text-right">Qty</th>
+                                <th>Unit</th>
+                                <th class="text-right">Price</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.pending_items_for_my_page %}
+                                <tr>
+                                    <td>{{ item.item_description }}</td>
+                                    <td class="text-right">{{ item.quantity|floatformat:2|intcomma }}</td>
+                                    <td>{{ item.unit }}</td>
+                                    <td class="text-right">${{ item.price|floatformat:2|intcomma }}</td>
+                                    <td>{{ item.item_notes|default:"" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endfor %}
+
+        </div>
+        </div>
+</div>
+{% endif %}
+
 {% if vacation_approval_requests_exist %}
 <!--    # vacation approvals-->
 {% if vacation_approvals_requiring_my_approval %}
@@ -2216,6 +2407,7 @@
     </div>
 
 <!--#respirator clearance 15-->
+{% if show_respirator_clearance_card %}
     <div class = "card">
         <div class="card-header{% if respirator_clearance_required %} required-action-header{% endif %}" id="headingFifteen">
             <h5 class="mb-0">
@@ -2277,7 +2469,7 @@
 
                 {% endif %}
 
-                {% if not respirator_clearance_required and not respirator_not_approved %}
+                {% if is_painter and not respirator_clearance_required and not respirator_not_approved %}
                     <form name="add_another_respirator_clearance" action="{% url 'respirator_clearance_section0' %}" class="mt-2">
                         {% csrf_token %}
                         <input type="submit"
@@ -2289,6 +2481,7 @@
         </div>
 
     </div>
+{% endif %}
 
 </div>
 
