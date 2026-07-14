@@ -27,7 +27,7 @@
                 <div class ="col-sm-12">
 
                         <label>{% if client %} Selected Company was {{client}} {% else %} Couldn't Find Company: {{new_client}} {% endif %}</label>
-                    <select class="form-control" id="select_company" name="select_company" onChange="changed_client()" >
+                    <select class="form-control searchable-client-select" id="select_company" name="select_company" onChange="changed_client()" >
                         {% if client %}<option value="{{client.id}}">{{client}}</option>{% else %} <option value="please_select">Please Select</option>{% endif %}
                         <option value="add_new">Add New</option>
                         {% if all_clients %}
@@ -242,6 +242,18 @@ for (i = 0; i < coll.length; i++) {
 }
 </script>
 <script type="text/javascript" class="init">
+
+$(document).ready(function() {
+    if (!$.fn.select2) {
+        return;
+    }
+
+    $('#select_company').select2({
+        width: '100%',
+        minimumResultsForSearch: 0,
+        placeholder: 'Search for a client'
+    });
+});
 
 function validatePersonName(field, label) {
     // Allows letters, spaces, apostrophes, hyphens, and periods only
