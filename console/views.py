@@ -398,6 +398,8 @@ def client_job_info(request, id):
 def client_info(request, id):
     send_data = {}
     send_data['clients']=Clients.objects.filter(is_active=True).order_by('company')
+    send_data['active_clients']=Clients.objects.filter(is_active=True).order_by('company')
+    send_data['all_clients']=Clients.objects.all().order_by('company')
     if id != 'ALL':
         selected_client = Clients.objects.get(id=id)
         send_data['selected_client'] = selected_client
@@ -406,7 +408,7 @@ def client_info(request, id):
     if request.method == "POST":
         if 'combine_companies_now' in request.POST:
             company1 = Clients.objects.get(id=request.POST['select_client1'])
-            company2 = Clients.objects.get(id=request.POST['select_client2'])
+            company2 = Clients.objects.get(id=request.POST['select_client2'], is_active=True)
             for x in ClientEmployees.objects.filter(id=company1,is_active=True).order_by('name'):
                 x.id=company2
                 x.save()
