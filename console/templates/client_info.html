@@ -96,16 +96,16 @@
             <div class="modal-body">
                                 <form name="client_info_form" id="client_info_form" action="{% url 'client_info' 'ALL' %}" method="post">
     {% csrf_token %}
-            Move this Company<select id="select_client1" name="select_client1" >
+            Move this Company<select id="select_client1" name="select_client1" class="form-control combine-company-select" >
                        <option value="please_select">Select Client</option>
-                {% for x in clients %}
+                {% for x in all_clients %}
                         <option value={{x.id}}>{{x.company}}-{{x.id}}</option>
 						{% endfor %}
             </select>
                 <br>
-                          To this Company<select id="select_client2" name="select_client2" >
+                          To this Company<select id="select_client2" name="select_client2" class="form-control combine-company-select" >
                        <option value="please_select">Select Client</option>
-                {% for x in clients %}
+                {% for x in active_clients %}
                         <option value={{x.id}}>{{x.company}}-{{x.id}}</option>
 						{% endfor %}
             </select>
@@ -325,6 +325,11 @@ window.onload = function() {
         $('.searchable-client').select2({
             width: '100%',
             placeholder: 'Search for a client'
+        });
+        $('.combine-company-select').select2({
+            width: '100%',
+            placeholder: 'Search for a client',
+            dropdownParent: $('#combinecompanies-modal')
         });
     });
     $(document).ready(function () {
