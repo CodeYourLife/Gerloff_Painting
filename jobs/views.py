@@ -2575,7 +2575,7 @@ def import_super_from_mc(request):
             sender = check_sender.email if check_sender and check_sender.email else "bridgette@gerloffpainting.com"
             if employee.email:
                 recipients.append(employee.email)
-                email_message=f"You have been Assigned as Super to {job.job_number} {job.job_name}"
+                email_message=f"{employee.first_name} {employee.last_name} has been Assigned as Super to {job.job_number} {job.job_name}"
             else:
                 recipients.append("bridgette@gerloffpainting.com")
                 email_message = f"No email is entered for {employee.first_name} {employee.last_name}. Please let them know they have been Assigned as Super to {job.job_number} {job.job_name}"
@@ -2695,7 +2695,7 @@ def import_pm_from_mc(request):
             sender = check_sender.email if check_sender and check_sender.email else "bridgette@gerloffpainting.com"
             if employee.email:
                 recipients.append(employee.email)
-                email_message=f"You have been Assigned as PM to {job.job_number} {job.job_name}"
+                email_message=f"{employee.first_name} {employee.last_name} has been Assigned as PM to {job.job_number} {job.job_name}"
             else:
                 recipients.append("bridgette@gerloffpainting.com")
                 email_message = f"No email is entered for {employee.first_name} {employee.last_name}. Please let them know they have been Assigned as PM to {job.job_number} {job.job_name}"
