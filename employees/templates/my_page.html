@@ -252,6 +252,109 @@
         white-space: normal !important;
     }
 
+    .my-certification-card {
+        cursor: pointer;
+        border: 1px solid #cfd8e3;
+        border-left: 6px solid #007bff;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        transition: box-shadow .15s ease, transform .15s ease;
+    }
+
+    .my-certification-card:hover,
+    .my-certification-card:focus {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.14);
+        transform: translateY(-1px);
+        outline: none;
+    }
+
+    .my-certification-card .certification-title {
+        color: #0056b3;
+        text-decoration: underline;
+    }
+
+    .mobile-cert-upload-modal .modal-dialog {
+        margin: .5rem;
+    }
+
+    .mobile-cert-upload-modal label {
+        margin-left: 0;
+        margin-right: 0;
+        font-weight: 600;
+    }
+
+    .mobile-cert-upload-modal .form-control {
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+        min-height: 48px;
+    }
+
+    .mobile-upload-file-label {
+        display: block;
+        width: 100%;
+        margin: 0;
+        padding: 18px 14px;
+        border: 2px dashed #007bff;
+        border-radius: 8px;
+        text-align: center;
+        background: #f4f9ff;
+        color: #0056b3;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .certification-description-error {
+        display: none;
+        color: #dc3545;
+        font-size: .875rem;
+        margin-top: .25rem;
+    }
+
+    .certification-description-invalid {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 .2rem rgba(220, 53, 69, .25) !important;
+    }
+
+    .mobile-cert-upload-modal .modal-footer {
+        display: block;
+    }
+
+    .mobile-cert-upload-modal .modal-footer .btn {
+        width: 100%;
+        margin: 0 0 .5rem 0;
+        min-height: 48px;
+        font-size: 1rem;
+    }
+
+    .certification-upload-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        background: rgba(255, 255, 255, .92);
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .certification-upload-overlay.is-visible {
+        display: flex;
+    }
+
+    .certification-upload-overlay-box {
+        width: 100%;
+        max-width: 320px;
+        padding: 1.5rem;
+        border: 1px solid #cfd8e3;
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: 0 6px 20px rgba(0,0,0,.16);
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+
     @media (max-width: 576px) {
         .vacation-request-button {
             width: 100%;
@@ -1610,12 +1713,21 @@
         </div>
         <div id="collapseFourteen" class="collapse" aria-labelledby="headingFourteen" data-parent="#accordion">
             <div class="card-body">
+                <div class="alert alert-info py-2">
+                    Click A Certification to Upload Files.
+                </div>
                 <div class="row">
                     {% for x in certifications %}
                         <div class="col-12 col-md-6 col-xl-4 mb-3">
-                            <div class="card h-100">
+                            <div class="card h-100 my-certification-card"
+                                 role="button"
+                                 tabindex="0"
+                                 data-toggle="modal"
+                                 data-target="#uploadMyCertificationFileModal"
+                                 data-certification-id="{{ x.id }}"
+                                 data-certification-name="{{ x.description|default:'Certification' }}">
                                 <div class="card-body">
-                                    <h5 class="mb-3 font-weight-bold">
+                                    <h5 class="mb-3 font-weight-bold certification-title">
                                         {{ x.description|default:"Certification" }}
                                     </h5>
 
@@ -1664,6 +1776,77 @@
         </div>
  </div>
 {% endif %}
+
+<div class="modal fade mobile-cert-upload-modal" id="uploadMyCertificationFileModal" tabindex="-1" role="dialog" aria-labelledby="uploadMyCertificationFileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'my_page' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="certification_id" id="my_certification_upload_id">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadMyCertificationFileModalLabel">Upload Certification File</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="text-muted small">Certification</div>
+                        <div id="my_certification_upload_name" class="font-weight-bold"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="my_certification_file_description">File Description</label>
+                        <input type="text"
+                               name="certification_file_description"
+                               id="my_certification_file_description"
+                               class="form-control"
+                               maxlength="120"
+                               required
+                               placeholder="Example: OSHA card front">
+                        <div id="my_certification_file_description_error" class="certification-description-error">
+                            Please enter a description of the file
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="mobile-upload-file-label" for="my_certification_file">
+                            Click to Select File
+                        </label>
+                        <input type="file"
+                               name="certification_file"
+                               id="my_certification_file"
+                               class="d-none"
+                               required
+                               accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.doc,.docx">
+                        <div id="my_certification_file_name" class="small text-muted mt-2"></div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit"
+                            name="upload_my_certification_file"
+                            id="my_certification_upload_submit"
+                            class="btn btn-primary"
+                            style="display:none;">
+                        Upload Now
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="certification_upload_overlay" class="certification-upload-overlay" aria-live="polite" aria-busy="true">
+    <div class="certification-upload-overlay-box">
+        Uploading File
+    </div>
+</div>
 
 <!--#pending required tasks-->
 {% if pending_actions_count %}
@@ -2650,6 +2833,22 @@ $('#completePendingActionModal').on('show.bs.modal', function (event) {
     $('#completion_note').val('');
 });
 
+$('#uploadMyCertificationFileModal').on('show.bs.modal', function (event) {
+    const card = $(event.relatedTarget);
+    const certificationId = card.data('certification-id') || '';
+    const certificationName = card.data('certification-name') || 'Certification';
+
+    $('#my_certification_upload_id').val(certificationId);
+    $('#my_certification_upload_name').text(certificationName);
+    $('#my_certification_file_description').val('');
+    $('#my_certification_file_description').removeClass('certification-description-invalid');
+    $('#my_certification_file_description_error').hide();
+    $('#my_certification_file').val('');
+    $('#my_certification_file_name').text('');
+    $('.mobile-upload-file-label[for="my_certification_file"]').show();
+    $('#my_certification_upload_submit').hide();
+});
+
 function isToolboxAccordion(openId) {
     return [
         "collapseSixteen",
@@ -2716,6 +2915,86 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
+
+    document.querySelectorAll(".my-certification-card").forEach(function (card) {
+        card.addEventListener("keydown", function (event) {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                card.click();
+            }
+        });
+    });
+
+    const myCertificationFile = document.getElementById("my_certification_file");
+    const myCertificationFileName = document.getElementById("my_certification_file_name");
+    const myCertificationDescription = document.getElementById("my_certification_file_description");
+    const myCertificationDescriptionError = document.getElementById("my_certification_file_description_error");
+    const myCertificationUploadSubmit = document.getElementById("my_certification_upload_submit");
+    const myCertificationUploadForm = document.querySelector("#uploadMyCertificationFileModal form");
+    const certificationUploadOverlay = document.getElementById("certification_upload_overlay");
+
+    function validateMyCertificationDescription(showError) {
+        if (!myCertificationDescription || !myCertificationDescriptionError) {
+            return true;
+        }
+
+        const hasDescription = myCertificationDescription.value.trim().length > 0;
+        if (hasDescription) {
+            myCertificationDescription.classList.remove("certification-description-invalid");
+            myCertificationDescriptionError.style.display = "none";
+            return true;
+        }
+
+        if (showError) {
+            myCertificationDescription.classList.add("certification-description-invalid");
+            myCertificationDescriptionError.style.display = "block";
+            myCertificationDescription.focus();
+        }
+        return false;
+    }
+
+    if (myCertificationFile && myCertificationFileName) {
+        const myCertificationFileLabel = document.querySelector('.mobile-upload-file-label[for="my_certification_file"]');
+
+        myCertificationFile.addEventListener("change", function () {
+            if (myCertificationFile.files && myCertificationFile.files.length) {
+                myCertificationFileName.textContent = myCertificationFile.files[0].name;
+                if (myCertificationFileLabel) {
+                    myCertificationFileLabel.style.display = "none";
+                }
+                if (myCertificationUploadSubmit) {
+                    myCertificationUploadSubmit.style.display = "block";
+                }
+            } else {
+                myCertificationFileName.textContent = "";
+                if (myCertificationFileLabel) {
+                    myCertificationFileLabel.style.display = "block";
+                }
+                if (myCertificationUploadSubmit) {
+                    myCertificationUploadSubmit.style.display = "none";
+                }
+            }
+        });
+    }
+
+    if (myCertificationDescription) {
+        myCertificationDescription.addEventListener("input", function () {
+            validateMyCertificationDescription(false);
+        });
+    }
+
+    if (myCertificationUploadForm) {
+        myCertificationUploadForm.addEventListener("submit", function (event) {
+            if (!validateMyCertificationDescription(true)) {
+                event.preventDefault();
+                return;
+            }
+
+            if (certificationUploadOverlay) {
+                certificationUploadOverlay.classList.add("is-visible");
+            }
+        });
+    }
 
     function showOtherToolboxEmployeeGroup(targetId) {
         document.querySelectorAll(".other-toolbox-employee-group").forEach(function (group) {

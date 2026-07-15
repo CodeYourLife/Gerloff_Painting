@@ -2555,6 +2555,52 @@ def my_page(request):
         return Q(pk__in=[])
 
     if request.method == 'POST':
+        if 'upload_my_certification_file' in request.POST:
+            certification = get_object_or_404(
+                Certifications,
+                id=request.POST.get("certification_id"),
+                employee=employee,
+                is_closed=False,
+            )
+            file_description = (request.POST.get("certification_file_description") or "").strip()
+            uploaded_file = request.FILES.get("certification_file")
+
+            if not file_description:
+                messages.error(request, "Please enter a description for the file.")
+                return redirect('my_page')
+
+            if not uploaded_file:
+                messages.error(request, "Please choose a file to upload.")
+                return redirect('my_page')
+
+            if uploaded_file.size > 25 * 1024 * 1024:
+                messages.error(request, "File is too large. Please upload a file smaller than 25 MB.")
+                return redirect('my_page')
+
+            folder = _certification_files_folder(certification.id)
+            os.makedirs(folder, exist_ok=True)
+
+            filename = _certification_upload_filename(uploaded_file, file_description)
+            file_path = os.path.join(folder, filename)
+            duplicate_index = 2
+            while os.path.exists(file_path):
+                filename = _certification_upload_filename(uploaded_file, file_description, duplicate_index)
+                file_path = os.path.join(folder, filename)
+                duplicate_index += 1
+
+            with open(file_path, "wb+") as destination:
+                for chunk in uploaded_file.chunks():
+                    destination.write(chunk)
+
+            CertificationNotes.objects.create(
+                certification=certification,
+                date=date.today(),
+                user=employee,
+                note=f"Employee uploaded certification file: {filename}. Description: {file_description}",
+            )
+            messages.success(request, "Certification file uploaded.")
+            return redirect('my_page')
+
         if 'complete_pending_action' in request.POST:
             pending_action = get_object_or_404(
                 EmployeePendingActions,
@@ -3526,6 +3572,23 @@ def certifications(request, id):
             send_data['pending_task_selected_assignee'] = f"employee:{selected_cert.employee_id}"
         else:
             send_data['pending_task_selected_assignee'] = ""
+        linkable_existing_tasks = EmployeePendingActions.objects.none()
+        if selected_cert.employee_id:
+            linkable_existing_tasks = EmployeePendingActions.objects.filter(
+                employee=selected_cert.employee,
+                subcontractor_employee__isnull=True,
+                certification__isnull=True,
+                is_complete=False,
+            )
+        elif selected_cert.subcontractor_employee_id:
+            linkable_existing_tasks = EmployeePendingActions.objects.filter(
+                employee__isnull=True,
+                subcontractor_employee=selected_cert.subcontractor_employee,
+                certification__isnull=True,
+                is_complete=False,
+            )
+        send_data['linkable_existing_tasks'] = linkable_existing_tasks.order_by("date", "id")
+        send_data['linkable_existing_tasks_count'] = linkable_existing_tasks.count()
         if selected_cert.category:
             if selected_cert.category.description=="Respirator Clearance" and RespiratorClearance.objects.filter(certification=selected_cert).exists():
                 return redirect('view_respirator_certification',id=id)
@@ -3701,6 +3764,43 @@ def certifications(request, id):
             else:
                 messages.warning(request, "Pending employee task added, but this employee does not have an email on file.")
             return redirect('certifications', id=cert.id)
+        if 'link_existing_pending_task' in request.POST:
+            if cert.employee_id:
+                existing_task = get_object_or_404(
+                    EmployeePendingActions,
+                    id=request.POST.get("existing_pending_task"),
+                    employee=cert.employee,
+                    subcontractor_employee__isnull=True,
+                    certification__isnull=True,
+                    is_complete=False,
+                )
+            elif cert.subcontractor_employee_id:
+                existing_task = get_object_or_404(
+                    EmployeePendingActions,
+                    id=request.POST.get("existing_pending_task"),
+                    employee__isnull=True,
+                    subcontractor_employee=cert.subcontractor_employee,
+                    certification__isnull=True,
+                    is_complete=False,
+                )
+            else:
+                messages.error(request, "This certification does not have an employee to match existing tasks.")
+                return redirect('certifications', id=cert.id)
+
+            existing_task.certification = cert
+            existing_task.save(update_fields=["certification"])
+            current_employee = Employees.objects.filter(user=request.user).first()
+            CertificationNotes.objects.create(
+                certification=cert,
+                date=date.today(),
+                user=current_employee or existing_task.employee or Employees.objects.filter(user__is_superuser=True).first() or Employees.objects.first(),
+                note=(
+                    f"Existing pending employee task linked for {existing_task.assignee_display}: "
+                    f"{existing_task.description}"
+                ),
+            )
+            messages.success(request, "Existing task linked to certification.")
+            return redirect('certifications', id=cert.id)
         if 'add_pending_task_note' in request.POST:
             pending_task = get_object_or_404(
                 EmployeePendingActions,
@@ -3806,14 +3906,14 @@ def certifications(request, id):
             cert.is_closed = True
             deleted_pending_actions_count, _ = EmployeePendingActions.objects.filter(
                 certification=cert,
-                confirmed_is_complete=False,
+                is_complete=False,
             ).delete()
             CertificationNotes.objects.create(certification=cert, date=date.today(),
                                               user=Employees.objects.get(user=request.user),
                                               note=(
                                                   "Cert closed."
                                                   + request.POST['closed_note']
-                                                  + f" Deleted {deleted_pending_actions_count} unconfirmed pending employee task(s)."
+                                                  + f" Deleted {deleted_pending_actions_count} incomplete pending employee task(s)."
                                               ))
             cert.save()
             return redirect('certifications', id='ALL')

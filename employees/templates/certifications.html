@@ -374,12 +374,21 @@
                     </div>
                     <div id="pendingEmployeeTasksCollapse" class="collapse">
                         <div class="card-body">
-                            <button type="button"
-                                    class="btn btn-primary mb-3"
-                                    data-toggle="modal"
-                                    data-target="#addPendingTaskModal">
-                                Add New Task
-                            </button>
+                            <div class="mb-3">
+                                <button type="button"
+                                        class="btn btn-primary mb-2 mr-2"
+                                        data-toggle="modal"
+                                        data-target="#addPendingTaskModal">
+                                    Add New Task
+                                </button>
+                                <button type="button"
+                                        class="btn btn-outline-primary mb-2"
+                                        data-toggle="modal"
+                                        data-target="#linkExistingTaskModal"
+                                        {% if not linkable_existing_tasks_count %}disabled{% endif %}>
+                                    Link to Existing Task
+                                </button>
+                            </div>
 
                             {% if pending_employee_tasks %}
                                 <div class="list-group">
@@ -722,6 +731,54 @@
                 <div class="modal-footer">
                     <button type="submit" name="add_pending_task" class="btn btn-primary">
                         Add Task
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="linkExistingTaskModal" tabindex="-1" role="dialog" aria-labelledby="linkExistingTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'certifications' selected_item.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="linkExistingTaskModalLabel">Link to Existing Task</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    {% if linkable_existing_tasks %}
+                        <div class="form-group mb-0">
+                            <label for="existing_pending_task">Existing Task</label>
+                            <select id="existing_pending_task" name="existing_pending_task" class="form-control" required>
+                                {% for task in linkable_existing_tasks %}
+                                    <option value="{{ task.id }}">
+                                        {{ task.description }}
+                                        {% if task.date %} - {{ task.date|date:"m/d/Y" }}{% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    {% else %}
+                        <div class="text-muted">
+                            No unlinked pending tasks were found for this certification's employee.
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit"
+                            name="link_existing_pending_task"
+                            class="btn btn-primary"
+                            {% if not linkable_existing_tasks_count %}disabled{% endif %}>
+                        Link Task
                     </button>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">
                         Cancel

@@ -11,6 +11,14 @@
         border-left: 5px solid #ffc107;
         border-radius: 6px;
         box-shadow: 0 .15rem .35rem rgba(0, 0, 0, .08);
+        cursor: pointer;
+        transition: box-shadow .15s ease, transform .15s ease;
+    }
+
+    .pending-task-card:hover,
+    .pending-task-card:focus {
+        box-shadow: 0 .3rem .7rem rgba(0, 0, 0, .14);
+        transform: translateY(-1px);
     }
 
     .pending-task-card .card-body {
@@ -54,7 +62,11 @@
         <div class="row">
             {% for task in pending_tasks %}
                 <div class="col-12 col-md-6 col-xl-4 mb-3">
-                    <div class="card h-100 pending-task-card">
+                    <div class="card h-100 pending-task-card"
+                         role="button"
+                         tabindex="0"
+                         data-toggle="modal"
+                         data-target="#pendingTaskModal{{ task.id }}">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <h6 class="mb-0">{{ task.description }}</h6>
@@ -64,11 +76,11 @@
                             <div class="mb-2">
                                 <strong>Employee:</strong>
                                 {% if task.employee %}
-                                    <a href="{% url 'employees_page' task.employee.id %}">
+                                    <a href="{% url 'employees_page' task.employee.id %}" onclick="event.stopPropagation();">
                                         {{ task.assignee_display }}
                                     </a>
                                 {% elif task.subcontractor_employee %}
-                                    <a href="{% url 'subcontractor_employee_page' task.subcontractor_employee.id %}">
+                                    <a href="{% url 'subcontractor_employee_page' task.subcontractor_employee.id %}" onclick="event.stopPropagation();">
                                         {{ task.assignee_display }}
                                     </a>
                                 {% else %}
@@ -94,7 +106,7 @@
                                 <div class="pending-task-meta">
                                     <span class="text-muted">Certification</span>
                                     <strong>
-                                        <a href="{% url 'certifications' task.certification.id %}">
+                                        <a href="{% url 'certifications' task.certification.id %}" onclick="event.stopPropagation();">
                                             {{ task.certification.description|default:task.certification.category }}
                                         </a>
                                     </strong>
@@ -110,10 +122,127 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="modal fade"
+                     id="pendingTaskModal{{ task.id }}"
+                     tabindex="-1"
+                     role="dialog"
+                     aria-labelledby="pendingTaskModalLabel{{ task.id }}"
+                     aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="pending_task_id" value="{{ task.id }}">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="pendingTaskModalLabel{{ task.id }}">
+                                        {{ task.description }}
+                                    </h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <strong>Employee:</strong>
+                                        {{ task.assignee_display }}
+                                    </div>
+
+                                    {% if task.subcontractor_employee %}
+                                        <div class="mb-3">
+                                            <strong>Subcontractor:</strong>
+                                            {{ task.subcontractor_employee.subcontractor.company }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if task.date %}
+                                        <div class="mb-3">
+                                            <strong>Date:</strong>
+                                            {{ task.date|date:"m/d/Y" }}
+                                        </div>
+                                    {% endif %}
+
+                                    <div class="form-group">
+                                        <label for="certification_{{ task.id }}">Link to Certification</label>
+                                        <select id="certification_{{ task.id }}" name="certification_id" class="form-control">
+                                            <option value="">No certification linked</option>
+                                            {% for certification in task.certification_options %}
+                                                <option value="{{ certification.id }}"{% if task.certification_id == certification.id %} selected{% endif %}>
+                                                    {{ certification.description|default:certification.category }}
+                                                    {% if certification.date_expires %}
+                                                        - Expires {{ certification.date_expires|date:"m/d/Y" }}
+                                                    {% endif %}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+
+                                    {% if task.notes %}
+                                        <div class="border-top pt-3 mt-3" style="white-space: normal; overflow-wrap: anywhere;">
+                                            <div class="text-muted">Notes</div>
+                                            <div>{{ task.notes }}</div>
+                                        </div>
+                                    {% endif %}
+
+                                    <div id="completion-note-{{ task.id }}" class="form-group mt-3" style="display:none;">
+                                        <label for="completion_note_{{ task.id }}">Optional Completion Note</label>
+                                        <textarea id="completion_note_{{ task.id }}"
+                                                  name="completion_note"
+                                                  class="form-control"
+                                                  rows="3"
+                                                  placeholder="Optional note"></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                                    <button type="button"
+                                            class="btn btn-success pending-task-complete-button"
+                                            data-task-id="{{ task.id }}">
+                                        Task Completed
+                                    </button>
+                                    <button type="submit"
+                                            name="complete_pending_task"
+                                            class="btn btn-primary pending-task-submit-button"
+                                            style="display:none;">
+                                        Submit Completion
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             {% endfor %}
         </div>
     {% else %}
         <p class="text-muted">No pending employee tasks.</p>
     {% endif %}
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.pending-task-card').forEach(function (card) {
+            card.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    $(card.getAttribute('data-target')).modal('show');
+                }
+            });
+        });
+
+        document.querySelectorAll('.pending-task-complete-button').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const taskId = button.getAttribute('data-task-id');
+                const notePrompt = document.getElementById('completion-note-' + taskId);
+                const submitButton = button.parentElement.querySelector('.pending-task-submit-button');
+                if (notePrompt) {
+                    notePrompt.style.display = 'block';
+                }
+                if (submitButton) {
+                    submitButton.style.display = 'inline-block';
+                }
+                button.style.display = 'none';
+            });
+        });
+    });
+</script>
 {% endblock %}
