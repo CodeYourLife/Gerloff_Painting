@@ -106,9 +106,9 @@
 									View Cert
 								</a>
                             </td>
-                            <td>{{ x.date_received }}</td>
+                            <td>{{ x.date_received|default_if_none:"" }}</td>
                             <td {% if x.is_expired_flagged %}class="table-danger font-weight-bold"{% endif %}>
-                                {{ x.date_expires }}
+                                {{ x.date_expires|default_if_none:"" }}
                             </td>
                             <td>
                                 {% if x.action_required %}
@@ -155,6 +155,53 @@
         </div>
 
         <div class="card-body">
+            {% if show_dbids_access_review %}
+                <div class="alert alert-warning border border-warning">
+                    <div class="font-weight-bold mb-3">
+                        Does This Employee Have Access to this Base?
+                    </div>
+                    <form action="{% url 'certifications' selected_item.id %}" method="post" class="mb-0">
+                        {% csrf_token %}
+                        <button type="submit"
+                                name="dbids_access_yes"
+                                value="1"
+                                class="btn btn-success mr-2 mb-2">
+                            Yes
+                        </button>
+                        <button type="submit"
+                                name="dbids_access_denied"
+                                value="1"
+                                class="btn btn-danger mb-2"
+                                onclick="return confirm('Mark access as denied and void this certification?');">
+                            Access Has Been Denied
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+            {% if show_dbids_access_change %}
+                <div class="alert alert-info border border-info">
+                    <div class="font-weight-bold mb-3">
+                        Change this record. This employee does not have access.
+                    </div>
+                    <form action="{% url 'certifications' selected_item.id %}" method="post" class="mb-0">
+                        {% csrf_token %}
+                        <button type="submit"
+                                name="dbids_access_no_yet"
+                                value="1"
+                                class="btn btn-warning mr-2 mb-2"
+                                onclick="return confirm('Change access finalized to No?');">
+                            No Access Yet
+                        </button>
+                        <button type="submit"
+                                name="dbids_access_finalized_denied"
+                                value="1"
+                                class="btn btn-danger mb-2"
+                                onclick="return confirm('Mark access as denied and void this certification?');">
+                            Denied
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
 
             <div class="row mb-3">
                 <div class="col-md-6">
@@ -188,6 +235,17 @@
                     <div>{% if selected_item.is_flagged_when_expired %}Yes{% else %}No{% endif %}</div>
                 </div>
             </div>
+
+            {% if custom_attributes %}
+                <div class="row mb-3">
+                    {% for custom_attribute in custom_attributes %}
+                        <div class="col-md-6 mb-2">
+                            <strong>{{ custom_attribute.custom_attribute }}</strong>
+                            <div>{{ custom_attribute.custom_attribute_result|default:"-" }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
 
             <hr>
 
@@ -597,6 +655,19 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="certification_category">Category</label>
+                        <select id="certification_category" name="certification_category" class="form-control">
+                            <option value="">No Category</option>
+                            {% for category in categories_for_certification %}
+                                <option value="{{ category.pk }}"
+                                        {% if selected_item.category_id == category.pk %}selected{% endif %}>
+                                    {{ category.description }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
                         <label for="certification_note">Note</label>
                         <textarea id="certification_note"
                                   name="certification_note"
@@ -615,6 +686,75 @@
                         <label class="form-check-label" for="is_flagged_when_expired">
                             Flag this certification when expired
                         </label>
+                    </div>
+
+                    {% if custom_attributes %}
+                        <hr>
+                        <h6>Custom Fields</h6>
+                        {% for custom_attribute in custom_attributes %}
+                            <div class="form-group">
+                                <label for="custom_attribute_result_{{ custom_attribute.id }}">
+                                    {{ custom_attribute.custom_attribute }}
+                                </label>
+                                {% if custom_attribute.field_type == "yes_no" %}
+                                    <select id="custom_attribute_result_{{ custom_attribute.id }}"
+                                            name="custom_attribute_result_{{ custom_attribute.id }}"
+                                            class="form-control">
+                                        <option value="">Please Select</option>
+                                        <option value="Yes"
+                                                {% if custom_attribute.custom_attribute_result == "Yes" %}selected{% endif %}>
+                                            Yes
+                                        </option>
+                                        <option value="No"
+                                                {% if custom_attribute.custom_attribute_result == "No" %}selected{% endif %}>
+                                            No
+                                        </option>
+                                    </select>
+                                {% else %}
+                                    <input type="text"
+                                           id="custom_attribute_result_{{ custom_attribute.id }}"
+                                           name="custom_attribute_result_{{ custom_attribute.id }}"
+                                           class="form-control"
+                                           maxlength="200"
+                                           value="{{ custom_attribute.custom_attribute_result|default:'' }}">
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <hr>
+                    <button class="btn btn-outline-primary btn-sm"
+                            type="button"
+                            data-toggle="collapse"
+                            data-target="#addCustomAttributeCollapse"
+                            aria-expanded="false"
+                            aria-controls="addCustomAttributeCollapse">
+                        Add Field
+                    </button>
+                    <div class="collapse mt-3" id="addCustomAttributeCollapse">
+                        <div class="form-group">
+                            <label for="new_custom_attribute">Field Name</label>
+                            <input type="text"
+                                   id="new_custom_attribute"
+                                   name="new_custom_attribute"
+                                   class="form-control"
+                                   maxlength="200">
+                        </div>
+                        <div class="form-group">
+                            <label for="new_custom_attribute_field_type">Response Type</label>
+                            <select id="new_custom_attribute_field_type"
+                                    name="new_custom_attribute_field_type"
+                                    class="form-control">
+                                <option value="text">Text</option>
+                                <option value="yes_no">Yes / No</option>
+                            </select>
+                        </div>
+                        <button type="submit"
+                                name="add_custom_attribute"
+                                value="1"
+                                class="btn btn-primary">
+                            Add Field
+                        </button>
                     </div>
                 </div>
 
@@ -831,7 +971,11 @@ $(document).ready(function () {
         if (selectedDescription) {
             certificationsTable
                 .column(1)
-                .search('^' + $.fn.dataTable.util.escapeRegex(selectedDescription) + '$', true, false)
+                .search(
+                    '^' + $.fn.dataTable.util.escapeRegex(selectedDescription) + '(?:\\s*\\[[^\\]]+\\])?$',
+                    true,
+                    false
+                )
                 .draw();
         } else {
             certificationsTable

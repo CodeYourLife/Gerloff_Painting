@@ -30,6 +30,7 @@ import json
 import mimetypes
 import openpyxl
 import os
+import re
 import shutil
 from subcontractors.models import *
 from subcontractors import toolbox_views as sub_toolbox
@@ -170,6 +171,176 @@ def _close_previous_employee_respirator_certifications(employee, current_certifi
         closed_count += 1
 
     return closed_count
+
+
+def _create_certification_custom_attributes(certification, template_fields):
+    existing_template_field_ids = set(
+        CertificationCustomAttributes.objects.filter(
+            certification=certification,
+            category=certification.category,
+            template_field__isnull=False,
+        ).values_list(
+            "template_field_id",
+            flat=True,
+        )
+    )
+    existing_attributes_by_name = {
+        custom_attribute.custom_attribute: custom_attribute
+        for custom_attribute in CertificationCustomAttributes.objects.filter(
+            certification=certification,
+            category=certification.category,
+            template_field__isnull=True,
+        )
+    }
+    attributes_to_create = []
+
+    for template_field in template_fields:
+        if template_field.id in existing_template_field_ids:
+            continue
+
+        existing_attribute = existing_attributes_by_name.get(template_field.custom_attribute)
+        if existing_attribute:
+            existing_attribute.template_field = template_field
+            existing_attribute.field_type = template_field.field_type
+            existing_attribute.save(update_fields=["template_field", "field_type"])
+            continue
+
+        attributes_to_create.append(
+            CertificationCustomAttributes(
+                category=certification.category,
+                certification=certification,
+                template_field=template_field,
+                custom_attribute=template_field.custom_attribute,
+                field_type=template_field.field_type,
+                custom_attribute_result="",
+            )
+        )
+
+    if attributes_to_create:
+        CertificationCustomAttributes.objects.bulk_create(attributes_to_create)
+
+    return len(attributes_to_create)
+
+
+def _create_standard_certification_custom_attributes(certification):
+    if not certification.category_id or not certification.category.template_id:
+        return 0
+
+    template_fields = list(
+        CategoryTemplateFields.objects.filter(
+            template=certification.category.template,
+        ).order_by(
+            "id",
+        )
+    )
+    if not template_fields:
+        return 0
+
+    return _create_certification_custom_attributes(certification, template_fields)
+
+
+def _normalize_custom_attribute_name(custom_attribute):
+    return (custom_attribute or "").replace(" ", "_").lower()
+
+
+def _add_certification_custom_attribute(certification, custom_attribute, field_type):
+    custom_attribute = (custom_attribute or "").strip()
+    field_type = field_type or CategoryTemplateFields.TEXT_FIELD
+
+    if not custom_attribute:
+        return "missing"
+    if field_type not in dict(CategoryTemplateFields.FIELD_TYPE_CHOICES):
+        return "invalid_type"
+    if CertificationCustomAttributes.objects.filter(
+        certification=certification,
+        custom_attribute=custom_attribute,
+    ).exists():
+        return "duplicate"
+
+    CertificationCustomAttributes.objects.create(
+        category=certification.category,
+        certification=certification,
+        custom_attribute=custom_attribute,
+        field_type=field_type,
+        custom_attribute_result="",
+    )
+    return "created"
+
+
+def _custom_attribute_by_normalized_name(certification, custom_attribute_name):
+    normalized_name = _normalize_custom_attribute_name(custom_attribute_name)
+    for custom_attribute in CertificationCustomAttributes.objects.filter(
+        certification=certification,
+    ).select_related(
+        "template_field",
+    ):
+        stored_name = (
+            custom_attribute.template_field.custom_attribute
+            if custom_attribute.template_field_id
+            else custom_attribute.custom_attribute
+        )
+        if _normalize_custom_attribute_name(stored_name) == normalized_name:
+            return custom_attribute
+    return None
+
+
+def _custom_attribute_values_by_certification(certification_ids):
+    custom_attribute_values = {}
+    for custom_attribute in CertificationCustomAttributes.objects.filter(
+        certification_id__in=certification_ids,
+    ).select_related(
+        "template_field",
+    ):
+        custom_attribute_name = (
+            custom_attribute.template_field.custom_attribute
+            if custom_attribute.template_field_id
+            else custom_attribute.custom_attribute
+        )
+        custom_attribute_values.setdefault(
+            custom_attribute.certification_id,
+            {},
+        )[_normalize_custom_attribute_name(custom_attribute_name)] = (
+            custom_attribute.custom_attribute_result or ""
+        ).strip()
+    return custom_attribute_values
+
+
+def _certification_base_description(certification):
+    if certification.category:
+        return str(certification.category)
+    return certification.description or ""
+
+
+def _dbids_base_access_status_suffix(certification, custom_attribute_values):
+    if not (
+        certification.category and
+        certification.category.template and
+        certification.category.template.name == "DBIDS Base Access"
+    ):
+        return ""
+
+    certification_values = custom_attribute_values.get(certification.id, {})
+    if certification_values.get("access_finalized", "").lower() == "yes":
+        return ""
+
+    if (
+        certification_values.get("date_approved_by_sponsor") or
+        certification_values.get("date_approved")
+    ):
+        return " [Approved-Need to Visit Pass Office]"
+
+    return " [Submitted]"
+
+
+def _certification_display_description(certification, custom_attribute_values):
+    return (
+        _certification_base_description(certification) +
+        _dbids_base_access_status_suffix(certification, custom_attribute_values)
+    )
+
+
+def _certification_filter_description(display_description):
+    return re.sub(r"\s*\[[^\]]*\]\s*", " ", str(display_description or "")).strip()
 
 
 def _certification_files_folder(certification_id):
@@ -1772,10 +1943,18 @@ def subcontractor_employee_page(request, id):
     certifications = (
         Certifications.objects
         .filter(subcontractor_employee=sub_employee)
-        .select_related("category", "subcontractor", "subcontractor_employee")
+        .select_related("category", "category__template", "subcontractor", "subcontractor_employee")
         .order_by("is_closed", "date_expires", "description")
     )
-    open_certifications = certifications.filter(is_closed=False)
+    open_certifications = list(certifications.filter(is_closed=False))
+    custom_attribute_values = _custom_attribute_values_by_certification(
+        [certification.id for certification in open_certifications]
+    )
+    for certification in open_certifications:
+        certification.display_description = _certification_display_description(
+            certification,
+            custom_attribute_values,
+        )
     pending_tasks = (
         EmployeePendingActions.objects
         .filter(
@@ -1802,7 +1981,7 @@ def subcontractor_employee_page(request, id):
         "toolbox_completed_count": toolbox_summary["completed_count"],
         "toolbox_incomplete_count": toolbox_summary["incomplete_count"],
         "open_certifications": open_certifications,
-        "certification_count": open_certifications.count(),
+        "certification_count": len(open_certifications),
         "pending_tasks": pending_tasks,
         "pending_task_count": pending_tasks.count(),
         "respirator_clearances": respirator_clearances,
@@ -2237,8 +2416,20 @@ def employees_page(request, id):
         ).values_list("certification_id", flat=True)
     )
     certification_summary["open_certifications"] = list(certification_summary["open_certifications"])
+    certification_summary["closed_certifications"] = list(certification_summary["closed_certifications"])
+    employee_page_certifications = (
+        certification_summary["open_certifications"] +
+        certification_summary["closed_certifications"]
+    )
+    employee_page_custom_attribute_values = _custom_attribute_values_by_certification(
+        [cert.id for cert in employee_page_certifications]
+    )
 
-    for cert in certification_summary["open_certifications"]:
+    for cert in employee_page_certifications:
+        cert.display_description = _certification_display_description(
+            cert,
+            employee_page_custom_attribute_values,
+        )
         cert.has_open_pending_action = cert.id in open_pending_action_cert_ids
 
     inventory_summary = employee.inventory_summary()
@@ -2555,6 +2746,92 @@ def my_page(request):
         return Q(pk__in=[])
 
     if request.method == 'POST':
+        if 'report_missing_dbids_clearances' in request.POST:
+            missing_note = (request.POST.get("missing_dbids_clearances_note") or "").strip()
+            if not missing_note:
+                messages.error(request, "Please enter what is missing.")
+                return redirect('my_page')
+
+            email_body = (
+                f"{employee} reported missing DBIDs cards or base clearances.\n\n"
+                f"Notes:\n{missing_note}"
+            )
+            sender = employee.email if employee.email else "bridgette@gerloffpainting.com"
+            try:
+                Email.sendEmail(
+                    "Missing DBIDs Cards or Base Clearances",
+                    email_body,
+                    ["bridgette@gerloffpainting.com"],
+                    False,
+                    sender,
+                )
+                messages.success(request, "Your note was sent to Bridgette.")
+            except Exception:
+                messages.warning(request, "Your note was saved, but the email could not be sent.")
+            return redirect('my_page')
+
+        if 'submit_dbids_base_access' in request.POST:
+            certification = get_object_or_404(
+                Certifications.objects.select_related("category", "category__template"),
+                id=request.POST.get("certification_id"),
+                employee=employee,
+                is_closed=False,
+                category__template__name="DBIDS Base Access",
+            )
+            expiration_date_raw = request.POST.get("dbids_expiration_date") or ""
+            has_base_access = request.POST.get("has_base_access") or ""
+
+            if expiration_date_raw:
+                try:
+                    certification.date_expires = date.fromisoformat(expiration_date_raw)
+                except ValueError:
+                    messages.error(request, "Please enter a valid expiration date.")
+                    return redirect('my_page')
+                has_base_access = "Yes"
+                certification.save(update_fields=["date_expires"])
+
+            if has_base_access not in ["", "Yes", "No"]:
+                messages.error(request, "Please select Yes or No for base access.")
+                return redirect('my_page')
+
+            _create_standard_certification_custom_attributes(certification)
+            access_finalized = _custom_attribute_by_normalized_name(
+                certification,
+                "access_finalized",
+            )
+            if access_finalized:
+                access_finalized.custom_attribute_result = has_base_access
+                access_finalized.save(update_fields=["custom_attribute_result"])
+
+            if has_base_access == "No":
+                CertificationNotes.objects.create(
+                    certification=certification,
+                    date=date.today(),
+                    user=employee,
+                    note=f"{employee} - I have no access to this base",
+                )
+
+            email_body = (
+                f"Employee: {employee}\n"
+                f"Certification: {certification.description or certification.category}\n"
+                f"Currently Has Access: {has_base_access or 'No response'}\n"
+                f"Expiration Date: {certification.date_expires.strftime('%m/%d/%Y') if certification.date_expires else 'Not provided'}\n"
+            )
+            sender = employee.email if employee.email else "bridgette@gerloffpainting.com"
+            try:
+                Email.sendEmail(
+                    "DBIDS Base Access Update",
+                    email_body,
+                    ["bridgette@gerloffpainting.com"],
+                    False,
+                    sender,
+                )
+                messages.success(request, "Base access response submitted.")
+            except Exception:
+                messages.warning(request, "Base access response submitted, but the email could not be sent.")
+
+            return redirect('my_page')
+
         if 'upload_my_certification_file' in request.POST:
             certification = get_object_or_404(
                 Certifications,
@@ -3205,7 +3482,11 @@ def my_page(request):
             is_closed=False,
         ).select_related(
             "category",
+            "category__template",
         )
+    )
+    certification_custom_attribute_values = _custom_attribute_values_by_certification(
+        [certification.id for certification in certifications]
     )
     pending_actions = list(
         EmployeePendingActions.objects.filter(
@@ -3233,6 +3514,28 @@ def my_page(request):
             certification.id,
             [],
         )
+        certification.is_dbids_base_access = bool(
+            certification.category and
+            certification.category.template and
+            certification.category.template.name == "DBIDS Base Access"
+        )
+        certification.display_description = _certification_display_description(
+            certification,
+            certification_custom_attribute_values,
+        )
+        if certification.is_dbids_base_access:
+            certification.current_base_access = (
+                certification_custom_attribute_values.get(
+                    certification.id,
+                    {},
+                ).get(
+                    "access_finalized",
+                    "",
+                )
+            )
+            certification.needs_base_access_response = (
+                certification.current_base_access or ""
+            ).strip().lower() != "yes"
 
     send_data['certifications'] = certifications
     send_data['certifications_count'] = len(certifications)
@@ -3508,6 +3811,36 @@ def certifications(request, id):
         selected_cert = Certifications.objects.get(id=id)
         send_data['selected_item'] = selected_cert
         send_data['notes2'] = CertificationNotes.objects.filter(certification__id=id)
+        send_data['custom_attributes'] = CertificationCustomAttributes.objects.filter(
+            certification=selected_cert,
+        ).select_related(
+            "template_field",
+        ).order_by(
+            "id",
+        )
+        dbids_access_finalized = _custom_attribute_by_normalized_name(
+            selected_cert,
+            "access_finalized",
+        )
+        is_dbids_base_access_certification = bool(
+            selected_cert.category and
+            selected_cert.category.template and
+            selected_cert.category.template.name == "DBIDS Base Access"
+        )
+        dbids_access_finalized_result = (
+            dbids_access_finalized.custom_attribute_result
+            if dbids_access_finalized
+            else ""
+        )
+        send_data['show_dbids_access_review'] = bool(
+            is_dbids_base_access_certification and
+            (dbids_access_finalized_result or "").strip().lower() != "yes"
+        )
+        send_data['show_dbids_access_change'] = bool(
+            is_dbids_base_access_certification and
+            (dbids_access_finalized_result or "").strip().lower() == "yes" and
+            not selected_cert.is_closed
+        )
         pending_employee_tasks = EmployeePendingActions.objects.filter(
             certification=selected_cert,
             is_complete=False,
@@ -3537,6 +3870,7 @@ def certifications(request, id):
                 Jobs.objects.filter(pk=selected_cert.job_id)
             ).distinct().order_by("job_number", "job_name")
         send_data['jobs_for_certification'] = jobs_for_certification
+        send_data['categories_for_certification'] = CertificationCategories.objects.all().order_by("description")
         send_data['active_employees'] = Employees.objects.filter(
             active=True,
         ).order_by(
@@ -3595,8 +3929,87 @@ def certifications(request, id):
 
     if request.method == 'POST':
         cert = Certifications.objects.get(id=id)
+        if (
+            'dbids_access_yes' in request.POST or
+            'dbids_access_denied' in request.POST or
+            'dbids_access_no_yet' in request.POST or
+            'dbids_access_finalized_denied' in request.POST
+        ):
+            if not (
+                cert.category and
+                cert.category.template and
+                cert.category.template.name == "DBIDS Base Access"
+            ):
+                messages.error(request, "This action only applies to DBIDS Base Access certifications.")
+                return redirect('certifications', id=cert.id)
+
+            _create_standard_certification_custom_attributes(cert)
+            access_finalized = _custom_attribute_by_normalized_name(
+                cert,
+                "access_finalized",
+            )
+            if access_finalized:
+                access_finalized.custom_attribute_result = "Yes" if 'dbids_access_yes' in request.POST else "No"
+                access_finalized.save(update_fields=["custom_attribute_result"])
+
+            current_employee = Employees.objects.get(user=request.user)
+            if 'dbids_access_yes' in request.POST:
+                CertificationNotes.objects.create(
+                    certification=cert,
+                    date=date.today(),
+                    user=current_employee,
+                    note="Employee has access to this base.",
+                )
+                messages.success(request, "Base access marked as Yes.")
+                return redirect('certifications', id=cert.id)
+
+            if 'dbids_access_no_yet' in request.POST:
+                CertificationNotes.objects.create(
+                    certification=cert,
+                    date=date.today(),
+                    user=current_employee,
+                    note="Access finalized changed to No. Employee does not have access yet.",
+                )
+                messages.success(request, "Base access changed to No.")
+                return redirect('certifications', id=cert.id)
+
+            cert.is_closed = True
+            cert.save(update_fields=["is_closed"])
+            CertificationNotes.objects.create(
+                certification=cert,
+                date=date.today(),
+                user=current_employee,
+                note=(
+                    "Access has been denied. Certification voided."
+                    if 'dbids_access_denied' in request.POST
+                    else "Access finalized changed to No because access was denied. Certification voided."
+                ),
+            )
+            messages.success(request, "Base access denied and certification voided.")
+            return redirect('certifications', id='ALL')
+
+        if 'add_custom_attribute' in request.POST:
+            add_result = _add_certification_custom_attribute(
+                cert,
+                request.POST.get("new_custom_attribute"),
+                request.POST.get("new_custom_attribute_field_type"),
+            )
+            if add_result == "missing":
+                messages.error(request, "Please enter a field name.")
+                return redirect('certifications', id=cert.id)
+            if add_result == "invalid_type":
+                messages.error(request, "Please select a valid field type.")
+                return redirect('certifications', id=cert.id)
+            if add_result == "duplicate":
+                messages.info(request, "That custom field already exists for this certification.")
+                return redirect('certifications', id=cert.id)
+
+            messages.success(request, "Custom field added.")
+            return redirect('certifications', id=cert.id)
+
         if 'edit_certification_info' in request.POST:
             old_description = cert.description or ""
+            old_category = str(cert.category) if cert.category else "None"
             old_job = str(cert.job) if cert.job else "None"
             old_note = cert.note or ""
             old_flag = cert.is_flagged_when_expired
@@ -3611,11 +4024,57 @@ def certifications(request, id):
             else:
                 cert.job = None
 
-            cert.save(update_fields=["description", "job", "note", "is_flagged_when_expired"])
+            category_id = request.POST.get("certification_category") or ""
+            if category_id:
+                cert.category = get_object_or_404(CertificationCategories, pk=category_id)
+            else:
+                cert.category = None
+
+            custom_attributes = list(
+                CertificationCustomAttributes.objects.filter(
+                    certification=cert,
+                ).select_related(
+                    "template_field",
+                ).order_by(
+                    "id",
+                )
+            )
+            custom_attribute_results = {}
+            for custom_attribute in custom_attributes:
+                new_custom_attribute_result = (
+                    request.POST.get(f"custom_attribute_result_{custom_attribute.id}") or ""
+                ).strip()
+                if (
+                    custom_attribute.field_type == CategoryTemplateFields.YES_NO_FIELD
+                    and new_custom_attribute_result not in ["", "Yes", "No"]
+                ):
+                    messages.error(
+                        request,
+                        f"{custom_attribute.custom_attribute} must be Yes or No.",
+                    )
+                    return redirect('certifications', id=cert.id)
+                custom_attribute_results[custom_attribute.id] = new_custom_attribute_result
+
+            cert.save(update_fields=["description", "category", "job", "note", "is_flagged_when_expired"])
+            _create_standard_certification_custom_attributes(cert)
+            new_custom_attribute = (request.POST.get("new_custom_attribute") or "").strip()
+            if new_custom_attribute:
+                add_result = _add_certification_custom_attribute(
+                    cert,
+                    new_custom_attribute,
+                    request.POST.get("new_custom_attribute_field_type"),
+                )
+                if add_result == "invalid_type":
+                    messages.error(request, "Please select a valid field type.")
+                    return redirect('certifications', id=cert.id)
+                if add_result == "duplicate":
+                    messages.info(request, "That custom field already exists for this certification.")
 
             note_parts = []
             if old_description != (cert.description or ""):
                 note_parts.append(f"Description changed from '{old_description or 'None'}' to '{cert.description or 'None'}'")
+            if old_category != (str(cert.category) if cert.category else "None"):
+                note_parts.append(f"Category changed from '{old_category}' to '{str(cert.category) if cert.category else 'None'}'")
             if old_job != (str(cert.job) if cert.job else "None"):
                 note_parts.append(f"Job changed from '{old_job}' to '{str(cert.job) if cert.job else 'None'}'")
             if old_note != (cert.note or ""):
@@ -3626,12 +4085,20 @@ def certifications(request, id):
                     + ("Yes" if cert.is_flagged_when_expired else "No")
                 )
 
-            CertificationNotes.objects.create(
-                certification=cert,
-                date=date.today(),
-                user=Employees.objects.get(user=request.user),
-                note="Certification info edited. " + "; ".join(note_parts) if note_parts else "Certification info edit submitted with no changes.",
-            )
+            for custom_attribute in custom_attributes:
+                old_custom_attribute_result = custom_attribute.custom_attribute_result or ""
+                new_custom_attribute_result = custom_attribute_results[custom_attribute.id]
+                if old_custom_attribute_result != new_custom_attribute_result:
+                    custom_attribute.custom_attribute_result = new_custom_attribute_result
+                    custom_attribute.save(update_fields=["custom_attribute_result"])
+
+            if note_parts:
+                CertificationNotes.objects.create(
+                    certification=cert,
+                    date=date.today(),
+                    user=Employees.objects.get(user=request.user),
+                    note="Certification info edited. " + "; ".join(note_parts),
+                )
             messages.success(request, "Certification info updated.")
             return redirect('certifications', id=cert.id)
         if 'upload_certification_files' in request.POST:
@@ -3943,6 +4410,7 @@ def certifications(request, id):
     ).select_related(
         "employee",
         "category",
+        "category__template",
         "subcontractor",
         "subcontractor_employee",
     )
@@ -3963,6 +4431,8 @@ def certifications(request, id):
     ):
         pending_tasks_by_certification.setdefault(task.certification_id, []).append(task)
 
+    custom_attribute_values = _custom_attribute_values_by_certification(certification_ids)
+
     certification_rows = []
     certification_filter_descriptions = set()
     for cert in certifications_list:
@@ -3974,12 +4444,12 @@ def certifications(request, id):
             else:
                 cert.display_description = "Respirator Certification [External]"
         else:
-            if cert.category:
-                cert.display_description = cert.category
-            else:
-                cert.display_description = cert.description
+            cert.display_description = _certification_display_description(
+                cert,
+                custom_attribute_values,
+            )
         if cert.display_description:
-            certification_filter_descriptions.add(str(cert.display_description))
+            certification_filter_descriptions.add(_certification_filter_description(cert.display_description))
         action_required = []
         if cert.category and cert.category.description == "Respirator Clearance":
             respirator_clearance = trinity_respirators_by_certification.get(cert.id)
@@ -4025,7 +4495,7 @@ def certifications(request, id):
         elif not clearance.approved_for_use:
             action_required.append("Awaiting Approval")
 
-        certification_filter_descriptions.add(subcontractor_description)
+        certification_filter_descriptions.add(_certification_filter_description(subcontractor_description))
         employee_url = None
         if clearance.employee_id:
             employee_url = reverse("subcontractor_employee_page", args=[clearance.employee_id])
@@ -4060,6 +4530,134 @@ def certifications(request, id):
 @login_required(login_url='/accounts/login')
 def subcontractor_certifications(request):
     return redirect("certifications", id="ALL")
+
+
+@login_required(login_url='/accounts/login')
+def certification_categories(request):
+    templates = list(
+        CategoryTemplates.objects.prefetch_related("fields").order_by("name")
+    )
+
+    if request.method == 'POST':
+        if 'create_category' in request.POST:
+            category_name = (request.POST.get("category_name") or "").strip()
+            if not category_name:
+                messages.error(request, "Please enter a category name.")
+                return redirect('certification_categories')
+
+            category, created = CertificationCategories.objects.get_or_create(
+                description=category_name,
+            )
+            if created:
+                messages.success(request, "Category created.")
+            else:
+                messages.info(request, "That category already exists.")
+            return redirect('certification_categories')
+
+        if 'create_template' in request.POST:
+            template_name = (request.POST.get("template_name") or "").strip()
+            if not template_name:
+                messages.error(request, "Please enter a template name.")
+                return redirect('certification_categories')
+
+            template, created = CategoryTemplates.objects.get_or_create(
+                name=template_name,
+            )
+            if created:
+                messages.success(request, "Template created.")
+            else:
+                messages.info(request, "That template already exists.")
+            return redirect('certification_categories')
+
+        if 'add_template_field' in request.POST:
+            template = get_object_or_404(
+                CategoryTemplates,
+                id=request.POST.get("template_id"),
+            )
+            custom_attribute = (request.POST.get("custom_attribute") or "").strip()
+            field_type = request.POST.get("field_type") or CategoryTemplateFields.TEXT_FIELD
+            if not custom_attribute:
+                messages.error(request, "Please enter a field name.")
+                return redirect('certification_categories')
+            if field_type not in dict(CategoryTemplateFields.FIELD_TYPE_CHOICES):
+                messages.error(request, "Please select a valid field type.")
+                return redirect('certification_categories')
+
+            field, created = CategoryTemplateFields.objects.get_or_create(
+                template=template,
+                custom_attribute=custom_attribute,
+                defaults={
+                    "field_type": field_type,
+                },
+            )
+            if created:
+                messages.success(request, "Template field added.")
+            else:
+                messages.info(request, "That field already exists for this template.")
+            return redirect('certification_categories')
+
+        if 'update_template_field_type' in request.POST:
+            field = get_object_or_404(
+                CategoryTemplateFields,
+                id=request.POST.get("field_id"),
+            )
+            field_type = request.POST.get("field_type") or CategoryTemplateFields.TEXT_FIELD
+            if field_type not in dict(CategoryTemplateFields.FIELD_TYPE_CHOICES):
+                messages.error(request, "Please select a valid field type.")
+                return redirect('certification_categories')
+
+            field.field_type = field_type
+            field.save(update_fields=["field_type"])
+            messages.success(request, "Template field type updated.")
+            return redirect('certification_categories')
+
+        if 'delete_template_field' in request.POST:
+            field = get_object_or_404(
+                CategoryTemplateFields,
+                id=request.POST.get("field_id"),
+            )
+            field.delete()
+            messages.success(request, "Template field deleted.")
+            return redirect('certification_categories')
+
+        categories = CertificationCategories.objects.all()
+        templates_by_id = {str(template.id): template for template in templates}
+
+        for category in categories:
+            category_description = (request.POST.get(f"category_description_{category.id}") or "").strip()
+            if not category_description:
+                messages.error(request, "Category descriptions cannot be blank.")
+                return redirect('certification_categories')
+
+            old_category_description = category.description or ""
+            category.description = category_description
+            template_id = request.POST.get(f"template_{category.id}") or ""
+            if template_id:
+                category.template = templates_by_id.get(template_id)
+            else:
+                category.template = None
+            category.save(update_fields=["description", "template"])
+            if old_category_description != category.description:
+                Certifications.objects.filter(
+                    category=category,
+                    description=old_category_description,
+                ).update(
+                    description=category.description,
+                )
+
+        messages.success(request, "Certification categories updated.")
+        return redirect('certification_categories')
+
+    send_data = {
+        "categories": CertificationCategories.objects.select_related(
+            "template",
+        ).order_by(
+            "description",
+        ),
+        "templates": templates,
+        "field_type_choices": CategoryTemplateFields.FIELD_TYPE_CHOICES,
+    }
+    return render(request, "certification_categories.html", send_data)
 
 
 @login_required(login_url='/accounts/login')
@@ -4236,6 +4834,7 @@ def new_certification(request):
             new_cert.job = Jobs.objects.get(job_number=selected_job)
 
         new_cert.save()
+        _create_standard_certification_custom_attributes(new_cert)
 
         if certification_note:
             CertificationNotes.objects.create(

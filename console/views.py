@@ -21,7 +21,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from employees.forms import SiriusUploadForm,ClockSharkUploadForm, ToolboxTalksUploadForm
 from employees.models import *
-from employees.views import get_respirators_in_review, get_scheduled_toolbox_folder, get_uploaded_toolbox_file
+from employees.views import (
+    _create_standard_certification_custom_attributes,
+    get_respirators_in_review,
+    get_scheduled_toolbox_folder,
+    get_uploaded_toolbox_file,
+)
 from jobs.models import *
 from jobs.models import Jobs
 from jobs.views import subtract_months
@@ -45,6 +50,561 @@ import os
 import os.path
 import random
 import re
+
+
+CERTIFICATION_IMPORT_REQUIRED_HEADERS = {
+    "employee": ["employee", "employee name", "name"],
+    "subcontractor": ["subcontractor", "sub contractor", "company", "subcontractor company"],
+    "category": ["category", "certification", "certification category", "description"],
+}
+
+CERTIFICATION_IMPORT_OPTIONAL_HEADERS = {
+    "date_received": ["date received", "received", "start date", "date submitted"],
+    "date_expires": ["date expires", "expiration", "expiration date", "expires"],
+    "job": ["job", "job number"],
+    "note": ["note", "notes"],
+    "task": ["task", "pending task", "task description", "action required"],
+    "task_note": ["task note", "task notes", "pending task note"],
+}
+
+CERTIFICATION_IMPORT_CUSTOM_ATTRIBUTE_HEADERS = {
+    "Sponsor": ["sponsor"],
+    "Date Submitted to Sponsor": ["date submitted to sponsor", "date submitted", "submitted to sponsor"],
+    "Date Approved by Sponsor": ["date approved by sponsor", "date approved", "approved by sponsor"],
+    "Access Finalized": ["access finalized", "access final"],
+}
+
+CERTIFICATION_IMPORT_CUSTOM_ATTRIBUTE_ALIASES = {
+    "sponsor": "Sponsor",
+    "date_submitted": "Date Submitted to Sponsor",
+    "date_approved": "Date Approved by Sponsor",
+    "access_finalized": "Access Finalized",
+}
+
+
+def _clean_import_value(value):
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value.strip()
+    return str(value).strip()
+
+
+def _normalize_import_text(value):
+    return re.sub(r"\s+", " ", _clean_import_value(value)).lower()
+
+
+def _looks_like_certification_import_header(row_values):
+    normalized = [_normalize_import_text(value) for value in row_values]
+    known_headers = [
+        header
+        for headers in (
+            list(CERTIFICATION_IMPORT_REQUIRED_HEADERS.values()) +
+            list(CERTIFICATION_IMPORT_OPTIONAL_HEADERS.values())
+        )
+        for header in headers
+    ]
+    return any(value in known_headers for value in normalized if value)
+
+
+def _certification_import_column_indexes(header_row):
+    normalized_headers = [_normalize_import_text(value) for value in header_row]
+    column_indexes = {"employee": 0, "subcontractor": 1, "category": 2}
+
+    for field, possible_headers in {
+        **CERTIFICATION_IMPORT_REQUIRED_HEADERS,
+        **CERTIFICATION_IMPORT_OPTIONAL_HEADERS,
+    }.items():
+        for possible_header in possible_headers:
+            if possible_header in normalized_headers:
+                column_indexes[field] = normalized_headers.index(possible_header)
+                break
+    return column_indexes
+
+
+def _certification_import_custom_attribute_column_indexes(header_row):
+    normalized_headers = [_normalize_import_text(value) for value in header_row]
+    column_indexes = {}
+    for custom_attribute, possible_headers in CERTIFICATION_IMPORT_CUSTOM_ATTRIBUTE_HEADERS.items():
+        for possible_header in possible_headers:
+            if possible_header in normalized_headers:
+                column_indexes[custom_attribute] = normalized_headers.index(possible_header)
+                break
+    return column_indexes
+
+
+def _certification_import_cell(row_values, column_indexes, field):
+    column_index = column_indexes.get(field)
+    if column_index is None or column_index >= len(row_values):
+        return ""
+    return row_values[column_index]
+
+
+def _certification_import_custom_attribute_values(row_values, custom_attribute_column_indexes):
+    custom_attribute_values = {}
+    for custom_attribute, column_index in custom_attribute_column_indexes.items():
+        if column_index >= len(row_values):
+            continue
+        value = _clean_import_value(row_values[column_index])
+        if value:
+            custom_attribute_values[custom_attribute] = value
+    return custom_attribute_values
+
+
+def _parse_certification_import_date(value):
+    if value in (None, ""):
+        return None
+    if isinstance(value, datetime.datetime):
+        return value.date()
+    if isinstance(value, datetime.date):
+        return value
+    cleaned_value = _clean_import_value(value)
+    if not cleaned_value:
+        return None
+    try:
+        parsed_value = parse_date(cleaned_value)
+        if isinstance(parsed_value, datetime.datetime):
+            return parsed_value.date()
+        return parsed_value
+    except (ValueError, TypeError, OverflowError):
+        return None
+
+
+def _employee_import_possible_names(employee):
+    return {
+        _normalize_import_text(f"{employee.first_name or ''} {employee.last_name or ''}"),
+        _normalize_import_text(f"{employee.first_name or ''} {employee.middle_name or ''} {employee.last_name or ''}"),
+        _normalize_import_text(f"{employee.last_name or ''}, {employee.first_name or ''}"),
+        _normalize_import_text(str(employee)),
+    }
+
+
+def _find_certification_import_employee_matches(employee_name):
+    normalized_name = _normalize_import_text(employee_name)
+    if not normalized_name:
+        return []
+
+    matches = []
+    employees = Employees.objects.filter(active=True)
+    for employee in employees:
+        if normalized_name in _employee_import_possible_names(employee):
+            matches.append(employee)
+    return matches
+
+
+def _select_certification_import_employee_match(matches):
+    if not matches:
+        return None, []
+    active_matches = [employee for employee in matches if employee.active]
+    if len(active_matches) == 1:
+        return active_matches[0], []
+    if len(active_matches) > 1:
+        return None, active_matches
+    if len(matches) == 1:
+        return matches[0], []
+    return None, matches
+
+
+def _find_certification_import_subcontractor(subcontractor_name):
+    subcontractor_name = _clean_import_value(subcontractor_name)
+    if not subcontractor_name:
+        return None
+    return Subcontractors.objects.filter(
+        company__iexact=subcontractor_name,
+        is_inactive=False,
+    ).first()
+
+
+def _find_certification_import_sub_employee(subcontractor, employee_name):
+    employee_name = _clean_import_value(employee_name)
+    if not subcontractor or not employee_name:
+        return None
+    return Subcontractor_Employees.objects.filter(
+        subcontractor=subcontractor,
+        name__iexact=employee_name,
+        is_active=True,
+    ).first()
+
+
+def _find_certification_import_category(category_description):
+    category_description = _clean_import_value(category_description)
+    if not category_description:
+        return None
+    return CertificationCategories.objects.filter(description__iexact=category_description).select_related("template").first()
+
+
+def _find_certification_import_job(job_number):
+    job_number = _clean_import_value(job_number)
+    if not job_number:
+        return None
+    return Jobs.objects.filter(job_number=job_number).first()
+
+
+def _certification_import_rows(uploaded_file):
+    if (getattr(uploaded_file, "name", "") or "").lower().endswith(".csv"):
+        return _certification_import_csv_rows(uploaded_file)
+
+    workbook = load_workbook(uploaded_file, data_only=True)
+    worksheet = workbook.active
+    raw_rows = [
+        [cell for cell in row]
+        for row in worksheet.iter_rows(values_only=True)
+        if any(_clean_import_value(cell) for cell in row)
+    ]
+    if not raw_rows:
+        return []
+
+    first_row = raw_rows[0]
+    has_header = _looks_like_certification_import_header(first_row)
+    column_indexes = _certification_import_column_indexes(first_row) if has_header else {
+        "employee": 0,
+        "subcontractor": 1,
+        "category": 2,
+    }
+    custom_attribute_column_indexes = (
+        _certification_import_custom_attribute_column_indexes(first_row)
+        if has_header
+        else {}
+    )
+    start_row_number = 2 if has_header else 1
+    rows = []
+
+    for offset, row_values in enumerate(raw_rows[1:] if has_header else raw_rows, start=start_row_number):
+        employee_name = _clean_import_value(_certification_import_cell(row_values, column_indexes, "employee"))
+        subcontractor_name = _clean_import_value(_certification_import_cell(row_values, column_indexes, "subcontractor"))
+        category_description = _clean_import_value(_certification_import_cell(row_values, column_indexes, "category"))
+        if not employee_name and not subcontractor_name and not category_description:
+            continue
+        rows.append({
+            "row_number": offset,
+            "employee_name": employee_name,
+            "subcontractor_name": subcontractor_name,
+            "category_description": category_description,
+            "date_received": _parse_certification_import_date(
+                _certification_import_cell(row_values, column_indexes, "date_received")
+            ),
+            "date_expires": _parse_certification_import_date(
+                _certification_import_cell(row_values, column_indexes, "date_expires")
+            ),
+            "job_number": _clean_import_value(_certification_import_cell(row_values, column_indexes, "job")),
+            "note": _clean_import_value(_certification_import_cell(row_values, column_indexes, "note")),
+            "task": _clean_import_value(_certification_import_cell(row_values, column_indexes, "task")),
+            "task_note": _clean_import_value(_certification_import_cell(row_values, column_indexes, "task_note")),
+            "custom_attribute_values": _certification_import_custom_attribute_values(
+                row_values,
+                custom_attribute_column_indexes,
+            ),
+        })
+    return rows
+
+
+def _certification_import_csv_rows(uploaded_file):
+    raw_content = uploaded_file.read()
+    if isinstance(raw_content, str):
+        text_content = raw_content
+    else:
+        text_content = raw_content.decode("utf-8-sig")
+    raw_rows = [
+        row for row in csv.reader(text_content.splitlines())
+        if any(_clean_import_value(cell) for cell in row)
+    ]
+    if not raw_rows:
+        return []
+
+    first_row = raw_rows[0]
+    has_header = _looks_like_certification_import_header(first_row)
+    column_indexes = _certification_import_column_indexes(first_row) if has_header else {
+        "employee": 0,
+        "subcontractor": 1,
+        "category": 2,
+    }
+    custom_attribute_column_indexes = (
+        _certification_import_custom_attribute_column_indexes(first_row)
+        if has_header
+        else {}
+    )
+    start_row_number = 2 if has_header else 1
+    rows = []
+
+    for offset, row_values in enumerate(raw_rows[1:] if has_header else raw_rows, start=start_row_number):
+        employee_name = _clean_import_value(_certification_import_cell(row_values, column_indexes, "employee"))
+        subcontractor_name = _clean_import_value(_certification_import_cell(row_values, column_indexes, "subcontractor"))
+        category_description = _clean_import_value(_certification_import_cell(row_values, column_indexes, "category"))
+        if not employee_name and not subcontractor_name and not category_description:
+            continue
+        rows.append({
+            "row_number": offset,
+            "employee_name": employee_name,
+            "subcontractor_name": subcontractor_name,
+            "category_description": category_description,
+            "date_received": _parse_certification_import_date(
+                _certification_import_cell(row_values, column_indexes, "date_received")
+            ),
+            "date_expires": _parse_certification_import_date(
+                _certification_import_cell(row_values, column_indexes, "date_expires")
+            ),
+            "job_number": _clean_import_value(_certification_import_cell(row_values, column_indexes, "job")),
+            "note": _clean_import_value(_certification_import_cell(row_values, column_indexes, "note")),
+            "task": _clean_import_value(_certification_import_cell(row_values, column_indexes, "task")),
+            "task_note": _clean_import_value(_certification_import_cell(row_values, column_indexes, "task_note")),
+            "custom_attribute_values": _certification_import_custom_attribute_values(
+                row_values,
+                custom_attribute_column_indexes,
+            ),
+        })
+    return rows
+
+
+def _normalize_certification_import_custom_attribute_name(custom_attribute):
+    return _normalize_import_text(custom_attribute).replace(" ", "_")
+
+
+def _apply_certification_import_custom_attribute_values(certification, custom_attribute_values):
+    updated_count = 0
+    if not custom_attribute_values:
+        return updated_count
+
+    custom_attributes = CertificationCustomAttributes.objects.filter(certification=certification)
+    custom_attributes_by_name = {
+        _normalize_certification_import_custom_attribute_name(attribute.custom_attribute): attribute
+        for attribute in custom_attributes
+    }
+
+    for custom_attribute_name, custom_attribute_value in custom_attribute_values.items():
+        custom_attribute_name = CERTIFICATION_IMPORT_CUSTOM_ATTRIBUTE_ALIASES.get(
+            custom_attribute_name,
+            custom_attribute_name,
+        )
+        custom_attribute = custom_attributes_by_name.get(
+            _normalize_certification_import_custom_attribute_name(custom_attribute_name)
+        )
+        if not custom_attribute:
+            continue
+        custom_attribute.custom_attribute_result = custom_attribute_value
+        custom_attribute.save(update_fields=["custom_attribute_result"])
+        updated_count += 1
+    return updated_count
+
+
+def _create_import_pending_task(certification, current_employee, task_description, task_note):
+    if not task_description:
+        return {"created": False, "email_sent": False, "warning": ""}
+
+    task_employee = certification.employee
+    task_subcontractor_employee = certification.subcontractor_employee
+    recipient_email = (
+        task_subcontractor_employee.email
+        if task_subcontractor_employee
+        else task_employee.email if task_employee else ""
+    )
+
+    notes = ""
+    if task_note:
+        note_prefix = date.today().strftime("%m/%d/%Y")
+        if current_employee:
+            note_prefix += f" - {current_employee.first_name}"
+        notes = f"{note_prefix}: {task_note}"
+
+    pending_action = EmployeePendingActions.objects.create(
+        employee=task_employee,
+        subcontractor_employee=task_subcontractor_employee,
+        certification=certification,
+        date=date.today(),
+        description=task_description,
+        notes=notes,
+        is_complete=False,
+        confirmed_is_complete=False,
+    )
+    assignee_display = (
+        f"[SUB] {task_subcontractor_employee}"
+        if task_subcontractor_employee
+        else str(task_employee)
+    )
+    certification_note = f"Pending employee task assigned to {assignee_display}: {task_description}"
+    if task_note:
+        certification_note += f". Note: {task_note}"
+    CertificationNotes.objects.create(
+        certification=certification,
+        date=date.today(),
+        user=current_employee or task_employee or Employees.objects.filter(user__is_superuser=True).first() or Employees.objects.first(),
+        note=certification_note,
+    )
+
+    if not recipient_email:
+        return {
+            "created": True,
+            "email_sent": False,
+            "warning": f"Row task created for {assignee_display}, but no email address was found.",
+        }
+
+    sender = (
+        current_employee.email
+        if current_employee and current_employee.email
+        else "bridgette@gerloffpainting.com"
+    )
+    email_body = (
+        "A new required task has been added for you.\n\n"
+        f"Task: {pending_action.description}\n"
+        f"Certification: {certification}\n"
+        f"Date Added: {pending_action.date.strftime('%m/%d/%Y')}\n"
+    )
+    if task_note:
+        email_body += f"\nNotes:\n{task_note}"
+    try:
+        Email.sendEmail("New Required Task", email_body, [recipient_email], False, sender)
+    except Exception:
+        return {
+            "created": True,
+            "email_sent": False,
+            "warning": f"Row task created for {assignee_display}, but the email could not be sent.",
+        }
+    return {"created": True, "email_sent": True, "warning": ""}
+
+
+def _review_certification_import_rows(rows):
+    reviewed_rows = []
+    errors = []
+    warnings = []
+
+    for row in rows:
+        row_errors = []
+        row_warnings = []
+        employee = None
+        subcontractor = None
+        subcontractor_employee = None
+        would_create_subcontractor_employee = False
+
+        if not row["employee_name"]:
+            row_errors.append("Missing employee name.")
+
+        if not row["category_description"]:
+            row_errors.append("Missing certification/category description.")
+
+        if row["subcontractor_name"]:
+            subcontractor = _find_certification_import_subcontractor(row["subcontractor_name"])
+            if not subcontractor:
+                row_errors.append(f"Subcontractor not found: {row['subcontractor_name']}.")
+            else:
+                subcontractor_employee = _find_certification_import_sub_employee(subcontractor, row["employee_name"])
+                if not subcontractor_employee and row["employee_name"]:
+                    would_create_subcontractor_employee = True
+        else:
+            employee_matches = _find_certification_import_employee_matches(row["employee_name"])
+            employee, ambiguous_employee_matches = _select_certification_import_employee_match(employee_matches)
+            if ambiguous_employee_matches:
+                match_list = ", ".join(
+                    f"{match} (ID {match.id})"
+                    for match in ambiguous_employee_matches
+                )
+                row_errors.append(f"Multiple employees found for {row['employee_name']}: {match_list}.")
+            elif not employee and row["employee_name"]:
+                row_errors.append(f"Employee not found: {row['employee_name']}.")
+
+        category = _find_certification_import_category(row["category_description"])
+        if row["category_description"] and not category:
+            row_warnings.append(
+                f"Category not found: {row['category_description']}. Final upload will use this as the certification description without linking a category."
+            )
+
+        job = _find_certification_import_job(row["job_number"])
+        if row["job_number"] and not job:
+            row_warnings.append(f"Job not found: {row['job_number']}. Certification will import without a job.")
+
+        reviewed_row = {
+            **row,
+            "employee": employee,
+            "subcontractor": subcontractor,
+            "subcontractor_employee": subcontractor_employee,
+            "would_create_subcontractor_employee": would_create_subcontractor_employee,
+            "category": category,
+            "job": job,
+            "errors": row_errors,
+            "warnings": row_warnings,
+        }
+        reviewed_rows.append(reviewed_row)
+        for error in row_errors:
+            errors.append(f"Row {row['row_number']}: {error}")
+        for warning in row_warnings:
+            warnings.append(f"Row {row['row_number']}: {warning}")
+    return reviewed_rows, errors, warnings
+
+
+def _commit_certification_import(reviewed_rows, request_user):
+    current_employee = Employees.objects.filter(user=request_user).first()
+    results = {
+        "certifications_created": 0,
+        "subcontractor_employees_created": 0,
+        "custom_attributes_created": 0,
+        "custom_attributes_updated": 0,
+        "pending_tasks_created": 0,
+        "task_emails_sent": 0,
+        "warnings": [],
+        "created_rows": [],
+    }
+
+    with transaction.atomic():
+        for row in reviewed_rows:
+            subcontractor_employee = row["subcontractor_employee"]
+            if row["subcontractor"] and not subcontractor_employee:
+                subcontractor_employee = Subcontractor_Employees.objects.create(
+                    subcontractor=row["subcontractor"],
+                    name=row["employee_name"],
+                    date_enrolled=date.today(),
+                    is_active=True,
+                )
+                results["subcontractor_employees_created"] += 1
+
+            certification = Certifications.objects.create(
+                category=row["category"],
+                employee=row["employee"],
+                subcontractor=row["subcontractor"],
+                subcontractor_employee=subcontractor_employee,
+                description=row["category"].description if row["category"] else row["category_description"],
+                date_received=row["date_received"],
+                date_expires=row["date_expires"],
+                job=row["job"],
+                note=row["note"],
+            )
+            results["certifications_created"] += 1
+            results["custom_attributes_created"] += _create_standard_certification_custom_attributes(certification)
+            results["custom_attributes_updated"] += _apply_certification_import_custom_attribute_values(
+                certification,
+                row["custom_attribute_values"],
+            )
+
+            if row["note"]:
+                CertificationNotes.objects.create(
+                    certification=certification,
+                    date=date.today(),
+                    user=current_employee or row["employee"] or Employees.objects.filter(user__is_superuser=True).first() or Employees.objects.first(),
+                    note=row["note"],
+                )
+
+            task_result = _create_import_pending_task(
+                certification,
+                current_employee,
+                row["task"],
+                row["task_note"],
+            )
+            if task_result["created"]:
+                results["pending_tasks_created"] += 1
+            if task_result["email_sent"]:
+                results["task_emails_sent"] += 1
+            if task_result["warning"]:
+                results["warnings"].append(f"Row {row['row_number']}: {task_result['warning']}")
+
+            results["created_rows"].append({
+                "row_number": row["row_number"],
+                "certification_id": certification.id,
+                "description": certification.description,
+                "employee_display": (
+                    f"[SUB] {subcontractor_employee}"
+                    if subcontractor_employee
+                    else str(row["employee"])
+                ),
+            })
+
+    return results
 
 
 def _has_employee_toolbox_record(toolbox_talk, employee):
@@ -926,6 +1486,61 @@ def admin_home(request):
     send_data['clockshark_form'] = ClockSharkUploadForm()
     send_data['clockshark_form'] = ToolboxTalksUploadForm()
     return render(request, 'admin_home.html', send_data)
+
+
+@login_required(login_url='/accounts/login')
+def import_certifications(request):
+    send_data = {
+        "reviewed_rows": [],
+        "errors": [],
+        "warnings": [],
+        "import_results": None,
+        "mode": "",
+    }
+
+    if request.method == "POST":
+        uploaded_file = request.FILES.get("certification_file")
+        mode = request.POST.get("import_mode")
+        send_data["mode"] = mode
+
+        if not uploaded_file:
+            messages.error(request, "Please choose a certification import file.")
+            return render(request, "import_certifications.html", send_data)
+
+        try:
+            rows = _certification_import_rows(uploaded_file)
+        except Exception:
+            messages.error(request, "The uploaded file could not be read. Please upload an Excel .xlsx file.")
+            return render(request, "import_certifications.html", send_data)
+
+        if not rows:
+            messages.error(request, "No certification rows were found in the uploaded file.")
+            return render(request, "import_certifications.html", send_data)
+
+        reviewed_rows, errors, warnings = _review_certification_import_rows(rows)
+        send_data.update({
+            "reviewed_rows": reviewed_rows,
+            "errors": errors,
+            "warnings": warnings,
+        })
+
+        if mode == "final":
+            if errors:
+                messages.error(
+                    request,
+                    "Final upload was blocked because one or more employees/subcontractors could not be matched.",
+                )
+                return render(request, "import_certifications.html", send_data)
+
+            import_results = _commit_certification_import(reviewed_rows, request.user)
+            send_data["import_results"] = import_results
+            send_data["warnings"] = warnings + import_results["warnings"]
+            messages.success(request, f"Imported {import_results['certifications_created']} certification(s).")
+        else:
+            messages.info(request, "Test complete. No certifications were created.")
+
+    return render(request, "import_certifications.html", send_data)
+
 
 def base(request):
     current_user = request.user

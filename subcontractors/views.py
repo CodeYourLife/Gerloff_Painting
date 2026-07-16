@@ -6,7 +6,16 @@ from changeorder.views import link_callback
 from datetime import datetime,date
 from decimal import Decimal, InvalidOperation
 from django.core.serializers.json import DjangoJSONEncoder
-from employees.views import get_scheduled_toolbox_folder, get_uploaded_toolbox_file
+from employees.views import (
+    _certification_display_description,
+    _certification_files_folder,
+    _certification_upload_filename,
+    _create_standard_certification_custom_attributes,
+    _custom_attribute_by_normalized_name,
+    _custom_attribute_values_by_certification,
+    get_scheduled_toolbox_folder,
+    get_uploaded_toolbox_file,
+)
 from wallcovering.models import Wallcovering, OrderItems
 from subcontractors.models import *
 from jobs.models import *
@@ -62,6 +71,10 @@ def _create_sub_resp_note(request, clearance, note):
         subcontractor_employee=clearance.employee if not request.user.is_authenticated else None,
         note=note
     )
+
+
+def _subcontractor_portal_certification_note_user():
+    return Employees.objects.filter(user__is_superuser=True).first() or Employees.objects.first()
 
 
 def _close_previous_subcontractor_respirator_clearances(request, clearance):
@@ -5053,6 +5066,158 @@ def subcontractor_employee_management(request, sub_id):
             messages.warning(request, "Task marked complete, but the email could not be sent.")
         return redirect("subcontractor_employee_management", sub_id=subcontractor.id)
 
+    if request.method == "POST" and "report_missing_dbids_clearances" in request.POST:
+        selected_sub_employee = get_object_or_404(
+            Subcontractor_Employees,
+            id=request.POST.get("subcontractor_employee_id"),
+            subcontractor=subcontractor,
+            is_active=True,
+        )
+        missing_note = (request.POST.get("missing_dbids_clearances_note") or "").strip()
+        if not missing_note:
+            messages.error(request, "Please enter what is missing.")
+            return redirect("subcontractor_employee_management", sub_id=subcontractor.id)
+
+        email_body = (
+            f"{selected_sub_employee.name} reported missing DBIDs cards or base clearances.\n\n"
+            f"Subcontractor: {subcontractor.company}\n\n"
+            f"Notes:\n{missing_note}"
+        )
+        sender = selected_sub_employee.email or "bridgette@gerloffpainting.com"
+        try:
+            Email.sendEmail(
+                "Missing DBIDs Cards or Base Clearances",
+                email_body,
+                ["bridgette@gerloffpainting.com"],
+                False,
+                sender,
+            )
+            messages.success(request, "The missing DBIDs/base clearance note was sent to Bridgette.")
+        except Exception:
+            messages.warning(request, "The note was saved, but the email could not be sent.")
+        return redirect("subcontractor_employee_management", sub_id=subcontractor.id)
+
+    if request.method == "POST" and "submit_dbids_base_access" in request.POST:
+        certification = get_object_or_404(
+            Certifications.objects.select_related(
+                "subcontractor_employee",
+                "category",
+                "category__template",
+            ),
+            id=request.POST.get("certification_id"),
+            subcontractor_employee__subcontractor=subcontractor,
+            is_closed=False,
+            category__template__name="DBIDS Base Access",
+        )
+        selected_sub_employee = certification.subcontractor_employee
+        expiration_date_raw = request.POST.get("dbids_expiration_date") or ""
+        has_base_access = request.POST.get("has_base_access") or ""
+        if expiration_date_raw:
+            has_base_access = "Yes"
+
+        if has_base_access not in ("Yes", "No", ""):
+            has_base_access = ""
+
+        if expiration_date_raw:
+            try:
+                certification.date_expires = datetime.datetime.strptime(
+                    expiration_date_raw,
+                    "%Y-%m-%d",
+                ).date()
+                certification.save(update_fields=["date_expires"])
+            except ValueError:
+                messages.error(request, "Please enter a valid expiration date.")
+                return redirect("subcontractor_employee_management", sub_id=subcontractor.id)
+
+        if has_base_access:
+            _create_standard_certification_custom_attributes(certification)
+            access_finalized = _custom_attribute_by_normalized_name(
+                certification,
+                "access_finalized",
+            )
+            if access_finalized:
+                access_finalized.custom_attribute_result = has_base_access
+                access_finalized.save(update_fields=["custom_attribute_result"])
+
+            if has_base_access == "No":
+                CertificationNotes.objects.create(
+                    certification=certification,
+                    date=date.today(),
+                    user=_subcontractor_portal_certification_note_user(),
+                    note=f"{selected_sub_employee.name} - I have no access to this base",
+                )
+
+        email_body = (
+            f"{selected_sub_employee.name} submitted base access information.\n\n"
+            f"Subcontractor: {subcontractor.company}\n"
+            f"Certification: {certification}\n"
+            f"Expiration Date: {expiration_date_raw or 'Not provided'}\n"
+            f"Currently Has Access: {has_base_access or 'Not answered'}"
+        )
+        sender = selected_sub_employee.email or "bridgette@gerloffpainting.com"
+        try:
+            Email.sendEmail(
+                "Subcontractor Base Access Information",
+                email_body,
+                ["bridgette@gerloffpainting.com"],
+                False,
+                sender,
+            )
+            messages.success(request, "Base access information submitted.")
+        except Exception:
+            messages.warning(request, "Base access information was saved, but the email could not be sent.")
+        return redirect("subcontractor_employee_management", sub_id=subcontractor.id)
+
+    if request.method == "POST" and "upload_my_certification_file" in request.POST:
+        certification = get_object_or_404(
+            Certifications.objects.select_related("subcontractor_employee"),
+            id=request.POST.get("certification_id"),
+            subcontractor_employee__subcontractor=subcontractor,
+            is_closed=False,
+        )
+        selected_sub_employee = certification.subcontractor_employee
+        file_description = (request.POST.get("certification_file_description") or "").strip()
+        uploaded_file = request.FILES.get("certification_file")
+
+        if not file_description:
+            messages.error(request, "Please enter a description of the file.")
+            return redirect("subcontractor_employee_management", sub_id=subcontractor.id)
+
+        if not uploaded_file:
+            messages.error(request, "Please choose a file to upload.")
+            return redirect("subcontractor_employee_management", sub_id=subcontractor.id)
+
+        if uploaded_file.size > 25 * 1024 * 1024:
+            messages.error(request, "File is too large. Please upload a file smaller than 25 MB.")
+            return redirect("subcontractor_employee_management", sub_id=subcontractor.id)
+
+        folder = _certification_files_folder(certification.id)
+        os.makedirs(folder, exist_ok=True)
+
+        filename = _certification_upload_filename(uploaded_file, file_description)
+        file_path = os.path.join(folder, filename)
+        duplicate_index = 2
+        while os.path.exists(file_path):
+            filename = _certification_upload_filename(uploaded_file, file_description, duplicate_index)
+            file_path = os.path.join(folder, filename)
+            duplicate_index += 1
+
+        with open(file_path, "wb+") as destination:
+            for chunk in uploaded_file.chunks():
+                destination.write(chunk)
+
+        CertificationNotes.objects.create(
+            certification=certification,
+            date=date.today(),
+            user=_subcontractor_portal_certification_note_user(),
+            note=(
+                f"Subcontractor employee uploaded certification file: {filename}. "
+                f"Employee: {selected_sub_employee.name}. Description: {file_description}"
+            ),
+        )
+        messages.success(request, "Certification file uploaded.")
+        return redirect("subcontractor_employee_management", sub_id=subcontractor.id)
+
     employees = Subcontractor_Employees.objects.filter(
         subcontractor=subcontractor,is_active=True
     ).order_by('name')
@@ -5264,7 +5429,7 @@ def subcontractor_employee_management(request, sub_id):
 
     send_data['job_assignment_rows'] = job_assignment_rows
     send_data['other_subcontract_job_rows'] = other_subcontract_job_rows
-    send_data['pending_employee_tasks'] = (
+    pending_employee_tasks = list(
         EmployeePendingActions.objects
         .filter(
             subcontractor_employee__subcontractor=subcontractor,
@@ -5278,7 +5443,79 @@ def subcontractor_employee_management(request, sub_id):
         )
         .order_by("subcontractor_employee__name", "date", "id")
     )
-    send_data['pending_employee_tasks_count'] = send_data['pending_employee_tasks'].count()
+    send_data['pending_employee_tasks'] = pending_employee_tasks
+    send_data['pending_employee_tasks_count'] = len(pending_employee_tasks)
+
+    certifications = list(
+        Certifications.objects.filter(
+            subcontractor_employee_id__in=employee_ids,
+            is_closed=False,
+        ).select_related(
+            "subcontractor_employee",
+            "category",
+            "category__template",
+        ).order_by(
+            "subcontractor_employee__name",
+            "date_expires",
+            "description",
+            "id",
+        )
+    )
+    certification_custom_attribute_values = _custom_attribute_values_by_certification(
+        [certification.id for certification in certifications]
+    )
+    pending_actions_by_certification = {}
+    for pending_action in pending_employee_tasks:
+        if pending_action.certification_id:
+            pending_actions_by_certification.setdefault(
+                pending_action.certification_id,
+                [],
+            ).append(pending_action)
+
+    certifications_by_employee = {}
+    for certification in certifications:
+        certification.display_description = _certification_display_description(
+            certification,
+            certification_custom_attribute_values,
+        )
+        certification.pending_actions = pending_actions_by_certification.get(certification.id, [])
+        certification.is_dbids_base_access = bool(
+            certification.category and
+            certification.category.template and
+            certification.category.template.name == "DBIDS Base Access"
+        )
+        certification.current_base_access = ""
+        certification.needs_base_access_response = False
+        if certification.is_dbids_base_access:
+            certification.current_base_access = (
+                certification_custom_attribute_values.get(
+                    certification.id,
+                    {},
+                ).get(
+                    "access_finalized",
+                    "",
+                )
+            )
+            certification.needs_base_access_response = (
+                certification.current_base_access or ""
+            ).strip().lower() != "yes"
+        certifications_by_employee.setdefault(
+            certification.subcontractor_employee_id,
+            [],
+        ).append(certification)
+
+    certification_employee_rows = []
+    for emp in employees:
+        employee_certifications = certifications_by_employee.get(emp.id, [])
+        if employee_certifications:
+            certification_employee_rows.append({
+                "employee": emp,
+                "certifications": employee_certifications,
+                "count": len(employee_certifications),
+            })
+
+    send_data["certification_employee_rows"] = certification_employee_rows
+    send_data["all_certifications_count"] = len(certifications)
 
 
     send_data['employees'] = employee_rows
@@ -5585,6 +5822,146 @@ def subcontractor_employee_portal(request, employee_id):
             messages.warning(request, "Task marked complete, but the email could not be sent.")
         return redirect("subcontractor_employee_portal", employee_id=selected_employee.id)
 
+    if request.method == "POST" and "report_missing_dbids_clearances" in request.POST:
+        missing_note = (request.POST.get("missing_dbids_clearances_note") or "").strip()
+        if not missing_note:
+            messages.error(request, "Please enter what is missing.")
+            return redirect("subcontractor_employee_portal", employee_id=selected_employee.id)
+
+        email_body = (
+            f"{selected_employee.name} reported missing DBIDs cards or base clearances.\n\n"
+            f"Subcontractor: {subcontractor.company}\n\n"
+            f"Notes:\n{missing_note}"
+        )
+        sender = selected_employee.email or "bridgette@gerloffpainting.com"
+        try:
+            Email.sendEmail(
+                "Missing DBIDs Cards or Base Clearances",
+                email_body,
+                ["bridgette@gerloffpainting.com"],
+                False,
+                sender,
+            )
+            messages.success(request, "Your note was sent to Bridgette.")
+        except Exception:
+            messages.warning(request, "Your note was saved, but the email could not be sent.")
+        return redirect("subcontractor_employee_portal", employee_id=selected_employee.id)
+
+    if request.method == "POST" and "submit_dbids_base_access" in request.POST:
+        certification = get_object_or_404(
+            Certifications.objects.select_related("category", "category__template"),
+            id=request.POST.get("certification_id"),
+            subcontractor_employee=selected_employee,
+            is_closed=False,
+            category__template__name="DBIDS Base Access",
+        )
+        expiration_date_raw = request.POST.get("dbids_expiration_date") or ""
+        has_base_access = request.POST.get("has_base_access") or ""
+        if expiration_date_raw:
+            has_base_access = "Yes"
+
+        if has_base_access not in ("Yes", "No", ""):
+            has_base_access = ""
+
+        if expiration_date_raw:
+            try:
+                certification.date_expires = datetime.datetime.strptime(
+                    expiration_date_raw,
+                    "%Y-%m-%d",
+                ).date()
+                certification.save(update_fields=["date_expires"])
+            except ValueError:
+                messages.error(request, "Please enter a valid expiration date.")
+                return redirect("subcontractor_employee_portal", employee_id=selected_employee.id)
+
+        if has_base_access:
+            _create_standard_certification_custom_attributes(certification)
+            access_finalized = _custom_attribute_by_normalized_name(
+                certification,
+                "access_finalized",
+            )
+            if access_finalized:
+                access_finalized.custom_attribute_result = has_base_access
+                access_finalized.save(update_fields=["custom_attribute_result"])
+
+            if has_base_access == "No":
+                CertificationNotes.objects.create(
+                    certification=certification,
+                    date=date.today(),
+                    user=_subcontractor_portal_certification_note_user(),
+                    note=f"{selected_employee.name} - I have no access to this base",
+                )
+
+        email_body = (
+            f"{selected_employee.name} submitted base access information.\n\n"
+            f"Subcontractor: {subcontractor.company}\n"
+            f"Certification: {certification}\n"
+            f"Expiration Date: {expiration_date_raw or 'Not provided'}\n"
+            f"Currently Has Access: {has_base_access or 'Not answered'}"
+        )
+        sender = selected_employee.email or "bridgette@gerloffpainting.com"
+        try:
+            Email.sendEmail(
+                "Subcontractor Base Access Information",
+                email_body,
+                ["bridgette@gerloffpainting.com"],
+                False,
+                sender,
+            )
+            messages.success(request, "Base access information submitted.")
+        except Exception:
+            messages.warning(request, "Base access information was saved, but the email could not be sent.")
+        return redirect("subcontractor_employee_portal", employee_id=selected_employee.id)
+
+    if request.method == "POST" and "upload_my_certification_file" in request.POST:
+        certification = get_object_or_404(
+            Certifications,
+            id=request.POST.get("certification_id"),
+            subcontractor_employee=selected_employee,
+            is_closed=False,
+        )
+        file_description = (request.POST.get("certification_file_description") or "").strip()
+        uploaded_file = request.FILES.get("certification_file")
+
+        if not file_description:
+            messages.error(request, "Please enter a description of the file.")
+            return redirect("subcontractor_employee_portal", employee_id=selected_employee.id)
+
+        if not uploaded_file:
+            messages.error(request, "Please choose a file to upload.")
+            return redirect("subcontractor_employee_portal", employee_id=selected_employee.id)
+
+        if uploaded_file.size > 25 * 1024 * 1024:
+            messages.error(request, "File is too large. Please upload a file smaller than 25 MB.")
+            return redirect("subcontractor_employee_portal", employee_id=selected_employee.id)
+
+        folder = _certification_files_folder(certification.id)
+        os.makedirs(folder, exist_ok=True)
+
+        filename = _certification_upload_filename(uploaded_file, file_description)
+        file_path = os.path.join(folder, filename)
+        duplicate_index = 2
+        while os.path.exists(file_path):
+            filename = _certification_upload_filename(uploaded_file, file_description, duplicate_index)
+            file_path = os.path.join(folder, filename)
+            duplicate_index += 1
+
+        with open(file_path, "wb+") as destination:
+            for chunk in uploaded_file.chunks():
+                destination.write(chunk)
+
+        CertificationNotes.objects.create(
+            certification=certification,
+            date=date.today(),
+            user=_subcontractor_portal_certification_note_user(),
+            note=(
+                f"Subcontractor employee uploaded certification file: {filename}. "
+                f"Employee: {selected_employee.name}. Description: {file_description}"
+            ),
+        )
+        messages.success(request, "Certification file uploaded.")
+        return redirect("subcontractor_employee_portal", employee_id=selected_employee.id)
+
     if request.method == "POST" and request.POST.get("start_employee_resp_clearance"):
         selected_language = (
             request.POST.get("language")
@@ -5680,6 +6057,60 @@ def subcontractor_employee_portal(request, employee_id):
     )
     send_data["pending_actions"] = pending_actions
     send_data["pending_actions_count"] = pending_actions.count()
+
+    certifications = list(
+        Certifications.objects.filter(
+            subcontractor_employee=selected_employee,
+            is_closed=False,
+        ).select_related(
+            "category",
+            "category__template",
+        ).order_by(
+            "date_expires",
+            "description",
+            "id",
+        )
+    )
+    certification_custom_attribute_values = _custom_attribute_values_by_certification(
+        [certification.id for certification in certifications]
+    )
+    pending_actions_by_certification = {}
+    for pending_action in pending_actions:
+        if pending_action.certification_id:
+            pending_actions_by_certification.setdefault(
+                pending_action.certification_id,
+                [],
+            ).append(pending_action)
+
+    for certification in certifications:
+        certification.display_description = _certification_display_description(
+            certification,
+            certification_custom_attribute_values,
+        )
+        certification.pending_actions = pending_actions_by_certification.get(certification.id, [])
+        certification.is_dbids_base_access = bool(
+            certification.category and
+            certification.category.template and
+            certification.category.template.name == "DBIDS Base Access"
+        )
+        certification.current_base_access = ""
+        certification.needs_base_access_response = False
+        if certification.is_dbids_base_access:
+            certification.current_base_access = (
+                certification_custom_attribute_values.get(
+                    certification.id,
+                    {},
+                ).get(
+                    "access_finalized",
+                    "",
+                )
+            )
+            certification.needs_base_access_response = (
+                certification.current_base_access or ""
+            ).strip().lower() != "yes"
+
+    send_data["certifications"] = certifications
+    send_data["certifications_count"] = len(certifications)
 
     # Toolbox talks
     group_toolbox_talks = []

@@ -570,9 +570,9 @@
                             </thead>
                             <tbody>
                                 {% for cert in open_certifications %}
-                                    <tr onclick="window.location.href='{% url 'certifications' cert.id %}'"
-                                        style="cursor:pointer;">
-                                        <td>{{ cert.description|default:cert.category }}</td>
+                                    <tr {% if user.is_authenticated and user.is_active %}onclick="window.location.href='{% url 'certifications' cert.id %}'"
+                                        style="cursor:pointer;"{% endif %}>
+                                        <td>{{ cert.display_description|default:cert.description }}</td>
                                         <td>{{ cert.date_received|date:"m/d/Y" }}</td>
                                         <td>{{ cert.date_expires|date:"m/d/Y" }}</td>
                                     </tr>
