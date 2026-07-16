@@ -146,12 +146,25 @@
                 <h4 class="mb-0">{% if selected_item.category %}{{ selected_item.category }}{% else %}{{ selected_item.description }}{% endif %}</h4>
                 <div class="small">{{ selected_item.owner_display }}</div>
             </div>
-            <button type="button"
-                    class="btn btn-light btn-sm mt-2 mt-md-0"
-                    data-toggle="modal"
-                    data-target="#editCertificationInfoModal">
-                Edit Info
-            </button>
+            <div class="d-flex flex-wrap align-items-center mt-2 mt-md-0">
+                <button type="button"
+                        class="btn btn-light btn-sm mr-2 mb-2 mb-md-0"
+                        data-toggle="modal"
+                        data-target="#editCertificationInfoModal">
+                    Edit Info
+                </button>
+                {% if selected_employee_url %}
+                    <a href="{{ selected_employee_url }}"
+                       class="btn btn-outline-light btn-sm mr-2 mb-2 mb-md-0">
+                        Goto Employee Page
+                    </a>
+                {% endif %}
+                <button type="button"
+                        class="btn btn-outline-light btn-sm"
+                        onclick="window.scrollTo({ top: 0, behavior: 'smooth' });">
+                    Go Back to All Certifications
+                </button>
+            </div>
         </div>
 
         <div class="card-body">

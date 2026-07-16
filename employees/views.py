@@ -3810,6 +3810,15 @@ def certifications(request, id):
     if id != 'ALL':
         selected_cert = Certifications.objects.get(id=id)
         send_data['selected_item'] = selected_cert
+        if selected_cert.employee_id:
+            send_data['selected_employee_url'] = reverse("employees_page", args=[selected_cert.employee_id])
+        elif selected_cert.subcontractor_employee_id:
+            send_data['selected_employee_url'] = reverse(
+                "subcontractor_employee_page",
+                args=[selected_cert.subcontractor_employee_id],
+            )
+        else:
+            send_data['selected_employee_url'] = ""
         send_data['notes2'] = CertificationNotes.objects.filter(certification__id=id)
         send_data['custom_attributes'] = CertificationCustomAttributes.objects.filter(
             certification=selected_cert,
