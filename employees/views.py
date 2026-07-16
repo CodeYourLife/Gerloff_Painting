@@ -4620,6 +4620,41 @@ def certification_categories(request):
             messages.success(request, "Template field deleted.")
             return redirect('certification_categories')
 
+        if 'delete_category' in request.POST:
+            category = get_object_or_404(
+                CertificationCategories,
+                id=request.POST.get("category_id"),
+            )
+            linked_certifications = Certifications.objects.filter(category=category)
+            linked_certification_count = linked_certifications.count()
+            if linked_certification_count and request.POST.get("confirm_delete_category") != "1":
+                messages.error(request, "Please confirm deleting this category before linked certifications are updated.")
+                return redirect('certification_categories')
+
+            with transaction.atomic():
+                linked_certification_ids = list(linked_certifications.values_list("id", flat=True))
+                linked_certifications.update(
+                    description=category.description,
+                    category=None,
+                )
+                if linked_certification_ids:
+                    CertificationCustomAttributes.objects.filter(
+                        certification_id__in=linked_certification_ids,
+                        category=category,
+                    ).update(
+                        category=None,
+                    )
+                category.delete()
+
+            if linked_certification_count:
+                messages.success(
+                    request,
+                    f"Category deleted. {linked_certification_count} linked certification(s) were unlinked and kept the category description.",
+                )
+            else:
+                messages.success(request, "Category deleted.")
+            return redirect('certification_categories')
+
         categories = CertificationCategories.objects.all()
         templates_by_id = {str(template.id): template for template in templates}
 
@@ -4648,12 +4683,28 @@ def certification_categories(request):
         messages.success(request, "Certification categories updated.")
         return redirect('certification_categories')
 
-    send_data = {
-        "categories": CertificationCategories.objects.select_related(
+    categories = list(
+        CertificationCategories.objects.select_related(
             "template",
         ).order_by(
             "description",
-        ),
+        )
+    )
+    linked_certifications_by_category = defaultdict(list)
+    for certification in (
+        Certifications.objects
+        .filter(category__in=categories)
+        .select_related("employee", "subcontractor", "subcontractor_employee", "category")
+        .order_by("category__description", "description", "id")
+    ):
+        linked_certifications_by_category[certification.category_id].append(certification)
+
+    for category in categories:
+        category.linked_certifications = linked_certifications_by_category.get(category.id, [])
+        category.linked_certification_count = len(category.linked_certifications)
+
+    send_data = {
+        "categories": categories,
         "templates": templates,
         "field_type_choices": CategoryTemplateFields.FIELD_TYPE_CHOICES,
     }
