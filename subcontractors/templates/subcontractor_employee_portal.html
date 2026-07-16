@@ -41,6 +41,76 @@
     margin-left: -4px;
     margin-right: -4px;
 }
+
+.my-certification-card {
+    cursor: pointer;
+    border: 1px solid #cfd8e3;
+    border-left: 6px solid #007bff;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    transition: box-shadow .15s ease, transform .15s ease;
+}
+
+.my-certification-card:hover,
+.my-certification-card:focus {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.14);
+    transform: translateY(-1px);
+    outline: none;
+}
+
+.my-certification-card .certification-title {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+.mobile-upload-file-label {
+    display: block;
+    width: 100%;
+    padding: 1rem;
+    border: 2px dashed #007bff;
+    border-radius: 8px;
+    text-align: center;
+    color: #0056b3;
+    cursor: pointer;
+}
+
+.certification-description-error {
+    display: none;
+    color: #dc3545;
+    font-size: .875rem;
+    margin-top: .25rem;
+}
+
+.certification-description-invalid {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 .2rem rgba(220, 53, 69, .25) !important;
+}
+
+.certification-upload-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: rgba(255, 255, 255, .92);
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.certification-upload-overlay.is-visible {
+    display: flex;
+}
+
+.certification-upload-overlay-box {
+    width: 100%;
+    max-width: 320px;
+    padding: 1.5rem;
+    border: 1px solid #cfd8e3;
+    border-radius: 8px;
+    background: #ffffff;
+    text-align: center;
+    font-weight: 700;
+}
 </style>
 {% endblock %}
 
@@ -269,6 +339,87 @@
                                         {% if action.notes %}
                                             <div style="white-space: normal; overflow-wrap: anywhere;">
                                                 {{ action.notes }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if certifications_count %}
+        <div class="card">
+            <div class="card-header" id="headingCertifications">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseCertifications"
+                            aria-expanded="false"
+                            aria-controls="collapseCertifications">
+                        {{ certifications_count }} Certification{{ certifications_count|pluralize }}
+                    </button>
+                </h5>
+            </div>
+            <div id="collapseCertifications" class="collapse" aria-labelledby="headingCertifications" data-parent="#accordion">
+                <div class="card-body">
+                    <div class="alert alert-info py-2">
+                        Click A Certification to Upload Files.
+                    </div>
+                    <div class="mb-3">
+                        <button type="button"
+                                class="btn btn-outline-primary"
+                                data-toggle="modal"
+                                data-target="#missingDbidsClearancesModal">
+                            Click here if you have DBIDs cards or Base Clearances not shown
+                        </button>
+                    </div>
+                    <div class="row">
+                        {% for x in certifications %}
+                            <div class="col-12 col-md-6 col-xl-4 mb-3">
+                                <div class="card h-100 my-certification-card"
+                                     role="button"
+                                     tabindex="0"
+                                     data-toggle="modal"
+                                     data-target="{% if x.is_dbids_base_access %}#dbidsBaseAccessModal{% else %}#uploadMyCertificationFileModal{% endif %}"
+                                     data-certification-id="{{ x.id }}"
+                                     data-certification-name="{{ x.display_description|default:'Certification' }}"
+                                     data-certification-expiration="{{ x.date_expires|date:'Y-m-d' }}"
+                                     data-current-base-access="{{ x.current_base_access|default:'' }}">
+                                    <div class="card-body">
+                                        <h5 class="mb-3 font-weight-bold certification-title">
+                                            {{ x.display_description|default:"Certification" }}
+                                        </h5>
+                                        {% if x.needs_base_access_response %}
+                                            <div class="badge badge-warning mb-3" style="white-space: normal;">
+                                                Click Here If You Already Have Access to this Base
+                                            </div>
+                                        {% endif %}
+
+                                        <div class="mb-2">
+                                            <strong>Date Received:</strong>
+                                            {{ x.date_received|default:"-" }}
+                                        </div>
+
+                                        <div class="mb-2">
+                                            <strong>Date Expires:</strong>
+                                            {{ x.date_expires|default:"-" }}
+                                        </div>
+
+                                        {% if x.pending_actions %}
+                                            <div style="white-space: normal; overflow-wrap: anywhere;">
+                                                <strong>Actions Required:</strong>
+                                                <ul class="mb-0 pl-3">
+                                                    {% for action in x.pending_actions %}
+                                                        <li>
+                                                            {{ action.description }}
+                                                            {% if action.date %}
+                                                                <span class="text-muted">({{ action.date|date:"m/d/Y" }})</span>
+                                                            {% endif %}
+                                                        </li>
+                                                    {% endfor %}
+                                                </ul>
                                             </div>
                                         {% endif %}
                                     </div>
@@ -594,6 +745,171 @@
     </div>
 </div>
 
+<div class="modal fade mobile-cert-upload-modal" id="missingDbidsClearancesModal" tabindex="-1" role="dialog" aria-labelledby="missingDbidsClearancesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'subcontractor_employee_portal' selected_employee.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="missingDbidsClearancesModalLabel">Missing DBIDs Cards or Base Clearances</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group mb-0">
+                        <label for="missing_dbids_clearances_note">What is missing?</label>
+                        <textarea name="missing_dbids_clearances_note"
+                                  id="missing_dbids_clearances_note"
+                                  class="form-control"
+                                  rows="5"
+                                  maxlength="2000"
+                                  required></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit"
+                            name="report_missing_dbids_clearances"
+                            class="btn btn-primary">
+                        Send to Bridgette
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade mobile-cert-upload-modal" id="dbidsBaseAccessModal" tabindex="-1" role="dialog" aria-labelledby="dbidsBaseAccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'subcontractor_employee_portal' selected_employee.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="certification_id" id="dbids_base_access_certification_id">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="dbidsBaseAccessModalLabel">Base Access</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="text-muted small">Certification</div>
+                        <div id="dbids_base_access_certification_name" class="font-weight-bold"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dbids_expiration_date">Expiration Date, if known</label>
+                        <input type="date"
+                               name="dbids_expiration_date"
+                               id="dbids_expiration_date"
+                               class="form-control">
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label for="has_base_access">Do you Currently Have Access To This Base?</label>
+                        <select name="has_base_access"
+                                id="has_base_access"
+                                class="form-control">
+                            <option value="">Please Select</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit"
+                            name="submit_dbids_base_access"
+                            class="btn btn-primary">
+                        Submit
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade mobile-cert-upload-modal" id="uploadMyCertificationFileModal" tabindex="-1" role="dialog" aria-labelledby="uploadMyCertificationFileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'subcontractor_employee_portal' selected_employee.id %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="certification_id" id="my_certification_upload_id">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadMyCertificationFileModalLabel">Upload Certification File</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="text-muted small">Certification</div>
+                        <div id="my_certification_upload_name" class="font-weight-bold"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="my_certification_file_description">File Description</label>
+                        <input type="text"
+                               name="certification_file_description"
+                               id="my_certification_file_description"
+                               class="form-control"
+                               maxlength="120"
+                               required
+                               placeholder="Example: OSHA card front">
+                        <div id="my_certification_file_description_error" class="certification-description-error">
+                            Please enter a description of the file
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="mobile-upload-file-label" for="my_certification_file">
+                            Click to Select File
+                        </label>
+                        <input type="file"
+                               name="certification_file"
+                               id="my_certification_file"
+                               class="d-none"
+                               required
+                               accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.doc,.docx">
+                        <div id="my_certification_file_name" class="small text-muted mt-2"></div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit"
+                            name="upload_my_certification_file"
+                            id="my_certification_upload_submit"
+                            class="btn btn-primary"
+                            style="display:none;">
+                        Upload Now
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="certification_upload_overlay" class="certification-upload-overlay" aria-live="polite" aria-busy="true">
+    <div class="certification-upload-overlay-box">
+        Uploading File
+    </div>
+</div>
+
 <div class="modal fade" id="completePendingActionModal" tabindex="-1" role="dialog" aria-labelledby="completePendingActionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -660,6 +976,121 @@ $('#completePendingActionModal').on('show.bs.modal', function (event) {
     $('#pending_action_certification').text(certification ? 'Certification: ' + certification : '');
     $('#completion_note').val('');
 });
+
+$('#uploadMyCertificationFileModal').on('show.bs.modal', function (event) {
+    const card = $(event.relatedTarget);
+    const certificationId = card.data('certification-id') || '';
+    const certificationName = card.data('certification-name') || 'Certification';
+
+    $('#my_certification_upload_id').val(certificationId);
+    $('#my_certification_upload_name').text(certificationName);
+    $('#my_certification_file_description').val('');
+    $('#my_certification_file_description').removeClass('certification-description-invalid');
+    $('#my_certification_file_description_error').hide();
+    $('#my_certification_file').val('');
+    $('#my_certification_file_name').text('');
+    $('.mobile-upload-file-label[for="my_certification_file"]').show();
+    $('#my_certification_upload_submit').hide();
+});
+
+$('#dbidsBaseAccessModal').on('show.bs.modal', function (event) {
+    const card = $(event.relatedTarget);
+    const certificationId = card.data('certification-id') || '';
+    const certificationName = card.data('certification-name') || 'Certification';
+    const expirationDate = card.data('certification-expiration') || '';
+    const currentBaseAccess = card.data('current-base-access') || '';
+
+    $('#dbids_base_access_certification_id').val(certificationId);
+    $('#dbids_base_access_certification_name').text(certificationName);
+    $('#dbids_expiration_date').val(expirationDate);
+    $('#has_base_access').val(currentBaseAccess);
+});
+
+$('#dbids_expiration_date').on('change input', function () {
+    if ($(this).val()) {
+        $('#has_base_access').val('Yes');
+    }
+});
+
+document.querySelectorAll(".my-certification-card").forEach(function (card) {
+    card.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            card.click();
+        }
+    });
+});
+
+const myCertificationFile = document.getElementById("my_certification_file");
+const myCertificationFileName = document.getElementById("my_certification_file_name");
+const myCertificationDescription = document.getElementById("my_certification_file_description");
+const myCertificationDescriptionError = document.getElementById("my_certification_file_description_error");
+const myCertificationUploadSubmit = document.getElementById("my_certification_upload_submit");
+const myCertificationUploadForm = document.querySelector("#uploadMyCertificationFileModal form");
+const certificationUploadOverlay = document.getElementById("certification_upload_overlay");
+
+function validateMyCertificationDescription(showError) {
+    if (!myCertificationDescription || !myCertificationDescriptionError) {
+        return true;
+    }
+
+    const hasDescription = myCertificationDescription.value.trim().length > 0;
+    if (hasDescription) {
+        myCertificationDescription.classList.remove("certification-description-invalid");
+        myCertificationDescriptionError.style.display = "none";
+        return true;
+    }
+
+    if (showError) {
+        myCertificationDescription.classList.add("certification-description-invalid");
+        myCertificationDescriptionError.style.display = "block";
+        myCertificationDescription.focus();
+    }
+    return false;
+}
+
+if (myCertificationFile && myCertificationFileName) {
+    const myCertificationFileLabel = document.querySelector('.mobile-upload-file-label[for="my_certification_file"]');
+
+    myCertificationFile.addEventListener("change", function () {
+        if (myCertificationFile.files && myCertificationFile.files.length) {
+            myCertificationFileName.textContent = myCertificationFile.files[0].name;
+            if (myCertificationFileLabel) {
+                myCertificationFileLabel.style.display = "none";
+            }
+            if (myCertificationUploadSubmit) {
+                myCertificationUploadSubmit.style.display = "block";
+            }
+        } else {
+            myCertificationFileName.textContent = "";
+            if (myCertificationFileLabel) {
+                myCertificationFileLabel.style.display = "block";
+            }
+            if (myCertificationUploadSubmit) {
+                myCertificationUploadSubmit.style.display = "none";
+            }
+        }
+    });
+}
+
+if (myCertificationDescription) {
+    myCertificationDescription.addEventListener("input", function () {
+        validateMyCertificationDescription(false);
+    });
+}
+
+if (myCertificationUploadForm) {
+    myCertificationUploadForm.addEventListener("submit", function (event) {
+        if (!validateMyCertificationDescription(true)) {
+            event.preventDefault();
+            return;
+        }
+
+        if (certificationUploadOverlay) {
+            certificationUploadOverlay.classList.add("is-visible");
+        }
+    });
+}
 
 function complete_subcontractor_toolbox(scheduled_id) {
     localStorage.setItem("openAccordion", "collapseIndividualToolbox");

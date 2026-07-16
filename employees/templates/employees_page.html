@@ -555,7 +555,7 @@
                                     title="Open certification"
                                     onclick="window.location.href='{% url 'certifications' cert.id %}'"
                                     onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.location.href='{% url 'certifications' cert.id %}'; }">
-                                    <td>{{ cert.description|default:"" }}</td>
+                                    <td>{{ cert.display_description|default:"" }}</td>
                                     <td>{{ cert.date_received|date:"m/d/Y" }}</td>
                                     <td>{{ cert.date_expires|date:"m/d/Y" }}</td>
                                     <td>

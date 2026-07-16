@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'project_styles.css' %}">
+{% endblock %}
+
+{% block content %}
+<nav class="sub-nav navbar navbar-expand-sm navbar-dark bg-dark">
+    <a class="navbar-brand sub-navbar-brand" href="{% url 'admin_home' %}">Admin Page</a>
+    <div id="navbarNavDropdown2">
+        <ul class="sub-nav-list navbar-nav">
+            <li><a class="nav-item nav-link" href="{% url 'admin_home' %}">Home</a></li>
+            <li><a class="nav-item nav-link active" href="{% url 'import_certifications' %}">Import Certifications</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container-fluid mt-3">
+    <h3>Import Certifications</h3>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="certification_file">Certification Excel File</label>
+                    <input type="file"
+                           id="certification_file"
+                           name="certification_file"
+                           class="form-control-file"
+                           accept=".csv,.xlsx,.xlsm"
+                           required>
+                </div>
+                <button type="submit" name="import_mode" value="test" class="btn btn-outline-primary mr-2">
+                    Test Upload
+                </button>
+                <button type="submit"
+                        name="import_mode"
+                        value="final"
+                        class="btn btn-primary"
+                        onclick="return confirm('Run final certification import?');">
+                    Final Upload
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {% if import_results %}
+        <div class="alert alert-success">
+            <strong>Final upload complete.</strong>
+            Created {{ import_results.certifications_created }} certification{{ import_results.certifications_created|pluralize }},
+            {{ import_results.subcontractor_employees_created }} subcontractor employee{{ import_results.subcontractor_employees_created|pluralize }},
+            {{ import_results.custom_attributes_created }} custom attribute{{ import_results.custom_attributes_created|pluralize }},
+            updated {{ import_results.custom_attributes_updated }} custom attribute value{{ import_results.custom_attributes_updated|pluralize }},
+            and {{ import_results.pending_tasks_created }} pending task{{ import_results.pending_tasks_created|pluralize }}.
+        </div>
+    {% endif %}
+
+    {% if errors %}
+        <div class="alert alert-danger">
+            <strong>Blocking issues</strong>
+            <ul class="mb-0">
+                {% for error in errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% if warnings %}
+        <div class="alert alert-warning">
+            <strong>Warnings</strong>
+            <ul class="mb-0">
+                {% for warning in warnings %}
+                    <li>{{ warning }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% if import_results.created_rows %}
+        <div class="card mb-3">
+            <div class="card-header">Created Certifications</div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-striped mb-0">
+                    <thead>
+                    <tr>
+                        <th>Row</th>
+                        <th>Certification</th>
+                        <th>Employee</th>
+                        <th>Description</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for row in import_results.created_rows %}
+                        <tr>
+                            <td>{{ row.row_number }}</td>
+                            <td><a href="{% url 'certifications' row.certification_id %}">{{ row.certification_id }}</a></td>
+                            <td>{{ row.employee_display }}</td>
+                            <td>{{ row.description }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if reviewed_rows %}
+        <div class="card">
+            <div class="card-header">
+                Review Results
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-striped mb-0">
+                    <thead>
+                    <tr>
+                        <th>Row</th>
+                        <th>Employee</th>
+                        <th>Subcontractor</th>
+                        <th>Category / Description</th>
+                        <th>Dates</th>
+                        <th>Custom Fields</th>
+                        <th>Job</th>
+                        <th>Task</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for row in reviewed_rows %}
+                        <tr>
+                            <td>{{ row.row_number }}</td>
+                            <td>
+                                {{ row.employee_name }}
+                                {% if row.employee %}
+                                    <div class="small text-success">Matched employee: {{ row.employee }}</div>
+                                {% endif %}
+                                {% if row.subcontractor_employee %}
+                                    <div class="small text-success">Matched subcontractor employee: {{ row.subcontractor_employee }}</div>
+                                {% elif row.would_create_subcontractor_employee %}
+                                    <div class="small text-info">Will create subcontractor employee</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ row.subcontractor_name }}
+                                {% if row.subcontractor %}
+                                    <div class="small text-success">Matched: {{ row.subcontractor }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ row.category_description }}
+                                {% if row.category %}
+                                    <div class="small text-success">
+                                        Linked category: {{ row.category }}
+                                        {% if row.category.template %} / Template: {{ row.category.template }}{% endif %}
+                                    </div>
+                                {% else %}
+                                    <div class="small text-warning">No linked category</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.date_received %}Start: {{ row.date_received|date:"m/d/Y" }}{% endif %}
+                                {% if row.date_expires %}<div>Expires: {{ row.date_expires|date:"m/d/Y" }}</div>{% endif %}
+                            </td>
+                            <td>
+                                {% for field, value in row.custom_attribute_values.items %}
+                                    <div><strong>{{ field }}:</strong> {{ value }}</div>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {{ row.job_number }}
+                                {% if row.job %}<div class="small text-success">Matched: {{ row.job }}</div>{% endif %}
+                            </td>
+                            <td>{{ row.task }}</td>
+                            <td>
+                                {% if row.errors %}
+                                    <div class="text-danger font-weight-bold">Blocked</div>
+                                    {% for error in row.errors %}
+                                        <div class="small text-danger">{{ error }}</div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-success font-weight-bold">Ready</div>
+                                {% endif %}
+                                {% for warning in row.warnings %}
+                                    <div class="small text-warning">{{ warning }}</div>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

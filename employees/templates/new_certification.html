@@ -73,6 +73,11 @@
                     {% csrf_token %}
 
                     <div class="form-section-title">Certification Details</div>
+                    <div class="mb-3">
+                        <a href="{% url 'certification_categories' %}" class="btn btn-outline-secondary">
+                            View Certification Categories
+                        </a>
+                    </div>
 
                     <div class="form-group">
                         <label for="select_category">Certification Type (Select Existing or Type New)</label>

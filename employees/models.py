@@ -169,6 +169,7 @@ class Employees(models.Model):
             employee=self
         ).select_related(
             "category",
+            "category__template",
             "job"
         ).order_by(
             "is_closed",
@@ -379,10 +380,42 @@ class CertificationCategories(models.Model):
     id = models.BigAutoField(primary_key=True)
     # OSHA30, dbids card, tuburculosis, CRMC, Respirator Clearance
     description = models.CharField(null=True, max_length=200)
+    template = models.ForeignKey(
+        'CategoryTemplates',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="categories",
+    )
     expiration_days = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.description}"
+
+
+class CategoryTemplates(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=200)
+
+    def __str__(self):
+        return f"{self.name}"
+
+
+class CategoryTemplateFields(models.Model):
+    TEXT_FIELD = "text"
+    YES_NO_FIELD = "yes_no"
+    FIELD_TYPE_CHOICES = [
+        (TEXT_FIELD, "Text"),
+        (YES_NO_FIELD, "Yes / No"),
+    ]
+
+    id = models.BigAutoField(primary_key=True)
+    template = models.ForeignKey(CategoryTemplates, on_delete=models.PROTECT, related_name="fields")
+    custom_attribute = models.CharField(max_length=200)
+    field_type = models.CharField(max_length=50, choices=FIELD_TYPE_CHOICES, default=TEXT_FIELD)
+
+    def __str__(self):
+        return f"{self.template} - {self.custom_attribute}"
 
 
 class Certifications(models.Model):
@@ -431,6 +464,19 @@ class Certifications(models.Model):
     def __str__(self):
         return f"{self.category} {self.owner_display}"
 
+
+class CertificationCustomAttributes(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    category = models.ForeignKey(CertificationCategories, on_delete=models.PROTECT, null=True)
+    certification = models.ForeignKey(Certifications, on_delete=models.PROTECT, null=True)
+    template_field = models.ForeignKey(CategoryTemplateFields, on_delete=models.PROTECT, null=True, blank=True)
+    custom_attribute = models.CharField(max_length=200)
+    field_type = models.CharField(
+        max_length=50,
+        choices=CategoryTemplateFields.FIELD_TYPE_CHOICES,
+        default=CategoryTemplateFields.TEXT_FIELD,
+    )
+    custom_attribute_result = models.CharField(max_length=200)
 
 class CertificationNotes(models.Model):
     id = models.BigAutoField(primary_key=True)
