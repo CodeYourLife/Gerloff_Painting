@@ -452,7 +452,7 @@
 {% endif %}
 
 {% block content %}
-
+<!--ignore-->
 <div style="width: 100%; text-align:center; margin-top: 5px;"><h4>{{employee}}'s Page</h4></div>
 <!--{{employee.}}-->
 <div id="accordion">
@@ -3148,41 +3148,6 @@ $('#show_completion_note_button').on('click', function () {
     $('#submit_completion_button').show();
     $('#completion_note').focus();
     $(this).hide();
-});
-
-$('#uploadMyCertificationFileModal').on('show.bs.modal', function (event) {
-    const card = $(event.relatedTarget);
-    const certificationId = card.data('certification-id') || '';
-    const certificationName = card.data('certification-name') || 'Certification';
-
-    $('#my_certification_upload_id').val(certificationId);
-    $('#my_certification_upload_name').text(certificationName);
-    $('#my_certification_file_description').val('');
-    $('#my_certification_file_description').removeClass('certification-description-invalid');
-    $('#my_certification_file_description_error').hide();
-    $('#my_certification_file').val('');
-    $('#my_certification_file_name').text('');
-    $('.mobile-upload-file-label[for="my_certification_file"]').show();
-    $('#my_certification_upload_submit').hide();
-});
-
-$('#dbidsBaseAccessModal').on('show.bs.modal', function (event) {
-    const card = $(event.relatedTarget);
-    const certificationId = card.data('certification-id') || '';
-    const certificationName = card.data('certification-name') || 'Certification';
-    const expirationDate = card.data('certification-expiration') || '';
-    const currentBaseAccess = card.data('current-base-access') || '';
-
-    $('#dbids_base_access_certification_id').val(certificationId);
-    $('#dbids_base_access_certification_name').text(certificationName);
-    $('#dbids_expiration_date').val(expirationDate);
-    $('#has_base_access').val(currentBaseAccess);
-});
-
-$('#dbids_expiration_date').on('change input', function () {
-    if ($(this).val()) {
-        $('#has_base_access').val('Yes');
-    }
 });
 
 $('#uploadMyCertificationFileModal').on('show.bs.modal', function (event) {
