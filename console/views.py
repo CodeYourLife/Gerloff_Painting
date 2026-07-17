@@ -15,13 +15,15 @@ from django.views.decorators.cache import never_cache
 from django.contrib.auth.models import User, auth
 from django.db import transaction
 from django.db.models import Max
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.utils import timezone
 from employees.forms import SiriusUploadForm,ClockSharkUploadForm, ToolboxTalksUploadForm
 from employees.models import *
 from employees.views import (
+    _apply_certification_display_descriptions,
     _create_standard_certification_custom_attributes,
     get_respirators_in_review,
     get_scheduled_toolbox_folder,
@@ -691,7 +693,34 @@ def _certification_options_for_pending_task(task):
     if task.certification and task.certification_id not in {cert.id for cert in certifications}:
         certifications.append(task.certification)
 
+    _apply_certification_display_descriptions(certifications)
+    if task.certification:
+        for certification in certifications:
+            if certification.id == task.certification_id:
+                task.certification.display_description = certification.display_description
+                break
     return certifications
+
+
+def _set_pending_task_certification(pending_task, certification_id):
+    if certification_id:
+        certification = get_object_or_404(
+            Certifications.objects.select_related("category"),
+            id=certification_id,
+        )
+        if certification.is_closed and certification.id != pending_task.certification_id:
+            return "That certification is closed and cannot be linked to this task."
+        if pending_task.employee_id and certification.employee_id != pending_task.employee_id:
+            return "That certification is not linked to this employee."
+        if (
+            pending_task.subcontractor_employee_id and
+            certification.subcontractor_employee_id != pending_task.subcontractor_employee_id
+        ):
+            return "That certification is not linked to this subcontractor employee."
+        pending_task.certification = certification
+    else:
+        pending_task.certification = None
+    return ""
 
 
 def _expired_flagged_certification_queryset():
@@ -1247,6 +1276,56 @@ def index(request):
 
 @login_required(login_url='/accounts/login')
 def pending_employee_tasks(request):
+    if request.method == "POST" and "add_pending_task_note" in request.POST:
+        pending_task = get_object_or_404(
+            _pending_employee_task_queryset(),
+            id=request.POST.get("pending_task_id"),
+        )
+        note = (request.POST.get(f"pending_task_note_{pending_task.id}") or "").strip()
+        certification_error = _set_pending_task_certification(
+            pending_task,
+            request.POST.get("certification_id"),
+        )
+        if certification_error:
+            messages.error(request, certification_error)
+            return redirect("pending_employee_tasks")
+        if not note:
+            messages.error(request, "Enter a note before submitting.")
+            return redirect("pending_employee_tasks")
+
+        current_employee = Employees.objects.filter(user=request.user).first()
+        note_prefix = date.today().strftime('%m/%d/%Y')
+        if current_employee:
+            note_prefix += f" - {current_employee.first_name}"
+        else:
+            note_prefix += f" - {request.user.get_full_name() or request.user.username}"
+        pending_task.notes = (
+            (pending_task.notes + "\n") if pending_task.notes else ""
+        ) + f"{note_prefix}: {note}"
+        pending_task.save(update_fields=["certification", "notes"])
+        messages.success(request, "Task note added.")
+        return redirect("pending_employee_tasks")
+
+    if request.method == "POST" and "delete_pending_task" in request.POST:
+        pending_task = get_object_or_404(
+            _pending_employee_task_queryset(),
+            id=request.POST.get("pending_task_id"),
+        )
+        current_employee = Employees.objects.filter(user=request.user).first()
+        if pending_task.certification:
+            CertificationNotes.objects.create(
+                certification=pending_task.certification,
+                date=date.today(),
+                user=current_employee or pending_task.employee or Employees.objects.filter(user__is_superuser=True).first() or Employees.objects.first(),
+                note=(
+                    f"Pending employee task deleted for {pending_task.assignee_display}: "
+                    f"{pending_task.description}"
+                ),
+            )
+        pending_task.delete()
+        messages.success(request, "Pending employee task deleted.")
+        return redirect("pending_employee_tasks")
+
     if request.method == "POST" and "complete_pending_task" in request.POST:
         pending_task = get_object_or_404(
             _pending_employee_task_queryset(),
@@ -1256,26 +1335,10 @@ def pending_employee_tasks(request):
         completion_note = (request.POST.get("completion_note") or "").strip()
         current_employee = Employees.objects.filter(user=request.user).first()
 
-        if certification_id:
-            certification = get_object_or_404(
-                Certifications,
-                id=certification_id,
-            )
-            if certification.is_closed and certification.id != pending_task.certification_id:
-                messages.error(request, "That certification is closed and cannot be linked to this task.")
-                return redirect("pending_employee_tasks")
-            if pending_task.employee_id and certification.employee_id != pending_task.employee_id:
-                messages.error(request, "That certification is not linked to this employee.")
-                return redirect("pending_employee_tasks")
-            if (
-                pending_task.subcontractor_employee_id and
-                certification.subcontractor_employee_id != pending_task.subcontractor_employee_id
-            ):
-                messages.error(request, "That certification is not linked to this subcontractor employee.")
-                return redirect("pending_employee_tasks")
-            pending_task.certification = certification
-        else:
-            pending_task.certification = None
+        certification_error = _set_pending_task_certification(pending_task, certification_id)
+        if certification_error:
+            messages.error(request, certification_error)
+            return redirect("pending_employee_tasks")
 
         completed_by = current_employee.first_name if current_employee else request.user.get_full_name() or request.user.username
         note_prefix = f"{date.today().strftime('%m/%d/%Y')} - {completed_by}: Completed task."
@@ -1310,6 +1373,39 @@ def pending_employee_tasks(request):
     return render(request, 'pending_employee_tasks.html', {
         "pending_tasks": pending_tasks,
         "pending_tasks_count": len(pending_tasks),
+    })
+
+
+@login_required(login_url='/accounts/login')
+def update_pending_employee_task_certification(request):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "Invalid request."}, status=405)
+
+    pending_task = get_object_or_404(
+        _pending_employee_task_queryset(),
+        id=request.POST.get("pending_task_id"),
+    )
+    certification_error = _set_pending_task_certification(
+        pending_task,
+        request.POST.get("certification_id"),
+    )
+    if certification_error:
+        return JsonResponse({"success": False, "message": certification_error}, status=400)
+
+    pending_task.save(update_fields=["certification"])
+    if pending_task.certification:
+        _apply_certification_display_descriptions([pending_task.certification])
+        certification_display = pending_task.certification.display_description
+        certification_url = reverse("certifications", args=[pending_task.certification.id])
+    else:
+        certification_display = ""
+        certification_url = ""
+
+    return JsonResponse({
+        "success": True,
+        "certification_id": pending_task.certification_id,
+        "certification_display": certification_display,
+        "certification_url": certification_url,
     })
 
 

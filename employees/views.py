@@ -339,6 +339,18 @@ def _certification_display_description(certification, custom_attribute_values):
     )
 
 
+def _apply_certification_display_descriptions(certifications):
+    custom_attribute_values = _custom_attribute_values_by_certification(
+        [certification.id for certification in certifications]
+    )
+    for certification in certifications:
+        certification.display_description = _certification_display_description(
+            certification,
+            custom_attribute_values,
+        )
+    return certifications
+
+
 def _certification_filter_description(display_description):
     return re.sub(r"\s*\[[^\]]*\]\s*", " ", str(display_description or "")).strip()
 
@@ -1868,6 +1880,20 @@ def subcontractor_employee_page(request, id):
             is_complete=False,
         )
         completion_note = (request.POST.get("completion_note") or "").strip()
+        if request.user.is_authenticated and request.user.is_active:
+            certification_id = request.POST.get("certification_id")
+            if certification_id:
+                certification = get_object_or_404(
+                    Certifications,
+                    id=certification_id,
+                    subcontractor_employee=sub_employee,
+                )
+                if certification.is_closed and certification.id != pending_action.certification_id:
+                    messages.error(request, "That certification is closed and cannot be linked to this task.")
+                    return redirect("subcontractor_employee_page", id=sub_employee.id)
+                pending_action.certification = certification
+            else:
+                pending_action.certification = None
         current_employee = None
         if request.user.is_authenticated:
             current_employee = Employees.objects.filter(user=request.user).first()
@@ -1883,7 +1909,8 @@ def subcontractor_employee_page(request, id):
         else:
             pending_action.notes = note_prefix
         pending_action.is_complete = True
-        pending_action.save(update_fields=["notes", "is_complete"])
+        pending_action.confirmed_is_complete = bool(request.user.is_authenticated and request.user.is_active)
+        pending_action.save(update_fields=["certification", "notes", "is_complete", "confirmed_is_complete"])
 
         email_body = (
             f"{sub_employee.name} completed a required task.\n\n"
@@ -1908,6 +1935,78 @@ def subcontractor_employee_page(request, id):
             messages.success(request, "Task marked complete.")
         except Exception:
             messages.warning(request, "Task marked complete, but the email could not be sent.")
+        return redirect("subcontractor_employee_page", id=sub_employee.id)
+
+    if request.method == "POST" and "add_pending_action_note" in request.POST:
+        pending_action = get_object_or_404(
+            EmployeePendingActions,
+            id=request.POST.get("pending_action_id"),
+            subcontractor_employee=sub_employee,
+            is_complete=False,
+        )
+        note_text = (request.POST.get(f"pending_action_note_{pending_action.id}") or "").strip()
+        if not note_text:
+            messages.error(request, "Please enter a note before adding it.")
+            return redirect("subcontractor_employee_page", id=sub_employee.id)
+
+        if request.user.is_authenticated and request.user.is_active:
+            certification_id = request.POST.get("certification_id")
+            if certification_id:
+                certification = get_object_or_404(
+                    Certifications,
+                    id=certification_id,
+                    subcontractor_employee=sub_employee,
+                )
+                if certification.is_closed and certification.id != pending_action.certification_id:
+                    messages.error(request, "That certification is closed and cannot be linked to this task.")
+                    return redirect("subcontractor_employee_page", id=sub_employee.id)
+                pending_action.certification = certification
+            else:
+                pending_action.certification = None
+
+        current_employee = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+        note_name = current_employee.first_name if current_employee else sub_employee.name
+        pending_action.notes = (
+            (pending_action.notes + "\n") if pending_action.notes else ""
+        ) + f"{date.today().strftime('%m/%d/%Y')} - {note_name}: {note_text}"
+        pending_action.save(update_fields=["certification", "notes"])
+        if not request.user.is_authenticated or not request.user.is_active:
+            try:
+                _send_required_task_note_email(
+                    pending_action,
+                    note_text,
+                    note_name,
+                    "subcontractor_employee_page",
+                    getattr(sub_employee, "email", None),
+                )
+            except Exception:
+                messages.warning(request, "Task note added, but the email could not be sent.")
+                return redirect("subcontractor_employee_page", id=sub_employee.id)
+        messages.success(request, "Task note added.")
+        return redirect("subcontractor_employee_page", id=sub_employee.id)
+
+    if request.method == "POST" and "delete_pending_action" in request.POST:
+        if not request.user.is_authenticated or not request.user.is_active:
+            messages.error(request, "You must be logged in to delete a task.")
+            return redirect("subcontractor_employee_page", id=sub_employee.id)
+        pending_action = get_object_or_404(
+            EmployeePendingActions,
+            id=request.POST.get("pending_action_id"),
+            subcontractor_employee=sub_employee,
+        )
+        current_employee = Employees.objects.filter(user=request.user).first()
+        if pending_action.certification:
+            CertificationNotes.objects.create(
+                certification=pending_action.certification,
+                date=date.today(),
+                user=current_employee or Employees.objects.filter(user__is_superuser=True).first() or Employees.objects.first(),
+                note=(
+                    f"Pending employee task deleted for {pending_action.assignee_display}: "
+                    f"{pending_action.description}"
+                ),
+            )
+        pending_action.delete()
+        messages.success(request, "Pending employee task deleted.")
         return redirect("subcontractor_employee_page", id=sub_employee.id)
 
     toolbox_summary = _sub_employee_toolbox_summary(sub_employee)
@@ -2139,6 +2238,249 @@ def toggle_subcontractor_delegation(request, sub_id):
 
     return redirect('employees_home')
 
+
+def _certification_options_for_employee_pending_action(action, employee):
+    certifications = list(
+        Certifications.objects
+        .filter(employee=employee, is_closed=False)
+        .select_related("category", "job")
+        .order_by("category__description", "description", "-date_received", "id")
+    )
+
+    if action.certification and action.certification_id not in {cert.id for cert in certifications}:
+        certifications.append(action.certification)
+
+    _apply_certification_display_descriptions(certifications)
+    if action.certification:
+        for certification in certifications:
+            if certification.id == action.certification_id:
+                action.certification.display_description = certification.display_description
+                break
+    return certifications
+
+
+def _set_employee_pending_action_certification(pending_action, certification_id, employee):
+    if certification_id:
+        certification = get_object_or_404(
+            Certifications.objects.select_related("category"),
+            id=certification_id,
+        )
+        if certification.is_closed and certification.id != pending_action.certification_id:
+            return "That certification is closed and cannot be linked to this task."
+        if certification.employee_id != employee.id:
+            return "That certification is not linked to this employee."
+        pending_action.certification = certification
+    else:
+        pending_action.certification = None
+    return ""
+
+
+def _certification_options_for_pending_action(action):
+    if action.employee_id:
+        certifications = list(
+            Certifications.objects
+            .filter(employee_id=action.employee_id, is_closed=False)
+            .select_related("category", "job")
+            .order_by("category__description", "description", "-date_received", "id")
+        )
+    elif action.subcontractor_employee_id:
+        certifications = list(
+            Certifications.objects
+            .filter(subcontractor_employee_id=action.subcontractor_employee_id, is_closed=False)
+            .select_related("category", "job")
+            .order_by("category__description", "description", "-date_received", "id")
+        )
+    else:
+        certifications = []
+
+    if action.certification and action.certification_id not in {cert.id for cert in certifications}:
+        certifications.append(action.certification)
+
+    _apply_certification_display_descriptions(certifications)
+    if action.certification:
+        for certification in certifications:
+            if certification.id == action.certification_id:
+                action.certification.display_description = certification.display_description
+                break
+    return certifications
+
+
+def _set_pending_action_certification(pending_action, certification_id):
+    if not certification_id:
+        pending_action.certification = None
+        return ""
+
+    certification = get_object_or_404(
+        Certifications.objects.select_related("category"),
+        id=certification_id,
+    )
+    if certification.is_closed and certification.id != pending_action.certification_id:
+        return "That certification is closed and cannot be linked to this task."
+    if pending_action.employee_id and certification.employee_id != pending_action.employee_id:
+        return "That certification is not linked to this employee."
+    if (
+        pending_action.subcontractor_employee_id and
+        certification.subcontractor_employee_id != pending_action.subcontractor_employee_id
+    ):
+        return "That certification is not linked to this subcontractor employee."
+    if not pending_action.employee_id and not pending_action.subcontractor_employee_id:
+        return "That task is not linked to an employee."
+
+    pending_action.certification = certification
+    return ""
+
+
+def _send_required_task_note_email(pending_action, note_text, note_author, source_label, sender_email=None):
+    sender = sender_email or "bridgette@gerloffpainting.com"
+    body = (
+        "A note was added to a required task.\n\n"
+        f"Source: {source_label}\n"
+        f"Employee: {pending_action.assignee_display}\n"
+        f"Task: {pending_action.description}\n"
+        f"Date: {date.today().strftime('%m/%d/%Y')}\n"
+        f"Added by: {note_author}\n\n"
+        f"Note:\n{note_text}"
+    )
+    if pending_action.certification:
+        body += f"\n\nCertification: {pending_action.certification}"
+
+    Email.sendEmail(
+        "Required Task Note Added",
+        body,
+        ["bridgette@gerloffpainting.com"],
+        False,
+        sender,
+    )
+
+
+def _send_task_completion_denied_email(pending_action, denial_note, denied_by, sender_email=None):
+    recipient = None
+    if pending_action.employee and pending_action.employee.email:
+        recipient = pending_action.employee.email
+    elif pending_action.subcontractor_employee and pending_action.subcontractor_employee.email:
+        recipient = pending_action.subcontractor_employee.email
+
+    if not recipient:
+        return False
+
+    sender = sender_email or "bridgette@gerloffpainting.com"
+    body = (
+        "Your completed task was denied and has been reopened.\n\n"
+        f"Task: {pending_action.description}\n"
+        f"Date: {date.today().strftime('%m/%d/%Y')}\n"
+        f"Denied by: {denied_by}\n\n"
+        f"Reason:\n{denial_note}"
+    )
+    if pending_action.certification:
+        body += f"\n\nCertification: {pending_action.certification}"
+
+    Email.sendEmail(
+        "Required Task Completion Denied",
+        body,
+        [recipient],
+        False,
+        sender,
+    )
+    return True
+
+
+def _task_review_scope_filter(user, employee):
+    if user.groups.filter(name="Employee Task Reviewers").exists():
+        return (
+            Q(employee__active=True) |
+            Q(
+                subcontractor_employee__is_active=True,
+                subcontractor_employee__subcontractor__is_inactive=False,
+            )
+        )
+    if employee and employee.job_title and employee.job_title.description == "Superintendent":
+        return (
+            Q(
+                employee__active=True,
+                employee__job_title__description__in=["Painter", "Warehouse"],
+            ) |
+            Q(
+                subcontractor_employee__is_active=True,
+                subcontractor_employee__subcontractor__is_inactive=False,
+            )
+        )
+    return Q(pk__in=[])
+
+
+@login_required(login_url='/accounts/login')
+def update_employee_pending_action_certification(request):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "Invalid request."}, status=405)
+
+    employee = get_object_or_404(Employees, id=request.POST.get("employee_id"))
+    pending_action = get_object_or_404(
+        EmployeePendingActions,
+        id=request.POST.get("pending_action_id"),
+        employee=employee,
+        is_complete=False,
+    )
+    certification_error = _set_employee_pending_action_certification(
+        pending_action,
+        request.POST.get("certification_id"),
+        employee,
+    )
+    if certification_error:
+        return JsonResponse({"success": False, "message": certification_error}, status=400)
+
+    pending_action.save(update_fields=["certification"])
+    if pending_action.certification:
+        _apply_certification_display_descriptions([pending_action.certification])
+        certification_display = pending_action.certification.display_description
+        certification_url = reverse("certifications", args=[pending_action.certification.id])
+    else:
+        certification_display = ""
+        certification_url = ""
+
+    return JsonResponse({
+        "success": True,
+        "certification_id": pending_action.certification_id,
+        "certification_display": certification_display,
+        "certification_url": certification_url,
+    })
+
+
+@login_required(login_url='/accounts/login')
+def update_review_pending_action_certification(request):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "Invalid request."}, status=405)
+
+    employee = Employees.objects.filter(user=request.user).first()
+    pending_action = get_object_or_404(
+        EmployeePendingActions.objects.filter(
+            _task_review_scope_filter(request.user, employee),
+            is_complete=False,
+        ),
+        id=request.POST.get("pending_action_id"),
+    )
+    certification_error = _set_pending_action_certification(
+        pending_action,
+        request.POST.get("certification_id"),
+    )
+    if certification_error:
+        return JsonResponse({"success": False, "message": certification_error}, status=400)
+
+    pending_action.save(update_fields=["certification"])
+    if pending_action.certification:
+        _apply_certification_display_descriptions([pending_action.certification])
+        certification_display = pending_action.certification.display_description
+        certification_url = reverse("certifications", args=[pending_action.certification.id])
+    else:
+        certification_display = ""
+        certification_url = ""
+
+    return JsonResponse({
+        "success": True,
+        "certification_id": pending_action.certification_id,
+        "certification_display": certification_display,
+        "certification_url": certification_url,
+    })
+
+
 def employees_page(request, id):
     employee = get_object_or_404(Employees, id=id)
     current_user_employee = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
@@ -2196,10 +2538,17 @@ def employees_page(request, id):
             EmployeePendingActions,
             id=request.POST.get("add_pending_action_note"),
             employee=employee,
-            certification__isnull=True,
             is_complete=False,
         )
         note_text = (request.POST.get(f"pending_action_note_{pending_action.id}") or "").strip()
+        certification_error = _set_employee_pending_action_certification(
+            pending_action,
+            request.POST.get("certification_id"),
+            employee,
+        )
+        if certification_error:
+            messages.error(request, certification_error)
+            return redirect("employees_page", id=employee.id)
 
         if not note_text:
             messages.error(request, "Please enter a note before adding it.")
@@ -2212,7 +2561,7 @@ def employees_page(request, id):
         pending_action.notes = (
             (pending_action.notes + "\n") if pending_action.notes else ""
         ) + f"{note_prefix}: {note_text}"
-        pending_action.save(update_fields=["notes"])
+        pending_action.save(update_fields=["certification", "notes"])
         messages.success(request, "Task note added.")
         return redirect("employees_page", id=employee.id)
 
@@ -2221,10 +2570,55 @@ def employees_page(request, id):
             EmployeePendingActions,
             id=request.POST.get("delete_pending_action"),
             employee=employee,
-            certification__isnull=True,
         )
+        if pending_action.certification:
+            CertificationNotes.objects.create(
+                certification=pending_action.certification,
+                date=date.today(),
+                user=current_user_employee or employee,
+                note=f"Pending employee task deleted for {pending_action.assignee_display}: {pending_action.description}",
+            )
         pending_action.delete()
         messages.success(request, "Pending employee task deleted.")
+        return redirect("employees_page", id=employee.id)
+
+    if request.method == 'POST' and 'complete_pending_action' in request.POST:
+        pending_action = get_object_or_404(
+            EmployeePendingActions,
+            id=request.POST.get("pending_action_id"),
+            employee=employee,
+            is_complete=False,
+        )
+        completion_note = (request.POST.get("completion_note") or "").strip()
+        certification_error = _set_employee_pending_action_certification(
+            pending_action,
+            request.POST.get("certification_id"),
+            employee,
+        )
+        if certification_error:
+            messages.error(request, certification_error)
+            return redirect("employees_page", id=employee.id)
+        completed_by = current_user_employee.first_name if current_user_employee else employee.first_name
+        note_prefix = f"{date.today().strftime('%m/%d/%Y')} - {completed_by}: Completed task."
+        if completion_note:
+            note_prefix += f" {completion_note}"
+
+        pending_action.notes = (
+            (pending_action.notes + "\n") if pending_action.notes else ""
+        ) + note_prefix
+        pending_action.is_complete = True
+        pending_action.confirmed_is_complete = True
+        pending_action.save(update_fields=["certification", "notes", "is_complete", "confirmed_is_complete"])
+
+        if pending_action.certification:
+            CertificationNotes.objects.create(
+                certification=pending_action.certification,
+                date=date.today(),
+                user=current_user_employee or employee,
+                note=f"Pending employee task completed for {pending_action.assignee_display}: {pending_action.description}",
+            )
+
+        messages.success(request, "Pending employee task marked complete.")
         return redirect("employees_page", id=employee.id)
 
     if request.method == 'POST' and ('approve_vacation' in request.POST or 'reject_vacation' in request.POST):
@@ -2405,6 +2799,11 @@ def employees_page(request, id):
             "id",
         )
     )
+    for pending_action in pending_actions:
+        pending_action.certification_options = _certification_options_for_employee_pending_action(
+            pending_action,
+            employee,
+        )
     pending_actions_count = len(pending_actions)
     certification_summary = employee.certification_summary()
     certification_count = certification_summary["count"]
@@ -2724,26 +3123,7 @@ def my_page(request):
     can_request_vacation = has_worked_more_than_one_year and is_vacation_request_employee
 
     def task_review_scope_filter():
-        if request.user.groups.filter(name="Employee Task Reviewers").exists():
-            return (
-                Q(employee__active=True) |
-                Q(
-                    subcontractor_employee__is_active=True,
-                    subcontractor_employee__subcontractor__is_inactive=False,
-                )
-            )
-        if employee.job_title and employee.job_title.description == "Superintendent":
-            return (
-                Q(
-                    employee__active=True,
-                    employee__job_title__description__in=["Painter", "Warehouse"],
-                ) |
-                Q(
-                    subcontractor_employee__is_active=True,
-                    subcontractor_employee__subcontractor__is_inactive=False,
-                )
-            )
-        return Q(pk__in=[])
+        return _task_review_scope_filter(request.user, employee)
 
     if request.method == 'POST':
         if 'report_missing_dbids_clearances' in request.POST:
@@ -2924,16 +3304,52 @@ def my_page(request):
 
             return redirect('my_page')
 
+        if 'add_pending_action_note' in request.POST:
+            pending_action = get_object_or_404(
+                EmployeePendingActions,
+                id=request.POST.get("pending_action_id"),
+                employee=employee,
+                is_complete=False,
+            )
+            note_text = (request.POST.get(f"pending_action_note_{pending_action.id}") or "").strip()
+            if not note_text:
+                messages.error(request, "Please enter a note before adding it.")
+                return redirect('my_page')
+
+            pending_action.notes = (
+                (pending_action.notes + "\n") if pending_action.notes else ""
+            ) + f"{date.today().strftime('%m/%d/%Y')} - {employee.first_name}: {note_text}"
+            pending_action.save(update_fields=["notes"])
+            try:
+                _send_required_task_note_email(
+                    pending_action,
+                    note_text,
+                    employee.first_name,
+                    "my_page",
+                    employee.email,
+                )
+            except Exception:
+                messages.warning(request, "Task note added, but the email could not be sent.")
+                return redirect('my_page')
+            messages.success(request, "Task note added.")
+            return redirect('my_page')
+
         if 'add_review_pending_action_note' in request.POST:
             pending_action = get_object_or_404(
                 EmployeePendingActions.objects.filter(
                     task_review_scope_filter(),
-                    certification__isnull=True,
                     is_complete=False,
                 ),
                 id=request.POST.get("add_review_pending_action_note"),
             )
             note_text = (request.POST.get(f"review_pending_action_note_{pending_action.id}") or "").strip()
+            certification_error = _set_pending_action_certification(
+                pending_action,
+                request.POST.get("certification_id"),
+            )
+            if certification_error:
+                messages.error(request, certification_error)
+                return redirect('my_page')
 
             if not note_text:
                 messages.error(request, "Please enter a note before adding it.")
@@ -2946,7 +3362,7 @@ def my_page(request):
             pending_action.notes = (
                 (pending_action.notes + "\n") if pending_action.notes else ""
             ) + f"{note_prefix}: {note_text}"
-            pending_action.save(update_fields=["notes"])
+            pending_action.save(update_fields=["certification", "notes"])
             messages.success(request, "Task note added.")
             return redirect('my_page')
 
@@ -2954,13 +3370,64 @@ def my_page(request):
             pending_action = get_object_or_404(
                 EmployeePendingActions.objects.filter(
                     task_review_scope_filter(),
-                    certification__isnull=True,
                     is_complete=False,
                 ),
                 id=request.POST.get("delete_review_pending_action"),
             )
+            if pending_action.certification:
+                CertificationNotes.objects.create(
+                    certification=pending_action.certification,
+                    date=date.today(),
+                    user=employee or pending_action.employee or Employees.objects.filter(user__is_superuser=True).first() or Employees.objects.first(),
+                    note=(
+                        f"Pending employee task deleted for {pending_action.assignee_display}: "
+                        f"{pending_action.description}"
+                    ),
+                )
             pending_action.delete()
             messages.success(request, "Pending employee task deleted.")
+            return redirect('my_page')
+
+        if 'complete_review_pending_action' in request.POST:
+            pending_action = get_object_or_404(
+                EmployeePendingActions.objects.filter(
+                    task_review_scope_filter(),
+                    is_complete=False,
+                ),
+                id=request.POST.get("complete_review_pending_action"),
+            )
+            completion_note = (request.POST.get(f"review_completion_note_{pending_action.id}") or "").strip()
+            certification_error = _set_pending_action_certification(
+                pending_action,
+                request.POST.get("certification_id"),
+            )
+            if certification_error:
+                messages.error(request, certification_error)
+                return redirect('my_page')
+            completed_by = employee.first_name if employee else request.user.get_full_name() or request.user.username
+            note_prefix = f"{date.today().strftime('%m/%d/%Y')} - {completed_by}: Completed task."
+            if completion_note:
+                note_prefix += f" {completion_note}"
+
+            pending_action.notes = (
+                (pending_action.notes + "\n") if pending_action.notes else ""
+            ) + note_prefix
+            pending_action.is_complete = True
+            pending_action.confirmed_is_complete = True
+            pending_action.save(update_fields=["certification", "notes", "is_complete", "confirmed_is_complete"])
+
+            if pending_action.certification:
+                CertificationNotes.objects.create(
+                    certification=pending_action.certification,
+                    date=date.today(),
+                    user=employee or pending_action.employee or Employees.objects.filter(user__is_superuser=True).first() or Employees.objects.first(),
+                    note=(
+                        f"Pending employee task completed for {pending_action.assignee_display}: "
+                        f"{pending_action.description}"
+                    ),
+                )
+
+            messages.success(request, "Pending employee task marked complete.")
             return redirect('my_page')
 
         if 'confirm_review_completed_action' in request.POST:
@@ -3017,6 +3484,19 @@ def my_page(request):
                         f"{completed_action.description}. Reason: {denial_note}"
                     ),
                 )
+            try:
+                email_sent = _send_task_completion_denied_email(
+                    completed_action,
+                    denial_note,
+                    employee.first_name if employee else request.user.get_full_name() or request.user.username,
+                    employee.email if employee else None,
+                )
+            except Exception:
+                messages.warning(request, "Completed task denied and reopened, but the employee email could not be sent.")
+                return redirect('my_page')
+            if not email_sent:
+                messages.warning(request, "Completed task denied and reopened, but the employee does not have an email on file.")
+                return redirect('my_page')
             messages.success(request, "Completed task denied and reopened.")
             return redirect('my_page')
 
@@ -3566,6 +4046,9 @@ def my_page(request):
             "id",
         )
     )
+    for pending_action in task_reviewer_pending_actions:
+        pending_action.certification_options = _certification_options_for_pending_action(pending_action)
+
     task_reviewer_completed_actions = list(
         EmployeePendingActions.objects.filter(
             task_review_employee_filter,
@@ -4018,6 +4501,7 @@ def certifications(request, id):
 
         if 'edit_certification_info' in request.POST:
             old_description = cert.description or ""
+            old_category_id = cert.category_id
             old_category = str(cert.category) if cert.category else "None"
             old_job = str(cert.job) if cert.job else "None"
             old_note = cert.note or ""
@@ -4036,6 +4520,8 @@ def certifications(request, id):
             category_id = request.POST.get("certification_category") or ""
             if category_id:
                 cert.category = get_object_or_404(CertificationCategories, pk=category_id)
+                if cert.category_id != old_category_id:
+                    cert.description = cert.category.description
             else:
                 cert.category = None
 
@@ -4320,6 +4806,36 @@ def certifications(request, id):
             pending_task.delete()
             messages.success(request, "Pending employee task deleted.")
             return redirect('certifications', id=cert.id)
+        if 'complete_pending_task' in request.POST:
+            pending_task = get_object_or_404(
+                EmployeePendingActions,
+                id=request.POST.get('complete_pending_task'),
+                certification=cert,
+                is_complete=False,
+            )
+            completion_note = (request.POST.get(f"complete_pending_task_note_{pending_task.id}") or "").strip()
+            current_employee = Employees.objects.filter(user=request.user).first()
+            completed_by = current_employee.first_name if current_employee else request.user.get_full_name() or request.user.username
+            note_prefix = f"{date.today().strftime('%m/%d/%Y')} - {completed_by}: Completed task."
+            if completion_note:
+                note_prefix += f" {completion_note}"
+            pending_task.notes = (
+                (pending_task.notes + "\n") if pending_task.notes else ""
+            ) + note_prefix
+            pending_task.is_complete = True
+            pending_task.confirmed_is_complete = True
+            pending_task.save(update_fields=["notes", "is_complete", "confirmed_is_complete"])
+            CertificationNotes.objects.create(
+                certification=cert,
+                date=date.today(),
+                user=current_employee or pending_task.employee or Employees.objects.filter(user__is_superuser=True).first() or Employees.objects.first(),
+                note=(
+                    f"Pending employee task completed for {pending_task.assignee_display}: "
+                    f"{pending_task.description}"
+                ),
+            )
+            messages.success(request, "Pending employee task marked complete.")
+            return redirect('certifications', id=cert.id)
         if 'confirm_completed_task' in request.POST:
             completed_task = get_object_or_404(
                 EmployeePendingActions,
@@ -4371,6 +4887,24 @@ def certifications(request, id):
                     f"{completed_task.description}. Reason: {denial_note}"
                 ),
             )
+            try:
+                denied_by = (
+                    current_employee.first_name
+                    if current_employee
+                    else request.user.get_full_name() or request.user.username
+                )
+                email_sent = _send_task_completion_denied_email(
+                    completed_task,
+                    denial_note,
+                    denied_by,
+                    current_employee.email if current_employee else None,
+                )
+            except Exception:
+                messages.warning(request, "Completed task denied and reopened, but the employee email could not be sent.")
+                return redirect('certifications', id=cert.id)
+            if not email_sent:
+                messages.warning(request, "Completed task denied and reopened, but the employee does not have an email on file.")
+                return redirect('certifications', id=cert.id)
             messages.success(request, "Completed task denied and reopened.")
             return redirect('certifications', id=cert.id)
         if 'new_note' in request.POST:

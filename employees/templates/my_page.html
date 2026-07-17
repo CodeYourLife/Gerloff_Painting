@@ -242,6 +242,66 @@
         text-align: left;
     }
 
+    .required-task-card {
+        cursor: pointer;
+        border-left-width: 5px;
+        border-radius: 6px;
+        box-shadow: 0 .15rem .35rem rgba(0, 0, 0, .08);
+        transition: box-shadow .15s ease, transform .15s ease, border-color .15s ease;
+    }
+
+    .required-task-card:hover,
+    .required-task-card:focus {
+        border-color: #d39e00;
+        box-shadow: 0 .3rem .7rem rgba(0, 0, 0, .14);
+        transform: translateY(-1px);
+        outline: none;
+    }
+
+    .required-task-card .card-body {
+        padding: 1rem;
+    }
+
+    .pending-task-card {
+        cursor: pointer;
+        border: 1px solid #d6d8db;
+        border-left: 5px solid #ffc107;
+        border-radius: 6px;
+        box-shadow: 0 .15rem .35rem rgba(0, 0, 0, .08);
+        transition: box-shadow .15s ease, transform .15s ease;
+    }
+
+    .pending-task-card:hover,
+    .pending-task-card:focus {
+        box-shadow: 0 .3rem .7rem rgba(0, 0, 0, .14);
+        transform: translateY(-1px);
+        outline: none;
+    }
+
+    .pending-task-card .card-body {
+        padding: 1rem;
+    }
+
+    .pending-task-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: .75rem;
+        border-top: 1px solid #e9ecef;
+        padding-top: .5rem;
+        margin-top: .5rem;
+    }
+
+    @media (max-width: 575.98px) {
+        .pending-task-meta {
+            display: block;
+        }
+
+        .pending-task-meta strong {
+            display: block;
+            margin-top: .15rem;
+        }
+    }
+
     .group-missing-employees label {
         display: block;
         padding: 10px;
@@ -1975,14 +2035,16 @@
                 <div class="row">
                     {% for action in pending_actions %}
                         <div class="col-12 col-md-6 col-xl-4 mb-3">
-                            <div class="card h-100 border-warning"
+                            <div class="card h-100 border-warning required-task-card"
                                  role="button"
+                                 tabindex="0"
                                  data-toggle="modal"
                                  data-target="#completePendingActionModal"
                                  data-action-id="{{ action.id }}"
-                                 data-action-description="{{ action.description|escapejs }}"
-                                 data-action-date="{{ action.date|date:'m/d/Y' }}"
-                                 data-action-certification="{% if action.certification %}{{ action.certification.category|default:action.certification.description|escapejs }}{% endif %}">
+                                data-action-description="{{ action.description|escapejs }}"
+                                data-action-date="{{ action.date|date:'m/d/Y' }}"
+                                data-action-notes="{{ action.notes|default:''|escape }}"
+                                data-action-certification="{% if action.certification %}{{ action.certification.category|default:action.certification.description|escapejs }}{% endif %}">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                         <h6 class="mb-0">{{ action.description }}</h6>
@@ -2038,8 +2100,34 @@
                     <div class="small text-muted mb-2" id="pending_action_date"></div>
                     <div class="mb-3" id="pending_action_certification"></div>
 
-                    <div class="form-group mb-0">
-                        <label for="completion_note">Additional Information</label>
+                    <div id="pending_action_notes_display"
+                         class="border-top pt-3 mt-3"
+                         style="white-space: normal; overflow-wrap: anywhere; display:none;">
+                        <div class="text-muted">Notes</div>
+                        <div id="pending_action_notes_text"></div>
+                    </div>
+
+                    <button type="button"
+                            id="show_pending_action_note"
+                            class="btn btn-outline-primary btn-sm mt-3">
+                        Add Note
+                    </button>
+
+                    <div id="pending_action_note_group" class="form-group mt-3" style="display:none;">
+                        <label for="pending_action_note_input">Task Note</label>
+                        <input type="text"
+                               id="pending_action_note_input"
+                               class="form-control"
+                               placeholder="Add note">
+                        <button type="submit"
+                                name="add_pending_action_note"
+                                class="btn btn-primary btn-sm mt-2">
+                            Add Note
+                        </button>
+                    </div>
+
+                    <div id="completion-note-group" class="form-group mb-0" style="display:none;">
+                        <label for="completion_note">Add A Note Here</label>
                         <input type="text"
                                name="completion_note"
                                id="completion_note"
@@ -2049,13 +2137,20 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="submit"
-                            name="complete_pending_action"
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="button"
+                            id="show_completion_note_button"
                             class="btn btn-success">
                         Task Completed
                     </button>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                        Cancel
+                    <button type="submit"
+                            name="complete_pending_action"
+                            id="submit_completion_button"
+                            class="btn btn-primary"
+                            style="display:none;">
+                        Submit Completion
                     </button>
                 </div>
             </form>
@@ -2080,16 +2175,15 @@
                 <div class="row">
                     {% for action in task_reviewer_pending_actions %}
                         <div class="col-12 col-md-6 col-xl-4 mb-3">
-                            {% if action.certification %}
-                                <a href="{% url 'certifications' action.certification.id %}"
-                                   class="text-dark"
-                                   style="text-decoration:none;">
-                            {% endif %}
-                            <div class="card h-100 border-success">
+                            <div class="card h-100 pending-task-card"
+                                 role="button"
+                                 tabindex="0"
+                                 data-toggle="modal"
+                                 data-target="#reviewPendingActionModal{{ action.id }}">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                         <h6 class="mb-0">{{ action.description }}</h6>
-                                        <span class="badge badge-success">Open</span>
+                                        <span class="badge badge-warning">Open</span>
                                     </div>
 
                                     <div class="mb-2">
@@ -2104,78 +2198,159 @@
                                     {% endif %}
 
                                     {% if action.date %}
-                                        <div class="small text-muted mb-2">
-                                            {{ action.date|date:"m/d/Y" }}
+                                        <div class="pending-task-meta">
+                                            <span class="text-muted">Date</span>
+                                            <strong>{{ action.date|date:"m/d/Y" }}</strong>
                                         </div>
                                     {% endif %}
 
-                                    {% if action.certification %}
-                                        <div class="mb-2">
-                                            <strong>Certification:</strong>
-                                            {% if action.certification.category %}
-                                                {{ action.certification.category }}
-                                            {% else %}
-                                                {{ action.certification.description }}
+                                    <div id="review-task-certification-card-{{ action.id }}"
+                                         class="pending-task-meta"
+                                         {% if not action.certification %}style="display:none;"{% endif %}>
+                                        <span class="text-muted">Certification</span>
+                                        <strong id="review-task-certification-card-text-{{ action.id }}">
+                                            {% if action.certification %}
+                                                {{ action.certification.display_description|default:action.certification.category|default:action.certification.description }}
                                             {% endif %}
-                                        </div>
-                                    {% endif %}
+                                        </strong>
+                                    </div>
 
                                     {% if action.notes %}
                                         <div style="white-space: normal; overflow-wrap: anywhere;">
-                                            <strong>Notes:</strong>
                                             {{ action.notes }}
-                                        </div>
-                                    {% endif %}
-
-                                    {% if not action.certification %}
-                                        <div class="mt-3">
-                                            <button type="button"
-                                                    class="btn btn-outline-primary mr-2 mb-2 show-review-pending-action-note"
-                                                    data-action-id="{{ action.id }}">
-                                                Add Note
-                                            </button>
-                                            <button type="submit"
-                                                    form="review_pending_task_actions_form"
-                                                    name="delete_review_pending_action"
-                                                    value="{{ action.id }}"
-                                                    class="btn btn-outline-danger mb-2"
-                                                    onclick="return confirm('Delete this pending employee task?');">
-                                                Delete
-                                            </button>
-                                        </div>
-                                        <div id="review-pending-action-note-{{ action.id }}" class="input-group mt-2" style="display:none;">
-                                            <input type="text"
-                                                   form="review_pending_task_actions_form"
-                                                   name="review_pending_action_note_{{ action.id }}"
-                                                   class="form-control"
-                                                   placeholder="Add note">
-                                            <div class="input-group-append">
-                                                <button type="submit"
-                                                        form="review_pending_task_actions_form"
-                                                        name="add_review_pending_action_note"
-                                                        value="{{ action.id }}"
-                                                        class="btn btn-primary">
-                                                    Add Note Now
-                                                </button>
-                                            </div>
                                         </div>
                                     {% endif %}
                                 </div>
                             </div>
-                            {% if action.certification %}
-                                </a>
-                            {% endif %}
+                        </div>
+
+                        <div class="modal fade"
+                             id="reviewPendingActionModal{{ action.id }}"
+                             tabindex="-1"
+                             role="dialog"
+                             aria-labelledby="reviewPendingActionModalLabel{{ action.id }}"
+                             aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                    <form method="post" action="{% url 'my_page' %}">
+                                        {% csrf_token %}
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="reviewPendingActionModalLabel{{ action.id }}">
+                                                {{ action.description }}
+                                            </h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <strong>Employee:</strong>
+                                                {{ action.assignee_display }}
+                                            </div>
+                                            {% if action.subcontractor_employee %}
+                                                <div class="mb-3">
+                                                    <strong>Subcontractor:</strong>
+                                                    {{ action.subcontractor_employee.subcontractor.company }}
+                                                </div>
+                                            {% endif %}
+                                            {% if action.date %}
+                                                <div class="mb-3">
+                                                    <strong>Date:</strong>
+                                                    {{ action.date|date:"m/d/Y" }}
+                                                </div>
+                                            {% endif %}
+                                            <div class="form-group">
+                                                <label for="review_certification_{{ action.id }}">Link to Certification</label>
+                                                <select id="review_certification_{{ action.id }}"
+                                                        name="certification_id"
+                                                        class="form-control review-pending-action-certification-select"
+                                                        data-action-id="{{ action.id }}">
+                                                    <option value="">No certification linked</option>
+                                                    {% for certification in action.certification_options %}
+                                                        <option value="{{ certification.id }}"{% if action.certification_id == certification.id %} selected{% endif %}>
+                                                            {{ certification.display_description|default:certification.category|default:certification.description }}
+                                                            {% if certification.date_expires %}
+                                                                - Expires {{ certification.date_expires|date:"m/d/Y" }}
+                                                            {% endif %}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                                <div id="review-certification-save-status-{{ action.id }}" class="small text-muted mt-1"></div>
+                                                <a id="review-task-certification-goto-{{ action.id }}"
+                                                   href="{% if action.certification %}{% url 'certifications' action.certification.id %}{% else %}#{% endif %}"
+                                                   class="btn btn-outline-primary btn-sm mt-2"
+                                                   {% if not action.certification %}style="display:none;"{% endif %}>
+                                                    GoTo Cert
+                                                </a>
+                                            </div>
+                                            {% if action.notes %}
+                                                <div class="border-top pt-3 mt-3" style="white-space: normal; overflow-wrap: anywhere;">
+                                                    <div class="text-muted">Notes</div>
+                                                    <div>{{ action.notes }}</div>
+                                                </div>
+                                            {% endif %}
+
+                                            <button type="button"
+                                                    class="btn btn-outline-primary btn-sm mt-3 show-review-pending-action-note"
+                                                    data-action-id="{{ action.id }}">
+                                                Add Note
+                                            </button>
+
+                                            <div id="review-pending-action-note-{{ action.id }}" class="form-group mt-3" style="display:none;">
+                                                <label for="review_pending_action_note_{{ action.id }}">Task Note</label>
+                                                <input type="text"
+                                                       id="review_pending_action_note_{{ action.id }}"
+                                                       name="review_pending_action_note_{{ action.id }}"
+                                                       class="form-control"
+                                                       placeholder="Add note">
+                                                <button type="submit"
+                                                        name="add_review_pending_action_note"
+                                                        value="{{ action.id }}"
+                                                        class="btn btn-primary btn-sm mt-2">
+                                                    Add Note
+                                                </button>
+                                            </div>
+
+                                            <div id="review-completion-note-{{ action.id }}" class="form-group mt-3" style="display:none;">
+                                                <label for="review_completion_note_{{ action.id }}">Optional Completion Note</label>
+                                                <textarea id="review_completion_note_{{ action.id }}"
+                                                          name="review_completion_note_{{ action.id }}"
+                                                          class="form-control"
+                                                          rows="3"
+                                                          placeholder="Optional note"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                                            <button type="submit"
+                                                    name="delete_review_pending_action"
+                                                    value="{{ action.id }}"
+                                                    class="btn btn-outline-danger"
+                                                    onclick="return confirm('Delete this pending employee task?');">
+                                                Delete
+                                            </button>
+                                            <button type="button"
+                                                    class="btn btn-success review-pending-action-complete-button"
+                                                    data-action-id="{{ action.id }}">
+                                                Task Completed
+                                            </button>
+                                            <button type="submit"
+                                                    name="complete_review_pending_action"
+                                                    value="{{ action.id }}"
+                                                    class="btn btn-primary review-pending-action-submit-button"
+                                                    style="display:none;">
+                                                Submit Completion
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     {% endfor %}
                 </div>
             </div>
         </div>
     </div>
-    <form method="post"
-          action="{% url 'my_page' %}"
-          id="review_pending_task_actions_form">
-        {% csrf_token %}
-    </form>
 {% endif %}
 
 {% if task_reviewer_completed_actions_count %}
@@ -2252,16 +2427,20 @@
                                             <textarea id="deny_review_completed_action_note_{{ action.id }}"
                                                       form="review_completed_task_actions_form"
                                                       name="deny_review_completed_action_note_{{ action.id }}"
-                                                      class="form-control"
+                                                      class="form-control deny-completed-task-note"
+                                                      data-action-id="{{ action.id }}"
                                                       rows="2"
                                                       placeholder="Required if denying"></textarea>
+                                            <div id="deny-review-completed-action-helper-{{ action.id }}"
+                                                 class="invalid-feedback">
+                                                Note is required
+                                            </div>
                                         </div>
                                         <button type="submit"
                                                 form="review_completed_task_actions_form"
                                                 name="deny_review_completed_action"
                                                 value="{{ action.id }}"
-                                                class="btn btn-outline-danger mb-2"
-                                                onclick="return confirm('Deny this completed task and reopen it?');">
+                                                class="btn btn-outline-danger mb-2 deny-completed-task-button">
                                             Deny
                                         </button>
                                     </div>
@@ -2933,13 +3112,42 @@ $('#completePendingActionModal').on('show.bs.modal', function (event) {
     const actionId = card.data('action-id');
     const description = card.data('action-description') || '';
     const actionDate = card.data('action-date') || '';
+    const actionNotes = card.data('action-notes') || '';
     const certification = card.data('action-certification') || '';
 
     $('#pending_action_id').val(actionId);
     $('#pending_action_description').text(description);
     $('#pending_action_date').text(actionDate ? 'Date: ' + actionDate : '');
     $('#pending_action_certification').text(certification ? 'Certification: ' + certification : '');
+    $('#pending_action_note_input')
+        .val('')
+        .attr('name', 'pending_action_note_' + actionId);
+    $('#pending_action_note_group').hide();
+    $('#show_pending_action_note').show();
+    if (actionNotes) {
+        $('#pending_action_notes_text').text(actionNotes);
+        $('#pending_action_notes_display').show();
+    } else {
+        $('#pending_action_notes_text').text('');
+        $('#pending_action_notes_display').hide();
+    }
     $('#completion_note').val('');
+    $('#completion-note-group').hide();
+    $('#submit_completion_button').hide();
+    $('#show_completion_note_button').show();
+});
+
+$('#show_pending_action_note').on('click', function () {
+    $('#pending_action_note_group').show();
+    $('#pending_action_note_input').focus();
+    $(this).hide();
+});
+
+$('#show_completion_note_button').on('click', function () {
+    $('#completion-note-group').show();
+    $('#submit_completion_button').show();
+    $('#completion_note').focus();
+    $(this).hide();
 });
 
 $('#uploadMyCertificationFileModal').on('show.bs.modal', function (event) {
@@ -3029,6 +3237,92 @@ document.addEventListener("DOMContentLoaded", function () {
 
     restoreAccordion();
 
+    function escapeHtml(value) {
+        const wrapper = document.createElement("div");
+        wrapper.textContent = value || "";
+        return wrapper.innerHTML;
+    }
+
+    document.querySelectorAll(".review-pending-action-certification-select").forEach(function (select) {
+        select.dataset.previousValue = select.value;
+        select.addEventListener("change", function () {
+            const actionId = select.getAttribute("data-action-id");
+            const status = document.getElementById("review-certification-save-status-" + actionId);
+            const body = new URLSearchParams();
+            body.append("pending_action_id", actionId);
+            body.append("certification_id", select.value);
+
+            if (status) {
+                status.className = "small text-muted mt-1";
+                status.textContent = "Saving...";
+            }
+
+            fetch("{% url 'update_review_pending_action_certification' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: body.toString()
+            })
+                .then(function (response) {
+                    return response.json().then(function (data) {
+                        if (!response.ok || !data.success) {
+                            throw data;
+                        }
+                        return data;
+                    });
+                })
+                .then(function (data) {
+                    const card = document.getElementById("review-task-certification-card-" + actionId);
+                    const cardText = document.getElementById("review-task-certification-card-text-" + actionId);
+                    const gotoButton = document.getElementById("review-task-certification-goto-" + actionId);
+
+                    select.dataset.previousValue = select.value;
+                    if (data.certification_id) {
+                        if (card) {
+                            card.style.display = "";
+                        }
+                        if (cardText) {
+                            cardText.innerHTML = escapeHtml(data.certification_display);
+                        }
+                        if (gotoButton) {
+                            gotoButton.href = data.certification_url;
+                            gotoButton.style.display = "";
+                        }
+                    } else {
+                        if (card) {
+                            card.style.display = "none";
+                        }
+                        if (cardText) {
+                            cardText.innerHTML = "";
+                        }
+                        if (gotoButton) {
+                            gotoButton.href = "#";
+                            gotoButton.style.display = "none";
+                        }
+                    }
+
+                    if (status) {
+                        status.className = "small text-success mt-1";
+                        status.textContent = "Saved";
+                        setTimeout(function () {
+                            if (status.textContent === "Saved") {
+                                status.textContent = "";
+                            }
+                        }, 1800);
+                    }
+                })
+                .catch(function (data) {
+                    select.value = select.dataset.previousValue || "";
+                    if (status) {
+                        status.className = "small text-danger mt-1";
+                        status.textContent = data.message || "Could not save certification.";
+                    }
+                });
+        });
+    });
+
     document.querySelectorAll(".show-review-pending-action-note").forEach(function (button) {
         button.addEventListener("click", function () {
             const actionId = button.getAttribute("data-action-id");
@@ -3044,6 +3338,26 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+    document.querySelectorAll(".review-pending-action-complete-button").forEach(function (button) {
+        button.addEventListener("click", function () {
+            const actionId = button.getAttribute("data-action-id");
+            const noteRow = document.getElementById("review-completion-note-" + actionId);
+            const submitButton = button.parentElement.querySelector(".review-pending-action-submit-button");
+
+            if (noteRow) {
+                noteRow.style.display = "";
+                const noteInput = noteRow.querySelector("textarea");
+                if (noteInput) {
+                    noteInput.focus();
+                }
+            }
+            if (submitButton) {
+                submitButton.style.display = "inline-block";
+            }
+            button.style.display = "none";
+        });
+    });
+
     document.querySelectorAll(".my-certification-card").forEach(function (card) {
         card.addEventListener("keydown", function (event) {
             if (event.key === "Enter" || event.key === " ") {
@@ -3052,6 +3366,24 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
+
+document.querySelectorAll(".pending-task-card[data-toggle='modal']").forEach(function (card) {
+    card.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            $(card.getAttribute("data-target")).modal("show");
+        }
+    });
+});
+
+document.querySelectorAll(".required-task-card[data-toggle='modal']").forEach(function (card) {
+    card.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            $(card.getAttribute("data-target")).modal("show");
+        }
+    });
+});
 
     const myCertificationFile = document.getElementById("my_certification_file");
     const myCertificationFileName = document.getElementById("my_certification_file_name");
@@ -3467,6 +3799,37 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         $("#vacationStatusModal").modal("show");
+    });
+
+    document.querySelectorAll(".deny-completed-task-button").forEach(function (button) {
+        button.addEventListener("click", function (event) {
+            const actionId = button.value;
+            const noteInput = document.getElementById("deny_review_completed_action_note_" + actionId);
+
+            if (!noteInput) {
+                return;
+            }
+
+            if (!noteInput.value.trim()) {
+                event.preventDefault();
+                noteInput.classList.add("is-invalid");
+                noteInput.focus();
+                return;
+            }
+
+            noteInput.classList.remove("is-invalid");
+            if (!confirm("Deny this completed task and reopen it?")) {
+                event.preventDefault();
+            }
+        });
+    });
+
+    document.querySelectorAll(".deny-completed-task-note").forEach(function (noteInput) {
+        noteInput.addEventListener("input", function () {
+            if (noteInput.value.trim()) {
+                noteInput.classList.remove("is-invalid");
+            }
+        });
     });
 
     $('.collapse').on('hidden.bs.collapse', function () {

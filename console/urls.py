@@ -8,6 +8,11 @@ urlpatterns = [
     path('register_user', views.register_user, name='register_user'),
     path('warehouse_home', views.warehouse_home, name='warehouse_home'),
     path('pending_employee_tasks', views.pending_employee_tasks, name='pending_employee_tasks'),
+    path(
+        'pending_employee_tasks/update_certification',
+        views.update_pending_employee_task_certification,
+        name='update_pending_employee_task_certification'
+    ),
     path('expired_certifications', views.expired_certifications, name='expired_certifications'),
     path('seperate_test', views.seperate_test, name='seperate_test'),
     path('import_csv', views.import_csv, name='import_csv'),

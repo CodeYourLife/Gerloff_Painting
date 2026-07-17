@@ -14,6 +14,7 @@ path("subcontract/<int:subcontract_id>/files/", views.subcontract_files, name='s
 path("subcontract/<int:subcontract_id>/files/upload/", views.subcontract_file_upload, name='subcontract_file_upload'),
 path("subcontract/<int:subcontract_id>/files/download/", views.subcontract_file_download, name='subcontract_file_download'),
 path("subcontract/<id>", views.subcontract, name='subcontract'),
+path("subcontractor/update_pending_task_certification", views.update_subcontractor_pending_task_certification, name='update_subcontractor_pending_task_certification'),
 path("subcontractor/<id>", views.subcontractor, name='subcontractor'),
 path("subcontractor_new", views.subcontractor_new, name='subcontractor_new'),
 path("subcontracts_new", views.subcontracts_new, name='subcontracts_new'),

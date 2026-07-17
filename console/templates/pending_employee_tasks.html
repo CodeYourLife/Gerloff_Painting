@@ -102,21 +102,22 @@
                                 </div>
                             {% endif %}
 
-                            {% if task.certification %}
-                                <div class="pending-task-meta">
-                                    <span class="text-muted">Certification</span>
-                                    <strong>
+                            <div id="task-certification-card-{{ task.id }}"
+                                 class="pending-task-meta"
+                                 {% if not task.certification %}style="display:none;"{% endif %}>
+                                <span class="text-muted">Certification</span>
+                                <strong id="task-certification-card-link-{{ task.id }}">
+                                    {% if task.certification %}
                                         <a href="{% url 'certifications' task.certification.id %}" onclick="event.stopPropagation();">
-                                            {{ task.certification.description|default:task.certification.category }}
+                                            {{ task.certification.display_description|default:task.certification.category|default:task.certification.description }}
                                         </a>
-                                    </strong>
-                                </div>
-                            {% endif %}
+                                    {% endif %}
+                                </strong>
+                            </div>
 
                             {% if task.notes %}
-                                <div class="border-top pt-2 mt-2" style="white-space: normal; overflow-wrap: anywhere;">
-                                    <div class="text-muted">Notes</div>
-                                    <div>{{ task.notes }}</div>
+                                <div style="white-space: normal; overflow-wrap: anywhere;">
+                                    {{ task.notes }}
                                 </div>
                             {% endif %}
                         </div>
@@ -164,17 +165,33 @@
 
                                     <div class="form-group">
                                         <label for="certification_{{ task.id }}">Link to Certification</label>
-                                        <select id="certification_{{ task.id }}" name="certification_id" class="form-control">
+                                        <select id="certification_{{ task.id }}"
+                                                name="certification_id"
+                                                class="form-control pending-task-certification-select"
+                                                data-task-id="{{ task.id }}">
                                             <option value="">No certification linked</option>
                                             {% for certification in task.certification_options %}
                                                 <option value="{{ certification.id }}"{% if task.certification_id == certification.id %} selected{% endif %}>
-                                                    {{ certification.description|default:certification.category }}
+                                                    {{ certification.display_description|default:certification.category|default:certification.description }}
                                                     {% if certification.date_expires %}
                                                         - Expires {{ certification.date_expires|date:"m/d/Y" }}
                                                     {% endif %}
                                                 </option>
                                             {% endfor %}
                                         </select>
+                                        <div id="certification-save-status-{{ task.id }}" class="small text-muted mt-1"></div>
+                                        <a id="task-certification-goto-{{ task.id }}"
+                                           href="{% if task.certification %}{% url 'certifications' task.certification.id %}{% else %}#{% endif %}"
+                                           class="btn btn-outline-primary btn-sm mt-2"
+                                           {% if not task.certification %}style="display:none;"{% endif %}>
+                                            GoTo Cert
+                                        </a>
+                                        <button type="button"
+                                                id="task-certification-add-note-{{ task.id }}"
+                                                class="btn btn-outline-primary btn-sm mt-2 pending-task-add-note-button"
+                                                data-task-id="{{ task.id }}">
+                                            Add Note
+                                        </button>
                                     </div>
 
                                     {% if task.notes %}
@@ -192,9 +209,29 @@
                                                   rows="3"
                                                   placeholder="Optional note"></textarea>
                                     </div>
+
+                                    <div id="pending-task-note-{{ task.id }}" class="form-group mt-3" style="display:none;">
+                                        <label for="pending_task_note_{{ task.id }}">Task Note</label>
+                                        <input type="text"
+                                               id="pending_task_note_{{ task.id }}"
+                                               name="pending_task_note_{{ task.id }}"
+                                               class="form-control"
+                                               placeholder="Add note">
+                                        <button type="submit"
+                                                name="add_pending_task_note"
+                                                class="btn btn-primary btn-sm mt-2">
+                                            Add Note
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                                    <button type="submit"
+                                            name="delete_pending_task"
+                                            class="btn btn-outline-danger"
+                                            onclick="return confirm('Delete this pending employee task?');">
+                                        Delete
+                                    </button>
                                     <button type="button"
                                             class="btn btn-success pending-task-complete-button"
                                             data-task-id="{{ task.id }}">
@@ -220,6 +257,107 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const updateCertificationUrl = "{% url 'update_pending_employee_task_certification' %}";
+        const csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
+
+        function escapeHtml(value) {
+            const wrapper = document.createElement('div');
+            wrapper.textContent = value || '';
+            return wrapper.innerHTML;
+        }
+
+        document.querySelectorAll('.pending-task-certification-select').forEach(function (select) {
+            select.dataset.previousValue = select.value;
+            select.addEventListener('change', function () {
+                const taskId = select.getAttribute('data-task-id');
+                const status = document.getElementById('certification-save-status-' + taskId);
+                const body = new URLSearchParams();
+                body.append('pending_task_id', taskId);
+                body.append('certification_id', select.value);
+
+                if (status) {
+                    status.className = 'small text-muted mt-1';
+                    status.textContent = 'Saving...';
+                }
+
+                fetch(updateCertificationUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: body.toString()
+                })
+                    .then(function (response) {
+                        return response.json().then(function (data) {
+                            if (!response.ok || !data.success) {
+                                throw data;
+                            }
+                            return data;
+                        });
+                    })
+                    .then(function (data) {
+                        const card = document.getElementById('task-certification-card-' + taskId);
+                        const cardLink = document.getElementById('task-certification-card-link-' + taskId);
+                        const gotoButton = document.getElementById('task-certification-goto-' + taskId);
+
+                        select.dataset.previousValue = select.value;
+                        if (data.certification_id) {
+                            if (card) {
+                                card.style.display = '';
+                            }
+                            if (cardLink) {
+                                cardLink.innerHTML = '<a href="' + data.certification_url + '" onclick="event.stopPropagation();">' + escapeHtml(data.certification_display) + '</a>';
+                            }
+                            if (gotoButton) {
+                                gotoButton.href = data.certification_url;
+                                gotoButton.style.display = '';
+                            }
+                        } else {
+                            if (card) {
+                                card.style.display = 'none';
+                            }
+                            if (cardLink) {
+                                cardLink.innerHTML = '';
+                            }
+                            if (gotoButton) {
+                                gotoButton.href = '#';
+                                gotoButton.style.display = 'none';
+                            }
+                        }
+
+                        if (status) {
+                            status.className = 'small text-success mt-1';
+                            status.textContent = 'Saved';
+                            setTimeout(function () {
+                                if (status.textContent === 'Saved') {
+                                    status.textContent = '';
+                                }
+                            }, 1800);
+                        }
+                    })
+                    .catch(function (data) {
+                        select.value = select.dataset.previousValue || '';
+                        if (status) {
+                            status.className = 'small text-danger mt-1';
+                            status.textContent = data.message || 'Could not save certification.';
+                        }
+                    });
+            });
+        });
+
+        document.querySelectorAll('.pending-task-add-note-button').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const taskId = button.getAttribute('data-task-id');
+                const notePrompt = document.getElementById('pending-task-note-' + taskId);
+                if (notePrompt) {
+                    notePrompt.style.display = 'block';
+                }
+                button.style.display = 'none';
+            });
+        });
+
         document.querySelectorAll('.pending-task-card').forEach(function (card) {
             card.addEventListener('keydown', function (event) {
                 if (event.key === 'Enter' || event.key === ' ') {
