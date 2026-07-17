@@ -10,9 +10,11 @@ from employees.views import (
     _certification_display_description,
     _certification_files_folder,
     _certification_upload_filename,
+    _apply_certification_display_descriptions,
     _create_standard_certification_custom_attributes,
     _custom_attribute_by_normalized_name,
     _custom_attribute_values_by_certification,
+    _send_required_task_note_email,
     get_scheduled_toolbox_folder,
     get_uploaded_toolbox_file,
 )
@@ -2308,12 +2310,226 @@ def subcontractor_home(request):
     return render(request, "subcontractor_home.html", send_data)
 
 
+def _certification_options_for_subcontractor_pending_task(task):
+    if task.subcontractor_employee_id:
+        certifications = Certifications.objects.filter(
+            subcontractor_employee=task.subcontractor_employee,
+            is_closed=False,
+        )
+    else:
+        certifications = Certifications.objects.none()
+
+    certifications = list(
+        certifications
+        .select_related("category", "job")
+        .order_by("category__description", "description", "-date_received", "id")
+    )
+
+    if task.certification and task.certification_id not in {cert.id for cert in certifications}:
+        certifications.append(task.certification)
+
+    _apply_certification_display_descriptions(certifications)
+    if task.certification:
+        for certification in certifications:
+            if certification.id == task.certification_id:
+                task.certification.display_description = certification.display_description
+                break
+    return certifications
+
+
+def _set_subcontractor_pending_task_certification(pending_task, certification_id, subcontractor):
+    if certification_id:
+        certification = get_object_or_404(
+            Certifications.objects.select_related("category", "subcontractor_employee"),
+            id=certification_id,
+        )
+        if certification.is_closed and certification.id != pending_task.certification_id:
+            return "That certification is closed and cannot be linked to this task."
+        if (
+            not pending_task.subcontractor_employee_id or
+            certification.subcontractor_employee_id != pending_task.subcontractor_employee_id or
+            certification.subcontractor_employee.subcontractor_id != subcontractor.id
+        ):
+            return "That certification is not linked to this subcontractor employee."
+        pending_task.certification = certification
+    else:
+        pending_task.certification = None
+    return ""
+
+
 @login_required(login_url='/accounts/login')
+def update_subcontractor_pending_task_certification(request):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "Invalid request."}, status=405)
+
+    subcontractor = get_object_or_404(Subcontractors, id=request.POST.get("subcontractor_id"))
+    pending_task = get_object_or_404(
+        EmployeePendingActions,
+        id=request.POST.get("pending_task_id"),
+        subcontractor_employee__subcontractor=subcontractor,
+        is_complete=False,
+    )
+    certification_error = _set_subcontractor_pending_task_certification(
+        pending_task,
+        request.POST.get("certification_id"),
+        subcontractor,
+    )
+    if certification_error:
+        return JsonResponse({"success": False, "message": certification_error}, status=400)
+
+    pending_task.save(update_fields=["certification"])
+    if pending_task.certification:
+        _apply_certification_display_descriptions([pending_task.certification])
+        certification_display = pending_task.certification.display_description
+        certification_url = reverse("certifications", args=[pending_task.certification.id])
+    else:
+        certification_display = ""
+        certification_url = ""
+
+    return JsonResponse({
+        "success": True,
+        "certification_id": pending_task.certification_id,
+        "certification_display": certification_display,
+        "certification_url": certification_url,
+    })
+
+
 def subcontractor(request, id):
     send_data = {}
     subcontractor = get_object_or_404(Subcontractors, id=id)
 
     if request.method == 'POST':
+        if "add_pending_task" in request.POST:
+            selected_employee = get_object_or_404(
+                Subcontractor_Employees,
+                id=request.POST.get("pending_task_employee"),
+                subcontractor=subcontractor,
+                is_active=True,
+            )
+            description = (request.POST.get("pending_task_description") or "").strip()
+            note_text = (request.POST.get("pending_task_note") or "").strip()
+
+            if not description:
+                messages.error(request, "Please enter a task description.")
+                return redirect('subcontractor', id=subcontractor.id)
+
+            current_employee = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            added_by = current_employee.first_name if current_employee else "Unknown"
+            notes = f"{date.today().strftime('%m/%d/%Y')} - Added by {added_by}."
+            if note_text:
+                notes += f" {note_text}"
+
+            EmployeePendingActions.objects.create(
+                subcontractor_employee=selected_employee,
+                description=description,
+                notes=notes,
+                date=date.today(),
+                is_complete=False,
+                confirmed_is_complete=False,
+            )
+            messages.success(request, "Pending employee task added.")
+            return redirect('subcontractor', id=subcontractor.id)
+
+        if "add_pending_task_note" in request.POST:
+            pending_task = get_object_or_404(
+                EmployeePendingActions,
+                id=request.POST.get("pending_task_id"),
+                subcontractor_employee__subcontractor=subcontractor,
+                is_complete=False,
+            )
+            note = (request.POST.get(f"pending_task_note_{pending_task.id}") or "").strip()
+            certification_error = _set_subcontractor_pending_task_certification(
+                pending_task,
+                request.POST.get("certification_id"),
+                subcontractor,
+            )
+            if certification_error:
+                messages.error(request, certification_error)
+                return redirect('subcontractor', id=subcontractor.id)
+            if not note:
+                messages.error(request, "Enter a note before submitting.")
+                return redirect('subcontractor', id=subcontractor.id)
+
+            current_employee = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            note_prefix = date.today().strftime('%m/%d/%Y')
+            if current_employee:
+                note_prefix += f" - {current_employee.first_name}"
+            else:
+                note_prefix += f" - {request.user.get_full_name() or request.user.username}"
+            pending_task.notes = (
+                (pending_task.notes + "\n") if pending_task.notes else ""
+            ) + f"{note_prefix}: {note}"
+            pending_task.save(update_fields=["certification", "notes"])
+            messages.success(request, "Task note added.")
+            return redirect('subcontractor', id=subcontractor.id)
+
+        if "delete_pending_task" in request.POST:
+            pending_task = get_object_or_404(
+                EmployeePendingActions,
+                id=request.POST.get("pending_task_id"),
+                subcontractor_employee__subcontractor=subcontractor,
+            )
+            current_employee = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            if pending_task.certification:
+                CertificationNotes.objects.create(
+                    certification=pending_task.certification,
+                    date=date.today(),
+                    user=current_employee or pending_task.employee or Employees.objects.filter(user__is_superuser=True).first() or Employees.objects.first(),
+                    note=(
+                        f"Pending employee task deleted for {pending_task.assignee_display}: "
+                        f"{pending_task.description}"
+                    ),
+                )
+            pending_task.delete()
+            messages.success(request, "Pending employee task deleted.")
+            return redirect('subcontractor', id=subcontractor.id)
+
+        if "complete_pending_task" in request.POST:
+            pending_task = get_object_or_404(
+                EmployeePendingActions,
+                id=request.POST.get("pending_task_id"),
+                subcontractor_employee__subcontractor=subcontractor,
+                is_complete=False,
+            )
+            certification_error = _set_subcontractor_pending_task_certification(
+                pending_task,
+                request.POST.get("certification_id"),
+                subcontractor,
+            )
+            if certification_error:
+                messages.error(request, certification_error)
+                return redirect('subcontractor', id=subcontractor.id)
+
+            completion_note = (request.POST.get("completion_note") or "").strip()
+            current_employee = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+            completed_by = (
+                current_employee.first_name
+                if current_employee
+                else request.user.get_full_name() or request.user.username
+            )
+            note_prefix = f"{date.today().strftime('%m/%d/%Y')} - {completed_by}: Completed task."
+            if completion_note:
+                note_prefix += f" {completion_note}"
+            pending_task.notes = (
+                (pending_task.notes + "\n") if pending_task.notes else ""
+            ) + note_prefix
+            pending_task.is_complete = True
+            pending_task.confirmed_is_complete = True
+            pending_task.save(update_fields=["certification", "notes", "is_complete", "confirmed_is_complete"])
+
+            if pending_task.certification:
+                CertificationNotes.objects.create(
+                    certification=pending_task.certification,
+                    date=date.today(),
+                    user=current_employee or pending_task.employee or Employees.objects.filter(user__is_superuser=True).first() or Employees.objects.first(),
+                    note=(
+                        f"Pending employee task completed for {pending_task.assignee_display}: "
+                        f"{pending_task.description}"
+                    ),
+                )
+            messages.success(request, "Pending employee task marked complete.")
+            return redirect('subcontractor', id=subcontractor.id)
+
         toolbox_action = request.POST.get('toolbox_action')
         if toolbox_action:
             scheduled = get_object_or_404(
@@ -2702,8 +2918,12 @@ def subcontractor(request, id):
         is_complete=False
     ).select_related(
         'subcontractor_employee',
-        'certification'
+        'certification',
+        'certification__category',
     ).order_by('date', 'id')
+    pending_tasks = list(pending_tasks)
+    for task in pending_tasks:
+        task.certification_options = _certification_options_for_subcontractor_pending_task(task)
 
     jobs = Subcontracts.objects.filter(
         subcontractor=subcontractor,
@@ -2887,6 +3107,7 @@ def subcontractor(request, id):
         subcontractor=subcontractor
     ).select_related('employee').order_by('employee__last_name', 'employee__first_name', 'job_description')
     send_data['subcontractor'] = subcontractor
+    send_data['active_sub_employees'] = active_sub_employees
     send_data['required_document_count'] = required_document_count
     send_data['approvers'] = approvers
     send_data['approver_count'] = approvers.count()
@@ -2898,7 +3119,7 @@ def subcontractor(request, id):
     send_data['toolbox_talk_rows'] = toolbox_talk_rows
     send_data['toolbox_talk_rows_count'] = len(toolbox_talk_rows)
     send_data['pending_tasks'] = pending_tasks
-    send_data['pending_task_count'] = pending_tasks.count()
+    send_data['pending_task_count'] = len(pending_tasks)
     send_data['jobs'] = jobs
     send_data['job_count'] = jobs.count()
     send_data['job_rows'] = job_rows
@@ -5014,6 +5235,38 @@ def subcontractor_employee_management(request, sub_id):
     subcontractor = Subcontractors.objects.get(id=sub_id)
     send_data['selected_sub'] = subcontractor
 
+    if request.method == "POST" and "add_pending_action_note" in request.POST:
+        pending_action = get_object_or_404(
+            EmployeePendingActions,
+            id=request.POST.get("pending_action_id"),
+            subcontractor_employee__subcontractor=subcontractor,
+            is_complete=False,
+        )
+        note_text = (request.POST.get(f"pending_action_note_{pending_action.id}") or "").strip()
+        if not note_text:
+            messages.error(request, "Please enter a note before adding it.")
+            return redirect("subcontractor_employee_management", sub_id=subcontractor.id)
+
+        current_employee = Employees.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+        note_name = current_employee.first_name if current_employee else pending_action.subcontractor_employee.name
+        pending_action.notes = (
+            (pending_action.notes + "\n") if pending_action.notes else ""
+        ) + f"{date.today().strftime('%m/%d/%Y')} - {note_name}: {note_text}"
+        pending_action.save(update_fields=["notes"])
+        try:
+            _send_required_task_note_email(
+                pending_action,
+                note_text,
+                note_name,
+                "subcontractor_employee_management",
+                getattr(pending_action.subcontractor_employee, "email", None),
+            )
+        except Exception:
+            messages.warning(request, "Task note added, but the email could not be sent.")
+            return redirect("subcontractor_employee_management", sub_id=subcontractor.id)
+        messages.success(request, "Task note added.")
+        return redirect("subcontractor_employee_management", sub_id=subcontractor.id)
+
     if request.method == "POST" and "complete_pending_action" in request.POST:
         pending_action = get_object_or_404(
             EmployeePendingActions,
@@ -5778,6 +6031,36 @@ def subcontractor_employee_portal(request, employee_id):
 
     send_data = {}
     subcontractor = selected_employee.subcontractor
+
+    if request.method == "POST" and "add_pending_action_note" in request.POST:
+        pending_action = get_object_or_404(
+            EmployeePendingActions,
+            id=request.POST.get("pending_action_id"),
+            subcontractor_employee=selected_employee,
+            is_complete=False,
+        )
+        note_text = (request.POST.get(f"pending_action_note_{pending_action.id}") or "").strip()
+        if not note_text:
+            messages.error(request, "Please enter a note before adding it.")
+            return redirect("subcontractor_employee_portal", employee_id=selected_employee.id)
+
+        pending_action.notes = (
+            (pending_action.notes + "\n") if pending_action.notes else ""
+        ) + f"{date.today().strftime('%m/%d/%Y')} - {selected_employee.name}: {note_text}"
+        pending_action.save(update_fields=["notes"])
+        try:
+            _send_required_task_note_email(
+                pending_action,
+                note_text,
+                selected_employee.name,
+                "subcontractor_employee_portal",
+                getattr(selected_employee, "email", None),
+            )
+        except Exception:
+            messages.warning(request, "Task note added, but the email could not be sent.")
+            return redirect("subcontractor_employee_portal", employee_id=selected_employee.id)
+        messages.success(request, "Task note added.")
+        return redirect("subcontractor_employee_portal", employee_id=selected_employee.id)
 
     if request.method == "POST" and "complete_pending_action" in request.POST:
         pending_action = get_object_or_404(

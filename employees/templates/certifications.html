@@ -489,6 +489,11 @@
                                                         data-task-id="{{ task.id }}">
                                                     Add Note
                                                 </button>
+                                                <button type="button"
+                                                        class="btn btn-success mr-2 mb-2 show-complete-pending-task-note"
+                                                        data-task-id="{{ task.id }}">
+                                                    Task Completed
+                                                </button>
                                                 <button type="submit"
                                                         name="delete_pending_task"
                                                         value="{{ task.id }}"
@@ -510,6 +515,20 @@
                                                         Add Note Now
                                                     </button>
                                                 </div>
+                                            </div>
+                                            <div id="complete-pending-task-note-{{ task.id }}" class="form-group mt-2" style="display:none;">
+                                                <label for="complete_pending_task_note_{{ task.id }}">Add A Note Here</label>
+                                                <input type="text"
+                                                       id="complete_pending_task_note_{{ task.id }}"
+                                                       name="complete_pending_task_note_{{ task.id }}"
+                                                       class="form-control"
+                                                       placeholder="Optional note">
+                                                <button type="submit"
+                                                        name="complete_pending_task"
+                                                        value="{{ task.id }}"
+                                                        class="btn btn-primary btn-sm mt-2">
+                                                    Submit Completion
+                                                </button>
                                             </div>
                                         </div>
                                     {% endfor %}
@@ -673,6 +692,7 @@
                             <option value="">No Category</option>
                             {% for category in categories_for_certification %}
                                 <option value="{{ category.pk }}"
+                                        data-description="{{ category.description|default:''|escape }}"
                                         {% if selected_item.category_id == category.pk %}selected{% endif %}>
                                     {{ category.description }}
                                 </option>
@@ -998,11 +1018,27 @@ $(document).ready(function () {
         }
     });
 
+    $('#certification_category').on('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const categoryDescription = selectedOption ? selectedOption.getAttribute('data-description') : '';
+        if (categoryDescription) {
+            $('#certification_description').val(categoryDescription);
+        }
+    });
+
     $('.show-pending-task-note').on('click', function () {
         const taskId = $(this).data('task-id');
         const noteRow = $('#pending-task-note-' + taskId);
         noteRow.show();
         noteRow.find('input[type="text"]').focus();
+    });
+
+    $('.show-complete-pending-task-note').on('click', function () {
+        const taskId = $(this).data('task-id');
+        const noteRow = $('#complete-pending-task-note-' + taskId);
+        noteRow.show();
+        noteRow.find('input[type="text"]').focus();
+        $(this).hide();
     });
 
     if ($('#pending_task_employee').length) {

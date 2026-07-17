@@ -89,6 +89,46 @@
         font-weight: 600;
         text-decoration: underline;
     }
+
+    .pending-task-card {
+        cursor: pointer;
+        border: 1px solid #d6d8db;
+        border-left: 5px solid #ffc107;
+        border-radius: 6px;
+        box-shadow: 0 .15rem .35rem rgba(0, 0, 0, .08);
+        transition: box-shadow .15s ease, transform .15s ease;
+    }
+
+    .pending-task-card:hover,
+    .pending-task-card:focus {
+        box-shadow: 0 .3rem .7rem rgba(0, 0, 0, .14);
+        transform: translateY(-1px);
+        outline: none;
+    }
+
+    .pending-task-card .card-body {
+        padding: 1rem;
+    }
+
+    .pending-task-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: .75rem;
+        border-top: 1px solid #e9ecef;
+        padding-top: .5rem;
+        margin-top: .5rem;
+    }
+
+    @media (max-width: 575.98px) {
+        .pending-task-meta {
+            display: block;
+        }
+
+        .pending-task-meta strong {
+            display: block;
+            margin-top: .15rem;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -385,12 +425,11 @@
                 <div class="row">
                     {% for action in pending_actions %}
                         <div class="col-12 col-md-6 col-xl-4 mb-3">
-                            {% if action.certification %}
-                                <a href="{% url 'certifications' action.certification.id %}"
-                                   class="text-dark"
-                                   style="text-decoration:none;">
-                            {% endif %}
-                            <div class="card h-100 border-warning">
+                            <div class="card h-100 pending-task-card"
+                                 role="button"
+                                 tabindex="0"
+                                 data-toggle="modal"
+                                 data-target="#pendingActionModal{{ action.id }}">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                         <h6 class="mb-0">{{ action.description }}</h6>
@@ -398,15 +437,27 @@
                                     </div>
 
                                     {% if action.date %}
-                                        <div class="small text-muted mb-2">
-                                            {{ action.date|date:"m/d/Y" }}
+                                        <div class="pending-task-meta">
+                                            <span class="text-muted">Date</span>
+                                            <strong>{{ action.date|date:"m/d/Y" }}</strong>
                                         </div>
                                     {% endif %}
 
                                     {% if action.certification %}
-                                        <div class="mb-2">
-                                            <strong>Certification:</strong>
-                                            {{ action.certification.category|default:action.certification.description }}
+                                        <div id="task-certification-card-{{ action.id }}" class="pending-task-meta">
+                                            <span class="text-muted">Certification</span>
+                                            <strong id="task-certification-card-link-{{ action.id }}">
+                                                <a href="{% url 'certifications' action.certification.id %}" onclick="event.stopPropagation();">
+                                                    {{ action.certification.display_description|default:action.certification.category|default:action.certification.description }}
+                                                </a>
+                                            </strong>
+                                        </div>
+                                    {% else %}
+                                        <div id="task-certification-card-{{ action.id }}"
+                                             class="pending-task-meta"
+                                             style="display:none;">
+                                            <span class="text-muted">Certification</span>
+                                            <strong id="task-certification-card-link-{{ action.id }}"></strong>
                                         </div>
                                     {% endif %}
 
@@ -415,57 +466,134 @@
                                             {{ action.notes }}
                                         </div>
                                     {% endif %}
+                                </div>
+                            </div>
+                        </div>
 
-                                    {% if not action.certification %}
-                                        <div class="mt-3">
-                                            <button type="button"
-                                                    class="btn btn-outline-primary mr-2 mb-2 show-pending-action-note"
-                                                    data-action-id="{{ action.id }}">
-                                                Add Note
+                        <div class="modal fade"
+                             id="pendingActionModal{{ action.id }}"
+                             tabindex="-1"
+                             role="dialog"
+                             aria-labelledby="pendingActionModalLabel{{ action.id }}"
+                             aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                    <form method="post" action="{% url 'employees_page' employee.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="pending_action_id" value="{{ action.id }}">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="pendingActionModalLabel{{ action.id }}">
+                                                {{ action.description }}
+                                            </h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
                                             </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <strong>Employee:</strong>
+                                                {{ employee }}
+                                            </div>
+
+                                            {% if action.date %}
+                                                <div class="mb-3">
+                                                    <strong>Date:</strong>
+                                                    {{ action.date|date:"m/d/Y" }}
+                                                </div>
+                                            {% endif %}
+
+                                            <div class="form-group">
+                                                <label for="certification_{{ action.id }}">Link to Certification</label>
+                                                <select id="certification_{{ action.id }}"
+                                                        name="certification_id"
+                                                        class="form-control pending-task-certification-select"
+                                                        data-task-id="{{ action.id }}">
+                                                    <option value="">No certification linked</option>
+                                                    {% for certification in action.certification_options %}
+                                                        <option value="{{ certification.id }}"{% if action.certification_id == certification.id %} selected{% endif %}>
+                                                            {{ certification.display_description|default:certification.category|default:certification.description }}
+                                                            {% if certification.date_expires %}
+                                                                - Expires {{ certification.date_expires|date:"m/d/Y" }}
+                                                            {% endif %}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                                <div id="certification-save-status-{{ action.id }}" class="small text-muted mt-1"></div>
+                                                <a id="task-certification-goto-{{ action.id }}"
+                                                   href="{% if action.certification %}{% url 'certifications' action.certification.id %}{% else %}#{% endif %}"
+                                                   class="btn btn-outline-primary btn-sm mt-2"
+                                                   {% if not action.certification %}style="display:none;"{% endif %}>
+                                                    GoTo Cert
+                                                </a>
+                                                <button type="button"
+                                                        id="task-certification-add-note-{{ action.id }}"
+                                                        class="btn btn-outline-primary btn-sm mt-2 pending-task-add-note-button"
+                                                        data-task-id="{{ action.id }}">
+                                                    Add Note
+                                                </button>
+                                            </div>
+
+                                            {% if action.notes %}
+                                                <div class="border-top pt-3 mt-3" style="white-space: normal; overflow-wrap: anywhere;">
+                                                    <div class="text-muted">Notes</div>
+                                                    <div>{{ action.notes }}</div>
+                                                </div>
+                                            {% endif %}
+
+                                            <div id="pending-task-note-{{ action.id }}" class="form-group mt-3" style="display:none;">
+                                                <label for="pending_action_note_{{ action.id }}">Task Note</label>
+                                                <input type="text"
+                                                       id="pending_action_note_{{ action.id }}"
+                                                       name="pending_action_note_{{ action.id }}"
+                                                       class="form-control"
+                                                       placeholder="Add note">
+                                                <button type="submit"
+                                                        name="add_pending_action_note"
+                                                        value="{{ action.id }}"
+                                                        class="btn btn-primary btn-sm mt-2">
+                                                    Add Note
+                                                </button>
+                                            </div>
+
+                                            <div id="completion-note-{{ action.id }}" class="form-group mt-3" style="display:none;">
+                                                <label for="completion_note_{{ action.id }}">Optional Completion Note</label>
+                                                <textarea id="completion_note_{{ action.id }}"
+                                                          name="completion_note"
+                                                          class="form-control"
+                                                          rows="3"
+                                                          placeholder="Optional note"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
                                             <button type="submit"
-                                                    form="employee_task_actions_form"
                                                     name="delete_pending_action"
                                                     value="{{ action.id }}"
-                                                    class="btn btn-outline-danger mb-2"
+                                                    class="btn btn-outline-danger"
                                                     onclick="return confirm('Delete this pending employee task?');">
                                                 Delete
                                             </button>
+                                            <button type="button"
+                                                    class="btn btn-success pending-task-complete-button"
+                                                    data-task-id="{{ action.id }}">
+                                                Task Completed
+                                            </button>
+                                            <button type="submit"
+                                                    name="complete_pending_action"
+                                                    class="btn btn-primary pending-task-submit-button"
+                                                    style="display:none;">
+                                                Submit Completion
+                                            </button>
                                         </div>
-                                        <div id="pending-action-note-{{ action.id }}" class="input-group mt-2" style="display:none;">
-                                            <input type="text"
-                                                   form="employee_task_actions_form"
-                                                   name="pending_action_note_{{ action.id }}"
-                                                   class="form-control"
-                                                   placeholder="Add note">
-                                            <div class="input-group-append">
-                                                <button type="submit"
-                                                        form="employee_task_actions_form"
-                                                        name="add_pending_action_note"
-                                                        value="{{ action.id }}"
-                                                        class="btn btn-primary">
-                                                    Add Note Now
-                                                </button>
-                                            </div>
-                                        </div>
-                                    {% endif %}
+                                    </form>
                                 </div>
                             </div>
-                            {% if action.certification %}
-                                </a>
-                            {% endif %}
                         </div>
                     {% endfor %}
                 </div>
             {% else %}
                 <p class="mb-0 text-muted">No required tasks.</p>
             {% endif %}
-
-            <form method="post"
-                  action="{% url 'employees_page' employee.id %}"
-                  id="employee_task_actions_form">
-                {% csrf_token %}
-            </form>
 
         </div>
     </div>
@@ -1092,6 +1220,15 @@ document.addEventListener("DOMContentLoaded", function () {
     const manualVacationFirstDay = document.getElementById("manual_vacation_first_day");
     const manualVacationLastDay = document.getElementById("manual_vacation_last_day");
     const manualVacationDurationHelper = document.getElementById("manual_vacation_duration_helper");
+    const updateCertificationUrl = "{% url 'update_employee_pending_action_certification' %}";
+    const csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    const csrfToken = csrfTokenInput ? csrfTokenInput.value : "";
+
+    function escapeHtml(value) {
+        const wrapper = document.createElement("div");
+        wrapper.textContent = value || "";
+        return wrapper.innerHTML;
+    }
 
     function countVacationWeekdays(firstDay, lastDay) {
         let vacationDays = 0;
@@ -1139,18 +1276,124 @@ document.addEventListener("DOMContentLoaded", function () {
         manualVacationLastDay.addEventListener("change", updateManualVacationDurationHelper);
     }
 
-    document.querySelectorAll(".show-pending-action-note").forEach(function (button) {
+    document.querySelectorAll(".pending-task-certification-select").forEach(function (select) {
+        select.dataset.previousValue = select.value;
+        select.addEventListener("change", function () {
+            const actionId = select.getAttribute("data-task-id");
+            const status = document.getElementById("certification-save-status-" + actionId);
+            const body = new URLSearchParams();
+            body.append("employee_id", "{{ employee.id }}");
+            body.append("pending_action_id", actionId);
+            body.append("certification_id", select.value);
+
+            if (status) {
+                status.className = "small text-muted mt-1";
+                status.textContent = "Saving...";
+            }
+
+            fetch(updateCertificationUrl, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": csrfToken,
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: body.toString()
+            })
+                .then(function (response) {
+                    return response.json().then(function (data) {
+                        if (!response.ok || !data.success) {
+                            throw data;
+                        }
+                        return data;
+                    });
+                })
+                .then(function (data) {
+                    const card = document.getElementById("task-certification-card-" + actionId);
+                    const cardLink = document.getElementById("task-certification-card-link-" + actionId);
+                    const gotoButton = document.getElementById("task-certification-goto-" + actionId);
+
+                    select.dataset.previousValue = select.value;
+                    if (data.certification_id) {
+                        if (card) {
+                            card.style.display = "";
+                        }
+                        if (cardLink) {
+                            cardLink.innerHTML = '<a href="' + data.certification_url + '" onclick="event.stopPropagation();">' + escapeHtml(data.certification_display) + '</a>';
+                        }
+                        if (gotoButton) {
+                            gotoButton.href = data.certification_url;
+                            gotoButton.style.display = "";
+                        }
+                    } else {
+                        if (card) {
+                            card.style.display = "none";
+                        }
+                        if (cardLink) {
+                            cardLink.innerHTML = "";
+                        }
+                        if (gotoButton) {
+                            gotoButton.href = "#";
+                            gotoButton.style.display = "none";
+                        }
+                    }
+
+                    if (status) {
+                        status.className = "small text-success mt-1";
+                        status.textContent = "Saved";
+                        setTimeout(function () {
+                            if (status.textContent === "Saved") {
+                                status.textContent = "";
+                            }
+                        }, 1800);
+                    }
+                })
+                .catch(function (data) {
+                    select.value = select.dataset.previousValue || "";
+                    if (status) {
+                        status.className = "small text-danger mt-1";
+                        status.textContent = data.message || "Could not save certification.";
+                    }
+                });
+        });
+    });
+
+    document.querySelectorAll(".pending-task-card").forEach(function (card) {
+        card.addEventListener("keydown", function (event) {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                $(card.getAttribute("data-target")).modal("show");
+            }
+        });
+    });
+
+    document.querySelectorAll(".pending-task-complete-button").forEach(function (button) {
         button.addEventListener("click", function () {
-            const actionId = button.getAttribute("data-action-id");
-            const noteRow = document.getElementById("pending-action-note-" + actionId);
+            const actionId = button.getAttribute("data-task-id");
+            const notePrompt = document.getElementById("completion-note-" + actionId);
+            const submitButton = button.parentElement.querySelector(".pending-task-submit-button");
+            if (notePrompt) {
+                notePrompt.style.display = "block";
+            }
+            if (submitButton) {
+                submitButton.style.display = "inline-block";
+            }
+            button.style.display = "none";
+        });
+    });
+
+    document.querySelectorAll(".pending-task-add-note-button").forEach(function (button) {
+        button.addEventListener("click", function () {
+            const actionId = button.getAttribute("data-task-id");
+            const noteRow = document.getElementById("pending-task-note-" + actionId);
 
             if (noteRow) {
-                noteRow.style.display = "";
+                noteRow.style.display = "block";
                 const noteInput = noteRow.querySelector('input[type="text"]');
                 if (noteInput) {
                     noteInput.focus();
                 }
             }
+            button.style.display = "none";
         });
     });
 

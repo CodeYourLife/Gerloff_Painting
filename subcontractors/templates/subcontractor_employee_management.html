@@ -60,6 +60,26 @@
     text-decoration: underline;
 }
 
+.pending-task-card {
+    cursor: pointer;
+    border: 1px solid #d6d8db;
+    border-left: 5px solid #ffc107;
+    border-radius: 6px;
+    box-shadow: 0 .15rem .35rem rgba(0, 0, 0, .08);
+    transition: box-shadow .15s ease, transform .15s ease;
+}
+
+.pending-task-card:hover,
+.pending-task-card:focus {
+    box-shadow: 0 .3rem .7rem rgba(0, 0, 0, .14);
+    transform: translateY(-1px);
+    outline: none;
+}
+
+.pending-task-card .card-body {
+    padding: 1rem;
+}
+
 .mobile-upload-file-label {
     display: block;
     width: 100%;
@@ -263,15 +283,17 @@
                     <div class="row">
                         {% for task in pending_employee_tasks %}
                             <div class="col-12 col-md-6 col-xl-4 mb-3">
-                                <div class="card h-100 border-warning"
+                                <div class="card h-100 pending-task-card"
                                      role="button"
+                                     tabindex="0"
                                      data-toggle="modal"
                                      data-target="#completePendingActionModal"
                                      data-action-id="{{ task.id }}"
                                      data-action-description="{{ task.description|escapejs }}"
                                      data-action-date="{{ task.date|date:'m/d/Y' }}"
                                      data-action-employee="{{ task.subcontractor_employee.name|escapejs }}"
-                                     data-action-certification="{% if task.certification %}{{ task.certification.description|default:task.certification.category|escapejs }}{% endif %}"
+                                     data-action-notes="{{ task.notes|default:''|escape }}"
+                                     data-action-certification="{% if task.certification %}{{ task.certification.display_description|default:task.certification.category|default:task.certification.description|escapejs }}{% endif %}"
                                      style="cursor:pointer;">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-start mb-2">
@@ -294,7 +316,7 @@
                                                 <span class="text-muted">Certification</span>
                                                 <a href="{% url 'certifications' task.certification.id %}"
                                                    class="pending-task-certification-link">
-                                                    {{ task.certification.description|default:task.certification.category }}
+                                                    {{ task.certification.display_description|default:task.certification.category|default:task.certification.description }}
                                                 </a>
                                             </div>
                                         {% endif %}
@@ -799,8 +821,34 @@
                     <div class="small text-muted mb-2" id="pending_action_date"></div>
                     <div class="mb-3" id="pending_action_certification"></div>
 
-                    <div class="form-group mb-0">
-                        <label for="completion_note">Additional Information</label>
+                    <div id="pending_action_notes_display"
+                         class="border-top pt-3 mt-3"
+                         style="white-space: normal; overflow-wrap: anywhere; display:none;">
+                        <div class="text-muted">Notes</div>
+                        <div id="pending_action_notes_text"></div>
+                    </div>
+
+                    <button type="button"
+                            id="show_pending_action_note"
+                            class="btn btn-outline-primary btn-sm mt-3">
+                        Add Note
+                    </button>
+
+                    <div id="pending_action_note_group" class="form-group mt-3" style="display:none;">
+                        <label for="pending_action_note_input">Task Note</label>
+                        <input type="text"
+                               id="pending_action_note_input"
+                               class="form-control"
+                               placeholder="Add note">
+                        <button type="submit"
+                                name="add_pending_action_note"
+                                class="btn btn-primary btn-sm mt-2">
+                            Add Note
+                        </button>
+                    </div>
+
+                    <div id="completion-note-group" class="form-group mt-3" style="display:none;">
+                        <label for="completion_note">Add A Note Here</label>
                         <input type="text"
                                name="completion_note"
                                id="completion_note"
@@ -810,10 +858,17 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="submit"
-                            name="complete_pending_action"
+                    <button type="button"
+                            id="show_completion_note_button"
                             class="btn btn-success">
                         Task Completed
+                    </button>
+                    <button type="submit"
+                            name="complete_pending_action"
+                            id="submit_completion_button"
+                            class="btn btn-primary"
+                            style="display:none;">
+                        Submit Completion
                     </button>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">
                         Cancel
@@ -1016,6 +1071,7 @@ $('#completePendingActionModal').on('show.bs.modal', function (event) {
     const description = card.data('action-description') || '';
     const employee = card.data('action-employee') || '';
     const actionDate = card.data('action-date') || '';
+    const actionNotes = card.data('action-notes') || '';
     const certification = card.data('action-certification') || '';
 
     $('#pending_action_id').val(actionId);
@@ -1023,7 +1079,44 @@ $('#completePendingActionModal').on('show.bs.modal', function (event) {
     $('#pending_action_employee').text(employee ? 'Employee: ' + employee : '');
     $('#pending_action_date').text(actionDate ? 'Date: ' + actionDate : '');
     $('#pending_action_certification').text(certification ? 'Certification: ' + certification : '');
+    $('#pending_action_note_input')
+        .val('')
+        .attr('name', 'pending_action_note_' + actionId);
+    $('#pending_action_note_group').hide();
+    $('#show_pending_action_note').show();
+    if (actionNotes) {
+        $('#pending_action_notes_text').text(actionNotes);
+        $('#pending_action_notes_display').show();
+    } else {
+        $('#pending_action_notes_text').text('');
+        $('#pending_action_notes_display').hide();
+    }
     $('#completion_note').val('');
+    $('#completion-note-group').hide();
+    $('#submit_completion_button').hide();
+    $('#show_completion_note_button').show();
+});
+
+$('#show_pending_action_note').on('click', function () {
+    $('#pending_action_note_group').show();
+    $('#pending_action_note_input').focus();
+    $(this).hide();
+});
+
+$('#show_completion_note_button').on('click', function () {
+    $('#completion-note-group').show();
+    $('#submit_completion_button').show();
+    $('#completion_note').focus();
+    $(this).hide();
+});
+
+document.querySelectorAll(".pending-task-card[data-toggle='modal']").forEach(function (card) {
+    card.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            card.click();
+        }
+    });
 });
 
 $('#missingDbidsClearancesModal').on('show.bs.modal', function (event) {
