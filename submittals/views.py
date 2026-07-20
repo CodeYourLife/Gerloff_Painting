@@ -18,6 +18,35 @@ from wallcovering.models import Wallcovering
 import os
 
 
+def get_or_create_unlinked_submittal_approval(item, defaults=None, update_existing=False):
+    defaults = defaults or {}
+    approval = SubmittalApprovals.objects.filter(
+        submittalitem=item,
+        submittal__isnull=True,
+    ).order_by("id").first()
+
+    if approval:
+        if update_existing and defaults:
+            update_fields = []
+            for field, value in defaults.items():
+                if getattr(approval, field) != value:
+                    setattr(approval, field, value)
+                    update_fields.append(field)
+
+            if update_fields:
+                approval.save(update_fields=update_fields)
+
+        return approval, False
+
+    create_values = {
+        "submittalitem": item,
+        "submittal": None,
+    }
+    create_values.update(defaults)
+
+    return SubmittalApprovals.objects.create(**create_values), True
+
+
 @login_required(login_url='/accounts/login')
 #THIS IS NOT USED RIGHT NOW I DONT THINK
 def submittals_item_close(request, id):
@@ -764,21 +793,28 @@ def submittal_send(request, submittal_id):
                 )
 
             if reject_action == 'additional_required':
-                SubmittalApprovals.objects.create(
-                    submittal=None,
-                    submittalitem=item,
-                    is_approved=None,
-                    notes='Rejected in submittal ' + str(submittal.submittal_number),
-                    quantity=approval.quantity,
-                    date_reviewed=None,
+                _, created = get_or_create_unlinked_submittal_approval(
+                    item,
+                    defaults={
+                        "is_approved": None,
+                        "notes": 'Rejected in submittal ' + str(submittal.submittal_number),
+                        "quantity": approval.quantity,
+                        "date_reviewed": None,
+                    },
+                    update_existing=True,
                 )
 
                 if employee:
+                    if created:
+                        note_text = "New pending submittal item created for "
+                    else:
+                        note_text = "Existing pending submittal item updated for "
+
                     SubmittalNotes.objects.create(
                         submittal=submittal,
                         date=timezone.now().date(),
                         user=employee,
-                        note="New pending submittal item created for " + str(item.description),
+                        note=note_text + str(item.description),
                     )
 
             elif reject_action == 'no_longer_needed':
@@ -1044,16 +1080,15 @@ def submittal_item_detail(request, item_id):
     # If the item has no approval records at all, create one unlinked approval.
     # This becomes the "Information for Next Submittal" record.
     if not item.is_no_longer_used and not SubmittalApprovals.objects.filter(submittalitem=item).exists():
-        SubmittalApprovals.objects.get_or_create(
-            submittalitem=item,
-            submittal=None,
-            defaults={
+        get_or_create_unlinked_submittal_approval(
+            item,
+            {
                 "is_approved": None,
                 "notes": "",
                 "item_notes": "",
                 "quantity": 0,
                 "date_reviewed": None,
-            }
+            },
         )
     all_job_submittal_items = SubmittalItems.objects.filter(
         job_number=item.job_number,
@@ -1156,16 +1191,15 @@ def submittal_item_detail(request, item_id):
                 if old_unlinked_approval:
                     old_item_notes = old_unlinked_approval.item_notes or ""
 
-                previous_unlinked_approval, created = SubmittalApprovals.objects.get_or_create(
-                    submittalitem=previous_item,
-                    submittal=None,
-                    defaults={
+                previous_unlinked_approval, created = get_or_create_unlinked_submittal_approval(
+                    previous_item,
+                    {
                         "is_approved": None,
                         "item_notes": old_item_notes,
                         "notes": "",
                         "quantity": 0,
                         "date_reviewed": None,
-                    }
+                    },
                 )
 
                 if not created and old_item_notes:
