@@ -2063,6 +2063,15 @@ def subcontractor_employee_page(request, id):
         .select_related("certification")
         .order_by("date", "id")
     )
+    completed_tasks = (
+        EmployeePendingActions.objects
+        .filter(
+            subcontractor_employee=sub_employee,
+            is_complete=True,
+        )
+        .select_related("certification")
+        .order_by("-date", "-id")
+    )
     respirator_clearances = (
         SubcontractorRespiratorClearance.objects
         .filter(employee=sub_employee)
@@ -2083,6 +2092,8 @@ def subcontractor_employee_page(request, id):
         "certification_count": len(open_certifications),
         "pending_tasks": pending_tasks,
         "pending_task_count": pending_tasks.count(),
+        "completed_tasks": completed_tasks,
+        "completed_task_count": completed_tasks.count(),
         "respirator_clearances": respirator_clearances,
         "respirator_clearance_count": respirator_clearances.count(),
     })
@@ -2805,6 +2816,19 @@ def employees_page(request, id):
             employee,
         )
     pending_actions_count = len(pending_actions)
+    completed_actions = list(
+        EmployeePendingActions.objects.filter(
+            employee=employee,
+            is_complete=True,
+        ).select_related(
+            "certification",
+            "certification__category",
+        ).order_by(
+            "-date",
+            "-id",
+        )
+    )
+    completed_actions_count = len(completed_actions)
     certification_summary = employee.certification_summary()
     certification_count = certification_summary["count"]
     open_pending_action_cert_ids = set(
@@ -2915,6 +2939,8 @@ def employees_page(request, id):
         "toolbox_summary": toolbox_summary,
         "pending_actions": pending_actions,
         "pending_actions_count": pending_actions_count,
+        "completed_actions": completed_actions,
+        "completed_actions_count": completed_actions_count,
         "certification_count": certification_count,
         "assigned_equipment_count": assigned_equipment_count,
         "can_view_employee_vacation_history": can_view_employee_vacation_history,
@@ -3440,7 +3466,10 @@ def my_page(request):
                 id=request.POST.get("confirm_review_completed_action"),
             )
             completed_action.confirmed_is_complete = True
-            completed_action.save(update_fields=["confirmed_is_complete"])
+            completed_action.notes = (
+                (completed_action.notes + "\n") if completed_action.notes else ""
+            ) + f"{date.today().strftime('%m/%d/%Y')} - {employee.first_name}: Completion Confirmed"
+            completed_action.save(update_fields=["confirmed_is_complete", "notes"])
             if completed_action.certification:
                 CertificationNotes.objects.create(
                     certification=completed_action.certification,
@@ -4348,10 +4377,20 @@ def certifications(request, id):
             "date",
             "id",
         )
+        completed_employee_tasks = EmployeePendingActions.objects.filter(
+            certification=selected_cert,
+            is_complete=True,
+            confirmed_is_complete=True,
+        ).order_by(
+            "-date",
+            "-id",
+        )
         send_data['pending_employee_tasks'] = pending_employee_tasks
         send_data['pending_employee_tasks_count'] = pending_employee_tasks.count()
         send_data['completed_tasks_requiring_review'] = completed_tasks_requiring_review
         send_data['completed_tasks_requiring_review_count'] = completed_tasks_requiring_review.count()
+        send_data['completed_employee_tasks'] = completed_employee_tasks
+        send_data['completed_employee_tasks_count'] = completed_employee_tasks.count()
         send_data['certification_files'] = _certification_file_rows(selected_cert.id)
         send_data['certification_files_count'] = len(send_data['certification_files'])
         send_data['certification_folder_path'] = rf"\\gp-webserver\trinity\certifications\{selected_cert.id}"

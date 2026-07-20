@@ -58,6 +58,84 @@
         {{ pending_tasks_count }} pending task{{ pending_tasks_count|pluralize }} for active employees and subcontractor employees.
     </div>
 
+    <button type="button"
+            class="btn btn-outline-secondary mb-3"
+            data-toggle="collapse"
+            data-target="#completedEmployeeTasksCollapse"
+            aria-expanded="false"
+            aria-controls="completedEmployeeTasksCollapse">
+        Show Completed Tasks{% if completed_tasks_count %} ({{ completed_tasks_count }}){% endif %}
+    </button>
+
+    <div class="collapse mb-3" id="completedEmployeeTasksCollapse">
+        <div class="border rounded p-3">
+            {% if completed_tasks %}
+                <div class="row">
+                    {% for task in completed_tasks %}
+                        <div class="col-12 col-md-6 col-xl-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="mb-0">{{ task.description }}</h6>
+                                        <span class="badge badge-success">Complete</span>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <strong>Employee:</strong>
+                                        {% if task.employee %}
+                                            <a href="{% url 'employees_page' task.employee.id %}">
+                                                {{ task.assignee_display }}
+                                            </a>
+                                        {% elif task.subcontractor_employee %}
+                                            <a href="{% url 'subcontractor_employee_page' task.subcontractor_employee.id %}">
+                                                {{ task.assignee_display }}
+                                            </a>
+                                        {% else %}
+                                            {{ task.assignee_display }}
+                                        {% endif %}
+                                    </div>
+
+                                    {% if task.subcontractor_employee %}
+                                        <div class="mb-2">
+                                            <strong>Subcontractor:</strong>
+                                            {{ task.subcontractor_employee.subcontractor.company }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if task.date %}
+                                        <div class="pending-task-meta">
+                                            <span class="text-muted">Date</span>
+                                            <strong>{{ task.date|date:"m/d/Y" }}</strong>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if task.certification %}
+                                        <div class="pending-task-meta">
+                                            <span class="text-muted">Certification</span>
+                                            <strong>
+                                                <a href="{% url 'certifications' task.certification.id %}">
+                                                    {{ task.certification.display_description|default:task.certification.category|default:task.certification.description }}
+                                                </a>
+                                            </strong>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if task.notes %}
+                                        <div style="white-space: normal; overflow-wrap: anywhere;">
+                                            {{ task.notes }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="mb-0 text-muted">No completed employee tasks.</p>
+            {% endif %}
+        </div>
+    </div>
+
     {% if pending_tasks %}
         <div class="row">
             {% for task in pending_tasks %}

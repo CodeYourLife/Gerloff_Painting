@@ -670,6 +670,32 @@ def _pending_employee_task_queryset():
     )
 
 
+def _completed_employee_task_queryset():
+    return (
+        EmployeePendingActions.objects
+        .filter(is_complete=True)
+        .filter(
+            Q(employee__active=True) |
+            Q(
+                subcontractor_employee__is_active=True,
+                subcontractor_employee__subcontractor__is_inactive=False,
+            )
+        )
+        .select_related(
+            "employee",
+            "employee__job_title",
+            "subcontractor_employee",
+            "subcontractor_employee__subcontractor",
+            "certification",
+            "certification__category",
+        )
+        .order_by(
+            "-date",
+            "-id",
+        )
+    )
+
+
 def _certification_options_for_pending_task(task):
     if task.employee_id:
         certifications = Certifications.objects.filter(
@@ -1369,10 +1395,13 @@ def pending_employee_tasks(request):
     pending_tasks = list(_pending_employee_task_queryset())
     for task in pending_tasks:
         task.certification_options = _certification_options_for_pending_task(task)
+    completed_tasks = list(_completed_employee_task_queryset())
 
     return render(request, 'pending_employee_tasks.html', {
         "pending_tasks": pending_tasks,
         "pending_tasks_count": len(pending_tasks),
+        "completed_tasks": completed_tasks,
+        "completed_tasks_count": len(completed_tasks),
     })
 
 
