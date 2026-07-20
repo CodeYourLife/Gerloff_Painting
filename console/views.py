@@ -1439,6 +1439,39 @@ def update_pending_employee_task_certification(request):
 
 
 @login_required(login_url='/accounts/login')
+def update_pending_employee_task_certification(request):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "Invalid request."}, status=405)
+
+    pending_task = get_object_or_404(
+        _pending_employee_task_queryset(),
+        id=request.POST.get("pending_task_id"),
+    )
+    certification_error = _set_pending_task_certification(
+        pending_task,
+        request.POST.get("certification_id"),
+    )
+    if certification_error:
+        return JsonResponse({"success": False, "message": certification_error}, status=400)
+
+    pending_task.save(update_fields=["certification"])
+    if pending_task.certification:
+        _apply_certification_display_descriptions([pending_task.certification])
+        certification_display = pending_task.certification.display_description
+        certification_url = reverse("certifications", args=[pending_task.certification.id])
+    else:
+        certification_display = ""
+        certification_url = ""
+
+    return JsonResponse({
+        "success": True,
+        "certification_id": pending_task.certification_id,
+        "certification_display": certification_display,
+        "certification_url": certification_url,
+    })
+
+
+@login_required(login_url='/accounts/login')
 def expired_certifications(request):
     certifications = list(_expired_flagged_certification_queryset())
     return render(request, 'expired_certifications.html', {
