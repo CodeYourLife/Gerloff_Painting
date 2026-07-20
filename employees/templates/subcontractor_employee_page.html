@@ -409,6 +409,57 @@
                         data-target="#addPendingActionModal">
                     Add New Task
                 </button>
+                <button type="button"
+                        class="btn btn-outline-secondary mb-3 ml-2"
+                        data-toggle="collapse"
+                        data-target="#completedPendingTasksCollapse"
+                        aria-expanded="false"
+                        aria-controls="completedPendingTasksCollapse">
+                    Show Completed Tasks{% if completed_task_count %} ({{ completed_task_count }}){% endif %}
+                </button>
+
+                <div class="collapse mb-3" id="completedPendingTasksCollapse">
+                    <div class="border rounded p-3">
+                        {% if completed_tasks %}
+                            <div class="row">
+                                {% for task in completed_tasks %}
+                                    <div class="col-12 col-md-6 col-xl-4 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <div class="font-weight-bold">{{ task.description }}</div>
+                                                    <span class="badge badge-success">Complete</span>
+                                                </div>
+                                                {% if task.date %}
+                                                    <div class="d-flex justify-content-between border-top pt-2">
+                                                        <span class="text-muted">Date</span>
+                                                        <strong>{{ task.date|date:"m/d/Y" }}</strong>
+                                                    </div>
+                                                {% endif %}
+                                                {% if task.certification %}
+                                                    <div class="d-flex justify-content-between border-top pt-2 mt-2">
+                                                        <span class="text-muted">Certification</span>
+                                                        <a href="{% url 'certifications' task.certification.id %}">
+                                                            {{ task.certification.display_description|default:task.certification.category|default:task.certification.description }}
+                                                        </a>
+                                                    </div>
+                                                {% endif %}
+                                                {% if task.notes %}
+                                                    <div class="border-top pt-2 mt-2">
+                                                        <div class="text-muted">Notes</div>
+                                                        <div>{{ task.notes }}</div>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="mb-0 text-muted">No completed tasks.</p>
+                        {% endif %}
+                    </div>
+                </div>
 
                 {% if pending_tasks %}
                     <div class="row">

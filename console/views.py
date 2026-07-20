@@ -670,6 +670,32 @@ def _pending_employee_task_queryset():
     )
 
 
+def _completed_employee_task_queryset():
+    return (
+        EmployeePendingActions.objects
+        .filter(is_complete=True)
+        .filter(
+            Q(employee__active=True) |
+            Q(
+                subcontractor_employee__is_active=True,
+                subcontractor_employee__subcontractor__is_inactive=False,
+            )
+        )
+        .select_related(
+            "employee",
+            "employee__job_title",
+            "subcontractor_employee",
+            "subcontractor_employee__subcontractor",
+            "certification",
+            "certification__category",
+        )
+        .order_by(
+            "-date",
+            "-id",
+        )
+    )
+
+
 def _certification_options_for_pending_task(task):
     if task.employee_id:
         certifications = Certifications.objects.filter(
@@ -1369,10 +1395,46 @@ def pending_employee_tasks(request):
     pending_tasks = list(_pending_employee_task_queryset())
     for task in pending_tasks:
         task.certification_options = _certification_options_for_pending_task(task)
+    completed_tasks = list(_completed_employee_task_queryset())
 
     return render(request, 'pending_employee_tasks.html', {
         "pending_tasks": pending_tasks,
         "pending_tasks_count": len(pending_tasks),
+        "completed_tasks": completed_tasks,
+        "completed_tasks_count": len(completed_tasks),
+    })
+
+
+@login_required(login_url='/accounts/login')
+def update_pending_employee_task_certification(request):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "Invalid request."}, status=405)
+
+    pending_task = get_object_or_404(
+        _pending_employee_task_queryset(),
+        id=request.POST.get("pending_task_id"),
+    )
+    certification_error = _set_pending_task_certification(
+        pending_task,
+        request.POST.get("certification_id"),
+    )
+    if certification_error:
+        return JsonResponse({"success": False, "message": certification_error}, status=400)
+
+    pending_task.save(update_fields=["certification"])
+    if pending_task.certification:
+        _apply_certification_display_descriptions([pending_task.certification])
+        certification_display = pending_task.certification.display_description
+        certification_url = reverse("certifications", args=[pending_task.certification.id])
+    else:
+        certification_display = ""
+        certification_url = ""
+
+    return JsonResponse({
+        "success": True,
+        "certification_id": pending_task.certification_id,
+        "certification_display": certification_display,
+        "certification_url": certification_url,
     })
 
 
