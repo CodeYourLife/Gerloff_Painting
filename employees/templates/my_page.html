@@ -2420,6 +2420,12 @@
                                                 class="btn btn-success mr-2 mb-2">
                                             Confirm Completion
                                         </button>
+                                        {% if action.certification %}
+                                            <a href="{% url 'certifications' action.certification.id %}"
+                                               class="btn btn-outline-primary mr-2 mb-2">
+                                                View Certification
+                                            </a>
+                                        {% endif %}
                                         <div class="form-group mt-2 mb-2">
                                             <label for="deny_review_completed_action_note_{{ action.id }}" class="small font-weight-bold">
                                                 Denial Note
