@@ -32,3 +32,7 @@ www.trinitygp.net
 {% include 'change_order_nav.html' with page_label="Select Job for New Change Order" %}
 {% endblock %}
 
+git checkout master
+git fetch origin
+git pull origin master
+git checkout -b T426

@@ -174,35 +174,78 @@ def _close_previous_employee_respirator_certifications(employee, current_certifi
 
 
 def _create_certification_custom_attributes(certification, template_fields):
-    existing_template_field_ids = set(
+    existing_attributes = list(
         CertificationCustomAttributes.objects.filter(
             certification=certification,
-            category=certification.category,
-            template_field__isnull=False,
-        ).values_list(
-            "template_field_id",
-            flat=True,
+        ).select_related(
+            "template_field",
+        ).order_by(
+            "id",
         )
     )
-    existing_attributes_by_name = {
-        custom_attribute.custom_attribute: custom_attribute
-        for custom_attribute in CertificationCustomAttributes.objects.filter(
-            certification=certification,
-            category=certification.category,
-            template_field__isnull=True,
+    existing_attributes_by_template_field = defaultdict(list)
+    existing_attributes_by_name = defaultdict(list)
+
+    for custom_attribute in existing_attributes:
+        if custom_attribute.template_field_id:
+            existing_attributes_by_template_field[custom_attribute.template_field_id].append(custom_attribute)
+
+        stored_name = (
+            custom_attribute.template_field.custom_attribute
+            if custom_attribute.template_field_id
+            else custom_attribute.custom_attribute
         )
-    }
+        existing_attributes_by_name[_normalize_custom_attribute_name(stored_name)].append(custom_attribute)
+
     attributes_to_create = []
 
-    for template_field in template_fields:
-        if template_field.id in existing_template_field_ids:
-            continue
+    def existing_attribute_for(template_field):
+        template_field_matches = existing_attributes_by_template_field.get(template_field.id, [])
+        if template_field_matches:
+            return next(
+                (
+                    custom_attribute for custom_attribute in template_field_matches
+                    if custom_attribute.custom_attribute_result
+                ),
+                template_field_matches[0],
+            )
 
-        existing_attribute = existing_attributes_by_name.get(template_field.custom_attribute)
+        name_matches = existing_attributes_by_name.get(
+            _normalize_custom_attribute_name(template_field.custom_attribute),
+            [],
+        )
+        if name_matches:
+            return next(
+                (
+                    custom_attribute for custom_attribute in name_matches
+                    if custom_attribute.custom_attribute_result
+                ),
+                name_matches[0],
+            )
+        return None
+
+    for template_field in template_fields:
+        existing_attribute = existing_attribute_for(template_field)
         if existing_attribute:
-            existing_attribute.template_field = template_field
-            existing_attribute.field_type = template_field.field_type
-            existing_attribute.save(update_fields=["template_field", "field_type"])
+            update_fields = []
+            if existing_attribute.category_id != certification.category_id:
+                existing_attribute.category = certification.category
+                update_fields.append("category")
+            if existing_attribute.template_field_id != template_field.id:
+                existing_attribute.template_field = template_field
+                update_fields.append("template_field")
+            if existing_attribute.custom_attribute != template_field.custom_attribute:
+                existing_attribute.custom_attribute = template_field.custom_attribute
+                update_fields.append("custom_attribute")
+            if existing_attribute.field_type != template_field.field_type:
+                existing_attribute.field_type = template_field.field_type
+                update_fields.append("field_type")
+            if update_fields:
+                existing_attribute.save(update_fields=update_fields)
+            existing_attributes_by_template_field[template_field.id].append(existing_attribute)
+            existing_attributes_by_name[
+                _normalize_custom_attribute_name(template_field.custom_attribute)
+            ].append(existing_attribute)
             continue
 
         attributes_to_create.append(
@@ -220,7 +263,6 @@ def _create_certification_custom_attributes(certification, template_fields):
         CertificationCustomAttributes.objects.bulk_create(attributes_to_create)
 
     return len(attributes_to_create)
-
 
 def _create_standard_certification_custom_attributes(certification):
     if not certification.category_id or not certification.category.template_id:
