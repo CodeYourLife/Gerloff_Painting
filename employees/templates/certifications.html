@@ -33,6 +33,7 @@
 
 <div class="container mt-4">
 
+    {% if not detail_only %}
     <div class="text-center mb-3">
         <form action="{% url 'new_certification' %}" class="d-inline-block mr-2">
             <button type="submit" class="btn btn-primary">
@@ -126,17 +127,20 @@
 
         </div>
     </div>
+    {% endif %}
 
 
 
 
 {% if selected_item %}
+{% if not detail_only %}
 <script>
     window.addEventListener("load", function () {
         document.getElementById("certification_details")
             .scrollIntoView({ behavior: "smooth" });
     });
 </script>
+{% endif %}
 
 <div class="mt-4 mb-5" id="certification_details">
 
@@ -159,11 +163,10 @@
                         Goto Employee Page
                     </a>
                 {% endif %}
-                <button type="button"
-                        class="btn btn-outline-light btn-sm"
-                        onclick="window.scrollTo({ top: 0, behavior: 'smooth' });">
+                <a href="{% url 'certifications' 'ALL' %}"
+                   class="btn btn-outline-light btn-sm">
                     Go Back to All Certifications
-                </button>
+                </a>
             </div>
         </div>
 
@@ -1033,34 +1036,37 @@ function copyCertificationFolderPath() {
 }
 
 $(document).ready(function () {
-    const certificationsTable = $('#certifications_table').DataTable({
-        paging: false,
-        info: false,
-        dom: 'rt'
-    });
+    const certificationsTableElement = $('#certifications_table');
+    if (certificationsTableElement.length) {
+        const certificationsTable = certificationsTableElement.DataTable({
+            paging: false,
+            info: false,
+            dom: 'rt'
+        });
 
-    $('#certifications_table_search').on('keyup change', function () {
-        certificationsTable.search(this.value).draw();
-    });
+        $('#certifications_table_search').on('keyup change', function () {
+            certificationsTable.search(this.value).draw();
+        });
 
-    $('#certification_description_filter').on('change', function () {
-        const selectedDescription = this.value;
-        if (selectedDescription) {
-            certificationsTable
-                .column(1)
-                .search(
-                    '^' + $.fn.dataTable.util.escapeRegex(selectedDescription) + '(?:\\s*\\[[^\\]]+\\])?$',
-                    true,
-                    false
-                )
-                .draw();
-        } else {
-            certificationsTable
-                .column(1)
-                .search('')
-                .draw();
-        }
-    });
+        $('#certification_description_filter').on('change', function () {
+            const selectedDescription = this.value;
+            if (selectedDescription) {
+                certificationsTable
+                    .column(1)
+                    .search(
+                        '^' + $.fn.dataTable.util.escapeRegex(selectedDescription) + '(?:\\s*\\[[^\\]]+\\])?$',
+                        true,
+                        false
+                    )
+                    .draw();
+            } else {
+                certificationsTable
+                    .column(1)
+                    .search('')
+                    .draw();
+            }
+        });
+    }
 
     $('#certification_category').on('change', function () {
         const selectedOption = this.options[this.selectedIndex];

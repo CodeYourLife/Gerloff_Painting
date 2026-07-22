@@ -5027,6 +5027,9 @@ def certifications(request, id):
             messages.success(request, "Expiration date updated.")
             return redirect('certifications', id=cert.id)
         cert.save()
+    if id != 'ALL':
+        send_data['detail_only'] = True
+        return render(request, "certifications.html", send_data)
     certifications_list = Certifications.objects.filter(
         is_closed=show_closed_certifications,
     ).filter(
