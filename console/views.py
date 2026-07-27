@@ -33,6 +33,11 @@ from jobs.models import *
 from jobs.models import Jobs
 from jobs.views import subtract_months
 from openpyxl import load_workbook
+from accounts.identity_email import (
+    EMAIL_IN_USE_MESSAGE,
+    identity_email_is_available,
+    normalize_identity_email,
+)
 from pathlib import Path
 from rentals.models import *
 from subcontractors.models import *
@@ -1731,7 +1736,8 @@ def register_user(request):
         username = request.POST['username'].strip()
         password1 = request.POST['password1']
         password2 = request.POST['password2']
-        email = request.POST['email']
+        email = normalize_identity_email(request.POST.get('email'))
+        employee = Employees.objects.get(id=request.POST['select_employee'])
         if password1 == password2:
             username_exists_in_django_users = User.objects.filter(username__iexact=username).exists() if username else False
             username_exists_in_subcontractors = Subcontractors.objects.filter(username__iexact=username).exists() if username else False
@@ -1740,16 +1746,22 @@ def register_user(request):
             if not username or username_exists_in_django_users or username_exists_in_subcontractors or username_exists_in_subcontractor_employees:
                 messages.error(request, 'USERNAME ALREADY IN USE. Please choose a different username.')
                 return redirect('register_user')
+            elif not identity_email_is_available(email, exclude_instance=employee):
+                messages.error(request, EMAIL_IN_USE_MESSAGE)
+                return redirect('register_user')
             else:
-                user = User.objects.create_user(username=username, password=password1, email=email,
-                                                first_name=Employees.objects.get(
-                                                    id=request.POST['select_employee']).first_name,
-                                                last_name=Employees.objects.get(
-                                                    id=request.POST['select_employee']).last_name, is_active=False)
-                user.save();
-                employee = Employees.objects.get(id=request.POST['select_employee'])
-                employee.user = user
-                employee.save()
+                with transaction.atomic():
+                    user = User.objects.create_user(
+                        username=username,
+                        password=password1,
+                        email=email,
+                        first_name=employee.first_name,
+                        last_name=employee.last_name,
+                        is_active=False,
+                    )
+                    employee.user = user
+                    employee.email = email
+                    employee.save()
                 return redirect('login')
         else:
             messages.info(request, 'password not matching...')

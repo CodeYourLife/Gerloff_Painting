@@ -37,6 +37,11 @@ from subcontractors import toolbox_views as sub_toolbox
 from wallcovering.models import Pending_Orders, Pending_Order_Items
 from xhtml2pdf import pisa
 from dateutil.relativedelta import relativedelta
+from accounts.identity_email import (
+    EMAIL_IN_USE_MESSAGE,
+    identity_email_is_available,
+    normalize_identity_email,
+)
 
 
 VACATION_APPROVAL_BASE_URL = "http://184.183.68.156"
@@ -1791,10 +1796,15 @@ def subcontractor_employee_page(request, id):
         id=id,
     )
     if request.method == "POST" and "update_employee_details" in request.POST:
+        email = normalize_identity_email(request.POST.get("email"))
+        if not identity_email_is_available(email, exclude_instance=sub_employee):
+            messages.error(request, EMAIL_IN_USE_MESSAGE)
+            return redirect("subcontractor_employee_page", id=sub_employee.id)
+
         sub_employee.name = (request.POST.get("name") or "").strip()
         sub_employee.nickname = (request.POST.get("nickname") or "").strip()
         sub_employee.phone = (request.POST.get("phone") or "").strip()
-        sub_employee.email = (request.POST.get("email") or "").strip()
+        sub_employee.email = email
         sub_employee.birth_date = request.POST.get("birth_date") or None
         sub_employee.save(update_fields=[
             "name",
@@ -3004,11 +3014,16 @@ def employee_edit(request, id):
     employee = get_object_or_404(Employees, id=id)
 
     if request.method == "POST":
+        email = normalize_identity_email(request.POST.get("email"))
+        if not identity_email_is_available(email, exclude_instance=employee):
+            messages.error(request, EMAIL_IN_USE_MESSAGE)
+            return redirect("employee_edit", id=employee.id)
+
         employee.first_name = request.POST.get("first_name")
         employee.middle_name = request.POST.get("middle_name")
         employee.last_name = request.POST.get("last_name")
         employee.phone = request.POST.get("phone")
-        employee.email = request.POST.get("email")
+        employee.email = email
         employee.nickname = request.POST.get("nickname")
 
         employee.birth_date = request.POST.get("birth_date") or None
@@ -3687,9 +3702,14 @@ def my_page(request):
             return redirect('my_page')
 
         if 'nickname' in request.POST:
+            email = normalize_identity_email(request.POST.get('email'))
+            if not identity_email_is_available(email, exclude_instance=employee):
+                messages.error(request, EMAIL_IN_USE_MESSAGE)
+                return redirect('my_page')
+
             employee.nickname = request.POST['nickname']
             employee.phone = request.POST['phone']
-            employee.email = request.POST['email']
+            employee.email = email
             employee.save()
 
         if request.POST.get('selected_file') == "pumpkin":
@@ -7605,6 +7625,11 @@ def upload_employees(request):
                     level = None
                     if level_name:
                         level = EmployeeLevels.objects.filter(name=level_name).first()
+
+                    email = normalize_identity_email(email)
+                    if not identity_email_is_available(email):
+                        skipped += 1
+                        continue
 
                     # job_title = None
                     # if job_title_name:

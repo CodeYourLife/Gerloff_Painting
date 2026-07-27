@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from datetime import date
+from accounts.identity_email import UniqueIdentityEmailMixin
 
 
 class TemporaryPassword(models.Model):
@@ -66,7 +67,7 @@ class GPUserAccount(models.Model):
     pin = models.IntegerField(blank=False, unique=True)
 
 
-class Employees(models.Model):
+class Employees(UniqueIdentityEmailMixin, models.Model):
     id = models.BigAutoField(primary_key=True)
     employee_number = models.IntegerField(default=0)
     active = models.BooleanField(default=True)

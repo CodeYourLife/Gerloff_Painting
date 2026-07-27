@@ -4,12 +4,21 @@ from employees.models import *
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User, auth
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from django.db import transaction
 from console.misc import Email
 from console.random_password_generator import RandomPasswordGenerator
 from subcontractors.models import Subcontractors, Subcontractor_Employees
 from datetime import datetime,timedelta
 from django.conf import settings
 import os
+from .identity_email import (
+    EMAIL_IN_USE_MESSAGE,
+    employee_for_unique_identity_email,
+    identity_email_is_available,
+    normalize_identity_email,
+)
 
 
 def _get_client_ip(request):
@@ -30,46 +39,93 @@ def _record_login_attempt(request, username, user, result, failure_reason=""):
     )
 
 
+def _resolve_login_user(identifier):
+    matching_user = User.objects.filter(username__iexact=identifier).first()
+    if matching_user is not None:
+        return matching_user, Employees.objects.filter(user=matching_user).first()
+
+    employee = employee_for_unique_identity_email(identifier)
+    if employee is not None and employee.user_id:
+        return employee.user, employee
+
+    return None, None
+
+
 def registration(request):
-    send_data = {}
+    selected_employee_id = request.session.get("registration_employee_id")
+    employee = None
+    if str(selected_employee_id or "").isdigit():
+        employee = Employees.objects.filter(id=selected_employee_id).first()
+
+    if employee is None:
+        request.session.pop("registration_employee_id", None)
+        return render(request, "verify_pin.html", {
+            "message": (
+                "Please enter your employee PIN again before registering."
+            ),
+        })
+
+    send_data = {"selected_employee": employee}
     if request.method == 'POST':
-        username = request.POST['username'].strip()
+        username = request.POST.get('username', '').strip()
+        email = normalize_identity_email(request.POST.get('email'))
+        send_data.update({
+            "username": username,
+            "phonenumber": request.POST.get('phonenumber', ''),
+            "email": email,
+            "nickname": request.POST.get('nickname', ''),
+        })
         username_exists_in_django_users = User.objects.filter(username__iexact=username).exists() if username else False
         username_exists_in_subcontractors = Subcontractors.objects.filter(username__iexact=username).exists() if username else False
         username_exists_in_subcontractor_employees = Subcontractor_Employees.objects.filter(username__iexact=username).exists() if username else False
 
         if not username or username_exists_in_django_users or username_exists_in_subcontractors or username_exists_in_subcontractor_employees:
             send_data['message'] = "USERNAME ALREADY IN USE. Please choose a different username."
-            send_data['username'] = username
-            send_data['password'] = request.POST['password']
-            send_data['phonenumber'] = request.POST['phonenumber']
-            send_data['email'] = request.POST['email']
             return render(request, "registration.html", send_data)
-        user = User.objects.create_user(username=username,
-                                        email=request.POST['email'],
-                                        password=request.POST['password'])
-        employee = Employees.objects.get(id=request.POST['selected_employee'])
-        employee.user = user
-        employee.phone = request.POST['phonenumber']
-        employee.nickname = request.POST['nickname']
-        employee.email = request.POST['email']
-        user.first_name = employee.first_name
-        user.last_name = employee.last_name
-        user.save()
-        employee.save()
+
+        try:
+            validate_email(email)
+        except ValidationError:
+            send_data['message'] = "Please enter a valid email address."
+            return render(request, "registration.html", send_data)
+
+        if not identity_email_is_available(email, exclude_instance=employee):
+            send_data['message'] = EMAIL_IN_USE_MESSAGE
+            return render(request, "registration.html", send_data)
+
+        with transaction.atomic():
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=request.POST['password'],
+            )
+            employee.user = user
+            employee.phone = request.POST.get('phonenumber', '')
+            employee.nickname = request.POST.get('nickname', '')
+            employee.email = email
+            user.first_name = employee.first_name
+            user.last_name = employee.last_name
+            user.save()
+            employee.save()
+        request.session.pop("registration_employee_id", None)
         return render(request, "login.html", send_data)
     return render(request, "registration.html", send_data)
 
 def verifyPin(request):
     if request.method == 'POST':
         send_data = {}
-        if Employees.objects.filter(pin=request.POST['pin']).exists():
-            selected_employee = Employees.objects.get(pin=request.POST['pin'])
+        selected_employee = Employees.objects.filter(
+            pin=request.POST.get('pin')
+        ).first()
+        if selected_employee is not None:
+            request.session["registration_employee_id"] = selected_employee.id
             send_data['selected_employee'] = selected_employee
             return render(request, "registration.html", send_data)
         else:
+            request.session.pop("registration_employee_id", None)
             send_data['message'] = "PIN NOT CORRECT"
             return render(request, "verify_pin.html", send_data)
+    return render(request, "verify_pin.html")
 
 def forgotPassword(request):
     send_data = {}
@@ -103,9 +159,10 @@ def login(request):
         elif 'forgot' in request.POST:
             # send email to user
             try:
-                username = request.POST['username'].strip()
-                forgottenUser = User.objects.get(username__iexact=username)
-                employee = Employees.objects.get(user=forgottenUser)
+                identifier = request.POST['username'].strip()
+                forgottenUser, employee = _resolve_login_user(identifier)
+                if forgottenUser is None or employee is None:
+                    raise User.DoesNotExist
                 randomPassword = RandomPasswordGenerator().getRandomPassword()
                 expiration = datetime.now() + timedelta(hours=1)
                 #make all other temporary passwords non active
@@ -118,17 +175,15 @@ def login(request):
                 send_data['message'] = "Unable to send email, check username and try again or contact your admin"
                 print('could not send email', e)
             send_data['username'] = request.POST['username']
-            send_data['password'] = request.POST['password']
             return render(request, "login.html", send_data)
         else:
             username = request.POST['username'].strip()
             password = request.POST['password']
             try:
-                matching_user = User.objects.filter(username__iexact=username).first()
+                matching_user, employee = _resolve_login_user(username)
                 auth_username = matching_user.username if matching_user else username
                 user = auth.authenticate(username=auth_username, password=password)
                 if user is not None:
-                    employee = Employees.objects.filter(user=user).first()
                     if employee is not None and not employee.active:
                         _record_login_attempt(
                             request,
@@ -139,7 +194,6 @@ def login(request):
                         )
                         send_data['message'] = "Invalid credentials"
                         send_data['username'] = request.POST['username']
-                        send_data['password'] = request.POST['password']
                         return render(request, "login.html", send_data)
                     auth.login(request, user)
                     return redirect("/")
@@ -161,7 +215,6 @@ def login(request):
                 print('invalid credentials', e)
             send_data['message'] = "Invalid credentials"
             send_data['username'] = request.POST['username']
-            send_data['password'] = request.POST['password']
             return render(request, "login.html", send_data)
     else:
         return render(request, 'login.html')

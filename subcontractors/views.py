@@ -26,6 +26,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.db import transaction
 from django.db.models import Q, Sum, Count
 from django.http import JsonResponse, HttpResponse, FileResponse, Http404
@@ -45,6 +47,12 @@ from dateutil.relativedelta import relativedelta
 from xhtml2pdf import pisa
 from media.utilities import MediaUtilities
 from subcontractors import toolbox_views as sub_toolbox
+from accounts.identity_email import (
+    EMAIL_IN_USE_MESSAGE,
+    identity_email_matches,
+    identity_email_is_available,
+    normalize_identity_email,
+)
 
 
 SUB_RESPIRATOR_SECTION_MODELS = {
@@ -1334,6 +1342,29 @@ def connect(request):
             if selected_employee:
                 return redirect('subcontractor_employee_portal', employee_id=selected_employee.id)
 
+            email_matches = identity_email_matches(username)
+            if len(email_matches) == 1:
+                email_match = email_matches[0]
+                if (
+                    isinstance(email_match, Subcontractors)
+                    and email_match.password == password
+                    and not email_match.is_inactive
+                ):
+                    return redirect(
+                        'portal',
+                        sub_id=email_match.id,
+                        contract_id='ALL',
+                    )
+                if (
+                    isinstance(email_match, Subcontractor_Employees)
+                    and email_match.password1 == password
+                    and email_match.is_active
+                ):
+                    return redirect(
+                        'subcontractor_employee_portal',
+                        employee_id=email_match.id,
+                    )
+
             send_data['message'] = "Username or password not valid"
             return render(request, "portal_registration.html", send_data)
 
@@ -1356,6 +1387,7 @@ def connect(request):
         if 'new_username' in request.POST:
             selected_sub = Subcontractors.objects.get(id=request.POST['selected_sub'])
             new_username = request.POST['new_username'].strip()
+            email = normalize_identity_email(request.POST.get('email'))
             username_exists_in_subcontractors = Subcontractors.objects.filter(
                 username__iexact=new_username
             ).exclude(id=selected_sub.id).exists() if new_username else False
@@ -1370,12 +1402,42 @@ def connect(request):
                 send_data['message'] = USERNAME_IN_USE_MESSAGE
                 send_data['selected_sub'] = selected_sub
                 send_data['register_now'] = True
+                send_data['new_username'] = new_username
+                send_data['email'] = email
                 return render(request, "portal_registration.html", send_data)
-            else:
-                selected_sub.username = new_username
-                selected_sub.password = request.POST['password']
+
+            try:
+                validate_email(email)
+            except ValidationError:
+                send_data['message'] = "Please enter a valid email address."
+                send_data['selected_sub'] = selected_sub
+                send_data['register_now'] = True
+                send_data['new_username'] = new_username
+                send_data['email'] = email
+                return render(request, "portal_registration.html", send_data)
+
+            if not identity_email_is_available(email, exclude_instance=selected_sub):
+                send_data['message'] = EMAIL_IN_USE_MESSAGE
+                send_data['selected_sub'] = selected_sub
+                send_data['register_now'] = True
+                send_data['new_username'] = new_username
+                send_data['email'] = email
+                return render(request, "portal_registration.html", send_data)
+
+            selected_sub.username = new_username
+            selected_sub.email = email
+            selected_sub.password = request.POST['password']
+            try:
                 selected_sub.save()
-                return redirect('portal', sub_id=selected_sub.id, contract_id='ALL')
+            except ValidationError:
+                send_data['message'] = EMAIL_IN_USE_MESSAGE
+                send_data['selected_sub'] = selected_sub
+                send_data['register_now'] = True
+                send_data['new_username'] = new_username
+                send_data['email'] = email
+                return render(request, "portal_registration.html", send_data)
+
+            return redirect('portal', sub_id=selected_sub.id, contract_id='ALL')
     return render(request, "portal_registration.html", send_data)
 
 
@@ -2220,9 +2282,14 @@ def subcontractor_home(request):
             subcontractor = Subcontractors.objects.get(id=request.POST['subcontractor_id'])
             if 'contact' in request.POST:
                 if 'contact' in request.POST:
+                    email = normalize_identity_email(request.POST.get('email'))
+                    if not identity_email_is_available(email, exclude_instance=subcontractor):
+                        messages.error(request, EMAIL_IN_USE_MESSAGE)
+                        return redirect('subcontractor_home')
+
                     subcontractor.contact = request.POST['contact']
                     subcontractor.phone = request.POST['phone']
-                    subcontractor.email = request.POST['email']
+                    subcontractor.email = email
                     subcontractor.notes = request.POST['notes']
                 if 'is_inactive' in request.POST:
                     subcontractor.is_inactive = True
@@ -2689,12 +2756,17 @@ def subcontractor(request, id):
                     messages.error(request, USERNAME_IN_USE_MESSAGE)
                     return redirect('subcontractor', id=subcontractor.id)
 
+            email = normalize_identity_email(request.POST.get('email'))
+            if not identity_email_is_available(email):
+                messages.error(request, EMAIL_IN_USE_MESSAGE)
+                return redirect('subcontractor', id=subcontractor.id)
+
             new_employee = Subcontractor_Employees.objects.create(
                 subcontractor=subcontractor,
                 name=employee_name,
                 username=username,
                 password1=(request.POST.get('password1') or '').strip(),
-                email=(request.POST.get('email') or '').strip(),
+                email=email,
                 phone=(request.POST.get('phone') or '').strip(),
                 has_access_to_toolbox='has_access_to_toolbox' in request.POST,
                 has_access_to_TM='has_access_to_TM' in request.POST,
@@ -2705,9 +2777,14 @@ def subcontractor(request, id):
             return redirect('subcontractor', id=subcontractor.id)
 
         if 'update_contact_info' in request.POST:
+            email = normalize_identity_email(request.POST.get('email'))
+            if not identity_email_is_available(email, exclude_instance=subcontractor):
+                messages.error(request, EMAIL_IN_USE_MESSAGE)
+                return redirect('subcontractor', id=subcontractor.id)
+
             subcontractor.contact = request.POST.get('contact', '')
             subcontractor.phone = request.POST.get('phone', '')
-            subcontractor.email = request.POST.get('email', '')
+            subcontractor.email = email
             subcontractor.notes = request.POST.get('notes', '')
             subcontractor.is_inactive = 'is_inactive' in request.POST
             subcontractor.is_toolbox_required = 'is_toolbox_required' in request.POST
@@ -3744,11 +3821,16 @@ def subcontract(request, id):
 @login_required(login_url='/accounts/login')
 def subcontractor_new(request):
     if request.method == 'POST':
+        email = normalize_identity_email(request.POST.get('email'))
+        if not identity_email_is_available(email):
+            messages.error(request, EMAIL_IN_USE_MESSAGE)
+            return redirect('subcontractor_new')
+
         signed = False
         if 'is_signed_labor_agreement' in request.POST:
             signed = True
         new_sub = Subcontractors.objects.create(company=request.POST['subcontractor'], contact=request.POST['contact'],
-                                                phone=request.POST['phone'], email=request.POST['email'],
+                                                phone=request.POST['phone'], email=email,
                                                 is_signed_labor_agreement=signed, notes=request.POST['notes'])
         new_sub.save()
         for y in Standard_Approvers.objects.all():
@@ -5898,10 +5980,14 @@ def subcontractor_employee_update(request):
         if username_exists_in_employees or username_exists_in_subcontractors or username_exists_in_django_users:
             return JsonResponse({'error': USERNAME_IN_USE_MESSAGE}, status=400)
 
+    email = normalize_identity_email(request.POST.get('email'))
+    if not identity_email_is_available(email, exclude_instance=emp):
+        return JsonResponse({'error': EMAIL_IN_USE_MESSAGE}, status=400)
+
     emp.name = request.POST.get('name', '').strip()
     emp.username = username
     emp.password1 = request.POST.get('password1', '').strip()
-    emp.email = request.POST.get('email', '').strip()
+    emp.email = email
     emp.phone = request.POST.get('phone', '').strip()
     emp.nickname = request.POST.get('nickname', '').strip()
     emp.birth_date = request.POST.get('birth_date') or None
@@ -5935,7 +6021,7 @@ def subcontractor_employee_create(request):
     name = request.POST.get('name', '').strip()
     username = request.POST.get('username', '').strip()
     password1 = request.POST.get('password1', '').strip()
-    email = request.POST.get('email', '').strip()
+    email = normalize_identity_email(request.POST.get('email'))
     phone = request.POST.get('phone', '').strip()
     nickname = request.POST.get('nickname', '').strip()
     birth_date = request.POST.get('birth_date') or None
@@ -5968,6 +6054,9 @@ def subcontractor_employee_create(request):
 
         if username_exists_in_employees or username_exists_in_subcontractors or username_exists_in_django_users:
             return JsonResponse({'error': USERNAME_IN_USE_MESSAGE}, status=400)
+
+    if not identity_email_is_available(email):
+        return JsonResponse({'error': EMAIL_IN_USE_MESSAGE}, status=400)
 
     if Subcontractor_Employees.objects.filter(
         subcontractor=subcontractor,

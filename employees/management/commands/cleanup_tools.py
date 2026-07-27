@@ -16,6 +16,7 @@ from changeorder.models import (
 from submittals.models import *
 from wallcovering.models import *
 from jobs.models import Orders
+from accounts.identity_email import normalize_identity_email
 
 
 # ----------------------------------------
@@ -45,6 +46,56 @@ def delete_all_submittals():
 
 def just_print_hello():
     print("Hello Joe 👋")
+
+def find_duplicate_identity_emails():
+    """
+    Return every nonblank email used by more than one login-related record.
+
+    Email addresses are compared the same way they are during saving and
+    login: surrounding spaces are removed and capitalization is ignored.
+    """
+    records_by_email = {}
+
+    identity_records = (
+        (
+            "Employee",
+            Employees.objects.exclude(email__isnull=True).exclude(email=""),
+            lambda employee: (
+                f"{employee.first_name or ''} {employee.last_name or ''}".strip()
+                or "Unnamed employee"
+            ),
+        ),
+        (
+            "Subcontractor",
+            Subcontractors.objects.exclude(email__isnull=True).exclude(email=""),
+            lambda subcontractor: subcontractor.company or "Unnamed subcontractor",
+        ),
+        (
+            "Subcontractor employee",
+            Subcontractor_Employees.objects.exclude(email__isnull=True).exclude(email=""),
+            lambda employee: employee.name or "Unnamed subcontractor employee",
+        ),
+    )
+
+    for record_type, queryset, display_name in identity_records:
+        for record in queryset.iterator():
+            normalized_email = normalize_identity_email(record.email)
+            if not normalized_email:
+                continue
+
+            records_by_email.setdefault(normalized_email, []).append({
+                "type": record_type,
+                "id": record.pk,
+                "name": display_name(record),
+                "stored_email": record.email,
+            })
+
+    return {
+        email: records
+        for email, records in records_by_email.items()
+        if len(records) > 1
+    }
+
 
 def delete_all_scheduled_toolbox_talks():
     with transaction.atomic():
@@ -250,6 +301,42 @@ class Command(BaseCommand):
 
         elif action == "hello":
             just_print_hello()
+
+        elif action == "duplicate_emails":
+            duplicates = find_duplicate_identity_emails()
+
+            if not duplicates:
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        "No duplicate employee, subcontractor, or "
+                        "subcontractor employee email addresses found."
+                    )
+                )
+                return
+
+            duplicate_record_count = sum(
+                len(records) for records in duplicates.values()
+            )
+            self.stdout.write(
+                self.style.WARNING(
+                    f"Found {len(duplicates)} duplicated email address(es) "
+                    f"across {duplicate_record_count} records:"
+                )
+            )
+
+            for email, records in sorted(duplicates.items()):
+                self.stdout.write("")
+                self.stdout.write(self.style.WARNING(email))
+                for record in records:
+                    stored_email_note = ""
+                    if record["stored_email"] != email:
+                        stored_email_note = (
+                            f" (stored as: {record['stored_email']})"
+                        )
+                    self.stdout.write(
+                        f"  - {record['type']} #{record['id']}: "
+                        f"{record['name']}{stored_email_note}"
+                    )
 
         elif action == "delete_toolbox":
             delete_all_scheduled_toolbox_talks()
