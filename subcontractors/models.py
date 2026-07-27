@@ -5,8 +5,9 @@ import employees.models
 from datetime import date
 import datetime
 from employees.models import *
+from accounts.identity_email import UniqueIdentityEmailMixin
 
-class Subcontractors(models.Model):
+class Subcontractors(UniqueIdentityEmailMixin, models.Model):
     id = models.BigAutoField(primary_key=True)
     company = models.CharField(null=True, max_length=250)
     contact = models.CharField(null=True, max_length=250, blank=True)
@@ -589,7 +590,7 @@ class Subcontract_Approvers(models.Model):
     employee = models.ForeignKey(employees.models.Employees, on_delete=models.PROTECT,null=True, blank=True)
     subcontract = models.ForeignKey(Subcontracts, on_delete=models.PROTECT)
 
-class Subcontractor_Employees(models.Model):
+class Subcontractor_Employees(UniqueIdentityEmailMixin, models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(null=True, max_length=2000, blank=True)
     subcontractor = models.ForeignKey(Subcontractors, on_delete=models.PROTECT)

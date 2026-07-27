@@ -1,45 +1,67 @@
 {% extends 'base.html' %}
 {% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-
-	<style type="text/css" class="init">
-
-	</style>
-	<script type="text/javascript" src="/media/js/site.js?_=1d5abd169416a09a2b389885211721dd" data-domain="datatables.net" data-api="https://plausible.sprymedia.co.uk/api/event"></script>
-	<script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fadvanced_init%2Fevents_live.html" async></script>
-	<script type="text/javascript" src="/media/js/dynamic.php?comments-page=examples%2Fdata_sources%2Fdom.html" async></script>
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="../resources/demo.js"></script>
-	<script type="text/javascript" class="init">
-
-
-	</script>
-</head>
-<body>
-    <div style="margin-top: 20%"  class="row h-100 d-flex align-items-center justify-content-center">
-    <div class="col-6">
-    <form action = "login" method = "post" class="form-group">
+<div style="margin-top: 20%" class="row h-100 d-flex align-items-center justify-content-center">
+    <div class="col-12 col-sm-8 col-md-6">
+    <form action="{% url 'login' %}" method="post" class="form-group" autocomplete="on">
         {% csrf_token %}
-        <input value="{{username}}" type="username" name = "username" placeholder="Username" class="form-control"><br>
-        <input value="{{password}}" type="password" name = "password" placeholder="Password" class="form-control"><br>
+        <div class="form-text text-muted mb-2">
+            Please enter your username or email address
+        </div>
+        <label class="sr-only" for="login-username">Username or email</label>
+        <input value="{{ username|default:'' }}" type="text" id="login-username" name="username"
+               autocomplete="username" autocapitalize="none" spellcheck="false"
+               placeholder="Username or email" class="form-control" required autofocus><br>
+
+        <label class="sr-only" for="login-password">Password</label>
+        <div class="input-group">
+            <input type="password" id="login-password" name="password"
+                   autocomplete="current-password" placeholder="Password"
+                   class="form-control" required>
+            <div class="input-group-append">
+                <button type="button" id="toggle-password"
+                        class="btn btn-outline-secondary"
+                        aria-label="Show password" aria-pressed="false"
+                        title="Show password">
+                    <span id="password-eye" aria-hidden="true">&#128065;</span>
+                </button>
+            </div>
+        </div>
+        <br>
         <div style="align-items: center">
-			<input style="margin-top: 5px" type="submit" class="btn btn-primary btn-sm" name = "login" value="Log In">
-			<input style="margin-top: 5px" type="submit" class="btn btn-primary btn-sm" name = "register" value="Register New User With Pin">
-			<input style="margin-top: 5px" type="submit" class="btn btn-secondary btn-sm" name = "forgot" value="Forgot Password">
-    	<div class="text-danger">{{message}}</div>
-		</div>
-	</form>
-		<br>
-		<form action="{% url 'connect' %}">
-			<input type="submit" class= "btn btn-danger btn-sm" value = "Subcontractors Click Here">
-		</form>
-	</div>
-	</div>
-</body>
-</html>
+            <input style="margin-top: 5px" type="submit" class="btn btn-primary btn-sm" name="login" value="Log In">
+            <input style="margin-top: 5px" type="submit" class="btn btn-primary btn-sm" name="register" value="Register New User With Pin" formnovalidate>
+            <input style="margin-top: 5px" type="submit" class="btn btn-secondary btn-sm" name="forgot" value="Forgot Password" formnovalidate>
+            <div class="text-danger" role="alert">{{ message }}</div>
+        </div>
+    </form>
+        <br>
+        <form action="{% url 'connect' %}">
+            <input type="submit" class="btn btn-danger btn-sm" value="Subcontractors Click Here">
+        </form>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const passwordInput = document.getElementById("login-password");
+        const toggleButton = document.getElementById("toggle-password");
+        const passwordEye = document.getElementById("password-eye");
+
+        toggleButton.addEventListener("click", function () {
+            const showPassword = passwordInput.type === "password";
+            passwordInput.type = showPassword ? "text" : "password";
+            passwordEye.textContent = showPassword ? "\uD83D\uDE48" : "\uD83D\uDC41";
+            toggleButton.setAttribute("aria-pressed", String(showPassword));
+            toggleButton.setAttribute(
+                "aria-label",
+                showPassword ? "Hide password" : "Show password"
+            );
+            toggleButton.setAttribute(
+                "title",
+                showPassword ? "Hide password" : "Show password"
+            );
+        });
+    }());
+</script>
 
 {% endblock %}

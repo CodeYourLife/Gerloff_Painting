@@ -40,7 +40,8 @@
 
             {% elif register_now %}
 
-                <form action="{% url 'connect' %}" method="post" id="registration_form2" class="form-group">
+                <form action="{% url 'connect' %}" method="post" id="registration_form2"
+                      class="form-group" autocomplete="on">
                     {% csrf_token %}
 
                     <input type="hidden" name="selected_sub" value="{{ selected_sub.id }}">
@@ -51,19 +52,33 @@
                     <input id="new_username"
                            type="text"
                            name="new_username"
+                           value="{{ new_username|default:'' }}"
+                           autocomplete="username"
                            placeholder="Username"
                            class="form-control">
+
+                    <label for="new_email" class="mt-2">Email address</label>
+                    <input id="new_email"
+                           type="email"
+                           name="email"
+                           value="{{ email|default:selected_sub.email|default:'' }}"
+                           autocomplete="email"
+                           placeholder="Email address"
+                           class="form-control"
+                           required>
 
                     <label for="new_password" class="mt-2">Password</label>
                     <input id="new_password"
                            type="password"
                            name="password"
+                           autocomplete="new-password"
                            placeholder="Password"
                            class="form-control">
 
                     <label for="new_password2" class="mt-2">Re-Enter Password</label>
                     <input id="new_password2"
                            type="password"
+                           autocomplete="new-password"
                            placeholder="Re-Enter Password"
                            class="form-control">
 
@@ -95,22 +110,30 @@
                     <div class="mb-3">Or Sign In Below</div>
                 </div>
 
-                <form action="{% url 'connect' %}" method="post" id="registration_form4" class="form-group">
+                <form action="{% url 'connect' %}" method="post" id="registration_form4"
+                      class="form-group" autocomplete="on">
                     {% csrf_token %}
 
                     <input type="hidden" name="login_now" value="True">
 
-                    <label for="login_username">Username:</label>
+                    <div class="form-text text-muted mb-2">
+                        Please enter your username or email address
+                    </div>
+                    <label for="login_username">Username or email:</label>
                     <input type="text"
                            name="username"
                            id="login_username"
-                           placeholder="Username"
+                           autocomplete="username"
+                           autocapitalize="none"
+                           spellcheck="false"
+                           placeholder="Username or email"
                            class="form-control">
 
                     <label for="login_password" class="mt-2">Password:</label>
                     <input type="password"
                            name="password"
                            id="login_password"
+                           autocomplete="current-password"
                            placeholder="Password"
                            class="form-control">
 
@@ -146,11 +169,22 @@ function validate(event) {
 
 function verify_password() {
     const username = document.getElementById("new_username").value;
+    const email = document.getElementById("new_email").value;
     const password = document.getElementById("new_password").value;
     const password2 = document.getElementById("new_password2").value;
 
     if (username === "") {
         alert("Please enter a username");
+        return false;
+    }
+
+    if (email === "") {
+        alert("Please enter an email address");
+        return false;
+    }
+
+    if (!document.getElementById("new_email").checkValidity()) {
+        alert("Please enter a valid email address");
         return false;
     }
 

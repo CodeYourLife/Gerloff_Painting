@@ -96,15 +96,15 @@
             <h2>Registration for {{selected_employee.first_name}} {{selected_employee.middle_name}} {{selected_employee.last_name}}</h2>
             <br>
             <label class="form-label" for="username">Username</label>
-            <input value="{{username}}" oninput="hideValidations()" onBlur="validate(event)" id="username" type="text" name = "username" placeholder="Employee Username" class="form-control">
+            <input value="{{username}}" oninput="hideValidations()" onBlur="validate(event)" id="username" type="text" name = "username" autocomplete="username" placeholder="Employee Username" class="form-control">
             <div class="text-danger validationLabel fade-in" style="display: hidden" id="validateUsernameLbl">
             </div>
             <label class="form-label" for="password">Password</label>
-            <input value="{{password}}" oninput="hideValidations()" onBlur="validate(event)" id="password" type="password" name = "password" placeholder="Employee Password" class="form-control">
+            <input oninput="hideValidations()" onBlur="validate(event)" id="password" type="password" name = "password" autocomplete="new-password" placeholder="Employee Password" class="form-control">
             <div class="text-danger validationLabel fade-in" style="display: hidden" id="validatePasswordLbl">
             </div>
             <label class="form-label" for="reEnterPassword">Re-Enter Password</label>
-            <input value="{{password}}" oninput="hideValidations()" onBlur="validate(event)" id="reEnterPassword" type="password" name = "reenterpassword" placeholder="Re-Enter Password" class="form-control">
+            <input oninput="hideValidations()" onBlur="validate(event)" id="reEnterPassword" type="password" name = "reenterpassword" autocomplete="new-password" placeholder="Re-Enter Password" class="form-control">
             <div class="text-danger validationLabel fade-in" style="display: hidden" id="validatePasswordMatchLbl">
             </div>
             <label class="form-label" for="phoneNumber">Phone Number</label>
@@ -112,12 +112,11 @@
             <div class="text-danger validationLabel fade-in" style="display: hidden" id="validatePhoneNumberLbl">
             </div>
             <label class="form-label" for="email">Email address</label>
-            <input value="{{email}}" oninput="hideValidations()" onBlur="validate(event)" id="email" type="email" name = "email" placeholder="Employee Email" class="form-control">
+            <input value="{{email}}" oninput="hideValidations()" onBlur="validate(event)" id="email" type="email" name = "email" autocomplete="email" placeholder="Employee Email" class="form-control">
             <div class="text-danger validationLabel fade-in" style="display: hidden" id="validateEmailLbl">
             </div>
             <label class="form-label" for="nickname">Nickname</label>
-            <input id="nickname" type="text" name = "nickname" placeholder="Employee NickName" class="form-control">
-            <input type="hidden" name="selected_employee" value={{selected_employee.id}}>
+            <input value="{{nickname}}" id="nickname" type="text" name = "nickname" placeholder="Employee NickName" class="form-control">
             <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
             <input type="submit" id="submitBtn" disabled class="btn btn-primary btn-sm" value="Submit" >
             <div class="text-danger">{{message}}</div>
