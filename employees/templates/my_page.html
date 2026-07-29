@@ -333,6 +333,11 @@
         text-decoration: underline;
     }
 
+    .my-certification-card.certification-card-highlight {
+        border-color: #ffc107;
+        box-shadow: 0 0 0 .2rem rgba(255, 193, 7, .35), 0 4px 12px rgba(0,0,0,0.14);
+    }
+
     .mobile-cert-upload-modal .modal-dialog {
         margin: .5rem;
     }
@@ -1788,6 +1793,7 @@
                     {% for x in certifications %}
                         <div class="col-12 col-md-6 col-xl-4 mb-3">
                             <div class="card h-100 my-certification-card"
+                                 id="my-certification-card-{{ x.id }}"
                                  role="button"
                                  tabindex="0"
                                  data-toggle="modal"
@@ -1803,6 +1809,10 @@
                                     {% if x.needs_base_access_response %}
                                         <div class="badge badge-warning mb-3" style="white-space: normal;">
                                             Click Here If You Already Have Access to this Base
+                                        </div>
+                                    {% elif x.is_dbids_base_access %}
+                                        <div class="badge badge-info mb-3" style="white-space: normal;">
+                                            Click Here If You Don't Have Access to this Base, or to Change the Expiration Date
                                         </div>
                                     {% endif %}
 
@@ -2041,10 +2051,11 @@
                                  data-toggle="modal"
                                  data-target="#completePendingActionModal"
                                  data-action-id="{{ action.id }}"
-                                data-action-description="{{ action.description|escapejs }}"
+                                data-action-description="{{ action.description|escape }}"
                                 data-action-date="{{ action.date|date:'m/d/Y' }}"
                                 data-action-notes="{{ action.notes|default:''|escape }}"
-                                data-action-certification="{% if action.certification %}{{ action.certification.category|default:action.certification.description|escapejs }}{% endif %}">
+                                data-action-certification-id="{% if action.certification %}{{ action.certification.id }}{% endif %}"
+                                data-action-certification="{% if action.certification %}{{ action.certification.display_description|default:action.certification.category|default:action.certification.description|escape }}{% endif %}">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                         <h6 class="mb-0">{{ action.description }}</h6>
@@ -2060,7 +2071,7 @@
                                     {% if action.certification %}
                                         <div class="mb-2">
                                             <strong>Certification:</strong>
-                                            {{ action.certification.category|default:action.certification.description }}
+                                            {{ action.certification.display_description|default:action.certification.category|default:action.certification.description }}
                                         </div>
                                     {% endif %}
 
@@ -2085,6 +2096,7 @@
             <form method="post" action="{% url 'my_page' %}">
                 {% csrf_token %}
                 <input type="hidden" name="pending_action_id" id="pending_action_id">
+                <input type="hidden" name="certification_id" id="pending_action_certification_id">
 
                 <div class="modal-header">
                     <h5 class="modal-title" id="completePendingActionModalLabel">Completed Task</h5>
@@ -2139,6 +2151,12 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
                         Cancel
+                    </button>
+                    <button type="button"
+                            id="go_to_pending_action_certification_button"
+                            class="btn btn-outline-primary"
+                            style="display:none;">
+                        Go To Item
                     </button>
                     <button type="button"
                             id="show_completion_note_button"
@@ -2891,7 +2909,9 @@
                 <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFifteen"
                         aria-expanded="false"
                         aria-controls="collapseFifteen">
-                    {% if respirator_clearance_required %}
+                    {% if incomplete_respirator_clearance %}
+                        Respirator Clearance Started - Finish Required
+                    {% elif respirator_clearance_required %}
                         New Respirator Clearance Required
                     {% elif respirator_not_approved %}
                         Respirator Clearance Submitted - Waiting for Approval
@@ -2907,7 +2927,13 @@
             <div class="card-body">
                 {% if respirator_clearance_required %}
 
-                    {% if expired_respirator_cert %}
+                    {% if incomplete_respirator_clearance %}
+                        <div class="alert alert-warning">
+                            <strong>Your respirator clearance has been started but not finished.</strong><br>
+                            Started: {{ incomplete_respirator_clearance.date_created|default:"Not Available" }}<br>
+                            Please finish the remaining sections.
+                        </div>
+                    {% elif expired_respirator_cert %}
                         <div class="alert alert-warning">
                             <strong>Your respirator clearance has expired.</strong><br>
                             Expiration Date: {{ expired_respirator_cert.date_expires|default:"Not Available" }}<br>
@@ -3119,9 +3145,11 @@ $('#completePendingActionModal').on('show.bs.modal', function (event) {
     const description = card.data('action-description') || '';
     const actionDate = card.data('action-date') || '';
     const actionNotes = card.data('action-notes') || '';
+    const certificationId = card.data('action-certification-id') || '';
     const certification = card.data('action-certification') || '';
 
     $('#pending_action_id').val(actionId);
+    $('#pending_action_certification_id').val(certificationId);
     $('#pending_action_description').text(description);
     $('#pending_action_date').text(actionDate ? 'Date: ' + actionDate : '');
     $('#pending_action_certification').text(certification ? 'Certification: ' + certification : '');
@@ -3141,6 +3169,54 @@ $('#completePendingActionModal').on('show.bs.modal', function (event) {
     $('#completion-note-group').hide();
     $('#submit_completion_button').hide();
     $('#show_completion_note_button').show();
+    $('#go_to_pending_action_certification_button')
+        .toggle(Boolean(certificationId))
+        .data('certification-id', certificationId);
+});
+
+$('#go_to_pending_action_certification_button').on('click', function () {
+    const certificationId = $(this).data('certification-id');
+    const certificationCard = document.getElementById("my-certification-card-" + certificationId);
+
+    if (!certificationId || !certificationCard) {
+        return;
+    }
+
+    $('#completePendingActionModal').modal('hide');
+
+    function highlightPendingActionCertification() {
+        document.querySelectorAll(".my-certification-card.certification-card-highlight").forEach(function (card) {
+            card.classList.remove("certification-card-highlight");
+        });
+
+        certificationCard.classList.add("certification-card-highlight");
+        certificationCard.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+        certificationCard.focus({ preventScroll: true });
+    }
+
+    function openCertificationsAndHighlight() {
+        const certificationsCollapse = $('#collapseFourteen');
+
+        if (certificationsCollapse.hasClass('show')) {
+            highlightPendingActionCertification();
+            return;
+        }
+
+        certificationsCollapse.one('shown.bs.collapse', highlightPendingActionCertification);
+        certificationsCollapse.collapse('show');
+    }
+
+    const pendingActionsCollapse = $('#collapsePendingActions');
+
+    if (pendingActionsCollapse.hasClass('show')) {
+        pendingActionsCollapse.one('hidden.bs.collapse', openCertificationsAndHighlight);
+        pendingActionsCollapse.collapse('hide');
+    } else {
+        openCertificationsAndHighlight();
+    }
 });
 
 $('#show_pending_action_note').on('click', function () {

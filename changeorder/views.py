@@ -2232,6 +2232,36 @@ def extra_work_ticket(request, id):
 
 
     if request.method == 'POST':
+        if 'save_changeorder_description' in request.POST:
+            employee = Employees.objects.filter(user=request.user).first()
+            old_description = (changeorder.description or "").strip()
+            new_description = request.POST.get('changeorder_description', '').strip()
+
+            if not new_description:
+                messages.error(request, "Change order description cannot be blank.")
+                return redirect('extra_work_ticket', id=id)
+
+            if old_description == new_description:
+                messages.warning(request, "No description changes were made.")
+                return redirect('extra_work_ticket', id=id)
+
+            changeorder.description = new_description
+            changeorder.save()
+
+            if employee:
+                ChangeOrderNotes.objects.create(
+                    cop_number=changeorder,
+                    date=date.today(),
+                    user=employee,
+                    note=(
+                        "Change Order Description changed from "
+                        f"'{old_description}' to '{new_description}'"
+                    )
+                )
+
+            messages.success(request, "Change order description updated.")
+            return redirect('extra_work_ticket', id=id)
+
         if 'delete_changeorder_wallcovering' in request.POST:
             employee = Employees.objects.filter(user=request.user).first()
 

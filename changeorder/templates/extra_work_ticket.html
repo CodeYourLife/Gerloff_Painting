@@ -91,6 +91,19 @@ select {
     border-radius: 0.25rem;
 }
 
+.change-order-description-form {
+    max-width: 760px;
+    margin: 10px auto 0;
+}
+
+.change-order-description-form input {
+    margin: 0;
+}
+
+.change-order-description-form .btn {
+    margin: 0 0 0 8px;
+}
+
 .small-note {
     font-size: 13px;
     color: #666;
@@ -976,9 +989,31 @@ select {
             Change Order #{{ changeorder.cop_number }}
         </div>
 
-        <div class="text-muted mt-1">
-            {{ changeorder.description }}
-        </div>
+        <form action="{% url 'extra_work_ticket' changeorder.id %}"
+              method="post"
+              class="change-order-description-form"
+              onsubmit="return validateChangeOrderDescriptionForm()">
+            {% csrf_token %}
+            <input type="hidden" name="save_changeorder_description" value="1">
+            <div class="input-group">
+                <input type="text"
+                       class="form-control text-center"
+                       name="changeorder_description"
+                       id="changeorder_description_input"
+                       value="{{ changeorder.description|default_if_none:'' }}"
+                       data-original="{{ changeorder.description|default_if_none:'' }}"
+                       maxlength="700"
+                       required>
+                <div class="input-group-append">
+                    <button type="submit"
+                            class="btn btn-primary btn-sm"
+                            id="saveChangeOrderDescriptionButton"
+                            style="display:none;">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </form>
     </div>
 
     <div class="d-flex flex-wrap justify-content-center gap-buttons">
@@ -2457,7 +2492,44 @@ function validateLinkSubcontractorForm() {
 
     return true;
 }
+
+function updateChangeOrderDescriptionSaveButton() {
+    const input = document.getElementById("changeorder_description_input");
+    const saveButton = document.getElementById("saveChangeOrderDescriptionButton");
+
+    if (!input || !saveButton) {
+        return;
+    }
+
+    const original = (input.dataset.original || "").trim();
+    const current = input.value.trim();
+
+    if (current && current !== original) {
+        saveButton.style.display = "inline-block";
+    } else {
+        saveButton.style.display = "none";
+    }
+}
+
+function validateChangeOrderDescriptionForm() {
+    const input = document.getElementById("changeorder_description_input");
+
+    if (!input || !input.value.trim()) {
+        alert("Change order description cannot be blank.");
+        return false;
+    }
+
+    return true;
+}
+
 document.addEventListener("DOMContentLoaded", function () {
+    const descriptionInput = document.getElementById("changeorder_description_input");
+
+    if (descriptionInput) {
+        descriptionInput.addEventListener("input", updateChangeOrderDescriptionSaveButton);
+        updateChangeOrderDescriptionSaveButton();
+    }
+
     const saveButton = document.getElementById("saveWallcoveringChangesButton");
     const inputs = document.querySelectorAll(".wallcovering-change-input");
 
