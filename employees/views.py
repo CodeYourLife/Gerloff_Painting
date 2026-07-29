@@ -3243,15 +3243,28 @@ def my_page(request):
             )
             expiration_date_raw = request.POST.get("dbids_expiration_date") or ""
             has_base_access = request.POST.get("has_base_access") or ""
+            old_expiration_date = certification.date_expires
 
             if expiration_date_raw:
                 try:
-                    certification.date_expires = date.fromisoformat(expiration_date_raw)
+                    new_expiration_date = date.fromisoformat(expiration_date_raw)
                 except ValueError:
                     messages.error(request, "Please enter a valid expiration date.")
                     return redirect('my_page')
+                certification.date_expires = new_expiration_date
                 has_base_access = "Yes"
                 certification.save(update_fields=["date_expires"])
+                if old_expiration_date != new_expiration_date:
+                    CertificationNotes.objects.create(
+                        certification=certification,
+                        date=date.today(),
+                        user=employee,
+                        note=(
+                            "Expiration date changed from "
+                            f"{old_expiration_date.strftime('%m/%d/%Y') if old_expiration_date else 'No expiration date'} "
+                            f"to {new_expiration_date.strftime('%m/%d/%Y')}."
+                        ),
+                    )
 
             if has_base_access not in ["", "Yes", "No"]:
                 messages.error(request, "Please select Yes or No for base access.")
@@ -3262,16 +3275,26 @@ def my_page(request):
                 certification,
                 "access_finalized",
             )
+            old_base_access = (
+                (access_finalized.custom_attribute_result or "").strip()
+                if access_finalized
+                else ""
+            )
             if access_finalized:
                 access_finalized.custom_attribute_result = has_base_access
                 access_finalized.save(update_fields=["custom_attribute_result"])
 
-            if has_base_access == "No":
+            if access_finalized and old_base_access != has_base_access:
+                old_base_access_display = old_base_access or "No response"
+                new_base_access_display = has_base_access or "No response"
                 CertificationNotes.objects.create(
                     certification=certification,
                     date=date.today(),
                     user=employee,
-                    note=f"{employee} - I have no access to this base",
+                    note=(
+                        "Base access response changed from "
+                        f"{old_base_access_display} to {new_base_access_display}."
+                    ),
                 )
 
             email_body = (
@@ -3841,6 +3864,12 @@ def my_page(request):
         certification__date_expires__gte=today
     ).order_by("-certification__date_expires", "-date_completed", "-id").first()
 
+    incomplete_trinity_resp_clearance = RespiratorClearance.objects.filter(
+        employee=employee,
+        date_completed__isnull=True,
+        certification__is_closed=False,
+    ).order_by("-date_created", "-id").first()
+
     pending_trinity_resp_clearance = RespiratorClearance.objects.filter(
         employee=employee,
         date_completed__isnull=False,
@@ -3869,7 +3898,11 @@ def my_page(request):
 
     show_respirator_clearance_card = True
 
-    if external_resp_cert:
+    if incomplete_trinity_resp_clearance:
+        send_data["respirator_clearance_required"] = "Yes"
+        send_data["incomplete_respirator_clearance"] = incomplete_trinity_resp_clearance
+
+    elif external_resp_cert:
         send_data["respirator_clearance_required"] = False
         send_data["external_respirator_cert"] = external_resp_cert
 
@@ -4051,6 +4084,9 @@ def my_page(request):
         Certifications.objects.filter(
             employee=employee,
             is_closed=False,
+        ).exclude(
+            respiratorclearance__date_completed__isnull=True,
+            category__description="Respirator Clearance",
         ).select_related(
             "category",
             "category__template",
@@ -4066,11 +4102,22 @@ def my_page(request):
         ).select_related(
             "certification",
             "certification__category",
+            "certification__category__template",
         ).order_by(
             "date",
             "id",
         )
     )
+    pending_action_certifications = []
+    seen_pending_action_certification_ids = set()
+    for pending_action in pending_actions:
+        if (
+            pending_action.certification and
+            pending_action.certification_id not in seen_pending_action_certification_ids
+        ):
+            seen_pending_action_certification_ids.add(pending_action.certification_id)
+            pending_action_certifications.append(pending_action.certification)
+    _apply_certification_display_descriptions(pending_action_certifications)
 
     pending_actions_by_certification = {}
     for pending_action in pending_actions:

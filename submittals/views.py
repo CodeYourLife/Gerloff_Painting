@@ -119,6 +119,12 @@ def submittals_home(request):
             notes=notes,
         )
 
+        SubmittalApprovals.objects.create(
+            submittalitem=item,
+            notes="",
+            item_notes="",
+        )
+
         if Employees.objects.filter(user=request.user).exists():
             employee = Employees.objects.get(user=request.user)
             SubmittalItemNotes.objects.create(
@@ -797,7 +803,8 @@ def submittal_send(request, submittal_id):
                     item,
                     defaults={
                         "is_approved": None,
-                        "notes": 'Rejected in submittal ' + str(submittal.submittal_number),
+                        "notes": "",
+                        "item_notes": "",
                         "quantity": approval.quantity,
                         "date_reviewed": None,
                     },
@@ -1498,7 +1505,8 @@ def job_submittals_summary(request, job_number):
 
                 SubmittalApprovals.objects.create(
                     submittalitem=new_item,
-                    item_notes = notes
+                    notes="",
+                    item_notes="",
                 )
 
                 return redirect(
