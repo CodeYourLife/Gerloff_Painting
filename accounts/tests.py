@@ -14,9 +14,15 @@ class LoginPageTests(TestCase):
         response = self.client.get(reverse("login"))
 
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="username"')
+        self.assertContains(response, 'name="password"')
+        self.assertContains(response, 'type="password"')
         self.assertContains(response, 'autocomplete="username"')
         self.assertContains(response, 'autocomplete="current-password"')
         self.assertContains(response, 'id="toggle-password"')
+        self.assertContains(response, 'class="login-panel"')
+        self.assertContains(response, 'class="login-primary-actions"')
+        self.assertContains(response, 'class="login-secondary-actions"')
 
     def test_failed_login_does_not_render_submitted_password(self):
         submitted_password = "DoNotEchoThisPassword!"

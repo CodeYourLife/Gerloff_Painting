@@ -1,15 +1,84 @@
 {% extends 'base.html' %}
+{% block extra_head %}
+<style>
+    .login-page {
+        min-height: calc(100vh - 56px);
+        padding: 32px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .login-panel {
+        width: 100%;
+        max-width: 460px;
+        padding: 24px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    }
+
+    .login-title {
+        margin: 0 0 20px;
+        color: #212529;
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 1.2;
+        text-align: center;
+    }
+
+    .login-primary-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    .login-secondary-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .login-primary-actions .btn {
+        min-height: 48px;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .login-secondary-actions .btn {
+        min-height: 38px;
+        white-space: normal;
+    }
+
+    @media (max-width: 360px) {
+        .login-panel {
+            padding: 18px;
+        }
+
+        .login-primary-actions,
+        .login-secondary-actions {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div style="margin-top: 20%" class="row h-100 d-flex align-items-center justify-content-center">
-    <div class="col-12 col-sm-8 col-md-6">
-    <form action="{% url 'login' %}" method="post" class="form-group" autocomplete="on">
+<div class="login-page">
+    <div class="login-panel">
+    <h1 class="login-title">Gerloff Painting Employee Login</h1>
+    <form action="{% url 'login' %}" method="post" class="form-group mb-0" autocomplete="on">
         {% csrf_token %}
         <div class="form-text text-muted mb-2">
             Please enter your username or email address
         </div>
         <label class="sr-only" for="login-username">Username or email</label>
         <input value="{{ username|default:'' }}" type="text" id="login-username" name="username"
-               autocomplete="username" autocapitalize="none" spellcheck="false"
+               autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"
+               inputmode="email"
                placeholder="Username or email" class="form-control" required autofocus><br>
 
         <label class="sr-only" for="login-password">Password</label>
@@ -22,35 +91,41 @@
                         class="btn btn-outline-secondary"
                         aria-label="Show password" aria-pressed="false"
                         title="Show password">
-                    <span id="password-eye" aria-hidden="true">&#128065;</span>
+                    Show
                 </button>
             </div>
         </div>
-        <br>
-        <div style="align-items: center">
-            <input style="margin-top: 5px" type="submit" class="btn btn-primary btn-sm" name="login" value="Log In">
-            <input style="margin-top: 5px" type="submit" class="btn btn-primary btn-sm" name="register" value="Register New User With Pin" formnovalidate>
-            <input style="margin-top: 5px" type="submit" class="btn btn-secondary btn-sm" name="forgot" value="Forgot Password" formnovalidate>
-            <div class="text-danger" role="alert">{{ message }}</div>
+
+        <div class="login-primary-actions">
+            <input type="submit" class="btn btn-primary" name="login" value="Log In">
+            <input type="submit" class="btn btn-secondary" name="forgot" value="Forgot Password" formnovalidate>
         </div>
+
+        <div class="login-secondary-actions">
+            <input type="submit" class="btn btn-outline-primary btn-sm" name="register" value="Register New User With Pin" formnovalidate>
+            <a href="{% url 'connect' %}" class="btn btn-outline-danger btn-sm">Subcontractors Click Here</a>
+        </div>
+
+        <div class="text-danger mt-3" role="alert">{{ message }}</div>
     </form>
-        <br>
-        <form action="{% url 'connect' %}">
-            <input type="submit" class="btn btn-danger btn-sm" value="Subcontractors Click Here">
-        </form>
     </div>
 </div>
 
 <script>
-    (function () {
+    document.addEventListener("DOMContentLoaded", function () {
         const passwordInput = document.getElementById("login-password");
         const toggleButton = document.getElementById("toggle-password");
-        const passwordEye = document.getElementById("password-eye");
+
+        if (!passwordInput || !toggleButton) {
+            return;
+        }
+
+        passwordInput.setAttribute("type", "password");
 
         toggleButton.addEventListener("click", function () {
             const showPassword = passwordInput.type === "password";
-            passwordInput.type = showPassword ? "text" : "password";
-            passwordEye.textContent = showPassword ? "\uD83D\uDE48" : "\uD83D\uDC41";
+            passwordInput.setAttribute("type", showPassword ? "text" : "password");
+            toggleButton.textContent = showPassword ? "Hide" : "Show";
             toggleButton.setAttribute("aria-pressed", String(showPassword));
             toggleButton.setAttribute(
                 "aria-label",
@@ -61,7 +136,7 @@
                 showPassword ? "Hide password" : "Show password"
             );
         });
-    }());
+    });
 </script>
 
 {% endblock %}
