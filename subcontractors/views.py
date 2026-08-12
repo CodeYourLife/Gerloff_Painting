@@ -1903,6 +1903,11 @@ def subcontract_invoices(request, subcontract_id, item_id):
             for x in SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice):
                 invoicetotal = invoicetotal + x.total_cost()
             selected_invoice.final_amount = invoicetotal
+            if selected_invoice.retainage is None:
+                try:
+                    selected_invoice.retainage = Decimal(request.POST.get('this_retainage') or "0.00")
+                except (InvalidOperation, TypeError):
+                    selected_invoice.retainage = Decimal("0.00")
         if ('approved' in request.POST) or ('approved_with_changes' in request.POST) or (
                 'reject_notes' in request.POST):
             approved = True
@@ -2128,15 +2133,28 @@ def subcontract_invoices(request, subcontract_id, item_id):
         selected_invoice = SubcontractorInvoice.objects.get(id=item_id)
         send_data['selected_invoice'] = selected_invoice
         invoice_items = []
+        selected_line_total = Decimal("0.00")
         if selected_invoice.is_release_retainage:
             invoice_items.append({'description':"Release Retainage",'billed':selected_invoice.release_retainage,'notes':selected_invoice.retainage_note, 'sov_item':0,'quantity':0})
         for x in SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice):
+            selected_line_total += x.total_cost()
             if x.sov_item.SOV_is_lump_sum:
                 invoice_items.append({'description': x.sov_item.SOV_description, 'billed': "$" + str(x.quantity),
                                   'notes': x.notes,'sov_item': x.sov_item.id,'quantity':x.quantity})
             else:
                 invoice_items.append({'description': x.sov_item.SOV_description, 'billed': str(x.quantity) + " " + str(x.sov_item.SOV_unit),
                                       'notes': x.notes,'sov_item': x.sov_item.id,'quantity':x.quantity})
+        selected_final_amount = selected_invoice.final_amount
+        if selected_final_amount is None:
+            selected_final_amount = selected_line_total
+        selected_retainage = selected_invoice.retainage
+        if selected_retainage is None:
+            if subcontract.is_retainage and subcontract.retainage_percentage:
+                selected_retainage = selected_final_amount * subcontract.retainage_percentage
+            else:
+                selected_retainage = Decimal("0.00")
+        selected_invoice.final_amount = selected_final_amount
+        selected_invoice.retainage = selected_retainage
         # invoice_items = SubcontractorInvoiceItem.objects.filter(invoice=selected_invoice)
         send_data['invoice_items'] = invoice_items
         notes = SubcontractNotes.objects.filter(subcontract=subcontract, invoice=selected_invoice)
@@ -2147,11 +2165,11 @@ def subcontract_invoices(request, subcontract_id, item_id):
             if x.retainage: other_retainage += x.retainage
             if x.final_amount: previously_billed += x.final_amount
         send_data['previously_billed'] = previously_billed
-        send_data['total_billed'] = previously_billed + selected_invoice.final_amount
+        send_data['total_billed'] = previously_billed + selected_final_amount
         send_data['other_retainage'] = other_retainage
-        send_data['total_retainage'] = other_retainage + selected_invoice.retainage
+        send_data['total_retainage'] = other_retainage + selected_retainage
         send_data['total_contract'] = subcontract.total_contract_amount()
-        send_data['invoice_total_after_retainage'] = selected_invoice.final_amount - selected_invoice.retainage
+        send_data['invoice_total_after_retainage'] = selected_final_amount - selected_retainage
         if InvoiceApprovals.objects.filter(employee=Employees.objects.get(user=request.user), invoice=selected_invoice,
                                            is_approved=False).exists():
             send_data['me_approve'] = True
