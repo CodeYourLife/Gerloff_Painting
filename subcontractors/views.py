@@ -962,11 +962,13 @@ def portal(request, sub_id, contract_id):
         send_data['selected_contract'] = selected_contract
         invoices=[]
         for x in SubcontractorInvoice.objects.filter(subcontract=selected_contract):
-            if x.retainage > 0:
+            retainage = x.retainage or Decimal("0.00")
+            final_amount = x.final_amount or Decimal("0.00")
+            if retainage > 0:
                 retainage_positive=True
             else:
                 retainage_positive=False
-            invoices.append({'invoice':x, 'total_pay_amount': x.final_amount - x.retainage,'retainage_positive':retainage_positive, 'retainage_formatted':"$" + f"{0-int(x.retainage):,d}"})
+            invoices.append({'invoice':x, 'total_pay_amount': final_amount - retainage,'retainage_positive':retainage_positive, 'retainage_formatted':"$" + f"{0-int(retainage):,d}"})
         invoices = sorted(
             invoices,
             key=lambda x: int(x['invoice'].pay_app_number),
@@ -3222,13 +3224,15 @@ def subcontract(request, id):
         send_data['is_entire_paint_job'] = True
     invoices = []
     for x in SubcontractorInvoice.objects.filter(subcontract=subcontract).order_by('id'):
-        if x.retainage > 0:
+        retainage_amount = x.retainage or Decimal("0.00")
+        final_amount = x.final_amount or Decimal("0.00")
+        if retainage_amount > 0:
             retainage_positive = True
         else:
             retainage_positive = False
-        retainage = "$" + f"{0-int(x.retainage):,d}"
+        retainage = "$" + f"{0-int(retainage_amount):,d}"
         invoices.append(
-            {'retainage':retainage, 'invoice': x, 'total_pay_amount': x.final_amount - x.retainage, 'retainage_positive': retainage_positive})
+            {'retainage':retainage, 'invoice': x, 'total_pay_amount': final_amount - retainage_amount, 'retainage_positive': retainage_positive})
     send_data['invoices'] = invoices
     # send_data['invoices'] = SubcontractorInvoice.objects.filter(subcontract=subcontract).order_by('id')
     items = []
