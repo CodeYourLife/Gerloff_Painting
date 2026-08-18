@@ -91,7 +91,8 @@ th {
 
 <tr style="background:#f2f2f2; font-weight:bold;">
 <th style="width:8%; text-align:left;">COP</th>
-<th style="width:57%; text-align:left;">Description</th>
+<th style="width:47%; text-align:left;">Description</th>
+<th style="width:10%; text-align:left; white-space:nowrap;">Date Sent</th>
 <th style="width:20%; text-align:left; white-space:nowrap;">Status</th>
 <th style="width:15%; text-align:left;">Price</th>
 </tr>
@@ -107,6 +108,12 @@ style="background:#fff3cd;"
 <td>{{ x.cop_number }}</td>
 
 <td>{{ x.description }}</td>
+
+<td style="white-space:nowrap;">
+{% if x.date_sent %}
+{{ x.date_sent|date:"m/d/Y" }}
+{% endif %}
+</td>
 
 <td style="white-space:nowrap;">{{ x.status }}</td>
 

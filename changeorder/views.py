@@ -3943,6 +3943,7 @@ def send_cop_report(request,job_number):
             "id": co.id,
             "cop_number": co.cop_number,
             "description": co.description,
+            "date_sent": co.date_sent,
             "status": status,
             "price": co.price,
             "is_approved": is_approved,
