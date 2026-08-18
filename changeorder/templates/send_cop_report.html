@@ -283,6 +283,7 @@
                             <th style="width:5%;">PDF</th>
                             <th>COP</th>
                             <th>Description</th>
+                            <th>Date Sent</th>
                             <th>Status</th>
                             <th>Price</th>
                         </tr>
@@ -303,6 +304,11 @@
 
                             <td>{{ x.cop_number }}</td>
                             <td>{{ x.description }}</td>
+                            <td>
+                                {% if x.date_sent %}
+                                    {{ x.date_sent|date:"m/d/Y" }}
+                                {% endif %}
+                            </td>
                             <td>{{ x.status }}</td>
                             <td>
                                 {% if x.price %}
