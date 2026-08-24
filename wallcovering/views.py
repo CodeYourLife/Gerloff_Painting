@@ -7,7 +7,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
-from django.db.models import Sum
+from django.db.models import Count, DecimalField, F, Q, Sum, Value
+from django.db.models.functions import Coalesce
 from django.shortcuts import render, get_object_or_404, redirect
 from employees.models import Employees
 from equipment.models import Vendors, VendorCategory
@@ -36,7 +37,6 @@ from io import BytesIO
 import openpyxl
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse, FileResponse, Http404
-from django.db.models import Count, Q
 
 
 DEFAULT_BOOKING_WALLCOVERING_PATTERN = "Default at Booking-Please Complete"
@@ -919,6 +919,25 @@ def clean_decimal(value):
         return Decimal("0.00")
 
 
+def update_order_item_satisfied(order_item):
+    ordered_quantity = order_item.quantity or Decimal("0.00")
+    order_item.is_satisfied = order_item.quantity_received() >= ordered_quantity
+    order_item.save(update_fields=["is_satisfied"])
+
+
+def open_wallcovering_order_items():
+    return OrderItems.objects.annotate(
+        received_quantity=Coalesce(
+            Sum("foreign_receiveditems2__quantity"),
+            Value(Decimal("0.00")),
+            output_field=DecimalField(max_digits=10, decimal_places=2),
+        )
+    ).filter(
+        quantity__isnull=False,
+        received_quantity__lt=F("quantity"),
+    )
+
+
 def build_wallcovering_order_email_lines(wallcovering, pending_order, message):
     email_lines = [
         f"Job Name: {wallcovering.job_number.job_name}",
@@ -1721,9 +1740,8 @@ def wallcovering_receive(request, wallcovering_id=None):
             "order_id", flat=True
         ).distinct()
 
-        open_order_items = OrderItems.objects.filter(
+        open_order_items = open_wallcovering_order_items().filter(
             order_id__in=related_orders,
-            is_satisfied=False
         ).select_related(
             'order',
             'wallcovering',
@@ -1733,8 +1751,7 @@ def wallcovering_receive(request, wallcovering_id=None):
             'id'
         )
     else:
-        open_order_items = OrderItems.objects.filter(
-            is_satisfied=False,
+        open_order_items = open_wallcovering_order_items().filter(
             order__orderitems2__wallcovering__isnull=False
         ).select_related(
             'order',
@@ -1840,9 +1857,7 @@ def wallcovering_receive(request, wallcovering_id=None):
                 quantity=quantity,
             )
 
-            if order_item.quantity_received() >= (order_item.quantity or Decimal("0.00")):
-                order_item.is_satisfied = True
-                order_item.save()
+            update_order_item_satisfied(order_item)
 
         for i in range(len(package_types)):
             package_orderitem_id = package_orderitem_ids[i] if i < len(package_orderitem_ids) else None
@@ -2424,6 +2439,15 @@ def wallcovering_receipt_edit(request, delivery_id):
                     return redirect(request.path)
                 package.delete()
 
+        affected_order_item_ids = set(
+            ReceivedItems.objects.filter(
+                wallcovering_delivery=delivery
+            ).values_list(
+                "order_item_id",
+                flat=True
+            )
+        )
+
         # Rebuild received items. These are safe to delete because packages reference orderitem, not ReceivedItems.
         ReceivedItems.objects.filter(
             wallcovering_delivery=delivery
@@ -2435,6 +2459,10 @@ def wallcovering_receipt_edit(request, delivery_id):
                 order_item=row["order_item"],
                 quantity=row["quantity"],
             )
+            affected_order_item_ids.add(row["order_item"].id)
+
+        for order_item in OrderItems.objects.filter(id__in=affected_order_item_ids):
+            update_order_item_satisfied(order_item)
 
         for i in range(len(package_types)):
             package_id = posted_package_ids[i] if i < len(posted_package_ids) else ""
