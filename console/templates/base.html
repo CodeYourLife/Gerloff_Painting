@@ -1,4 +1,5 @@
 {% load static %}
+{% load auth_extras %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -412,7 +413,7 @@ function hidePageOverlay() {
         <ul class="navbar-nav ">
             <li><a class="nav-item nav-link {% block nav_item_changeorder %}{% endblock nav_item_changeorder %}"
                    href="{% url 'change_order_home' %}">Change Orders</a></li>
-            {% if user.is_superuser %}
+            {% if user.is_superuser or user|has_group:"Employee Viewers" %}
             <li><a class="nav-item nav-link {% block nav_item_employees %}{% endblock nav_item_employees %}"
                    href="{% url 'employees_home' %}">Employees</a></li>
             {% endif %}
