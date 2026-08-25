@@ -39,6 +39,7 @@ from django.views.decorators.cache import never_cache
 from django.utils.timezone import now
 from django.utils.text import get_valid_filename
 from employees.models import *
+from media.upload_utils import save_uploaded_file_unique
 import datetime
 import os
 from datetime import date
@@ -836,17 +837,7 @@ def subcontract_file_upload(request, subcontract_id):
     requested_base = os.path.splitext(os.path.basename(requested_name))[0] or original_base
     dated_name = f"{date.today().strftime('%m-%d-%Y')} - {requested_base}{original_ext}"
     safe_name = get_valid_filename(dated_name)
-    file_path = os.path.join(folder, safe_name)
-
-    base_name, ext = os.path.splitext(safe_name)
-    counter = 1
-    while os.path.exists(file_path):
-        file_path = os.path.join(folder, f"{base_name}_{counter}{ext}")
-        counter += 1
-
-    with open(file_path, "wb+") as destination:
-        for chunk in uploaded_file.chunks():
-            destination.write(chunk)
+    save_uploaded_file_unique(uploaded_file, folder, safe_name)
 
     return JsonResponse({"ok": True})
 
@@ -5549,19 +5540,9 @@ def subcontractor_employee_management(request, sub_id):
             return redirect("subcontractor_employee_management", sub_id=subcontractor.id)
 
         folder = _certification_files_folder(certification.id)
-        os.makedirs(folder, exist_ok=True)
 
         filename = _certification_upload_filename(uploaded_file, file_description)
-        file_path = os.path.join(folder, filename)
-        duplicate_index = 2
-        while os.path.exists(file_path):
-            filename = _certification_upload_filename(uploaded_file, file_description, duplicate_index)
-            file_path = os.path.join(folder, filename)
-            duplicate_index += 1
-
-        with open(file_path, "wb+") as destination:
-            for chunk in uploaded_file.chunks():
-                destination.write(chunk)
+        filename = save_uploaded_file_unique(uploaded_file, folder, filename)
 
         CertificationNotes.objects.create(
             certification=certification,
@@ -6330,19 +6311,9 @@ def subcontractor_employee_portal(request, employee_id):
             return redirect("subcontractor_employee_portal", employee_id=selected_employee.id)
 
         folder = _certification_files_folder(certification.id)
-        os.makedirs(folder, exist_ok=True)
 
         filename = _certification_upload_filename(uploaded_file, file_description)
-        file_path = os.path.join(folder, filename)
-        duplicate_index = 2
-        while os.path.exists(file_path):
-            filename = _certification_upload_filename(uploaded_file, file_description, duplicate_index)
-            file_path = os.path.join(folder, filename)
-            duplicate_index += 1
-
-        with open(file_path, "wb+") as destination:
-            for chunk in uploaded_file.chunks():
-                destination.write(chunk)
+        filename = save_uploaded_file_unique(uploaded_file, folder, filename)
 
         CertificationNotes.objects.create(
             certification=certification,

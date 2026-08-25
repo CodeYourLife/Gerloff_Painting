@@ -22,7 +22,8 @@
                         <select name="job_number" class="form-control select2" required>
                             <option value="">Select Job</option>
                             {% for job in jobs %}
-                                <option value="{{ job.job_number }}">
+                                <option value="{{ job.job_number }}"
+                                        {% if job.job_number == selected_job_number %}selected{% endif %}>
                                     {{ job.job_number }} {{job.job_name}}
                                 </option>
                             {% endfor %}

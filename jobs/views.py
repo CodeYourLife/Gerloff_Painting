@@ -2985,15 +2985,19 @@ def upload_new_job_from_excel(request):
 
     fileitem = request.FILES["upload_file"]
 
-    upload_token = uuid.uuid4().hex
     upload_dir = os.path.join(settings.MEDIA_ROOT, "job_upload")
     os.makedirs(upload_dir, exist_ok=True)
 
-    upload_path = os.path.join(upload_dir, f"{upload_token}.xlsx")
-
-    with open(upload_path, "wb") as destination:
-        for chunk in fileitem.chunks():
-            destination.write(chunk)
+    while True:
+        upload_token = uuid.uuid4().hex
+        upload_path = os.path.join(upload_dir, f"{upload_token}.xlsx")
+        try:
+            with open(upload_path, "xb") as destination:
+                for chunk in fileitem.chunks():
+                    destination.write(chunk)
+            break
+        except FileExistsError:
+            continue
 
     review_url = request.build_absolute_uri(
         reverse("upload_new_job_review", kwargs={"upload_token": upload_token})

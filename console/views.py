@@ -22,6 +22,7 @@ from django.urls import reverse
 from django.utils import timezone
 from employees.forms import SiriusUploadForm,ClockSharkUploadForm, ToolboxTalksUploadForm
 from employees.models import *
+from media.upload_utils import save_uploaded_file_unique
 from employees.views import (
     _apply_certification_display_descriptions,
     _create_standard_certification_custom_attributes,
@@ -960,8 +961,7 @@ def _count_missing_toolbox_talks_before(cutoff_date):
 def seperate_test(request):
     fileitem = request.FILES['filename']
     fn = os.path.basename(fileitem.name)
-    fn2 = os.path.join("C:/Trinity/", fn)
-    open(fn2, 'wb').write(fileitem.file.read())
+    save_uploaded_file_unique(fileitem, "C:/Trinity/", fn)
     return redirect('index')
 
 

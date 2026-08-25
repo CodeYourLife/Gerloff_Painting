@@ -26,6 +26,7 @@ from io import StringIO, BytesIO
 from jobs.models import Jobs, JobCharges, ClientEmployees, Email_Errors,JobNotes
 from media.utilities import MediaUtilities
 from media.utilities import MediaUtilities
+from media.upload_utils import save_uploaded_file_unique
 from .models import ChangeOrders
 from subcontractors.models import *
 from wallcovering.filters import ChangeOrderFilter
@@ -236,8 +237,8 @@ def batch_approve_co(request, id):
                 if 'upload_file' in request.FILES:
                     fileitem = request.FILES['upload_file']
                     fn = os.path.basename(fileitem.name)
-                    fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder",str(selected_cop.job_number.job_number)+ " COP #" + str(selected_cop.cop_number), fn)
-                    open(fn2, 'wb').write(fileitem.file.read())
+                    folder_path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(selected_cop.job_number.job_number) + " COP #" + str(selected_cop.cop_number))
+                    save_uploaded_file_unique(fileitem, folder_path, fn)
         if send_email:
             if not gc_number_exists:
                 gc_number="None"
@@ -2717,8 +2718,8 @@ def extra_work_ticket(request, id):
         if 'upload_file' in request.FILES:
             fileitem = request.FILES['upload_file']
             fn = os.path.basename(fileitem.name)
-            fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number), fn)
-            open(fn2, 'wb').write(fileitem.file.read())
+            folder_path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number) + " COP #" + str(changeorder.cop_number))
+            save_uploaded_file_unique(fileitem, folder_path, fn)
             try:
                 path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
                 foldercontents = os.listdir(path)
@@ -2923,8 +2924,8 @@ def uploadFile(request):
         fn = os.path.basename(request.FILES['file'].name)
         name = request.FILES['file'].name
         changeorder = ChangeOrders.objects.get(id=request.GET['id'])
-        fn2 = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number), fn)
-        open(fn2, 'wb').write(request.FILES['file'].read())
+        folder_path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number)+ " COP #" + str(changeorder.cop_number))
+        save_uploaded_file_unique(request.FILES['file'], folder_path, fn)
     except Exception as e:
         print('cannot write to folder', e)
     return HttpResponse(json.dumps('{"name": ' + name + ' }'))
@@ -3177,11 +3178,7 @@ def upload_changeorder_file(request, changeorder_id):
 
     for uploaded_file in request.FILES.getlist("upload_file"):
         filename = get_valid_filename(uploaded_file.name)
-        file_path = os.path.join(folder_path, filename)
-
-        with open(file_path, "wb+") as destination:
-            for chunk in uploaded_file.chunks():
-                destination.write(chunk)
+        save_uploaded_file_unique(uploaded_file, folder_path, filename)
 
     return JsonResponse({"success": True})
 

@@ -26,6 +26,7 @@ from employees.models import Employees, ToolboxTalks, ScheduledToolboxTalks,Sche
 from equipment.models import Inventory
 from jobs.models import Jobs, JobNotes, Email_Errors, JobsiteSafetyInspection, ClockSharkTimeEntry
 from media.utilities import MediaUtilities
+from media.upload_utils import save_uploaded_file_unique
 import json
 import mimetypes
 import openpyxl
@@ -3341,19 +3342,9 @@ def my_page(request):
                 return redirect('my_page')
 
             folder = _certification_files_folder(certification.id)
-            os.makedirs(folder, exist_ok=True)
 
             filename = _certification_upload_filename(uploaded_file, file_description)
-            file_path = os.path.join(folder, filename)
-            duplicate_index = 2
-            while os.path.exists(file_path):
-                filename = _certification_upload_filename(uploaded_file, file_description, duplicate_index)
-                file_path = os.path.join(folder, filename)
-                duplicate_index += 1
-
-            with open(file_path, "wb+") as destination:
-                for chunk in uploaded_file.chunks():
-                    destination.write(chunk)
+            filename = save_uploaded_file_unique(uploaded_file, folder, filename)
 
             CertificationNotes.objects.create(
                 certification=certification,
@@ -4753,7 +4744,6 @@ def certifications(request, id):
                 return redirect('certifications', id=cert.id)
 
             folder = _certification_files_folder(cert.id)
-            os.makedirs(folder, exist_ok=True)
 
             for index, uploaded_file in enumerate(uploaded_files, start=1):
                 filename = _certification_upload_filename(
@@ -4761,10 +4751,7 @@ def certifications(request, id):
                     custom_name,
                     index if len(uploaded_files) > 1 else None,
                 )
-                file_path = os.path.join(folder, filename)
-                with open(file_path, "wb+") as destination:
-                    for chunk in uploaded_file.chunks():
-                        destination.write(chunk)
+                save_uploaded_file_unique(uploaded_file, folder, filename)
 
             CertificationNotes.objects.create(
                 certification=cert,
