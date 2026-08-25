@@ -98,6 +98,11 @@
                 Back to Wallcovering
             </a>
 
+            <a href="{% url 'wallcovering_new' %}?job_number={{ wallcovering.job_number.job_number|urlencode }}"
+               class="btn btn-success ml-2">
+                Add New WC to Job
+            </a>
+
         </div>
     </div>
 

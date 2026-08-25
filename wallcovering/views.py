@@ -13,6 +13,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from employees.models import Employees
 from equipment.models import Vendors, VendorCategory
 from jobs.models import JobNotes
+from media.upload_utils import save_uploaded_file_unique
 from .models import (
     Wallcovering,
     OrderItems,
@@ -740,7 +741,10 @@ def wallcovering_detail(request, wallcovering_id):
 def wallcovering_new(request):
     Jobs = apps.get_model('jobs', 'Jobs')
 
-    jobs = Jobs.objects.filter(is_closed=False).order_by('job_name')
+    selected_job_number = request.GET.get("job_number", "")
+    jobs = Jobs.objects.filter(
+        Q(is_closed=False) | Q(job_number=selected_job_number)
+    ).order_by('job_name')
     vendors = Vendors.objects.filter(category__category="Wallcovering Supplier").order_by('company_name')
     if request.method == "POST":
         job_number_value = request.POST.get("job_number")
@@ -819,7 +823,9 @@ def wallcovering_new(request):
         return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
 
     return render(request, 'wallcovering_new.html', {
-        'jobs': jobs,'vendors': vendors
+        'jobs': jobs,
+        'vendors': vendors,
+        'selected_job_number': selected_job_number,
     })
 
 
@@ -2803,6 +2809,17 @@ def _clean_wallcovering_quote_filename(value):
     return cleaned.strip(". ")
 
 
+def _wallcovering_quote_requested_base(requested_name, original_base, original_ext):
+    requested_base = os.path.basename(requested_name).strip()
+    if not requested_base:
+        return original_base
+
+    if original_ext and requested_base.lower().endswith(original_ext.lower()):
+        requested_base = requested_base[:-len(original_ext)].strip()
+
+    return requested_base or original_base
+
+
 def wallcovering_pricing_files(request, wallcovering_id):
     wallcovering = get_object_or_404(Wallcovering, id=wallcovering_id)
 
@@ -2844,20 +2861,15 @@ def wallcovering_pricing_upload(request, wallcovering_id):
     original_name = os.path.basename(uploaded_file.name)
     original_base, original_ext = os.path.splitext(original_name)
     requested_name = request.POST.get("file_name", "").strip() or original_base
-    requested_base = os.path.splitext(os.path.basename(requested_name))[0] or original_base
+    requested_base = _wallcovering_quote_requested_base(
+        requested_name,
+        original_base,
+        original_ext
+    )
     safe_base = _clean_wallcovering_quote_filename(requested_base) or original_base
     safe_name = f"{safe_base}{original_ext}"
-    file_path = os.path.join(folder, safe_name)
 
-    base_name, ext = os.path.splitext(safe_name)
-    counter = 1
-    while os.path.exists(file_path):
-        file_path = os.path.join(folder, f"{base_name}_{counter}{ext}")
-        counter += 1
-
-    with open(file_path, "wb+") as destination:
-        for chunk in uploaded_file.chunks():
-            destination.write(chunk)
+    save_uploaded_file_unique(uploaded_file, folder, safe_name)
 
     return JsonResponse({"ok": True})
 

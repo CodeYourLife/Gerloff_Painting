@@ -16,6 +16,7 @@ from employees.models import *
 from django.http import HttpResponse
 from console.misc import Email
 from equipment.filters import RentalsFilter
+from media.upload_utils import save_uploaded_file_unique
 from wallcovering.views import get_next_po_number
 
 # Create your views here.
@@ -270,8 +271,8 @@ def rental_page(request, id, reverse):
         if 'upload_file' in request.FILES:
             fileitem = request.FILES['upload_file']
             fn = os.path.basename(fileitem.name)
-            fn2 = os.path.join(settings.MEDIA_ROOT, "rentals", str(rental.id), fn)
-            open(fn2, 'wb').write(fileitem.file.read())
+            folder_path = os.path.join(settings.MEDIA_ROOT, "rentals", str(rental.id))
+            save_uploaded_file_unique(fileitem, folder_path, fn)
         return redirect("rental_page", id=rental.id, reverse='YES')
     send_data['rental']=rental
     send_data['reverse'] =reverse

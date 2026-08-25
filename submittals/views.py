@@ -11,6 +11,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import get_template
 from django.utils import timezone
 from jobs.models import Jobs
+from media.upload_utils import save_uploaded_file_unique
 from employees.models import Employees
 from .models import *
 from xhtml2pdf import pisa
@@ -945,33 +946,21 @@ def submittal_send(request, submittal_id):
         # =========================
         if 'upload_main_file' in request.FILES:
             upload_file = request.FILES['upload_main_file']
-            save_path = os.path.join(main_folder_path, upload_file.name)
-
-            with open(save_path, 'wb+') as destination:
-                for chunk in upload_file.chunks():
-                    destination.write(chunk)
+            save_uploaded_file_unique(upload_file, main_folder_path)
 
             messages.success(request, "File uploaded to main submittal folder.")
             return redirect('submittal_send', submittal.id)
 
         if 'upload_sent_to_gc_file' in request.FILES:
             upload_file = request.FILES['upload_sent_to_gc_file']
-            save_path = os.path.join(sent_to_gc_path, upload_file.name)
-
-            with open(save_path, 'wb+') as destination:
-                for chunk in upload_file.chunks():
-                    destination.write(chunk)
+            save_uploaded_file_unique(upload_file, sent_to_gc_path)
 
             messages.success(request, "File uploaded to Sent to GC.")
             return redirect('submittal_send', submittal.id)
 
         if 'upload_approval_file' in request.FILES:
             upload_file = request.FILES['upload_approval_file']
-            save_path = os.path.join(approval_docs_path, upload_file.name)
-
-            with open(save_path, 'wb+') as destination:
-                for chunk in upload_file.chunks():
-                    destination.write(chunk)
+            save_uploaded_file_unique(upload_file, approval_docs_path)
 
             messages.success(request, "File uploaded to Approval Documents.")
             return redirect('submittal_send', submittal.id)
@@ -982,10 +971,7 @@ def submittal_send(request, submittal_id):
         main_batch_files = request.FILES.getlist('upload_main_batch')
         if main_batch_files:
             for f in main_batch_files:
-                save_path = os.path.join(main_folder_path, f.name)
-                with open(save_path, 'wb+') as destination:
-                    for chunk in f.chunks():
-                        destination.write(chunk)
+                save_uploaded_file_unique(f, main_folder_path)
 
             messages.success(request, "Files uploaded to main submittal folder.")
             return redirect('submittal_send', submittal.id)
@@ -993,10 +979,7 @@ def submittal_send(request, submittal_id):
         sent_to_gc_batch_files = request.FILES.getlist('upload_sent_to_gc_batch')
         if sent_to_gc_batch_files:
             for f in sent_to_gc_batch_files:
-                save_path = os.path.join(sent_to_gc_path, f.name)
-                with open(save_path, 'wb+') as destination:
-                    for chunk in f.chunks():
-                        destination.write(chunk)
+                save_uploaded_file_unique(f, sent_to_gc_path)
 
             messages.success(request, "Files uploaded to Sent to GC.")
             return redirect('submittal_send', submittal.id)
@@ -1004,10 +987,7 @@ def submittal_send(request, submittal_id):
         approval_batch_files = request.FILES.getlist('upload_approval_batch')
         if approval_batch_files:
             for f in approval_batch_files:
-                save_path = os.path.join(approval_docs_path, f.name)
-                with open(save_path, 'wb+') as destination:
-                    for chunk in f.chunks():
-                        destination.write(chunk)
+                save_uploaded_file_unique(f, approval_docs_path)
 
             messages.success(request, "Files uploaded to Approval Documents.")
             return redirect('submittal_send', submittal.id)

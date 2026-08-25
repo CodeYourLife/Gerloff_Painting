@@ -18,6 +18,7 @@ from pathlib import Path
 from django.conf import settings
 from django.http import HttpResponse
 from media.utilities import MediaUtilities
+from media.upload_utils import save_uploaded_file_unique
 from console.misc import Email, get_client_ip, is_internal_ip
 from datetime import datetime
 from employees.models import *
@@ -892,10 +893,10 @@ def equipment_page(request, id):
             short_mth = date.today().strftime("%m")
             short_day = date.today().strftime("%d")
             short_date = short_year + "-" + short_mth + "-" + short_day
-            extension = fileitem.name.split(".")[1]
+            extension = os.path.splitext(fileitem.name)[1].lstrip(".")
             fn = os.path.basename(short_date + " " + custom_name + "." + extension)
-            fn2 = os.path.join(settings.MEDIA_ROOT, "equipment", str(inventory.id), fn)
-            open(fn2, 'wb').write(fileitem.file.read())
+            folder_path = os.path.join(settings.MEDIA_ROOT, "equipment", str(inventory.id))
+            save_uploaded_file_unique(fileitem, folder_path, fn)
             foldercontents = os.listdir(path)
             folder_count = 0
             for x in os.listdir(path):
