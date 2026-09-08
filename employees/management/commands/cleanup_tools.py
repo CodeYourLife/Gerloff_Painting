@@ -295,6 +295,22 @@ def backfill_wallcovering_submittal_approvals():
     }
 
 
+def clear_unlinked_submittal_approval_notes():
+    with transaction.atomic():
+        approvals = SubmittalApprovals.objects.filter(
+            submittal__isnull=True,
+        ).exclude(
+            notes__isnull=True,
+        ).exclude(
+            notes="",
+        )
+
+        updated_count = approvals.count()
+        approvals.update(notes="")
+
+    return updated_count
+
+
 def _upsert_completed_sub_toolbox_talk(employee, scheduled, job, completed_date=None, is_excused=False, note=""):
     completed_date = completed_date or timezone.localdate()
 
@@ -520,6 +536,14 @@ class Command(BaseCommand):
                     f"Updated approval(s): {result['updated_approvals']}. "
                     f"Skipped item(s): {result['skipped_items']}. "
                     f"Skipped duplicate generated item(s): {result['skipped_duplicate_items']}."
+                )
+            )
+
+        elif action == "clear_unlinked_submittal_approval_notes":
+            updated_count = clear_unlinked_submittal_approval_notes()
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"Cleared notes on {updated_count} unlinked submittal approval(s)."
                 )
             )
 
