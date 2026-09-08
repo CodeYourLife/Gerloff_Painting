@@ -43,6 +43,121 @@ from django.http import HttpResponse, JsonResponse, FileResponse, Http404
 DEFAULT_BOOKING_WALLCOVERING_PATTERN = "Default at Booking-Please Complete"
 
 
+def wallcovering_submittal_description(code, submittal_type):
+    wallcovering_code = code or "Wallcovering"
+    return f"{wallcovering_code} {submittal_type}"
+
+
+def wallcovering_submittal_approval_notes(vendor, pattern):
+    vendor_name = vendor.company_name if vendor else ""
+    return f"{vendor_name} {pattern or ''}".strip()
+
+
+def ensure_wallcovering_submittal_item(wallcovering, submittal_type, existing_item=None):
+    description = wallcovering_submittal_description(wallcovering.code, submittal_type)
+    approval_notes = wallcovering_submittal_approval_notes(
+        wallcovering.vendor,
+        wallcovering.pattern
+    )
+
+    if existing_item:
+        existing_item.description = description
+        existing_item.wallcovering_id = wallcovering
+        existing_item.notes = ""
+        existing_item.job_number = wallcovering.job_number
+        existing_item.save()
+        item = existing_item
+    else:
+        item = SubmittalItems.objects.create(
+            wallcovering_id=wallcovering,
+            description=description,
+            notes="",
+            job_number=wallcovering.job_number
+        )
+
+    approval = SubmittalApprovals.objects.filter(
+        submittalitem=item,
+        submittal__isnull=True
+    ).order_by("id").first()
+
+    if approval:
+        update_fields = []
+
+        if approval.notes:
+            approval.notes = ""
+            update_fields.append("notes")
+
+        if not approval.item_notes:
+            approval.item_notes = approval_notes
+            update_fields.append("item_notes")
+
+        if update_fields:
+            approval.save(update_fields=update_fields)
+    else:
+        SubmittalApprovals.objects.create(
+            submittalitem=item,
+            submittal=None,
+            is_approved=None,
+            notes="",
+            item_notes=approval_notes,
+            quantity=0,
+            date_reviewed=None,
+        )
+
+    return item
+
+
+def update_unlinked_wallcovering_submittals(wallcovering, new_vendor, new_code, new_pattern):
+    old_vendor = wallcovering.vendor
+    old_code = wallcovering.code
+    old_pattern = wallcovering.pattern
+
+    old_notes = wallcovering_submittal_approval_notes(old_vendor, old_pattern)
+    new_notes = wallcovering_submittal_approval_notes(new_vendor, new_pattern)
+    updated_count = 0
+
+    for submittal_type in ["Product Data", "Samples"]:
+        old_description = wallcovering_submittal_description(old_code, submittal_type)
+        new_description = wallcovering_submittal_description(new_code, submittal_type)
+
+        matching_items = SubmittalItems.objects.filter(
+            wallcovering_id=wallcovering,
+            description=old_description,
+            submittalapprovals__submittal__isnull=True,
+        ).distinct()
+
+        for item in matching_items:
+            matching_approvals = SubmittalApprovals.objects.filter(
+                submittalitem=item,
+                submittal__isnull=True,
+            ).order_by("id")
+
+            approval_update_count = 0
+
+            for approval in matching_approvals:
+                update_fields = []
+
+                if approval.notes:
+                    approval.notes = ""
+                    update_fields.append("notes")
+
+                if approval.item_notes == old_notes:
+                    approval.item_notes = new_notes
+                    update_fields.append("item_notes")
+
+                if update_fields:
+                    approval.save(update_fields=update_fields)
+                    approval_update_count += 1
+
+            if approval_update_count and item.description != new_description:
+                item.description = new_description
+                item.save(update_fields=["description"])
+
+            updated_count += approval_update_count
+
+    return updated_count
+
+
 def wallcovering_home(request):
     selected_filter = request.GET.get("filter", "all")
 
@@ -597,46 +712,39 @@ def wallcovering_detail(request, wallcovering_id):
             submittalitem=item
         ).select_related("submittal").order_by("-id")
 
-        linked_approvals = all_approvals.filter(
-            submittal__isnull=False
-        )
-
-        latest_linked_approval = linked_approvals.first()
-
-        has_unlinked_approval = all_approvals.filter(
-            submittal__isnull=True
-        ).exists()
-
         if not all_approvals.exists():
-            status = "Not Sent"
-            approval = None
+            submittal_rows.append({
+                "item": item,
+                "approval": None,
+                "description": item.description,
+                "status": "Not Submitted",
+            })
+            continue
 
-        elif has_unlinked_approval:
-            status = "Not Sent"
-            approval = latest_linked_approval
+        for approval in all_approvals:
+            description_parts = [item.description or ""]
 
-        elif latest_linked_approval and latest_linked_approval.is_approved is True:
-            status = "Approved"
-            approval = latest_linked_approval
+            if approval.item_notes:
+                description_parts.append(approval.item_notes)
 
-        elif latest_linked_approval and latest_linked_approval.is_approved is False:
-            status = "Rejected"
-            approval = latest_linked_approval
+            if approval.notes:
+                description_parts.append(f"Reviewer Notes: {approval.notes}")
 
-        elif latest_linked_approval:
-            status = "Sent"
-            approval = latest_linked_approval
+            if not approval.submittal:
+                status = "Not Submitted"
+            elif approval.is_approved is True:
+                status = "Approved"
+            elif approval.is_approved is False:
+                status = "Rejected"
+            else:
+                status = "In Review"
 
-        else:
-            status = "Not Sent"
-            approval = None
-
-        submittal_rows.append({
-            "item": item,
-            "approval": approval,
-            "status": status,
-            "has_unlinked_approval": has_unlinked_approval,
-        })
+            submittal_rows.append({
+                "item": item,
+                "approval": approval,
+                "description": " - ".join(description_parts).strip(" -"),
+                "status": status,
+            })
 
     label_packages = Packages.objects.filter(
         orderitem__wallcovering=wallcovering
@@ -805,20 +913,19 @@ def wallcovering_new(request):
             messages.success(request, "Updated the default wallcovering created at booking.")
         else:
             wallcovering = Wallcovering.objects.create(**wallcovering_defaults)
-        if wallcovering.code:
-            description = f"{wallcovering.code} {wallcovering.vendor.company_name} {wallcovering.pattern}"
-        else:
-            description = f"{wallcovering.vendor.company_name}"
         if wallcovering.is_owner_furnished == False:
             existing_submittal = SubmittalItems.objects.filter(description = "Wallcovering Submittal",job_number=selected_job).first()
-            if existing_submittal:
-                existing_submittal.description = f"{description} Product Data"
-                existing_submittal.wallcovering = wallcovering
-                existing_submittal.notes = ""
-                existing_submittal.save()
-            else:
-                SubmittalItems.objects.create(wallcovering_id=wallcovering,description =f"{description} Product Data",job_number=selected_job)
-            SubmittalItems.objects.create(wallcovering_id=wallcovering, description=f"{description} Samples",job_number=selected_job)
+
+            ensure_wallcovering_submittal_item(
+                wallcovering,
+                "Product Data",
+                existing_item=existing_submittal
+            )
+
+            ensure_wallcovering_submittal_item(
+                wallcovering,
+                "Samples"
+            )
 
         return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
 
@@ -861,10 +968,20 @@ def wallcovering_edit(request, wallcovering_id):
                 category=vendor_category
             )
 
+        new_code = request.POST.get("code")
+        new_pattern = request.POST.get("pattern")
+
+        updated_submittal_count = update_unlinked_wallcovering_submittals(
+            wallcovering,
+            vendor_obj,
+            new_code,
+            new_pattern
+        )
+
         wallcovering.job_number = selected_job
         wallcovering.vendor = vendor_obj
-        wallcovering.code = request.POST.get("code")
-        wallcovering.pattern = request.POST.get("pattern")
+        wallcovering.code = new_code
+        wallcovering.pattern = new_pattern
         wallcovering.estimated_quantity = request.POST.get("estimated_quantity") or 0
         wallcovering.estimated_unit = request.POST.get("estimated_unit")
         wallcovering.install_yardage = request.POST.get("install_yardage") or None
@@ -878,6 +995,12 @@ def wallcovering_edit(request, wallcovering_id):
         wallcovering.is_repeat = bool(request.POST.get("is_repeat"))
         wallcovering.increment_requirement = request.POST.get("increment_requirement")
         wallcovering.save()
+
+        if updated_submittal_count:
+            messages.success(
+                request,
+                f"Updated {updated_submittal_count} unsubmitted wallcovering submittal approval(s)."
+            )
 
         return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
 

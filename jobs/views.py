@@ -1594,10 +1594,6 @@ def job_page(request, jobnumber):
             is_approved__isnull=True
         )
 
-        rejected_linked_approvals = linked_approvals.filter(
-            is_approved=False
-        )
-
         approved_linked_approvals = linked_approvals.filter(
             is_approved=True
         )
@@ -1605,7 +1601,7 @@ def job_page(request, jobnumber):
         # =========================
         # UNAPPROVED / PENDING ITEMS
         # =========================
-        if not approvals.exists() or unlinked_approvals.exists() or pending_linked_approvals.exists() or rejected_linked_approvals.exists():
+        if not linked_approvals.exists() or unlinked_approvals.exists() or pending_linked_approvals.exists():
 
             approval = None
 
@@ -1613,8 +1609,6 @@ def job_page(request, jobnumber):
                 approval = unlinked_approvals.last()
             elif pending_linked_approvals.exists():
                 approval = pending_linked_approvals.last()
-            elif rejected_linked_approvals.exists():
-                approval = rejected_linked_approvals.last()
 
             combined_notes = []
 
@@ -1653,9 +1647,6 @@ def job_page(request, jobnumber):
                 description_parts.append(approval.item_notes)
 
             notes_parts = []
-
-            if item.notes:
-                notes_parts.append(item.notes)
 
             if approval.notes:
                 notes_parts.append(approval.notes)

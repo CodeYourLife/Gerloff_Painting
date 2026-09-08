@@ -16,6 +16,31 @@
     .clickable-row:hover {
         background-color: #f8f9fa;
     }
+
+    .submittal-item-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-top: 12px;
+        margin-bottom: 20px;
+    }
+
+    @media (max-width: 575.98px) {
+        .submittal-item-actions form,
+        .submittal-item-actions .btn {
+            width: 100%;
+        }
+
+        .submittal-description-actions {
+            flex-wrap: wrap;
+        }
+
+        .submittal-description-actions .btn {
+            width: 100%;
+            margin-left: 0 !important;
+            margin-top: 6px;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -23,24 +48,17 @@
 
 <div class="container-fluid mt-4">
 
-    <div style="padding-top: 12px;margin-bottom: 20px;" class="d-flex flex-row">
-
-    <div class="col-sm-2">
+    <div class="submittal-item-actions">
         <form action="{% url 'job_page' item.job_number.job_number %}">
-            <input type="submit" class="btn btn-info btn-sm w-100"
+            <input type="submit" class="btn btn-info btn-sm"
                    value="Goto Job Page"/>
         </form>
-    </div>
 
-
-    <div class="col-sm-2">
         <form action="{% url 'job_submittals_summary' item.job_number.job_number %}">
-            <input type="submit" class="btn btn-info btn-sm w-100"
+            <input type="submit" class="btn btn-info btn-sm"
                    value="View All Submittals For This Job"/>
         </form>
     </div>
-
-</div>
 
 
     <div class="card shadow-sm mb-4">
@@ -80,12 +98,24 @@
                            value="{{ item.description }}"
                            required>
 
-                    <div class="input-group-append">
+                    <div class="input-group-append submittal-description-actions">
                         <button type="submit"
                                 name="change_description"
                                 class="btn btn-primary btn-sm">
                             Change Description
                         </button>
+                        {% if show_wallcovering_repair_buttons %}
+                        <button type="submit"
+                                name="fix_wallcovering_product_data"
+                                class="btn btn-info btn-sm ml-2">
+                            Fix Product Data
+                        </button>
+                        <button type="submit"
+                                name="fix_wallcovering_samples"
+                                class="btn btn-info btn-sm ml-2">
+                            Fix Samples
+                        </button>
+                        {% endif %}
                     </div>
 
                 </div>
@@ -277,10 +307,9 @@
             <table class="table table-sm table-striped mb-0">
                 <thead class="thead-light">
                     <tr>
-                        <th style="width:360px; white-space:nowrap;">Job</th>
                         <th style="width:120px;">Submittal #</th>
                         <th style="width:120px;">Status</th>
-                        <th>Item Notes</th>
+                        <th>Submitted Item</th>
                         <th>Approval Notes</th>
                         <th style="width:140px;">Date Reviewed</th>
                     </tr>
@@ -291,10 +320,6 @@
                         {% if approval.submittal %}
                         onclick="window.location='{% url 'submittal_send' approval.submittal.id %}';"
                         {% endif %}>
-                        <td style="white-space:nowrap;">
-                            {{ item.job_number.job_number }} - {{ item.job_number.job_name }}
-                        </td>
-
                         <td>
                             {% if approval.submittal %}
                                 {{ approval.submittal.submittal_number }}
@@ -320,7 +345,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6">No approval history found for this item.</td>
+                        <td colspan="5">No approval history found for this item.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -391,6 +416,12 @@
                 {{ item.wallcovering_id.vendor.company_name }}
                 {{ item.wallcovering_id.pattern }}
             </p>
+            <div class="mb-3">
+                <a href="{% url 'wallcovering_detail' item.wallcovering_id.id %}"
+                   class="btn btn-info btn-sm">
+                    Go to {{ item.wallcovering_id.code }}
+                </a>
+            </div>
         {% endif %}
 
         <form method="post">

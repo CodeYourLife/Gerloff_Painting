@@ -536,7 +536,7 @@
                             <h5>Equipment Folder</h5>
 
                             <button class="btn btn-secondary btn-sm"
-                                    onclick="navigator.clipboard.writeText('{{ folder_path|escapejs }}')">
+                                    onclick="navigator.clipboard.writeText('{{ folder_path|escapejs }}').then(function () { showToast('Folder path copied to clipboard'); })">
                                 📂 Copy Folder Path
                             </button>
 

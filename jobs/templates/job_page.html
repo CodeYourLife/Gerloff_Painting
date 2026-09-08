@@ -1673,33 +1673,44 @@ float: left !important;
                         <tr>
                             <th>Description</th>
                             <th>Notes</th>
-                            <th>Status</th>
+                            <th style="width:120px;">Item Page</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for row in unapproved_items %}
-                        <tr class="clickable-row">
-                            <td><a class="row-link" href="{% url 'submittal_item_detail' row.item.id %}">
-            {{ row.item.description }}
-        </a></td>
-                            <td>        <a class="row-link" href="{% url 'submittal_item_detail' row.item.id %}">
-            {{ row.notes|default:"" }}
-        </a></td>
+                        <tr>
                             <td>
-                                <a class="row-link" href="{% url 'submittal_item_detail' row.item.id %}">
-            {% if not row.approval %}
-                Not Submitted
-            {% elif row.approval.is_approved == False %}
-                Rejected
-            {% else %}
-                Pending
-            {% endif %}
-        </a>
+                                {{ row.item.description }}
+
+                                {% if row.approval and row.approval.submittal %}
+                                    <span class="badge badge-warning ml-2">In Review</span>
+                                {% else %}
+                                    <span class="badge badge-secondary ml-2">Not Submitted Yet</span>
+                                {% endif %}
+
+                                {% if row.item.wallcovering_id %}
+                                    <span class="badge badge-success ml-2">
+                                        {% if row.item.wallcovering_id.code %}
+                                            {{ row.item.wallcovering_id.code }}
+                                        {% else %}
+                                            WC - No Code
+                                        {% endif %}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>{{ row.notes|default:"" }}</td>
+                            <td>
+                                <a href="{% url 'submittal_item_detail' row.item.id %}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    Open Item
+                                </a>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="4">No un-approved items</td>
+                            <td colspan="3" class="text-center text-muted">
+                                No un-approved items found.
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
