@@ -48,74 +48,6 @@ def get_or_create_unlinked_submittal_approval(item, defaults=None, update_existi
     return SubmittalApprovals.objects.create(**create_values), True
 
 
-def wallcovering_submittal_description(wallcovering, submittal_type):
-    wallcovering_code = wallcovering.code or "Wallcovering"
-    return f"{wallcovering_code} {submittal_type}"
-
-
-def wallcovering_submittal_approval_notes(wallcovering):
-    vendor_name = wallcovering.vendor.company_name if wallcovering.vendor else ""
-    return f"{vendor_name} {wallcovering.pattern or ''}".strip()
-
-
-def repair_wallcovering_submittal_item(item, submittal_type):
-    wallcovering = item.wallcovering_id
-
-    if not wallcovering:
-        return False, "This item is not linked to a wallcovering."
-
-    if SubmittalApprovals.objects.filter(
-        submittalitem=item,
-        submittal__isnull=False
-    ).exists():
-        return False, "This item has already been submitted and cannot be repaired automatically."
-
-    unlinked_approvals = SubmittalApprovals.objects.filter(
-        submittalitem=item,
-        submittal__isnull=True
-    ).order_by("id")
-
-    if unlinked_approvals.count() > 1:
-        return False, "This item has multiple unsubmitted approvals and cannot be repaired automatically."
-
-    item.description = wallcovering_submittal_description(
-        wallcovering,
-        submittal_type
-    )
-    item.notes = ""
-    item.job_number = wallcovering.job_number
-    item.save(update_fields=["description", "notes", "job_number"])
-
-    approval_notes = wallcovering_submittal_approval_notes(wallcovering)
-    approval = unlinked_approvals.first()
-
-    if approval:
-        approval.notes = ""
-        approval.item_notes = approval_notes
-        approval.is_approved = None
-        approval.quantity = 0
-        approval.date_reviewed = None
-        approval.save(update_fields=[
-            "notes",
-            "item_notes",
-            "is_approved",
-            "quantity",
-            "date_reviewed",
-        ])
-    else:
-        SubmittalApprovals.objects.create(
-            submittalitem=item,
-            submittal=None,
-            is_approved=None,
-            notes="",
-            item_notes=approval_notes,
-            quantity=0,
-            date_reviewed=None,
-        )
-
-    return True, f"Repaired wallcovering {submittal_type} item."
-
-
 @login_required(login_url='/accounts/login')
 #THIS IS NOT USED RIGHT NOW I DONT THINK
 def submittals_item_close(request, id):
@@ -1271,22 +1203,6 @@ def submittal_item_detail(request, item_id):
         submittal__isnull=False
     ).exists()
     has_no_linked_submittal_approvals = not item_has_been_submitted
-    item_approval_count = SubmittalApprovals.objects.filter(
-        submittalitem=item
-    ).count()
-    show_wallcovering_repair_buttons = (
-        item.wallcovering_id_id
-        and (
-            item_approval_count == 0
-            or (
-                item_approval_count == 1
-                and SubmittalApprovals.objects.filter(
-                    submittalitem=item,
-                    submittal__isnull=True
-                ).exists()
-            )
-        )
-    )
     wallcoverings = Wallcovering.objects.filter(
         job_number=item.job_number
     ).order_by("code", "pattern")
@@ -1341,31 +1257,6 @@ def submittal_item_detail(request, item_id):
                 )
 
                 messages.success(request, "Wallcovering link removed.")
-
-            return redirect("submittal_item_detail", item.id)
-        if "fix_wallcovering_product_data" in request.POST or "fix_wallcovering_samples" in request.POST:
-            if "fix_wallcovering_product_data" in request.POST:
-                submittal_type = "Product Data"
-            else:
-                submittal_type = "Samples"
-
-            repaired, message = repair_wallcovering_submittal_item(
-                item,
-                submittal_type
-            )
-
-            if repaired:
-                if employee:
-                    SubmittalItemNotes.objects.create(
-                        submittal=None,
-                        submittalitem=item,
-                        date=timezone.now().date(),
-                        user=employee,
-                        note=message
-                    )
-                messages.success(request, message)
-            else:
-                messages.error(request, message)
 
             return redirect("submittal_item_detail", item.id)
         if "change_description" in request.POST:
@@ -1677,7 +1568,6 @@ def submittal_item_detail(request, item_id):
         "next_submittal_approval": next_submittal_approval,
         "has_no_linked_submittal_approvals": has_no_linked_submittal_approvals,
         "show_additional_submittal_needed_button": show_additional_submittal_needed_button,
-        "show_wallcovering_repair_buttons": show_wallcovering_repair_buttons,
         "next_page": next_page,
     }
 
