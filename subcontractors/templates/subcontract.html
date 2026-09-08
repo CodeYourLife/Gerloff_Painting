@@ -1100,7 +1100,7 @@ function copySubcontractFolderPath() {
         const copied = document.execCommand("copy");
 
         if (copied) {
-            alert("Folder path copied. Paste into Windows Explorer.");
+            showToast("Folder path copied to clipboard");
         } else {
             prompt("Copy this folder path:", input.value);
         }

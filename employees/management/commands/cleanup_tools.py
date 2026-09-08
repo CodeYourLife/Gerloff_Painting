@@ -143,6 +143,158 @@ def delete_all_wallcovering():
         Wallcovering.objects.all().delete()
 
 
+def _wallcovering_submittal_description(wallcovering, submittal_type):
+    wallcovering_code = wallcovering.code or "Wallcovering"
+    return f"{wallcovering_code} {submittal_type}"
+
+
+def _legacy_wallcovering_submittal_descriptions(wallcovering, submittal_type):
+    descriptions = [_wallcovering_submittal_description(wallcovering, submittal_type)]
+
+    vendor_name = wallcovering.vendor.company_name if wallcovering.vendor else ""
+    wallcovering_code = wallcovering.code or ""
+    pattern = wallcovering.pattern or ""
+
+    legacy_bases = [
+        vendor_name,
+        f"{wallcovering_code} {vendor_name} {pattern}".strip(),
+    ]
+
+    for legacy_base in legacy_bases:
+        if legacy_base:
+            descriptions.append(f"{legacy_base} {submittal_type}")
+
+    return list(dict.fromkeys(descriptions))
+
+
+def _wallcovering_approval_notes(wallcovering):
+    vendor_name = wallcovering.vendor.company_name if wallcovering.vendor else ""
+    return f"{vendor_name} {wallcovering.pattern or ''}".strip()
+
+
+def backfill_wallcovering_submittal_approvals():
+    """
+    Bring legacy wallcovering-created submittal items into the current shape.
+
+    Legacy items are identified only by generated wallcovering descriptions.
+    Eligible items are renamed to the current form:
+    "<wallcovering code> Product Data" or "<wallcovering code> Samples".
+
+    For each matching item, ensure there is an unlinked/future approval and set
+    that approval's notes and item_notes to "<vendor company name> <pattern>".
+    Items with submitted approvals or multiple approval rows are left untouched.
+    """
+    matched_items = 0
+    renamed_items = 0
+    created_approvals = 0
+    updated_approvals = 0
+    skipped_items = 0
+    skipped_duplicate_items = 0
+
+    with transaction.atomic():
+        wallcoverings = Wallcovering.objects.select_related(
+            "vendor",
+            "job_number"
+        ).all()
+
+        for wallcovering in wallcoverings:
+            approval_notes = _wallcovering_approval_notes(wallcovering)
+
+            for submittal_type in ["Product Data", "Samples"]:
+                current_description = _wallcovering_submittal_description(
+                    wallcovering,
+                    submittal_type
+                )
+                generated_descriptions = _legacy_wallcovering_submittal_descriptions(
+                    wallcovering,
+                    submittal_type
+                )
+
+                submittal_items = SubmittalItems.objects.filter(
+                    wallcovering_id=wallcovering,
+                    job_number=wallcovering.job_number,
+                    description__in=generated_descriptions,
+                )
+
+                eligible_items = []
+
+                for item in submittal_items:
+                    matched_items += 1
+
+                    approvals = SubmittalApprovals.objects.filter(
+                        submittalitem=item,
+                    ).order_by("id")
+                    approval_count = approvals.count()
+                    approval = approvals.first()
+
+                    if approval_count > 1 or (approval and approval.submittal_id):
+                        skipped_items += 1
+                        continue
+
+                    eligible_items.append({
+                        "item": item,
+                        "approvals": approvals,
+                        "approval": approval,
+                        "has_approval": approval is not None,
+                        "has_current_description": item.description == current_description,
+                    })
+
+                eligible_items.sort(
+                    key=lambda row: (
+                        not row["has_approval"],
+                        not row["has_current_description"],
+                        row["item"].id,
+                    )
+                )
+
+                if len(eligible_items) > 1:
+                    skipped_duplicate_items += len(eligible_items) - 1
+
+                for row in eligible_items[:1]:
+                    item = row["item"]
+                    approval = row["approval"]
+
+                    if item.description != current_description:
+                        item.description = current_description
+                        item.save(update_fields=["description"])
+                        renamed_items += 1
+
+                    if approval:
+                        update_fields = []
+
+                        if approval.notes:
+                            approval.notes = ""
+                            update_fields.append("notes")
+
+                        if approval.item_notes != approval_notes:
+                            approval.item_notes = approval_notes
+                            update_fields.append("item_notes")
+
+                        if update_fields:
+                            approval.save(update_fields=update_fields)
+                            updated_approvals += 1
+                    else:
+                        SubmittalApprovals.objects.create(
+                            submittalitem=item,
+                            submittal=None,
+                            is_approved=None,
+                            notes="",
+                            item_notes=approval_notes,
+                            quantity=0,
+                            date_reviewed=None,
+                        )
+                        created_approvals += 1
+
+    return {
+        "matched_items": matched_items,
+        "renamed_items": renamed_items,
+        "created_approvals": created_approvals,
+        "updated_approvals": updated_approvals,
+        "skipped_items": skipped_items,
+        "skipped_duplicate_items": skipped_duplicate_items,
+    }
+
+
 def _upsert_completed_sub_toolbox_talk(employee, scheduled, job, completed_date=None, is_excused=False, note=""):
     completed_date = completed_date or timezone.localdate()
 
@@ -354,6 +506,20 @@ class Command(BaseCommand):
                     f"Created from group attendance: {result['created_from_group_attendance']}. "
                     f"Created from viewed records: {result['created_from_views']}. "
                     f"Created total: {result['created_total']}."
+                )
+            )
+
+        elif action == "backfill_wallcovering_submittals":
+            result = backfill_wallcovering_submittal_approvals()
+            self.stdout.write(
+                self.style.SUCCESS(
+                    "Wallcovering submittal approvals backfilled. "
+                    f"Matched generated item(s): {result['matched_items']}. "
+                    f"Renamed item(s): {result['renamed_items']}. "
+                    f"Created approval(s): {result['created_approvals']}. "
+                    f"Updated approval(s): {result['updated_approvals']}. "
+                    f"Skipped item(s): {result['skipped_items']}. "
+                    f"Skipped duplicate generated item(s): {result['skipped_duplicate_items']}."
                 )
             )
 

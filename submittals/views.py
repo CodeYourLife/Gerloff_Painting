@@ -48,6 +48,74 @@ def get_or_create_unlinked_submittal_approval(item, defaults=None, update_existi
     return SubmittalApprovals.objects.create(**create_values), True
 
 
+def wallcovering_submittal_description(wallcovering, submittal_type):
+    wallcovering_code = wallcovering.code or "Wallcovering"
+    return f"{wallcovering_code} {submittal_type}"
+
+
+def wallcovering_submittal_approval_notes(wallcovering):
+    vendor_name = wallcovering.vendor.company_name if wallcovering.vendor else ""
+    return f"{vendor_name} {wallcovering.pattern or ''}".strip()
+
+
+def repair_wallcovering_submittal_item(item, submittal_type):
+    wallcovering = item.wallcovering_id
+
+    if not wallcovering:
+        return False, "This item is not linked to a wallcovering."
+
+    if SubmittalApprovals.objects.filter(
+        submittalitem=item,
+        submittal__isnull=False
+    ).exists():
+        return False, "This item has already been submitted and cannot be repaired automatically."
+
+    unlinked_approvals = SubmittalApprovals.objects.filter(
+        submittalitem=item,
+        submittal__isnull=True
+    ).order_by("id")
+
+    if unlinked_approvals.count() > 1:
+        return False, "This item has multiple unsubmitted approvals and cannot be repaired automatically."
+
+    item.description = wallcovering_submittal_description(
+        wallcovering,
+        submittal_type
+    )
+    item.notes = ""
+    item.job_number = wallcovering.job_number
+    item.save(update_fields=["description", "notes", "job_number"])
+
+    approval_notes = wallcovering_submittal_approval_notes(wallcovering)
+    approval = unlinked_approvals.first()
+
+    if approval:
+        approval.notes = ""
+        approval.item_notes = approval_notes
+        approval.is_approved = None
+        approval.quantity = 0
+        approval.date_reviewed = None
+        approval.save(update_fields=[
+            "notes",
+            "item_notes",
+            "is_approved",
+            "quantity",
+            "date_reviewed",
+        ])
+    else:
+        SubmittalApprovals.objects.create(
+            submittalitem=item,
+            submittal=None,
+            is_approved=None,
+            notes="",
+            item_notes=approval_notes,
+            quantity=0,
+            date_reviewed=None,
+        )
+
+    return True, f"Repaired wallcovering {submittal_type} item."
+
+
 @login_required(login_url='/accounts/login')
 #THIS IS NOT USED RIGHT NOW I DONT THINK
 def submittals_item_close(request, id):
@@ -101,6 +169,7 @@ def submittals_home(request):
     send_data = {}
     if request.method == 'POST' and 'add_pending_item' in request.POST:
         description = request.POST.get('pending_description', '').strip()
+        next_description = request.POST.get('pending_next_description', '').strip()
         notes = request.POST.get('pending_notes', '').strip()
         job_id = request.POST.get('pending_job', '').strip()
 
@@ -123,17 +192,21 @@ def submittals_home(request):
         SubmittalApprovals.objects.create(
             submittalitem=item,
             notes="",
-            item_notes="",
+            item_notes=next_description,
         )
 
-        if Employees.objects.filter(user=request.user).exists():
-            employee = Employees.objects.get(user=request.user)
+        employee = Employees.objects.filter(user=request.user).first()
+        if employee:
+            note_text = "item added"
+            if notes:
+                note_text += " - " + notes
+
             SubmittalItemNotes.objects.create(
                 submittal=None,
                 submittalitem=item,
                 date=timezone.now().date(),
                 user=employee,
-                note="Pending submittal item created. " + notes
+                note=note_text
             )
         messages.success(request, "Pending submittal item created.")
         return redirect("submittals_home")
@@ -196,19 +269,22 @@ def submittals_home(request):
         if item.notes:
             combined_notes.append(f"Notes: {item.notes}")
 
-        future_notes = []
+        approval_notes = []
 
         for approval in unlinked_approvals:
             if approval.item_notes and approval.item_notes.strip():
-                future_notes.append(approval.item_notes.strip())
+                approval_notes.append(approval.item_notes.strip())
 
-        if future_notes:
-            combined_notes.append(
-                "Next Submittal: " + " | ".join(future_notes)
-            )
+        display_description = item.description or ""
+
+        if approval_notes:
+            display_description = (
+                display_description + " - " + " | ".join(approval_notes)
+            ).strip()
 
         pending_item_rows.append({
             "item": item,
+            "display_description": display_description,
             "combined_notes": " | ".join(combined_notes)
         })
 
@@ -459,6 +535,50 @@ def submittal_send(request, submittal_id):
         submittalitem__is_no_longer_used=False
     ).select_related('submittalitem').order_by('submittalitem__description')
 
+    pending_choices = []
+    wallcovering_pending_choices = []
+
+    for item in available_items_without_approvals:
+        choice = {
+            "field_name": "pending_item_ids[]",
+            "value": item.id,
+            "description": item.description,
+            "approval_notes": "",
+            "item_notes": "",
+        }
+        pending_choices.append(choice)
+
+        if item.wallcovering_id_id:
+            wallcovering_pending_choices.append(choice)
+
+    for approval in available_unlinked_approvals:
+        choice = {
+            "field_name": "pending_approval_ids[]",
+            "value": approval.id,
+            "description": approval.submittalitem.description,
+            "approval_notes": approval.notes or "",
+            "item_notes": approval.item_notes or "",
+        }
+        pending_choices.append(choice)
+
+        if approval.submittalitem.wallcovering_id_id:
+            wallcovering_pending_choices.append(choice)
+
+    pending_choices.sort(
+        key=lambda choice: (
+            choice["description"] or "",
+            choice["approval_notes"] or "",
+            choice["item_notes"] or "",
+        )
+    )
+    wallcovering_pending_choices.sort(
+        key=lambda choice: (
+            choice["description"] or "",
+            choice["approval_notes"] or "",
+            choice["item_notes"] or "",
+        )
+    )
+
 
     approvals = SubmittalApprovals.objects.filter(
         submittal=submittal
@@ -563,8 +683,9 @@ def submittal_send(request, submittal_id):
                     submittalitem__is_no_longer_used=False,
                 )
 
+                approval.notes = ""
                 approval.submittal = submittal
-                approval.save()
+                approval.save(update_fields=["notes", "submittal"])
 
                 added_count += 1
 
@@ -649,6 +770,7 @@ def submittal_send(request, submittal_id):
         if 'delete_row' in request.POST:
             item_id = request.POST.get('item_id')
             approval_id = request.POST.get('approval_id')
+            future_submission_needed = request.POST.get('future_submission_needed') == 'yes'
 
             item = get_object_or_404(
                 SubmittalItems,
@@ -669,14 +791,33 @@ def submittal_send(request, submittal_id):
             ).exists()
 
             if other_approvals_exist:
+                future_item_notes = approval.item_notes or ""
+                future_quantity = approval.quantity
                 approval.delete()
 
+                if future_submission_needed:
+                    get_or_create_unlinked_submittal_approval(
+                        item,
+                        defaults={
+                            "is_approved": None,
+                            "notes": "",
+                            "item_notes": future_item_notes,
+                            "quantity": future_quantity,
+                            "date_reviewed": None,
+                        },
+                        update_existing=True,
+                    )
+
                 if employee:
+                    note_text = f"Removed item from submittal: {item.description}"
+                    if future_submission_needed:
+                        note_text += ". Future submittal still needed."
+
                     SubmittalNotes.objects.create(
                         submittal=submittal,
                         date=timezone.now().date(),
                         user=employee,
-                        note=f"Removed item from submittal: {item.description}"
+                        note=note_text
                     )
             else:
                 item_description = item.description
@@ -764,6 +905,7 @@ def submittal_send(request, submittal_id):
             is_approved_checked = request.POST.get('is_approved') == 'true'
             is_rejected_checked = request.POST.get('is_rejected') == 'true'
             reject_action = request.POST.get('reject_action', '').strip()
+            delete_unlinked_approvals = request.POST.get('delete_unlinked_approvals') == 'yes'
 
             if is_approved_checked and not is_rejected_checked:
                 approval.is_approved = True
@@ -777,6 +919,17 @@ def submittal_send(request, submittal_id):
             approval.save()
 
             note_parts = []
+
+            if approval.is_approved is True and delete_unlinked_approvals:
+                deleted_unlinked_count, _ = SubmittalApprovals.objects.filter(
+                    submittalitem=item,
+                    submittal__isnull=True
+                ).delete()
+
+                if deleted_unlinked_count:
+                    note_parts.append(
+                        f"Deleted {deleted_unlinked_count} unlinked approval(s)"
+                    )
 
             if approval.is_approved != old_is_approved:
                 if approval.is_approved is True:
@@ -800,7 +953,7 @@ def submittal_send(request, submittal_id):
                 )
 
             if reject_action == 'additional_required':
-                _, created = get_or_create_unlinked_submittal_approval(
+                future_approval, created = get_or_create_unlinked_submittal_approval(
                     item,
                     defaults={
                         "is_approved": None,
@@ -811,6 +964,10 @@ def submittal_send(request, submittal_id):
                     },
                     update_existing=True,
                 )
+
+                if future_approval.notes:
+                    future_approval.notes = ""
+                    future_approval.save(update_fields=["notes"])
 
                 if employee:
                     if created:
@@ -823,6 +980,15 @@ def submittal_send(request, submittal_id):
                         date=timezone.now().date(),
                         user=employee,
                         note=note_text + str(item.description),
+                    )
+                    SubmittalNotes.objects.create(
+                        submittal=submittal,
+                        date=timezone.now().date(),
+                        user=employee,
+                        note=(
+                            f"Additional submittal required after rejection in "
+                            f"submittal {submittal.submittal_number}: {item.description}"
+                        ),
                     )
 
             elif reject_action == 'no_longer_needed':
@@ -998,17 +1164,31 @@ def submittal_send(request, submittal_id):
     item_rows = []
 
     for approval in approvals:
-        other_submittal_history_exists = SubmittalApprovals.objects.filter(
+        submitted_count = SubmittalApprovals.objects.filter(
             submittalitem=approval.submittalitem,
             submittal__isnull=False
         ).exclude(
             submittal=submittal
-        ).exists()
+        ).count()
+        unlinked_approval_count = SubmittalApprovals.objects.filter(
+            submittalitem=approval.submittalitem,
+            submittal__isnull=True
+        ).count()
+        unlinked_approval_item_notes = " | ".join(
+            note for note in SubmittalApprovals.objects.filter(
+                submittalitem=approval.submittalitem,
+                submittal__isnull=True
+            ).values_list("item_notes", flat=True)
+            if note
+        )
 
         item_rows.append({
             'item': approval.submittalitem,
             'approval': approval,
-            'has_history': other_submittal_history_exists,
+            'has_history': submitted_count > 0,
+            'submitted_count': submitted_count,
+            'unlinked_approval_count': unlinked_approval_count,
+            'unlinked_approval_item_notes': unlinked_approval_item_notes,
         })
     new_row_id = request.session.pop('new_row_id', None)
     pending_item_count = (
@@ -1054,6 +1234,8 @@ def submittal_send(request, submittal_id):
         "wallcoverings": wallcoverings,
         "available_items_without_approvals":available_items_without_approvals,
         "available_unlinked_approvals":available_unlinked_approvals,
+        "pending_choices": pending_choices,
+        "wallcovering_pending_choices": wallcovering_pending_choices,
         "pending_item_count": pending_item_count,
         "pending_wallcovering_submittals_exist":pending_wallcovering_submittals_exist,
     }
@@ -1089,6 +1271,22 @@ def submittal_item_detail(request, item_id):
         submittal__isnull=False
     ).exists()
     has_no_linked_submittal_approvals = not item_has_been_submitted
+    item_approval_count = SubmittalApprovals.objects.filter(
+        submittalitem=item
+    ).count()
+    show_wallcovering_repair_buttons = (
+        item.wallcovering_id_id
+        and (
+            item_approval_count == 0
+            or (
+                item_approval_count == 1
+                and SubmittalApprovals.objects.filter(
+                    submittalitem=item,
+                    submittal__isnull=True
+                ).exists()
+            )
+        )
+    )
     wallcoverings = Wallcovering.objects.filter(
         job_number=item.job_number
     ).order_by("code", "pattern")
@@ -1143,6 +1341,31 @@ def submittal_item_detail(request, item_id):
                 )
 
                 messages.success(request, "Wallcovering link removed.")
+
+            return redirect("submittal_item_detail", item.id)
+        if "fix_wallcovering_product_data" in request.POST or "fix_wallcovering_samples" in request.POST:
+            if "fix_wallcovering_product_data" in request.POST:
+                submittal_type = "Product Data"
+            else:
+                submittal_type = "Samples"
+
+            repaired, message = repair_wallcovering_submittal_item(
+                item,
+                submittal_type
+            )
+
+            if repaired:
+                if employee:
+                    SubmittalItemNotes.objects.create(
+                        submittal=None,
+                        submittalitem=item,
+                        date=timezone.now().date(),
+                        user=employee,
+                        note=message
+                    )
+                messages.success(request, message)
+            else:
+                messages.error(request, message)
 
             return redirect("submittal_item_detail", item.id)
         if "change_description" in request.POST:
@@ -1454,6 +1677,7 @@ def submittal_item_detail(request, item_id):
         "next_submittal_approval": next_submittal_approval,
         "has_no_linked_submittal_approvals": has_no_linked_submittal_approvals,
         "show_additional_submittal_needed_button": show_additional_submittal_needed_button,
+        "show_wallcovering_repair_buttons": show_wallcovering_repair_buttons,
         "next_page": next_page,
     }
 
@@ -1472,6 +1696,10 @@ def job_submittals_summary(request, job_number):
                 "new_item_description", ""
             ).strip()
 
+            next_description = request.POST.get(
+                "new_item_next_description", ""
+            ).strip()
+
             notes = request.POST.get(
                 "new_item_notes", ""
             ).strip()
@@ -1486,8 +1714,22 @@ def job_submittals_summary(request, job_number):
                 SubmittalApprovals.objects.create(
                     submittalitem=new_item,
                     notes="",
-                    item_notes="",
+                    item_notes=next_description,
                 )
+
+                employee = Employees.objects.filter(user=request.user).first()
+                if employee:
+                    note_text = "item added"
+                    if notes:
+                        note_text += " - " + notes
+
+                    SubmittalItemNotes.objects.create(
+                        submittal=None,
+                        submittalitem=new_item,
+                        date=timezone.now().date(),
+                        user=employee,
+                        note=note_text,
+                    )
 
                 return redirect(
                     "job_submittals_summary",
@@ -1535,25 +1777,11 @@ def job_submittals_summary(request, job_number):
 
             note_parts = []
 
+            if linked_approvals:
+                note_parts.append("Previously Submitted")
+
             if item.notes:
-                note_parts.append(f"Item Notes: {item.notes}")
-
-            status_parts = []
-
-            for approval in linked_approvals:
-                if approval.is_approved is True:
-                    status = "approved"
-                elif approval.is_approved is False:
-                    status = "rejected"
-                else:
-                    status = "pending"
-
-                status_parts.append(
-                    f"Submittal {approval.submittal.submittal_number}-{status}"
-                )
-
-            if status_parts:
-                note_parts.append(", ".join(status_parts))
+                note_parts.append(f"Notes: {item.notes}")
 
             future_notes = []
 
@@ -1561,13 +1789,15 @@ def job_submittals_summary(request, job_number):
                 if approval.item_notes:
                     future_notes.append(approval.item_notes)
 
+            display_description = item.description or ""
+
             if future_notes:
-                note_parts.append(
-                    "Future submittal: " + " | ".join(future_notes)
-                )
+                display_description = (
+                    display_description + " - " + " | ".join(future_notes)
+                ).strip()
 
             not_sent_items.append({
-                "description": item.description,
+                "description": display_description,
                 "id": item.id,
                 "notes": ". ".join(note_parts),
                 "wallcovering_id": item.wallcovering_id,

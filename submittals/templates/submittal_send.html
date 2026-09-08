@@ -128,6 +128,69 @@ select {
 .no-longer-used-row td {
     opacity: 0.75;
 }
+.submittal-items-table,
+.submittal-items-row-table {
+    table-layout: fixed;
+    width: 100%;
+}
+.submittal-items-table .description-col,
+.submittal-items-row-table .description-col {
+    width: 20%;
+}
+.submittal-items-table .specific-item-col,
+.submittal-items-row-table .specific-item-col {
+    width: 25%;
+}
+.submittal-items-table .quantity-col,
+.submittal-items-row-table .quantity-col {
+    width: 7%;
+}
+.submittal-items-table .approval-notes-col,
+.submittal-items-row-table .approval-notes-col {
+    width: 18%;
+}
+.submittal-items-table .review-status-col,
+.submittal-items-row-table .review-status-col {
+    width: 12%;
+}
+.submittal-items-table .row-actions-col,
+.submittal-items-row-table .row-actions-col {
+    width: 18%;
+}
+.submittal-items-table .header-helper {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.25;
+}
+.submittal-items-row-table input,
+.submittal-items-row-table textarea,
+.submittal-items-row-table select {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    box-sizing: border-box;
+}
+.submittal-items-row-table input[type="checkbox"] {
+    width: auto;
+}
+.submittal-items-row-table .row-actions-cell {
+    white-space: nowrap;
+}
+.submittal-items-row-table .row-actions-cell .btn {
+    margin: 2px;
+}
+.row-actions-cell > a,
+.row-actions-cell > button:not(.row-save-btn):not(.edit-submittal-item-btn) {
+    display: none;
+}
+.review-status-btn {
+    white-space: normal;
+    width: 100%;
+}
+.linked-wallcovering-badge {
+    display: inline-block;
+    white-space: nowrap;
+}
 </style>
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
 {% endblock %}
@@ -141,55 +204,90 @@ select {
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
 
-            <form method="post">
-                {% csrf_token %}
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">Add Wallcovering</h5>
 
-                <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title">Add Wallcovering</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
 
-                    <button type="button" class="close text-white" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
+            <div class="modal-body">
+
+                <div class="border rounded p-3 mb-3">
+                    <h6 class="font-weight-bold">Existing Pending Submittals</h6>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        {% for choice in wallcovering_pending_choices %}
+                            <div class="border rounded p-2 mb-2">
+                                <label class="mb-0">
+                                    <input type="checkbox"
+                                           name="{{ choice.field_name }}"
+                                           value="{{ choice.value }}">
+                                    <strong>{{ choice.description }}</strong>
+                                    {% if choice.item_notes %}
+                                        - {{ choice.item_notes }}
+                                    {% endif %}
+                                </label>
+                            </div>
+                        {% empty %}
+                            <div class="text-muted py-2">
+                                No existing pending wallcovering submittals.
+                            </div>
+                        {% endfor %}
+
+                        {% if wallcovering_pending_choices %}
+                            <button type="submit" name="add_pending_items" class="btn btn-success btn-sm">
+                                Add Selected
+                            </button>
+                        {% endif %}
+                    </form>
                 </div>
 
-                <div class="modal-body">
+                <div class="border rounded p-3">
+                    <h6 class="font-weight-bold">Add Items Not Shown Above</h6>
 
-                    <div class="form-group">
-                        <label>Wallcovering</label>
-                        <select name="wallcovering_id" class="form-control select2" required>
-                            <option value="">Select Wallcovering</option>
+                    <form method="post">
+                        {% csrf_token %}
 
-                            {% for wc in wallcoverings %}
-                                <option value="{{ wc.id }}">
-                                    {{ wc.code }} - {{ wc.vendor.company_name }} {{ wc.pattern }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
+                        <div class="form-group">
+                            <label>Wallcovering</label>
+                            <select name="wallcovering_id" class="form-control select2" required>
+                                <option value="">Select Wallcovering</option>
 
-                    <div class="form-group">
-                        <label>Submittal Type</label>
-                        <select name="wallcovering_submittal_type" class="form-control" required>
-                            <option value="">Select Type</option>
-                            <option value="Sample">Sample</option>
-                            <option value="Product Data">Product Data</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
+                                {% for wc in wallcoverings %}
+                                    <option value="{{ wc.id }}">
+                                        {{ wc.code }} - {{ wc.vendor.company_name }} {{ wc.pattern }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
 
+                        <div class="form-group">
+                            <label>Submittal Type</label>
+                            <select name="wallcovering_submittal_type" class="form-control" required>
+                                <option value="">Select Type</option>
+                                <option value="Sample">Sample</option>
+                                <option value="Product Data">Product Data</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" name="add_wallcovering_item" class="btn btn-success btn-sm">
+                            Add
+                        </button>
+                    </form>
                 </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                        Cancel
-                    </button>
+            </div>
 
-                    <button type="submit" name="add_wallcovering_item" class="btn btn-success">
-                        Add
-                    </button>
-                </div>
-
-            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    Close
+                </button>
+            </div>
 
         </div>
     </div>
@@ -212,53 +310,23 @@ select {
 
                 <div class="modal-body">
 
-                    {% if available_items_without_approvals %}
-                        <h6 class="font-weight-bold">Items Without Approvals</h6>
-
-                        {% for item in available_items_without_approvals %}
-                            <div class="border rounded p-2 mb-2">
-                                <label class="mb-0">
-                                    <input type="checkbox"
-                                           name="pending_item_ids[]"
-                                           value="{{ item.id }}">
-                                    <strong>{{ item.description }}</strong>
-                                </label>
-
-                                {% if item.notes %}
-                                    <div class="small text-muted ml-4">
-                                        {{ item.notes }}
-                                    </div>
+                    {% for choice in pending_choices %}
+                        <div class="border rounded p-2 mb-2">
+                            <label class="mb-0">
+                                <input type="checkbox"
+                                       name="{{ choice.field_name }}"
+                                       value="{{ choice.value }}">
+                                <strong>{{ choice.description }}</strong>
+                                {% if choice.item_notes %}
+                                    - {{ choice.item_notes }}
                                 {% endif %}
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-
-                    {% if available_unlinked_approvals %}
-                        <h6 class="font-weight-bold mt-3">Unlinked Pending Approvals</h6>
-
-                        {% for approval in available_unlinked_approvals %}
-                            <div class="border rounded p-2 mb-2">
-                                <label class="mb-0">
-                                    <input type="checkbox"
-                                           name="pending_approval_ids[]"
-                                           value="{{ approval.id }}">
-                                    <strong>{{ approval.submittalitem.description }}</strong>
-                                </label>
-
-                                {% if approval.notes %}
-                                    <div class="small text-muted ml-4">
-                                        {{ approval.notes }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-
-                    {% if not available_items_without_approvals and not available_unlinked_approvals %}
+                            </label>
+                        </div>
+                    {% empty %}
                         <div class="text-muted text-center py-3">
                             No pending items available.
                         </div>
-                    {% endif %}
+                    {% endfor %}
 
                 </div>
 
@@ -370,7 +438,7 @@ select {
 
             <div class="modal-footer d-flex flex-wrap justify-content-center">
                 <button type="button" id="rejectAdditionalBtn" class="btn btn-warning">
-                    Additional submittal required
+                    Another Submittal is Required
                 </button>
 
                 <button type="button" id="rejectNoLongerNeededBtn" class="btn btn-danger">
@@ -379,6 +447,31 @@ select {
 
                 <button type="button" id="rejectNABtn" class="btn btn-secondary" data-dismiss="modal">
                     N/A
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="reviewStatusModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Review Status</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body text-center">
+                <button type="button" id="reviewApprovedBtn" class="btn btn-success btn-block mb-2">
+                    Approved
+                </button>
+
+                <button type="button" id="reviewRejectedBtn" class="btn btn-danger btn-block">
+                    Rejected
                 </button>
             </div>
 
@@ -875,78 +968,146 @@ select {
         </div>
 
         <div class="table-responsive">
-            <table class="table table-sm table-striped mb-0">
+            <table class="table table-sm table-striped mb-0 submittal-items-table">
+                <colgroup>
+                    <col class="description-col">
+                    <col class="specific-item-col">
+                    <col class="quantity-col">
+                    <col class="approval-notes-col">
+                    <col class="review-status-col">
+                    <col class="row-actions-col">
+                </colgroup>
                 <thead class="thead-light">
                     <tr>
-                        <th style="min-width:220px;">Description</th>
-                        <th style="min-width:220px;">Item Notes</th>
-                        <th style="width:100px;">Qty</th>
-                        <th style="min-width:220px;">Approval Notes</th>
-                        <th style="width:90px;">Approved</th>
-                        <th style="width:90px;">Rejected</th>
-                        <th style="width:260px;"></th>
+                        <th>
+                            Description
+                            <small class="d-block text-muted font-weight-normal header-helper">
+                                Keep generic, such as "P1 Walls Drawdown" or "Paint Product Data"
+                            </small>
+                        </th>
+                        <th>
+                            Specific Item Submitted
+                            <small class="d-block text-muted font-weight-normal header-helper">
+                                This is where you put "Sherwin Williams Product Data" or "Promar 200 Eg-Shel SW7006 Extra White"
+                            </small>
+                        </th>
+                        <th>Qty</th>
+                        <th>Approval Notes</th>
+                        <th>Review Status</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for row in item_rows %}
                     <tr class="{% if row.item.is_no_longer_used %}no-longer-used-row{% endif %}">
-                        <td colspan="7" class="p-0 border-0">
+                        <td colspan="6" class="p-0 border-0">
                             <form method="post"
                               class="row-edit-form mb-0"
-                              data-approval-id="{{ row.approval.id }}">
+                              data-approval-id="{{ row.approval.id }}"
+                              data-unlinked-approval-count="{{ row.unlinked_approval_count }}"
+                              data-has-unlinked-approvals="{% if row.unlinked_approval_count %}true{% else %}false{% endif %}"
+                              data-unlinked-approval-item-notes="{{ row.unlinked_approval_item_notes|escape }}">
                                 {% csrf_token %}
                                 <input type="hidden" name="item_id" value="{{ row.item.id }}">
                                 <input type="hidden" name="approval_id" value="{{ row.approval.id }}">
                                 <input type="hidden" name="reject_action" class="reject-action" value="">
+                                <input type="hidden" name="delete_unlinked_approvals" class="delete-unlinked-approvals" value="">
 
 
-                                <table class="table table-sm table-striped mb-0">
+                                <table class="table table-sm table-striped mb-0 submittal-items-row-table">
+                                    <colgroup>
+                                        <col class="description-col">
+                                        <col class="specific-item-col">
+                                        <col class="quantity-col">
+                                        <col class="approval-notes-col">
+                                        <col class="review-status-col">
+                                        <col class="row-actions-col">
+                                    </colgroup>
                                     <tr class="{% if row.item.is_no_longer_used %}no-longer-used-row{% endif %}">
-                                        <td style="min-width:220px;">
-                                            <input type="text"
-                                                   name="item_description"
-                                                   class="form-control form-control-sm"
-                                                   value="{{ row.item.description|default:'' }}">
+                                        <td>
+                                            <textarea name="item_description"
+                                                      class="form-control form-control-sm textarea-compact"
+                                                      rows="1">{{ row.item.description|default:'' }}</textarea>
                                         </td>
 
-                                        <td style="min-width:220px;">
+                                        <td>
                                             <textarea name="item_notes"
                                               class="form-control form-control-sm textarea-compact"
                                               rows="1">{{ row.approval.item_notes|default:'' }}</textarea>
                                         </td>
 
-                                        <td style="width:100px;">
+                                        <td>
                                             <input type="number"
                                                    name="approval_quantity"
                                                    class="form-control form-control-sm"
                                                    value="{{ row.approval.quantity|default:0 }}">
                                         </td>
 
-                                        <td style="min-width:220px;">
+                                        <td>
                                             <textarea name="approval_notes"
                                                       class="form-control form-control-sm textarea-compact"
                                                       rows="1">{{ row.approval.notes|default:'' }}</textarea>
                                         </td>
 
-                                        <td class="text-center align-middle" style="width:90px;">
+                                        <td class="text-center align-middle">
                                             <input type="checkbox"
                                                name="is_approved"
                                                value="true"
-                                               class="approve-checkbox"
+                                               class="approve-checkbox d-none"
                                                {% if row.approval.is_approved %}checked{% endif %}
                                                {% if not submittal.date_sent %}disabled{% endif %}>
-                                        </td>
-
-                                        <td class="text-center align-middle" style="width:90px;">
                                             <input type="checkbox"
                                                name="is_rejected"
                                                value="true"
-                                               class="reject-checkbox"
+                                               class="reject-checkbox d-none"
                                                {% if row.approval.is_approved == False %}checked{% endif %}
                                                {% if not submittal.date_sent %}disabled{% endif %}>
+                                            <button type="button"
+                                                    class="btn btn-sm review-status-btn
+                                                        {% if not submittal.date_sent %}
+                                                            btn-secondary
+                                                        {% elif row.approval.is_approved == True %}
+                                                            btn-success
+                                                        {% elif row.approval.is_approved == False %}
+                                                            btn-danger
+                                                        {% else %}
+                                                            btn-secondary
+                                                        {% endif %}"
+                                                    {% if not submittal.date_sent %}disabled{% endif %}>
+                                                {% if not submittal.date_sent %}
+                                                    Not Sent
+                                                {% elif row.approval.is_approved == True %}
+                                                    Approved
+                                                {% elif row.approval.is_approved == False %}
+                                                    Rejected
+                                                {% else %}
+                                                    Not Reviewed
+                                                {% endif %}
+                                            </button>
                                         </td>
 
-                                        <td class="text-center align-middle" style="width:260px; white-space:nowrap;">
+                                        <td class="text-center align-middle row-actions-cell">
+
+                                            <button type="submit" name="save_row" class="btn btn-secondary btn-sm row-save-btn d-none">
+                                                Save
+                                            </button>
+
+                                            {% if row.item.wallcovering_id %}
+                                                <span class="badge badge-success linked-wallcovering-badge mr-1">
+                                                        {% if row.item.wallcovering_id.code %}
+                                                            {{ row.item.wallcovering_id.code }}
+                                                        {% else %}
+                                                            Linked Wallcovering
+                                                        {% endif %}
+                                                </span>
+                                            {% endif %}
+
+                                            <button type="button"
+                                                    class="btn btn-primary btn-sm edit-submittal-item-btn"
+                                                    data-toggle="modal"
+                                                    data-target="#editSubmittalItemModal{{ row.item.id }}">
+                                                Edit
+                                            </button>
 
                                             {% if row.item.is_no_longer_used %}
 
@@ -1009,56 +1170,114 @@ select {
 
                         </td>
                     </tr>
-                    <div class="modal fade" id="wcLinkModal{{ row.item.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal fade" id="editSubmittalItemModal{{ row.item.id }}" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
 
-            <form method="post" action="{% url 'submittal_item_link_wallcovering' row.item.id %}">
-                {% csrf_token %}
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">Edit Submittal Item</h5>
 
-                <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title">Link Wallcovering</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
 
-                    <button type="button" class="close text-white" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
+            <div class="modal-body">
+
+                <div class="mb-3">
+                    <strong>Submittal Item:</strong><br>
+                    {{ row.item.description }}
                 </div>
 
-                <div class="modal-body">
+                <div class="border rounded p-3 mb-3">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="item_id" value="{{ row.item.id }}">
+                        <input type="hidden" name="approval_id" value="{{ row.approval.id }}">
+                        <input type="hidden" name="future_submission_needed" value="">
 
-                    <div class="mb-2">
-                        <strong>Submittal Item:</strong><br>
-                        {{ row.item.description }}
+                        <button type="submit"
+                                name="delete_row"
+                                class="btn btn-danger btn-sm"
+                                {% if row.submitted_count %}
+                                    onclick="return confirmFutureSubmissionNeeded(this.form);"
+                                {% else %}
+                                    onclick="return confirm('Delete this row?');"
+                                {% endif %}>
+                            {% if row.submitted_count %}
+                                Remove from this Submittal
+                            {% else %}
+                                Delete
+                            {% endif %}
+                        </button>
+                    </form>
+                </div>
+
+                {% if wallcoverings %}
+                <div class="border rounded p-3 mb-3">
+                    <h6 class="font-weight-bold">Link to Wallcovering</h6>
+
+                    <form method="post" action="{% url 'submittal_item_link_wallcovering' row.item.id %}">
+                        {% csrf_token %}
+
+                        <div class="form-group">
+                            <label>Select Wallcovering</label>
+
+                            <select name="wallcovering_id"
+                                    class="form-control select2 wallcovering-link-select"
+                                    data-original-value="{{ row.item.wallcovering_id_id|default:'' }}"
+                                    data-save-button-id="saveWallcoveringLinkBtn{{ row.item.id }}"
+                                    onchange="toggleWallcoveringSaveButton(this);">
+                                <option value="">No Wallcovering Link</option>
+
+                                {% for wc in wallcoverings %}
+                                    <option value="{{ wc.id }}"
+                                        {% if row.item.wallcovering_id_id == wc.id %}selected{% endif %}>
+                                        {{ wc.code }} - {{ wc.vendor }} {{ wc.pattern }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <button type="submit"
+                                id="saveWallcoveringLinkBtn{{ row.item.id }}"
+                                class="btn btn-success btn-sm save-wallcovering-link-btn d-none"
+                                style="display:none;">
+                            Save Link
+                        </button>
+
+                        {% if row.item.wallcovering_id %}
+                            <a href="{% url 'wallcovering_detail' row.item.wallcovering_id.id %}"
+                               class="btn btn-info btn-sm ml-2">
+                                Go to Wallcovering
+                            </a>
+                        {% endif %}
+                    </form>
+                </div>
+                {% endif %}
+
+                <div class="border rounded p-3">
+                    {% if row.submitted_count %}
+                        This item has been previously submitted {{ row.submitted_count }} times.
+                    {% else %}
+                        This item has never been submitted before.
+                    {% endif %}
+
+                    <div class="mt-2">
+                        <a href="{% url 'submittal_item_detail' row.item.id %}"
+                           class="btn btn-info btn-sm">
+                            Go to Submittal Item
+                        </a>
                     </div>
-
-                    <div class="form-group">
-                        <label>Select Wallcovering</label>
-
-                        <select name="wallcovering_id" class="form-control select2">
-                            <option value="">No Wallcovering Link</option>
-
-                            {% for wc in wallcoverings %}
-                                <option value="{{ wc.id }}"
-                                    {% if row.item.wallcovering_id_id == wc.id %}selected{% endif %}>
-                                    {{ wc.code }} - {{ wc.vendor }} {{ wc.pattern }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
                 </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                        Cancel
-                    </button>
+            </div>
 
-                    <button type="submit" class="btn btn-success">
-                        Save Link
-                    </button>
-                </div>
-
-            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    Close
+                </button>
+            </div>
 
         </div>
     </div>
@@ -1066,7 +1285,7 @@ select {
 <!--                    ignore-->
                     {% empty %}
                     <tr>
-                        <td colspan="7">No items found.</td>
+                        <td colspan="6">No items found.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -1221,6 +1440,7 @@ function openApprovalFile(fileName) {
 }
 
 let currentRejectForm = null;
+let currentReviewForm = null;
 
 function resizeTextarea(el) {
     el.style.height = '28px';
@@ -1232,30 +1452,79 @@ $(document).ready(function () {
         resizeTextarea(this);
     });
 
-    $('.approve-checkbox').on('change', function () {
-    const form = $(this).closest('form');
+    $('.review-status-btn').on('click', function () {
+        currentReviewForm = $(this).closest('form');
+        $('#reviewStatusModal').modal('show');
+    });
 
-    if (this.checked) {
-        form.find('.reject-checkbox').prop('checked', false);
-        form.find('.reject-action').val('');
-    }
-});
+    $('#reviewApprovedBtn').on('click', function () {
+        if (!currentReviewForm) return;
 
-    $('.reject-checkbox').on('change', function () {
-    const form = $(this).closest('form');
+        const hasUnlinkedApprovals =
+            currentReviewForm.attr('data-has-unlinked-approvals') === 'true';
+        const deleteUnlinkedField = currentReviewForm.find('.delete-unlinked-approvals');
 
-    if (this.checked) {
-        form.find('.approve-checkbox').prop('checked', false);
-        currentRejectForm = form;
+        if (deleteUnlinkedField.length) {
+            deleteUnlinkedField.val('');
+        }
+
+        if (hasUnlinkedApprovals) {
+            const itemDescription = currentReviewForm.find('textarea[name="item_description"]').val() || 'this item';
+            const unlinkedItemNotes = currentReviewForm.attr('data-unlinked-approval-item-notes') || '';
+            let confirmMessage = (
+                'The system is currently showing an additional submittal is required for ' +
+                itemDescription +
+                '.'
+            );
+
+            if (unlinkedItemNotes) {
+                confirmMessage += (
+                    '\n\nThe next item to be submitted is ' +
+                    unlinkedItemNotes +
+                    '.'
+                );
+            }
+
+            confirmMessage += (
+                '\n\nClick OK if no additional submittal is required for ' +
+                itemDescription +
+                '.'
+            );
+
+            const deleteUnlinked = confirm(confirmMessage);
+
+            if (deleteUnlinkedField.length) {
+                deleteUnlinkedField.val(deleteUnlinked ? 'yes' : 'no');
+            }
+        }
+
+        currentReviewForm.find('.approve-checkbox').prop('checked', true);
+        currentReviewForm.find('.reject-checkbox').prop('checked', false);
+        currentReviewForm.find('.reject-action').val('');
+        updateReviewStatusButton(currentReviewForm, 'approved');
+
+        $('#reviewStatusModal').modal('hide');
+        autosaveForm(currentReviewForm);
+        currentReviewForm = null;
+    });
+
+    $('#reviewRejectedBtn').on('click', function () {
+        if (!currentReviewForm) return;
+
+        currentReviewForm.find('.approve-checkbox').prop('checked', false);
+        currentReviewForm.find('.reject-checkbox').prop('checked', true);
+        updateReviewStatusButton(currentReviewForm, 'rejected');
+        currentRejectForm = currentReviewForm;
+        currentReviewForm = null;
+
+        $('#reviewStatusModal').modal('hide');
         $('#rejectChoiceModal').modal('show');
-    } else {
-        form.find('.reject-action').val('');
-    }
-});
+    });
 
     $('#rejectAdditionalBtn').on('click', function () {
         if (currentRejectForm) {
             currentRejectForm.find('.reject-action').val('additional_required');
+            updateReviewStatusButton(currentRejectForm, 'rejected');
 
             if (currentRejectForm.find('input[name="save_row"]').length === 0) {
                 currentRejectForm.append('<input type="hidden" name="save_row" value="1">');
@@ -1269,6 +1538,7 @@ $(document).ready(function () {
     $('#rejectNoLongerNeededBtn').on('click', function () {
         if (currentRejectForm) {
             currentRejectForm.find('.reject-action').val('no_longer_needed');
+            updateReviewStatusButton(currentRejectForm, 'rejected');
 
             if (currentRejectForm.find('input[name="save_row"]').length === 0) {
                 currentRejectForm.append('<input type="hidden" name="save_row" value="1">');
@@ -1284,9 +1554,14 @@ $(document).ready(function () {
             const action = currentRejectForm.find('.reject-action').val();
             if (!action) {
                 currentRejectForm.find('.reject-checkbox').prop('checked', false);
+                updateReviewStatusButton(currentRejectForm, 'not_reviewed');
             }
         }
         currentRejectForm = null;
+    });
+
+    $(document).on('change select2:select select2:clear', '.wallcovering-link-select', function () {
+        toggleWallcoveringSaveButton(this);
     });
 
     let autosaveTimers = {};
@@ -1305,6 +1580,12 @@ function autosaveForm(form) {
         success: function () {
 
             const saveBtn = form.find('.row-save-btn');
+
+            if (form.find('.delete-unlinked-approvals').val() === 'yes') {
+                form.attr('data-has-unlinked-approvals', 'false');
+                form.attr('data-unlinked-approval-count', '0');
+                form.find('.delete-unlinked-approvals').val('');
+            }
 
             saveBtn.removeClass('btn-success');
             saveBtn.addClass('btn-secondary');
@@ -1353,7 +1634,9 @@ $('.row-edit-form[data-approval-id="{{ new_row_id }}"]').each(function () {
 {% endif %}
 $('#rejectNABtn').on('click', function () {
     if (currentRejectForm) {
-        currentRejectForm.find('.reject-action').val('na');
+        currentRejectForm.find('.reject-action').val('');
+        currentRejectForm.find('.reject-checkbox').prop('checked', false);
+        updateReviewStatusButton(currentRejectForm, 'not_reviewed');
     }
 });
 });
@@ -1369,6 +1652,50 @@ function markRowDirty(form) {
     saveBtn.removeClass('btn-secondary');
     saveBtn.addClass('btn-success');
     saveBtn.text('Save *');
+}
+
+function updateReviewStatusButton(form, status) {
+    const btn = form.find('.review-status-btn');
+    if (!btn.length) return;
+
+    btn.removeClass('btn-secondary btn-success btn-danger');
+
+    if (status === 'approved') {
+        btn.addClass('btn-success').text('Approved');
+    } else if (status === 'rejected') {
+        btn.addClass('btn-danger').text('Rejected');
+    } else {
+        btn.addClass('btn-secondary').text('Not Reviewed');
+    }
+}
+
+function confirmFutureSubmissionNeeded(form) {
+    const futureField = form.querySelector('input[name="future_submission_needed"]');
+    const stillNeeded = confirm("Does this item still need to be submitted in the future?");
+
+    if (futureField) {
+        futureField.value = stillNeeded ? "yes" : "no";
+    }
+
+    return true;
+}
+
+function toggleWallcoveringSaveButton(selectElement) {
+    const select = $(selectElement);
+    const originalValue = String(select.attr('data-original-value') || '');
+    const currentValue = String(select.val() || '');
+    const saveButtonId = select.attr('data-save-button-id');
+    const saveButton = saveButtonId ? document.getElementById(saveButtonId) : null;
+
+    if (!saveButton) return;
+
+    if (currentValue === originalValue) {
+        saveButton.classList.add('d-none');
+        saveButton.style.display = 'none';
+    } else {
+        saveButton.classList.remove('d-none');
+        saveButton.style.display = 'inline-block';
+    }
 }
 
 const submittalDescriptionInput = document.getElementById('submittalDescriptionInput');
@@ -1392,10 +1719,6 @@ const pendingWallcoveringSubmittalsExist =
     {{ pending_wallcovering_submittals_exist|yesno:"true,false" }};
 
 function openAddWallcoveringModal() {
-    if (pendingWallcoveringSubmittalsExist) {
-        alert("There are pending wallcovering submittals. Make sure to first check pending items before using this button");
-    }
-
     $('#addWallcoveringItemModal').modal('show');
 }
 

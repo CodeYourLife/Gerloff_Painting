@@ -151,7 +151,7 @@
                             {{ row.item.job_number.job_number }} - {{ row.item.job_number.job_name }}
                         </td>
                         <td>
-                            {{ row.item.description }}
+                            {{ row.display_description }}
 
                             {% if row.item.wallcovering_id %}
                                 <span class="badge badge-success ml-2">
@@ -194,13 +194,28 @@
                 <div class="modal-body">
 
                     <div class="form-group">
-                        <label for="pending_description">Description</label>
+                        <label for="pending_description">Submittal Item</label>
                         <input type="text"
                                class="form-control"
                                id="pending_description"
                                name="pending_description"
                                maxlength="250"
                                required>
+                        <small class="form-text text-muted">
+                            use a generic description such as P1 Walls Drawdown, WC1 Sample, or Paint Product Data
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pending_next_description">Specific Item to be Submitted</label>
+                        <input type="text"
+                               class="form-control"
+                               id="pending_next_description"
+                               name="pending_next_description"
+                               maxlength="2000">
+                        <small class="form-text text-muted">
+                            use a specific description such as "Sherwin Williams Promar 200 E/S SW7006 Extra White. Keep this part blank if you don't know that information yet."
+                        </small>
                     </div>
 
                     <div class="form-group">
