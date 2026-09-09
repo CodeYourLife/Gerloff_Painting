@@ -60,43 +60,56 @@
 }
 
 .label-job {
-    font-size: 12.5pt;
-    line-height: 1.08;
-    white-space: nowrap;
+    font-size: 8.5pt;
+    line-height: 1.1;
+    white-space: normal;
     overflow: hidden;
-    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
 }
 
 .label-wallcovering {
-    font-size: 10pt;
+    font-size: 8.5pt;
     line-height: 1.1;
-    white-space: nowrap;
+    white-space: normal;
     overflow: hidden;
-    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     margin-top: 3px;
 }
 
 .label-contents {
-    font-size: 9pt;
+    font-size: 7.5pt;
     line-height: 1.1;
-    white-space: nowrap;
+    white-space: normal;
     overflow: hidden;
-    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     margin-top: 3px;
 }
 
-.label-bottom {
+.label-count-row {
     display: grid;
     grid-template-columns: 1fr 0.45fr 0.2fr 0.45fr;
     align-items: center;
-    margin-top: 7px;
-    font-size: 14pt;
+    font-size: 10pt;
     line-height: 1;
+}
+
+.label-bottom {
+    margin-top: 7px;
+}
+
+.label-accessory-row {
+    margin-top: 2px;
 }
 
 .label-current {
     text-align: center;
-    font-size: 24pt;
+    font-size: 12pt;
 }
 
 .label-of {
@@ -106,7 +119,7 @@
 
 .label-total {
     text-align: center;
-    font-size: 24pt;
+    font-size: 12pt;
 }
 
         @media print {
@@ -156,7 +169,7 @@
                     {{ label.contents_line }}
                 </div>
 
-                <div class="label-bottom">
+                <div class="label-count-row label-bottom">
                     <div class="label-type">
                         {{ label.package_type }}
                     </div>
@@ -173,6 +186,26 @@
                         {{ label.total_packages }}
                     </div>
                 </div>
+
+                {% if label.accessory_total %}
+                    <div class="label-count-row label-accessory-row">
+                        <div class="label-type">
+                            {{ label.accessory_label }}
+                        </div>
+
+                        <div class="label-current">
+                            {{ label.accessory_number }}
+                        </div>
+
+                        <div class="label-of">
+                            of
+                        </div>
+
+                        <div class="label-total">
+                            {{ label.accessory_total }}
+                        </div>
+                    </div>
+                {% endif %}
 
             </div>
         </div>

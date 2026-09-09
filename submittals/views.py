@@ -217,15 +217,34 @@ def submittals_home(request):
         job_number__is_closed=False
     ).select_related(
         "job_number"
+    ).prefetch_related(
+        Prefetch(
+            "submittalapprovals_set",
+            queryset=SubmittalApprovals.objects.select_related("submittalitem"),
+            to_attr="review_approvals",
+        )
     ).order_by(
         "job_number__job_number",
         "submittal_number"
     )
 
+    submittals = list(submittals)
+    for submittal in submittals:
+        all_approvals = getattr(submittal, "review_approvals", [])
+        approvals = [
+            approval for approval in all_approvals
+            if not approval.submittalitem.is_no_longer_used
+        ]
+        submittal.approved_count = sum(1 for approval in approvals if approval.is_approved is True)
+        submittal.rejected_count = sum(1 for approval in approvals if approval.is_approved is False)
+        submittal.pending_count = sum(1 for approval in approvals if approval.is_approved is None)
+        submittal.no_longer_used_count = sum(
+            1 for approval in all_approvals
+            if approval.submittalitem.is_no_longer_used
+        )
+
     if not show_closed:
-        submittals = [x for x in submittals if x.status() == "OPEN"]
-    else:
-        submittals = list(submittals)
+        submittals = [x for x in submittals if x.pending_count > 0]
 
     send_data['submittals'] = submittals
     send_data['show_closed'] = show_closed
@@ -327,6 +346,8 @@ def submittals_new(request, job_number):
         if "add_wallcovering_item" in request.POST:
             wallcovering_id = request.POST.get("wallcovering_id")
             submittal_type = request.POST.get("wallcovering_submittal_type")
+            if submittal_type == "Other":
+                submittal_type = request.POST.get("wallcovering_other_submittal_type", "").strip()
 
             wallcovering = get_object_or_404(
                 Wallcovering,
@@ -702,7 +723,9 @@ def submittal_send(request, submittal_id):
 
         if "add_wallcovering_item" in request.POST:
             wallcovering_id = request.POST.get("wallcovering_id")
-            submittal_type = request.POST.get("wallcovering_submittal_type")
+            submittal_type_choice = request.POST.get("wallcovering_submittal_type")
+            custom_submittal_type = request.POST.get("wallcovering_other_submittal_type", "").strip()
+            submittal_type = custom_submittal_type if submittal_type_choice == "Other" else submittal_type_choice
 
             wallcovering = get_object_or_404(
                 Wallcovering,
@@ -710,10 +733,20 @@ def submittal_send(request, submittal_id):
                 job_number=job,
             )
 
-            description = f"{wallcovering.code} {wallcovering.vendor.company_name} {wallcovering.pattern}"
+            if submittal_type_choice == "Other" and not custom_submittal_type:
+                messages.error(request, "Please enter the other wallcovering submittal type.")
+                return redirect("submittal_send", submittal.id)
 
-            if submittal_type:
-                description = f"{description} - {submittal_type}"
+            wallcovering_code = wallcovering.code or "Wallcovering"
+            description = f"{wallcovering_code} {submittal_type or ''}".strip()
+
+            item_notes = " ".join(
+                part for part in [
+                    wallcovering.vendor.company_name if wallcovering.vendor else "",
+                    wallcovering.pattern or "",
+                ]
+                if part
+            )
 
             new_item = SubmittalItems.objects.create(
                 job_number=job,
@@ -727,6 +760,7 @@ def submittal_send(request, submittal_id):
                 submittalitem=new_item,
                 is_approved=None,
                 notes="",
+                item_notes=item_notes,
                 quantity=0,
                 date_reviewed=None,
             )
@@ -822,6 +856,9 @@ def submittal_send(request, submittal_id):
             else:
                 item_description = item.description
                 approval.delete()
+                SubmittalItemNotes.objects.filter(
+                    submittalitem=item
+                ).delete()
                 item.delete()
 
                 if employee:
@@ -915,6 +952,7 @@ def submittal_send(request, submittal_id):
                 approval.date_reviewed = timezone.now().date()
             else:
                 approval.is_approved = None
+                approval.date_reviewed = None
 
             approval.save()
 
@@ -991,8 +1029,32 @@ def submittal_send(request, submittal_id):
                         ),
                     )
 
-            elif reject_action == 'no_longer_needed':
+            elif reject_action in ('no_longer_needed', 'no_longer_required'):
                 item.is_no_longer_used = True
+                item.save()
+
+                if employee:
+                    if reject_action == 'no_longer_needed':
+                        item_note = "Rejected - item no longer needed on this job"
+                    else:
+                        item_note = "Item marked as no longer required on this job"
+
+                    SubmittalItemNotes.objects.create(
+                        submittal=submittal,
+                        submittalitem=item,
+                        date=timezone.now().date(),
+                        user=employee,
+                        note=item_note
+                    )
+                    SubmittalNotes.objects.create(
+                        submittal=submittal,
+                        date=timezone.now().date(),
+                        user=employee,
+                        note="Item no longer required on this job: " + str(item.description),
+                    )
+
+            elif reject_action == 'still_required':
+                item.is_no_longer_used = False
                 item.save()
 
                 if employee:
@@ -1001,13 +1063,13 @@ def submittal_send(request, submittal_id):
                         submittalitem=item,
                         date=timezone.now().date(),
                         user=employee,
-                        note="Rejected - item no longer needed on this job"
+                        note="Item marked as still required on this job"
                     )
                     SubmittalNotes.objects.create(
                         submittal=submittal,
                         date=timezone.now().date(),
                         user=employee,
-                        note="Item no longer needed on this job: " + str(item.description),
+                        note="Item still required on this job: " + str(item.description),
                     )
 
             messages.success(request, "Row updated.")
@@ -1436,16 +1498,19 @@ def submittal_item_detail(request, item_id):
             )
             return redirect('submittal_item_detail', item.id)
         if "save_item_notes" in request.POST:
-            item.notes = request.POST.get("item_notes", "").strip()
+            old_notes = item.notes or ""
+            item_notes = request.POST.get("item_notes", "").strip()
+
+            item.notes = item_notes
             item.save(update_fields=["notes"])
 
-            if employee:
+            if employee and old_notes != item_notes:
                 SubmittalItemNotes.objects.create(
                     submittal=None,
                     submittalitem=item,
                     date=timezone.now().date(),
                     user=employee,
-                    note="Item notes updated"
+                    note=f"Item notes change from {old_notes} to {item_notes}"
                 )
 
             messages.success(request, "Item notes updated.")
@@ -1473,7 +1538,7 @@ def submittal_item_detail(request, item_id):
                     submittalitem=item,
                     date=timezone.now().date(),
                     user=employee,
-                    note="Information for next submittal updated"
+                    note=f"Description for next submittal changed from {old_notes} to {next_item_notes}"
                 )
 
             messages.success(request, "Information for next submittal updated.")
@@ -1650,7 +1715,7 @@ def submittal_item_detail(request, item_id):
 
     approval_notes = SubmittalItemNotes.objects.filter(
         submittalitem=item
-    ).order_by('id')
+    ).order_by('-id')
 
     unlinked_approvals = SubmittalApprovals.objects.filter(
         submittalitem=item,
@@ -1737,7 +1802,7 @@ def job_submittals_summary(request, job_number):
                 )
     not_sent_items = []
 
-    submittals = (
+    submittals = list(
         Submittals.objects
         .filter(job_number=job)
         .order_by("submittal_number")
@@ -1751,6 +1816,19 @@ def job_submittals_summary(request, job_number):
             )
         )
     )
+    for submittal in submittals:
+        all_approvals = submittal.approval_rows
+        approvals = [
+            approval for approval in all_approvals
+            if not approval.submittalitem.is_no_longer_used
+        ]
+        submittal.approved_count = sum(1 for approval in approvals if approval.is_approved is True)
+        submittal.rejected_count = sum(1 for approval in approvals if approval.is_approved is False)
+        submittal.pending_count = sum(1 for approval in approvals if approval.is_approved is None)
+        submittal.no_longer_used_count = sum(
+            1 for approval in all_approvals
+            if approval.submittalitem.is_no_longer_used
+        )
 
     for item in SubmittalItems.objects.filter(
             job_number=job,

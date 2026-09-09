@@ -53,6 +53,36 @@
 .wallcovering-void-row .badge {
     opacity: 0.65;
 }
+
+.wallcovering-search-tools {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 14px;
+}
+
+.wallcovering-search-tools label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wallcovering-search-tools input {
+    width: 160px;
+    margin-left: 0 !important;
+}
+
+@media (max-width: 576px) {
+    .wallcovering-search-tools {
+        display: block;
+        margin-left: 0;
+        margin-top: 8px;
+    }
+
+    .wallcovering-search-tools input {
+        width: 100%;
+    }
+}
 </style>
 
 
@@ -87,7 +117,12 @@
 
     <a href="{% url 'wallcovering_home' %}?filter=not_delivered"
        class="btn btn-sm {% if selected_filter == 'not_delivered' %}btn-dark{% else %}btn-outline-dark{% endif %}">
-        Show Not Delivered Yet
+        Show Not Received Yet
+    </a>
+
+    <a href="{% url 'wallcovering_home' %}?filter=show_closed_jobs"
+       class="btn btn-sm {% if selected_filter == 'show_closed_jobs' %}btn-dark{% else %}btn-outline-dark{% endif %}">
+        Show Closed Jobs
     </a>
 </div>
     <div class="card shadow-sm">
@@ -110,7 +145,8 @@
 
                     <tbody>
                         {% for wc in wallcoverings %}
-                            <tr class="{% if wc.is_void %}wallcovering-void-row{% endif %}">
+                            <tr class="{% if wc.is_void %}wallcovering-void-row{% endif %}"
+                                data-po-numbers="{{ wc.po_numbers }}">
                                 <td>
                                     <a href="{% url 'wallcovering_detail' wc.id %}" class="font-weight-bold">
                                         {% if wc.code %}{{ wc.code }}{% else %}WC (No Code) {% endif %}{% if wc.is_void %}[VOIDED]{% endif %}
@@ -233,11 +269,38 @@
 {% block extra_scripts %}
 <script>
 $(document).ready(function () {
-    $('#wallcoveringTable').DataTable({
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+        if (settings.nTable.id !== 'wallcoveringTable') {
+            return true;
+        }
+
+        const poSearch = $('#poNumberSearch').val();
+        if (!poSearch) {
+            return true;
+        }
+
+        const row = settings.aoData[dataIndex].nTr;
+        const poNumbers = ($(row).data('po-numbers') || '').toString().toLowerCase();
+        return poNumbers.indexOf(poSearch.toLowerCase()) !== -1;
+    });
+
+    const table = $('#wallcoveringTable').DataTable({
         paging: false,
         info: false,
         order: [],
         autoWidth: false
+    });
+
+    $('.dataTables_filter').append(
+        '<span class="wallcovering-search-tools">' +
+            '<label class="mb-0">PO Number: ' +
+                '<input type="search" id="poNumberSearch" class="form-control form-control-sm" placeholder="Search PO">' +
+            '</label>' +
+        '</span>'
+    );
+
+    $('#poNumberSearch').on('keyup change search', function () {
+        table.draw();
     });
 });
 </script>

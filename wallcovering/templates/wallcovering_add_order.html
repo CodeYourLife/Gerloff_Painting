@@ -221,6 +221,7 @@ placeholder="{{ wallcovering.estimated_quantity }}"
 
     {% for p in pricing %}
         <option value="{{ p.price }}"
+                data-price-unit="{{ p.unit|default:'' }}"
             {% if main_item and main_item.price == p.price %}selected{% endif %}>
 
             {{ p.quote_date|date:"m/d/Y" }}
@@ -238,6 +239,7 @@ placeholder="{{ wallcovering.estimated_quantity }}"
     {% endif %}
 
 </select>
+                <input type="hidden" name="main_price_unit" id="mainPriceUnit" value="">
             </div>
         </div>
 
@@ -521,6 +523,14 @@ $(document).ready(function () {
         tags: true,
         placeholder: 'Select or type price'
     });
+
+    function updateMainPriceUnit() {
+        const selectedOption = $('select[name="main_price"] option:selected');
+        $('#mainPriceUnit').val(selectedOption.data('price-unit') || '');
+    }
+
+    updateMainPriceUnit();
+    $('select[name="main_price"]').on('change select2:select', updateMainPriceUnit);
 
     $('#useCustomPoButton').on('click', function () {
         $('#customPoNumberWrapper').show();

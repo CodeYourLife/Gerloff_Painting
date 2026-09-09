@@ -267,12 +267,26 @@ select {
 
                         <div class="form-group">
                             <label>Submittal Type</label>
-                            <select name="wallcovering_submittal_type" class="form-control" required>
+                            <select name="wallcovering_submittal_type"
+                                    id="wallcoveringSubmittalType"
+                                    class="form-control"
+                                    required>
                                 <option value="">Select Type</option>
                                 <option value="Sample">Sample</option>
                                 <option value="Product Data">Product Data</option>
                                 <option value="Other">Other</option>
                             </select>
+                        </div>
+
+                        <div class="form-group d-none" id="wallcoveringOtherTypeGroup">
+                            <label>Other Submittal Type</label>
+                            <input type="text"
+                                   name="wallcovering_other_submittal_type"
+                                   id="wallcoveringOtherSubmittalType"
+                                   class="form-control">
+                            <small class="form-text text-muted">
+                                For instance, type Digital Rendering, Strikeoff Sample, etc.
+                            </small>
                         </div>
 
                         <button type="submit" name="add_wallcovering_item" class="btn btn-success btn-sm">
@@ -472,6 +486,14 @@ select {
 
                 <button type="button" id="reviewRejectedBtn" class="btn btn-danger btn-block">
                     Rejected
+                </button>
+
+                <button type="button" id="reviewNotReviewedBtn" class="btn btn-secondary btn-block mt-2">
+                    Not Reviewed Yet
+                </button>
+
+                <button type="button" id="reviewNoLongerRequiredBtn" class="btn btn-dark btn-block mt-2">
+                    No Longer Required
                 </button>
             </div>
 
@@ -1004,6 +1026,7 @@ select {
                             <form method="post"
                               class="row-edit-form mb-0"
                               data-approval-id="{{ row.approval.id }}"
+                              data-is-no-longer-used="{% if row.item.is_no_longer_used %}true{% else %}false{% endif %}"
                               data-unlinked-approval-count="{{ row.unlinked_approval_count }}"
                               data-has-unlinked-approvals="{% if row.unlinked_approval_count %}true{% else %}false{% endif %}"
                               data-unlinked-approval-item-notes="{{ row.unlinked_approval_item_notes|escape }}">
@@ -1070,6 +1093,8 @@ select {
                                                             btn-success
                                                         {% elif row.approval.is_approved == False %}
                                                             btn-danger
+                                                        {% elif row.item.is_no_longer_used %}
+                                                            btn-secondary
                                                         {% else %}
                                                             btn-secondary
                                                         {% endif %}"
@@ -1077,9 +1102,19 @@ select {
                                                 {% if not submittal.date_sent %}
                                                     Not Sent
                                                 {% elif row.approval.is_approved == True %}
-                                                    Approved
+                                                    {% if row.item.is_no_longer_used %}
+                                                        Approved - No Longer Used
+                                                    {% else %}
+                                                        Approved
+                                                    {% endif %}
                                                 {% elif row.approval.is_approved == False %}
-                                                    Rejected
+                                                    {% if row.item.is_no_longer_used %}
+                                                        Rejected - No Longer Used
+                                                    {% else %}
+                                                        Rejected
+                                                    {% endif %}
+                                                {% elif row.item.is_no_longer_used %}
+                                                    Not Reviewed - No Longer Used
                                                 {% else %}
                                                     Not Reviewed
                                                 {% endif %}
@@ -1093,7 +1128,9 @@ select {
                                             </button>
 
                                             {% if row.item.wallcovering_id %}
-                                                <span class="badge badge-success linked-wallcovering-badge mr-1">
+                                                <span class="badge badge-success linked-wallcovering-badge mr-1"
+                                                      style="cursor:pointer;"
+                                                      onclick="window.location='{% url 'wallcovering_detail' row.item.wallcovering_id.id %}';">
                                                         {% if row.item.wallcovering_id.code %}
                                                             {{ row.item.wallcovering_id.code }}
                                                         {% else %}
@@ -1299,6 +1336,12 @@ select {
 {% block extra_scripts %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    const savedScrollY = sessionStorage.getItem('submittalSendScrollY');
+    if (savedScrollY !== null) {
+        sessionStorage.removeItem('submittalSendScrollY');
+        window.scrollTo(0, parseInt(savedScrollY, 10) || 0);
+    }
+
     setupDropArea("drop-area-main", "fileElemMain", "upload_main_batch");
     setupDropArea("drop-area-sent-to-gc", "fileElemSentToGC", "upload_sent_to_gc_batch");
     setupDropArea("drop-area-approval-docs", "fileElemApprovalDocs", "upload_approval_batch");
@@ -1448,12 +1491,33 @@ function resizeTextarea(el) {
 }
 
 $(document).ready(function () {
+    $('#wallcoveringSubmittalType').on('change', function () {
+        const otherTypeGroup = $('#wallcoveringOtherTypeGroup');
+        const otherTypeInput = $('#wallcoveringOtherSubmittalType');
+
+        if ($(this).val() === 'Other') {
+            otherTypeGroup.removeClass('d-none');
+            otherTypeInput.prop('required', true);
+        } else {
+            otherTypeGroup.addClass('d-none');
+            otherTypeInput.prop('required', false).val('');
+        }
+    });
+
     $('.textarea-compact').each(function () {
         resizeTextarea(this);
     });
 
     $('.review-status-btn').on('click', function () {
         currentReviewForm = $(this).closest('form');
+        const noLongerRequiredBtn = $('#reviewNoLongerRequiredBtn');
+        if (currentReviewForm.attr('data-is-no-longer-used') === 'true') {
+            noLongerRequiredBtn.text('Still Required');
+            noLongerRequiredBtn.attr('data-action', 'still_required');
+        } else {
+            noLongerRequiredBtn.text('No Longer Required');
+            noLongerRequiredBtn.attr('data-action', 'no_longer_required');
+        }
         $('#reviewStatusModal').modal('show');
     });
 
@@ -1504,7 +1568,7 @@ $(document).ready(function () {
         updateReviewStatusButton(currentReviewForm, 'approved');
 
         $('#reviewStatusModal').modal('hide');
-        autosaveForm(currentReviewForm);
+        autosaveForm(currentReviewForm, true);
         currentReviewForm = null;
     });
 
@@ -1521,6 +1585,34 @@ $(document).ready(function () {
         $('#rejectChoiceModal').modal('show');
     });
 
+    $('#reviewNotReviewedBtn').on('click', function () {
+        if (!currentReviewForm) return;
+
+        currentReviewForm.find('.approve-checkbox').prop('checked', false);
+        currentReviewForm.find('.reject-checkbox').prop('checked', false);
+        currentReviewForm.find('.reject-action').val('');
+        updateReviewStatusButton(currentReviewForm, 'not_reviewed');
+
+        $('#reviewStatusModal').modal('hide');
+        autosaveForm(currentReviewForm, true);
+        currentReviewForm = null;
+    });
+
+    $('#reviewNoLongerRequiredBtn').on('click', function () {
+        if (!currentReviewForm) return;
+
+        const action = $(this).attr('data-action') || 'no_longer_required';
+        currentReviewForm.find('.approve-checkbox').prop('checked', false);
+        currentReviewForm.find('.reject-checkbox').prop('checked', false);
+        currentReviewForm.find('.reject-action').val(action);
+        updateReviewStatusButton(currentReviewForm, action);
+        currentReviewForm.attr('data-is-no-longer-used', action === 'no_longer_required' ? 'true' : 'false');
+
+        $('#reviewStatusModal').modal('hide');
+        autosaveForm(currentReviewForm, true);
+        currentReviewForm = null;
+    });
+
     $('#rejectAdditionalBtn').on('click', function () {
         if (currentRejectForm) {
             currentRejectForm.find('.reject-action').val('additional_required');
@@ -1531,7 +1623,7 @@ $(document).ready(function () {
             }
 
             $('#rejectChoiceModal').modal('hide');
-            autosaveForm(currentRejectForm);
+            autosaveForm(currentRejectForm, true);
         }
     });
 
@@ -1545,7 +1637,7 @@ $(document).ready(function () {
             }
 
             $('#rejectChoiceModal').modal('hide');
-            autosaveForm(currentRejectForm);
+            autosaveForm(currentRejectForm, true);
         }
     });
 
@@ -1566,7 +1658,8 @@ $(document).ready(function () {
 
     let autosaveTimers = {};
 
-function autosaveForm(form) {
+function autosaveForm(form, reloadAfterSave) {
+    reloadAfterSave = reloadAfterSave === true;
 
     if (form.find('input[name="save_row"]').length === 0) {
         form.append('<input type="hidden" name="save_row" value="1">');
@@ -1578,7 +1671,6 @@ function autosaveForm(form) {
         data: form.serialize(),
 
         success: function () {
-
             const saveBtn = form.find('.row-save-btn');
 
             if (form.find('.delete-unlinked-approvals').val() === 'yes') {
@@ -1594,6 +1686,13 @@ function autosaveForm(form) {
             setTimeout(function () {
                 saveBtn.text('Save');
             }, 1000);
+        },
+
+        complete: function () {
+            if (reloadAfterSave) {
+                sessionStorage.setItem('submittalSendScrollY', String(window.scrollY || window.pageYOffset || 0));
+                window.location.href = window.location.href;
+            }
         }
     });
 }
@@ -1635,8 +1734,12 @@ $('.row-edit-form[data-approval-id="{{ new_row_id }}"]').each(function () {
 $('#rejectNABtn').on('click', function () {
     if (currentRejectForm) {
         currentRejectForm.find('.reject-action').val('');
-        currentRejectForm.find('.reject-checkbox').prop('checked', false);
-        updateReviewStatusButton(currentRejectForm, 'not_reviewed');
+        currentRejectForm.find('.approve-checkbox').prop('checked', false);
+        currentRejectForm.find('.reject-checkbox').prop('checked', true);
+        updateReviewStatusButton(currentRejectForm, 'rejected');
+        $('#rejectChoiceModal').modal('hide');
+        autosaveForm(currentRejectForm, true);
+        currentRejectForm = null;
     }
 });
 });
@@ -1661,11 +1764,27 @@ function updateReviewStatusButton(form, status) {
     btn.removeClass('btn-secondary btn-success btn-danger');
 
     if (status === 'approved') {
-        btn.addClass('btn-success').text('Approved');
+        if (form.attr('data-is-no-longer-used') === 'true') {
+            btn.addClass('btn-secondary').text('Approved - No Longer Used');
+        } else {
+            btn.addClass('btn-success').text('Approved');
+        }
     } else if (status === 'rejected') {
-        btn.addClass('btn-danger').text('Rejected');
-    } else {
+        if (form.attr('data-is-no-longer-used') === 'true') {
+            btn.addClass('btn-secondary').text('Rejected - No Longer Used');
+        } else {
+            btn.addClass('btn-danger').text('Rejected');
+        }
+    } else if (status === 'no_longer_required') {
+        btn.addClass('btn-secondary').text('Not Reviewed - No Longer Used');
+    } else if (status === 'still_required') {
         btn.addClass('btn-secondary').text('Not Reviewed');
+    } else {
+        if (form.attr('data-is-no-longer-used') === 'true') {
+            btn.addClass('btn-secondary').text('Not Reviewed - No Longer Used');
+        } else {
+            btn.addClass('btn-secondary').text('Not Reviewed');
+        }
     }
 }
 

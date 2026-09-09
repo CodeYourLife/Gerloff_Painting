@@ -22,6 +22,8 @@ def start_date_change(job, newdate, status, note, author, did_date_change, notif
     recipients = []
     if job.superintendent and job.superintendent.email:
         recipients.append(job.superintendent.email)
+    elif not job.superintendent:
+        recipients.append("victor@gerloffpainting.com")
 
     if did_date_change:
         job.start_date_checked = date.today()
