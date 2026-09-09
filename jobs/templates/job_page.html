@@ -1220,23 +1220,31 @@ float: left !important;
                 </form>
             </div>
 
-            {% if mc_job_folder_url %}
+            {% if mc_job_folder_path %}
             <div class="col-12 col-md-4 col-lg-3 mb-2">
-                <a href="{{ mc_job_folder_url }}"
-                   target="_blank"
-                   class="btn btn-info btn-sm btn-block">
+                <input type="text"
+                       id="mcJobFolderPath"
+                       value="{{ mc_job_folder_path }}"
+                       style="position:absolute; left:-9999px;">
+                <button type="button"
+                        class="btn btn-info btn-sm btn-block"
+                        onclick="copyJobFolderPath('mcJobFolderPath')">
                     Go To MC Folder
-                </a>
+                </button>
             </div>
             {% endif %}
 
-            {% if lg_drawings_folder_url %}
+            {% if lg_drawings_folder_path %}
             <div class="col-12 col-md-4 col-lg-3 mb-2">
-                <a href="{{ lg_drawings_folder_url }}"
-                   target="_blank"
-                   class="btn btn-info btn-sm btn-block">
+                <input type="text"
+                       id="lgDrawingsFolderPath"
+                       value="{{ lg_drawings_folder_path }}"
+                       style="position:absolute; left:-9999px;">
+                <button type="button"
+                        class="btn btn-info btn-sm btn-block"
+                        onclick="copyJobFolderPath('lgDrawingsFolderPath')">
                     L&amp;G Drawings
-                </a>
+                </button>
             </div>
             {% endif %}
 
@@ -2158,6 +2166,25 @@ float: left !important;
 {% block extra_scripts %}
 <script src="https://www.jqueryscript.net/demo/Two-side-Multi-Select-Plugin-with-jQuery-multiselect-js/js/multiselect.js"></script>
 <script>
+function copyJobFolderPath(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input || !input.value) return;
+
+    input.select();
+    input.setSelectionRange(0, 99999);
+
+    try {
+        const copied = document.execCommand("copy");
+        if (copied) {
+            showToast("Folder path copied to clipboard");
+        } else {
+            prompt("Copy this folder path:", input.value);
+        }
+    } catch {
+        prompt("Copy this folder path:", input.value);
+    }
+}
+
 $(document).on('click', '.clickable-row', function (e) {
     if ($(e.target).closest('a, button').length) {
         return;
