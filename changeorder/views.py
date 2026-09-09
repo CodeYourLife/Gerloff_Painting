@@ -2573,6 +2573,7 @@ def extra_work_ticket(request, id):
 
             # --- determine if newly approved to bill ---
             newly_approved_to_bill = (not old_is_approved_to_bill and changeorder.is_approved_to_bill)
+            notify_billing_change = old_is_approved_to_bill and bool(changes)
 
             # --- save changeorder first ---
             changeorder.save()
@@ -2612,6 +2613,36 @@ def extra_work_ticket(request, id):
                     messages.error(
                         request,
                         "There was a problem sending the email to Bridgette. Please tell her it is approved."
+                    )
+
+            if notify_billing_change:
+                subject = f"Approved To Bill Change Order #{changeorder.cop_number} Updated"
+                employee_name = ""
+                if employee:
+                    employee_name = f"{employee.first_name or ''} {employee.last_name or ''}".strip()
+                if not employee_name:
+                    employee_name = request.user.get_full_name() or request.user.username
+
+                job_number = changeorder.job_number.job_number
+                change_summary = ". ".join(changes)
+                email_message = (
+                    f"Formally Approved COP{changeorder.cop_number} {changeorder.description} "
+                    f"for job {job_number} was changed by {employee_name}. "
+                    f"{change_summary}.\n\n"
+                    f"Reason:\n{raw_note}\n"
+                )
+
+                check_sender = Employees.objects.filter(
+                    user=request.user).first() if request.user.is_authenticated else None
+                sender = check_sender.email if check_sender and check_sender.email else "bridgette@gerloffpainting.com"
+
+                try:
+                    Email.sendEmail(subject, email_message, ["bridgette@gerloffpainting.com"], False, sender)
+                    messages.success(request, "Email Sent to Bridgette")
+                except Exception:
+                    messages.error(
+                        request,
+                        "There was a problem sending the change email to Bridgette."
                     )
 
             return redirect('extra_work_ticket', id=id)
@@ -2736,6 +2767,11 @@ def extra_work_ticket(request, id):
                                             user=Employees.objects.get(user=request.user),
                                             note="Ticket Signed - " + request.POST['signed_notes'])
         if 'void_notes' in request.POST:
+            was_formally_approved = bool(changeorder.is_approved_to_bill)
+            old_price = changeorder.price
+            old_gc_number = (changeorder.gc_number or "").strip()
+            old_date_approved = changeorder.date_approved
+            employee = Employees.objects.filter(user=request.user).first()
             if changeorder.is_closed == True:
                 changeorder.is_closed = False
                 note = "RE-OPENED - " + request.POST['void_notes']
@@ -2746,6 +2782,35 @@ def extra_work_ticket(request, id):
             ChangeOrderNotes.objects.create(cop_number=changeorder, date=date.today(),
                                             user=Employees.objects.get(user=request.user),
                                             note=note)
+            if was_formally_approved:
+                action_text = "re-opened" if not changeorder.is_closed else "voided"
+                employee_name = ""
+                if employee:
+                    employee_name = f"{employee.first_name or ''} {employee.last_name or ''}".strip()
+                if not employee_name:
+                    employee_name = request.user.get_full_name() or request.user.username
+
+                email_message = (
+                    f"Formally Approved COP{changeorder.cop_number} {changeorder.description} "
+                    f"for job {changeorder.job_number.job_number} was {action_text} by {employee_name}.\n\n"
+                    f"Previous Price: {f'${old_price:,.2f}' if old_price is not None else 'N/A'}\n"
+                    f"Previous Formal Change Order Number: {old_gc_number or 'N/A'}\n"
+                    f"Previous Date Approved: {old_date_approved or 'N/A'}\n\n"
+                    f"Reason:\n{request.POST['void_notes']}\n"
+                )
+
+                sender = employee.email if employee and employee.email else "bridgette@gerloffpainting.com"
+                try:
+                    Email.sendEmail(
+                        f"Formally Approved COP{changeorder.cop_number} {action_text.title()}",
+                        email_message,
+                        ["bridgette@gerloffpainting.com"],
+                        False,
+                        sender
+                    )
+                    messages.success(request, "Email Sent to Bridgette")
+                except Exception:
+                    messages.error(request, f"There was a problem sending the {action_text} email to Bridgette.")
             return redirect('extra_work_ticket', id=id)
         if 'submit_form1' in request.POST:
             changeorder.is_approved = True

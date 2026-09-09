@@ -23,6 +23,7 @@ class Wallcovering(models.Model):
     increment_requirement = models.CharField(null=True, max_length=500, blank=True)
     is_void = models.BooleanField(default=False)
     install_yardage = models.DecimalField(null=True, max_digits=10, decimal_places=2, blank=True)
+    installer_notes = models.CharField(null=True, max_length=2000, blank=True)
 
     def __str__(self):
         return f"{self.job_number} {self.code}"
@@ -238,6 +239,13 @@ class WallcoveringDelivery(models.Model):
     order = models.ForeignKey(
         'jobs.Orders', on_delete=models.PROTECT, related_name="foreign_wallcoveringdelivery")
     date = models.DateField(null=True, blank=True)
+    received_by = models.ForeignKey(
+        employees.models.Employees,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="wallcovering_deliveries_received"
+    )
     notes = models.CharField(null=True, max_length=2000,
                              blank=True)  # box, bolt, bucket
 

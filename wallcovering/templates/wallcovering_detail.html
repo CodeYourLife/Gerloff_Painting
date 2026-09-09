@@ -19,6 +19,38 @@
     padding: 8px 10px;
     margin-bottom: 10px;
 }
+.wc-order-card-a {
+    background: #f4f8fb;
+    border-left-color: #2f80a8;
+}
+.wc-order-card-b {
+    background: #f7f6ef;
+    border-left-color: #94743a;
+}
+.wc-order-card-a .wc-event-card-header {
+    background: #ffffff;
+    border-color: #c8dbe6;
+}
+.wc-order-card-b .wc-event-card-header {
+    background: #ffffff;
+    border-color: #ddd4bd;
+}
+.wc-delivery-card-a {
+    background: #f3faf6;
+    border-left-color: #2f8a5f;
+}
+.wc-delivery-card-b {
+    background: #fbf5f4;
+    border-left-color: #a84f45;
+}
+.wc-delivery-card-a .wc-event-card-header {
+    background: #ffffff;
+    border-color: #c5e0d0;
+}
+.wc-delivery-card-b .wc-event-card-header {
+    background: #ffffff;
+    border-color: #e4cbc7;
+}
 .status-summary-label {
     font-size: 14px;
     font-weight: 700;
@@ -58,6 +90,82 @@
 .pricing-dropzone.dragover {
     border-color: #28a745;
     background: #eaf9ee;
+}
+.main-label-panel {
+    border: 2px solid #2f80a8;
+    border-radius: 8px;
+    background: #f4f8fb;
+    padding: 12px;
+    margin-bottom: 18px;
+}
+.main-label-panel-header {
+    background: #2f80a8;
+    color: #ffffff;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 12px;
+}
+.main-label-panel-section {
+    background: #ffffff;
+    border: 1px solid #c8dbe6;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+.additional-label-panel {
+    border: 2px solid #7b5aa6;
+    border-radius: 8px;
+    background: #f7f4fb;
+    padding: 12px;
+    margin-bottom: 18px;
+}
+.additional-label-panel-header {
+    background: #7b5aa6;
+    color: #ffffff;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 12px;
+}
+.additional-label-panel-section {
+    background: #ffffff;
+    border: 1px solid #d8cbe8;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+.btn-main-labels {
+    background: #2f80a8;
+    border-color: #2f80a8;
+    color: #ffffff;
+}
+.btn-main-labels:hover {
+    background: #286f91;
+    border-color: #286f91;
+    color: #ffffff;
+}
+.btn-additional-labels {
+    background: #7b5aa6;
+    border-color: #7b5aa6;
+    color: #ffffff;
+}
+.btn-additional-labels:hover {
+    background: #684b8e;
+    border-color: #684b8e;
+    color: #ffffff;
+}
+.package-status-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: flex-end;
+}
+.package-status-badges .badge {
+    white-space: nowrap;
+}
+@media (max-width: 576px) {
+    .package-status-badges {
+        justify-content: flex-start;
+    }
 }
 </style>
 {% endblock %}
@@ -382,8 +490,13 @@
 
 
             <tr>
-                <th class="bg-light">Notes</th>
+                <th class="bg-light">Estimator Notes</th>
                 <td>{{ wallcovering.notes|linebreaksbr }}</td>
+            </tr>
+
+            <tr>
+                <th class="bg-light">Installer Notes</th>
+                <td>{{ wallcovering.installer_notes|linebreaksbr }}</td>
             </tr>
 
 
@@ -545,15 +658,7 @@
                             </td>
 
                             <td class="text-center">
-                                  {% if row.status == "Approved" %}
-                                      <span class="badge badge-success">Approved</span>
-                                  {% elif row.status == "Rejected" %}
-                                      <span class="badge badge-danger">Rejected</span>
-                                  {% elif row.status == "In Review" %}
-                                      <span class="badge badge-primary">In Review</span>
-                                  {% else %}
-                                      <span class="badge badge-secondary">Not Submitted</span>
-                                  {% endif %}
+                                  <span class="badge {{ row.badge_class }}">{{ row.status }}</span>
                               </td>
                         </tr>
                     {% empty %}
@@ -884,7 +989,7 @@
     <div class="card-body p-0">
 
         {% for group in order_groups %}
-            <div class="wc-event-card">
+            <div class="wc-event-card {% cycle 'wc-order-card-a' 'wc-order-card-b' %}">
 
     <div class="wc-event-card-header">
 
@@ -995,10 +1100,16 @@
     <div class="card-body p-0">
 
         {% for group in receipt_groups %}
-                <div class="wc-event-card">
+                <div class="wc-event-card {% cycle 'wc-delivery-card-a' 'wc-delivery-card-b' %}">
                     <div class="wc-event-card-header">
                     <div class="mb-3">
                         <strong>{{ group.delivery.date|date:"m/d/Y" }}</strong>
+
+                        {% if group.delivery.received_by %}
+                            <span class="text-muted">
+                                - Received By: {{ group.delivery.received_by }}
+                            </span>
+                        {% endif %}
 
                         {% if group.delivery.notes %}
                             <div class="text-muted mt-1">
@@ -1035,9 +1146,7 @@
                                             <tr>
                                                 <th>Type</th>
                                                 <th>Contents</th>
-                                                <th class="text-right">Packages Received</th>
-                                                <th class="text-right">Packages Sent</th>
-                                                <th class="text-right">Remaining</th>
+                                                <th class="text-right">Packages</th>
                                                 <th>Notes</th>
                                             </tr>
                                         </thead>
@@ -1047,9 +1156,16 @@
                                                 <tr>
                                                     <td>{{ package.type }}</td>
                                                     <td>{{ package.contents }}</td>
-                                                    <td class="text-right">{{ package.quantity_received|intcomma }}</td>
-                                                    <td class="text-right">{{ package.total_sent|intcomma }}</td>
-                                                    <td class="text-right">{{ package.quantity_remaining|intcomma }}</td>
+                                                    <td>
+                                                        <div class="package-status-badges">
+                                                            <span class="badge badge-success">
+                                                                Received = {{ package.quantity_received|intcomma }}
+                                                            </span>
+                                                            <span class="badge badge-warning">
+                                                                Sent = {{ package.total_sent|intcomma }}
+                                                            </span>
+                                                        </div>
+                                                    </td>
                                                     <td>{{ package.notes|default:"" }}</td>
                                                 </tr>
                                             {% endfor %}
@@ -1090,7 +1206,7 @@
         <div class="card-body p-0">
 
             {% for group in sent_to_job_groups %}
-                <div class="wc-event-card">
+                <div class="wc-event-card {% cycle 'wc-delivery-card-a' 'wc-delivery-card-b' %}">
                     <div class="wc-event-card-header">
                     <div class="mb-3">
                         <strong>{{ group.event.date|date:"m/d/Y" }}</strong>
@@ -1337,56 +1453,193 @@
                         Select which received packages need labels.
                     </p>
 
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered mb-0">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th class="text-center">Print</th>
-                                    <th>Delivery Date</th>
-                                    <th>Type</th>
-                                    <th>Contents</th>
-                                    <th class="text-right">Packages Received</th>
-                                    <th>Notes</th>
-                                </tr>
-                            </thead>
+                    <div class="main-label-panel">
+                        <div class="main-label-panel-header d-flex justify-content-between align-items-center">
+                            <strong>
+                                Main Wallcovering Item
+                            </strong>
 
-                            <tbody>
-                                {% for package in label_packages %}
-                                    <tr>
-                                        <td class="text-center">
-                                            <input type="checkbox"
-                                                   name="package_ids"
-                                                   value="{{ package.id }}"
-                                                   checked>
-                                        </td>
+                            <div class="form-check mb-0">
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       id="selectAllMainDeliveries">
+                                <label class="form-check-label" for="selectAllMainDeliveries">
+                                    Select All Deliveries
+                                </label>
+                            </div>
+                        </div>
 
-                                        <td>
-                                            {% if package.delivery.date %}
-                                                {{ package.delivery.date|date:"m/d/y" }}
-                                            {% else %}
-                                                -
-                                            {% endif %}
-                                        </td>
+                        <div class="main-label-panel-section">
+                            <div class="text-muted mb-2">
+                                {{ wallcovering.code }} {{ wallcovering.vendor.company_name }} {{ wallcovering.pattern }}
+                            </div>
 
-                                        <td>{{ package.type }}</td>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th class="text-center">Print</th>
+                                            <th>Delivery Date</th>
+                                            <th>Type</th>
+                                            <th>Package #</th>
+                                            <th class="text-right">Received</th>
+                                            <th>Notes</th>
+                                        </tr>
+                                    </thead>
 
-                                        <td>{{ package.contents }}</td>
+                                    <tbody>
+                                        {% for row in label_package_rows %}
+                                            <tr>
+                                                <td class="text-center">
+                                                    <input type="checkbox"
+                                                           class="main-wallcovering-package-checkbox"
+                                                       name="package_ids"
+                                                       value="{{ row.package.id }}"
+                                                       data-label-count="{{ row.label_count }}">
+                                                </td>
 
-                                        <td class="text-right">
-                                            {{ package.quantity_received }}
-                                        </td>
+                                                <td>
+                                                    {% if row.package.delivery.date %}
+                                                        {{ row.package.delivery.date|date:"m/d/y" }}
+                                                    {% else %}
+                                                        -
+                                                    {% endif %}
+                                                </td>
 
-                                        <td>{{ package.notes|default:"" }}</td>
-                                    </tr>
-                                {% empty %}
-                                    <tr>
-                                        <td colspan="7" class="text-center text-muted py-3">
-                                            No received packages available for labels.
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                                <td>{{ row.package.type }}</td>
+
+                                                <td>
+                                                    <span class="main-package-number-display"></span>
+                                                </td>
+
+                                                <td class="text-right">
+                                                    {{ row.package.quantity_received }}
+                                                </td>
+
+                                                <td>{{ row.package.notes|default:"" }}</td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted py-3">
+                                                    No main wallcovering deliveries available for labels.
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="main-label-panel-section">
+                            <div class="form-check">
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       id="printInstallerNotes"
+                                       name="print_installer_notes"
+                                       {% if wallcovering.installer_notes %}checked{% endif %}
+                                       {% if not wallcovering.installer_notes %}disabled{% endif %}>
+                                <label class="form-check-label font-weight-bold" for="printInstallerNotes">
+                                    Installer Notes
+                                </label>
+                            </div>
+
+                            {% if wallcovering.installer_notes %}
+                                <div class="text-muted mt-2">
+                                    {{ wallcovering.installer_notes }}
+                                </div>
+                            {% else %}
+                                <div class="text-muted mt-2">
+                                    No installer notes entered.
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit"
+                                    class="btn btn-main-labels"
+                                    name="label_section"
+                                    value="main"
+                                    id="generateMainLabelsButton">
+                                Generate 0 Labels
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="additional-label-panel">
+                        <div class="additional-label-panel-header">
+                            <strong>Additional Items</strong>
+                        </div>
+
+                        <div class="additional-label-panel-section">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th class="text-center">Print</th>
+                                            <th>Delivery Date</th>
+                                            <th>Type</th>
+                                            <th>Contents</th>
+                                            <th class="text-right">Received</th>
+                                            <th>Notes</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {% for package in other_label_packages %}
+                                            <tr>
+                                                <td class="text-center">
+                                                    <input type="checkbox"
+                                                           class="existing-label-package-checkbox"
+                                                           name="package_ids"
+                                                           value="{{ package.id }}"
+                                                           data-label-count="{{ package.quantity_received }}">
+                                                </td>
+
+                                                <td>
+                                                    {% if package.delivery.date %}
+                                                        {{ package.delivery.date|date:"m/d/y" }}
+                                                    {% else %}
+                                                        -
+                                                    {% endif %}
+                                                </td>
+
+                                                <td>{{ package.type }}</td>
+
+                                                <td>{{ package.contents }}</td>
+
+                                                <td class="text-right">
+                                                    {{ package.quantity_received }}
+                                                </td>
+
+                                                <td>{{ package.notes|default:"" }}</td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted py-3">
+                                                    No other received packages available for labels.
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="text-center">
+                            {% if other_label_packages %}
+                                <button type="submit"
+                                        class="btn btn-additional-labels"
+                                        name="label_section"
+                                        value="additional"
+                                        id="generateAdditionalLabelsButton">
+                                    Generate Labels
+                                </button>
+                            {% else %}
+                                <button type="button" class="btn btn-additional-labels" disabled>
+                                    Generate Labels
+                                </button>
+                            {% endif %}
+                        </div>
                     </div>
 
                 </div>
@@ -1395,16 +1648,6 @@
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">
                         Cancel
                     </button>
-
-                    {% if label_packages %}
-                        <button type="submit" class="btn btn-success">
-                            Generate Labels
-                        </button>
-                    {% else %}
-                        <button type="button" class="btn btn-success" disabled>
-                            Generate Labels
-                        </button>
-                    {% endif %}
                 </div>
 
             </form>
@@ -1491,6 +1734,101 @@ document.addEventListener("DOMContentLoaded", function () {
             saveButton.style.display = "inline-block";
         });
     });
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    const selectAll = document.getElementById("selectAllMainDeliveries");
+    const installerNotes = document.getElementById("printInstallerNotes");
+    const mainLabelsButton = document.getElementById("generateMainLabelsButton");
+    const additionalLabelsButton = document.getElementById("generateAdditionalLabelsButton");
+    const packageCheckboxes = document.querySelectorAll('input[name="package_ids"]');
+
+    function updateSelectAllState() {
+        if (!selectAll) return;
+
+        const mainCheckboxes = document.querySelectorAll(".main-wallcovering-package-checkbox");
+        if (!mainCheckboxes.length) {
+            selectAll.checked = false;
+            return;
+        }
+
+        selectAll.checked = Array.from(mainCheckboxes).every(function (checkbox) {
+            return checkbox.checked;
+        });
+    }
+
+    function updateMainLabelsButton() {
+        if (!mainLabelsButton) return;
+
+        let labelCount = 0;
+        document.querySelectorAll(".main-wallcovering-package-checkbox:checked").forEach(function (checkbox) {
+            labelCount += parseInt(checkbox.dataset.labelCount || "0", 10);
+        });
+
+        mainLabelsButton.textContent = "Generate " + labelCount + (labelCount === 1 ? " Label" : " Labels");
+    }
+
+    function updateAdditionalLabelsButton() {
+        if (!additionalLabelsButton) return;
+
+        let labelCount = 0;
+        document.querySelectorAll(".existing-label-package-checkbox:checked").forEach(function (checkbox) {
+            labelCount += parseInt(checkbox.dataset.labelCount || "0", 10);
+        });
+
+        additionalLabelsButton.textContent = "Generate " + labelCount + (labelCount === 1 ? " Label" : " Labels");
+    }
+
+    function updateMainPackageNumbers() {
+        let nextPackageNumber = 1;
+
+        document.querySelectorAll(".main-wallcovering-package-checkbox").forEach(function (checkbox) {
+            const display = checkbox.closest("tr").querySelector(".main-package-number-display");
+            const packageCount = parseInt(checkbox.dataset.labelCount || "0", 10);
+
+            if (!display) return;
+
+            if (!checkbox.checked || packageCount <= 0) {
+                display.textContent = "";
+                return;
+            }
+
+            const firstPackageNumber = nextPackageNumber;
+            const lastPackageNumber = nextPackageNumber + packageCount - 1;
+            display.textContent = firstPackageNumber === lastPackageNumber
+                ? String(firstPackageNumber)
+                : firstPackageNumber + "-" + lastPackageNumber;
+            nextPackageNumber = lastPackageNumber + 1;
+        });
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener("change", function () {
+            document.querySelectorAll(".main-wallcovering-package-checkbox").forEach(function (checkbox) {
+                checkbox.checked = selectAll.checked;
+            });
+            updateMainPackageNumbers();
+            updateMainLabelsButton();
+        });
+    }
+
+    packageCheckboxes.forEach(function (checkbox) {
+        checkbox.addEventListener("change", function () {
+            updateSelectAllState();
+            updateMainPackageNumbers();
+            updateMainLabelsButton();
+            updateAdditionalLabelsButton();
+        });
+    });
+
+    if (installerNotes) {
+        installerNotes.addEventListener("change", updateMainLabelsButton);
+    }
+
+    updateSelectAllState();
+    updateMainPackageNumbers();
+    updateMainLabelsButton();
+    updateAdditionalLabelsButton();
 });
 
 const pricingFilesListUrl = "{% url 'wallcovering_pricing_files' wallcovering.id %}";

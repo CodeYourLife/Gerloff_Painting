@@ -1220,6 +1220,26 @@ float: left !important;
                 </form>
             </div>
 
+            {% if mc_job_folder_url %}
+            <div class="col-12 col-md-4 col-lg-3 mb-2">
+                <a href="{{ mc_job_folder_url }}"
+                   target="_blank"
+                   class="btn btn-info btn-sm btn-block">
+                    Go To MC Folder
+                </a>
+            </div>
+            {% endif %}
+
+            {% if lg_drawings_folder_url %}
+            <div class="col-12 col-md-4 col-lg-3 mb-2">
+                <a href="{{ lg_drawings_folder_url }}"
+                   target="_blank"
+                   class="btn btn-info btn-sm btn-block">
+                    L&amp;G Drawings
+                </a>
+            </div>
+            {% endif %}
+
             <div class="col-12 col-md-4 col-lg-3 mb-2">
 
     <div id="dropbox_button_hide">
@@ -1894,7 +1914,7 @@ float: left !important;
                                     {% endif %}
                                     <br>
                                     <span class="text-muted">
-                                        {{ wc.vendor }} {{ wc.pattern }}
+                                        {{ wc.vendor.company_name }} {{ wc.pattern }}
                                     </span>
                                 </td>
 

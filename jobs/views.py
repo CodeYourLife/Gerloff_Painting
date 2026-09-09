@@ -1,7 +1,7 @@
 
 from changeorder.models import ClientJobRoles, ChangeOrders, Wallcovering_Change_Orders
 from collections import defaultdict
-from console.misc import Email, send_safety_inspection_email
+from console.misc import Email, get_client_ip, is_internal_ip, send_safety_inspection_email
 from console.models import *
 from datetime import date
 from dateutil.parser import parse as parse_date
@@ -59,6 +59,11 @@ from jobs.exchange_public_folders import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def unc_path_to_file_url(path):
+    normalized_path = path.replace("\\", "/").lstrip("/")
+    return "file://" + urlquote(normalized_path, safe="/:")
 
 
 @login_required(login_url='/accounts/login')
@@ -1337,6 +1342,18 @@ def job_page(request, jobnumber):
     go_to_pickup = False
     selectedjob = Jobs.objects.get(job_number=jobnumber)
     send_data = {}
+    client_ip = get_client_ip(request)
+    can_open_server_folders = is_internal_ip(client_ip)
+    job_folder_status = "closed jobs" if selectedjob.is_closed else "open jobs"
+    mc_job_folder_path = rf"\\gp2022\company\Jobs\{job_folder_status.title()}\{selectedjob.job_number} {selectedjob.job_name}"
+    lg_drawings_folder_path = os.path.join(mc_job_folder_path, "Plans")
+
+    send_data["can_open_server_folders"] = can_open_server_folders
+    if can_open_server_folders and os.path.exists(mc_job_folder_path):
+        send_data["mc_job_folder_url"] = unc_path_to_file_url(mc_job_folder_path)
+    if can_open_server_folders and os.path.exists(lg_drawings_folder_path):
+        send_data["lg_drawings_folder_url"] = unc_path_to_file_url(lg_drawings_folder_path)
+
     if Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).exists():
         send_data['error_message']= Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).last().error
     Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).delete()

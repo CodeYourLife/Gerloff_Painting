@@ -43,6 +43,48 @@ from django.http import HttpResponse, JsonResponse, FileResponse, Http404
 DEFAULT_BOOKING_WALLCOVERING_PATTERN = "Default at Booking-Please Complete"
 
 
+def normalized_wallcovering_text(value):
+    return " ".join((value or "").split()).lower()
+
+
+def default_wallcovering_package_contents(wallcovering):
+    return f"{wallcovering.code or ''} {wallcovering.pattern or ''}".strip()
+
+
+def wallcovering_change_note_value(value):
+    if value is None:
+        return ""
+    if isinstance(value, Decimal) and value == Decimal("0"):
+        return ""
+    if isinstance(value, bool):
+        return "Yes" if value else "No"
+    return str(value)
+
+
+def wallcovering_change_compare_value(value):
+    if value is None:
+        return ""
+    if isinstance(value, Decimal) and value == Decimal("0"):
+        return ""
+    return value
+
+
+def wallcovering_change_note_text(field_name, old_value, new_value):
+    old_display = wallcovering_change_note_value(old_value)
+    new_display = wallcovering_change_note_value(new_value)
+
+    if field_name == "Notes":
+        if old_display == "":
+            return f"{field_name} changed to ({new_display})"
+
+        return f"{field_name} changed from ({old_display}) to ({new_display})"
+
+    if old_display == "":
+        return f"{field_name} changed to {new_display}"
+
+    return f"{field_name} changed from {old_display} to {new_display}"
+
+
 def wallcovering_submittal_description(code, submittal_type):
     wallcovering_code = code or "Wallcovering"
     return f"{wallcovering_code} {submittal_type}"
@@ -170,9 +212,12 @@ def wallcovering_home(request):
             filter=Q(wallcoveringnotes__note__isnull=False) & ~Q(wallcoveringnotes__note=""),
             distinct=True
         )
-    ).filter(
-        job_number__is_closed=False
-    ).order_by(
+    )
+
+    if selected_filter != "show_closed_jobs":
+        wallcoverings = wallcoverings.filter(job_number__is_closed=False)
+
+    wallcoverings = wallcoverings.order_by(
         "job_number__job_name",
         "code"
     )
@@ -194,7 +239,7 @@ def wallcovering_home(request):
         ).exists()
 
         # Exclude voided / owner furnished wallcovering from all filtered views
-        if selected_filter != "all" and (wc.is_void or wc.is_owner_furnished):
+        if selected_filter not in ["all", "show_closed_jobs"] and (wc.is_void or wc.is_owner_furnished):
             include_wc = False
 
         elif selected_filter == "not_approved":
@@ -291,6 +336,13 @@ def wallcovering_home(request):
                 .filter(wallcovering_id=wc)
                 .select_related("subcontract__subcontractor")
                 .values_list("subcontract__subcontractor__company", flat=True)
+                .distinct()
+            )
+            wc.po_numbers = " ".join(
+                OrderItems.objects
+                .filter(link_to_wallcovering=wc)
+                .select_related("order")
+                .values_list("order__po_number", flat=True)
                 .distinct()
             )
 
@@ -593,6 +645,8 @@ def wallcovering_detail(request, wallcovering_id):
 
     deliveries_for_receiving = WallcoveringDelivery.objects.filter(
         foreign_receiveditems1__order_item__link_to_wallcovering=wallcovering
+    ).select_related(
+        "received_by"
     ).distinct().order_by("-date", "-id")
 
     for delivery in deliveries_for_receiving:
@@ -701,8 +755,7 @@ def wallcovering_detail(request, wallcovering_id):
         })
 
     submittal_items = SubmittalItems.objects.filter(
-        wallcovering_id=wallcovering,
-        is_no_longer_used=False
+        wallcovering_id=wallcovering
     ).order_by("id")
 
     submittal_rows = []
@@ -713,11 +766,17 @@ def wallcovering_detail(request, wallcovering_id):
         ).select_related("submittal").order_by("-id")
 
         if not all_approvals.exists():
+            status = "Not Submitted"
+            badge_class = "badge-secondary"
+            if item.is_no_longer_used:
+                status = "Not Reviewed - No Longer Used"
+                badge_class = "badge-secondary"
             submittal_rows.append({
                 "item": item,
                 "approval": None,
                 "description": item.description,
-                "status": "Not Submitted",
+                "status": status,
+                "badge_class": badge_class,
             })
             continue
 
@@ -732,32 +791,92 @@ def wallcovering_detail(request, wallcovering_id):
 
             if not approval.submittal:
                 status = "Not Submitted"
+                badge_class = "badge-secondary"
             elif approval.is_approved is True:
                 status = "Approved"
+                badge_class = "badge-success"
             elif approval.is_approved is False:
                 status = "Rejected"
+                badge_class = "badge-danger"
             else:
                 status = "In Review"
+                badge_class = "badge-primary"
+
+            if item.is_no_longer_used:
+                if approval.is_approved is True:
+                    status = "Approved - No Longer Used"
+                    badge_class = "badge-secondary"
+                elif approval.is_approved is False:
+                    status = "Rejected - No Longer Used"
+                    badge_class = "badge-secondary"
+                else:
+                    status = "Not Reviewed - No Longer Used"
+                    badge_class = "badge-secondary"
 
             submittal_rows.append({
                 "item": item,
                 "approval": approval,
                 "description": " - ".join(description_parts).strip(" -"),
                 "status": status,
+                "badge_class": badge_class,
             })
 
     label_packages = Packages.objects.filter(
-        orderitem__wallcovering=wallcovering
+        orderitem__link_to_wallcovering=wallcovering
     ).select_related(
         "delivery",
         "orderitem",
         "orderitem__wallcovering",
+        "orderitem__link_to_wallcovering",
         "orderitem__wallcovering__job_number",
         "orderitem__wallcovering__vendor",
     ).order_by(
         "delivery__date",
         "id"
     )
+
+    default_package_contents = normalized_wallcovering_text(
+        default_wallcovering_package_contents(wallcovering)
+    )
+    main_label_packages = []
+    other_label_packages = []
+
+    for package in label_packages:
+        is_main_wallcovering_package = (
+            package.orderitem.wallcovering_id == wallcovering.id and
+            normalized_wallcovering_text(package.contents) == default_package_contents
+        )
+
+        if is_main_wallcovering_package:
+            main_label_packages.append(package)
+        else:
+            other_label_packages.append(package)
+
+    label_package_rows = []
+    next_package_number = 1
+
+    for package in main_label_packages:
+        package_count = int(package.quantity_received or 0)
+        if package_count <= 0:
+            package_number_display = "-"
+        else:
+            first_package_number = next_package_number
+            last_package_number = next_package_number + package_count - 1
+
+            if first_package_number == last_package_number:
+                package_number_display = str(first_package_number)
+            else:
+                package_number_display = f"{first_package_number}-{last_package_number}"
+
+            next_package_number = last_package_number + 1
+
+        label_package_rows.append({
+            "package": package,
+            "package_number_display": package_number_display,
+            "label_count": package_count,
+        })
+
+    main_label_total = next_package_number - 1
 
     linked_change_orders = Wallcovering_Change_Orders.objects.filter(
         wallcovering=wallcovering
@@ -837,6 +956,9 @@ def wallcovering_detail(request, wallcovering_id):
         "sent_to_job_groups": sent_to_job_groups,
         "submittal_rows": submittal_rows,
         "label_packages": label_packages,
+        "other_label_packages": other_label_packages,
+        "label_package_rows": label_package_rows,
+        "main_label_total": main_label_total,
         "linked_change_orders": linked_change_orders,
         "subcontract_items": subcontract_items,
         "pending_order_groups": pending_order_groups,
@@ -894,6 +1016,7 @@ def wallcovering_new(request):
             "vertical_repeat": request.POST.get("vertical_repeat"),
             "cut_charge": request.POST.get("cut_charge"),
             "notes": request.POST.get("notes"),
+            "installer_notes": request.POST.get("installer_notes"),
             "is_owner_furnished": bool(request.POST.get("is_owner_furnished")),
             "is_random_reverse": bool(request.POST.get("is_random_reverse")),
             "is_repeat": bool(request.POST.get("is_repeat")),
@@ -948,6 +1071,7 @@ def wallcovering_edit(request, wallcovering_id):
     ).order_by('company_name')
 
     if request.method == "POST":
+        employee = Employees.objects.filter(user=request.user).first()
         job_number_value = request.POST.get("job_number")
         vendor_input = (request.POST.get("vendor") or "").strip()
 
@@ -970,6 +1094,56 @@ def wallcovering_edit(request, wallcovering_id):
 
         new_code = request.POST.get("code")
         new_pattern = request.POST.get("pattern")
+        try:
+            new_estimated_quantity = int(request.POST.get("estimated_quantity") or 0)
+            new_install_yardage = (
+                Decimal(request.POST.get("install_yardage"))
+                if request.POST.get("install_yardage")
+                else None
+            )
+        except (ValueError, InvalidOperation):
+            messages.error(request, "Please enter valid wallcovering quantities.")
+            return redirect("wallcovering_edit", wallcovering_id=wallcovering.id)
+
+        old_values = {
+            "Job": str(wallcovering.job_number or ""),
+            "Vendor": wallcovering.vendor.company_name if wallcovering.vendor else "",
+            "Code": wallcovering.code or "",
+            "Pattern": wallcovering.pattern or "",
+            "Estimated quantity": wallcovering.estimated_quantity or 0,
+            "Estimated unit": wallcovering.estimated_unit or "",
+            "Install yardage": wallcovering.install_yardage,
+            "Roll width": wallcovering.roll_width or "",
+            "Roll length": wallcovering.roll_length or "",
+            "Vertical repeat": wallcovering.vertical_repeat or "",
+            "Cut charge": wallcovering.cut_charge or "",
+            "Notes": wallcovering.notes or "",
+            "Installer notes": wallcovering.installer_notes or "",
+            "Owner furnished": wallcovering.is_owner_furnished,
+            "Random match": wallcovering.is_random_reverse,
+            "Repeat pattern": wallcovering.is_repeat,
+            "Increment requirement": wallcovering.increment_requirement or "",
+        }
+
+        new_values = {
+            "Job": str(selected_job or ""),
+            "Vendor": vendor_obj.company_name if vendor_obj else "",
+            "Code": new_code or "",
+            "Pattern": new_pattern or "",
+            "Estimated quantity": new_estimated_quantity,
+            "Estimated unit": request.POST.get("estimated_unit") or "",
+            "Install yardage": new_install_yardage,
+            "Roll width": request.POST.get("roll_width") or "",
+            "Roll length": request.POST.get("roll_length") or "",
+            "Vertical repeat": request.POST.get("vertical_repeat") or "",
+            "Cut charge": request.POST.get("cut_charge") or "",
+            "Notes": request.POST.get("notes") or "",
+            "Installer notes": request.POST.get("installer_notes") or "",
+            "Owner furnished": bool(request.POST.get("is_owner_furnished")),
+            "Random match": bool(request.POST.get("is_random_reverse")),
+            "Repeat pattern": bool(request.POST.get("is_repeat")),
+            "Increment requirement": request.POST.get("increment_requirement") or "",
+        }
 
         updated_submittal_count = update_unlinked_wallcovering_submittals(
             wallcovering,
@@ -982,19 +1156,40 @@ def wallcovering_edit(request, wallcovering_id):
         wallcovering.vendor = vendor_obj
         wallcovering.code = new_code
         wallcovering.pattern = new_pattern
-        wallcovering.estimated_quantity = request.POST.get("estimated_quantity") or 0
+        wallcovering.estimated_quantity = new_estimated_quantity
         wallcovering.estimated_unit = request.POST.get("estimated_unit")
-        wallcovering.install_yardage = request.POST.get("install_yardage") or None
+        wallcovering.install_yardage = new_install_yardage
         wallcovering.roll_width = request.POST.get("roll_width")
         wallcovering.roll_length = request.POST.get("roll_length")
         wallcovering.vertical_repeat = request.POST.get("vertical_repeat")
         wallcovering.cut_charge = request.POST.get("cut_charge")
         wallcovering.notes = request.POST.get("notes")
+        wallcovering.installer_notes = request.POST.get("installer_notes")
         wallcovering.is_owner_furnished = bool(request.POST.get("is_owner_furnished"))
         wallcovering.is_random_reverse = bool(request.POST.get("is_random_reverse"))
         wallcovering.is_repeat = bool(request.POST.get("is_repeat"))
         wallcovering.increment_requirement = request.POST.get("increment_requirement")
         wallcovering.save()
+
+        if employee:
+            change_notes = []
+            for field_name, old_value in old_values.items():
+                new_value = new_values[field_name]
+                if (
+                    wallcovering_change_compare_value(old_value) !=
+                    wallcovering_change_compare_value(new_value)
+                ):
+                    change_notes.append(
+                        wallcovering_change_note_text(field_name, old_value, new_value)
+                    )
+
+            if change_notes:
+                WallcoveringNotes.objects.create(
+                    pattern=wallcovering,
+                    date=date.today(),
+                    user=employee,
+                    note=". ".join(change_notes)
+                )
 
         if updated_submittal_count:
             messages.success(
@@ -1046,6 +1241,33 @@ def clean_decimal(value):
         return Decimal(value).quantize(Decimal("0.01"))
     except InvalidOperation:
         return Decimal("0.00")
+
+
+def get_wallcovering_price_unit(wallcovering, price, posted_unit=""):
+    if posted_unit:
+        return posted_unit.strip()
+
+    if price is None:
+        return ""
+
+    pricing = WallcoveringPricing.objects.filter(
+        wallcovering=wallcovering,
+        price=price
+    ).exclude(
+        unit__isnull=True
+    ).exclude(
+        unit=""
+    ).order_by("-quote_date", "-id").first()
+
+    return pricing.unit if pricing else ""
+
+
+def format_wallcovering_order_price(price, price_unit=""):
+    price_text = f"${price}"
+    if price_unit:
+        price_text += f" per {price_unit}"
+
+    return price_text
 
 
 def update_order_item_satisfied(order_item):
@@ -1104,6 +1326,11 @@ def wallcovering_add_order(request, wallcovering_id):
         main_quantity = clean_decimal(request.POST.get("main_quantity"))
         main_unit = (request.POST.get("main_unit") or "").strip()
         main_price = clean_decimal(request.POST.get("main_price"))
+        main_price_unit = get_wallcovering_price_unit(
+            wallcovering,
+            main_price,
+            request.POST.get("main_price_unit", "")
+        )
         main_item_notes = request.POST.get("main_item_notes")
 
         descriptions = request.POST.getlist("extra_description[]")
@@ -1338,7 +1565,7 @@ def wallcovering_add_order(request, wallcovering_id):
                 link_to_wallcovering = wallcovering,
             )
             lines.extend([
-                f"{main_quantity} {main_unit} of {wallcovering.code} {wallcovering.vendor.company_name} {wallcovering.pattern}",
+                f"{main_quantity} {main_unit} of {wallcovering.code} {wallcovering.vendor.company_name} {wallcovering.pattern} - Price: {format_wallcovering_order_price(main_price, main_price_unit)}",
                 "",])
             lines2.extend([
                 f"{main_quantity} {main_unit} of {wallcovering.code} {wallcovering.vendor.company_name} {wallcovering.pattern}",
@@ -1356,7 +1583,7 @@ def wallcovering_add_order(request, wallcovering_id):
                 link_to_wallcovering=wallcovering,
             )
             lines.extend([
-                f"{item['quantity']} {item['unit']} of {item['description']}",
+                f"{item['quantity']} {item['unit']} of {item['description']} - Price: ${item['price']} per {item['unit']}",
                 "", ])
             lines2.extend([
                 f"{item['quantity']} {item['unit']} of {item['description']}",
@@ -1449,6 +1676,11 @@ def wallcovering_pending_order(request, pending_order_id):
         main_quantity = clean_decimal(request.POST.get("main_quantity"))
         main_unit = (request.POST.get("main_unit") or "").strip()
         main_price = clean_decimal(request.POST.get("main_price"))
+        main_price_unit = get_wallcovering_price_unit(
+            wallcovering,
+            main_price,
+            request.POST.get("main_price_unit", "")
+        )
         main_item_notes = request.POST.get("main_item_notes")
 
         descriptions = request.POST.getlist("extra_description[]")
@@ -1482,6 +1714,7 @@ def wallcovering_pending_order(request, pending_order_id):
             "main_quantity": main_quantity,
             "main_unit": main_unit,
             "main_price": main_price,
+            "main_price_unit": main_price_unit,
             "main_item_notes": main_item_notes,
             "extra_items": extra_items,
             "has_main_item": has_main_item,
@@ -1770,15 +2003,20 @@ def wallcovering_pending_order(request, pending_order_id):
         if posted_items["has_main_item"]:
             item_line = (
                 f"{posted_items['main_quantity']} {posted_items['main_unit']} "
+                f"of {wallcovering.code} {vendor_name} {wallcovering.pattern} "
+                f"- Price: {format_wallcovering_order_price(posted_items['main_price'], posted_items['main_price_unit'])}"
+            )
+            warehouse_item_line = (
+                f"{posted_items['main_quantity']} {posted_items['main_unit']} "
                 f"of {wallcovering.code} {vendor_name} {wallcovering.pattern}"
             )
             lines.extend([item_line, ""])
-            lines2.extend([item_line, ""])
+            lines2.extend([warehouse_item_line, ""])
 
         for item in posted_items["extra_items"]:
-            item_line = f"{item['quantity']} {item['unit']} of {item['description']}"
+            item_line = f"{item['quantity']} {item['unit']} of {item['description']} - Price: ${item['price']} per {item['unit']}"
             lines.extend([item_line, ""])
-            lines2.extend([item_line, ""])
+            lines2.extend([f"{item['quantity']} {item['unit']} of {item['description']}", ""])
 
         if employee and employee.email:
             recipient = [employee.email]
@@ -1900,6 +2138,7 @@ def wallcovering_receive(request, wallcovering_id=None):
         ).first()
 
     if request.method == "POST":
+        employee = Employees.objects.filter(user=request.user).first()
         receipt_date = request.POST.get("date") or date.today()
         receipt_notes = request.POST.get("notes")
 
@@ -1973,6 +2212,7 @@ def wallcovering_receive(request, wallcovering_id=None):
         delivery = WallcoveringDelivery.objects.create(
             order=first_order,
             date=receipt_date,
+            received_by=employee,
             notes=receipt_notes,
         )
 
@@ -2021,7 +2261,6 @@ def wallcovering_receive(request, wallcovering_id=None):
         if job.superintendent and job.superintendent.email:
             recipients.append(job.superintendent.email)
 
-        employee = Employees.objects.filter(user=request.user).first()
         if employee and employee.email:
             recipients.append(employee.email)
 
@@ -2855,14 +3094,16 @@ def wallcovering_print_labels(request, wallcovering_id):
         return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
 
     package_ids = request.POST.getlist("package_ids")
+    include_installer_notes = request.POST.get("print_installer_notes") == "on"
+    label_section = request.POST.get("label_section")
 
-    selected_packages = Packages.objects.filter(
-        id__in=package_ids,
-        orderitem__wallcovering=wallcovering
+    all_label_packages = Packages.objects.filter(
+        orderitem__link_to_wallcovering=wallcovering
     ).select_related(
         "delivery",
         "orderitem",
         "orderitem__wallcovering",
+        "orderitem__link_to_wallcovering",
         "orderitem__wallcovering__job_number",
         "orderitem__wallcovering__vendor",
     ).order_by(
@@ -2870,45 +3111,130 @@ def wallcovering_print_labels(request, wallcovering_id):
         "id"
     )
 
-    labels_to_print = []
+    selected_package_ids = {int(package_id) for package_id in package_ids if package_id.isdigit()}
+    default_package_contents = normalized_wallcovering_text(
+        default_wallcovering_package_contents(wallcovering)
+    )
+    all_main_label_package_ids = set()
+    main_label_package_ids = set()
+    package_number_map = {}
+    next_package_number = 1
 
-    for package in selected_packages:
-        selected_wallcovering = package.orderitem.wallcovering
+    for package in all_label_packages:
+        is_main_wallcovering_package = (
+            package.orderitem.wallcovering_id == wallcovering.id and
+            normalized_wallcovering_text(package.contents) == default_package_contents
+        )
+
+        if not is_main_wallcovering_package:
+            continue
+
+        all_main_label_package_ids.add(package.id)
+
+        if package.id not in selected_package_ids:
+            continue
+
+        package_count = int(package.quantity_received or 0)
+        if package_count <= 0:
+            continue
+
+        main_label_package_ids.add(package.id)
+        package_number_map[package.id] = {
+            "first": next_package_number,
+            "last": next_package_number + package_count - 1,
+        }
+        next_package_number += package_count
+
+    total_packages = next_package_number - 1
+    accessory_total_packages = 0
+    if label_section == "additional":
+        for package in all_label_packages:
+            if package.id not in selected_package_ids or package.id in all_main_label_package_ids:
+                continue
+
+            accessory_total_packages += int(package.quantity_received or 0)
+
+    next_accessory_number = 1
+    labels_to_print = []
+    installer_notes = ""
+    if include_installer_notes and label_section != "additional":
+        installer_notes = wallcovering.installer_notes
+
+    for package in all_label_packages:
+        if package.id not in selected_package_ids:
+            continue
+
+        if label_section == "main" and package.id not in main_label_package_ids:
+            continue
+
+        if label_section == "additional" and package.id in all_main_label_package_ids:
+            continue
+
+        selected_wallcovering = package.orderitem.link_to_wallcovering
         job = selected_wallcovering.job_number
 
-        total_packages = package.quantity_received or 0
+        package_count = int(package.quantity_received or 0)
+        if package_count <= 0:
+            continue
 
         delivery_date = ""
         if package.delivery and package.delivery.date:
             delivery_date = package.delivery.date.strftime("%m/%d/%y")
 
-        contents_notes_parts = []
+        if package.id in main_label_package_ids:
+            package_range = package_number_map[package.id]
+            package_numbers = range(package_range["first"], package_range["last"] + 1)
+            package_total = total_packages
+            wallcovering_line = (
+                f"{selected_wallcovering.code or ''} "
+                f"{selected_wallcovering.vendor.company_name if selected_wallcovering.vendor else ''} "
+                f"{selected_wallcovering.pattern or ''} "
+                f"- received {delivery_date}"
+            ).strip()
+            contents_notes_parts = []
 
-        if package.contents:
-            contents_notes_parts.append(package.contents)
+            if package.notes:
+                contents_notes_parts.append(package.notes)
+        else:
+            package_numbers = range(1, package_count + 1)
+            package_total = package_count
+            wallcovering_line = f"Accessories for {selected_wallcovering.code or ''} - received {delivery_date}".strip()
+            accessory_numbers = list(range(
+                next_accessory_number,
+                next_accessory_number + package_count
+            ))
+            next_accessory_number += package_count
+            contents_notes_parts = []
 
-        if package.notes:
-            contents_notes_parts.append(package.notes)
+            if package.contents:
+                contents_notes_parts.append(package.contents)
+
+            if package.notes:
+                contents_notes_parts.append(package.notes)
 
         contents_notes = " - ".join(contents_notes_parts)
+        if installer_notes:
+            if contents_notes:
+                contents_notes += " - "
+            contents_notes += f"Installer: {installer_notes}"
 
-        contents_line = f"Rec'd {delivery_date}"
+        for package_index, package_number in enumerate(package_numbers):
+            accessory_number = ""
+            accessory_total = ""
+            if package.id not in main_label_package_ids and label_section == "additional":
+                accessory_number = accessory_numbers[package_index]
+                accessory_total = accessory_total_packages
 
-        if contents_notes:
-            contents_line += f" - {contents_notes}"
-
-        for package_number in range(1, total_packages + 1):
             labels_to_print.append({
                 "job_line": f"{job.job_number} {job.job_name}",
-                "wallcovering_line": (
-                    f"{selected_wallcovering.code or ''} "
-                    f"{selected_wallcovering.vendor.company_name if selected_wallcovering.vendor else ''} "
-                    f"{selected_wallcovering.pattern or ''}"
-                ).strip(),
-                "contents_line": contents_line,
+                "wallcovering_line": wallcovering_line,
+                "contents_line": contents_notes,
                 "package_type": package.type or "",
                 "package_number": package_number,
-                "total_packages": total_packages,
+                "total_packages": package_total,
+                "accessory_number": accessory_number,
+                "accessory_total": accessory_total,
+                "accessory_label": f"{selected_wallcovering.code or ''} accessory".strip(),
             })
 
     if not labels_to_print:

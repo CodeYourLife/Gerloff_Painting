@@ -12,6 +12,13 @@
     .clickable-row:hover {
         background-color: #f8f9fa;
     }
+
+    .submittal-status-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        min-width: 260px;
+    }
 </style>
 {% endblock %}
 
@@ -78,7 +85,7 @@
                         <th style="width:320px; white-space:nowrap;">Job</th>
                         <th style="width:120px;">Submittal #</th>
                         <th>Description</th>
-                        <th style="width:120px;">Status</th>
+                        <th style="width:280px;">Status</th>
                     </tr>
                 </thead>
 
@@ -92,11 +99,20 @@
                         <td>{{ submittal.submittal_number }}</td>
                         <td>{{ submittal.description }}</td>
                         <td>
-                            {% if submittal.status == "OPEN" %}
-                                <span class="badge badge-warning">OPEN</span>
-                            {% else %}
-                                <span class="badge badge-success">CLOSED</span>
-                            {% endif %}
+                            <div class="submittal-status-badges">
+                                {% if submittal.approved_count > 0 %}
+                                    <span class="badge badge-success">{{ submittal.approved_count }} Approved</span>
+                                {% endif %}
+                                {% if submittal.rejected_count > 0 %}
+                                    <span class="badge badge-danger">{{ submittal.rejected_count }} Rejected</span>
+                                {% endif %}
+                                {% if submittal.pending_count > 0 %}
+                                    <span class="badge badge-warning">{{ submittal.pending_count }} Pending</span>
+                                {% endif %}
+                                {% if submittal.no_longer_used_count > 0 %}
+                                    <span class="badge badge-secondary">{{ submittal.no_longer_used_count }} No Longer Used</span>
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% empty %}
