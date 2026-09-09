@@ -61,11 +61,6 @@ from jobs.exchange_public_folders import (
 logger = logging.getLogger(__name__)
 
 
-def unc_path_to_file_url(path):
-    normalized_path = path.replace("\\", "/").lstrip("/")
-    return "file://" + urlquote(normalized_path, safe="/:")
-
-
 @login_required(login_url='/accounts/login')
 def change_start_date(request, jobnumber, previous, super, filter):
     # jobnumber is the job number you are changing
@@ -1350,9 +1345,9 @@ def job_page(request, jobnumber):
 
     send_data["can_open_server_folders"] = can_open_server_folders
     if can_open_server_folders and os.path.exists(mc_job_folder_path):
-        send_data["mc_job_folder_url"] = unc_path_to_file_url(mc_job_folder_path)
+        send_data["mc_job_folder_path"] = mc_job_folder_path
     if can_open_server_folders and os.path.exists(lg_drawings_folder_path):
-        send_data["lg_drawings_folder_url"] = unc_path_to_file_url(lg_drawings_folder_path)
+        send_data["lg_drawings_folder_path"] = lg_drawings_folder_path
 
     if Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).exists():
         send_data['error_message']= Email_Errors.objects.filter(user=request.user.first_name + " " + request.user.last_name).last().error
