@@ -3269,12 +3269,17 @@ def subcontract(request, id):
         else:
             percentage = (totalbilled / totalcost) * 100
             percentage2 = (totalbilledandpending / totalcost) * 100
+        rounded_percentage = round(percentage, 2)
+        rounded_percentage2 = round(percentage2, 2)
         items.append(
-            {'is_approved': x.is_approved, 'date': x.date.strftime("%m/%d/%y"), 'percentage': str(round(percentage, 2)),'percentage2': str(round(percentage2, 2)),
+            {'is_approved': x.is_approved, 'date': x.date.strftime("%m/%d/%y"), 'percentage': str(rounded_percentage),'percentage2': str(rounded_percentage2),
              'remainingqnty': remainingqnty, 'remainingcost': remainingcost, 'id': x.id,
              'SOV_description': x.SOV_description, 'SOV_is_lump_sum': x.SOV_is_lump_sum,
              'SOV_unit': x.SOV_unit, 'SOV_total_ordered': x.SOV_total_ordered, 'SOV_rate': x.SOV_rate,
              'notes': x.notes, 'quantity_billed': float(x.quantity_billed()),
+             'total_billed_and_pending': round(x.total_billed_and_pending(), 2),
+             'show_total_billed_amount': rounded_percentage not in (0, 100),
+             'show_total_pending_amount': rounded_percentage2 not in (0, 100),
              'total_billed': round(x.total_billed(), 2), 'total_cost': round(x.total_cost(), 2),'change_order_status': change_order_status,
             'change_order_number': change_order_number,'change_order_id': change_order_id,
              'wallcovering_pk': x.wallcovering_id.id if x.wallcovering_id else '',
