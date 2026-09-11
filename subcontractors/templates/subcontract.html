@@ -812,8 +812,18 @@
                                     </td>
                                 {% endif %}
 
-                                <td>{{ x.percentage }}%</td>
-                                <td>{{ x.percentage2 }}%</td>
+                                <td>
+                                    {{ x.percentage }}%
+                                    {% if x.show_total_billed_amount %}
+                                        <div class="small text-muted">${{ x.total_billed|floatformat:2|intcomma }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ x.percentage2 }}%
+                                    {% if x.show_total_pending_amount %}
+                                        <div class="small text-muted">${{ x.total_billed_and_pending|floatformat:2|intcomma }}</div>
+                                    {% endif %}
+                                </td>
                                 <td>
                                     <input name="is_approved" id="is_approved" type="checkbox" {% if x.is_approved %}checked{% endif %}>
                                 </td>
@@ -864,8 +874,18 @@
                                 {% endif %}
 
                                 <td>{{ x.SOV_rate }}</td>
-                                <td>{{ x.percentage }}%</td>
-                                <td>{{ x.percentage2 }}%</td>
+                                <td>
+                                    {{ x.percentage }}%
+                                    {% if x.show_total_billed_amount %}
+                                        <div class="small text-muted">${{ x.total_billed|floatformat:2|intcomma }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ x.percentage2 }}%
+                                    {% if x.show_total_pending_amount %}
+                                        <div class="small text-muted">${{ x.total_billed_and_pending|floatformat:2|intcomma }}</div>
+                                    {% endif %}
+                                </td>
                                 <td>{% if x.is_approved %}Yes{% else %}No{% endif %}</td>
                                 <td>{{ x.notes }}</td>
                                 <td>
