@@ -432,11 +432,11 @@
                     </td>
 
                     {% if me_approve or other_approve or edit_now %}
-                        <td data-label="Amount"><div id="invoice_total3">{{ x.final_amount }}</div></td>
-                        <td data-label="Retainage"><div id="retainage_this2">{{ x.retainage }}</div></td>
+                        <td data-label="Amount"><div id="invoice_total3">{{ x.final_amount|floatformat:2|intcomma }}</div></td>
+                        <td data-label="Retainage"><div id="retainage_this2">{{ x.retainage|floatformat:2|intcomma }}</div></td>
                     {% else %}
-                        <td data-label="Amount">{{ x.final_amount }}</td>
-                        <td data-label="Retainage">{{ x.retainage }}</td>
+                        <td data-label="Amount">{{ x.final_amount|floatformat:2|intcomma }}</td>
+                        <td data-label="Retainage">{{ x.retainage|floatformat:2|intcomma }}</td>
                     {% endif %}
 
                     <td data-label="Status">
@@ -570,7 +570,7 @@
                                            class="changed-input"
                                            name="retainage_adjust"
                                            id="retainage_adjust"
-                                           value="{{ selected_invoice.release_retainage }}"
+                                           value="{{ selected_invoice.release_retainage|floatformat:2 }}"
                                            step=".01"
                                            onchange="calculate_invoice_total();">
                                 </td>
@@ -599,7 +599,7 @@
                                     <td data-label="Ordered $" class="nowrap money-cell">
                                         <input type="hidden" id="quantity_ordered{{ item.id }}" value="1 Lump Sum">
                                         <input type="hidden" id="total_cost{{ item.id }}" value="{{ item.total_cost }}">
-                                        ${{ item.total_cost }}
+                                        ${{ item.total_cost|floatformat:2|intcomma }}
                                     </td>
 
                                     <td data-label="Billed Qnty" class="nowrap">
@@ -609,7 +609,7 @@
 
                                     <td data-label="Billed $" class="nowrap money-cell">
                                         <input type="hidden" id="previous{{ item.id }}" value="{{ item.total_billed }}">
-                                        ${{ item.total_billed }}
+                                        ${{ item.total_billed|floatformat:2|intcomma }}
                                     </td>
 
                                     {% if item.invoiced %}
@@ -621,7 +621,7 @@
                                                            class="changed-input"
                                                            name="quantity{{ item.id }}"
                                                            id="{{ item.id }}"
-                                                           value="{{ x.quantity }}"
+                                                           value="{{ x.quantity|floatformat:2 }}"
                                                            step=".01"
                                                            onchange="update_percentage(event);">
                                                 </td>
@@ -642,7 +642,7 @@
                                             <input type="number"
                                                    name="quantity{{ item.id }}"
                                                    id="{{ item.id }}"
-                                                   placeholder="{{ item.remainingcost|floatformat }}"
+                                                   placeholder="{{ item.remainingcost|floatformat:2 }}"
                                                    step=".01"
                                                    onchange="update_percentage(event);">
                                         </td>
@@ -660,22 +660,22 @@
                                     <td data-label="Ordered Qnty" class="nowrap qty-cell">
                                         <input type="hidden" id="SOV_rate{{ item.id }}" value="{{ item.SOV_rate }}">
                                         <input type="hidden" id="quantity_ordered{{ item.id }}" value="{{ item.SOV_total_ordered }}">
-                                        {{ item.SOV_total_ordered }} {{ item.SOV_unit }}
+                                        {{ item.SOV_total_ordered|floatformat:2 }} {{ item.SOV_unit }}
                                     </td>
 
                                     <td data-label="Ordered $" class="nowrap">
                                         <input type="hidden" id="total_cost{{ item.id }}" value="{{ item.total_cost }}">
-                                        ${{ item.total_cost }}
+                                        ${{ item.total_cost|floatformat:2|intcomma }}
                                     </td>
 
                                     <td data-label="Billed Qnty" class="nowrap qty-cell">
                                         <input type="hidden" id="quantity_billed{{ item.id }}" value="{{ item.quantity_billed }}">
-                                        {{ item.quantity_billed }} {{ item.SOV_unit }}
+                                        {{ item.quantity_billed|floatformat:2 }} {{ item.SOV_unit }}
                                     </td>
 
                                     <td data-label="Billed $" class="nowrap">
                                         <input type="hidden" id="previous{{ item.id }}" value="{{ item.total_billed }}">
-                                        ${{ item.total_billed }}
+                                        ${{ item.total_billed|floatformat:2|intcomma }}
                                     </td>
 
                                     {% if item.invoiced %}
@@ -686,7 +686,7 @@
                                                            class="changed-input"
                                                            name="quantity{{ item.id }}"
                                                            id="{{ item.id }}"
-                                                           value="{{ x.quantity|floatformat }}"
+                                                           value="{{ x.quantity|floatformat:2 }}"
                                                            step=".01"
                                                            onchange="update_percentage(event);">
                                                 </td>
@@ -707,7 +707,7 @@
                                             <input type="number"
                                                    name="quantity{{ item.id }}"
                                                    id="{{ item.id }}"
-                                                   placeholder="{{ item.remainingqnty|floatformat }}"
+                                                   placeholder="{{ item.remainingqnty|floatformat:2 }}"
                                                    step=".01"
                                                    onchange="update_percentage(event);">
                                         </td>

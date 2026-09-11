@@ -72,6 +72,11 @@ input::-webkit-inner-spin-button {
 input[type=number] {
   -moz-appearance: textfield;
 }
+
+.invoice-quantity-input.has-value {
+  background-color: #fff3b0;
+  border-color: #d39e00;
+}
     </style>
 <link rel="stylesheet" href="{% static 'project_styles.css' %}">
 {% endblock %}
@@ -125,7 +130,7 @@ input[type=number] {
 					<!--4 --><td style="white-space: nowrap;"><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.total_cost}}" />{% widthratio item.quantity_billed 1 100 %}%</td>
 					<!--5 --><td style="background-color:hsl(121, 67%, 87%);"><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
 					<!--6 --><td></td>
-					<!--7 --><td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingcost}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
+					<!--7 --><td><input type= "number" class="invoice-quantity-input" name="quantity{{item.id}}" id="{{item.id}}" placeholder="{{item.remainingcost|floatformat:2}}" size="7" step="0.01" oninput="markEnteredValue(event.currentTarget)" onchange="update_percentage(event)" /></td>
 					<!--8 --><td><div id="percentage{{item.id}}" >{% widthratio item.total_billed item.total_cost 100 %}%</div></td>
 					{% else %}
 					<!--4 thru 8 --><td></td><td></td><td>Not Approved</td><td></td><td></td>
@@ -136,7 +141,7 @@ input[type=number] {
 					{% if item.is_approved %}
 					<!--4 --><td style="background-color:hsl(0, 67%, 87%);white-space: nowrap;"><input type="hidden" id="quantity_billed{{item.id}}" value="{{item.quantity_billed}}" />{{item.quantity_billed}} {{item.SOV_unit}}</td>
 					<!--5 --><td><input type="hidden" id="previous{{item.id}}" value="{{item.total_billed}}" />${{item.total_billed}}</td>
-					<!--6 --><td><input type= "number" name="quantity{{item.id}}" id="{{item.id}}" placeholder={{item.remainingqnty}} size="7" step="0.01" onchange="update_percentage(event)" /></td>
+					<!--6 --><td><input type= "number" class="invoice-quantity-input" name="quantity{{item.id}}" id="{{item.id}}" placeholder="{{item.remainingqnty|floatformat:2}}" size="7" step="0.01" oninput="markEnteredValue(event.currentTarget)" onchange="update_percentage(event)" /></td>
 					<!--7 --><td><input type="hidden" id="current_total{{item.id}}" value="" /></td>
 					<!--8 --><td><div id="percentage{{item.id}}" >{% widthratio item.quantity_billed item.SOV_total_ordered 100 %}%</div></td>
 					{% else %}
@@ -173,12 +178,27 @@ input[type=number] {
     <script type="text/javascript" class="init">
 $(document).ready(function () {
     var table = $('#job_table').DataTable({paging:false, info:false, searching:false, ordering:false});
+    document.querySelectorAll(".invoice-quantity-input").forEach(markEnteredValue);
 })
 
 var global_to_date = 0
 var global_total_contract = 0
 
+function moneyFormat(value) {
+	return Number(value || 0).toFixed(2);
+}
+
+function markEnteredValue(input) {
+	if (input.value === "") {
+		input.classList.remove("has-value");
+	}
+	else {
+		input.classList.add("has-value");
+	}
+}
+
 function update_percentage(event){
+markEnteredValue(event.currentTarget)
 percentage_cell = document.getElementById("percentage"+event.currentTarget.id)
 if(event.currentTarget.value){
 current_total=parseFloat(event.currentTarget.value)
@@ -245,10 +265,10 @@ function calculate_invoice_total(){
 		}
 	});
 	total_to_date += invoice_total + previously_billed
-	document.getElementById("invoice_total").innerHTML="<b>Total Invoice:</b> $" + invoice_total
-	document.getElementById("total_to_date").innerHTML="<b>Total To Date:</b> $" + total_to_date
-	document.getElementById("previously_billed").innerHTML="<b>Previously Billed:</b> $" + previously_billed
-	document.getElementById("total_contract").innerHTML="<b>Total Contract:</b> $" + total_contract
+	document.getElementById("invoice_total").innerHTML="<b>Total Invoice:</b> $" + moneyFormat(invoice_total)
+	document.getElementById("total_to_date").innerHTML="<b>Total To Date:</b> $" + moneyFormat(total_to_date)
+	document.getElementById("previously_billed").innerHTML="<b>Previously Billed:</b> $" + moneyFormat(previously_billed)
+	document.getElementById("total_contract").innerHTML="<b>Total Contract:</b> $" + moneyFormat(total_contract)
 	global_to_date = total_to_date
 	global_total_contract = total_contract
 }
