@@ -1622,29 +1622,21 @@ def job_page(request, jobnumber):
             elif pending_linked_approvals.exists():
                 approval = pending_linked_approvals.last()
 
-            combined_notes = []
+            description_parts = [item.description or ""]
 
-            if linked_approvals.exists():
-                combined_notes.append("Previously Submitted")
+            if approval and approval.item_notes:
+                description_parts.append(approval.item_notes)
 
-            if item.notes:
-                combined_notes.append(f"Notes: {item.notes}")
+            notes = item.notes or ""
 
-            future_notes = [
-                x.item_notes.strip()
-                for x in unlinked_approvals
-                if x.item_notes and x.item_notes.strip()
-            ]
-
-            if future_notes:
-                combined_notes.append(
-                    "Next Submittal: " + " | ".join(future_notes)
-                )
+            if approval and approval.submittal is None and linked_approvals.exists():
+                notes = f"Previously Submitted. {notes}".strip()
 
             unapproved_items.append({
                 "item": item,
                 "approval": approval,
-                "notes": " | ".join(combined_notes),
+                "description": " - ".join(description_parts).strip(" -"),
+                "notes": notes,
             })
 
         # =========================
@@ -1660,8 +1652,11 @@ def job_page(request, jobnumber):
 
             notes_parts = []
 
+            if item.notes:
+                notes_parts.append(item.notes)
+
             if approval.notes:
-                notes_parts.append(approval.notes)
+                notes_parts.append(f"reviewer notes: {approval.notes}")
 
             approved_items.append({
                 "item": item,

@@ -69,10 +69,10 @@ class SubmittalApprovals(models.Model):
     submittal = models.ForeignKey(Submittals, on_delete=models.PROTECT,null=True,blank=True)
     submittalitem = models.ForeignKey(SubmittalItems, on_delete=models.PROTECT)
     is_approved = models.BooleanField(null=True,blank=True)
-    notes = models.CharField(null=True, max_length=2000, blank=True)
+    notes = models.CharField(null=True, max_length=2000, blank=True)#reviewer notes
     quantity = models.IntegerField(default=0)
     date_reviewed = models.DateField(null=True, blank=True)
-    item_notes = models.CharField(null=True, max_length=2000, blank=True)
+    item_notes = models.CharField(null=True, max_length=2000, blank=True)#item submitted
 
 
 class SubmittalNotes(models.Model):
