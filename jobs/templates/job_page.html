@@ -1708,7 +1708,7 @@ float: left !important;
                         {% for row in unapproved_items %}
                         <tr>
                             <td>
-                                {{ row.item.description }}
+                                {{ row.description }}
 
                                 {% if row.approval and row.approval.submittal %}
                                     <span class="badge badge-warning ml-2">In Review</span>

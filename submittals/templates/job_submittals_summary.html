@@ -116,9 +116,6 @@
                                         {% if approval.item_notes %}
                                             - {{ approval.item_notes }}
                                         {% endif %}
-                                        {% if approval.notes %}
-                                            - Reviewer Notes: {{ approval.notes }}
-                                        {% endif %}
 
                                         {% if approval.submittalitem.wallcovering_id %}
                                             <span class="badge badge-success ml-2">
@@ -130,7 +127,15 @@
                                             </span>
                                         {% endif %}
                                     </td>
-                                    <td>{{ approval.item_notes }}</td>
+                                    <td>
+                                        {% if approval.submittalitem.notes %}
+                                            {{ approval.submittalitem.notes }}
+                                        {% endif %}
+                                        {% if approval.notes %}
+                                            {% if approval.submittalitem.notes %}<br>{% endif %}
+                                            reviewer notes: {{ approval.notes }}
+                                        {% endif %}
+                                    </td>
                                     <td>
                                         {% if approval.is_approved == True %}
                                             <span class="badge badge-success">Approved</span>
@@ -332,3 +337,4 @@
     </div>
 </div>
 {% endblock %}
+
