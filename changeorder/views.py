@@ -1841,7 +1841,8 @@ def change_order_send(request, id):
 
             os.makedirs(path, exist_ok=True)
 
-            filename = f"GP COP {changeorder.cop_number} {changeorder.description} {date.today()}.pdf"
+            safe_description = sanitize_windows_filename_part(changeorder.description)
+            filename = f"GP COP {changeorder.cop_number} {safe_description} {date.today()}.pdf"
             filepath = os.path.join(path, filename)
 
             # If file exists, start adding REV numbers
@@ -4133,10 +4134,11 @@ def send_cop_report(request,job_number):
             # -----------------------------
 
             logo_path = os.path.join(settings.MEDIA_ROOT, "images/logo.png")
+            safe_job_name = sanitize_windows_filename_part(job.job_name)
             filepath = os.path.join(
                 settings.MEDIA_ROOT,
                 "temp",
-                f"Gerloff Painting COP Report {job.job_name}.pdf"
+                f"Gerloff Painting COP Report {safe_job_name}.pdf"
             )
             with open(filepath, "w+b") as result_file:
 
