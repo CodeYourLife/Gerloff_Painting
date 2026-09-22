@@ -370,13 +370,37 @@ select {
                 </button>
             </div>
             <div class="modal-body">
+                <div class="mb-3 small-note">
+                    This folder should only contain internal files that we didn't send to the GC. Rename the file here.. Type a short but informative description regarding what the file is. For instance, data sheets from supplier, etc.
+                </div>
                 <div id="drop-area-main" class="drop-area">
                     <form class="my-form">
                         <p>Upload multiple files by dragging them here</p>
-                        <input type="file" id="fileElemMain" multiple>
-                        <label class="btn btn-primary btn-sm mt-2" for="fileElemMain">Select Files</label>
+                        <p class="small-note">You will be asked to type a short file name for each file.</p>
                     </form>
                 </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="location.reload();" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="mainFolderBrowseModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Browse for Files - Main Submittal Folder</h5>
+                <button onclick="location.reload();" type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3 small-note">
+                    This folder should only contain internal files that we didn't send to the GC. Rename the file here.. Type a short but informative description regarding what the file is. For instance, data sheets from supplier, etc.
+                </div>
+                <input type="file" id="fileElemMainBrowse" class="form-control" multiple>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="location.reload();" data-dismiss="modal">Cancel</button>
@@ -395,13 +419,37 @@ select {
                 </button>
             </div>
             <div class="modal-body">
+                <div class="mb-3 small-note">
+                    This folder should contain all of the items we sent to the GC. Pictures of drawdowns, .pdf of product data, etc. Rename the file here, to say sent submittal to GC, etc.
+                </div>
                 <div id="drop-area-sent-to-gc" class="drop-area">
                     <form class="my-form">
                         <p>Upload multiple files by dragging them here</p>
-                        <input type="file" id="fileElemSentToGC" multiple>
-                        <label class="btn btn-primary btn-sm mt-2" for="fileElemSentToGC">Select Files</label>
+                        <p class="small-note">You will be asked to type a short file name for each file.</p>
                     </form>
                 </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="location.reload();" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="sentToGCBrowseModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Browse for Files - Sent to GC</h5>
+                <button onclick="location.reload();" type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3 small-note">
+                    This folder should contain all of the items we sent to the GC. Pictures of drawdowns, .pdf of product data, etc. Rename the file here, to say sent submittal to GC, etc.
+                </div>
+                <input type="file" id="fileElemSentToGCBrowse" class="form-control" multiple>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="location.reload();" data-dismiss="modal">Cancel</button>
@@ -420,13 +468,37 @@ select {
                 </button>
             </div>
             <div class="modal-body">
+                <div class="mb-3 small-note">
+                    Put all documents that involve submittal review comments here. Change the description to something simple such as approved drawdowns, approved interior product data, etc.
+                </div>
                 <div id="drop-area-approval-docs" class="drop-area">
                     <form class="my-form">
                         <p>Upload multiple files by dragging them here</p>
-                        <input type="file" id="fileElemApprovalDocs" multiple>
-                        <label class="btn btn-primary btn-sm mt-2" for="fileElemApprovalDocs">Select Files</label>
+                        <p class="small-note">You will be asked to type a short file name for each file.</p>
                     </form>
                 </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="location.reload();" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="approvalDocsBrowseModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Browse for Files - Approval Documents</h5>
+                <button onclick="location.reload();" type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3 small-note">
+                    Put all documents that involve submittal review comments here. Change the description to something simple such as approved drawdowns, approved interior product data, etc.
+                </div>
+                <input type="file" id="fileElemApprovalDocsBrowse" class="form-control" multiple>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="location.reload();" data-dismiss="modal">Cancel</button>
@@ -673,22 +745,15 @@ select {
             <div class="clean-card">
 
                 <div class="mb-3 small-note">
-                    Upload general documents for this submittal
+                    This folder should only contain internal files that we didn't send to the GC. Rename the file here.. Type a short but informative description regarding what the file is. For instance, data sheets from supplier, etc.
                 </div>
-
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="input-group">
-                        <input type="file" class="form-control" name="upload_main_file">
-                        <div class="input-group-append">
-                            <button class="btn btn-outline-secondary btn-sm" type="submit">Upload</button>
-                        </div>
-                    </div>
-                </form>
 
                 <div class="mt-3">
                     <button data-toggle="modal" data-target="#mainFolderModal" class="btn btn-info btn-sm">
-                        Batch Upload Files
+                        Click Here to Drag and Drop
+                    </button>
+                    <button data-toggle="modal" data-target="#mainFolderBrowseModal" class="btn btn-info btn-sm">
+                        Click Here to Browse for File
                     </button>
                 </div>
 
@@ -723,8 +788,6 @@ select {
                 {% if can_open_folder %}
                 <div class="section-divider"></div>
 
-                <div class="small-note mb-2">Open Main Submittal Folder</div>
-
                 <input type="text" id="mainFolderPath" value="{{ main_folder_path }}" style="position:absolute; left:-9999px;">
 
                 {% if mc_folder_path %}
@@ -756,22 +819,15 @@ select {
             <div class="clean-card">
 
                 <div class="mb-3 small-note">
-                    Upload documents sent to the GC for this submittal
+                    This folder should contain all of the items we sent to the GC. Pictures of drawdowns, .pdf of product data, etc. Rename the file here, to say sent submittal to GC, etc.
                 </div>
-
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="input-group">
-                        <input type="file" class="form-control" name="upload_sent_to_gc_file">
-                        <div class="input-group-append">
-                            <button class="btn btn-outline-secondary btn-sm" type="submit">Upload</button>
-                        </div>
-                    </div>
-                </form>
 
                 <div class="mt-3">
                     <button data-toggle="modal" data-target="#sentToGCFolderModal" class="btn btn-info btn-sm">
-                        Batch Upload Files
+                        Click Here to Drag and Drop
+                    </button>
+                    <button data-toggle="modal" data-target="#sentToGCBrowseModal" class="btn btn-info btn-sm">
+                        Click Here to Browse for File
                     </button>
                 </div>
 
@@ -829,22 +885,15 @@ select {
             <div class="clean-card">
 
                 <div class="mb-3 small-note">
-                    Upload approval and return documents for this submittal
+                    Put all documents that involve submittal review comments here. Change the description to something simple such as approved drawdowns, approved interior product data, etc.
                 </div>
-
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="input-group">
-                        <input type="file" class="form-control" name="upload_approval_file">
-                        <div class="input-group-append">
-                            <button class="btn btn-outline-secondary btn-sm" type="submit">Upload</button>
-                        </div>
-                    </div>
-                </form>
 
                 <div class="mt-3">
                     <button data-toggle="modal" data-target="#approvalDocsFolderModal" class="btn btn-info btn-sm">
-                        Batch Upload Files
+                        Click Here to Drag and Drop
+                    </button>
+                    <button data-toggle="modal" data-target="#approvalDocsBrowseModal" class="btn btn-info btn-sm">
+                        Click Here to Browse for File
                     </button>
                 </div>
 
@@ -1342,14 +1391,16 @@ document.addEventListener("DOMContentLoaded", function () {
         window.scrollTo(0, parseInt(savedScrollY, 10) || 0);
     }
 
-    setupDropArea("drop-area-main", "fileElemMain", "upload_main_batch");
-    setupDropArea("drop-area-sent-to-gc", "fileElemSentToGC", "upload_sent_to_gc_batch");
-    setupDropArea("drop-area-approval-docs", "fileElemApprovalDocs", "upload_approval_batch");
+    setupDropArea("drop-area-main", "upload_main_batch");
+    setupDropArea("drop-area-sent-to-gc", "upload_sent_to_gc_batch");
+    setupDropArea("drop-area-approval-docs", "upload_approval_batch");
+    setupBrowseInput("fileElemMainBrowse", "upload_main_batch");
+    setupBrowseInput("fileElemSentToGCBrowse", "upload_sent_to_gc_batch");
+    setupBrowseInput("fileElemApprovalDocsBrowse", "upload_approval_batch");
 });
 
-function setupDropArea(dropAreaId, fileInputId, fieldName) {
+function setupDropArea(dropAreaId, fieldName) {
     const dropArea = document.getElementById(dropAreaId);
-    const fileInput = document.getElementById(fileInputId);
 
     if (dropArea) {
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(event => {
@@ -1369,10 +1420,14 @@ function setupDropArea(dropAreaId, fileInputId, fieldName) {
             if (files.length) uploadFiles(files, fieldName);
         });
     }
+}
 
+function setupBrowseInput(fileInputId, fieldName) {
+    const fileInput = document.getElementById(fileInputId);
     if (fileInput) {
         fileInput.addEventListener("change", function () {
             if (this.files.length) uploadFiles(this.files, fieldName);
+            this.value = "";
         });
     }
 }
@@ -1384,9 +1439,22 @@ function preventDefaults(e) {
 
 function uploadFiles(files, fieldName) {
     const formData = new FormData();
+    const promptText = getUploadPromptText(fieldName);
+    const useCustomFileName = files.length === 1;
 
     for (let i = 0; i < files.length; i++) {
+        if (useCustomFileName) {
+            const fileName = promptForUploadName(promptText);
+            if (fileName === null) {
+                continue;
+            }
+            formData.append("file_name", fileName);
+        }
         formData.append(fieldName, files[i]);
+    }
+
+    if (!formData.has(fieldName)) {
+        return;
     }
 
     fetch("{% url 'submittal_send' submittal.id %}", {
@@ -1404,6 +1472,26 @@ function uploadFiles(files, fieldName) {
         }
     })
     .catch(() => alert("Upload error."));
+}
+
+function getUploadPromptText(fieldName) {
+    if (fieldName === "upload_main_batch") {
+        return "This folder should only contain internal files that we didn't send to the GC. Rename the file here.. Type a short but informative description regarding what the file is. For instance, data sheets from supplier, etc.";
+    }
+
+    if (fieldName === "upload_sent_to_gc_batch") {
+        return "This folder should contain all of the items we sent to the GC. Pictures of drawdowns, .pdf of product data, etc. Rename the file here, to say sent submittal to GC, etc.";
+    }
+
+    if (fieldName === "upload_approval_batch") {
+        return "Put all documents that involve submittal review comments here. Change the description to something simple such as approved drawdowns, approved interior product data, etc.";
+    }
+
+    return "Type a short file name or description.";
+}
+
+function promptForUploadName(promptText) {
+    return prompt(promptText, "");
 }
 
 function copyMainFolderPath() {

@@ -470,19 +470,37 @@ select {
                 <div id="drop-area" class="drop-zone">
                     <form class="my-form">
                         <p>Upload multiple files by dragging them here</p>
-
-                        <input type="file"
-                               id="fileElem"
-                               multiple>
-
-                        <label class="btn btn-primary btn-sm mt-2" for="fileElem">
-                            Select Files
-                        </label>
+                        <p class="small-note">
+                            You will be asked to type a short file name for each file.
+                        </p>
                     </form>
                 </div>
             </div>
             <div class="modal-footer">
                 <div id="hidden-element"></div>
+                <button type="button" class="btn btn-secondary" onclick="location.reload();" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="changeOrderBrowseModal" tabindex="-1" role="dialog" aria-labelledby="changeOrderBrowseModalTitle"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changeOrderBrowseModalTitle">Browse for Files</h5>
+                <button onclick="location.reload();" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3 small-note">
+                    Upload documents (pictures, invoices, etc.) for this change order.
+                </div>
+                <input type="file" id="fileElemBrowse" class="form-control" multiple>
+            </div>
+            <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="location.reload();" data-dismiss="modal">Cancel</button>
             </div>
         </div>
@@ -1085,17 +1103,20 @@ select {
         Upload documents (pictures, invoices, etc.) for this change order
     </div>
 
-    <form action="{% url 'extra_work_ticket' changeorder.id %}" method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="input-group">
-            <input type="file" class="form-control" name="upload_file">
-            <div class="input-group-append">
-                <button class="btn btn-outline-secondary btn-sm" type="submit">
-                    Upload
-                </button>
-            </div>
-        </div>
-    </form>
+    <div class="mt-3">
+        <button
+            data-toggle="modal"
+            data-target="#changeOrderFolderModal"
+            class="btn btn-info btn-sm">
+            Click Here to Drag and Drop
+        </button>
+        <button
+            data-toggle="modal"
+            data-target="#changeOrderBrowseModal"
+            class="btn btn-info btn-sm">
+            Click Here to Browse for File
+        </button>
+    </div>
 
     <div class="section-divider"></div>
 
@@ -1149,8 +1170,6 @@ select {
 
     {% if can_open_folder %}
     <div class="section-divider"></div>
-
-    <div class="small-note mb-2">Open Change Order Folder</div>
 
     <input type="text" id="changeOrderPath"
            value="{{ folder_path }}"
@@ -1820,7 +1839,7 @@ document.addEventListener("DOMContentLoaded", function () {
        DRAG & DROP (MODAL SAFE + MULTI FILE)
     ========================================================== */
     const dropArea = document.getElementById("drop-area");
-    const fileInput = document.getElementById("fileElem");
+    const fileInput = document.getElementById("fileElemBrowse");
 
     if (dropArea) {
 
@@ -1845,6 +1864,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (fileInput) {
         fileInput.addEventListener("change", function () {
             if (this.files.length) uploadFiles(this.files);
+            this.value = "";
         });
     }
 
@@ -1862,9 +1882,21 @@ function preventDefaults(e) {
 function uploadFiles(files) {
 
     const formData = new FormData();
+    const useCustomFileName = files.length === 1;
 
     for (let i = 0; i < files.length; i++) {
+        if (useCustomFileName) {
+            const fileName = promptForUploadName(files[i]);
+            if (fileName === null) {
+                continue;
+            }
+            formData.append("file_name", fileName);
+        }
         formData.append("upload_file", files[i]);
+    }
+
+    if (!formData.has("upload_file")) {
+        return;
     }
 
     fetch("{% url 'upload_changeorder_file' changeorder.id %}", {
@@ -1882,6 +1914,13 @@ function uploadFiles(files) {
         }
     })
     .catch(() => alert("Upload error."));
+}
+
+function promptForUploadName(file) {
+    return prompt(
+        "Type a short file name or description.\n\nStart the description with 01 or 2026.09.22, so that the files stay in chronological order. For instance, 01 request from GC, 02 request for wc pricing, 03 sent price to GC.",
+        ""
+    );
 }
 
 /* ==========================================================

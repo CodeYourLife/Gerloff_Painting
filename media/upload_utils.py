@@ -1,4 +1,5 @@
 import os
+import re
 
 
 def save_uploaded_file_unique(uploaded_file, folder, filename=None):
@@ -19,3 +20,20 @@ def save_uploaded_file_unique(uploaded_file, folder, filename=None):
         except FileExistsError:
             candidate_name = f"{base_name}_{counter}{ext}"
             counter += 1
+
+
+def get_requested_upload_filename(uploaded_file, requested_name=None):
+    original_name = os.path.basename(uploaded_file.name)
+    original_base, original_ext = os.path.splitext(original_name)
+    requested_base = os.path.basename((requested_name or "").strip())
+
+    if not requested_base:
+        requested_base = original_base
+
+    if original_ext and requested_base.lower().endswith(original_ext.lower()):
+        requested_base = requested_base[:-len(original_ext)].strip()
+
+    requested_base = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "", requested_base).strip()
+    requested_base = re.sub(r"\s+", " ", requested_base).strip(". ")
+
+    return f"{requested_base or original_base}{original_ext}"
