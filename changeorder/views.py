@@ -17,7 +17,6 @@ from django.db.models import Case, When, IntegerField
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import get_template, render_to_string
-from django.utils.text import get_valid_filename
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django_tables2 import RequestConfig
@@ -26,7 +25,7 @@ from io import StringIO, BytesIO
 from jobs.models import Jobs, JobCharges, ClientEmployees, Email_Errors,JobNotes
 from media.utilities import MediaUtilities
 from media.utilities import MediaUtilities
-from media.upload_utils import save_uploaded_file_unique
+from media.upload_utils import get_requested_upload_filename, save_uploaded_file_unique
 from .models import ChangeOrders
 from subcontractors.models import *
 from wallcovering.filters import ChangeOrderFilter
@@ -2749,7 +2748,7 @@ def extra_work_ticket(request, id):
                                             user=Employees.objects.get(user=request.user))
         if 'upload_file' in request.FILES:
             fileitem = request.FILES['upload_file']
-            fn = os.path.basename(fileitem.name)
+            fn = get_requested_upload_filename(fileitem, request.POST.get("upload_file_name"))
             folder_path = os.path.join(settings.MEDIA_ROOT, "changeorder", str(changeorder.job_number.job_number) + " COP #" + str(changeorder.cop_number))
             save_uploaded_file_unique(fileitem, folder_path, fn)
             try:
@@ -3242,8 +3241,10 @@ def upload_changeorder_file(request, changeorder_id):
 
     os.makedirs(folder_path, exist_ok=True)
 
-    for uploaded_file in request.FILES.getlist("upload_file"):
-        filename = get_valid_filename(uploaded_file.name)
+    requested_names = request.POST.getlist("file_name")
+    for index, uploaded_file in enumerate(request.FILES.getlist("upload_file")):
+        requested_name = requested_names[index] if index < len(requested_names) else None
+        filename = get_requested_upload_filename(uploaded_file, requested_name)
         save_uploaded_file_unique(uploaded_file, folder_path, filename)
 
     return JsonResponse({"success": True})
