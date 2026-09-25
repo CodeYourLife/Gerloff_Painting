@@ -12,6 +12,7 @@ from submittals.models import (
     SubmittalItems,
     SubmittalApprovals,
     SubmittalNotes,
+    delete_empty_booking_paint_submittal,
 )
 from console.misc import createfolder
 
@@ -333,6 +334,7 @@ class Command(BaseCommand):
                     is_no_longer_used=False,
                     job_number=job_obj,
                 )
+                delete_empty_booking_paint_submittal(item_obj)
                 results["items_created"] += 1
 
             approval_qs = SubmittalApprovals.objects.filter(

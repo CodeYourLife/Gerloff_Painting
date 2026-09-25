@@ -4,6 +4,48 @@ from wallcovering.models import Wallcovering
 import employees.models
 from django.db.models import Q, Max, Count
 
+BOOKING_CREATED_NOTE = "Created at Booking"
+
+
+def clear_booking_created_note(submittal_item, save=True):
+    if (submittal_item.notes or "").strip() != BOOKING_CREATED_NOTE:
+        return False
+
+    submittal_item.notes = ""
+    if save:
+        submittal_item.save(update_fields=["notes"])
+
+    return True
+
+
+def delete_empty_booking_paint_submittal(new_submittal_item):
+    if "paint" not in (new_submittal_item.description or "").lower():
+        return 0
+
+    booking_items = SubmittalItems.objects.filter(
+        job_number=new_submittal_item.job_number,
+        description="Paint Submittal",
+        notes=BOOKING_CREATED_NOTE,
+    ).exclude(
+        id=new_submittal_item.id
+    ).exclude(
+        submittalapprovals__submittal__isnull=False
+    ).distinct()
+
+    deleted_count = 0
+
+    for booking_item in booking_items:
+        SubmittalItemNotes.objects.filter(submittalitem=booking_item).delete()
+        SubmittalApprovals.objects.filter(
+            submittalitem=booking_item,
+            submittal__isnull=True,
+        ).delete()
+        booking_item.delete()
+        deleted_count += 1
+
+    return deleted_count
+
+
 class Submittals(models.Model):
     id = models.BigAutoField(primary_key=True)
     job_number = models.ForeignKey(Jobs, on_delete=models.PROTECT)
