@@ -82,9 +82,11 @@ def repair_wallcovering_submittal_item(item, submittal_type):
         wallcovering,
         submittal_type
     )
-    item.notes = ""
     item.job_number = wallcovering.job_number
-    item.save(update_fields=["description", "notes", "job_number"])
+    update_fields = ["description", "job_number"]
+    if clear_booking_created_note(item, save=False):
+        update_fields.append("notes")
+    item.save(update_fields=update_fields)
 
     approval_notes = wallcovering_submittal_approval_notes(wallcovering)
     approval = unlinked_approvals.first()
@@ -188,6 +190,7 @@ def submittals_home(request):
             description=description,
             notes=notes,
         )
+        delete_empty_booking_paint_submittal(item)
 
         SubmittalApprovals.objects.create(
             submittalitem=item,
@@ -693,6 +696,7 @@ def submittal_send(request, submittal_id):
                     date_reviewed=None,
                 )
 
+                clear_booking_created_note(item)
                 added_count += 1
 
             for approval_id in approval_ids:
@@ -708,6 +712,7 @@ def submittal_send(request, submittal_id):
                 approval.submittal = submittal
                 approval.save(update_fields=["notes", "submittal"])
 
+                clear_booking_created_note(approval.submittalitem)
                 added_count += 1
 
             # if employee and added_count:
@@ -929,6 +934,7 @@ def submittal_send(request, submittal_id):
             #item.notes = request.POST.get('item_notes', '').strip()
             item.job_number = job
             item.save()
+            delete_empty_booking_paint_submittal(item)
             approval.item_notes = request.POST.get('item_notes', '').strip()
 
             qty_raw = request.POST.get('approval_quantity', '').strip()
@@ -1388,7 +1394,10 @@ def submittal_item_detail(request, item_id):
                 )
 
                 item.wallcovering_id = wallcovering
-                item.save()
+                update_fields = ["wallcovering_id"]
+                if clear_booking_created_note(item, save=False):
+                    update_fields.append("notes")
+                item.save(update_fields=update_fields)
 
                 SubmittalItemNotes.objects.create(
                     submittal=None,
@@ -1784,6 +1793,7 @@ def job_submittals_summary(request, job_number):
                     description=description,
                     notes=notes
                 )
+                delete_empty_booking_paint_submittal(new_item)
 
                 SubmittalApprovals.objects.create(
                     submittalitem=new_item,
@@ -1929,7 +1939,10 @@ def submittal_item_link_wallcovering(request, item_id):
             )
 
             item.wallcovering_id = wallcovering
-            item.save()
+            update_fields = ["wallcovering_id"]
+            if clear_booking_created_note(item, save=False):
+                update_fields.append("notes")
+            item.save(update_fields=update_fields)
 
             messages.success(request, "Wallcovering linked.")
         else:

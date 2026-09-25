@@ -27,7 +27,12 @@ from .models import (
     Pending_Orders,
     Pending_Order_Items
 )
-from submittals.models import SubmittalItems, SubmittalApprovals, SubmittalItemNotes
+from submittals.models import (
+    SubmittalItems,
+    SubmittalApprovals,
+    SubmittalItemNotes,
+    clear_booking_created_note,
+)
 from changeorder.models import Wallcovering_Change_Orders
 from subcontractors.models import SubcontractItems
 
@@ -105,8 +110,8 @@ def ensure_wallcovering_submittal_item(wallcovering, submittal_type, existing_it
     if existing_item:
         existing_item.description = description
         existing_item.wallcovering_id = wallcovering
-        existing_item.notes = ""
         existing_item.job_number = wallcovering.job_number
+        clear_booking_created_note(existing_item, save=False)
         existing_item.save()
         item = existing_item
     else:
@@ -191,9 +196,17 @@ def update_unlinked_wallcovering_submittals(wallcovering, new_vendor, new_code, 
                     approval.save(update_fields=update_fields)
                     approval_update_count += 1
 
+            item_update_fields = []
+
             if approval_update_count and item.description != new_description:
                 item.description = new_description
-                item.save(update_fields=["description"])
+                item_update_fields.append("description")
+
+            if clear_booking_created_note(item, save=False):
+                item_update_fields.append("notes")
+
+            if item_update_fields:
+                item.save(update_fields=item_update_fields)
 
             updated_count += approval_update_count
 
