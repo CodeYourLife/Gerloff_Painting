@@ -11,7 +11,7 @@ class Wallcovering(models.Model):
     vendor = models.ForeignKey(Vendors, on_delete=models.PROTECT,null=True)
     pattern = models.CharField(null=True, max_length=2000,blank=True)
     estimated_quantity = models.IntegerField(default=0, blank=True,null=True)
-    estimated_unit = models.CharField(null=True, max_length=20, blank=True)
+    estimated_unit = models.CharField(null=True, max_length=50, blank=True)
     cut_charge = models.CharField(null=True, max_length=1000, blank=True)
     roll_width = models.CharField(null=True, max_length=50, blank=True)
     vertical_repeat = models.CharField(null=True, max_length=50, blank=True)
@@ -214,7 +214,7 @@ class OrderItems(models.Model):  # usually just one of these per order
         Wallcovering, on_delete=models.PROTECT, related_name='orderitems1', null=True, blank=True)
     quantity = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True, verbose_name='Quantity Ordered')
-    unit = models.CharField(null=True, max_length=10)
+    unit = models.CharField(null=True, max_length=50)
     price = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True)
     item_description = models.CharField(null=True, max_length=100)
@@ -364,7 +364,7 @@ class Pending_Order_Items(models.Model):
         Wallcovering, on_delete=models.PROTECT, related_name='pending_orderitems', null=True, blank=True)
     quantity = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True, verbose_name='Quantity Ordered')
-    unit = models.CharField(null=True, max_length=10)
+    unit = models.CharField(null=True, max_length=50)
     price = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True)
     item_description = models.CharField(null=True, max_length=100)

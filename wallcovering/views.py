@@ -1302,15 +1302,21 @@ def open_wallcovering_order_items():
     )
 
 
-def build_wallcovering_order_email_lines(wallcovering, pending_order, message):
-    email_lines = [
-        f"Job Name: {wallcovering.job_number.job_name}",
-        f"Project Manager: {wallcovering.job_number.project_manager or ''}",
-        "",
+def build_wallcovering_order_email_lines(wallcovering, pending_order, message, include_job_context=True):
+    email_lines = []
+
+    if include_job_context:
+        email_lines.extend([
+            f"Job Name: {wallcovering.job_number.job_name}",
+            f"Project Manager: {wallcovering.job_number.project_manager or ''}",
+            "",
+        ])
+
+    email_lines.extend([
         message,
         "",
         "Pending Order Items:",
-    ]
+    ])
 
     pending_items = Pending_Order_Items.objects.filter(
         pending_order=pending_order
@@ -1647,6 +1653,62 @@ def wallcovering_add_order(request, wallcovering_id):
     })
 
 
+def wallcovering_pending_order_delete(request, pending_order_id):
+    pending_order = get_object_or_404(
+        Pending_Orders.objects.select_related(
+            "job_number",
+            "vendor",
+            "requested_by",
+            "approved_by",
+        ),
+        id=pending_order_id,
+        is_ordered=False,
+    )
+
+    first_item = Pending_Order_Items.objects.filter(
+        pending_order=pending_order,
+        link_to_wallcovering__isnull=False,
+    ).select_related("link_to_wallcovering").first()
+
+    if not first_item:
+        messages.error(request, "This pending order is not linked to a wallcovering.")
+        return redirect("wallcovering_home")
+
+    wallcovering = first_item.link_to_wallcovering
+
+    if request.method != "POST":
+        return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
+
+    employee = Employees.objects.filter(user=request.user).first()
+    if not employee:
+        messages.error(request, "Could not cancel the pending order because your employee record was not found.")
+        return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
+
+    cancel_note = (request.POST.get("cancel_note") or "").strip()
+    if not cancel_note:
+        messages.error(request, "Please enter an explanation before deleting the pending order.")
+        return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
+
+    note_lines = [
+        f"Pending Order Canceled - Pending Order #{pending_order.id}",
+        "",
+        cancel_note,
+    ]
+
+    with transaction.atomic():
+        WallcoveringNotes.objects.create(
+            pattern=wallcovering,
+            date=date.today(),
+            user=employee,
+            note="\r\n".join(note_lines)[:2000],
+        )
+        Pending_Order_Items.objects.filter(pending_order=pending_order).delete()
+        pending_order.delete()
+
+    messages.success(request, "Pending order deleted.")
+    return redirect("wallcovering_detail", wallcovering_id=wallcovering.id)
+
+
 
 
 def wallcovering_pending_order(request, pending_order_id):
@@ -1889,6 +1951,7 @@ def wallcovering_pending_order(request, pending_order_id):
                 wallcovering,
                 pending_order,
                 "Wallcovering order approved.",
+                include_job_context=False,
             )
 
             if approver_notes:
@@ -1901,12 +1964,6 @@ def wallcovering_pending_order(request, pending_order_id):
             if changes:
                 approval_lines.extend(["", "Approver Changes:"])
                 approval_lines.extend([f"- {change}" for change in changes])
-            else:
-                approval_lines.extend([
-                    "",
-                    "Approver Changes:",
-                    "- No changes made by approver.",
-                ])
 
             if linked_change_orders:
                 approval_lines.extend(["", "Change Order Quantities:"])
@@ -1916,11 +1973,6 @@ def wallcovering_pending_order(request, pending_order_id):
                     approval_lines.append(
                         f"- COP {link.change_order.cop_number} - {link.change_order.description or ''}: {included_text}"
                     )
-
-            approval_lines.extend([
-                "",
-                f"http://gp-webserver/wallcovering/wallcovering_detail/{wallcovering.id}",
-            ])
 
             if employee:
                 WallcoveringNotes.objects.create(
