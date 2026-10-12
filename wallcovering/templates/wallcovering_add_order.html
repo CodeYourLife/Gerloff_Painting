@@ -209,6 +209,7 @@ placeholder="{{ wallcovering.estimated_quantity }}"
                 <input type="text"
                        name="main_unit"
                        class="form-control"
+                       maxlength="50"
                        value="{% if main_item %}{{ main_item.unit }}{% else %}{{ wallcovering.estimated_unit|default:'' }}{% endif %}"
                        >
             </div>
@@ -311,6 +312,7 @@ placeholder="{{ wallcovering.estimated_quantity }}"
             <input type="text"
                    name="extra_unit[]"
                    class="form-control"
+                   maxlength="50"
                    value="{{ item.unit }}">
         </div>
 
@@ -491,7 +493,7 @@ placeholder="{{ wallcovering.estimated_quantity }}"
 
             <div class="form-group col-md-2">
                 <label>Unit</label>
-                <input type="text" name="extra_unit[]" class="form-control">
+                <input type="text" name="extra_unit[]" class="form-control" maxlength="50">
             </div>
 
             <div class="form-group col-md-3">

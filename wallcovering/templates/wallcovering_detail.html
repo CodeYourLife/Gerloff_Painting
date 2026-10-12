@@ -551,6 +551,7 @@
                         <div class="form-group col-md-2">
                             <label>Unit</label>
                             <input type="text" name="unit" class="form-control form-control-sm"
+                                   maxlength="50"
                                    placeholder="yd, roll, each">
                         </div>
 
@@ -846,9 +847,17 @@
 
                         <div class="col-md-3 text-md-right mt-2 mt-md-0">
                             <a href="{% url 'wallcovering_pending_order' group.order.id %}"
-                               class="btn btn-sm btn-outline-dark">
+                               class="btn btn-sm btn-outline-dark mb-1">
                                 Review Order
                             </a>
+                            <button type="button"
+                                    class="btn btn-sm btn-danger mb-1"
+                                    data-toggle="modal"
+                                    data-target="#deletePendingOrderModal"
+                                    data-delete-url="{% url 'wallcovering_pending_order_delete' group.order.id %}"
+                                    data-order-label="Pending Order #{{ group.order.id }}">
+                                Delete
+                            </button>
                         </div>
                     </div>
 
@@ -927,9 +936,17 @@
 
                         <div class="col-md-3 text-md-right mt-2 mt-md-0">
                             <a href="{% url 'wallcovering_pending_order' group.order.id %}"
-                               class="btn btn-sm btn-outline-info">
+                               class="btn btn-sm btn-outline-info mb-1">
                                 Open Order
                             </a>
+                            <button type="button"
+                                    class="btn btn-sm btn-danger mb-1"
+                                    data-toggle="modal"
+                                    data-target="#deletePendingOrderModal"
+                                    data-delete-url="{% url 'wallcovering_pending_order_delete' group.order.id %}"
+                                    data-order-label="Approved Order #{{ group.order.id }}">
+                                Delete
+                            </button>
                         </div>
                     </div>
 
@@ -1380,6 +1397,49 @@
     </div>
 </div>
 
+<div class="modal fade" id="deletePendingOrderModal" tabindex="-1" role="dialog" aria-labelledby="deletePendingOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+
+            <form method="post" id="deletePendingOrderForm">
+                {% csrf_token %}
+
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deletePendingOrderModalLabel">
+                        Delete Pending Order
+                    </h5>
+
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="font-weight-bold mb-2" id="deletePendingOrderLabel"></div>
+                    <label>Explanation</label>
+                    <textarea name="cancel_note"
+                              class="form-control"
+                              rows="5"
+                              required
+                              placeholder="Explain why this pending order is being deleted..."></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="submit" class="btn btn-danger">
+                        Delete
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="printJobTagModal" tabindex="-1" role="dialog" aria-labelledby="printJobTagModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -1719,6 +1779,27 @@
 
 {% block extra_scripts %}
 <script>
+document.addEventListener("DOMContentLoaded", function () {
+    const deleteButtons = document.querySelectorAll('[data-target="#deletePendingOrderModal"][data-delete-url]');
+    const deleteForm = document.getElementById("deletePendingOrderForm");
+    const deleteLabel = document.getElementById("deletePendingOrderLabel");
+    const deleteNote = deleteForm ? deleteForm.querySelector('textarea[name="cancel_note"]') : null;
+
+    deleteButtons.forEach(function (button) {
+        button.addEventListener("click", function () {
+            if (deleteForm) {
+                deleteForm.action = button.getAttribute("data-delete-url");
+            }
+            if (deleteLabel) {
+                deleteLabel.textContent = button.getAttribute("data-order-label") || "";
+            }
+            if (deleteNote) {
+                deleteNote.value = "";
+            }
+        });
+    });
+});
+
 document.addEventListener("DOMContentLoaded", function () {
     const saveButton = document.getElementById("saveChangeOrderWallcoveringChangesButton");
     const inputs = document.querySelectorAll(".changeorder-wallcovering-change-input");
