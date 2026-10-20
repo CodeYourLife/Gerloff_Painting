@@ -319,7 +319,7 @@ def gerloff_estimator_pm_change(job, estimator, project_manager, author):
 
 def open_dropbox(jobnumber, user):
     job = Jobs.objects.get(job_number=jobnumber)
-    query = str(job.job_number) + " " + str(job.job_name)
+    trinity_job_number = str(job.job_number)
     # dbx = dropbox.Dropbox(
     #     '0ZO2RCS5HXUAAAAAAAAAAYnYkAqko1APtMIdkSLShC9Hn650xeuxoYe3wtgQvh7I')
     dbx = dropbox.Dropbox(
@@ -341,7 +341,7 @@ def open_dropbox(jobnumber, user):
                 try:
                     # print(entry.name)
                     for entry2 in dbx.files_list_folder("/Gerloff Painting/" + entry.name).entries:
-                        if entry2.name == query:
+                        if entry2.name[:5] == trinity_job_number:
                             # print("------------FOUND IT")
                             try:
                                 shared_link_metadata = dbx.sharing_create_shared_link_with_settings(entry2.path_lower)
