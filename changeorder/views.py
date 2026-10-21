@@ -1700,6 +1700,10 @@ def get_or_create_contact(add_value,email, client):
 def change_order_send(request, id):
 
     changeorder = ChangeOrders.objects.get(id=id)
+    bond_rate = Decimal("0")
+    if changeorder.job_number.is_bonded:
+        bond_rate = TMPricesMaster.objects.get(category="Bond").rate
+    bond_rate_percent = bond_rate * Decimal("100")
 
     # --------------------------------------------------
     # Reset temp recipients if not POST
@@ -1727,7 +1731,7 @@ def change_order_send(request, id):
                     Decimal("0.01"),
                     rounding=ROUND_HALF_UP)
                 if changeorder.job_number.is_bonded:
-                    bond_amount = parsed_price * Decimal("0.02")
+                    bond_amount = parsed_price * bond_rate
                     parsed_price = parsed_price + bond_amount
                 price = parsed_price.quantize(Decimal("0.01"),rounding=ROUND_HALF_UP)
                 changeorder.price = price
@@ -2045,7 +2049,9 @@ def change_order_send(request, id):
         {
             'client_list': client_list,
             'extra_contacts': extra_contacts,
-            'changeorder': changeorder
+            'changeorder': changeorder,
+            'bond_rate': bond_rate,
+            'bond_rate_percent': bond_rate_percent,
         }
     )
 

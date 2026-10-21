@@ -45,7 +45,11 @@
 </td>
 
 <td>
-<input type="number" step="0.01" name="rate" value="{{ row.rate }}" class="form-control form-control-sm">
+<input type="number"
+       step="{% if category == 'Bond' %}0.001{% else %}0.01{% endif %}"
+       name="rate"
+       value="{{ row.rate }}"
+       class="form-control form-control-sm">
 </td>
 
 <td>
@@ -126,7 +130,7 @@ Add Item
 
 <div class="form-group">
 <label>Rate</label>
-<input type="number" step="0.01" name="rate" class="form-control" required>
+<input type="number" step="0.01" id="add_rate" name="rate" class="form-control" required>
 </div>
 
 </div>
@@ -152,6 +156,7 @@ Add Item
 function showAddRow(category){
 
 document.getElementById("category_field").value = category;
+document.getElementById("add_rate").step = category === "Bond" ? "0.001" : "0.01";
 
 $('#addItemModal').modal('show');
 

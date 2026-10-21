@@ -38,7 +38,7 @@
                         {% csrf_token %}
                         <input type="hidden" name="master_id" value="{{ row.master_id }}">
                         <input type="number"
-                               step="0.01"
+                               step="{{ row.rate_step }}"
                                name="rate"
                                value="{{ row.current_rate }}"
                                class="form-control form-control-sm mr-2"

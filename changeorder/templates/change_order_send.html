@@ -266,10 +266,10 @@
 {% if changeorder.job_number.is_bonded %}
 <hr>
 <div class="mt-3 p-3 border rounded bg-light">
-    <h6>Bond Calculation (2%)</h6>
+    <h6>Bond Calculation ({{ bond_rate_percent|floatformat:2 }}%)</h6>
 
     <div>
-        Bond Amount (2%): $
+        Bond Amount ({{ bond_rate_percent|floatformat:2 }}%): $
         <span id="bond_amount">0.00</span>
     </div>
 
@@ -347,7 +347,8 @@ function updateBondTotal() {
         return;
     }
 
-    const bondAmount = price * 0.02;
+    const bondRate = parseFloat("{{ bond_rate|default:'0' }}");
+    const bondAmount = price * bondRate;
     const total = price + bondAmount;
 
     $("#bond_amount").text(bondAmount.toFixed(2));
