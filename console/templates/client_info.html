@@ -54,6 +54,19 @@
 .dataTables_filter {
    float: left !important;
 }
+.client-details-form .form-group {
+    margin-bottom: 1rem;
+}
+.client-details-form label {
+    display: block;
+    margin: 0 0 0.35rem;
+    font-weight: 600;
+    color: #495057;
+}
+.client-details-form input.form-control {
+    width: 100%;
+    margin: 0;
+}
 .tb { border-collapse: collapse; width:300px; }
 
 .tb th, .tb td { padding: 5px; border: solid 1px #777; }
@@ -122,11 +135,6 @@
     </div>
 </div>
 
-<a href="{% url 'client_cleanup_report' %}"
-   class="btn btn-warning btn-sm">
-    Client Cleanup Report
-</a>
-
 <form name="form2" id="form2" action="{% url 'client_info' 'ALL' %}" method="post">
     {% csrf_token %}
 <div class="row">
@@ -150,7 +158,6 @@
     </div>
 </div>
 </form>
-<br>
 {% if selected_client %}
 
 <!--combine people modal-->
@@ -192,51 +199,152 @@
     </div>
 </div>
 
-<form name="form3" id="form3" action="{% url 'client_info' selected_client.id %}" method="post">
-    {% csrf_token %}
+<div class="card mt-3 mb-3">
+    <div class="card-header">
+        <h5 class="mb-0">Client Details</h5>
+    </div>
+    <div class="card-body">
+        <form name="form5" id="form5" action="{% url 'client_info' selected_client.id %}" method="post" class="client-details-form">
+            {% csrf_token %}
 
-<br>
-<div class="row">
-    <div class="col-12 col-md-6 col-lg-4">
-        <label for="select_job">Job</label>
+            <div class="row">
+                <div class="col-12 col-lg-4">
+                    <div class="form-group">
+                        <label for="company_name">Company Name</label>
+                        <input type="text" id="company_name" name="company_name" value="{{selected_client.company}}" class="form-control" onchange="search_now(5)" />
+                    </div>
+                </div>
+                <div class="col-12 col-lg-4">
+                    <div class="form-group">
+                        <label for="company_email">Email to Send Bids</label>
+                        <input type="email" id="company_email" name="company_email" value="{{selected_client.bid_email}}" class="form-control" onchange="search_now(5)" />
+                    </div>
+                </div>
+                <div class="col-12 col-lg-4">
+                    <div class="form-group">
+                        <label for="company_phone">Main Phone</label>
+                        <input type="phone" id="company_phone" name="company_phone" value="{{selected_client.phone}}" class="form-control" onchange="search_now(5)" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 col-md-7">
+                    <div class="form-group">
+                        <label for="company_address">Address</label>
+                        <input type="text" id="company_address" name="company_address" value="{{selected_client.address}}" class="form-control" onchange="search_now(5)" />
+                    </div>
+                </div>
+                <div class="col-12 col-md-3">
+                    <div class="form-group">
+                        <label for="company_city">City</label>
+                        <input type="text" id="company_city" name="company_city" value="{{selected_client.city}}" class="form-control" onchange="search_now(5)" />
+                    </div>
+                </div>
+                <div class="col-12 col-md-2">
+                    <div class="form-group">
+                        <label for="company_state">State</label>
+                        <input type="text" id="company_state" name="company_state" value="{{selected_client.state}}" class="form-control" onchange="search_now(5)" />
+                    </div>
+                </div>
+            </div>
+        </form>
 
-        <select id="select_job"
-                name="select_job"
-                class="form-control searchable-job"
-                onchange="search_now(3)">
-            <option value="please_select">Select a job</option>
+        {% if not selected_client.is_active %}
+        <h2>THIS CLIENT IS NO LONGER ACTIVE!</h2>
+        {% endif %}
 
-            {% for x in jobs %}
-                <option value="{{ x.job_number }}">
-                    {{ x.job_number }} - {{ x.job_name }}
-                </option>
-            {% endfor %}
-        </select>
+        <div class="d-flex align-items-center flex-wrap mt-2">
+            <form name="form4" id="form4" action="{% url 'client_info' selected_client.id %}" method="post" class="mb-2 mr-2">
+                {% csrf_token %}
+                {% if selected_client.is_active %}
+                <input type="submit" class="btn btn-outline-danger btn-sm" name="make_client_inactive" value="De-Activate Client" />
+                {% else %}
+                <input type="submit" class="btn btn-outline-success btn-sm" name="make_client_active" value="Make this Client Active Again" />
+                {% endif %}
+            </form>
+
+            <button class="btn btn-outline-secondary btn-sm mr-2 mb-2"
+                    type="button"
+                    data-toggle="collapse"
+                    data-target="#clientCleanupUtilities"
+                    aria-expanded="false"
+                    aria-controls="clientCleanupUtilities">
+                Client Cleanup Utilities
+            </button>
+
+            <button class="btn btn-outline-primary btn-sm mb-2"
+                    type="button"
+                    data-toggle="collapse"
+                    data-target="#projectContactSelector"
+                    aria-expanded="false"
+                    aria-controls="projectContactSelector">
+                Change Contacts for Specific Project
+            </button>
+        </div>
+
+        <div class="collapse mb-3" id="projectContactSelector">
+            <div class="card card-body">
+                <form name="form3" id="form3" action="{% url 'client_info' selected_client.id %}" method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <label for="select_job">Select Job</label>
+                            <select id="select_job"
+                                    name="select_job"
+                                    class="form-control searchable-job"
+                                    onchange="search_now(3)">
+                                <option value="please_select">Select a job</option>
+                                {% for x in jobs %}
+                                    <option value="{{ x.job_number }}">
+                                        {{ x.job_number }} - {{ x.job_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="collapse" id="clientCleanupUtilities">
+            <div class="card card-body">
+                <div class="d-flex align-items-center flex-wrap mb-2">
+                    <a href="{% url 'client_cleanup_report' %}"
+                       class="btn btn-secondary btn-sm mr-3">
+                        Client Cleanup Report
+                    </a>
+                    <span class="text-muted">This report will analyze all client names and client employees, identify duplicates, and provide tools to cleanup duplicate entries.</span>
+                </div>
+                <div class="d-flex align-items-center flex-wrap mb-2">
+                    <button type="button"
+                            class="btn btn-secondary btn-sm mr-3"
+                            data-toggle="modal"
+                            data-target="#combinepeople-modal">
+                        Combine People
+                    </button>
+                    <span class="text-muted">Combines duplicate client employees into a single employee record.</span>
+                </div>
+                <div class="d-flex align-items-center flex-wrap">
+                    <button type="button"
+                            class="btn btn-secondary btn-sm mr-3"
+                            data-toggle="modal"
+                            data-target="#combinecompanies-modal">
+                        Combine Companies
+                    </button>
+                    <span class="text-muted">Combines duplicate client companies into a single company record.</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-    </form>
-<br>
-    <br>
-<form name="form4" id="form4" action="{% url 'client_info' selected_client.id %}" method="post">
-    {% csrf_token %}
-{% if selected_client.is_active %}<input type="submit" class="btn btn-danger btn-sm" name="make_client_inactive" value="De-Activate Client" />
-{% else %}<h2>THIS CLIENT IS NO LONGER ACTIVE!</h2><br><input type="submit" class="btn btn-primary btn-sm" name="make_client_active" value="Make this Client Active Again" />
-{% endif %}
-</form>
-<button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#combinepeople-modal" >Combine People</button>
-<button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#combinecompanies-modal" >Combine Companies</button>
-<br>
 
-<form name="form5" id="form5" action="{% url 'client_info' selected_client.id %}" method="post">
-        {% csrf_token %}
-
-    Company Name: <input type="text" name="company_name" value = "{{selected_client.company}}" size="50" onchange="search_now(5)" /><br>
-    Email to Send Bids: <input type="email" name="company_email" value = "{{selected_client.bid_email}}" size="50"  onchange="search_now(5)" /><br>
-    Main Phone: <input type="phone" name="company_phone" value = "{{selected_client.phone}}" size="50" onchange="search_now(5)" /><br>
-    Address: <input type="text" name="company_address" value = "{{selected_client.address}}" size="40" onchange="search_now(5)" /> City:  <input type="text" name="company_city" value = "{{selected_client.city}}" size="25" onchange="search_now(5)" />State:  <input type="text" name="company_state" value = "{{selected_client.state}}" size="15" onchange="search_now(5)" />
-</form>
-    <br>
     <hr>
+
+<div class="card mt-3 mb-3">
+    <div class="card-header">
+        <h5 class="mb-0">Cient Employees</h5>
+    </div>
+</div>
 
 <div class="table-responsive">
 <form name="form6" id="form6" action="{% url 'client_info' selected_client.id %}" method="post">

@@ -84,15 +84,17 @@
 </nav>
 <br>
 <H2>{{selected_client}}</H2>
-<a href = "{% url 'job_page' selected_job.job_number %}">{{selected_job}}</a>
+<h5 class="text-muted">Client Contacts for Job {{ selected_job.job_name }}</h5>
 <h4 style="color:red">{{error_message}}</h4>
 
 <div class="table-responsive">
 <form name="form6" id="form6" action="{% url 'client_job_info' selected_job.job_number %}" method="post">
 {% csrf_token %}
     <input type="hidden" name="person_pk" id="person_pk" value="0" />
-    <input class= "btn btn-danger btn-sm" type="submit" name="go_back" value="Go Back to Client Page"/>
-    <br>
+    <div class="d-flex align-items-center flex-wrap mb-3">
+        <input class="btn btn-danger btn-sm" type="submit" name="go_back" value="Go to Client Page"/>
+        <a class="btn btn-primary btn-sm" href="{% url 'job_page' selected_job.job_number %}">Go To Job</a>
+    </div>
 <table id="jobs_table" class="display table table-sm">
     <thead>
     <tr>
