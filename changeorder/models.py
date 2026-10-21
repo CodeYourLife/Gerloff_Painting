@@ -18,7 +18,7 @@ class TMPricesMaster(models.Model):
                                 validate_tm_category])  # Labor, Material, Equipment, Bond, Inventory
     item = models.CharField(null=False, max_length=50)
     unit = models.CharField(null=False, max_length=50)  # gallons, hours
-    rate = models.DecimalField(max_digits=9, decimal_places=2)
+    rate = models.DecimalField(max_digits=9, decimal_places=3)
 
     def __str__(self):
         return f"{self.item}"
@@ -26,7 +26,7 @@ class TMPricesMaster(models.Model):
 class JobPrices(models.Model):
     id = models.BigAutoField(primary_key=True)
     master = models.ForeignKey('changeorder.TMPricesMaster', on_delete=models.PROTECT)
-    rate = models.DecimalField(max_digits=9, decimal_places=2)
+    rate = models.DecimalField(max_digits=9, decimal_places=3)
     job_number = models.ForeignKey('jobs.Jobs', on_delete=models.PROTECT)
 
     class Meta:

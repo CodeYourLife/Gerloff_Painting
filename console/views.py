@@ -2981,17 +2981,17 @@ def job_prices(request, job_number):
         if "master_id" in request.POST:
             master_id = request.POST.get("master_id")
             raw_rate = request.POST.get("rate", "").replace(",", "").strip()
+            master = get_object_or_404(TMPricesMaster, id=master_id)
+            rate_precision = Decimal("0.001") if master.category == "Bond" else Decimal("0.01")
 
             try:
                 new_rate = Decimal(raw_rate).quantize(
-                    Decimal("0.01"),
+                    rate_precision,
                     rounding=ROUND_HALF_UP
                 )
             except (InvalidOperation, TypeError):
                 messages.error(request, "Please enter a valid rate.")
                 return redirect("job_prices", job_number=job.job_number)
-
-            master = get_object_or_404(TMPricesMaster, id=master_id)
 
             existing_job_price = JobPrices.objects.filter(
                 master=master,
@@ -3061,6 +3061,7 @@ def job_prices(request, job_number):
             "category": master.category,
             "item": master.item,
             "unit": master.unit,
+            "rate_step": "0.001" if master.category == "Bond" else "0.01",
             "master_rate": master.rate,
             "current_rate": override.rate if override else master.rate,
             "has_override": bool(override),
