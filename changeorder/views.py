@@ -39,6 +39,15 @@ from django.utils.dateparse import parse_date
 from wallcovering.models import Wallcovering, WallcoveringNotes
 from changeorder.models import Wallcovering_Change_Orders
 
+
+def get_effective_job_rate(master_obj, job):
+    override = JobPrices.objects.filter(
+        master=master_obj,
+        job_number=job,
+    ).first()
+    return override.rate if override else master_obj.rate
+
+
 def emailed_ticket(request, id):
     send_data = {}
     changeorder = ChangeOrders.objects.get(id=id)
@@ -562,10 +571,12 @@ def revise_TM_COP(request, id):
                                   category="Inventory", category2="Inventory",
                                   proposal=newproposal)
         if 'bond_cost' in request.POST:
+            bond_master = TMPricesMaster.objects.get(category='Bond')
+            bond_rate = get_effective_job_rate(bond_master, changeorder.job_number)
             TMList.objects.create(change_order=changeorder, description="Bond",
                                   quantity="1",
                                   units="Lump Sum",
-                                  rate=request.POST['bond_rate'], total=request.POST['bond_cost'],
+                                  rate=bond_rate, total=request.POST['bond_cost'],
                                   category="Bond", category2="Bond",
                                   proposal=newproposal)
         return redirect('preview_TMProposal', id=newproposal.id)
@@ -633,13 +644,14 @@ def revise_TM_COP(request, id):
     is_bonded = False
     totalcost=totalmaterialcost+totallaborcost+totalequipmentcost+totalsundriescost+totalextrascost+inventory
     if changeorder.job_number.is_bonded == True:
-        bond_rate = TMPricesMaster.objects.get(category='Bond').rate
+        bond_master = TMPricesMaster.objects.get(category='Bond')
+        bond_rate = get_effective_job_rate(bond_master, changeorder.job_number)
         bond_cost = bond_rate * totalcost
         totalcost = totalcost + bond_cost
         is_bonded = True
     send_data['is_bonded'] = is_bonded
     send_data['bond_cost'] = int(bond_cost)
-    send_data['bond_rate'] = int(bond_rate)
+    send_data['bond_rate'] = bond_rate
     employees2 = TMPricesMaster.objects.filter(category="Labor").values()
     materials2 = TMPricesMaster.objects.filter(category="Material").values()
     equipment2 = TMPricesMaster.objects.filter(category="Equipment").values()
@@ -684,11 +696,7 @@ def price_ewt(request, id):
     job = changeorder.job_number
 
     def effective_rate(master_obj):
-        override = JobPrices.objects.filter(
-            master=master_obj,
-            job_number=job
-        ).first()
-        return override.rate if override else master_obj.rate
+        return get_effective_job_rate(master_obj, job)
 
     def effective_master_values(category):
         rows = []
@@ -914,7 +922,11 @@ def price_ewt(request, id):
             # BOND
             # ==================================================
             bond_cost = money(request.POST.get("bond_cost"))
-            bond_rate = safe_decimal(request.POST.get("bond_rate"))
+            if changeorder.job_number.is_bonded:
+                bond_master = TMPricesMaster.objects.get(category="Bond")
+                bond_rate = get_effective_job_rate(bond_master, changeorder.job_number)
+            else:
+                bond_rate = Decimal("0")
 
             if bond_cost != 0:
                 TMList.objects.create(
@@ -1343,10 +1355,12 @@ def price_old_ewt(request, id):
                                   category="Inventory", category2="Inventory",
                                   proposal=newproposal)
         if 'bond_cost' in request.POST:
+            bond_master = TMPricesMaster.objects.get(category='Bond')
+            bond_rate = get_effective_job_rate(bond_master, changeorder.job_number)
             TMList.objects.create(change_order=changeorder, description="Bond",
                                   quantity="1",
                                   units="Lump Sum",
-                                  rate=request.POST['bond_rate'], total=request.POST['bond_cost'],
+                                  rate=bond_rate, total=request.POST['bond_cost'],
                                   category="Bond", category2="Bond",
                                   proposal=newproposal)
         return redirect('preview_TMProposal', id=newproposal.id)
@@ -1391,7 +1405,8 @@ def price_old_ewt(request, id):
     bond_rate = 0
     bond_cost = 0
     if changeorder.job_number.is_bonded == True:
-        bond_rate = TMPricesMaster.objects.get(category='Bond').rate
+        bond_master = TMPricesMaster.objects.get(category='Bond')
+        bond_rate = get_effective_job_rate(bond_master, changeorder.job_number)
         bond_cost = bond_rate * totalcost
         totalcost = totalcost + bond_cost
         is_bonded = True
@@ -1702,7 +1717,8 @@ def change_order_send(request, id):
     changeorder = ChangeOrders.objects.get(id=id)
     bond_rate = Decimal("0")
     if changeorder.job_number.is_bonded:
-        bond_rate = TMPricesMaster.objects.get(category="Bond").rate
+        bond_master = TMPricesMaster.objects.get(category="Bond")
+        bond_rate = get_effective_job_rate(bond_master, changeorder.job_number)
     bond_rate_percent = bond_rate * Decimal("100")
 
     # --------------------------------------------------
