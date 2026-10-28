@@ -1460,7 +1460,11 @@ def job_page(request, jobnumber):
                         go_to_pickup = True
             if request.POST['select_status'] == 'done_done':
                 message = "Labor is 100% done."
-                open_changeorders = ChangeOrders.objects.filter(job_number=selectedjob, is_closed=False,is_approved=False)
+                open_changeorders = ChangeOrders.objects.filter(
+                    job_number=selectedjob,
+                    is_closed=False,
+                    is_approved_to_bill=False,
+                )
                 email_message =  f"Per {request.user.first_name} {request.user.last_name} Labor is 100% Done. Please make sure to Click the Labor Done button in Management Console. {request.POST['closed_note']}"
                 email_message += f"\n\n"
                 email_message += f"There are {open_changeorders.count()} Open Change Orders:"
