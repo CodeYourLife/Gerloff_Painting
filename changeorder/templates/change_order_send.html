@@ -281,6 +281,7 @@
 {% endif %}
 </div>
                 <!-- FINAL ACTION -->
+<div class="d-flex align-items-center">
 <button type="submit"
         name="myself"
         onsubmit="return submitProposal('draft')"
@@ -294,6 +295,14 @@
         class="btn btn-primary">
     Send Email With Proposal Now
 </button>
+
+<button type="submit"
+        name="draft"
+        onclick="return submitProposal('draft')"
+        class="btn btn-outline-secondary ml-auto">
+    Save as Draft
+</button>
+</div>
 
     <!-- Sending Proposal Overlay -->
 <div id="sending_overlay"
@@ -481,7 +490,8 @@ function submitProposal(mode) {
 
 
 
-    if (!validateEmails()) {
+    // A draft is not being emailed, so recipient validation is not required.
+    if (mode !== "draft" && !validateEmails()) {
         return false;
     }
 

@@ -1758,6 +1758,7 @@ def change_order_send(request, id):
         # -----------------------------
         # Button Flags
         # -----------------------------
+        is_draft = 'draft' in request.POST
         is_final = 'final' in request.POST
         is_myself = 'myself' in request.POST
 
@@ -1844,6 +1845,20 @@ def change_order_send(request, id):
         # ==================================================
         # 7️⃣ FINAL / MYSELF (Generate Proposal)
         # ==================================================
+        if is_draft:
+            if price is None:
+                messages.error(request, "Please enter a valid price before saving the proposal as a draft.")
+                return redirect('change_order_send', id=id)
+
+            ChangeOrderNotes.objects.create(
+                cop_number=changeorder,
+                date=date.today(),
+                user=Employees.objects.get(user=request.user),
+                note="Draft Proposal Saved."
+            )
+
+            return redirect('extra_work_ticket', id=id)
+
         if is_final or is_myself:
             if price is None:
                 messages.error(request, "Please enter a valid price before creating or sending the proposal.")
