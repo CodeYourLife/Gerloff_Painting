@@ -188,6 +188,10 @@ function moneyFormat(value) {
 	return Number(value || 0).toFixed(2);
 }
 
+function roundCurrency(value) {
+	return Number(Number(value || 0).toFixed(2));
+}
+
 function markEnteredValue(input) {
 	if (input.value === "") {
 		input.classList.remove("has-value");
@@ -217,24 +221,34 @@ else{
 	previous = parseFloat(document.getElementById("quantity_billed"+event.currentTarget.id).value)
 }
 total_to_date = current_total + previous
+total_to_date = roundCurrency(total_to_date)
+totalcost = roundCurrency(totalcost)
 percentage_calc = parseFloat(total_to_date/totalcost *100).toFixed(1)
 if (totalcost < 0){
 	if (total_to_date > 0){
 		alert("You can't bill for a positive amount on a negative line item")
 		event.currentTarget.value = ""
 		percentage_cell.innerHTML = ""
+		calculate_invoice_total()
+		return
 	}
 	if (total_to_date < totalcost){
 		alert("You can't deduct more than the contract")
 		event.currentTarget.value = ""
 		percentage_cell.innerHTML = ""
+		calculate_invoice_total()
+		return
 	}
 }
 else if (total_to_date > totalcost){
 alert("You can't bill for more than the contract")
 event.currentTarget.value = ""
+percentage_cell.innerHTML = ""
+calculate_invoice_total()
+return
 }
-else{percentage_cell.innerHTML = String(percentage_calc)+ "%"}
+
+percentage_cell.innerHTML = String(percentage_calc)+ "%"
 calculate_invoice_total()
 }
 
@@ -264,7 +278,10 @@ function calculate_invoice_total(){
 			total_contract += Number(document.getElementById("total_cost"+ item_number).value)
 		}
 	});
-	total_to_date += invoice_total + previously_billed
+	invoice_total = roundCurrency(invoice_total)
+	previously_billed = roundCurrency(previously_billed)
+	total_contract = roundCurrency(total_contract)
+	total_to_date = roundCurrency(invoice_total + previously_billed)
 	document.getElementById("invoice_total").innerHTML="<b>Total Invoice:</b> $" + moneyFormat(invoice_total)
 	document.getElementById("total_to_date").innerHTML="<b>Total To Date:</b> $" + moneyFormat(total_to_date)
 	document.getElementById("previously_billed").innerHTML="<b>Previously Billed:</b> $" + moneyFormat(previously_billed)
