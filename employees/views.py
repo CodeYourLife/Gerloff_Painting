@@ -1284,6 +1284,112 @@ def _send_vacation_request_emails(vacation, approvers):
         )
 
 
+def _send_vacation_cancellation_request_emails(vacation, approvers):
+    vacation_link = VACATION_APPROVAL_BASE_URL + reverse("my_page")
+    requester = vacation.employee
+    requester_name = str(requester)
+    sender = requester.email or "operations@gerloffpainting.com"
+    vacation_duration = _vacation_weekday_count(vacation.first_day, vacation.last_day)
+
+    body = (
+        f"{requester_name} requested cancellation of an approved vacation.\n\n"
+        f"First Day Off: {vacation.first_day.strftime('%m/%d/%Y')}\n"
+        f"Last Day Off: {vacation.last_day.strftime('%m/%d/%Y')}\n"
+        f"Duration: {vacation_duration} day{'s' if vacation_duration != 1 else ''}\n"
+        f"Note: {vacation.employee_note or 'No note provided.'}\n\n"
+        f"Review the cancellation here:\n{vacation_link}"
+    )
+
+    for approver in approvers:
+        if not approver.email:
+            continue
+
+        Email.sendEmail(
+            "Vacation Cancellation Requested",
+            body,
+            [approver.email],
+            False,
+            sender,
+        )
+
+
+def _send_vacation_cancellation_notice_emails(vacation, approvers):
+    requester = vacation.employee
+    sender = requester.email or "operations@gerloffpainting.com"
+    body = (
+        f"{requester} cancelled a vacation request.\n\n"
+        f"First Day Off: {vacation.first_day.strftime('%m/%d/%Y')}\n"
+        f"Last Day Off: {vacation.last_day.strftime('%m/%d/%Y')}\n"
+    )
+
+    for approver in approvers:
+        if not approver.email:
+            continue
+
+        Email.sendEmail(
+            "Vacation Request Cancelled",
+            body,
+            [approver.email],
+            False,
+            sender,
+        )
+
+
+def _send_vacation_cancellation_result_email(vacation, cancellation_approved):
+    employee = vacation.employee
+    if not employee.email:
+        return
+
+    sender = "operations@gerloffpainting.com"
+    vacation_duration = _vacation_weekday_count(vacation.first_day, vacation.last_day)
+
+    if cancellation_approved:
+        subject = "Vacation Cancellation Approved"
+        body = (
+            "Your vacation cancellation was approved.\n\n"
+            f"First Day Off: {vacation.first_day.strftime('%m/%d/%Y')}\n"
+            f"Last Day Off: {vacation.last_day.strftime('%m/%d/%Y')}\n"
+            f"Duration: {vacation_duration} day{'s' if vacation_duration != 1 else ''}"
+        )
+    else:
+        rejection_notes = []
+        for approval in VacationCancellationApprovals.objects.filter(
+            request=vacation,
+            is_rejected=True,
+        ).select_related("approver"):
+            if approval.approver_notes:
+                rejection_notes.append(f"{approval.approver}: {approval.approver_notes}")
+
+        subject = "Vacation Cancellation Rejected"
+        body = (
+            "Your vacation cancellation was rejected.\n\n"
+            f"First Day Off: {vacation.first_day.strftime('%m/%d/%Y')}\n"
+            f"Last Day Off: {vacation.last_day.strftime('%m/%d/%Y')}\n"
+            f"Duration: {vacation_duration} day{'s' if vacation_duration != 1 else ''}\n\n"
+            "Rejection Notes:\n"
+            + ("\n".join(rejection_notes) if rejection_notes else "No note provided.")
+        )
+
+    Email.sendEmail(subject, body, [employee.email], False, sender)
+
+
+def _mark_vacation_cancelled(vacation, cancelled_by):
+    vacation.is_cancelled = True
+    vacation.cancellation_requested = False
+    vacation.is_approved = False
+    vacation.is_rejected = False
+    vacation.cancelled_date = date.today()
+    vacation.cancelled_by = cancelled_by
+    vacation.save(update_fields=[
+        "is_cancelled",
+        "cancellation_requested",
+        "is_approved",
+        "is_rejected",
+        "cancelled_date",
+        "cancelled_by",
+    ])
+
+
 def _send_vacation_final_status_email(vacation):
     employee = vacation.employee
 
@@ -2930,6 +3036,8 @@ def employees_page(request, id):
             employee=employee,
             is_approved=False,
             is_rejected=False,
+            is_cancelled=False,
+            cancellation_requested=False,
         ).order_by("first_day", "id"))
 
         for vacation_request in pending_vacation_requests:
@@ -3600,6 +3708,129 @@ def my_page(request):
             messages.success(request, "Completed task denied and reopened.")
             return redirect('my_page')
 
+        if 'approve_vacation_cancellation' in request.POST or 'reject_vacation_cancellation' in request.POST:
+            cancellation_approval_id = request.POST.get("vacation_cancellation_approval_id")
+
+            if not cancellation_approval_id or not cancellation_approval_id.isdigit():
+                messages.error(request, "Vacation cancellation approval could not be found.")
+                return redirect('my_page')
+
+            approval = get_object_or_404(
+                VacationCancellationApprovals,
+                id=cancellation_approval_id,
+                approver=employee,
+            )
+            vacation = approval.request
+
+            if vacation.is_cancelled or not vacation.cancellation_requested:
+                messages.error(request, "This vacation cancellation is no longer pending.")
+                return redirect('my_page')
+
+            approval.approver_notes = request.POST.get("vacation_cancellation_approver_notes") or ""
+            approval.is_approved = 'approve_vacation_cancellation' in request.POST
+            approval.is_rejected = 'reject_vacation_cancellation' in request.POST
+            approval.save()
+
+            has_pending_approvals = VacationCancellationApprovals.objects.filter(
+                request=vacation,
+                is_approved=False,
+                is_rejected=False,
+            ).exists()
+
+            if not has_pending_approvals:
+                has_rejected_approvals = VacationCancellationApprovals.objects.filter(
+                    request=vacation,
+                    is_rejected=True,
+                ).exists()
+
+                vacation.cancellation_requested = False
+                if has_rejected_approvals:
+                    vacation.save(update_fields=["cancellation_requested"])
+                else:
+                    _mark_vacation_cancelled(vacation, employee)
+
+                try:
+                    _send_vacation_cancellation_result_email(vacation, not has_rejected_approvals)
+                except Exception:
+                    messages.warning(
+                        request,
+                        "Vacation cancellation review saved, but the employee email could not be sent.",
+                    )
+
+                if has_rejected_approvals:
+                    messages.success(request, "Vacation cancellation rejected.")
+                else:
+                    messages.success(request, "Vacation cancellation approved.")
+            else:
+                messages.success(request, "Vacation cancellation review saved.")
+
+            return redirect('my_page')
+
+        if 'cancel_vacation' in request.POST:
+            if not can_request_vacation:
+                messages.error(request, "You are not allowed to cancel vacation.")
+                return redirect('my_page')
+
+            vacation = get_object_or_404(
+                Vacation,
+                id=request.POST.get("edit_vacation"),
+                employee=employee,
+            )
+
+            if vacation.first_day < date.today():
+                messages.error(request, "Only future vacation requests can be cancelled.")
+                return redirect('my_page')
+
+            if vacation.is_cancelled:
+                messages.error(request, "This vacation request has already been cancelled.")
+                return redirect('my_page')
+
+            if vacation.cancellation_requested:
+                messages.error(request, "A cancellation request is already pending for this vacation.")
+                return redirect('my_page')
+
+            if vacation.is_approved:
+                approvers = _vacation_approvers_for(employee)
+                if approvers:
+                    vacation.cancellation_requested = True
+                    with transaction.atomic():
+                        vacation.save(update_fields=["cancellation_requested"])
+                        VacationCancellationApprovals.objects.filter(request=vacation).delete()
+                        for approver in approvers:
+                            VacationCancellationApprovals.objects.create(
+                                request=vacation,
+                                approver=approver,
+                                approver_notes="",
+                            )
+
+                    try:
+                        _send_vacation_cancellation_request_emails(vacation, approvers)
+                    except Exception:
+                        messages.warning(
+                            request,
+                            "Cancellation request submitted, but the approval email could not be sent.",
+                        )
+
+                    messages.success(request, "Cancellation request submitted for approval.")
+                else:
+                    _mark_vacation_cancelled(vacation, employee)
+                    messages.success(request, "Vacation request cancelled.")
+            else:
+                approvers = _vacation_approvers_for(employee)
+                _mark_vacation_cancelled(vacation, employee)
+
+                try:
+                    _send_vacation_cancellation_notice_emails(vacation, approvers)
+                except Exception:
+                    messages.warning(
+                        request,
+                        "Vacation request cancelled, but the approver notification could not be sent.",
+                    )
+
+                messages.success(request, "Vacation request cancelled.")
+
+            return redirect('my_page')
+
         if 'approve_vacation' in request.POST or 'reject_vacation' in request.POST:
             vacation_approval_id = request.POST.get("vacation_approval_id")
 
@@ -3613,6 +3844,11 @@ def my_page(request):
                 approver=employee,
             )
             vacation = approval.request
+
+            if vacation.is_cancelled or vacation.cancellation_requested:
+                messages.error(request, "This vacation request is no longer available for approval.")
+                return redirect('my_page')
+
             had_pending_approvals_before_review = ApprovedVacations.objects.filter(
                 request=vacation,
                 is_approved=False,
@@ -3661,6 +3897,69 @@ def my_page(request):
                 messages.success(request, "Vacation request approved.")
             else:
                 messages.success(request, "Vacation request rejected.")
+            return redirect('my_page')
+
+        if 'edit_vacation' in request.POST:
+            if not can_request_vacation:
+                messages.error(request, "You are not allowed to edit vacation.")
+                return redirect('my_page')
+
+            vacation_id = request.POST.get("edit_vacation")
+            vacation = get_object_or_404(
+                Vacation,
+                id=vacation_id,
+                employee=employee,
+            )
+
+            if vacation.first_day < date.today():
+                messages.error(request, "Only future vacation requests can be edited.")
+                return redirect('my_page')
+
+            first_day_raw = request.POST.get("first_day")
+            last_day_raw = request.POST.get("last_day")
+            employee_note = request.POST.get("employee_note") or ""
+
+            try:
+                first_day = date.fromisoformat(first_day_raw)
+                last_day = date.fromisoformat(last_day_raw)
+            except (TypeError, ValueError):
+                messages.error(request, "Please enter valid vacation dates.")
+                return redirect('my_page')
+
+            if last_day < first_day:
+                messages.error(request, "Last day cannot be before first day.")
+                return redirect('my_page')
+
+            vacation.vacation_date = first_day
+            vacation.first_day = first_day
+            vacation.last_day = last_day
+            vacation.duration = _vacation_weekday_count(first_day, last_day)
+            vacation.employee_note = employee_note
+            vacation.request_date = date.today()
+            vacation.is_approved = False
+            vacation.is_rejected = False
+
+            with transaction.atomic():
+                vacation.save()
+                ApprovedVacations.objects.filter(request=vacation).delete()
+
+                approvers = _vacation_approvers_for(employee)
+                for approver in approvers:
+                    ApprovedVacations.objects.create(
+                        request=vacation,
+                        approver=approver,
+                        approver_notes="",
+                    )
+
+            try:
+                _send_vacation_request_emails(vacation, approvers)
+            except Exception:
+                messages.warning(
+                    request,
+                    "Vacation request updated, but the approval email could not be sent.",
+                )
+
+            messages.success(request, "Vacation request updated and resubmitted for approval.")
             return redirect('my_page')
 
         if 'request_vacation' in request.POST:
@@ -3940,13 +4239,24 @@ def my_page(request):
     send_data['writeups_written'] = WriteUp.objects.filter(supervisor=employee)
     send_data['writeups_received'] = WriteUp.objects.filter(employee=employee)
     send_data['writeups_received_count'] = WriteUp.objects.filter(employee=employee).count()
-    vacation_requests = list(Vacation.objects.filter(employee=employee))
+    vacation_requests = list(Vacation.objects.filter(
+        employee=employee,
+    ).order_by("first_day", "id"))
     for vacation_request in vacation_requests:
         vacation_request.display_duration = _vacation_weekday_count(
             vacation_request.first_day,
             vacation_request.last_day,
         )
     send_data['vacation_requests'] = vacation_requests
+    send_data['future_vacation_requests'] = [
+        vacation_request
+        for vacation_request in vacation_requests
+        if (
+            vacation_request.first_day >= date.today() and
+            not vacation_request.is_cancelled and
+            not vacation_request.cancellation_requested
+        )
+    ]
     send_data['my_vacation_history_by_year'] = _vacation_history_by_year(employee)
     my_vacation_days_allowed = _vacation_allowed_days_for(employee)
     current_year = date.today().year
@@ -3967,6 +4277,8 @@ def my_page(request):
     send_data['my_vacation_days_allowed'] = my_vacation_days_allowed
     send_data['my_vacation_days_used_current_year'] = my_vacation_days_used_current_year
     vacation_requests_with_pending_reviews = ApprovedVacations.objects.filter(
+        request__is_cancelled=False,
+        request__cancellation_requested=False,
         is_approved=False,
         is_rejected=False,
     ).values_list("request_id", flat=True)
@@ -3994,6 +4306,38 @@ def my_page(request):
     vacation_approval_modal_requests = (
         vacation_approvals_requiring_my_approval +
         vacation_approvals_waiting_on_others
+    )
+
+    vacation_cancellation_requests_with_pending_reviews = VacationCancellationApprovals.objects.filter(
+        request__is_cancelled=False,
+        request__cancellation_requested=True,
+        is_approved=False,
+        is_rejected=False,
+    ).values_list("request_id", flat=True)
+
+    vacation_cancellations_requiring_my_approval = list(VacationCancellationApprovals.objects.filter(
+        approver=employee,
+        request_id__in=vacation_cancellation_requests_with_pending_reviews,
+        is_approved=False,
+        is_rejected=False,
+    ).select_related(
+        "request",
+        "request__employee",
+    ).order_by("request__first_day", "request__employee__last_name", "request__employee__first_name"))
+
+    vacation_cancellations_waiting_on_others = list(VacationCancellationApprovals.objects.filter(
+        approver=employee,
+        request_id__in=vacation_cancellation_requests_with_pending_reviews,
+    ).filter(
+        Q(is_approved=True) | Q(is_rejected=True)
+    ).select_related(
+        "request",
+        "request__employee",
+    ).order_by("request__first_day", "request__employee__last_name", "request__employee__first_name"))
+
+    vacation_cancellation_approval_requests = (
+        vacation_cancellations_requiring_my_approval +
+        vacation_cancellations_waiting_on_others
     )
 
     for approval in vacation_approval_modal_requests:
@@ -4063,7 +4407,14 @@ def my_page(request):
     send_data['vacation_approvals_waiting_on_others'] = vacation_approvals_waiting_on_others
     send_data['vacation_approvals_waiting_on_others_count'] = len(vacation_approvals_waiting_on_others)
     send_data['vacation_approval_modal_requests'] = vacation_approval_modal_requests
-    send_data['vacation_approval_requests_exist'] = bool(vacation_approval_modal_requests)
+    send_data['vacation_cancellations_requiring_my_approval'] = vacation_cancellations_requiring_my_approval
+    send_data['vacation_cancellations_requiring_my_approval_count'] = len(vacation_cancellations_requiring_my_approval)
+    send_data['vacation_cancellations_waiting_on_others'] = vacation_cancellations_waiting_on_others
+    send_data['vacation_cancellations_waiting_on_others_count'] = len(vacation_cancellations_waiting_on_others)
+    send_data['vacation_cancellation_approval_requests'] = vacation_cancellation_approval_requests
+    send_data['vacation_approval_requests_exist'] = bool(
+        vacation_approval_modal_requests or vacation_cancellation_approval_requests
+    )
     send_data['production_reports_written'] = DailyReports.objects.filter(foreman=employee)
     send_data['production_reports_received'] = ProductionItems.objects.filter(employee=employee)
     send_data['classes_taught'] = ClassOccurrence.objects.filter(teacher=employee)

@@ -912,6 +912,12 @@
                 <p class="text-muted">No pending vacation requests.</p>
             {% endif %}
 
+            {% if not pending_vacation_requests and not vacation_history_by_year %}
+                <p class="text-muted">
+                    No vacation history found yet. Use Manual Vacation Entry below to add one.
+                </p>
+            {% endif %}
+
             <div class="mb-3">
                 <strong>{{ current_year }} Vacation Days Used:</strong>
                 {{ vacation_days_used_current_year }} of {{ vacation_days_allowed }} day{{ vacation_days_allowed|pluralize }}
@@ -1173,7 +1179,11 @@
                                                     <a href="#"
                                                        class="vacation-status-link"
                                                        data-statuses-id="employee_vacation_history_statuses_{{ vacation_item.id }}">
-                                                        {% if vacation_item.is_approved %}
+                                                        {% if vacation_item.is_cancelled %}
+                                                            Cancelled
+                                                        {% elif vacation_item.cancellation_requested %}
+                                                            Cancellation Pending
+                                                        {% elif vacation_item.is_approved %}
                                                             Approved
                                                         {% elif vacation_item.is_rejected %}
                                                             Rejected
