@@ -561,6 +561,16 @@ class Vacation(models.Model):
     request_date = models.DateField()
     first_day = models.DateField()
     last_day = models.DateField()
+    is_cancelled = models.BooleanField(default=False)
+    cancellation_requested = models.BooleanField(default=False)
+    cancelled_date = models.DateField(null=True, blank=True)
+    cancelled_by = models.ForeignKey(
+        Employees,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="vacations_cancelled",
+    )
 
 
 class VacationDefaults(models.Model):
@@ -595,6 +605,15 @@ class ApprovedVacations(models.Model):
     is_approved = models.BooleanField(default=False)
     is_rejected = models.BooleanField(default=False)
     approver_notes = models.CharField(max_length=2000)
+
+
+class VacationCancellationApprovals(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    request = models.ForeignKey(Vacation, on_delete=models.PROTECT, related_name="cancellation_approvals")
+    approver = models.ForeignKey(Employees, on_delete=models.PROTECT)
+    is_approved = models.BooleanField(default=False)
+    is_rejected = models.BooleanField(default=False)
+    approver_notes = models.CharField(max_length=2000, default="")
 
 
 class DailyReportEmployees(models.Model):
