@@ -690,6 +690,14 @@ select {
                     Save Now
                 </button>
 
+                {% if not changeorder.is_approved and not changeorder.is_approved_to_bill %}
+                <button type="button"
+                        class="btn btn-warning"
+                        onclick="submitChangeAmountForm(true)">
+                    Change to Not Sent
+                </button>
+                {% endif %}
+
                 <button type="button"
                         class="btn btn-secondary"
                         data-dismiss="modal">
@@ -1713,6 +1721,7 @@ select {
     <input type="hidden" name="formal_co_number" id="formal_co_number"/>
     <input type="hidden" name="informally_approved" id="informally_approved"/>
     <input type="hidden" name="approved_to_bill" id="approved_to_bill"/>
+    <input type="hidden" name="change_to_not_sent" id="change_to_not_sent" value="0"/>
 
     <button type="button"
             class="btn btn-secondary btn-sm"
@@ -2153,7 +2162,7 @@ function not_coded_yet() {
     alert("TELL JOE TO CODE THIS")
 }
 
-function submitChangeAmountForm() {
+function submitChangeAmountForm(changeToNotSent = false) {
     const priceInput = document.getElementById("change_amount_price_input");
     const noteInput = document.getElementById("change_amount_note_input");
     const formalCoInput = document.getElementById("formal_co_number_input");
@@ -2165,6 +2174,7 @@ function submitChangeAmountForm() {
     const hiddenFormalCo = document.getElementById("formal_co_number");
     const hiddenInformallyApproved = document.getElementById("informally_approved");
     const hiddenApprovedToBill = document.getElementById("approved_to_bill");
+    const hiddenChangeToNotSent = document.getElementById("change_to_not_sent");
 
     const form = document.getElementById("change_amount_form");
 
@@ -2179,6 +2189,7 @@ function submitChangeAmountForm() {
         !hiddenFormalCo ||
         !hiddenInformallyApproved ||
         !hiddenApprovedToBill ||
+        !hiddenChangeToNotSent ||
         !form
     ) {
         alert("Unable to submit change amount form.");
@@ -2190,6 +2201,21 @@ function submitChangeAmountForm() {
     const rawFormalCo = formalCoInput.value.trim();
     const informallyApproved = informallyApprovedCheckbox.checked;
     const approvedToBill = approvedToBillCheckbox.checked;
+
+    if (changeToNotSent) {
+        if (rawNote === "") {
+            alert("Please explain this change in the notes field.");
+            noteInput.focus();
+            return false;
+        }
+
+        hiddenChangeToNotSent.value = "1";
+        hiddenNote.value = rawNote;
+        form.submit();
+        return false;
+    }
+
+    hiddenChangeToNotSent.value = "0";
 
     const originalPriceRaw = (priceInput.dataset.original || "").trim();
     const originalFormalCo = (formalCoInput.dataset.original || "").trim();

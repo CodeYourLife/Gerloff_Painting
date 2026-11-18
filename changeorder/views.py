@@ -2499,6 +2499,33 @@ def extra_work_ticket(request, id):
         if 'new_price' in request.POST:
             employee = Employees.objects.filter(user=request.user).first()
 
+            if request.POST.get('change_to_not_sent') == '1':
+                raw_note = request.POST.get('new_price_note', '').strip()
+
+                if changeorder.is_approved or changeorder.is_approved_to_bill:
+                    messages.error(
+                        request,
+                        "A change order with an approval cannot be changed to Not Sent."
+                    )
+                    return redirect('extra_work_ticket', id=id)
+
+                if not raw_note:
+                    messages.error(request, "Please explain the change in the notes field.")
+                    return redirect('extra_work_ticket', id=id)
+
+                changeorder.date_sent = None
+                changeorder.save()
+
+                ChangeOrderNotes.objects.create(
+                    cop_number=changeorder,
+                    date=date.today(),
+                    user=employee,
+                    note=f"Changed from Sent to Not Sent (Draft). {raw_note}"
+                )
+
+                messages.success(request, "Change order changed to Not Sent (Draft).")
+                return redirect('extra_work_ticket', id=id)
+
             # --- old values before changes ---
             old_price = changeorder.price
             old_gc_number = (changeorder.gc_number or "").strip()
